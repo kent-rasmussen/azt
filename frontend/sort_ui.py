@@ -442,6 +442,7 @@ class SortPresenter(PresenterBase):
                 anchor='c', sticky='sew')
         buttonframe = SortButtonFrame(groupsFrame, sort_obj, groups,
                                      macrosort=macrosort,
+                                     joinable=True,
                                      row=1, sticky='nsew', columnspan=2)
         return groupsFrame, buttonframe
 

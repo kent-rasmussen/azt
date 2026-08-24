@@ -5,6 +5,7 @@ from utilities import logsetup,file
 log=logsetup.getlog(__name__)
 
 from utilities.error_handler import notify_error as ErrorNotice
+from utilities.error_handler import notify_user as NotifyUser
 
 from backend.core.sorting_engine import Sort
 
@@ -730,9 +731,14 @@ class Alphabet():
                 "so I’m going to ask you to consider joining them now.")
             else:
                 text=''
-            ErrorNotice(_("Removing {items} from ‘{glyph}’ to make room for {new}{text}"
-                        ).format(items=conflicts,glyph=glyph,new=item,text=text),
-                                wait=True)
+            # NotifyUser, not ErrorNotice: this REPORTS what was done — the
+            # removal happens either way, three lines below — so there is nothing
+            # for the user to decide and no reason to block them mid-macrosort
+            # (missed in the 2026-08-01 ErrorNotice→NotifyUser pass; Kent
+            # 2026-08-24). The recurring-conflict sentence still earns its place,
+            # it just doesn't need a modal to carry it.
+            NotifyUser(_("Removing {items} from ‘{glyph}’ to make room for {new}{text}"
+                        ).format(items=conflicts,glyph=glyph,new=item,text=text))
         for i in conflicts:
             self.remove_item_from_glyph(i)
         return recurring_conflicts

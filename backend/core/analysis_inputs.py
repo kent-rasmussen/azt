@@ -5,7 +5,7 @@ log=logsetup.getlog(__name__)
 
 import sys
 import collections
-# import re
+import re
 # import datetime
 # import tkinter as tk
 from utilities.utilities import *
@@ -439,6 +439,44 @@ class CheckParameters(object):
         return len(self._vowel_runs(self._profile_segments(profile)))
     def _individual_vowels(self,segs):
         return sum(1 for s in segs if self._segment_type(s)=='V')
+    def check_segments(self,check,profile):
+        """(segments, hits) for showing WHICH part of `profile` a check is about:
+        the profile split into segments, and the indices the check names.
+
+        So 'V1' on 'CVCC' → (['C','V','C','C'], {1}) and 'C1=C2' on 'CVCV' →
+        ({0,2}), which a caller renders as C**V**CC / **C**V**C**V instead of
+        stacking 'CVCC' over 'V1' and making the user combine them (Kent
+        2026-08-24).
+
+        Indices are into SEGMENTS, not characters — 'Vː' is one segment, so
+        string indexing would highlight the wrong thing.
+
+        Understands the positional vocabulary: a token '<C|V><n>' anywhere in a
+        check joined by '=' or 'x' (C1, V1, C1=C2, C1=C2=C3, C2xC3). Returns
+        hits=None — NOT an empty set — for anything it can't map, so a caller can
+        tell 'nothing to highlight' from 'this check isn't positional' and fall
+        back rather than silently showing an unmarked profile."""
+        segs=self._profile_segments(profile)
+        if not segs or not check:
+            return segs,None
+        hits=set()
+        found=False
+        for token in re.split(r'[=x]',str(check)):
+            m=re.fullmatch(r'([CV])(\d+)',token.strip())
+            if not m:
+                continue
+            want,n=m.group(1),int(m.group(2))
+            if n<1:
+                continue
+            found=True
+            seen=0
+            for i,s in enumerate(segs):
+                if self._segment_type(s)==want:
+                    seen+=1
+                    if seen==n:
+                        hits.add(i)
+                        break
+        return segs,(hits if found else None)
     def profile_satisfies(self,profile,beg=None,end=None,syls=None):
         """True iff `profile` is consistent with the confirmed primitives: first
         segment is beg's type, last is end's type, and `syls` lies in the profile's

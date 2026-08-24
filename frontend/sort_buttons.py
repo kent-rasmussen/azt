@@ -276,6 +276,18 @@ class SortButtonFrame(ui.ScrollingFrame):
         # log.info("Updating counts for each button")
         for b in self.groupbuttonlist:
             b.updatecount()
+    def removegroupbutton(self,group):
+        """Drop ONE group's button — the group no longer exists (it was joined
+        into another). Delisted as well as destroyed: groupbuttonlist feeds
+        updatecounts and groupvars feeds get_selected, so a destroyed-but-listed
+        button would raise on the next refresh."""
+        for b in [i for i in self.groupbuttonlist if i.group==group]:
+            self.groupbuttonlist.remove(b)
+            try:
+                b.destroy()
+            except Exception as e:
+                log.info("removegroupbutton destroy failed for %s: %s",group,e)
+        self.groupvars.pop(group,None)
     def addgroupbutton(self,group):
         # log.info("SortButtonFrame addgroupbutton for {group}".format(group=group))
         if self.exitFlag.istrue():
@@ -302,6 +314,8 @@ class SortButtonFrame(ui.ScrollingFrame):
         # (Kent 2026-07-28).
         if self.reverifiable:
             kwargs['reverifiable']=True
+        if self.joinable:
+            kwargs['joinable']=True
         b=frame_class(self.groupbuttons, self.task,
                         showtonegroup=True,
                         alwaysrefreshable=True,
@@ -318,6 +332,7 @@ class SortButtonFrame(ui.ScrollingFrame):
             b.destroy()
             return
         # log.info('group button example found')
+        b.buttonframe=self #so a button can reach the frame that owns it
         self.groupvars[group]=b.var()
         self.groupbuttonlist.append(b)
         log.info('Group added: {group}'.format(group=group))
@@ -355,6 +370,11 @@ class SortButtonFrame(ui.ScrollingFrame):
         # (addgroupbutton). Opt-in per page, not per frame class: the sort page's
         # group buttons are ANSWERS to 'which group?' and don't get one.
         self.reverifiable=kwargs.pop('reverifiable',False)
+        # Drag one group button onto another to JOIN them. Opt-in per page like
+        # reverifiable: the SORT page (macrosort or not) wants it; the macrosort
+        # VERIFY page does not, since a row there is a group being checked
+        # against a letter, not a group you'd merge.
+        self.joinable=kwargs.pop('joinable',False)
         self.task=task
         self.program=self.task.program
         self.groups=groups
@@ -425,6 +445,7 @@ class _GroupButtonFrame(object):
                         'goback','all_for_cvt', 'on_select',
                         'show_check',
                         'reverifiable', #right-click → reverify THIS group
+                        'joinable', #drag THIS group onto another to join them
 
                         'gridwait', #frame-only: must NOT reach child buttons,
                         #or they grid_remove themselves and never restore
@@ -543,6 +564,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if self.kwargs['unsortable']:
             self.unsortbutton()
         self.maybe_reverify_menu()
+        self.maybe_join_dnd()
         self.makerefreshbutton()
         if (self.check and self.kwargs.get('show_check') and
             not isinstance(self.parent, SortGlyphGroupButtonFrame)):
@@ -572,6 +594,56 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self.program.sort_ui.attach_context_menu(w,
                 [(_("Reverify this group (‘{group}’)").format(group=self.group),
                     reverify)])
+    def maybe_join_dnd(self):
+        """Drag one group button onto another to JOIN the two (Kent 2026-08-24).
+
+        Dropping A onto B keeps B (Kent 2026-08-24): the segmental tiebreak
+        exists only because there was never a way to know the user's intent, and
+        a deliberate drop IS that intent. Syllable PROFILES still get
+        `choose_join_direction` regardless — there one direction corrupts real
+        data, so the drop opens the question rather than answering it.
+
+        `dragthreshold` is what makes this safe on these buttons: they already
+        sort a word into the group on click and may carry a right-click menu, and
+        the dnd layer otherwise starts the drag on ButtonPress and eats both."""
+        w=getattr(self,'_display',None)
+        if not self.kwargs.get('joinable') or w is None:
+            return
+        try:
+            w.draggable=w.droppable=True
+            w.dragthreshold=8
+            w.draggable_bindings()
+            w.dnd_bindings()
+            w.joingroup=self.group
+            w.groupframe=self
+            def dnd_commit(source,event,target=w):
+                other=getattr(source,'joingroup',None)
+                if not other or other==target.joingroup:
+                    return #dropped on itself, or on something that isn't a group
+                log.info("Drag-join: %s onto %s",other,target.joingroup)
+                def repair():
+                    # A is gone and B has grown: drop A's button and refresh B,
+                    # rather than quitting the page (which is right for the join
+                    # PAGE, whose job ends with the join) or rebuilding the whole
+                    # frame. Kent 2026-08-24.
+                    try:
+                        exs=self.program.examples
+                        for g in (other,target.joingroup):
+                            exs.clear_cache(group=g) #both memberships changed
+                        bf=getattr(self,'buttonframe',None)
+                        if bf is not None:
+                            bf.removegroupbutton(other)
+                        self.refresh()
+                    except Exception as e:
+                        log.info("drag-join repair failed: %s",e)
+                self.task.join_groups([other,target.joingroup],
+                            macrosort=bool(getattr(self.parent,'macrosort',
+                                        getattr(self,'macrosort',False))),
+                            keep=target.joingroup,
+                            on_done=repair)
+            w.dnd_commit=dnd_commit
+        except Exception as e:
+            log.info("join drag-and-drop skipped for %s: %s",self.group,e)
     """buttons"""
     def labelbutton(self):
         self.label=self._display=ui.Label(self, text=self._text,
@@ -748,12 +820,32 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                         text=_("Change example word; Right click to back up"))
         self.refresh_button_state()
     def make_check_button(self):
-        # cvprofile on a line ABOVE the check, in ONE label (same cell) so the
-        # profile difference is visible (CVCC over V1 vs CVC over V1) WITHOUT
-        # adding a grid row / making the button taller.
+        # ONE line, with the check's own segment(s) in bold — C**V**CC rather
+        # than 'CVCC' stacked over 'V1', which made the user combine the two in
+        # their head (Kent 2026-08-24). A Tk Label carries a single font for its
+        # whole string, so each segment is its own Label in a row: that also
+        # handles a check naming SEVERAL positions (C1=C2 → **C**V**C**V), which
+        # inline markup would need anyway.
         profile=self.kwargs.get('profile')
-        text=f"{profile}\n{self.check}" if profile else self.check
-        ui.Label(self, text=text, column=self.ncolumns())
+        col=self.ncolumns()
+        segs=hits=None
+        if profile:
+            try:
+                segs,hits=self.program.params.check_segments(self.check,profile)
+            except Exception as e:
+                log.info("check_segments failed for %s/%s: %s",
+                            self.check,profile,e)
+        if not (segs and hits):
+            # Not a positional check (or no profile): keep the two-line form
+            # rather than show a profile with nothing marked, which would say
+            # less than what it replaced.
+            text=f"{profile}\n{self.check}" if profile else self.check
+            ui.Label(self, text=text, column=col)
+            return
+        row=ui.Frame(self, column=col)
+        for i,s in enumerate(segs):
+            ui.Label(row, text=s, column=i, row=0,
+                        font='bold' if i in hits else 'default')
     def unsortbutton(self):
         t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()

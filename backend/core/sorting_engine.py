@@ -1967,8 +1967,15 @@ class Sort(Categories):
         # non-macrosort: shared with macrosort eligibility (analysis.py). Keys off
         # THIS slice's verified groups (kwargs), fixing the old current-slice bug.
         return self.program.status.pending_distinctions(**kwargs)
-    def join_groups(self,pair,macrosort=False):
+    def join_groups(self,pair,macrosort=False,keep=None,on_done=None):
         """Join two groups: move one into the other, per the direction rules.
+
+        `keep` names the group that SURVIVES, for a caller that knows the user's
+        intent — dropping A onto B means B (Kent 2026-08-24). Segmental joins
+        have never had a good way to decide direction, so the rule below is a
+        tiebreak rather than a judgement; an explicit drop beats it. The join
+        PAGE passes nothing, because a pair on that page carries no direction,
+        and so keeps the old behaviour exactly.
 
         Lifted out of `join()`'s closures 2026-08-24 (Kent) so a caller that is
         NOT the join page — the sort page's drag-and-drop — can join a pair. The
@@ -1977,6 +1984,16 @@ class Sort(Categories):
         from macrosort, `check` from params, the button class from sort_ui)."""
         img_mod='glyphs' if macrosort else ''
         check=self.program.params.check()
+        def finish():
+            # The join PAGE is done once a pair is joined, so quitting its run
+            # window was the whole ending. A caller that stays open — the sort
+            # page, after a drag-join — passes on_done instead and repairs
+            # itself in place (Kent 2026-08-24: drop A on B → delete A, refresh
+            # B; no full rebuild, no closing the page).
+            if on_done:
+                on_done()
+            else:
+                self.ui.runwindow.on_quit()
         def _do_join(lpr):
             # lpr=[remove, keep]: move the first group into the second.
             log.info("Joining {lpr} (macrosort={macrosort}).".format(lpr=lpr, macrosort=macrosort))
@@ -2008,7 +2025,7 @@ class Sort(Categories):
                     except Exception as e:
                         log.info("join glyph-unverify skipped: %s",e)
                     self.did[f'join{img_mod}']=True
-                    self.ui.runwindow.on_quit()
+                    finish()
                 self.ui.runwindow.drive_work(
                     self.updatebygroupsense(*lpr),
                     on_done=join_pair_done)
@@ -2021,7 +2038,7 @@ class Sort(Categories):
                 self.did[f'join{img_mod}']=True
             finally:
                 self.ui.runwindow.waitdone()
-            self.ui.runwindow.on_quit()
+            finish()
         # Syllable PROFILE join: both sides are REAL CV profiles (no isdigit
         # placeholder to break the tie — the picker+scrub keep integers out), so
         # the DIRECTION is a linguistic call: CVCV→CVCCV and CVCCV→CVCV are NOT
@@ -2039,7 +2056,14 @@ class Sort(Categories):
                 _on_choose)  # on_back=None → just close, back to the join page
             return
         # Segmental/other: choose remove-vs-keep between the two EXISTING names
-        # (lpr=[remove, keep] — first is removed into second). Rank:
+        # (lpr=[remove, keep] — first is removed into second).
+        if keep and keep in pair:
+            # The caller knows which one the user meant to keep — a drop onto B
+            # says B. Beats the tiebreak below, which exists only because there
+            # was no way to know.
+            _do_join([next(g for g in pair if g!=keep), keep])
+            return
+        # Rank:
         #   1. digit placeholder first → unnamed placeholder removed into a real name;
         #   2. between two real names, the LONGER is removed into the SHORTER (simpler)
         #      one ('g' + 'gu' → keep 'g'), not the lexicographic accident of key=str;

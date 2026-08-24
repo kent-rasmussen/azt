@@ -2598,7 +2598,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.withdraw() #this is the parent of the runwindow, the task
         self.guardvisible()
         return self.runwindow
-    RUNWINDOW_GUARD_MS=2000
+    RUNWINDOW_GUARD_MS=15000
     def guardvisible(self,delay=None):
         """Safety net: getrunwindow returns with BOTH windows hidden unless a
         wait was started, and that needs a msg AND a mature repo — so a caller
@@ -2631,15 +2631,36 @@ class TaskDressing(HasMenus,ui.Window):
                 except Exception:
                     continue #a dead or half-built widget just isn't evidence
             return False
+        def haschildren(w):
+            # w.frame, NOT w: ui.Window puts its own Exit button in
+            # `outsideframe`, not in `frame` (both backends), so
+            # testing the window itself would count a bare run window as
+            # "built" — which is precisely the empty-kiosk-with-a-quit-button
+            # this guard must never show. Load-bearing; don't simplify to w.
+            try:
+                return bool(w is not None and w.winfo_exists()
+                            and w.frame.winfo_children())
+            except Exception:
+                return False
         def check():
             try:
                 if self.exitFlag.istrue():
                     return
                 if anythingviewable():
                     return
-                w=getattr(self,'runwindow',None)
-                if w is None or not w.winfo_exists():
-                    w=self
+                # NEVER reveal an EMPTY window. Revealing the bare run window
+                # showed a fullscreen block of theme colour whose only content was
+                # its own exit button — which reads as "quit the app?" at exactly
+                # the wrong moment (Kent 2026-08-24, on "Sort!"). A window with no
+                # children isn't a window the user can do anything with, so a
+                # build still in progress must not be interrupted by one.
+                w=next((x for x in (getattr(self,'runwindow',None),self)
+                            if haschildren(x)),None)
+                if w is None:
+                    log.warning("NO WINDOW: nothing viewable %sms after "
+                            "getrunwindow, and nothing built to reveal. Some "
+                            "caller left every window withdrawn.",delay)
+                    return
                 log.warning("NO WINDOW: nothing viewable %sms after getrunwindow; "
                         "revealing %s. Some caller left every window withdrawn.",
                         delay,w)

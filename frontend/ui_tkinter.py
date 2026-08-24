@@ -495,6 +495,11 @@ class Theme(object):
                 'tiny':tkinter.font.Font(family=charis, size=tiny),
                 'default':tkinter.font.Font(family=charis, size=default),
                 'italic':tkinter.font.Font(family=charis, size=default, slant='italic'),
+                # For marking PART of a short string — a Tk Label carries one
+                # font for its whole text, so a highlighted segment has to be its
+                # own Label in the same size (see make_check_button).
+                'bold':tkinter.font.Font(family=charis, size=default,
+                                            weight='bold'),
                 'fixed':tkinter.font.Font(family='Courier', size=small)
                     }
         """additional keyword options (ignored if font is specified):
@@ -882,6 +887,15 @@ class Gridded():
     def _disarm_drag(self,event=None):
         self._drag_origin=None
     def _maybe_drag(self,event):
+        # Once a drag is running, FORWARD motion to it. DndHandler binds
+        # "<Motion>" on this same widget, but our "<B1-Motion>" is the more
+        # specific pattern, so Tk dispatches ours and dnd's never runs — no
+        # target is ever found and the release has nothing to commit. This is
+        # the cost of starting the drag from motion instead of from the press.
+        h=getattr(self._root(),'_DndHandler__dnd',None)
+        if h is not None:
+            h.on_motion(event)
+            return
         o=getattr(self,'_drag_origin',None)
         if not o:
             return
@@ -889,6 +903,14 @@ class Gridded():
                 and abs(event.y_root-o[1])<self.dragthreshold):
             return #still a click, as far as we know
         self._drag_origin=None
+        # dnd_start reads event.num to know which button is dragging: it rejects
+        # `num > 5` and builds its release binding as
+        # "<B%d-ButtonRelease-%d>" % (num, num). A <B1-Motion> event carries
+        # num='??', so starting a drag from motion either dies comparing str to
+        # int or binds "<B??-ButtonRelease-??>" — and tkintermod swallows both,
+        # which is why this failed silently in the UI *and* the log. Say which
+        # button we are on; it's a press-and-move, so it is button 1.
+        event.num=1
         self.on_drag_start(event)
     def dnd_bindings(self):
         self.initial_widget=False
