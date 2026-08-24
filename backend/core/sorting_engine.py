@@ -1809,6 +1809,14 @@ class Sort(Categories):
                 updatestatus(True)
         self.ui.runwindow.on_quit()
         return 1
+    # Flagging the SECOND-TO-LAST member of a group used to remove the last one
+    # with it: at two-or-fewer remaining, one "not this" cleared them all, on the
+    # reasoning that a group this broken is best started over. Easier joining
+    # makes that much less valuable, and it took the choice away from the user —
+    # so it is gated OFF (Kent 2026-08-24), not deleted, in case it earns its way
+    # back. Flip to True to restore the old behaviour. Lives on Sort, so it
+    # covers SortS/SortV/SortT alike — verifybutton is shared by all of them.
+    REMOVE_REMAINDER_AT_PENULTIMATE=False
     def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
         """This should maybe take examples as input, rather than senses"""
         # This must run one subcheck at a time. If the subcheck changes,
@@ -1852,12 +1860,20 @@ class Sort(Categories):
                 self.maybewrite()
                 bf.destroy()
                 return
-            if len(self.currentsortitems) > 2:
+            if self.REMOVE_REMAINDER_AT_PENULTIMATE and len(
+                        self.currentsortitems) <= 2:
+                for i in list(self.currentsortitems): #copy: the call mutates it
+                    self.removeitemfromgroup(i,sorting=True,write=False)
+                self.currentsortitems.clear()
+            else:
                 self.removeitemfromgroup(sense,sorting=True,write=False)
                 self.currentsortitems.remove(sense)
-            else:
-                for i in self.currentsortitems:
-                    self.removeitemfromgroup(i,sorting=True,write=False)
+            # The close-and-move-on half is KEPT, and only for the LAST member:
+            # with nothing left there is no group to verify, so end the page —
+            # WITHOUT confirming it verified, since the OK button is what
+            # confirms. Removing the penultimate member now just leaves a group
+            # of one, which the user may keep or clear as they like.
+            if not self.currentsortitems:
                 self.verifycanary.destroy()
             self.maybewrite()
             bf.destroy()

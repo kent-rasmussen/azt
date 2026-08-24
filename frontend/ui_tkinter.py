@@ -500,6 +500,10 @@ class Theme(object):
                 # own Label in the same size (see make_check_button).
                 'bold':tkinter.font.Font(family=charis, size=default,
                                             weight='bold'),
+                # Bold ALONE didn't carry at this size against a raised button
+                # (Kent 2026-08-24), so the marked segment gets both.
+                'boldunderline':tkinter.font.Font(family=charis, size=default,
+                                            weight='bold', underline=True),
                 'fixed':tkinter.font.Font(family='Courier', size=small)
                     }
         """additional keyword options (ignored if font is specified):
@@ -895,6 +899,7 @@ class Gridded():
         h=getattr(self._root(),'_DndHandler__dnd',None)
         if h is not None:
             h.on_motion(event)
+            self._autoscroll(event)
             return
         o=getattr(self,'_drag_origin',None)
         if not o:
@@ -935,7 +940,65 @@ class Gridded():
             lines=[i['text'].split('\n')[0] for i in (widget,event.widget)]
             log.info(f"{e}: {lines}")
         event.widget._root()._DndHandler__dnd.initial_widget.on_motion(event)
+    AUTOSCROLL_MS=60      # between notches while parked at an edge
+    AUTOSCROLL_MARGIN=24  # px from the edge that counts as "past it"
+    def _scrollable_ancestor(self):
+        """The nearest ancestor that can scroll — the ScrollingFrame's Canvas,
+        for a group button. Cached: the widget tree doesn't move mid-drag."""
+        w=self
+        while w is not None:
+            if hasattr(w,'yview_scroll'):
+                return w
+            w=getattr(w,'master',None)
+        return None
+    def _autoscroll(self,event):
+        """Scroll the enclosing scroller while a drag is held near its edge, so a
+        drop target that is off-screen is reachable at all. Without this, a group
+        can only be dropped on one that happens to be visible."""
+        if not hasattr(self,'_autoscroll_canvas'):
+            self._autoscroll_canvas=self._scrollable_ancestor()
+        c=self._autoscroll_canvas
+        if c is None:
+            return
+        try:
+            top=c.winfo_rooty(); height=c.winfo_height()
+        except Exception:
+            return
+        m=self.AUTOSCROLL_MARGIN
+        if event.y_root < top+m:
+            d=-1
+        elif event.y_root > top+height-m:
+            d=1
+        else:
+            d=0
+        self._autoscroll_dir=d
+        if d and not getattr(self,'_autoscroll_job',None):
+            self._autoscroll_tick(c)
+        elif not d:
+            self._autoscroll_stop()
+    def _autoscroll_tick(self,c):
+        if not getattr(self,'_autoscroll_dir',0):
+            self._autoscroll_job=None
+            return
+        try:
+            c.yview_scroll(self._autoscroll_dir,'units')
+        except Exception as e:
+            log.info("drag autoscroll stopped: %s",e)
+            self._autoscroll_job=None
+            return
+        self._autoscroll_job=self.after(self.AUTOSCROLL_MS,
+                    lambda: self._autoscroll_tick(c))
+    def _autoscroll_stop(self):
+        j=getattr(self,'_autoscroll_job',None)
+        if j:
+            try:
+                self.after_cancel(j)
+            except Exception:
+                pass
+        self._autoscroll_job=None
+        self._autoscroll_dir=0
     def dnd_end(self, target, event):
+        self._autoscroll_stop() #never leave it scrolling after the drop
         self.initial_widget=False
         if target and hasattr(target,'dnd_focus_off'):
             target.dnd_focus_off()

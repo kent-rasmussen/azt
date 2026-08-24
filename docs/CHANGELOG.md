@@ -19,6 +19,64 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.14.0
+
+- **Drag one group button onto another to join them**, on the sort page (macrosort or
+  not). Verified live. The drop names only the pair and which side survives — dropping A
+  on B keeps B, because the segmental tiebreak existed only for want of knowing the
+  user's intent, and a deliberate drop *is* that intent. Syllable profiles still open
+  `choose_join_direction`: there one direction corrupts real data, so the drop asks
+  rather than answers. Afterwards the page repairs itself in place — A's button is
+  removed, B refreshes — instead of closing.
+  - `join()`'s `join_pair`/`_do_join` were closures over the join PAGE (its `buttons`,
+    `check`, `buttonclass`, `current_pair`), so nothing else could join a pair. Lifted to
+    `Sort.join_groups(pair, macrosort=False, keep=None, on_done=None)`; the join page
+    still routes through it and behaves as before (verified separately before the drag
+    layer went on top).
+  - `ui_tkinter` gained an opt-in `dragthreshold`: `draggable_bindings` started the drag
+    on `<ButtonPress-1>`, which eats the click of any *clickable* widget. With a
+    threshold the press only arms, and the drag starts on the first motion past N pixels,
+    so a click still sorts and a right-click menu still posts.
+  - Two Tk details that made this fail silently in both the UI and the log:
+    `tkinter.dnd.dnd_start` reads `event.num` to build its release binding, and a
+    `<B1-Motion>` event carries `'??'`; and `DndHandler` binds `<Motion>` on the same
+    widget whose `<B1-Motion>` we bind — the more specific pattern wins, so dnd's own
+    motion handler never ran and no drop target was ever recorded.
+  - `removegroupbutton` delists as well as destroys: `groupbuttonlist` feeds
+    `updatecounts` and `groupvars` feeds `get_selected`. The repair also clears the
+    example cache for BOTH groups, since a join moves membership through
+    `updatebygroupsense`, which is not one of the paths that invalidates it.
+- **Rename a misnamed syllable profile group.** A group can be internally consistent but
+  wrongly named, and join can't fix it when the correct profile doesn't exist yet — which
+  is the common case, the legal-profile space being far larger than the attested one.
+  `Sort.rename_profile_group` renames through `Categories.rename_group`, and the chooser
+  is `pick_syllable_profile`'s two pages with the verb changed. Offered by right-click on
+  the verify page's **title, instructions and OK button** — every surface that shows the
+  profile name. Afterwards it calls `reverify_group(new)`, so the page returns to the
+  same group under its real name rather than moving on.
+- **The check label reads on one line.** `CVCC` stacked over `V1` needed the user to
+  combine the two; it now shows the profile with the check's own segment(s) in bold.
+  `params.check_segments` maps a check to SEGMENT indices (via `_profile_segments`, so
+  `Vː` stays one unit) and handles multi-position checks — `C1=C2` marks both. A Tk Label
+  carries one font for its whole string, so each segment is its own Label. Checks that
+  aren't positional keep the old two-line form rather than showing an unmarked profile.
+  The marked segment is bold AND underlined — bold alone didn't carry at that size — and
+  the letters sit flush: `Gridded.__init__` pops `padx`/`pady` into GRID padding before
+  the Tk widget sees them, so the Label's own padding (1px a side, 2px between adjacent
+  letters) is only reachable after construction.
+- The group-button count no longer drifts low. `ExampleDict.prefetch` fills
+  `nodes_by_code` once per boot and `clear_cache` had a single caller —
+  `removeitemfromgroup`. Adding a word to a group never invalidated it, so buttons
+  under-counted by however many words had been sorted in since boot (76 where a recompute
+  said 84). `marksortgroup` now clears the entry it just changed.
+- "Removing {items} from '{glyph}' to make room for {new}" was still an `ErrorNotice`
+  with `wait=True`, blocking mid-macrosort to report a removal that happens regardless.
+  Now a status-window notice (missed in the 2026-08-01 conversion pass).
+- The no-window guard no longer fires on a slow build. It waited 2 s — less than a sort
+  page takes — and revealed the bare run window: a fullscreen block of theme colour whose
+  only content was its own exit button. Now 15 s, and it reveals only a window that has
+  children, since a window offering nothing but "quit" is worse than none.
+
 # Version 1.13.24
 
 Consolidates the 1.13.22 and 1.13.23 bumps, which carried no notes.

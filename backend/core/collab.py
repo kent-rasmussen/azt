@@ -1014,6 +1014,10 @@ NO_SETTINGS = 'settings-unreadable'
 NO_LANGCODE = 'no-project-code'
 NO_CLIENT   = 'client-missing'
 NO_SERVER   = 'server-not-answering'
+# Seconds attach() will wait for the daemon before treating it as absent.
+# Generous enough for a busy-but-working daemon, far short of rpc.call's
+# 300 s default — which, on the startup path, is a hang, not a wait.
+ATTACH_TIMEOUT_S = 20
 WRONG_TREE  = 'wrong-copy'
 NO_HOOK     = 'save-hook-failed'
 
@@ -1173,6 +1177,18 @@ def attach(program):
               "re-registers this file and stores the code."))
     try:
         _client.configure(app_id='azt')
+        # BOUNDED. attach runs in _run_setup, on the main thread, BEFORE
+        # mainloop — so an unbounded call here is not a frozen UI, it is a
+        # startup that never completes and can never say why (Kent
+        # 2026-08-24: stack blocked in socket.readinto under open_project).
+        # rpc.call's default is 300 s, and a daemon that is listening but
+        # not yet serving answers nothing for all of it. No answer in
+        # ATTACH_TIMEOUT_S is the same fact as an unreachable daemon, and
+        # falls into the NO_SERVER decline immediately below.
+        proj = _client.open_project(langcode, timeout=ATTACH_TIMEOUT_S)
+    except TypeError:
+        # Older azt_collab_client without the timeout parameter: keep
+        # working rather than refusing to attach at all.
         proj = _client.open_project(langcode)
     except Exception as e:
         proj = None

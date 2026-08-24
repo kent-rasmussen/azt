@@ -266,12 +266,21 @@ class SortButtonFrame(ui.ScrollingFrame):
         # Second column: the profiles already IN PLAY for this class (computed
         # above), so the user can see what NOT to re-enter (this page is for a NEW
         # profile) — the same set excluded from the examples.
-        side=ui.Frame(w.frame)
-        side.grid(row=0,column=2,rowspan=4,sticky='nw',padx=12)
-        ui.Label(side,text=_("\nAlready in play here —\ndon’t re-enter these:"),
+        # SCROLLING, not a plain Frame: a class with many groups in play made this
+        # column taller than the rows it spans, which stretched rows 0-3 and
+        # pushed the buttons to the bottom of the page — and ran the list off it
+        # entirely (Kent 2026-08-24). ScrollingFrame sets grid_propagate(0), so it
+        # takes the size the GRID gives it and scrolls its content instead of
+        # dictating the window's height; the buttons then sit under the field
+        # where they belong. Children go in .content (as build_verify_layout does).
+        side=ui.ScrollingFrame(w.frame,row=0,column=2,rowspan=4,sticky='nsw',
+                    padx=12)
+        ui.Label(side.content,text=_("Already in play here —\n"
+                    "don’t re-enter these:"),
                     font='instructions',row=0,column=0,sticky='w')
         for i,g in enumerate(inplay or [_("(none yet)")]):
-            ui.Label(side,text=g,font='normal',row=i+1,column=0,sticky='w')
+            ui.Label(side.content,text=g,font='normal',row=i+1,column=0,
+                        sticky='w')
     def updatecounts(self):
         # log.info("Updating counts for each button")
         for b in self.groupbuttonlist:
@@ -782,15 +791,6 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         else:
             nodes=self.exs.getexamples(self.group,**self.kwargs)
             # log.info(_("Found {count} examples: {nodes}").format(count=len(nodes),nodes=nodes))
-            # DIAG group_count_reverts_on_refresh: the button's number has TWO
-            # sources — get_button_data (which normalises via exampletype AND
-            # reads the nodes_by_code cache) and this recompute (which does
-            # neither). Sorting shows 3→4 and refresh reverts to 1, so one of
-            # them is wrong; this says which, with the kwargs both were given.
-            was=self._n.get()
-            if was != len(nodes):
-                log.info("DIAG-count %s: button had %s, recompute says %s "
-                        "(kwargs=%r)", self.group, was, len(nodes), self.kwargs)
             self._n.set(len(nodes))
         if hasattr(self,'refreshbutton'):
             self.refresh_button_state()
@@ -842,10 +842,24 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             text=f"{profile}\n{self.check}" if profile else self.check
             ui.Label(self, text=text, column=col)
             return
-        row=ui.Frame(self, column=col)
+        # padx/pady 0 throughout: these Labels are LETTERS of one word, not
+        # separate items, and the grid's default padding put a visible gap
+        # between each one (Kent 2026-08-24). Bold alone didn't carry at this
+        # size either, so the marked segment is bold AND underlined.
+        row=ui.Frame(self, column=col, padx=0, pady=0, ipadx=0, ipady=0)
         for i,s in enumerate(segs):
-            ui.Label(row, text=s, column=i, row=0,
-                        font='bold' if i in hits else 'default')
+            l=ui.Label(row, text=s, column=i, row=0, padx=0, pady=0,
+                        ipadx=0, ipady=0,
+                        font='boldunderline' if i in hits else 'default')
+            # ui.Label routes padx/pady to the GRID, so the Label's own padding
+            # (Tk default 1px a side, i.e. 2px between adjacent letters) is only
+            # reachable after construction. These are letters of one word.
+            try:
+                l['padx']=0
+                l['pady']=0
+                l['borderwidth']=0
+            except Exception as e:
+                log.info("check label tightening skipped: %s", e)
     def unsortbutton(self):
         t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()
