@@ -53,6 +53,16 @@ class StatusWindow(ui.Window):
         # size to THIS WINDOW rather than to the screen — see _fill_parent in
         # ScrollingFrame._do_configure_interior.
         self.scroll._fill_parent = True
+        # Theme the CANVAS. Filling the parent means the canvas is now taller than
+        # its content, so the empty area below the messages is visible for the
+        # first time — and it came up black, because nothing had ever needed to
+        # paint it (Kent 2026-08-25). Before _fill_parent the canvas was exactly
+        # content-height, so none of it ever showed.
+        try:
+            self.scroll.canvas['background'] = self.theme.background
+            self.scroll.canvas['highlightthickness'] = 0
+        except Exception as e:
+            log.info("status window canvas theming failed: %s", e)
         self.frame.grid_rowconfigure(0, weight=1)
         self.frame.grid_columnconfigure(0, weight=1)
         # Let the content FILL the window. `Window.post_tk_init` centers the
