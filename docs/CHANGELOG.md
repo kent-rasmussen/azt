@@ -21,6 +21,29 @@
 
 # Version 1.14.0
 
+- **Flagging the second-to-last member of a group no longer clears the group.** At two or
+  fewer remaining, one "not this" used to remove every other member too, on the reasoning
+  that a group this broken is best restarted. Easier joining makes that much less
+  valuable, and it took the choice away from the user — so removing the penultimate
+  member now removes only that word, leaving a group of one the user may keep or clear as
+  they like. Verified live. The close-and-move-on half is KEPT, and only for the LAST
+  member: with nothing left there is no group to verify, so the page ends — WITHOUT
+  confirming it verified, since the OK button is what confirms. Gated rather than deleted
+  (`Sort.REMOVE_REMAINDER_AT_PENULTIMATE = False`) in case it earns its way back; on
+  `Sort`, so SortS/SortV/SortT share it. The old loop also mutated the list it iterated —
+  the gated branch now iterates a copy.
+- **The status window keeps the session's messages.** It always appended (newest first,
+  one Label each) but `ScrollingFrame` sets `grid_propagate(0)`, so with no geometry the
+  window shrank to about a line: the older messages were there, clipped, with nowhere to
+  scroll. Now sized to 55%×60% of screen — deliberately not fullscreen, since it pulses
+  `-topmost` on each message and must never cover the work. The Close button is restored
+  and is now load-bearing: closing is the only thing that clears the list (the next
+  message opens a fresh window), and `exit=False` means there is no Exit button.
+- **The by-hand syllable-profile page fits on screen.** Its "already in play here" column
+  was a plain Frame spanning the rows, so a class with many groups in play stretched the
+  layout, pushed the buttons to the bottom of the page, and ran the list off it. Now a
+  `ScrollingFrame`, which takes the size the grid gives it and scrolls its own content, so
+  the buttons sit under the entry field where they belong.
 - **Drag one group button onto another to join them**, on the sort page (macrosort or
   not). Verified live. The drop names only the pair and which side survives — dropping A
   on B keeps B, because the segmental tiebreak existed only for want of knowing the

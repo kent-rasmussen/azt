@@ -22,6 +22,8 @@ it is the shape that wedges. So this window:
 
 The one exception Kent named: if the window has been KILLED (the user closed
 it), the next message may draw it again — and that one becomes the live one.
+That is also the ONLY way messages are cleared: they accumulate for the whole
+session, and Close is the deliberate act that ends the list (Kent 2026-08-25).
 """
 from utilities.i18n import _
 from utilities import logsetup
@@ -49,8 +51,33 @@ class StatusWindow(ui.Window):
                                         sticky='nsew')
         self.frame.grid_rowconfigure(0, weight=1)
         self.frame.grid_columnconfigure(0, weight=1)
-        # ui.Button(self.frame, text=_("Close"), cmd=self.on_quit,
-        #          font='instructions', row=1, column=0, sticky='e')
+        # Let the content FILL the window. `Window.post_tk_init` centers the
+        # r=c=1 frame by giving rows/columns 0 and 2 weight=3 and row 1 none — so
+        # without this the messages sit in a small block in the MIDDLE of a
+        # resized window (Kent 2026-08-25) instead of using it. Same override
+        # build_verify_layout does for the kiosk pages.
+        try:
+            self.grid_rowconfigure(1, weight=1)
+            self.grid_columnconfigure(1, weight=1)
+        except Exception as e:
+            log.info("status window fill-weights failed: %s", e)
+        # SIZE IT (Kent 2026-08-25). ScrollingFrame sets grid_propagate(0), so it
+        # never grows to fit its content — with no geometry the window shrank to
+        # about one line, and every message after the first looked like it had
+        # OVERWRITTEN the last. The messages were always there; there was just
+        # nowhere to scroll to. Big enough to read a session's worth, short of
+        # fullscreen: this window must never cover the work.
+        try:
+            self.geometry('{}x{}'.format(int(self.winfo_screenwidth() * 0.55),
+                                        int(self.winfo_screenheight() * 0.6)))
+        except Exception as e:
+            log.info("status window geometry failed: %s", e)
+        # A manual Close is REQUIRED now, not optional: messages accumulate for
+        # the session, and closing is the only thing that clears them (the next
+        # message then opens a fresh window). exit=False means there is no Exit
+        # button, so without this there is no way to do it deliberately.
+        ui.Button(self.frame, text=_("Close"), cmd=self.on_quit,
+                 font='instructions', row=1, column=0, sticky='e')
         self._row = self.FIRST_ROW
         self._surface() # once, for the first message — not per message
     def _surface(self):
@@ -89,12 +116,19 @@ class StatusWindow(ui.Window):
         except Exception as e:
             log.info("status message wrap failed: %s", e)
         try:
-            # The DEBOUNCED reflow (after_idle), deliberately not reflow() —
-            # that one flushes synchronously (update() under Wayland), which is
-            # the very cost this window exists to avoid, and a status message can
-            # arrive mid-teardown of the window that produced it. The Label is
-            # already gridded and visible; only the scrollregion waits for idle.
-            self.scroll._configure_interior()
+            # A REAL reflow, but scheduled — not called inline. `reflow()` settles
+            # geometry itself before recomputing, which the debounced
+            # `_configure_interior()` does not: that one reads the content's
+            # requested height while the just-added Label's wrap() is still
+            # pending, so the canvas ends up sized to a stale (too small) content
+            # and clips the very message that arrived (Kent 2026-08-25 — text cut
+            # off top and bottom). It also re-reads the AVAILABLE size, which is
+            # what makes a hand-resized window take effect.
+            #   Scheduled via after_idle because reflow() flushes synchronously
+            # (update() under Wayland, which drains events): a status message can
+            # arrive mid-teardown of the window that produced it, and re-entering
+            # the event loop there is the one thing this window must never do.
+            self.after_idle(self.scroll.reflow)
         except Exception as e:
             log.info("status window reflow failed: %s", e)
         # Raise it for the new message: minimised by the user, or (the usual case)

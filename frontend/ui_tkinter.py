@@ -2926,7 +2926,37 @@ class ScrollingFrame(Frame):
         # per-frame wheel bindings are needed here.
         # self.canvas.bind('<Configure>', self._configure_canvas) #called by:
         self.content.bind('<Configure>', self._configure_interior)
+        # CONTENT changing size is not the only reason to reflow: the WINDOW
+        # changing size gives this frame a different amount of room, and nothing
+        # was listening for that — so a hand-resized window kept a viewport sized
+        # for the old one until some content change happened to fire the binding
+        # above (Kent 2026-08-25, on the status window). Bound on `self`, so every
+        # ScrollingFrame in the app gets it.
+        self.bind('<Configure>', self._on_frame_resize, add='+')
         self.bind('<Visibility>', self.windowsize, add='+')
+    RESIZE_SETTLE_MS=150
+    def _on_frame_resize(self, event=None):
+        """Reflow after the frame's own allocation changes — debounced.
+
+        Two guards, both load-bearing. (1) Only act when the size actually
+        CHANGED: `_do_configure_interior` sets `canvas.config(...)` and, when
+        hugging, `self.config(height=…)`, each of which fires <Configure> again —
+        so an unguarded handler oscillates. (2) Coalesce with `after`, because a
+        drag-resize emits a continuous stream and the recompute is O(content)."""
+        if event is not None and getattr(event, 'widget', None) is not self:
+            return #a child's Configure bubbling; not our allocation
+        size=(self.winfo_width(), self.winfo_height())
+        if size==getattr(self, '_last_frame_size', None):
+            return
+        self._last_frame_size=size
+        job=getattr(self, '_resize_job', None)
+        if job:
+            try:
+                self.after_cancel(job)
+            except Exception:
+                pass
+        self._resize_job=self.after(self.RESIZE_SETTLE_MS,
+                    self._configure_interior)
 class ScrollingButtonFrame(ScrollingFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
     def reserve_kwargs(self,**kwargs):
