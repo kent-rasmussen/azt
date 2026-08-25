@@ -2668,7 +2668,18 @@ class TaskDressing(HasMenus,ui.Window):
             except Exception:
                 log.exception("visibility guard failed")
         try:
-            self.after(delay,check)
+            # Schedule on the ROOT, not on this window. 15s is a long time for a
+            # task window to survive, and tkinter's after() wrapper deletes its
+            # own command AFTER running the callback — on a widget destroyed
+            # meanwhile that is an AttributeError it doesn't catch, surfacing as
+            # a crash inside tkinter (Kent 2026-08-25). The root outlives every
+            # page; `check` already tolerates its window being gone.
+            host=None
+            try:
+                host=ui.default_root()
+            except Exception:
+                host=None
+            (host or self).after(delay,check)
         except Exception:
             log.exception("could not schedule visibility guard")
     def isrunwindow(self):

@@ -1744,7 +1744,26 @@ class Sort(Categories):
             log.info("Groups to verify: {groups}"
                         "".format(groups=self.groups(toverify=True)))
             return
-        elif len(items) == 1 and not getattr(self,'reverifying',False):
+        elif (len(items) == 1 and not getattr(self,'reverifying',False)
+                and not self.program.status._na_is_a_result(check=check)):
+            # SINGLETONS AUTO-VERIFY, EXCEPT UNDER AN '=' CHECK (Kent 2026-08-25,
+            # after finding 'nephew' alone in V1=V2=e, marked verified, never
+            # looked at).
+            #   AZT categorises before it describes, so the question a one-word
+            # page must ask is NOT "is this value e" — the group's VALUE is set
+            # later, which is why a new group can be born with an integer name
+            # and 'V1=V2=1' is perfectly fine. The unasked question is whether
+            # V1=V2 HOLDS FOR THIS WORD AT ALL, and the right answer may be to
+            # skip it: the test doesn't apply. Under an '=' check the presort
+            # partitions into the equal groups plus a not-equal remainder (NA),
+            # so a group of one is precisely where that judgement is still owed —
+            # the same reason _na_is_a_result gates NA into the verify loop.
+            #   Every other check keeps the shortcut: presorting one word into a
+            # group of its own may still be wrong, but that is the price of the
+            # convenience, and there is no comparison to make. Tone already works
+            # this way — the user says "this word goes in this frame" rather than
+            # having the first word auto-seed a group, in case of a grammatical
+            # or other clash.
             log.info(_("Group ‘{group}’ only has {count} example; marking verified and "
                     "continuing.").format(group=group,count=len(items)))
             updatestatus(True)

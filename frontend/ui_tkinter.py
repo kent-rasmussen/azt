@@ -2942,7 +2942,23 @@ class ScrollingFrame(Frame):
         # above (Kent 2026-08-25, on the status window). Bound on `self`, so every
         # ScrollingFrame in the app gets it.
         self.bind('<Configure>', self._on_frame_resize, add='+')
+        # CANCEL ON DEATH. tkinter's after() wrapper runs the callback and then
+        # deletecommand()s itself; a widget destroyed in the meantime has
+        # _tclCommands = None, and callit catches TclError but NOT the resulting
+        # AttributeError — so it escapes as a crash with a traceback pointing at
+        # tkinter, not at us (Kent 2026-08-25, mid-presort). Teardown resizes
+        # siblings, so a doomed frame reliably schedules one of these first.
+        self.bind('<Destroy>', self._cancel_resize_job, add='+')
         self.bind('<Visibility>', self.windowsize, add='+')
+    def _cancel_resize_job(self, event=None):
+        job=getattr(self, '_resize_job', None)
+        if not job:
+            return
+        self._resize_job=None
+        try:
+            self.after_cancel(job)
+        except Exception:
+            pass
     RESIZE_SETTLE_MS=150
     def _on_frame_resize(self, event=None):
         """Reflow after the frame's own allocation changes — debounced.
