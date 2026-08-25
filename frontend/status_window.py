@@ -49,6 +49,10 @@ class StatusWindow(ui.Window):
             self['background'] = self.theme.background
         self.scroll = ui.ScrollingFrame(self.frame, row=0, column=0,
                                         sticky='nsew')
+        # This window is not a fullscreen kiosk page, so the scroll viewport must
+        # size to THIS WINDOW rather than to the screen — see _fill_parent in
+        # ScrollingFrame._do_configure_interior.
+        self.scroll._fill_parent = True
         self.frame.grid_rowconfigure(0, weight=1)
         self.frame.grid_columnconfigure(0, weight=1)
         # Let the content FILL the window. `Window.post_tk_init` centers the

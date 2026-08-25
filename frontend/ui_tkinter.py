@@ -2746,7 +2746,16 @@ class ScrollingFrame(Frame):
         # page grew past one screen; before that, content fit and hugging was a
         # harmless no-op.)
         self.availablexy()  # refresh self.maxheight/self.maxwidth
-        viewh = min(self.content.winfo_reqheight(), self.maxheight)
+        if getattr(self, '_fill_parent', False) and self.winfo_height() > 1:
+            # Opt-in (the status window): the VIEWPORT IS THIS FRAME. availablexy
+            # measures the SCREEN minus siblings, which is right for a fullscreen
+            # kiosk page and meaningless in a window sized to a fraction of the
+            # screen — there the canvas came out unrelated to the window holding
+            # it, filling about a third of it (Kent 2026-08-25). Scrollregion is
+            # still the full content, so taller content scrolls as always.
+            viewh = self.winfo_height()
+        else:
+            viewh = min(self.content.winfo_reqheight(), self.maxheight)
         if viewh != self.canvas.winfo_height():
             self.canvas.config(height=viewh)
         if getattr(self, '_hug_content', False):
