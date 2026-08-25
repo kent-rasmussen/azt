@@ -1178,26 +1178,57 @@ class Sort(Categories):
         verify page, which had no way to say this at all. Persist immediately
         (power-fault tolerant) and drop the word from the LIVE to-sort list so the
         current page can't re-present it; what "advance" means on the page is the
-        caller's business, not ours."""
+        caller's business, not ours.
+
+        DEVIATION, deliberate and narrow: this writes the new primitive as
+        VERIFIED. Everywhere else verification is an independent step confirming
+        congruence — see the comment at the write below for why primitives are the
+        exception and why it must not be copied."""
         ftype=self.program.params.ftype()
         sense.annotationvaluebyftypelang(ftype,self.analang,check,value)
         # The sense's OWN primitive verification code still asserts the value we
         # just replaced — 'C#=C' while the annotation now reads V (Kent
         # 2026-08-21). Stored check values are authoritative, so every reader is
         # right to trust that stale code, and the word keeps coming back in later
-        # tests. Drop only the code for THIS check (same rule as
-        # analysis._set_confirmed: the check is everything before the first '='),
-        # leaving the other primitives' confirmations alone. Dropping rather than
-        # re-asserting is deliberate: "this is the wrong group" is not the same
-        # claim as "I have verified the new one", and an unconfirmed primitive is
-        # what lets profile_satisfies/constrain_profile reconcile the profile on
-        # its normal terms instead of overriding confirmed data.
+        # tests. Replace the code for THIS check (the check being everything
+        # before the first '='), leaving the other primitives' confirmations
+        # alone.
+        #
+        # !!! THE FLIP COUNTS AS THE VERIFICATION — AND THIS IS THE ONE PLACE
+        # THAT IS TRUE. DO NOT COPY THIS PATTERN. Everywhere else in AZT,
+        # verification is an INDEPENDENT step that confirms congruence between
+        # what was recorded and what a human sees: marksortgroup actively
+        # rmverification()s unless told otherwise, precisely so that placing a
+        # word never counts as confirming it. Writing 'verified' at the moment of
+        # the edit is exactly the conflation the rest of the codebase is built to
+        # avoid, and copying it haphazardly would quietly turn machine guesses
+        # into confirmed data.
+        #
+        # It is admissible HERE, for PRIMITIVES ONLY (#C / C# / syls), because
+        # (Kent 2026-08-25):
+        #   - the user is not placing a word, they are stating the primitive's
+        #     VALUE — which is the single statement the prep verify page exists
+        #     to collect, so this is a second entrance to the same act;
+        #   - the option set is tiny: #C and C# are binary, so "not C" fully
+        #     determines V, and syls comes from an explicit chooser. There is no
+        #     room for the user to mean something other than what is recorded;
+        #   - sorting isn't finished in any case, so a wrong call here surfaces
+        #     again downstream rather than being final;
+        #   - it presumes the user has verified this word before, which on the
+        #     profile pages they have.
+        # Leaving it UNVERIFIED instead was the 2026-08-21 behaviour, and it left
+        # a hole: profile_class_of_sense reads the ANNOTATIONS, so the word moves
+        # to its new class at once, while syllable_prep_complete (the gate for
+        # the Task-1 board, Task-2 board and runcheck) is only re-evaluated at a
+        # task boundary — so the word could be profile-sorted in a class whose
+        # defining primitive nobody had confirmed.
         try:
             codes=[c for c in sense.primitiveverification(ftype)
                         if c.split('=')[0]!=check]
+            codes.append('{}={}'.format(check,value)) #same shape as _set_confirmed
             sense.primitiveverification(ftype,value=codes)
         except Exception as e:
-            log.info("class escape primitive-unverify skipped: %s", e)
+            log.info("class escape primitive-verify skipped: %s", e)
         # Same problem one level up. Verification keyed by a profile or class the
         # word has just LEFT is harmless — nothing reads 'CVCV lc verification'
         # for a word that is no longer CVCV (Kent 2026-08-21) — but the
