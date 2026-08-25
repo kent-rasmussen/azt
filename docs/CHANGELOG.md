@@ -21,6 +21,33 @@
 
 # Version 1.14.0
 
+- **Flipping a primitive on the class escape now records it as VERIFIED** — a deliberate,
+  documented exception to the rule that verification is an independent step. Earlier in
+  this release the flip merely DROPPED the contradicted code, leaving the primitive
+  unconfirmed; that left a hole, because `profile_class_of_sense` reads the ANNOTATIONS,
+  so the word moves to its new class immediately, while `syllable_prep_complete` — the
+  single gate for the Task-1 board, the Task-2 board and `runcheck` — is only
+  re-evaluated at a task boundary. A word could therefore be profile-sorted inside a
+  class whose defining primitive nobody had confirmed. Admissible for PRIMITIVES ONLY
+  (`#C`/`C#`/`syls`) because the user is stating the primitive's VALUE rather than placing
+  a word — the one statement the prep verify page exists to collect — and the option set
+  is too small to mean anything else: `#C`/`C#` are binary, so "not C" fully determines
+  V, and `syls` comes from an explicit chooser. Commented at length in
+  `escape_profile_class` as NOT to be copied: everywhere else, placing a word actively
+  un-verifies it (`marksortgroup` calls `rmverification` unless told otherwise), and
+  writing "verified" at the moment of the edit is exactly the conflation the rest of the
+  codebase is built to avoid.
+- **Single-item groups no longer auto-verify under an `=` check.** `verify` marked any
+  group of one verified and moved on, so *nephew*, alone in `V1=V2=e`, was confirmed
+  without ever being looked at. The shortcut is right that a group of one has no "do these
+  belong together?" to ask — but under an `=` check the unasked question is whether
+  `V1=V2` holds for that word *at all*, and the right answer may be to skip it as not
+  applying. (AZT categorises before it describes: the group's VALUE is set later, which is
+  why a new group can be born with an integer name and `V1=V2=1` is fine.) Gated with
+  `_na_is_a_result`, the predicate that already decides NA's treatment in the same
+  function, so there is one definition of "equality check"; every other check keeps the
+  shortcut, and macrosort keeps it too, since verifying sort GROUPS against a letter is a
+  different question.
 - **Flagging the second-to-last member of a group no longer clears the group.** At two or
   fewer remaining, one "not this" used to remove every other member too, on the reasoning
   that a group this broken is best restarted. Easier joining makes that much less
@@ -150,10 +177,9 @@ Consolidates the 1.13.22 and 1.13.23 bumps, which carried no notes.
   code for the changed check (same rule as `analysis._set_confirmed`: check is everything
   before the first `=`), and the `lc` code under `SYLLABLE_SLICE_SENTINEL`, whose
   pseudo-profile is a constant a word cannot leave. Verification keyed by a profile or
-  class the word HAS left is harmless residue and is left alone. Dropping rather than
-  re-asserting is deliberate: "wrong group" is not "I verified the new one", and an
-  unconfirmed primitive is what lets `profile_satisfies`/`constrain_profile` reconcile the
-  profile on its normal terms instead of overriding confirmed data. Root cause worth
+  class the word HAS left is harmless residue and is left alone. (**Superseded within
+  1.14.0** — see the primitive-flip entry above: it now REPLACES that code with the new
+  value rather than dropping it.) Root cause worth
   keeping: `_set_confirmed` is only ever called from `mark_slice`, which iterates
   `members_in_slice` — the slice, not the mover — and `mark_for_reverify` deliberately
   preserves member confirmations, so a sense moving between groups never had its own code
