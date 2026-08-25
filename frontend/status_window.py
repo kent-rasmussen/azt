@@ -93,11 +93,18 @@ class StatusWindow(ui.Window):
         is why the first notices "weren't appearing" at all (Kent 2026-07-30).
         `ErrorNotice` sets `-topmost` for exactly this reason. A status window that
         STAYS on top would cover the work, so pulse it: raise, then release. Still
-        no grab and no wait — it must never block."""
+        no grab and no wait — it must never block.
+
+        NO lift(): `-topmost` below already raises the window, so lift() was a
+        SECOND window-manager round trip for the same effect — and it is the one
+        that hung, blocked in `tkraise` while being called from this window's own
+        constructor (Kent's faulthandler dump, 2026-08-25). Raising a window is a
+        WM round trip, and under XWayland those are exactly the calls that wedge;
+        see azt/agenda/wayland_freeze_audit.md. One call, and it is the one that
+        also makes the window visible over a fullscreen kiosk page."""
         try:
             if not self.winfo_viewable():
                 self.deiconify()
-            self.lift()
             self.attributes('-topmost', True)
             self.after(1200, self._release_topmost)
         except Exception as e:
