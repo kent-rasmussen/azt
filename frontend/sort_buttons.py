@@ -1017,7 +1017,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             for w in f.winfo_children():
                 w.destroy()
             row=self.check_segments_row(f,item.check,
-                        item.kwargs.get('profile'),row=0,column=0)
+                        item.kwargs.get('profile'),row=0,column=0,sticky='')
             if row is not None:
                 self.check_label['text']=''
                 # The segments sit ON the cycle control, so they must cycle too —
@@ -1042,6 +1042,11 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         # by _show_check. Its own frame so that rebuild destroys only these.
         self.check_segs=ui.Frame(self.refresh_frame,col=1,row=1,
                     padx=0,pady=0,ipadx=0,ipady=0)
+        # Let column 0 take the whole width, so a row gridded sticky='' inside it
+        # is CENTERED under the cycle button rather than hugging the left edge
+        # (Kent 2026-08-25). Without the weight the column is exactly as wide as
+        # the row, and there is nothing to centre within.
+        self.check_segs.grid_columnconfigure(0, weight=1)
         for w in [self.refresh_frame,self.check_label]:#,self.group_count]:
             ui.ToolTip(w,'click to change group')
             # w.bind('<Button-1>', self.next_item)

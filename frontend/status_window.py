@@ -76,12 +76,13 @@ class StatusWindow(ui.Window):
                                         int(self.winfo_screenheight() * 0.6)))
         except Exception as e:
             log.info("status window geometry failed: %s", e)
-        # A manual Close is REQUIRED now, not optional: messages accumulate for
+        # A manual Close is still not REQUIRED: messages accumulate for
         # the session, and closing is the only thing that clears them (the next
         # message then opens a fresh window). exit=False means there is no Exit
-        # button, so without this there is no way to do it deliberately.
-        ui.Button(self.frame, text=_("Close"), cmd=self.on_quit,
-                 font='instructions', row=1, column=0, sticky='e')
+        # button, so without this the user is obliged to us the OS window dressing,
+        # which we assume he is more than competent to do.
+        # ui.Button(self.frame, text=_("Close"), cmd=self.on_quit,
+        #          font='instructions', row=1, column=0, sticky='e')
         self._row = self.FIRST_ROW
         self._surface() # once, for the first message — not per message
     def _surface(self):
