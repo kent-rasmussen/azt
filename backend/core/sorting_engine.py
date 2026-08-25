@@ -1726,6 +1726,12 @@ class Sort(Categories):
         # The title for this page changes by group, below.
         self.program.status.build()
         last=False
+        # Does a group of one still owe a judgement? Only under an '=' check, and
+        # `check` exists only on the non-macrosort branch above — a macrosort page
+        # verifies sort GROUPS against a letter, which is a different question and
+        # keeps the old shortcut. Computed here so the elif below stays readable.
+        singleton_still_asks=(not macrosort
+                    and self.program.status._na_is_a_result(check=check))
         if not items: #then remove the group
             groups=self.groups(wsorted=True) #from which to remove, put back
             # log.info("Groups: {}".format(self.groups(toverify=True)))
@@ -1745,7 +1751,7 @@ class Sort(Categories):
                         "".format(groups=self.groups(toverify=True)))
             return
         elif (len(items) == 1 and not getattr(self,'reverifying',False)
-                and not self.program.status._na_is_a_result(check=check)):
+                and not singleton_still_asks):
             # SINGLETONS AUTO-VERIFY, EXCEPT UNDER AN '=' CHECK (Kent 2026-08-25,
             # after finding 'nephew' alone in V1=V2=e, marked verified, never
             # looked at).
