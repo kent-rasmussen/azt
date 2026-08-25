@@ -297,6 +297,21 @@ class SortButtonFrame(ui.ScrollingFrame):
             except Exception as e:
                 log.info("removegroupbutton destroy failed for %s: %s",group,e)
         self.groupvars.pop(group,None)
+        # CLOSE THE GAP. Destroying a button leaves its grid row empty, so the
+        # rows stop matching list positions — and addgroupbutton grids the next
+        # group at len(groupbuttonlist), which would then land on an occupied
+        # row. Re-grid what's left, in order, so index == row again (and the
+        # hole doesn't show).
+        for i,b in enumerate(self.groupbuttonlist):
+            r,c=i//self.buttoncolumns,i%self.buttoncolumns
+            try:
+                if (getattr(b,'row',None),getattr(b,'column',None))==(r,c):
+                    continue
+                b.row,b.column=r,c
+                b.grid(row=r,column=c)
+            except Exception as e:
+                log.info("removegroupbutton re-grid failed for %s: %s",
+                            getattr(b,'group',b),e)
     def addgroupbutton(self,group):
         # log.info("SortButtonFrame addgroupbutton for {group}".format(group=group))
         if self.exitFlag.istrue():
@@ -307,7 +322,14 @@ class SortButtonFrame(ui.ScrollingFrame):
         else:
             scaledpady=int(40*self.theme.scale)
         # log.info("This button at row={row}, col={col}".format(row=self.groupbuttons.row, col=self.groupbuttons.col))
-        nbuttons=len(self.groupbuttons.winfo_children())
+        # Count OUR buttons, not the frame's children. winfo_children() also
+        # drops by one whenever a button is destroyed — which never happened
+        # until drag-join started removing the group it merged away (2026-08-24),
+        # after which the next new group button was gridded onto an already
+        # occupied row: two joins put "Other V1" two rows back, on top of the
+        # penultimate group (Kent 2026-08-25). groupbuttonlist is the real
+        # population, and removegroupbutton re-grids it so index == row stays true.
+        nbuttons=len(self.groupbuttonlist)
         r,c=nbuttons//self.buttoncolumns,nbuttons%self.buttoncolumns
         kwargs={'group':group} #this may be glyph, item code, or sort group
         if self.macrosort and not self.remove_on_click:
