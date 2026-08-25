@@ -498,6 +498,41 @@ class _GroupButtonFrame(object):
                 'ipady',
                 'border',
                 ]
+    def check_segments_row(self,parent,check,profile,**gridkwargs):
+        """The profile on ONE line with the check's own segment(s) bold+underlined
+        — C**V**CC for V1 on CVCC, **C**V**C**V for C1=C2 on CVCV — or None when
+        it doesn't apply (no profile, or a check that names no position).
+
+        Shared by BOTH group-button frames: the sort page's own check display and
+        the glyph frame's cycle label, which showed the bare check until Kent
+        2026-08-25 ("we greatly improved CVCV|V1 display, but in only one of at
+        least two places"). One renderer, so they cannot drift.
+
+        A Tk Label carries a single font for its whole string, so each segment is
+        its own Label; padding is zeroed on the grid AND on the widget (ui.Label
+        routes constructor padx to the GRID, so the Label's own 1px-a-side default
+        is only reachable after construction) because these are letters of one
+        word, not separate items."""
+        segs=hits=None
+        if profile:
+            try:
+                segs,hits=self.program.params.check_segments(check,profile)
+            except Exception as e:
+                log.info("check_segments failed for %s/%s: %s",check,profile,e)
+        if not (segs and hits):
+            return None
+        row=ui.Frame(parent,padx=0,pady=0,ipadx=0,ipady=0,**gridkwargs)
+        for i,s in enumerate(segs):
+            l=ui.Label(row,text=s,column=i,row=0,padx=0,pady=0,
+                        ipadx=0,ipady=0,
+                        font='boldunderline' if i in hits else 'default')
+            try:
+                l['padx']=0
+                l['pady']=0
+                l['borderwidth']=0
+            except Exception as e:
+                log.info("check label tightening skipped: %s", e)
+        return row
     def select(self):
         self._var.set(True)
     def sortnext(self):
@@ -850,38 +885,12 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         # inline markup would need anyway.
         profile=self.kwargs.get('profile')
         col=self.ncolumns()
-        segs=hits=None
-        if profile:
-            try:
-                segs,hits=self.program.params.check_segments(self.check,profile)
-            except Exception as e:
-                log.info("check_segments failed for %s/%s: %s",
-                            self.check,profile,e)
-        if not (segs and hits):
+        if self.check_segments_row(self,self.check,profile,column=col) is None:
             # Not a positional check (or no profile): keep the two-line form
             # rather than show a profile with nothing marked, which would say
             # less than what it replaced.
             text=f"{profile}\n{self.check}" if profile else self.check
             ui.Label(self, text=text, column=col)
-            return
-        # padx/pady 0 throughout: these Labels are LETTERS of one word, not
-        # separate items, and the grid's default padding put a visible gap
-        # between each one (Kent 2026-08-24). Bold alone didn't carry at this
-        # size either, so the marked segment is bold AND underlined.
-        row=ui.Frame(self, column=col, padx=0, pady=0, ipadx=0, ipady=0)
-        for i,s in enumerate(segs):
-            l=ui.Label(row, text=s, column=i, row=0, padx=0, pady=0,
-                        ipadx=0, ipady=0,
-                        font='boldunderline' if i in hits else 'default')
-            # ui.Label routes padx/pady to the GRID, so the Label's own padding
-            # (Tk default 1px a side, i.e. 2px between adjacent letters) is only
-            # reachable after construction. These are letters of one word.
-            try:
-                l['padx']=0
-                l['pady']=0
-                l['borderwidth']=0
-            except Exception as e:
-                log.info("check label tightening skipped: %s", e)
     def unsortbutton(self):
         t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()
@@ -994,8 +1003,30 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self.items[index].grid()
         log.info(_("Showing item with {code}").format(code=self.items[index].code))
         # "={self.items[index].group}")
-        self.check_label['text']=self.items[index].check
+        self._show_check(self.items[index])
         self.shown_index=index
+    def _show_check(self,item):
+        """The cycle button used to name the bare check ('V1'). Show the same
+        profile-with-the-check-in-bold the sort page shows (Kent 2026-08-25) —
+        the profile is what makes two otherwise identical checks tell apart, and
+        it was left off here for space before the display got compact enough to
+        afford it. Falls back to the bare check when the profile isn't there or
+        the check names no position."""
+        f=getattr(self,'check_segs',None)
+        if f is not None:
+            for w in f.winfo_children():
+                w.destroy()
+            row=self.check_segments_row(f,item.check,
+                        item.kwargs.get('profile'),row=0,column=0)
+            if row is not None:
+                self.check_label['text']=''
+                # The segments sit ON the cycle control, so they must cycle too —
+                # otherwise clicking the thing you are reading does nothing.
+                for w in [row]+list(row.winfo_children()):
+                    w.bind('<Button-1>', self.next_item, add='+')
+                    w.bind('<Button-3>', self.prev_item, add='+')
+                return
+        self.check_label['text']=item.check
     def make_refresh(self):
         self.refresh_frame=ui.Frame(self,col=2,border=True,sticky='nsew')
         # self.check_label=ui.Label(self.refresh_frame, text='', #to show check
@@ -1007,6 +1038,10 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                                         borderwidth=5,
                                         compound='top',
                                         col=1)
+        # Container for the profile-with-check display, refilled per shown item
+        # by _show_check. Its own frame so that rebuild destroys only these.
+        self.check_segs=ui.Frame(self.refresh_frame,col=1,row=1,
+                    padx=0,pady=0,ipadx=0,ipady=0)
         for w in [self.refresh_frame,self.check_label]:#,self.group_count]:
             ui.ToolTip(w,'click to change group')
             # w.bind('<Button-1>', self.next_item)
