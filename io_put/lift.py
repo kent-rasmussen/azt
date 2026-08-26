@@ -39,6 +39,54 @@ class Object(object):
 #         self=Tree(lift).parsed
 #         log.info(self.glosslang)
 #         Tree.__init__(self, db, guid=guid)
+def _safe_attrib_value(value,where=''):
+    """One attribute value, guaranteed to be a string ElementTree will escape.
+
+    THE HAZARD, found the hard way (Kent 2026-08-26). ElementTree escapes
+    attribute values in `_escape_attrib`, which is written as:
+
+        try:
+            if "&" in text: ...
+            if '"' in text: text=text.replace('"','&quot;')
+        except (TypeError, AttributeError):
+            _raise_serialization_error(text)
+
+    Hand it a TUPLE and `"&" in text` is a MEMBERSHIP test, not a substring
+    test — it returns False and raises nothing. Every check is skipped, the
+    tuple comes back untouched, and the serializer then writes
+    `" %s=\\"%s\\"" % (name, value)`, i.e. `str(tuple)` — Python's repr, with
+    Python's own quote-switching. So a tuple whose member contains `'` is
+    emitted as raw `"` INSIDE a `"`-delimited attribute, and the file stops
+    being well-formed. Silently: nothing raises, at set time or at write time.
+
+    That is exactly how `<trait name="Noun-infl-class" value="(('ngom', 'li'),
+    ('ngombi', "'"))" />` reached a production lexicon.
+
+    So: refuse CONTAINERS, whose repr is not a defined interchange format and
+    which only `literal_eval` can read back — serialise those deliberately at
+    the call site (see `utilities.affixset_to_str`). Coerce scalars, since
+    `str(2)` is unambiguous, but log it: it still means someone skipped the
+    decision about how their data is stored."""
+    if isinstance(value,str):
+        return value
+    if isinstance(value,(list,tuple,dict,set,frozenset)):
+        raise TypeError("LIFT attribute values must be strings; got {} ({!r})"
+                "{}. Serialise it at the call site.".format(
+                    type(value).__name__,value,' in <%s>'%where if where else ''))
+    if value is None:
+        return value #ElementTree's own business; not our repr hazard
+    log.info("coercing %s %r to str for a LIFT attribute%s",
+                type(value).__name__,value,' in <%s>'%where if where else '')
+    return str(value)
+def _safe_attrib(attrib,tag=''):
+    """Every value in an attrib dict, checked. Node creation and attribute
+    updates both route through here, because `myvalue` alone was not enough:
+    `annotationvalue` builds an Annotation directly when one doesn't exist yet,
+    and `annotationsupdate` calls `.set()` and the Node constructor with values
+    straight out of a dict."""
+    if not isinstance(attrib,dict):
+        return attrib
+    return {k:_safe_attrib_value(v,tag) for k,v in attrib.items()}
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
@@ -2721,6 +2769,12 @@ class Node(et.Element):
             log.error("{} node in entry {} has multiple forms for {} tag. "
                     "This is not legal LIFT; please fix this!"
                     "".format(self.tag,self.entry.guid,tag))
+    def set(self,key,value):
+        """Every attribute UPDATE goes through here, as every creation goes
+        through Node.__init__ — the two doors into ElementTree's attrib dict.
+        See `_safe_attrib_value` for what a non-string does at serialisation
+        time, and why nothing catches it later."""
+        return super().set(key,_safe_attrib_value(value,self.tag))
     def tagattrib(self,node,**kwargs):
         if isinstance(node,et.Element):
             tag=node.tag
@@ -2743,6 +2797,7 @@ class Node(et.Element):
     def __init__(self, parent, node=None, **kwargs):
         self.parent=parent
         tag,attrib=self.tagattrib(node,**kwargs) #this pulls from either
+        attrib=_safe_attrib(attrib,tag)
         # log.info("Calling with tag: {}, attrib: {}, kwargs: {}".format(
         #                                                 tag, attrib, kwargs
         #                                                     ))
@@ -2798,28 +2853,9 @@ class Text(Node):
 class ValueNode(Node):
     def myvalue(self,value=None):
         if value:
-            # ONLY STRINGS BECOME LIFT DATA. A caller used to be able to hand a
-            # Python object straight through to an XML attribute — parser.py
-            # passed a TUPLE, whose repr ((('ngom','li'),('ngombi',"'"))) then
-            # WAS the stored value, quotes and all (Kent 2026-08-26). Serialise
-            # at the call site, deliberately, in a defined format
-            # (utilities.affixset_to_str); don't let str() decide it here.
-            #   ValueNode backs trait, annotation and grammatical-info, so this
-            # one check covers every attribute-value write.
-            #   Refuse CONTAINERS, which is the bug class: their repr is not a
-            # defined format and only literal_eval can read it back. Scalars
-            # (int, float) are coerced as before — an int's str() is
-            # unambiguous — but say so, since it is still someone skipping the
-            # decision about how their data is stored.
-            if isinstance(value,(list,tuple,dict,set,frozenset)):
-                raise TypeError("LIFT values must be strings; got {} ({!r}). "
-                        "Serialise it at the call site — see "
-                        "utilities.affixset_to_str.".format(
-                            type(value).__name__,value))
-            if not isinstance(value,str):
-                log.info("coercing %s %r to str for LIFT %s",
-                            type(value).__name__,value,self.valuename)
-                value=str(value)
+            # Type-checked by Node.set — the ONE place that guards attribute
+            # updates, as Node.__init__ guards creation. Don't re-check here:
+            # two copies of the rule drift apart.
             self.set(self.valuename,value)
         elif value == '':
             del self.attrib[self.valuename]
