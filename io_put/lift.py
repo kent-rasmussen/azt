@@ -16,6 +16,7 @@ lxml=False
 # from xmletfns import * # from xml.etree import ElementTree as ET
 from utilities import xmletfns as et
 from utilities import xmlfns, file, rx
+from utilities.error_handler import notify_user as NotifyUser
 import sys
 import pathlib
 import threading
@@ -63,8 +64,16 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         """Problems reading a valid LIFT file are dealt with in main.py"""
         try:
             self.read() #load and parse the XML file. (Should this go to check?)
-        except Exception:
-            raise BadParseError(self.filename)
+        except Exception as e:
+            # The bare `except Exception: raise BadParseError(...)` threw the real
+            # error away — message, line and column with it — so a file that
+            # wouldn't parse said nothing about WHY (Kent 2026-08-26, after a
+            # `git checkout HEAD -- <lift>` still failed to load).
+            self._log_parse_failure(e)
+            if self._repair_unparseable(e):
+                self.read() #repaired in place and verified; carry on
+            else:
+                raise BadParseError(self.filename)
         self.getglosslangs() #sets: self.glosslangs
         # self.word_list_n_attr='cawln' #make this configurable
         self.word_list_field_name='SILCAWL' #make this configurable
@@ -1167,6 +1176,256 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 e.attrib['dateModified']=getnow()
         if write:
             self.write()
+    def _log_parse_failure(self,e):
+        """Say WHY and WHERE a LIFT wouldn't parse, and WHICH BYTES we read.
+
+        Two possibilities have to be told apart, and until now nothing let us
+        (Kent 2026-08-26: a `git checkout HEAD -- <lift>` restored the file and it
+        STILL failed to load):
+          a. the committed file is itself corrupt — corruption reached history;
+          b. the file is fine on disk and something mangles it during load.
+        The size + sha256 below decide it: compare them against the committed
+        blob (`git show HEAD:<file> | sha256sum`, `| wc -c`). Same digest means
+        the committed bytes really are bad — case (a). Different means something
+        rewrote the file after checkout — case (b), and the mtime says when."""
+        fn=str(self.filename)
+        log.error("LIFT PARSE FAILED: %s", fn)
+        log.error("LIFT PARSE FAILED: %s: %s", type(e).__name__, e)
+        try:
+            import hashlib
+            st=os.stat(fn)
+            h=hashlib.sha256()
+            with open(fn,'rb') as f:
+                for chunk in iter(lambda: f.read(1<<20), b''):
+                    h.update(chunk)
+            log.error("LIFT PARSE FAILED: %d bytes, mtime %s, sha256 %s "
+                    "(compare: `git show HEAD:%s | sha256sum`)",
+                    st.st_size,
+                    time.strftime('%Y-%m-%d %H:%M:%S',
+                                time.localtime(st.st_mtime)),
+                    h.hexdigest(), pathlib.Path(fn).name)
+        except Exception as ex:
+            log.error("LIFT PARSE FAILED: couldn’t stat/hash it: %s", ex)
+        # ElementTree's ParseError carries (line, column); show that line and its
+        # neighbours, which is usually the whole diagnosis.
+        pos=getattr(e,'position',None)
+        try:
+            with open(fn,'r',encoding='utf-8',errors='replace') as f:
+                lines=f.readlines()
+            log.error("LIFT PARSE FAILED: %d lines", len(lines))
+            if pos:
+                ln,col=pos
+                log.error("LIFT PARSE FAILED: at line %s, column %s", ln, col)
+                for i in range(max(0,ln-3), min(len(lines), ln+2)):
+                    log.error("LIFT PARSE FAILED: %s%5d| %.300s",
+                            '>>' if i==ln-1 else '  ', i+1,
+                            lines[i].rstrip('\n'))
+            # The tail regardless: truncation is the failure we have in hand, and
+            # it shows there rather than at the reported position.
+            log.error("LIFT PARSE FAILED: last 200 chars: %r",
+                        ''.join(lines[-3:])[-200:] if lines else '')
+        except Exception as ex:
+            log.error("LIFT PARSE FAILED: couldn’t read it as text: %s", ex)
+        self._log_committed_version(fn)
+    def _log_committed_version(self,fn):
+        """The COMMITTED bytes beside the on-disk ones, so the two cases separate
+        themselves in the log instead of by hand (Kent 2026-08-26).
+
+        Same digest as the file above ⇒ the corruption is IN HISTORY, and a
+        checkout can only restore it — which is exactly what he saw. A committed
+        tail that ends properly while the disk one doesn't ⇒ the file was fine
+        when committed and something broke it since.
+
+        `HEAD:./<name>` resolves relative to `-C <dir>`, so this needs no
+        repo-relative path. Bounded and best-effort: a lexicon that isn't in a
+        repo, or a git that isn't there, is a normal answer, not an error."""
+        try:
+            import subprocess, hashlib
+            p=pathlib.Path(fn)
+            r=subprocess.run(['git','-C',str(p.parent),'show',
+                            'HEAD:./{}'.format(p.name)],
+                            capture_output=True,timeout=30)
+            if r.returncode:
+                log.error("LIFT PARSE FAILED: no committed copy to compare "
+                        "(git said: %.200s)",
+                        (r.stderr or b'').decode('utf-8','replace').strip())
+                return
+            blob=r.stdout
+            log.error("LIFT PARSE FAILED: committed HEAD copy is %d bytes, "
+                    "sha256 %s", len(blob),
+                    hashlib.sha256(blob).hexdigest())
+            tail=blob.decode('utf-8','replace').splitlines()[-5:]
+            log.error("LIFT PARSE FAILED: committed HEAD copy, last 5 lines:")
+            for l in tail:
+                log.error("LIFT PARSE FAILED: HEAD| %.300s", l)
+            if b'</lift>' not in blob[-512:]:
+                log.error("LIFT PARSE FAILED: the COMMITTED copy is ALSO cut "
+                        "off — the corruption is in history, so a checkout "
+                        "cannot fix it.")
+        except Exception as ex:
+            log.error("LIFT PARSE FAILED: couldn’t read the committed copy: %s",
+                        ex)
+    MAX_REPAIRS=200 # a parse reports ONE error at a time; bound the loop
+    # An attribute value that swallowed stray quotes. Anchored so the mess must be
+    # the LAST attribute on the line and every attribute BEFORE it well-formed
+    # ([\w:-]+="[^"]*"), which is exactly the shape a Python repr produces:
+    #     <trait name="Noun-infl-class" value="(('ngom','li'),('ngombi',"'"))" />
+    # The greedy middle then runs to the last quote before `/>`. Refusing the
+    # general case is deliberate: on a line with several damaged attributes, a
+    # greedy grab would happily produce something that PARSES but means something
+    # else, which is worse than failing to load.
+    _BAD_ATTR=re.compile(r'^(\s*<[\w:-]+(?:\s+[\w:-]+="[^"]*")*\s+[\w:-]+=")'
+                        r'(.*)'
+                        r'("\s*/?>\s*)$')
+    def _repair_unparseable(self,e):
+        """Repair known malformations IN PLACE, verify by re-parsing, and keep the
+        original. Returns True only if the file now parses.
+
+        Rolling back to a committed revision was the plan for corruption — but for
+        this class repair is strictly better: a rollback discards whatever the
+        user has done since, while escaping a quote discards nothing. And it is
+        the only thing that helps when the bad bytes are ALSO the committed ones.
+
+        Only ever touches a file that has ALREADY failed to parse, always writes
+        `<name>.unparseable-<stamp>` first, and reverts if the repair doesn't
+        actually fix it — so the worst case is the file we started with."""
+        try:
+            with open(str(self.filename),'r',encoding='utf-8') as f:
+                lines=f.readlines()
+        except Exception as ex:
+            log.error("LIFT REPAIR: can’t read the file to repair it: %s",ex)
+            return False
+        fixed=[]
+        for _n in range(self.MAX_REPAIRS):
+            pos=getattr(e,'position',None)
+            if not pos:
+                break #nothing to aim at
+            ln=pos[0]
+            if not 0<ln<=len(lines):
+                break
+            m=self._BAD_ATTR.match(lines[ln-1])
+            if not m or '"' not in m.group(2):
+                break #not a shape we know how to fix; don't guess
+            head,val,tail=m.groups()
+            # Escape BARE ampersands only — one already part of an entity
+            # (&amp; &#39; &#x27;) must be left alone, or a valid value gets
+            # double-escaped into nonsense while we are "repairing" it.
+            val=re.sub(r'&(?![a-zA-Z][a-zA-Z0-9]*;|#[0-9]+;|#x[0-9a-fA-F]+;)',
+                        '&amp;',val)
+            lines[ln-1]=head+val.replace('"','&quot;')+tail
+            fixed.append(ln)
+            try:
+                from xml.etree import ElementTree as _ET
+                _ET.fromstring(''.join(lines))
+                break #parses now
+            except Exception as e2:
+                e=e2 #next error; keep going
+        else:
+            log.error("LIFT REPAIR: gave up after %d repairs",self.MAX_REPAIRS)
+            return False
+        if not fixed:
+            return False
+        # Verify BEFORE writing anything: a repair that doesn't parse is not a
+        # repair, and we must not leave the user worse off than we found them.
+        try:
+            from xml.etree import ElementTree as _ET
+            _ET.fromstring(''.join(lines))
+        except Exception as ex:
+            log.error("LIFT REPAIR: repaired %d line(s) and it STILL doesn’t "
+                    "parse (%s); leaving the file alone",len(fixed),ex)
+            return False
+        keep='{}.unparseable-{}'.format(self.filename,
+                    time.strftime('%Y%m%d-%H%M%S'))
+        try:
+            import shutil
+            shutil.copy2(str(self.filename),keep)
+            with open(str(self.filename),'w',encoding='utf-8') as f:
+                f.writelines(lines)
+        except Exception as ex:
+            log.error("LIFT REPAIR: couldn’t write the repair: %s",ex)
+            return False
+        msg=_("Your lexicon wouldn’t open: {n} attribute value(s) contained "
+            "quotes that hadn’t been escaped (line(s) {lines}). A-Z+T has "
+            "repaired them and kept the original at {keep}. Nothing was "
+            "lost.").format(n=len(fixed),
+                        lines=', '.join(str(i) for i in fixed),keep=keep)
+        log.warning("LIFT REPAIR: fixed line(s) %s; original kept at %s",
+                    fixed,keep)
+        try:
+            NotifyUser(msg,title=_("Lexicon repaired"))
+        except Exception as ex:
+            log.info("couldn’t report the repair: %s",ex)
+        return True
+    CATASTROPHIC_SHRINK=4 # refuse a save under 1/Nth of what it replaces
+    def _written_file_sane(self,tmp,filename):
+        """(ok, why) — cheap sanity on the file we just wrote, BEFORE it replaces
+        the user's data or goes to the daemon.
+
+        A production machine is holding a LIFT that ends about five entries in,
+        mid-`<field>` (Kent 2026-08-26). Whatever produced it, the lesson is that
+        a writer returning without raising does NOT mean the bytes are good — so
+        check before committing to them. Without this gate a truncated file is not
+        merely a local loss: on a collab project it gets committed and pushed, and
+        one machine's bad write reaches the whole team.
+
+        Three cheap checks first, because they fail fast and name the problem
+        plainly:
+          - empty/missing;
+          - doesn't end in the closing tag — i.e. TRUNCATED;
+          - collapsed to a fraction of the file it would replace. Same shape as
+            azt-collab's `_looks_catastrophic_output`, which exists because a
+            merge there once went 1700 entries to 1 field.
+
+        Then a FULL PARSE. An earlier version of this stopped at the cheap three,
+        reasoning that parsing a multi-MB LIFT roughly doubles the local cost of
+        a save (~0.07s indent + ~0.21s serialise). The evidence overruled it: the
+        second corruption found (Kent 2026-08-26) was a `<trait>` whose value
+        carried an unescaped `"`, from a Python tuple repr —
+
+            value="(('ngom', 'li'), ('ngombi', "'"))"
+
+        — a file that is complete, correctly terminated, and full-sized, and NOT
+        well-formed. The cheap checks pass it; only a parse catches it. Since the
+        thing being protected is the entire lexicon, and the alternative is
+        shipping malformed XML to the user's disk and (on a collab project) to
+        their teammates, the parse is worth its cost."""
+        try:
+            n=os.path.getsize(tmp)
+        except OSError as e:
+            return False,_("it isn’t there ({e})").format(e=e)
+        if not n:
+            return False,_("it is empty")
+        try:
+            with open(tmp,'rb') as f:
+                f.seek(max(0,n-512))
+                tail=f.read()
+        except OSError as e:
+            return False,_("it can’t be read back ({e})").format(e=e)
+        if b'</lift>' not in tail:
+            return False,_("it is cut off — no closing tag at the end")
+        try:
+            old=os.path.getsize(filename)
+        except OSError:
+            old=0 #first write, or replacing nothing: nothing to compare against
+        if old and n*self.CATASTROPHIC_SHRINK<old:
+            return False,_("it is {n} bytes, replacing {old} — a collapse, not "
+                    "an edit").format(n=n,old=old)
+        # The real gate: does it PARSE? Everything above is a fast reject.
+        try:
+            from xml.etree import ElementTree as _ET
+            _t0=time.perf_counter()
+            _ET.parse(tmp)
+            _el=time.perf_counter()-_t0
+            if _el>0.5:
+                log.info("save validation parsed %d bytes in %.2fs",n,_el)
+        except Exception as e:
+            # Say WHERE, exactly as the load-side failure does — the position is
+            # most of the diagnosis, and here we still have the good file.
+            _pos=getattr(e,'position',None)
+            _at=_(" at line {ln}, column {col}").format(ln=_pos[0],col=_pos[1]
+                        ) if _pos else ''
+            return False,_("it isn’t valid XML{at}: {e}").format(at=_at,e=e)
+        return True,''
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
@@ -1262,12 +1521,61 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             # log.info(f"{tmp=} ({type(tmp)=})")
             _t0=time.perf_counter()
             tree.write(tmp, encoding="UTF-8")
+            # FSYNC BEFORE THE RENAME. os.replace below gives ATOMICITY — the
+            # destination is never half-written by us — but NOT DURABILITY: the
+            # rename can reach the disk while the new file's data is still in the
+            # page cache, so a crash or power loss leaves the right filename with
+            # a missing tail. That is not theoretical: a production machine is
+            # holding a LIFT that ends about five entries in, mid-<field> node
+            # (Kent 2026-08-26). ext4's default data=ordered mostly hides this;
+            # Windows, network shares and cloud-synced folders do not.
+            #   Cost is one flush of a file we just wrote, on a path that already
+            # takes ~0.2s to serialise — and the thing it protects is the whole
+            # lexicon.
+            try:
+                with open(tmp,'rb+') as _f:
+                    _f.flush()
+                    os.fsync(_f.fileno())
+            except Exception as e:
+                # Not fatal: without it we are back to today's durability, which
+                # is what every save before this did. Say so rather than fail.
+                log.warning("could not fsync %s before replace: %s",tmp,e)
             _t_ser=time.perf_counter()-_t0
             write=True
         except Exception as e:
             error=_("There was a problem writing to partial file: "
                 "{tmp} ({e})").format(tmp=tmp,e=e)
             log.error(error)
+        if write:
+            _ok,_why=self._written_file_sane(tmp,filename)
+            if not _ok:
+                # Keep the bad bytes under a name the NEXT save won't reuse: the
+                # top of this method removes `<name>.part` before writing, so
+                # leaving it there would destroy the only copy of whatever went
+                # wrong — and possibly the only copy of the user's edits.
+                _kept=tmp
+                try:
+                    _kept='{}.corrupt-{}'.format(tmp,
+                                time.strftime('%Y%m%d-%H%M%S'))
+                    os.replace(tmp,_kept)
+                except Exception as e:
+                    log.error("could not set aside the bad %s: %s",tmp,e)
+                    _kept=tmp
+                error=_("Refusing to save {name}: the file just written looks "
+                    "corrupt ({why}). Your previous file has NOT been touched, "
+                    "so nothing already saved is lost — but THIS SESSION’S "
+                    "CHANGES ARE NOT SAVED. The bad file is kept at {kept} in "
+                    "case it can be recovered.").format(
+                        name=pathlib.Path(filename).name,why=_why,kept=_kept)
+                log.error("REFUSING SAVE: %s (%s); bad file kept at %s",
+                            filename,_why,_kept)
+                # The user MUST hear this: a silent refusal leaves them believing
+                # their work is saved, which is worse than the corruption.
+                try:
+                    NotifyUser(error,title=_("Save refused"))
+                except Exception as e:
+                    log.error("could not report the refused save: %s",e)
+                write=False
         if write:
             # Collab seam (see backend/core/collab.py): when this db
             # belongs to a daemon-connected project, the .part handoff
@@ -1323,6 +1631,18 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             try:
                 _t0=time.perf_counter()
                 os.replace(tmp,filename)
+                # And fsync the DIRECTORY, so the rename itself survives a crash:
+                # the file's data is already durable (above), but the directory
+                # entry pointing at it need not be. POSIX only — Windows can't
+                # open a directory, so this is best-effort by design.
+                try:
+                    _dfd=os.open(str(pathlib.Path(filename).parent),os.O_RDONLY)
+                    try:
+                        os.fsync(_dfd)
+                    finally:
+                        os.close(_dfd)
+                except Exception as e:
+                    log.info("directory fsync skipped for %s: %s",filename,e)
                 _t_replace=time.perf_counter()-_t0
                 # Logged AFTER the replace (2026-07-30): the first field numbers
                 # showed 5-6 s between this line and "Done writing to lift", so the
@@ -2478,6 +2798,28 @@ class Text(Node):
 class ValueNode(Node):
     def myvalue(self,value=None):
         if value:
+            # ONLY STRINGS BECOME LIFT DATA. A caller used to be able to hand a
+            # Python object straight through to an XML attribute — parser.py
+            # passed a TUPLE, whose repr ((('ngom','li'),('ngombi',"'"))) then
+            # WAS the stored value, quotes and all (Kent 2026-08-26). Serialise
+            # at the call site, deliberately, in a defined format
+            # (utilities.affixset_to_str); don't let str() decide it here.
+            #   ValueNode backs trait, annotation and grammatical-info, so this
+            # one check covers every attribute-value write.
+            #   Refuse CONTAINERS, which is the bug class: their repr is not a
+            # defined format and only literal_eval can read it back. Scalars
+            # (int, float) are coerced as before — an int's str() is
+            # unambiguous — but say so, since it is still someone skipping the
+            # decision about how their data is stored.
+            if isinstance(value,(list,tuple,dict,set,frozenset)):
+                raise TypeError("LIFT values must be strings; got {} ({!r}). "
+                        "Serialise it at the call site — see "
+                        "utilities.affixset_to_str.".format(
+                            type(value).__name__,value))
+            if not isinstance(value,str):
+                log.info("coercing %s %r to str for LIFT %s",
+                            type(value).__name__,value,self.valuename)
+                value=str(value)
             self.set(self.valuename,value)
         elif value == '':
             del self.attrib[self.valuename]

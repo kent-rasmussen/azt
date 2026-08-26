@@ -1217,8 +1217,8 @@ class App:
             # self.production=True #True for making screenshots (default theme)
             self.me=True
             self.testlift='Demo_en' #portion of filename
-            self.testtask='SortT' #Will convert from string to class later
-            # self.testtask='SortV' #Will convert from string to class later
+            # self.testtask='SortT' #Will convert from string to class later
+            self.testtask='SortV' #Will convert from string to class later
             # self.testtask='SortSyllables' #Will convert from string to class later
             # self.testtask='WordCollectnParsewRecordings'
             # self.default_task='WordCollectnParse'

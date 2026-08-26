@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 import ast
+import json
 import inspect #this is for determining this file name and location
 # import logsetup
 import datetime
@@ -349,6 +350,48 @@ def ofromstr(x):
     except (SyntaxError,ValueError) as e:
         # log.debug("Assuming '{}' is a string ({})".format(x,e))
         return x
+def _tuplize(x):
+    """Lists (and lists of lists) → tuples, recursively; anything else as-is.
+
+    JSON has no tuple, so a decoded affix set comes back as nested LISTS — and
+    the parser's Catalog uses the affix set as a Counter KEY
+    (`Counter([affixes[1]])`), which requires it to be hashable. Without this
+    every lookup silently misses, and an unhashable-type error is the LUCKY
+    outcome."""
+    if isinstance(x,(list,tuple)):
+        return tuple(_tuplize(i) for i in x)
+    return x
+def affixset_to_str(afxtuple):
+    """Serialise an affix set for storage in a LIFT `<trait>` value.
+
+    JSON, not `str(tuple)`. The repr was the whole problem: when an affix is `'`,
+    Python switches its quoting to `"` — and that value goes into a `"`-delimited
+    XML attribute (Kent 2026-08-26, from a production lexicon that stopped being
+    well-formed). ElementTree escapes it correctly, so AZT's own writer survived
+    it, but nothing about `repr` is a defined interchange format and only
+    `literal_eval` can read it back.
+
+    JSON's own quotes become `&quot;` in the attribute — noisier to read raw, and
+    deliberately accepted: Kent 2026-08-26, "most people can't read XML anyway…
+    any time this information is human facing the escaping would be presented
+    appropriately, so the simpler correct version is best"."""
+    return json.dumps(afxtuple)
+def affixset_from_str(s):
+    """Read an affix set back, accepting BOTH formats — indefinitely.
+
+    Field lexicons hold `str(tuple)` values written before this changed, so JSON
+    first, then the old `ofromstr` (`ast.literal_eval`) path. Returns tuples
+    either way (see `_tuplize`).
+
+    Never raises: a value that is neither is handed back as-is. The whole point
+    of this change is that a malformed value must not take down a load."""
+    if not isinstance(s,str):
+        return _tuplize(s)
+    try:
+        return _tuplize(json.loads(s))
+    except Exception:
+        pass #not JSON: an older file, or something else entirely
+    return _tuplize(ofromstr(s))
 def tryrun(cmd):
     try:
         cmd()

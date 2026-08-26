@@ -1819,7 +1819,9 @@ class Parse(Segments):
                         "".format(*r[1:5]))
             log.info("adding {} affix set {}".format(*r[4:]))
             self.parser.addaffixset(*r[4:])#self.ps,afxs)
-            self.parser.sense.pssubclassvalue(r[-1])
+            # Serialise before it reaches the LIFT layer — see parser.doparsetolx,
+            # the other writer of this trait.
+            self.parser.sense.pssubclassvalue(affixset_to_str(r[-1]))
             return
         else:
             log.info(f"No parse (trythreeforms).")

@@ -81,11 +81,15 @@ class StatusWindow(ui.Window):
         # OVERWRITTEN the last. The messages were always there; there was just
         # nowhere to scroll to. Big enough to read a session's worth, short of
         # fullscreen: this window must never cover the work.
+        self._width = int(self.winfo_screenwidth() * 0.55)
         try:
-            self.geometry('{}x{}'.format(int(self.winfo_screenwidth() * 0.55),
+            self.geometry('{}x{}'.format(self._width,
                                         int(self.winfo_screenheight() * 0.6)))
         except Exception as e:
             log.info("status window geometry failed: %s", e)
+        # Re-wrap on resize: wraplength is fixed per Label at creation, so without
+        # this a window made wider keeps the old messages at the old width.
+        self.bind('<Configure>', self._on_resize, add='+')
         # A manual Close is still not REQUIRED: messages accumulate for
         # the session, and closing is the only thing that clears them (the next
         # message then opens a fresh window). exit=False means there is no Exit
@@ -119,6 +123,49 @@ class StatusWindow(ui.Window):
             self.after(1200, self._release_topmost)
         except Exception as e:
             log.info("status window surface failed: %s", e)
+    def _wraplength(self):
+        """Wrap to THIS WINDOW's width, not the screen's.
+
+        `Label.wrap()` sizes from `availablexy()`, i.e. screen width minus
+        siblings — right for a fullscreen kiosk page, wrong here: messages wrapped
+        at nearly screen width and the overflow was simply clipped, since there is
+        no horizontal scrollbar (Kent 2026-08-26). Exactly the vertical bug that
+        `_fill_parent` fixed, one axis over."""
+        for w in (self.scroll.winfo_width(), self.winfo_width(), self._width):
+            if w and w > 120:
+                return w - 40 # scrollbar + a little breathing room
+        return 400 # nothing laid out yet; re-wrapped on the first <Configure>
+    def _on_resize(self, event=None):
+        if event is not None and getattr(event, 'widget', None) is not self:
+            return
+        size = (self.winfo_width(), self.winfo_height())
+        if size == getattr(self, '_last_size', None):
+            return # our own geometry changes re-fire this; don't loop
+        self._last_size = size
+        job = getattr(self, '_rewrap_job', None)
+        if job:
+            try:
+                self.after_cancel(job)
+            except Exception:
+                pass
+        self._rewrap_job = self.after(200, self._rewrap)
+    def _rewrap(self):
+        """Re-wrap every message to the new width. Debounced by _on_resize: a
+        drag-resize is a stream of Configures and this touches every Label."""
+        self._rewrap_job = None
+        if not self.winfo_exists():
+            return
+        n = self._wraplength()
+        try:
+            for w in self.scroll.content.winfo_children():
+                try:
+                    w.wraplength = n
+                    w.wrap()
+                except Exception:
+                    continue # not a wrappable Label; leave it alone
+            self.scroll.reflow()
+        except Exception as e:
+            log.info("status window re-wrap failed: %s", e)
     def _release_topmost(self):
         try:
             if self.winfo_exists():
@@ -134,6 +181,10 @@ class StatusWindow(ui.Window):
         l = ui.Label(self.scroll.content, text=line, anchor='w',
                     row=self._row, column=0, sticky='ew')
         try:
+            # Set it BEFORE wrap(): wrap() takes min(self.wraplength, maxwidth)
+            # when the attribute exists, so this bounds it to the window instead
+            # of the screen. See _wraplength.
+            l.wraplength = self._wraplength()
             l.wrap()
         except Exception as e:
             log.info("status message wrap failed: %s", e)

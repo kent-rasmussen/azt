@@ -52,7 +52,11 @@ class AffixCollector(object):
                 self.catalog.addparsed(sensenode.get('id'))
             rtodo=len(results)
             for nr,r in enumerate(results):
-                self.catalog.addaffixset((ps,ofromstr(r.get('value'))))
+                # affixset_from_str, not ofromstr: reads BOTH the new JSON and the
+                # older str(tuple) values still in field lexicons, and returns
+                # tuples either way — the Catalog uses this as a Counter key.
+                self.catalog.addaffixset((ps,
+                                    affixset_from_str(r.get('value'))))
                 # log.info("ps progress: {} ({}/{})".format(100*n/pstodo,n,pstodo))
                 # log.info("results progress: {} ({}/{})"
                 #         "".format(100*nr/rtodo/pstodo,nr,rtodo))
@@ -244,7 +248,10 @@ class Engine(object):
                 "".format(root,ps,afxtuple))
         self.entry.lx.textvaluebylang(self.analang,root)
         self.sense.psvalue(ps)
-        self.sense.pssubclassvalue(afxtuple)
+        # SERIALISE HERE, don't hand a Python object to the LIFT layer: this call
+        # used to pass the tuple straight through to maketraitnode's str(), which
+        # is how a repr — quotes and all — became lexicon data (Kent 2026-08-26).
+        self.sense.pssubclassvalue(affixset_to_str(afxtuple))
         self.addaffixset(ps,afxtuple)
         self.catalog.affixesbyform()
     def getfields(self):

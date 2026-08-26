@@ -279,12 +279,25 @@ def make(regex, **kwargs):
     else:
         flags=re.UNICODE
     if kwargs.get('compile'):
+        # DIAG presort_regex_compile_hang: the UI froze inside re.compile here —
+        # COMPILATION, not matching, so it is pattern size/shape. Say how big and
+        # how long, so the next occurrence names the profile instead of leaving us
+        # to infer it from a faulthandler stack. Only speaks when it is actually
+        # slow, so this costs nothing on the normal path.
+        _t0=time.perf_counter()
         try:
             regex=re.compile(regex, flags=flags)
         except ValueError as e:
             log.error('Regex Value compile problem ({};{})'.format(e,regex))
         except Exception as e:
             log.error('Regex compile problem ({};{})'.format(e,regex))
+        _el=time.perf_counter()-_t0
+        if _el>0.5:
+            _p=kwargs.get('pattern_for') or ''
+            log.warning("SLOW REGEX COMPILE: %.1fs for %s chars%s (ci=%s)",
+                        _el, len(str(regex.pattern if hasattr(regex,'pattern')
+                                    else regex)),
+                        ' [%s]'%_p if _p else '', bool(caseinsensitive))
     return regex
 class RegexDict(object):
     """This makes and stores all the regex's needed for A−Z+T (for now)"""
@@ -592,6 +605,7 @@ class RegexDict(object):
         # log.info("Replacing other Cs and Vs: {}".format(CVs))
         CVs=re.sub(r'\)([^(?]+)\(',')(\\1)(',CVs) #this puts parens around everything
         # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
+        kwargs.setdefault('pattern_for',CVs_ori) #DIAG: name the profile if slow
         self.setrx(CVs_ori, CVs, **kwargs)
         return self.getrx(CVs_ori, **kwargs)
     def profileofform(self,form,ps,diag=False):
