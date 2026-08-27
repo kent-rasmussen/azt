@@ -383,6 +383,14 @@ def affixset_from_str(s):
     first, then the old `ofromstr` (`ast.literal_eval`) path. Returns tuples
     either way (see `_tuplize`).
 
+    THE FALLBACK IS LOAD-BEARING, NOT TRANSITIONAL — do not remove it once
+    "everything has been migrated", because nothing migrates anything. There is
+    no conversion pass: a trait is only rewritten as JSON when its sense is
+    re-parsed, so a lexicon holds BOTH formats indefinitely, and a file may still
+    be handed a `str(tuple)` value years from now. Verified on real data
+    2026-08-27: `(('', ''), ('', 'z'))` and `[["", ""], ["'", "'"]]` sat in one
+    file and both read.
+
     Never raises: a value that is neither is handed back as-is. The whole point
     of this change is that a malformed value must not take down a load."""
     if not isinstance(s,str):

@@ -1580,14 +1580,17 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             #   Cost is one flush of a file we just wrote, on a path that already
             # takes ~0.2s to serialise — and the thing it protects is the whole
             # lexicon.
-            try:
-                with open(tmp,'rb+') as _f:
-                    _f.flush()
-                    os.fsync(_f.fileno())
-            except Exception as e:
-                # Not fatal: without it we are back to today's durability, which
-                # is what every save before this did. Say so rather than fail.
-                log.warning("could not fsync %s before replace: %s",tmp,e)
+            #   FSYNC FAILURE FAILS THE SAVE. It used to warn and carry on, which
+            # was worse than doing nothing: if fsync fails with ENOSPC the tail
+            # may never have reached the disk, but the validation below reads the
+            # file back THROUGH THE PAGE CACHE, sees it complete, and cheerfully
+            # replaces the user's good lexicon with one that is short after the
+            # next reboot. That is the exact failure this is here to prevent, and
+            # it is Kent's own precondition: no commit after a write unless the
+            # write completed (2026-08-26).
+            with open(tmp,'rb+') as _f:
+                _f.flush()
+                os.fsync(_f.fileno())
             _t_ser=time.perf_counter()-_t0
             write=True
         except Exception as e:

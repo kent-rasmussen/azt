@@ -99,6 +99,10 @@ class StatusWindow(ui.Window):
         #          font='instructions', row=1, column=0, sticky='e')
         self._row = self.FIRST_ROW
         self._surface() # once, for the first message — not per message
+        # The first message is wrapped from the width we ASKED for, since nothing
+        # is mapped yet. Re-wrap once the window is actually on screen, so the
+        # user doesn't have to resize it by hand to make the first notice legible.
+        self.after(120, self._rewrap)
     def _surface(self):
         """Bring the window to the front WITHOUT holding it there.
 
@@ -130,11 +134,22 @@ class StatusWindow(ui.Window):
         siblings — right for a fullscreen kiosk page, wrong here: messages wrapped
         at nearly screen width and the overflow was simply clipped, since there is
         no horizontal scrollbar (Kent 2026-08-26). Exactly the vertical bug that
-        `_fill_parent` fixed, one axis over."""
-        for w in (self.scroll.winfo_width(), self.winfo_width(), self._width):
-            if w and w > 120:
-                return w - 40 # scrollbar + a little breathing room
-        return 400 # nothing laid out yet; re-wrapped on the first <Configure>
+        `_fill_parent` fixed, one axis over.
+
+        MEASURE ONLY WHEN MAPPED. Before the window is on screen, winfo_width()
+        does not report the geometry we asked for — a ScrollingFrame carries
+        grid_propagate(0) and sits at some small default, so the FIRST message
+        was wrapping to a fraction of the eventual width and only came right when
+        the window was resized by hand (Kent 2026-08-27). The width we asked for
+        is the better estimate until reality is available."""
+        try:
+            if self.winfo_ismapped():
+                for w in (self.scroll.winfo_width(), self.winfo_width()):
+                    if w and w > 120:
+                        return w - 40 # scrollbar + a little breathing room
+        except Exception as e:
+            log.info("status window width probe failed: %s", e)
+        return max(200, self._width - 40)
     def _on_resize(self, event=None):
         if event is not None and getattr(event, 'widget', None) is not self:
             return

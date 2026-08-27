@@ -19,6 +19,63 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.14.1
+
+- **A LIFT that won't parse is now diagnosed, and repaired where it can be.** The load
+  path was doing `except Exception: raise BadParseError(...)`, throwing the real error
+  away — message, line and column with it — so an unopenable lexicon said nothing about
+  why. It now logs the exception, the file's size / mtime / sha256, the failing line and
+  column with its neighbours, the tail, and the **committed HEAD copy's** size, sha256 and
+  last five lines. That last part is what separates "the corruption is in history" from
+  "something broke the file since it was committed" — a distinction that had to be made by
+  hand, and wrongly, before it existed.
+  - Where the damage is a shape we recognise — an attribute value carrying unescaped
+    quotes — `_repair_unparseable` fixes it in place, verifies by re-parsing BEFORE
+    writing anything, keeps the original as `<name>.unparseable-<stamp>`, and says what it
+    did. Repair beats the rollback originally planned for this: it discards nothing, and
+    it works even when the bad bytes are also the committed ones.
+  - Deliberately narrow. It only runs on a file that already failed to parse, aimed at the
+    reported line; the pattern is anchored so the damaged attribute must be the LAST on
+    its line with every earlier one well-formed. A line with several damaged attributes is
+    refused rather than greedily rewritten — that could produce something that parses but
+    MEANS something else, which is worse than failing to load. Bare `&` is escaped; an
+    existing `&amp;` is left alone.
+- **A failed `fsync` now fails the save.** It used to log a warning and carry on, which
+  was worse than not trying: if the fsync fails with ENOSPC the tail may never reach the
+  disk, but the save-time validation reads the file back through the PAGE CACHE, sees it
+  complete, and replaces a good lexicon with one that is short after the next reboot.
+  It now propagates, so `write_OK` is false and the existing notice tells the user —
+  no silent "saved".
+- **Inflection-class affix sets are stored as JSON**, not `str(tuple)`. `_tuplize` turns
+  JSON's lists back into tuples, because the parser's `Catalog` uses the affix set as a
+  `Counter` key and a list would silently miss every lookup. The reader takes both
+  formats and always will: nothing migrates anything — a trait is only rewritten as JSON
+  when its sense is re-parsed, so a lexicon holds both indefinitely. Verified on real
+  data: `(('', ''), ('', 'z'))` and `[["", ""], ["'", "'"]]` in one file, both read, and a
+  restart-plus-parse collapsed two identical JSON traits into ONE catalog option — which
+  only holds if the reader returns hashable tuples.
+- **Non-string values can no longer reach a LIFT attribute.** This is the root cause of
+  the corruption above, and it is subtle: ElementTree's `_escape_attrib` is written as
+  `if "&" in text: ...` inside a `try` that catches `TypeError`. Hand it a TUPLE and
+  `"&" in text` is a MEMBERSHIP test — it returns False and raises nothing, so every
+  escape is skipped, the tuple is returned untouched, and the serializer then writes
+  `" %s=\"%s\"" % (name, value)`, i.e. `str(tuple)` — Python's repr, with Python's own
+  quote-switching. A tuple whose member contains `'` therefore lands as a raw `"` inside a
+  `"`-delimited attribute. Silently, at set time and at write time. Guarded at both doors
+  into ET's attrib dict — `Node.__init__` and a new `Node.set` — refusing containers and
+  coercing scalars with a log line. `ValueNode.myvalue` alone was the wrong altitude:
+  `annotationvalue` builds an `Annotation` directly when none exists, and
+  `annotationsupdate` calls `.set()` and the `Node` constructor straight from a dict.
+- The status window's first message wrapped to about a fifth of the window. `_wraplength`
+  was measuring `winfo_width()` before the window was mapped, and a `ScrollingFrame`
+  carries `grid_propagate(0)`, so it reported some small default instead of the geometry
+  we asked for. It now measures only when mapped, falls back to the requested width, and
+  re-wraps shortly after the window appears — previously only a manual resize fixed it.
+- Diagnostics kept, not behaviour: `rx.make` times every pattern compile and logs
+  `SLOW REGEX COMPILE: …s for N chars [profile]` above 0.5s, with the profile named. The
+  presort hang that prompted it did not reproduce (`CVCVCV`/`V1=V2=V3`, 32 vowel groups),
+  and nothing in `rx.py` changed — so this stays as a tripwire rather than a fix.
+
 # Version 1.14.0
 
 - **Flipping a primitive on the class escape now records it as VERIFIED** — a deliberate,
