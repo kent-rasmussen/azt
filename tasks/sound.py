@@ -106,62 +106,93 @@ class Record(BackendRecord, Sound):
             return
         if not self.ui.runwindow.frame.winfo_exists():
             return
-        self.ui.runwindow.resetframe()
-        ps = self.program.slices.ps()
-        profile = self.program.slices.profile()
-        count = self.program.slices.count()
-        text = "Record {profile} {ps} Words: click 'Record', talk, and release ({count} words)".format(profile=profile, ps=ps, count=count)
-        log.info(text)
-        instr = ui.Label(self.ui.runwindow.frame, anchor='w', text=text)
-        instr.grid(row=0, column=0, sticky='w')
-        senses = self.program.slices.senses(ps=ps, profile=profile)
-        if not senses:
-            senses = self.program.db.senses
-        nperpage = 5
-        pages = [senses[i:i + nperpage] for i in range(0, len(senses), nperpage)]
-        # A5 in-place reload: resume at the page the user was on. The old task
-        # stashes its position as _record_anchor (below); reload_database hands
-        # it over as program._reload_anchor; consume it here (once) by seeking
-        # to the page holding the anchored sense in the anchored slice.
-        start = 0
-        anchor = getattr(self.program, '_reload_anchor', None)
-        if (anchor and anchor.get('ps') == ps
-                and anchor.get('profile') == profile):
-            ids = [s.id for s in senses]
-            if anchor.get('senseid') in ids:
-                start = ids.index(anchor['senseid']) // nperpage
-                log.info("record page: resuming at page %d (reload anchor)",
-                         start)
-            self.program._reload_anchor = None
-        for pageno, page in enumerate(pages):
-            if pageno < start:
-                continue
-            self._record_anchor = {'ps': ps, 'profile': profile,
-                                   'senseid': page[0].id}
-            if self.ui.runwindow.exitFlag.istrue():
-                return
-            with self.ui.runwindow.waiting(thenshow=True):
-                buttonframes = ui.ScrollingFrame(self.ui.runwindow.frame,
-                                                 row=1, column=0, sticky='w')
-                row = 0
-                done = list()
-                for row, entry in enumerate([i.entry for i in page]):
-                    self.ui.runwindow.column = 0
-                    if entry.guid in done:
-                        continue
-                    else:
-                        done.append(entry.guid)
-                    ftypes = ['lc', 'pl', 'imp']
-                    for node in [entry.sense.nodebyftype(f) for f in ftypes
-                                 if entry.sense.nodebyftype(f)]:
-                        self.ui.runwindow.column += 2
-                        self.makelabelsnrecordingbuttons(buttonframes.content, node,
-                                                        row, self.ui.runwindow.column)
-                ui.Button(buttonframes.content, column=1, row=row,
-                          text="Next {count} words".format(count=nperpage),
-                          cmd=lambda x=buttonframes: self.cleanup_pa(x))
-            buttonframes.reflow()  # grow canvas to cover this page's record buttons
-            buttonframes.wait_window(buttonframes)
+        # Open the wait BEFORE resetframe(): on the 2nd and later groups this
+        # window is already mapped, so blanking it here — with Exit living in
+        # outsideframe — leaves an empty fullscreen kiosk page until the first
+        # page finishes building. wait() withdraws and covers the screen; the
+        # per-page `with waiting()` below finds the wait already active, so it
+        # just reuses it and its exit does the single reveal. No extra
+        # withdraw/deiconify cycle, no flash of a one-label page.
+        self.ui.runwindow.wait(msg="Getting words to record…", thenshow=True)
+        try:
+            self.ui.runwindow.resetframe()
+            ps = self.program.slices.ps()
+            profile = self.program.slices.profile()
+            count = self.program.slices.count()
+            text = "Record {profile} {ps} Words: click 'Record', talk, and release ({count} words)".format(profile=profile, ps=ps, count=count)
+            log.info(text)
+            instr = ui.Label(self.ui.runwindow.frame, anchor='w', text=text)
+            instr.grid(row=0, column=0, sticky='w')
+            senses = self.program.slices.senses(ps=ps, profile=profile)
+            if not senses:
+                senses = self.program.db.senses
+            nperpage = 5
+            pages = [senses[i:i + nperpage] for i in range(0, len(senses), nperpage)]
+            # A5 in-place reload: resume at the page the user was on. The old task
+            # stashes its position as _record_anchor (below); reload_database hands
+            # it over as program._reload_anchor; consume it here (once) by seeking
+            # to the page holding the anchored sense in the anchored slice.
+            start = 0
+            anchor = getattr(self.program, '_reload_anchor', None)
+            if (anchor and anchor.get('ps') == ps
+                    and anchor.get('profile') == profile):
+                ids = [s.id for s in senses]
+                if anchor.get('senseid') in ids:
+                    start = ids.index(anchor['senseid']) // nperpage
+                    log.info("record page: resuming at page %d (reload anchor)",
+                             start)
+                self.program._reload_anchor = None
+            for pageno, page in enumerate(pages):
+                if pageno < start:
+                    continue
+                self._record_anchor = {'ps': ps, 'profile': profile,
+                                       'senseid': page[0].id}
+                if self.ui.runwindow.exitFlag.istrue():
+                    return
+                with self.ui.runwindow.waiting(thenshow=True):
+                    buttonframes = ui.ScrollingFrame(self.ui.runwindow.frame,
+                                                     row=1, column=0, sticky='w')
+                    row = 0
+                    done = list()
+                    for row, entry in enumerate([i.entry for i in page]):
+                        self.ui.runwindow.column = 0
+                        if entry.guid in done:
+                            continue
+                        else:
+                            done.append(entry.guid)
+                        ftypes = ['lc', 'pl', 'imp']
+                        for node in [entry.sense.nodebyftype(f) for f in ftypes
+                                     if entry.sense.nodebyftype(f)]:
+                            self.ui.runwindow.column += 2
+                            self.makelabelsnrecordingbuttons(buttonframes.content, node,
+                                                            row, self.ui.runwindow.column)
+                    ui.Button(buttonframes.content, column=1, row=row,
+                              text="Next {count} words".format(count=nperpage),
+                              cmd=lambda x=buttonframes: self.cleanup_pa(x))
+                    # INSIDE the wait block, not after it: leaving the block calls
+                    # waitdone(), and waitdone() IS the reveal (deiconify+update).
+                    # A ScrollingFrame's children are invisible until reflow sizes
+                    # the canvas, so reflowing after the reveal maps a fullscreen
+                    # kiosk window whose only visible widget is the Exit button in
+                    # outsideframe — the "blank page with just Quit" report. Sibling
+                    # showsenseswithexamplestorecord already has the right order
+                    # (reflow, then waitdone).
+                    buttonframes.reflow()  # grow canvas to cover this page's record buttons
+                # Page built and revealed; the outer wait opened above is closed
+                # by this first inner block's exit. Everything from here is the
+                # user working the page, uncovered by design.
+                buttonframes.wait_window(buttonframes)
+        finally:
+            # Covers the paths where NO page build ran — no senses, or every page
+            # skipped by the reload anchor — so the dialog can't be left up over
+            # the wait_window() below. No-op once a page build has closed it.
+            # Guarded: this runs on every exit path, including ones where the run
+            # window is already gone (quit mid-build), and an exception raised in
+            # a finally would replace whatever actually happened.
+            try:
+                self.ui.runwindow.waitdone()
+            except Exception as e:
+                log.info("could not close the record-page wait: {}".format(e))
         if not self.ui.runwindow.exitFlag.istrue():
             self.ui.runwindow.wait_window(self.ui.runwindow.frame)
 
@@ -277,14 +308,18 @@ class Record(BackendRecord, Sound):
                     if exited == True:
                         return
         if not (self.ui.runwindow.exitFlag.istrue() or self.ui.exitFlag.istrue()):
-            self.ui.runwindow.waitdone()
-            self.ui.runwindow.resetframe()
-            ui.Label(self.ui.runwindow.frame, anchor='w', font='read',
-                     text="All done! Sort some more words, and come back."
-                     ).grid(row=0, column=0, sticky='w')
-            ui.Button(self.ui.runwindow.frame,
-                      text="Continue to next syllable profile",
-                      command=next_p).grid(row=1, column=0)
+            # waitdone() is the REVEAL, so it has to come last. It used to run
+            # first, which mapped the window and only then blanked it with
+            # resetframe() — an empty kiosk page showing nothing but Exit until
+            # these two widgets were gridded.
+            with self.ui.runwindow.waiting(thenshow=True):
+                self.ui.runwindow.resetframe()
+                ui.Label(self.ui.runwindow.frame, anchor='w', font='read',
+                         text="All done! Sort some more words, and come back."
+                         ).grid(row=0, column=0, sticky='w')
+                ui.Button(self.ui.runwindow.frame,
+                          text="Continue to next syllable profile",
+                          command=next_p).grid(row=1, column=0)
         self.program.soundsettings.done_pyaudio()
 
     def __init__(self, **kwargs):

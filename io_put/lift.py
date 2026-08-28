@@ -2188,7 +2188,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     'qu', #French
                     'mp', 'nt', 'nk', 'ŋk',
                     # 'kw','tw',
-                    'Pk','Pw' #tsh
+                    'Pk','Pw', #tsh
                     'pʰ','tʰ','kʰ','qʰ',
                     'p̚', 't\u031A','k\u031A','q\u031A',#IPA
                     ] #gnd
@@ -2216,7 +2216,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     ]
         #Assuming x is voiceless, per IPA and most useage...
         c['f'][1]=['F','f','s','ʃ','θ','x','h', #not 'S'
-                    'ɦ','χ','ʂ','ɕ','ʁ','ʑ','ʐ' #IPA
+                    'ɦ','χ','ʂ','ɕ','ʁ','ʑ','ʐ', #IPA
                     'ཞ','ཞ', #/ʒa/
                     'ཟ', #/za/
                     'ར', #/ra/

@@ -97,6 +97,26 @@ class SyllablePrep(object):
             NotifyUser(text=_("All the syllable groups are checked! You can now "
                         "sort the words by syllable profile."),
                         title=_("Done!"))
+            # DIAG (Kent 2026-08-27): this branch is the last thing that runs
+            # before the app goes idle — on_quit the run window, refresh the
+            # board, notify, return. Nothing after it builds a page, so if the
+            # board came back empty the user is left staring at a full-screen
+            # window with nothing on it and no code coming to fill it, which is
+            # what two faulthandler dumps showed (main thread parked in
+            # mainloop, preload worker idle on an empty queue). isrunwindow()
+            # already logs exists/mapped/viewable/iswaiting/state for both
+            # windows — call it here so the next occurrence names the window
+            # instead of needing another round of guessing.
+            try:
+                log.info("DIAG-prepdone: window state after Task 1 completion")
+                self.ui.isrunwindow()
+                board=getattr(self.status,'board',None)
+                log.info("DIAG-prepdone: board=%s children=%s",
+                         board,
+                         len(board.winfo_children()) if board is not None
+                            and hasattr(board,'winfo_children') else 'n/a')
+            except Exception as e:
+                log.info("DIAG-prepdone failed: %s", e)
             return
         check,group,idx=nxt
         self.program.params.check(check)
@@ -119,6 +139,15 @@ class SyllablePrep(object):
         """The reused prep run window: keep the existing one (just clear its frame
         for the next slice), creating one only if there isn't a live one. Reusing
         it means no fullscreen destroy/recreate transition between slices."""
+        # NO WAIT HERE. build_verify_layout owns the wait on this path — it
+        # drives the first-page build through wait_and_drive_work and does the
+        # reveal itself (see the comment at verify()'s getrunwindow call). A
+        # second wait opened here fought that one: withdraw/reveal/withdraw,
+        # which Kent saw as the window "flashing back and forth, painting
+        # nothing-but-quit, then withdrawing, then painting again"
+        # (2026-08-27). Adding one was my error, against a contract already
+        # written down. If the reuse branch's blank interval needs covering,
+        # the fix belongs inside build_verify_layout, where the one wait lives.
         rw=getattr(self.ui,'runwindow',None)
         if rw is not None and rw.winfo_exists() and not rw.exitFlag.istrue():
             for w in list(rw.frame.winfo_children()):
@@ -1512,22 +1541,46 @@ class Sort(Categories):
             return 1
         log.info(f"Getting Runwindow")
         self.ui.getrunwindow() #after we know this will do something
-        self.groupsFrame, self.buttonframe = self.sort_ui.build_sort_layout(
-            self.ui.runwindow, img_mod, self.pageicon(macrosort=macrosort),
-            instructions, self, groups, macrosort)
-        # log.info("Sort SBF done macrosort={macrosort}".format(macrosort=macrosort))
-        """Stuff that changes by lexical entry
-        The second frame, for the other two buttons, which also scroll"""
-        while current_list_fn():
-            if self.ui.runwindow.exitFlag.istrue():
-                return
-            item=self.presenttosort(current_list_fn()[0], macrosort=macrosort)
-            # log.info("presenttosort done")
-            if not self.ui.runwindow.exitFlag.istrue() and item is not None:
-                r=self.sortselected(item, macrosort=macrosort)
-                if r: #on restarting to maybesort
+        # Cover the build. getrunwindow() returns with BOTH windows hidden here
+        # (no msg passed, and the msg path is gated on a mature repo anyway), so
+        # nothing at all is viewable while build_sort_layout and the first
+        # present_group/present_sense run — long enough on an image-heavy page
+        # for guardvisible to fire at 15s and reveal the HALF-BUILT page: a
+        # fullscreen block of theme colour whose only widget is the Exit button
+        # in outsideframe. The guard added for the no-window bug thus produces
+        # the nothing-but-quit one, because "frame has children" is not the same
+        # question as "frame has anything the user can see" (a ScrollingFrame's
+        # rows are invisible until reflow). A wait dialog fixes both halves: it
+        # covers the build for the user, and it counts as viewable, so the guard
+        # stays quiet. presenttosort's existing waitdone() closes it the moment
+        # the first item is ready — that call is already in the right place.
+        self.ui.runwindow.wait(msg=_("Setting up the sort page…"), thenshow=True)
+        try:
+            self.groupsFrame, self.buttonframe = self.sort_ui.build_sort_layout(
+                self.ui.runwindow, img_mod, self.pageicon(macrosort=macrosort),
+                instructions, self, groups, macrosort)
+            # log.info("Sort SBF done macrosort={macrosort}".format(macrosort=macrosort))
+            """Stuff that changes by lexical entry
+            The second frame, for the other two buttons, which also scroll"""
+            while current_list_fn():
+                if self.ui.runwindow.exitFlag.istrue():
                     return
-                self.buttonframe.updatecounts()
+                item=self.presenttosort(current_list_fn()[0], macrosort=macrosort)
+                # log.info("presenttosort done")
+                if not self.ui.runwindow.exitFlag.istrue() and item is not None:
+                    r=self.sortselected(item, macrosort=macrosort)
+                    if r: #on restarting to maybesort
+                        return
+                    self.buttonframe.updatecounts()
+        finally:
+            # presenttosort normally closes the wait, but it can return before
+            # reaching its waitdone() (exitFlag, or an empty sortitem), and the
+            # returns above leave by other doors. A dialog left up over the
+            # sorted page would look exactly like the hang we are chasing.
+            try:
+                self.ui.runwindow.waitdone()
+            except Exception as e:
+                log.info("could not close the sort-build wait: %s", e)
         if macrosort: #generalize
             self.program.alphabet.save_settings()
             self.program.settings.storesettingsfile('alphabet')

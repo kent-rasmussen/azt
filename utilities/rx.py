@@ -614,6 +614,29 @@ class RegexDict(object):
             return 'Invalid'
         profile=form
         classes=set(self.profilelegit) & set(self.rx)
+        # ONE-SHOT class-set report (Kent 2026-08-28: en-x-cvprofile_MT coming
+        # out all-C — CVC>CCC, CVCVC>CCCCC). Per-form diag is thousands of lines
+        # over a database; the class set is the thing that actually explains it
+        # and it is constant for the run, so say it once. Two failure shapes to
+        # tell apart: 'V' MISSING from the set (setrx refuses an empty regex, so
+        # a class with no glyphs silently vanishes — but that would leave the
+        # vowel LITERAL, 'CaC', not 'CCC'), versus 'V' present but the C regex
+        # matching vowels too, which is what CVC>CCC actually means and points
+        # at the interpret settings feeding compileCVrxforsclass.
+        if not getattr(self,'_logged_class_set',False):
+            self._logged_class_set=True
+            try:
+                log.info("DIAG-classes: profileofform classes=%s | legit=%s | "
+                         "rx keys=%s", sorted(classes),
+                         sorted(self.profilelegit), sorted(self.rx))
+                for s in sorted(classes):
+                    try:
+                        log.info("DIAG-classes: %s uncompiled=%r", s,
+                                 self.rxuncompiled.get(s))
+                    except Exception:
+                        continue
+            except Exception as e:
+                log.info("DIAG-classes failed: %s", e)
         steps=[] # DIAG: (class, polyn, before>after) for each sub that changed it
         for polyn in range(4,0,-1): #find and sub longer forms first
             for s in classes:

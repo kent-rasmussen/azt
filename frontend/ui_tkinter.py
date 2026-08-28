@@ -2418,8 +2418,27 @@ class Window(Toplevel):
         except Exception as e:
             log.info(f"Exception updating progress: {e}")
     def resetframe(self):
+        """Blank the content frame. INVARIANT: never call this on a VIEWABLE
+        window outside a waiting() block. The Exit button lives in
+        `outsideframe`, not `frame`, so a mapped window whose frame has just
+        been emptied shows a fullscreen block of theme colour containing
+        nothing but Quit — and it stays that way for as long as the next build
+        takes (Kent measured ~10s). `with waiting(thenshow=True)` is the fix
+        and already exists: wait() withdraws the window and covers the screen
+        with the Loading dialog, waitdone() deiconifies once the build is done.
+        Logged rather than raised — a noisy log beats breaking a live page."""
         if self.parent.exitFlag.istrue():
             return
+        try:
+            if self.winfo_exists() and self.winfo_viewable() \
+                    and not self.iswaiting():
+                log.warning("resetframe on a VIEWABLE window with no wait "
+                            "active (%s) — user sees an empty kiosk page with "
+                            "only Quit until the next build finishes; wrap the "
+                            "teardown+rebuild in waiting(thenshow=True)",
+                            self.title())
+        except Exception:
+            pass # a diagnostic must never be the thing that breaks the reset
         if self.winfo_exists(): #If this has been destroyed, don't bother.
             if hasattr(self,'frame') and type(self.frame) is Frame:
                 self.frame.destroy()

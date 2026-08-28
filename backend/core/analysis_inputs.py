@@ -606,6 +606,33 @@ class CheckParameters(object):
             g=set(n.get('groups',[])); d=set(n.get('done',[]))
             if not g or not (g<=d):
                 return False
+        # …AND nothing still unsorted in the check (Kent 2026-08-28). The loop
+        # above only asks whether the groups that EXIST are verified. A word with
+        # no annotation for a check is in no group, so it is in no slice either,
+        # and it is invisible to both that test and next_unverified_slice(). Prep
+        # therefore read complete while words were still unclassified — the app
+        # moved to stage 2, the vowels were never distinguished, and the machine
+        # profile stayed all-C. C# is where this shows up first: #C and syls
+        # yield a value for any form, so C# is the check most likely to leave
+        # words ungrouped.
+        #   Uses the LIVE slice dict if there is one (analysis.py sets
+        # program.syllable_slices on construction) — building one here would be
+        # expensive and re-entrant. With no slice dict we fall through to the old
+        # answer rather than block the gate on a missing cache: fail-open keeps
+        # this from becoming a way to make the app unusable.
+        sl=getattr(self.program,'syllable_slices',None)
+        if sl is not None and hasattr(sl,'unsorted'):
+            for chk in ('#C','C#','syls'):
+                try:
+                    n_unsorted=len(sl.unsorted(chk))
+                except Exception as e:
+                    log.info("prep-complete unsorted probe failed for %s: %s",
+                             chk, e)
+                    continue
+                if n_unsorted:
+                    log.info("syllable prep NOT complete: %d word(s) still "
+                             "unsorted in %s", n_unsorted, chk)
+                    return False
         return True
     # --- profile class → prose (the configurable renderer; tune to user feedback) ---
     def profile_class_begend_name(self,beg,end):

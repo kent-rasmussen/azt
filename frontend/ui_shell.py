@@ -1118,12 +1118,22 @@ class StatusFrame(ui.Frame):
     """Right side"""
     def maybeboard(self):
         if not self.winfo_exists(): #stale after()/post-wait call; this frame's
+            log.info("maybeboard: frame gone; no board built")
             return                  #window was destroyed (e.g. task switch)
         if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
             self.leaderboard.destroy()
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky='') #nesw
         #Given the line above, much of the below can go, but not all?
+        # ORDER RESTORED 2026-08-28. I had moved this check ABOVE the
+        # destroy+recreate, reasoning that a task wanting no board shouldn't
+        # silently discard the existing one. That was speculative — I never
+        # confirmed this branch was the one being taken — and it changed real
+        # control flow: on this path `self.leaderboard` was then never created
+        # at all, where before it always existed as an empty Frame. Reverted
+        # while a data regression is being chased; the logging stays, since
+        # that is what the branch was missing in the first place.
         if self.program.task.no_leaderboard:
+            log.info("maybeboard: task wants no leaderboard; empty board")
             return
         if self.program.task.icon_leaderboard or not self.program.taskchooser.doneenough['collectionlc']:
             self.makenoboard()
@@ -2626,6 +2636,18 @@ class TaskDressing(HasMenus,ui.Window):
                     pass
             for w in widgets:
                 try:
+                    # Skip AMBIENT windows (guard_ambient): ones that are
+                    # viewable but are not a surface the user can work in. The
+                    # status/message window is parented to the root and stays
+                    # open all session by design, so counting it silently
+                    # disabled this whole guard from the first notify onward —
+                    # which is why no NO WINDOW line was ever logged, including
+                    # while the user sat looking at nothing at all (Kent
+                    # 2026-08-27). Wait dialogs and real modals still count:
+                    # those mean "something is happening", which is exactly the
+                    # evidence this guard should accept.
+                    if getattr(w,'guard_ambient',False):
+                        continue
                     if w.winfo_exists() and w.winfo_viewable():
                         return True
                 except Exception:
@@ -2688,12 +2710,25 @@ class TaskDressing(HasMenus,ui.Window):
         if hasattr(self,'runwindow'):
             widgets+=[self.runwindow]
         for w in widgets:
-            log.info(f"{w} {w.winfo_exists()=}")
-            log.info(f"{w} {w.winfo_ismapped()=}")
-            log.info(f"{w} {w.winfo_viewable()=}")
-            log.info(f"{w} {w.iswaiting()=}")
-            log.info(f"{w} {w.state()=}")
-            log.info(f"{w} {w.winfo_toplevel() == w=}")
+            # STOP AT A DEAD WIDGET. Every probe below raises TclError 'bad
+            # window path name' on a destroyed window, so the old code turned a
+            # diagnostic into an exception exactly when the thing it was called
+            # to explain had happened (Kent 2026-08-27: the run window was gone,
+            # and isrunwindow crashed instead of reporting the task window's
+            # state). A diagnostic that dies on the interesting case is worse
+            # than none.
+            try:
+                alive=w.winfo_exists()
+                log.info(f"{w} {alive=}")
+                if not alive:
+                    continue
+                log.info(f"{w} {w.winfo_ismapped()=}")
+                log.info(f"{w} {w.winfo_viewable()=}")
+                log.info(f"{w} {w.iswaiting()=}")
+                log.info(f"{w} {w.state()=}")
+                log.info(f"{w} {w.winfo_toplevel() == w=}")
+            except Exception as e:
+                log.info(f"{w} probe failed: {e}")
     def clear_runwindow(self):
         if hasattr(self,'runwindow'):
             self.runwindow.destroy()

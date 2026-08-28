@@ -875,6 +875,18 @@ class SyllableSliceDict(object):
             return []
     def _members(self,check,group):
         return [s for s in self._psenses() if self._group_of(s,check)==group]
+    def unsorted(self,check):
+        """Senses with NO group in this check — i.e. never sorted for it.
+
+        groups_of() discards None and '' below, so an unannotated word is
+        invisible to every downstream predicate: it is in no group, therefore in
+        no slice, therefore neither next_unverified_slice() nor
+        syllable_prep_complete()'s `groups <= done` can see it. Both ask "is
+        everything I can see finished?" and neither asks "is everything here?",
+        so prep reported complete with words still unclassified (Kent
+        2026-08-28: a word carrying ['#C=C','syls=3'] and no C# at all, while
+        the app had moved on to stage 2)."""
+        return [s for s in self._psenses() if not self._group_of(s,check)]
     def groups_of(self,check):
         gs={self._group_of(s,check) for s in self._psenses()}
         gs.discard(None); gs.discard('')

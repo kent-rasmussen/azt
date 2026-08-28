@@ -42,6 +42,17 @@ class StatusWindow(ui.Window):
     out the messages already there, and without fighting the scroll canvas for
     its position. That keeps the per-message cost to one Label."""
     FIRST_ROW = 9999      # counts DOWN from here; also the message cap
+    # AMBIENT: not a work surface. TaskDressing.guardvisible asks "is anything
+    # viewable?" before warning that every window is hidden, and it counts the
+    # app root plus ALL of the root's children — which includes this window,
+    # parented to the root and (by design) left open for the whole session. So
+    # from the first notify onward the guard found this and returned silently:
+    # no NO WINDOW line ever appeared, through the entire 2026-08 hunt, even
+    # when the user was looking at no window at all (Kent 2026-08-27). A wait
+    # dialog or a real modal SHOULD suppress the guard — the user is being told
+    # something is happening. A message list the user can neither work in nor
+    # dismiss the problem from should not.
+    guard_ambient = True
     def __init__(self, parent, **kwargs):
         super().__init__(parent, title=_("Messages"), exit=False,
                         withdrawn=True)
@@ -216,7 +227,22 @@ class StatusWindow(ui.Window):
             # (update() under Wayland, which drains events): a status message can
             # arrive mid-teardown of the window that produced it, and re-entering
             # the event loop there is the one thing this window must never do.
-            self.after_idle(self.scroll.reflow)
+            #   SURFACE IN THE SAME CALLBACK, AFTER the reflow (2026-08-27). It
+            # used to raise the window inline, i.e. BEFORE the scheduled reflow
+            # ran — and a ScrollingFrame's children are invisible until reflow
+            # sizes the canvas, so the raise showed an EMPTY window and the
+            # message appeared only afterwards. That is the same
+            # reveal-before-layout bug found in tasks/sound.py and Sort.sort()
+            # the same day; see azt/agenda/fullscreen_with_only_quit.md. Layout
+            # first, then raise, so the message is there when the user looks.
+            self.after_idle(self._settle)
+        except Exception as e:
+            log.info("status window reflow failed: %s", e)
+    def _settle(self):
+        """Lay the new message out, THEN raise the window. Split out of add()
+        so the two happen in that order in one idle callback."""
+        try:
+            self.scroll.reflow()
         except Exception as e:
             log.info("status window reflow failed: %s", e)
         # Raise it for the new message: minimised by the user, or (the usual case)
