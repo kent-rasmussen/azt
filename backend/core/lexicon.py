@@ -2224,15 +2224,21 @@ class Syllables(Senses):
         n=max(len(senses),1)
         # Per-sense seeding is the shared params.seed_sense_primitives rule (also
         # run at LIFT load), so the two paths can't drift. Tally what it did.
-        tally={'seeded':0,'edges':0,'defaulted':0,'syls':0}
+        tally={'seeded':0,'edges':0,'defaulted':0,'syls':0,'backfilled':0}
         for i,sense in enumerate(senses):
             tag=self.program.params.seed_sense_primitives(sense,ftype,analang)
             if tag in tally:
                 tally[tag]+=1
             yield i*100//n
         log.info("Presort (wordlist-wide): total=%d seeded=%d edges-from-form=%d "
-                "defaulted→#C=C=%d syls-backfilled=%d", n, tally['seeded'],
-                tally['edges'], tally['defaulted'], tally['syls'])
+                "defaulted→#C=C=%d syls-backfilled=%d other-backfilled=%d", n,
+                tally['seeded'], tally['edges'], tally['defaulted'],
+                tally['syls'], tally['backfilled'])
+        if tally['backfilled']:
+            log.info("Presort: filled a missing primitive on %d already-bucketed "
+                    "word(s) — most likely C# on a word that had #C and syls "
+                    "(the 'mʌchete' shape). They re-enter their check.",
+                    tally['backfilled'])
         if tally['syls']:
             log.info("Presort: backfilled syls for %d already-bucketed word(s) "
                     "that had #C/C# but no syllable count — they re-enter the "

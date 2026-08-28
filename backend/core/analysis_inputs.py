@@ -346,37 +346,58 @@ class CheckParameters(object):
                         last-resort bucket, syls left unset
           'syls'      — backfilled a missing syls on an already-bucketed, now-
                         analyzable word (the bug that stranded words like 'always')
-          None        — already complete / nothing to do."""
+          'backfilled'— filled some other missing primitive on a bucketed word
+          None        — already complete / nothing to do.
+
+        EACH PRIMITIVE IS INDEPENDENT. This used to branch on `not #C`, treating
+        "#C absent" as "not yet bucketed" and seeding all three together — so any
+        word holding SOME of the three could never acquire the rest. syls got a
+        special-case backfill when that stranded 'always'; C# never did, which
+        stranded 'mʌchete' (#C=C, syls=3, no C#) — unsortable, and invisible to
+        next_unverified_slice() because a word in no group is in no slice, so prep
+        reported complete with it outstanding (Kent 2026-08-28). Adding a second
+        special case would just move the seam, so the gate is gone: work out what
+        is MISSING, then fill exactly that, whatever the combination."""
         av=sense.annotationvaluebyftypelang
         if av(ftype,analang,'syls')=='0':       # normalise a nonsensical 0
             av(ftype,analang,'syls','1')
         profile=sense.cvprofilevalue(ftype) or sense.cvprofilemachinevalue(ftype)
         valid=bool(profile) and profile!='Invalid'
-        if not av(ftype,analang,'#C'):          # not yet bucketed
-            if valid:
-                av(ftype,analang,'#C',self.word_initial(profile))
-                av(ftype,analang,'C#',self.word_final(profile))
-                av(ftype,analang,'syls',str(self.syllable_count(profile)))
-                av(ftype,analang,ftype,profile)
-                return 'seeded'
-            # Un-analyzable (capitalised, multi-word, out-of-alphabet …). The edges
-            # are still facts about the first/last SEGMENT, so READ THEM OFF THE
-            # FORM rather than calling both consonant: the old blanket default
-            # parked vowel-final words in C#=C for no reason visible to the user,
-            # and #C/C# are closed binaries with no sort page, so nothing ever
-            # offered them for correction (Kent 2026-07-29). syls stays unset —
-            # that IS the judgement a missing profile deprives us of, and the syls
-            # sort will ask for it.
-            beg,end=self.orthographic_edges(sense,ftype,analang)
-            av(ftype,analang,'#C',beg or 'C')
-            av(ftype,analang,'C#',end or 'C')
-            return 'defaulted' if (beg is None or end is None) else 'edges'
-        if not av(ftype,analang,'syls') and valid: # backfill a missing syls
-            av(ftype,analang,'syls',str(self.syllable_count(profile)))
+        missing=[k for k in ('#C','C#','syls') if not av(ftype,analang,k)]
+        if not missing:
+            return None
+        first_bucketing=len(missing)==3 # nothing known yet: the old 'seeded' case
+        if valid:
+            derive={'#C':   lambda:self.word_initial(profile),
+                    'C#':   lambda:self.word_final(profile),
+                    'syls': lambda:str(self.syllable_count(profile))}
+            for k in missing:
+                av(ftype,analang,k,derive[k]())
             if not av(ftype,analang,ftype):
                 av(ftype,analang,ftype,profile)
-            return 'syls'
-        return None
+            if first_bucketing:
+                return 'seeded'
+            return 'syls' if 'syls' in missing else 'backfilled'
+        # Un-analyzable (capitalised, multi-word, out-of-alphabet …). The edges
+        # are still facts about the first/last SEGMENT, so READ THEM OFF THE
+        # FORM rather than calling both consonant: the old blanket default
+        # parked vowel-final words in C#=C for no reason visible to the user,
+        # and #C/C# are closed binaries with no sort page, so nothing ever
+        # offered them for correction (Kent 2026-07-29). syls stays unset —
+        # that IS the judgement a missing profile deprives us of, and the syls
+        # sort will ask for it. Only the edges that are actually missing get
+        # written, so a confirmed edge is never overwritten by a guess.
+        edges=[k for k in missing if k in ('#C','C#')]
+        if not edges:
+            return None # only syls missing, and no profile to count it from
+        beg,end=self.orthographic_edges(sense,ftype,analang)
+        for k,e in (('#C',beg),('C#',end)):
+            if k in edges:
+                av(ftype,analang,k,e or 'C')
+        guessed=[e for k,e in (('#C',beg),('C#',end)) if k in edges and e is None]
+        if guessed:
+            return 'defaulted'
+        return 'edges' if first_bucketing else 'backfilled'
     # --- reconciling a machine CV profile with the user's CONFIRMED primitives.
     # A machine analysis can contradict what the user verified — e.g. 'CVCV' for a
     # word confirmed C_1_C. constrain_profile reconciles it SYLLABLES-FIRST, then
@@ -624,15 +645,34 @@ class CheckParameters(object):
         if sl is not None and hasattr(sl,'unsorted'):
             for chk in ('#C','C#','syls'):
                 try:
-                    n_unsorted=len(sl.unsorted(chk))
+                    stuck=sl.unsorted(chk)
+                    n_unsorted=len(stuck)
+                    if stuck: # name them: 2 of 1700 is a data question, not a
+                              # statistic, and the forms say why presort skipped
+                        log.warning("prep unsorted in %s: %s", chk,
+                            [ (s.formattedform(sl.analang,sl.ftype) or '?')
+                              for s in stuck[:10] ])
                 except Exception as e:
                     log.info("prep-complete unsorted probe failed for %s: %s",
                              chk, e)
                     continue
                 if n_unsorted:
-                    log.info("syllable prep NOT complete: %d word(s) still "
-                             "unsorted in %s", n_unsorted, chk)
-                    return False
+                    # WARN, DO NOT BLOCK — yet. Blocking here livelocked the app
+                    # (Kent 2026-08-28): maybeverifysyllables asks
+                    # next_unverified_slice(), which has the SAME blind spot, so
+                    # it still reported Task 1 done, closed the run window and
+                    # notified — while this gate said "not complete", so the task
+                    # restarted prep, and round it went, a blank page each pass.
+                    # Presort doesn't rescue them either ('seeded=0
+                    # defaulted→#C=C=0'), so there is currently NO path that can
+                    # give these words a C#. A gate must not block on a condition
+                    # nothing can clear. Restore `return False` only once unsorted
+                    # words are actually presented for sorting — that is the real
+                    # fix, and this line is the evidence for it.
+                    log.warning("syllable prep INCOMPLETE (not blocking): %d "
+                                "word(s) unsorted in %s — no path assigns them, "
+                                "so stage 2 proceeds. See the prep-gate item.",
+                                n_unsorted, chk)
         return True
     # --- profile class → prose (the configurable renderer; tune to user feedback) ---
     def profile_class_begend_name(self,beg,end):

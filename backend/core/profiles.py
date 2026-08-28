@@ -200,7 +200,23 @@ class ProfileAnalyzer:
         self.slists()  # makes s; depends on polygraphs
         analang = self.program.db.analang
         glyphs_present = self.program.status.all_groups_verified_anywhere()
-        for cvt in glyphs_present:
+        # GLYPH cvts ONLY. This loop exists for one purpose: make sure every
+        # ANALYZED glyph group reaches the C&V regexes even when lift.py's
+        # possible∩present scan missed it. 'C' and 'V' are the only cvts whose
+        # groups are glyphs. The syllable pseudo-cvt 'S' has cvprofiles for group
+        # names, and tone 'T' has melodies — neither is a segment, and NO
+        # cvprofile group may enter the segment inventory, ever, for any reason
+        # (Kent 2026-08-28).
+        #   The earlier guard here filtered group ids containing
+        # SyllableSliceDict.SEP, which caught only the SLICED ids ('CVC␟2') and
+        # let the bare group names through — 'C', 'V', '1', 'CVC', 'CVCV',
+        # 'CCVCVCC=CCVC'. Those landed in class 'S' (the 'S'-overload trap: the
+        # syllable cvt and the sonorant class share a letter), and an
+        # undistinguished 'S' folds into C — so the C class ended up matching the
+        # literal 'V' that the V pass had just written, turning CVCVCV into
+        # CCCCCC on every load. Filtering by cvt is the fix; the separator never
+        # was the distinction that mattered.
+        for cvt in [c for c in glyphs_present if c in ('C', 'V')]:
             if cvt == 'V':
                 there = self.s[analang][cvt]
             else:
@@ -211,13 +227,10 @@ class ProfileAnalyzer:
                         if k in self.s[analang]
                         for i in j
                     ]
-            # Keep encoded syllable-slice ids out of the segment inventory. The
-            # syllable pseudo-cvt 'S' collides with the sonorant class 'S' (the
-            # 'S'-overload trap in CONTEXT.md), so all_groups_verified_anywhere()
-            # hands this loop that node's group␟slice 'done' ids. SEP is
-            # collision-free, so filtering it drops only synthetic ids, never a
-            # real grapheme — otherwise those ids poison C-class expansion and
-            # every fromCV() seed regex matches nothing.
+            # Belt-and-braces only: with the cvt filter above, a group␟slice id
+            # can no longer reach this line (those live in the 'S' node). Kept
+            # because a synthetic id is never a grapheme under any future
+            # keying, and it costs one set comprehension.
             fresh = {g for g in glyphs_present[cvt]
                         if SyllableSliceDict.SEP not in g}
             self.s[analang][cvt].extend(fresh - set(there))
@@ -780,16 +793,18 @@ class ProfileAnalyzer:
         analang = self.program.db.analang
         if any(s.annotationvaluebyftypelang(ftype, analang, '#C')
                 for s in self.program.db.senses):
-            tally = {'seeded': 0, 'edges': 0, 'defaulted': 0, 'syls': 0}
+            tally = {'seeded': 0, 'edges': 0, 'defaulted': 0, 'syls': 0,
+                     'backfilled': 0}
             for s in self.program.db.senses:
                 tag = self.program.params.seed_sense_primitives(s, ftype, analang)
                 if tag in tally:
                     tally[tag] += 1
             if any(tally.values()):
                 log.info("Load: seeded syllable primitives (seeded=%d "
-                        "edges-from-form=%d defaulted=%d syls-backfilled=%d).",
+                        "edges-from-form=%d defaulted=%d syls-backfilled=%d "
+                        "other-backfilled=%d).",
                         tally['seeded'], tally['edges'], tally['defaulted'],
-                        tally['syls'])
+                        tally['syls'], tally['backfilled'])
             try:
                 SyllableSliceDict(self.program,
                                 self.program.slices.ps(), ftype).build()

@@ -110,8 +110,10 @@ class SyllablePrep(object):
             try:
                 log.info("DIAG-prepdone: window state after Task 1 completion")
                 self.ui.isrunwindow()
-                board=getattr(self.status,'board',None)
-                log.info("DIAG-prepdone: board=%s children=%s",
+                board=getattr(self.status,'leaderboard',None) # NOT 'board' —
+                # that attribute does not exist, so this reported board=None
+                # every time and told us nothing for two rounds.
+                log.info("DIAG-prepdone: leaderboard=%s children=%s",
                          board,
                          len(board.winfo_children()) if board is not None
                             and hasattr(board,'winfo_children') else 'n/a')

@@ -1389,6 +1389,11 @@ class StatusFrame(ui.Frame):
                     else sl._first_pending_slice()
         if active in self._cells:
             self.activate_cell(self._cells[active])
+        # Reflow, or none of the above is visible — see makeSyllableprogresstable.
+        try:
+            leaderscroll.reflow()
+        except Exception as e:
+            log.info("syllable prep board reflow failed: %s", e)
     def makeSyllableprogresstable(self):
         """2-D syllable progress board, shown only once the three primitive
         checks (#C/C#/syls) are VERIFIED. Rows = syllable count; columns grouped
@@ -1406,6 +1411,9 @@ class StatusFrame(ui.Frame):
         sentinel=params.SYLLABLE_SLICE_SENTINEL
         if not self._syllable_primitives_verified(ps):
             # profile classes aren't defined until the 3 primitives are verified
+            log.info("Task-2 board: primitives not verified for ps=%s → blank "
+                     "board (makenoboard renders an EMPTY spacer, so this is "
+                     "the full-screen blank page the user sees)", ps)
             self.makenoboard()
             return
         # Bucket the ps words by profile class (Beg+count+End). Two indicators, same
@@ -1430,6 +1438,17 @@ class StatusFrame(ui.Frame):
             beg,syls,end=params.parse_profile_class(pc)
             begends.add((beg,end)); sylset.add(syls)
         if not counts:
+            # No word has a profile class, so there is nothing to draw. Say WHY:
+            # profile_class_of_sense returns None until all three primitives are
+            # set, so this is either an empty sentinel slice or words missing a
+            # primitive — two very different problems that look identical on
+            # screen (a blank full-screen page, since makenoboard draws an empty
+            # spacer). Kent 2026-08-28.
+            log.info("Task-2 board: no profile classes → blank board. "
+                     "ps=%s sentinel-slice words=%d (a word counts only once "
+                     "#C, C# AND syls are all set)", ps,
+                     len(list(self.program.slices.senses(ps=ps,
+                                                        profile=sentinel))))
             self.makenoboard()
             return
         self.boardtitle()
@@ -1550,6 +1569,19 @@ class StatusFrame(ui.Frame):
             if getattr(self.program.slices,'_S_profile_class',None)!=active:
                 self.program.slices.profile(active)
             self.activate_cell(self._cells[active])
+        # REFLOW, or the whole board is invisible. leaderscroll is a
+        # ScrollingFrame, which carries grid_propagate(0): its canvas is not
+        # sized to the content until reflow, so every cell above is built,
+        # gridded, and unseen. That is the stage 1 → 2 "freeze" — the task
+        # window comes back mapped/viewable/state=normal with nothing on it and
+        # nothing scheduled, which reads exactly like a hang (Kent 2026-08-28).
+        # The glyph board already does this (updateglyphbuttons); this one never
+        # did. Safe to drain here: runwindowcleanup deiconified the task window
+        # before maybeboard ran, so we are not flushing into an unmapped window.
+        try:
+            leaderscroll.reflow()
+        except Exception as e:
+            log.info("syllable progress board reflow failed: %s", e)
     def update_S_profile_class(self,pc):
         """Click a profile-class cell → make that Beg+count+End the current 'S'
         slice (so its profile sort can be worked) and move the highlight."""
@@ -1802,6 +1834,13 @@ class StatusFrame(ui.Frame):
         if ungroups > 0:
             log.error(_("You have more groups verified than there are, in {count} "
                         "cells").format(count=ungroups))
+        # Reflow, or none of the above is visible — see makeSyllableprogresstable.
+        # (The commented-out self.frame.update() below was an earlier, blunter
+        # attempt at the same thing.)
+        try:
+            leaderscroll.reflow()
+        except Exception as e:
+            log.info("progress board reflow failed: %s", e)
         # self.frame.update()
     def __init__(self, parent, program, **kwargs):
         # log.info("Remaking status frame")

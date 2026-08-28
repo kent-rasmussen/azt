@@ -227,22 +227,16 @@ class StatusWindow(ui.Window):
             # (update() under Wayland, which drains events): a status message can
             # arrive mid-teardown of the window that produced it, and re-entering
             # the event loop there is the one thing this window must never do.
-            #   SURFACE IN THE SAME CALLBACK, AFTER the reflow (2026-08-27). It
-            # used to raise the window inline, i.e. BEFORE the scheduled reflow
-            # ran — and a ScrollingFrame's children are invisible until reflow
-            # sizes the canvas, so the raise showed an EMPTY window and the
-            # message appeared only afterwards. That is the same
-            # reveal-before-layout bug found in tasks/sound.py and Sort.sort()
-            # the same day; see azt/agenda/fullscreen_with_only_quit.md. Layout
-            # first, then raise, so the message is there when the user looks.
-            self.after_idle(self._settle)
-        except Exception as e:
-            log.info("status window reflow failed: %s", e)
-    def _settle(self):
-        """Lay the new message out, THEN raise the window. Split out of add()
-        so the two happen in that order in one idle callback."""
-        try:
-            self.scroll.reflow()
+            #   SURFACE FIRST, REFLOW SECOND — do NOT reorder these (tried and
+            # reverted 2026-08-28). Laying out before raising looks right (a
+            # ScrollingFrame's children are invisible until reflow, so the raise
+            # briefly shows an empty window), but reflow() drains synchronously
+            # and XWayland DEADLOCKS draining a render backlog into a window
+            # that is not mapped yet — the hazard spelled out at
+            # ui_tkinter.py:1411-1415, and it wedged the app inside
+            # _configure_canvas→update_idletasks within minutes. Map first, then
+            # drain, exactly as waitdone() does for the same reason.
+            self.after_idle(self.scroll.reflow)
         except Exception as e:
             log.info("status window reflow failed: %s", e)
         # Raise it for the new message: minimised by the user, or (the usual case)
