@@ -1181,6 +1181,39 @@ class StatusFrame(ui.Frame):
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
         lps.bind('<ButtonRelease-1>',self.program.ui_settings.getps)
+    def _reflow_board_soon(self,scroll,tries=10):
+        """Reflow a board's ScrollingFrame AFTER the window is actually mapped.
+
+        NEVER call reflow() inline from a board builder. maybeboard() runs from
+        maybeverifysyllables() inside a Tk callback, moments after
+        runwindowcleanup() called deiconify() on the task window — the map is
+        still QUEUED. reflow() drains synchronously (update_idletasks), and
+        XWayland deadlocks draining a backlog into a window that is not mapped
+        yet: the same hazard spelled out at ui_tkinter.py:1411-1415 for
+        waitdone(). Calling it inline wedged the app in
+        _configure_canvas→update_idletasks (Kent 2026-08-28).
+
+        So: schedule it, and before draining, CHECK the toplevel is viewable —
+        retrying briefly if not, giving up rather than blocking. A board that
+        stays unreflowed is invisible, which is bad; a wedged app is worse."""
+        def go(n=tries):
+            try:
+                if not scroll.winfo_exists():
+                    return
+                top=scroll.winfo_toplevel()
+                if not top.winfo_viewable():
+                    if n>0:
+                        self.after(50,lambda:go(n-1))
+                    else:
+                        log.info("board reflow skipped: window never mapped")
+                    return
+                scroll.reflow()
+            except Exception as e:
+                log.info("board reflow failed: %s", e)
+        try:
+            self.after_idle(go)
+        except Exception as e:
+            log.info("could not schedule board reflow: %s", e)
     def makenoboard(self):
         log.info("No Progress board")
         try:
@@ -1390,10 +1423,7 @@ class StatusFrame(ui.Frame):
         if active in self._cells:
             self.activate_cell(self._cells[active])
         # Reflow, or none of the above is visible — see makeSyllableprogresstable.
-        try:
-            leaderscroll.reflow()
-        except Exception as e:
-            log.info("syllable prep board reflow failed: %s", e)
+        self._reflow_board_soon(leaderscroll)
     def makeSyllableprogresstable(self):
         """2-D syllable progress board, shown only once the three primitive
         checks (#C/C#/syls) are VERIFIED. Rows = syllable count; columns grouped
@@ -1576,12 +1606,12 @@ class StatusFrame(ui.Frame):
         # window comes back mapped/viewable/state=normal with nothing on it and
         # nothing scheduled, which reads exactly like a hang (Kent 2026-08-28).
         # The glyph board already does this (updateglyphbuttons); this one never
-        # did. Safe to drain here: runwindowcleanup deiconified the task window
-        # before maybeboard ran, so we are not flushing into an unmapped window.
-        try:
-            leaderscroll.reflow()
-        except Exception as e:
-            log.info("syllable progress board reflow failed: %s", e)
+        # did. SCHEDULED, never inline — I first wrote this as a direct
+        # reflow() on the reasoning that runwindowcleanup had already
+        # deiconified the task window, and that is wrong: the deiconify is only
+        # QUEUED at this point, so the drain deadlocked. See
+        # _reflow_board_soon.
+        self._reflow_board_soon(leaderscroll)
     def update_S_profile_class(self,pc):
         """Click a profile-class cell → make that Beg+count+End the current 'S'
         slice (so its profile sort can be worked) and move the highlight."""
@@ -1837,10 +1867,7 @@ class StatusFrame(ui.Frame):
         # Reflow, or none of the above is visible — see makeSyllableprogresstable.
         # (The commented-out self.frame.update() below was an earlier, blunter
         # attempt at the same thing.)
-        try:
-            leaderscroll.reflow()
-        except Exception as e:
-            log.info("progress board reflow failed: %s", e)
+        self._reflow_board_soon(leaderscroll)
         # self.frame.update()
     def __init__(self, parent, program, **kwargs):
         # log.info("Remaking status frame")
