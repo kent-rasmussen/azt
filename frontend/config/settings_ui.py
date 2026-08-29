@@ -255,9 +255,16 @@ class SettingsUI(object):
         self.refreshattributechanges()
         if window:
             window.destroy()
-    def setprofile(self,choice=None,window=None):
+    def setprofile(self,choice=None,window=None,**kwargs):
+        # **kwargs mirrors setcheck below, and for the same reason: the caller
+        # says WHICH next one it wants (toverify=True, wsorted=True …) and only
+        # nextprofile can act on that. Without it, setprofile(toverify=True)
+        # raised TypeError — the interface every call site was already written
+        # against (sorting_engine.nprofile), and nextprofile has taken **kwargs
+        # all along. Crashed a field machine out of the mainloop, since it fires
+        # from drive_work's on_done where nothing catches it.
         if not choice:
-            choice=self.program.status.nextprofile()
+            choice=self.program.status.nextprofile(**kwargs)
         self.program.slices.profile(choice)
         self.program.mainwindow.status.updateprofile()
         if self.program.params.cvt() != 'T': #profiles don't determine tone checks
