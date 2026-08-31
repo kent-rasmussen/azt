@@ -514,24 +514,89 @@ class Theme(object):
         underline - font underlining (0 - none, 1 - underline)
         overstrike - font strikeout (0 - none, 1 - strikeout)
         """
+    BASELINE_DPI=96.0   # what every hard-coded pixel size in this app assumes
     def setscale(self):
+        """UI scale = how big a glyph should be PHYSICALLY, and nothing else.
+
+        THE PRINCIPLE (Kent 2026-08-31, "I'd like to not keep looking over my
+        shoulder for it"): ask the one authority that actually knows, instead of
+        inferring a physical quantity from numbers that don't carry one.
+
+        This used to compute `this screen as a ratio of Kent's 1920x1080
+        (286x508mm)` over four ratios — two pixel, two millimetre — and keep
+        whichever deviated MOST from 1. Three things were wrong with that, and
+        every past fix here was a guard bolted onto the third:
+          1. the reference was a MACHINE, not a physical quantity, so `scale`
+             meant "bigger than Kent's old laptop" — meaningless elsewhere;
+          2. ONE number answered TWO independent questions — how big a glyph
+             should be (physical/DPI) and how much content fits (real estate).
+             A 4K 15" laptop and a 4K 40" TV have identical pixel counts and
+             opposite needs, which is why a big screen produced huge text
+             instead of more text;
+          3. the rule MAXIMIZED — it deliberately selected the most extreme
+             input, so any single bad reading dominated the whole UI. Hence the
+             mm plausibility test, the no-op band and the clamp: each one
+             narrowing the blast radius of a structurally fragile rule.
+
+        DPI is the right quantity, and on Windows the USER HAS ALREADY DECLARED
+        IT via display scaling — that setting is literally them answering "how
+        big should UI be on this machine", and every other app on their desktop
+        already obeys it. So we obey it too, and stop having our own opinion.
+
+        Correct whichever way Tk is built, which is the property the old rule
+        lacked:
+          * DPI-aware process  → fpixels reports 192 at 200%, we scale by 2.0;
+          * DPI-UNAWARE process → Windows reports 96, we scale by 1.0, and
+            WINDOWS magnifies the window itself.
+        Both land on the right physical size; only the sharpness differs. The
+        old rule, given bad input, produced a wrong size confidently.
+
+        NOT answered here, deliberately: whether the content FITS. That is the
+        real-estate question and it belongs to availablexy() and to layout
+        (columns, wrapping, scrolling). Conflating the two is what produced
+        years of this."""
         root=self.program.tk_root #tkinter.Tk() #just to get these values
-        modifier=1 #2 seemed necessary in the transition to xwayland; no idea why
-        h = self.program.screenh = root.winfo_screenheight()/modifier
-        w = self.program.screenw = root.winfo_screenwidth()/modifier
-        log.debug(f'{root.winfo_screenmmwidth()=}')
-        log.debug(f'{root.winfo_screenmmheight()=}')
-        log.debug(f'{root.winfo_screenheight()=}')
-        log.debug(f'{root.winfo_screenwidth()=}')
-        wmm = root.winfo_screenmmwidth()/modifier
-        hmm = root.winfo_screenmmheight()/modifier
+        h = self.program.screenh = root.winfo_screenheight()
+        w = self.program.screenw = root.winfo_screenwidth()
+        # winfo_fpixels('1i') = pixels per inch, straight from the platform.
+        dpi=0
+        try:
+            dpi=float(root.winfo_fpixels('1i'))
+        except Exception as e:
+            log.info("Could not read screen dpi (%s); assuming %.0f",
+                    e,self.BASELINE_DPI)
+        # A plausibility band, not a computation: anything outside it means the
+        # platform returned nonsense, and 1.0 is the safe reading.
+        if 48.0 <= dpi <= 480.0:
+            self.scale=dpi/self.BASELINE_DPI
+        else:
+            if dpi:
+                log.error("Implausible screen dpi %.1f; using %.0f dpi (scale "
+                        "1.0) rather than trusting it.",dpi,self.BASELINE_DPI)
+            self.scale=1.0
+        if 0.98 < self.scale < 1.02: #don't rescale the whole UI for 1%
+            self.scale=1.0
+        # Corruption backstop only. 2.0 is a LEGITIMATE reading now (a 200%
+        # Windows display), so this is deliberately not tight — unlike the 1.5
+        # cap that briefly guarded the old rule, where a 2.0 meant a misread.
+        clamped=min(max(self.scale,0.5),3.0)
+        if clamped!=self.scale:
+            log.error("UI scale %.2f out of range; clamping to %.2f.",
+                    self.scale,clamped)
+            self.scale=clamped
+        log.info("Screen %dx%d at %.1f dpi → UI scale %.2f (baseline %.0f dpi)",
+                w,h,dpi,self.scale,self.BASELINE_DPI)
+        return
+        # ---- superseded ratio-of-Kent's-screen computation, kept unreachable
+        # for one release in case a field machine reports a dpi we haven't seen;
+        # delete once 1.15 has run in the field. ----
+        wmm = root.winfo_screenmmwidth()
+        hmm = root.winfo_screenmmheight()
         #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
         hx=h/1080
         wx=w/1920
         hmmx=hmm/286
         wmmx=wmm/508
-        log.debug("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
-        log.debug("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
         # PIXELS ARE THE TRUSTWORTHY SIGNAL; mm are ADVISORY (Kent 2026-07-29,
         # "worst on windows machines"). This used to take min/max over all four
         # ratios and keep whichever deviated MOST from 1 — so a single bad number
@@ -1116,15 +1181,69 @@ class Gridded():
                 w=w.parent
             else:
                 return otherwidth, otherheight
+    MIN_AVAILABLE=200 # px floor; below this a measurement is wrong, not tight
+    def workarea(self):
+        """The USABLE screen, not the raw screen.
+
+        winfo_screenheight() is the whole display, taskbar/panel included — and
+        on Windows a window cannot be dragged above the top edge, so anything
+        that overflows the bottom is unreachable RATHER than merely awkward
+        (Kent 2026-08-31). wm_maxsize() is what the window manager will actually
+        allow a window to be, which on Windows is the work area (screen minus
+        taskbar) and on X11 is normally the screen — so it is never worse than
+        what we had, and better exactly where it needs to be.
+
+        Trusted only when it is a plausible REDUCTION of the screen: some WMs
+        report enormous sentinel values, and a multi-monitor X setup can report
+        the whole virtual desktop."""
+        try:
+            root=self._root()
+            sw,sh=root.winfo_screenwidth(),root.winfo_screenheight()
+            mw,mh=root.wm_maxsize()
+            if 0.5*sw <= mw <= sw and 0.5*sh <= mh <= sh:
+                return mw,mh
+            return sw,sh
+        except Exception as e:
+            log.info("work area unavailable (%s); using the raw screen",e)
+            try:
+                return self.winfo_screenwidth(),self.winfo_screenheight()
+            except Exception:
+                return 1024,768
     def availablexy(self):
-        """Compute self.maxwidth/self.maxheight from available screen space."""
+        """Compute self.maxwidth/self.maxheight — the REAL-ESTATE question.
+
+        Deliberately separate from theme.scale, which answers "how big should a
+        glyph be" (see Theme.setscale). Conflating the two is what made a large
+        screen produce large text instead of more text.
+
+        Two fixes, 2026-08-31:
+        * THE CHROME ALLOWANCES SCALE. 50/50/100 were raw pixels, so on a 200%
+          display they under-counted by half — a title bar really is ~100px
+          there. They are chrome, and chrome scales with the UI.
+        * THERE IS A FLOOR. This subtracts _measure_siblings' total from the
+          screen, and on a busy page that sum can approach or exceed it,
+          yielding a tiny or NEGATIVE maxwidth. Label.wrap() takes
+          min(self.wraplength, self.maxwidth), so a tiny maxwidth wraps text at
+          a few pixels — which is precisely the "one character per line" button
+          text in the field screenshots. A measurement that says there is no
+          room is wrong; treat it as wrong, and say so, rather than laying out
+          against it."""
         otherwidth, otherheight = self._measure_siblings(self)
-        titlebarHeight=50
-        borderSize=50
+        s=getattr(getattr(self,'theme',None),'scale',1) or 1
+        titlebarHeight=int(50*s)
+        borderSize=int(50*s)
         otherwidth+=borderSize*2
-        otherheight+=titlebarHeight+100
-        self.maxheight=self.winfo_screenheight()-otherheight
-        self.maxwidth=self.winfo_screenwidth()-otherwidth
+        otherheight+=titlebarHeight+int(100*s)
+        w,h=self.workarea()
+        self.maxwidth=w-otherwidth
+        self.maxheight=h-otherheight
+        for attr,total in (('maxwidth',w),('maxheight',h)):
+            if getattr(self,attr) < self.MIN_AVAILABLE:
+                log.info("availablexy: %s came out %d of %d for %s — siblings "
+                        "measured %d/%d; flooring to %d rather than laying out "
+                        "against a bad measurement.",attr,getattr(self,attr),
+                        total,self,otherwidth,otherheight,self.MIN_AVAILABLE)
+                setattr(self,attr,self.MIN_AVAILABLE)
     def __init__(self, *args, **kwargs):
         """this removes gridding kwargs from the widget calls"""
         self._grid=False

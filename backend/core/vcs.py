@@ -1055,10 +1055,21 @@ class GitReadOnly(Git):
         # reading it as live made this method look like it did something it
         # does not. The live version is the `if self.program.me:` block above.)
     def switchbranches(self):
-        if self.branch == 'main':
-            self.testversion()
-        else:
-            self.reverttomain()
+        """Move to the OTHER branch, non-destructively.
+
+        NEVER hard_checkout here. This is the developer publish loop
+        (share() under program.me): it visits the other branch only to push it,
+        so resetting that branch to origin would discard exactly the unpushed
+        commits it is about to publish, and -f would discard working-tree edits
+        on the maintainer's own machine. The destructive reset belongs to the
+        USER-facing 'Try testing version' / 'Revert to main' buttons, where
+        overwriting local mess is the point (Kent 2026-08-31) — those still call
+        reverttomain/testversion, which still hard_checkout.
+        A plain checkout is also honest here: git refuses the switch if
+        uncommitted changes would be clobbered, which is the correct answer for
+        a machine whose work is the thing being shared."""
+        target=self.program.testversionname if self.branch=='main' else 'main'
+        return self.checkout(target)
     def hard_checkout(self,branchname):
         """Switch to `branchname` and make it match origin/<branchname> EXACTLY,
         discarding local commits and local edits.

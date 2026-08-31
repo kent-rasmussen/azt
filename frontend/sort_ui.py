@@ -515,22 +515,56 @@ class SortPresenter(PresenterBase):
             task.rename_profile_group(group,new)
             if on_renamed:
                 on_renamed()
-        r=1
+        # THE OPTIONS SCROLL; THE ESCAPES DO NOT (Kent 2026-08-31, Windows:
+        # "bottom options run off the page"). Everything used to be gridded
+        # straight into w.frame — up to twelve profile buttons plus the two
+        # escapes, fifteen rows at font 'normal' — so on a short or scaled
+        # screen the page simply ran past the bottom edge. The rows that fell
+        # off were the LAST two, i.e. 'Other…' and 'Cancel', and this window is
+        # built exit=False, so a user who cannot reach Cancel has no button at
+        # all. Put the variable-length list in a scroll frame and keep the
+        # fixed escapes outside it, always on screen — the same shape Kent
+        # asked for on the sibling entry page ("the OK|these groups line should
+        # be just under the field").
+        w.frame.grid_rowconfigure(1, weight=1)
+        w.frame.grid_columnconfigure(0, weight=1)
+        scroll=ui.ScrollingFrame(w.frame, row=1, column=0, sticky='nsew')
+        r=0
         for prof in options:
-            ui.Button(w.frame, text=prof, cmd=lambda p=prof:apply(p),
+            ui.Button(scroll.content, text=prof, cmd=lambda p=prof:apply(p),
                         anchor='w', font='normal', row=r, column=0,
                         sticky='ew'); r+=1
         if not options:
-            ui.Label(w.frame, text=_("(every simple profile here is already used)"),
-                        font='instructions', row=r, column=0, sticky='ew'); r+=1
+            ui.Label(scroll.content,
+                        text=_("(every simple profile here is already used)"),
+                        font='instructions', row=r, column=0, sticky='ew')
         ui.Button(w.frame, text=_("Other… (set a profile by hand)"),
                     cmd=lambda:self._group_rename_freeentry(w, parent, task,
                                                 group, beg, syls, end, apply),
                     anchor='w', relief='flat', font='normal',
-                    row=r, column=0, sticky='ew'); r+=1
+                    row=2, column=0, sticky='ew')
         ui.Button(w.frame, text=_("Cancel — go back"), cmd=w.destroy,
                     anchor='w', relief='flat', font='normal',
-                    row=r, column=0, sticky='ew')
+                    row=3, column=0, sticky='ew')
+        # Reflow or the list is invisible (grid_propagate(0)) — but SCHEDULED
+        # and only once the window is really mapped: reflow drains
+        # synchronously, and XWayland deadlocks draining into an unmapped
+        # window (ui_tkinter.py:1411-1415). Same rule as the boards.
+        def _settle(n=10):
+            try:
+                if not scroll.winfo_exists():
+                    return
+                if not w.winfo_viewable():
+                    if n>0:
+                        w.after(50,lambda:_settle(n-1))
+                    return
+                scroll.reflow()
+            except Exception as e:
+                log.info("group-rename list reflow failed: %s", e)
+        try:
+            w.after_idle(_settle)
+        except Exception as e:
+            log.info("could not schedule group-rename reflow: %s", e)
         return w
 
     def _group_rename_freeentry(self, page1, parent, task, group,

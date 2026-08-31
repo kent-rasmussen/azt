@@ -157,23 +157,51 @@ class SortButtonFrame(ui.ScrollingFrame):
         w=ui.Window(self,title=_("Which {cls} profile?").format(cls=cls),exit=False)
         ui.Label(w.frame,text=_("Which profile fits this word?"),
                     font='instructions',row=0,column=0,sticky='ew')
-        r=1
+        # OPTIONS SCROLL, ESCAPES DON'T — same fix and same reason as
+        # sort_ui.ask_group_rename, which this page is the one-word twin of.
+        # Twelve options plus two nav rows at font 'normal' ran off the bottom
+        # of a short or scaled screen, and the rows lost were the LAST two:
+        # 'Other…' and 'Cancel'. This window is exit=False, so losing Cancel
+        # leaves no button at all (Kent 2026-08-31, Windows).
+        w.frame.grid_rowconfigure(1,weight=1)
+        w.frame.grid_columnconfigure(0,weight=1)
+        scroll=ui.ScrollingFrame(w.frame,row=1,column=0,sticky='nsew')
+        r=0
         for prof in options:
-            ui.Button(w.frame,text=prof,
+            ui.Button(scroll.content,text=prof,
                         cmd=lambda p=prof:self._resolve_new_profile(w,p),
                         anchor='w',font='normal',row=r,column=0,sticky='ew')
             r+=1
         if not options:
-            ui.Label(w.frame,text=_("(every simple profile here is already used)"),
-                        font='instructions',row=r,column=0,sticky='ew'); r+=1
-        # Nav at the bottom, after the options.
+            ui.Label(scroll.content,
+                        text=_("(every simple profile here is already used)"),
+                        font='instructions',row=r,column=0,sticky='ew')
+        # Nav OUTSIDE the scroll, so it is always reachable.
         ui.Button(w.frame,text=_("Other… (set a profile by hand)"),
                     cmd=lambda:self._syllable_profile_freeentry(w,beg,syls,end),
                     anchor='w',relief='flat',font='normal',
-                    row=r,column=0,sticky='ew'); r+=1
+                    row=2,column=0,sticky='ew')
         ui.Button(w.frame,text=_("Cancel — go back"),cmd=w.destroy,
                     anchor='w',relief='flat',font='normal',
-                    row=r,column=0,sticky='ew')
+                    row=3,column=0,sticky='ew')
+        # Reflow (grid_propagate(0) → invisible otherwise), but scheduled and
+        # only once mapped: reflow drains synchronously and XWayland deadlocks
+        # draining into an unmapped window (ui_tkinter.py:1411-1415).
+        def _settle(n=10):
+            try:
+                if not scroll.winfo_exists():
+                    return
+                if not w.winfo_viewable():
+                    if n>0:
+                        w.after(50,lambda:_settle(n-1))
+                    return
+                scroll.reflow()
+            except Exception as e:
+                log.info("profile-picker list reflow failed: %s", e)
+        try:
+            w.after_idle(_settle)
+        except Exception as e:
+            log.info("could not schedule profile-picker reflow: %s", e)
     def _resolve_new_profile(self,w,profile):
         """A profile was chosen/entered: record it so sortselected marks the
         current word into it (the normal new-group path), close the picker, and
