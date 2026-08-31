@@ -37,12 +37,36 @@ class Repository(object):
                 ).replace('?','_').replace('"','_').replace('<','_').replace('>','_'
                 ).replace('|','_').replace('~','_').replace('^','_').replace('[','_'
                 ).replace('@{','_').replace('\\','_')
-    def checkout(self,branchname=None,_tries=0):
+    def checkout(self,branchname=None,_tries=0,_generated=None):
         args=['checkout']
+        # RECYCLE ONLY OUR OWN GENERATED WORK BRANCH (Kent 2026-08-31).
+        # The delete below existed for the multi-machine merge scheme:
+        # checkout() with NO argument mints `work_from_<username>`, and dropping
+        # a stale one before making it fresh is reasonable — it is ours, and it
+        # is disposable by construction.
+        #   But the same delete fired for a branch a CALLER named. The field log
+        # shows it plainly:
+        #     branch_exists ['--list','testing']: testing
+        #     remove_branch ['-d','testing']: Deleted branch testing (was 6d82d95)
+        #     checkout ['testing']: Switched to a new branch 'testing'
+        #     branch 'testing' set up to track 'origin/testing'
+        # i.e. delete the local branch, then let git DWIM re-create it from
+        # origin — an implicit `reset --hard origin/<branch>` that silently
+        # discards any local commits. Nobody asked for a reset; they asked to
+        # switch branches. testversion()/reverttomain() go through here, so
+        # "try the testing version" was quietly throwing away local work.
+        #   That the reset was never the point is recorded in reverttomain
+        # itself, which still carries the standing TODO `need to also / git reset
+        # --hard origin/main` — the explicit reset was always understood to be a
+        # SEPARATE step that had not been written. If a reset is wanted, it
+        # belongs there, deliberately, not as a side effect of switching.
+        if _generated is None:
+            _generated=not branchname #only the defaulted name is ours to recycle
         if not branchname:
             branchname=self.legalize(f"work_from_{self.username}")
         if self.branch_exists(branchname):
-            if branchname != self.main and not self.remove_branch(branchname):
+            if (_generated and branchname != self.main
+                    and not self.remove_branch(branchname)):
                 # BOUNDED (Kent 2026-08-31, field: a RECURSIVE "cannot delete
                 # branch main" on attempted update). This retry was unbounded:
                 # every failed delete recursed with another '_' appended, so a
@@ -59,7 +83,9 @@ class Repository(object):
                         "rather than renaming indefinitely.").format(
                             branch=branchname,n=_tries+1))
                     return
-                return self.checkout(branchname+'_',_tries=_tries+1)
+                # Still ours after the rename, so keep the recycle permission.
+                return self.checkout(branchname+'_',_tries=_tries+1,
+                                    _generated=True)
         else:
             args.append('-b')
         args.append(branchname)
@@ -990,6 +1016,19 @@ class GitReadOnly(Git):
             # This doesn't mind if there is no USB:
             remotes=self.localremotes() #don't publish to internet this way
             log.info(_("remotes: {remotes}").format(remotes=remotes))
+            if not remotes:
+                # NOTHING TO PUSH TO → DON'T TOUCH THE BRANCHES (Kent
+                # 2026-08-31). Both loops below iterate `remotes`, so with none
+                # found they do nothing at all — but switchbranches() still ran
+                # twice, checking the working tree out to the other branch and
+                # back for no benefit whatsoever. That is where the update's
+                # branch deletion came from, in a run whose own log said
+                # `remotes: []`. Branch surgery is not free (it rewrites the
+                # working tree, and used to delete and re-create the branch), so
+                # it must not happen when the work it exists to enable cannot.
+                log.info(_("No local remotes to publish to; skipping the "
+                            "both-branches push and leaving the branch alone."))
+                return r
             for remote in remotes: #iterate here to keep results
                 r[remote+'/'+self.branch]=method(self,remotes=[remote])
             # self.stash()
@@ -1010,40 +1049,62 @@ class GitReadOnly(Git):
             for remote in remotes:
                 r[remote+'/'+self.branch]=method(self,remotes=[remote])
         return r
-        remotes=self.findpresentremotes() #do once
-        if not remotes:
-            return
-        branches = ['main',self.program.testversionname]
-        fns = [self.testversion, self.reverttomain]
-        if self.branch != 'main':
-            branches.reverse()
-            fns.reverse()
-        try:
-            for i in range(2):
-                log.info(_("Running index {index} ({branch} {fn})").format(index=i,branch=branches[i],fn=fns[i]))
-                #not pulling here, as not sharing in that direction.
-                r=Repository.push(self,remotes=remotes,branch=branches[i])
-                if r:
-                    r=fns[i]()
-        except Exception as e:
-            ErrorNotice(e)
+        # (Removed 2026-08-31: ~17 lines of unreachable code sat here, after the
+        # return — an earlier both-branches implementation using a
+        # branches/fns pair reversed by current branch. It could not run, and
+        # reading it as live made this method look like it did something it
+        # does not. The live version is the `if self.program.me:` block above.)
     def switchbranches(self):
         if self.branch == 'main':
             self.testversion()
         else:
             self.reverttomain()
+    def hard_checkout(self,branchname):
+        """Switch to `branchname` and make it match origin/<branchname> EXACTLY,
+        discarding local commits and local edits.
+
+        That destruction is deliberate (Kent 2026-08-31): this UI is used by
+        people who don't use git, so anything they have accidentally changed
+        SHOULD be overwritten by the published branch.
+
+        `checkout -f -B` says all of that in one command:
+          -B <b> <start>  create OR RESET the branch to the start point, so it
+                          works even when we are standing on it — unlike the old
+                          delete-then-checkout, which git refuses for the current
+                          branch (the "cannot delete branch" failures) and which
+                          left the branch GONE if anything failed in between.
+          origin/<b>      name the source explicitly instead of relying on git's
+                          DWIM re-creation, which needs exactly one remote to
+                          carry the branch and quietly does nothing like this if
+                          the branch already exists locally.
+          -f              discard conflicting working-tree changes — the half the
+                          old code never did at all. Delete-and-recreate threw
+                          away COMMITS (the valuable half) while leaving
+                          uncommitted edits in place, i.e. exactly backwards.
+        This retires the standing `need to also / git reset --hard origin/main`
+        TODO that sat in reverttomain: the reset is no longer a missing separate
+        step, it is what this does."""
+        start='origin/'+branchname
+        if self.do(['rev-parse','--verify','--quiet',start]):
+            r=self.do(['checkout','-f','-B',branchname,start])
+        else:
+            # No such remote branch (offline clone, or never published): fall
+            # back to an ordinary switch rather than inventing a reset target.
+            log.info(_("No {start}; switching to ‘{branch}’ without resetting "
+                        "it.").format(start=start,branch=branchname))
+            r=self.checkout(branchname)
+        log.info(r)
+        self.branchname() #because this changes
+        return r
     def reverttomain(self,event=None):
-        r=self.checkout('main')
-        """need to also
-        git reset --hard origin/main
-        """
+        r=self.hard_checkout('main')
         log.info(r)
         if self.branch == 'main':
             return True
         else:
             ErrorNotice(r)
     def testversion(self,event=None):
-        r=self.checkout(self.program.testversionname)
+        r=self.hard_checkout(self.program.testversionname)
         log.info(r)
         if self.branch == self.program.testversionname:
             return True
