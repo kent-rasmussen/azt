@@ -19,6 +19,72 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.14.2
+
+- **UI scale is now the screen's DPI, not a ratio against one developer's laptop.**
+  `Theme.setscale` computed `this screen ÷ Kent's 1920x1080 (286x508mm)` across four
+  ratios — two pixel, two millimetre — and kept whichever deviated MOST from 1. Three
+  things were wrong, and every previous fix here was a guard bolted onto the third: the
+  reference was a MACHINE rather than a physical quantity; ONE number answered two
+  independent questions (how big a glyph should be, and how much content fits — a 4K 15"
+  laptop and a 4K 40" TV have identical pixel counts and opposite needs, which is why a
+  big screen produced huge text instead of more text); and the rule MAXIMIZED, so any
+  single bad reading dominated the whole UI. It is now `winfo_fpixels('1i')/96`, i.e. the
+  platform's own DPI — which on Windows the user has already declared via display scaling,
+  and which every other app on their desktop already obeys. Correct either way Tk is
+  built: DPI-aware reports 192 at 200% and we scale by 2.0; DPI-unaware reports 96, we
+  scale by 1.0, and Windows magnifies the window itself. The mm reading, the four-ratio
+  min/max and the plausibility test are gone (nothing left to guard); a 48–480 dpi band,
+  the 1% no-op and a 0.5–3.0 corruption clamp remain. The old computation is retained
+  unreachable for one release. NB 2.0 is now a LEGITIMATE scale, so the ceiling went back
+  up from the 1.5 that briefly guarded the old rule.
+- **`availablexy` — the real-estate question — got a sound basis.** New `workarea()`
+  prefers `wm_maxsize()` (on Windows the screen MINUS the taskbar) when it is a plausible
+  reduction of the screen: a window cannot be dragged above the top edge there, so
+  anything overflowing the bottom is unreachable rather than merely awkward. The 50/50/100
+  chrome allowances now scale with the UI (a title bar really is ~100px at 200%). And
+  there is a FLOOR: this subtracts `_measure_siblings`' total from the screen, which on a
+  busy page can approach or exceed it and yield a tiny or negative `maxwidth` — and
+  `Label.wrap()` takes `min(self.wraplength, self.maxwidth)`, so a tiny value wraps text
+  at a few pixels, which is exactly the one-character-per-line button labels seen in the
+  field. It now floors at 200px and logs the measurement instead of laying out against it.
+- **FIX (update loop): two unbounded recursions in `vcs.py`.** `checkout` recursed with
+  another `_` appended on every failed delete, forever, minting `work_from_x`,
+  `work_from_x_`, `work_from_x__`… (now 3 attempts, then a log); `pull` called itself
+  unconditionally on "Automatic merge failed", invoking `checkout` each pass (now one
+  retry). Together these are the "recursive `cannot delete branch main`" a field machine
+  reported — a one-line git failure turned into an unrecoverable spin.
+- **FIX (update): branch deletion is scoped to the branch we generate.** `checkout`
+  deleted ANY existing branch a caller named and let git's DWIM re-create it from
+  `origin/` — an implicit `reset --hard` nobody asked for. Only the defaulted
+  `work_from_<username>` is ours to recycle now. `remove_branch` additionally refuses
+  `main` and the currently-checked-out branch, logging the caller with a stack, since both
+  call sites already guarded `main` and yet the field saw it attempted.
+- **`Try testing version` / `Revert to main` now reset properly** via new `hard_checkout`:
+  `checkout -f -B <branch> origin/<branch>`. Deliberately destructive — this UI is used by
+  people who don't use git, so local mess SHOULD be overwritten — and it retires the
+  standing `need to also / git reset --hard origin/main` TODO. It works while standing on
+  the branch (unlike delete), names the source explicitly (no DWIM), and discards
+  working-tree changes, which delete-and-recreate never did: `branch -d` is the SAFE
+  delete and refuses unmerged branches, so the old path destroyed nothing but also reset
+  nothing. `switchbranches` (the maintainer's publish loop) deliberately does NOT use it —
+  resetting there would discard the very commits it is about to push.
+- **`share()` no longer churns branches with nowhere to push.** Under `program.me` both
+  push loops iterate `localremotes()`, so with none present they do nothing — yet
+  `switchbranches()` still ran twice, rewriting the working tree to the other branch and
+  back. That was the entire observed effect of an update whose own log said `remotes: []`.
+  Also removed ~17 lines of unreachable code after that method's `return`.
+- **Right-click a word on the segmental/tone sort page → "Not {profile}"**, matching the
+  verify page and the syllable pages' class escape. The sort page's button stays; same
+  wording, same action (`itemstosort` → `unverify_profile` → advance).
+- **The two profile pickers scroll.** `ask_group_rename` and `pick_syllable_profile`
+  gridded up to twelve options plus "Other…" and "Cancel" flat into the window, so on a
+  short or scaled screen the rows that fell off were the two ESCAPES — and both windows
+  are `exit=False`, leaving no button at all. Options now scroll; the nav stays outside.
+- FIX (`setprofile` never accepted the argument every caller passed): `SettingsUI.setprofile`
+  lacked the `**kwargs` its sibling `setcheck` has, so `setprofile(toverify=True)` raised
+  TypeError out of `drive_work`'s `on_done` and took the mainloop down on a field machine.
+
 # Version 1.14.1
 
 - **A LIFT that won't parse is now diagnosed, and repaired where it can be.** The load
