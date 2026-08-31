@@ -399,6 +399,29 @@ class SortPresenter(PresenterBase):
                         buttonframe.sortitem.destroy()
                 self.attach_context_menu(l, self.class_escape_items(
                             buttonframe.task, sense, on_applied=advance))
+            elif (getattr(buttonframe, 'cvt', None) != 'S'
+                    and not getattr(buttonframe, 'macrosort', False)
+                    and buttonframe.program.slices.profile()):
+                # SEGMENTAL/TONE: 'Not {profile}' on the word (Kent 2026-08-31).
+                # Same gesture the verify page already offers
+                # (sorting_engine's `elif profile:` menu item) and the same
+                # action as the sort page's own button, which STAYS below for
+                # now — two affordances, one wording, deliberately identical.
+                # macrosort is excluded because the thing presented there is a
+                # GROUP, not a word, so "not this profile" has no referent.
+                profile = buttonframe.program.slices.profile()
+                def notprofile():
+                    # Mirrors sort_buttons.getanotherskip's notprofile() — keep
+                    # the two in step, and if that button is ever removed this
+                    # becomes the only copy.
+                    todo = buttonframe.task.itemstosort()
+                    if todo:
+                        buttonframe.task.unverify_profile(todo[0])
+                    # Advance with NO group chosen → maybesort restarts without it.
+                    if getattr(buttonframe, 'sortitem', None):
+                        buttonframe.sortitem.destroy()
+                self.attach_context_menu(l, [
+                    (_("Not {profile}").format(profile=profile), notprofile)])
         except Exception as e:
             log.info("sort-page class-escape menu skipped: %s", e)
         return sortitem
@@ -973,8 +996,49 @@ class SortPresenter(PresenterBase):
                          column=0, row=0, sticky='ew',
                          ipady=ipady, **kwargs)
         self._wid_t+=time.perf_counter()-_w
+        # ZERO THE WIDGET'S OWN VERTICAL CHROME (Kent 2026-08-31: verify rows far
+        # taller than their one line of text). The `pady='0'` above does NOT do
+        # this: ui.Button routes a constructor pady to the GRID, so the widget's
+        # own pady is still Tk's default — the same trap recorded at
+        # sort_buttons.check_segments_row ("ui.Label routes constructor padx to
+        # the GRID, so the Label's own 1px-a-side default is only reachable after
+        # construction"), which is why that method sets l['padx'] AFTER building.
+        # Tk's per-widget defaults are small individually but they stack with the
+        # frame's border on every row of a whole slice. highlightthickness is the
+        # focus ring, invisible here and pure height. borderwidth is deliberately
+        # NOT touched: it draws the visible box these pages are designed around.
+        for _k,_v in (('pady',0),('ipady',0),('highlightthickness',0)):
+            try:
+                b[_k]=_v
+            except Exception:
+                pass # not every widget/backend carries every option
         b['image'] = self.set_sense_illustration(sense)
         b['compound'] = 'left'
+        # ONE-SHOT height breakdown (Kent 2026-08-31: verify rows far taller than
+        # their one line of text, on Windows). Three candidates — font, image, or
+        # padding — and inspection has not settled it: rows WITHOUT an
+        # illustration are as tall as rows with one, which rules the image out,
+        # and lowverticalspace=true already gives ipady=0/pady=1, which rules out
+        # the padding I was asked to reduce. So measure instead of infer. Once per
+        # page build, on the first row, and every field wrapped: a diagnostic must
+        # never be what breaks the page.
+        if not getattr(self,'_logged_row_height',False):
+            self._logged_row_height=True
+            try:
+                import tkinter.font as _tkfont
+                b.update_idletasks()
+                f=_tkfont.Font(font=b['font'])
+                img=b['image']
+                log.info("DIAG-rowheight: button req=%s actual=%s | frame req=%s "
+                         "| font %r linespace=%s | image h=%s | widget pady=%r "
+                         "ipady(grid)=%r | scale=%s",
+                         b.winfo_reqheight(), b.winfo_height(),
+                         bf.winfo_reqheight() if bf is not None else 'n/a',
+                         b['font'], f.metrics('linespace'),
+                         (b.tk.call('image','height',img) if img else 0),
+                         b['pady'], ipady, self.theme.scale)
+            except Exception as e:
+                log.info("DIAG-rowheight failed: %s", e)
         if menu_items:
             self.attach_context_menu(b, menu_items)
         return b, bf

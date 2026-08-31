@@ -569,7 +569,18 @@ class Theme(object):
         # Last-resort clamp: whatever the readings, no machine wants a UI at a
         # quarter size or triple size, and an unbounded scale multiplies every
         # font and every image.
-        clamped=min(max(self.scale,0.5),3.0)
+        #   UPPER BOUND TIGHTENED 3.0 → 1.5 (Kent 2026-08-31). The rule above is
+        # "keep whichever ratio deviates MOST from 1", and the ratios are this
+        # screen against a 1920x1080 reference — so a screen Tk reports as 4K
+        # yields 2.0 and EVERYTHING doubles: fonts, images, and every dimension
+        # derived from them. On Windows that is a live risk rather than a
+        # theoretical one, because whether Tk reports native or OS-scaled pixels
+        # depends on the process's DPI awareness, and when it reports native
+        # pixels on a display the OS is ALREADY magnifying, we magnify on top.
+        # 3.0 was never a bound anyone wanted to reach; 1.5 still allows a
+        # genuinely large screen a bigger UI while keeping a misread from
+        # tripling a field machine's text. Below 1.5 nothing changes.
+        clamped=min(max(self.scale,0.5),1.5)
         if clamped!=self.scale:
             log.error("Computed UI scale %.2f is out of range; clamping to %.2f. "
                     "Screen %dx%d (%sx%smm).",self.scale,clamped,int(w),int(h),

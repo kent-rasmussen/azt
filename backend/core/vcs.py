@@ -37,13 +37,29 @@ class Repository(object):
                 ).replace('?','_').replace('"','_').replace('<','_').replace('>','_'
                 ).replace('|','_').replace('~','_').replace('^','_').replace('[','_'
                 ).replace('@{','_').replace('\\','_')
-    def checkout(self,branchname=None):
+    def checkout(self,branchname=None,_tries=0):
         args=['checkout']
         if not branchname:
             branchname=self.legalize(f"work_from_{self.username}")
         if self.branch_exists(branchname):
             if branchname != self.main and not self.remove_branch(branchname):
-                return self.checkout(branchname+'_')
+                # BOUNDED (Kent 2026-08-31, field: a RECURSIVE "cannot delete
+                # branch main" on attempted update). This retry was unbounded:
+                # every failed delete recursed with another '_' appended, so a
+                # delete that can never succeed — the branch is checked out, or
+                # `-d` refuses it as unmerged — spins forever, minting
+                # work_from_x, work_from_x_, work_from_x__ … A git failure
+                # should be reported once, not looped on. Three attempts is
+                # already generous: the second only helps if the collision was
+                # with a DIFFERENT stale branch.
+                if _tries>=3:
+                    log.error(_("Could not check out ‘{branch}’: it already "
+                        "exists and cannot be deleted (checked out elsewhere, "
+                        "or not fully merged). Giving up after {n} attempts "
+                        "rather than renaming indefinitely.").format(
+                            branch=branchname,n=_tries+1))
+                    return
+                return self.checkout(branchname+'_',_tries=_tries+1)
         else:
             args.append('-b')
         args.append(branchname)
@@ -57,6 +73,40 @@ class Repository(object):
     def branch_exists(self,branchname):
         return self.do(['branch','--list',branchname])
     def remove_branch(self,branchname):
+        # REFUSE main, and refuse the branch we are standing on. Both callers
+        # already exclude self.main (checkout's rename retry, try_pull_main's
+        # post-merge cleanup) — and yet a field machine produced "cannot delete
+        # branch main" on an update (Kent 2026-08-31), so a path reaches here
+        # with 'main' that reading those two guards does not explain. Guarding
+        # the single choke point makes the whole class impossible rather than
+        # relying on every present and future caller to remember; git would
+        # refuse both of these anyway, so this only changes a confusing error
+        # into a clear log line. Deleting the checked-out branch is the other
+        # thing git always refuses, and it is the likelier real cause: these
+        # branches exist for the multi-machine merge scheme, where the branch
+        # being cleaned up can still be the current one.
+        current=getattr(self,'branch',None)
+        for name,why in ((getattr(self,'main',None),'the main branch'),
+                        (current,'the branch currently checked out')):
+            if name and branchname==name:
+                # NAME THE CALLER. Refusing quietly would trade a loud wrong
+                # behaviour for a silent one, and "who asked to delete main?"
+                # is a SEPARATE bug from "main got deleted" (Kent 2026-08-31) —
+                # both call sites guard against it, so whoever reaches here is
+                # doing something this file does not account for. Log the stack
+                # once so the next occurrence identifies itself instead of
+                # needing another field round-trip.
+                try:
+                    import traceback
+                    chain=''.join(traceback.format_stack()[-6:-1])
+                except Exception:
+                    chain='(stack unavailable)'
+                log.error(_("Refusing to delete ‘{branch}’: it is {why}. "
+                    "Nothing deletes it; continuing. THIS CALL SHOULD NOT "
+                    "HAPPEN — called by {caller}; stack:\n{chain}").format(
+                        branch=branchname,why=why,
+                        caller=callerfn(),chain=chain))
+                return
         return self.do(['branch','-d',branchname])
     def add(self,file,force=False):
         #This function must be used to see changes
@@ -230,7 +280,7 @@ class Repository(object):
             self.remove_branch(old_branch) #only if fully merged
         except Exception as err:
             self.undo_pull()
-    def pull(self,remotes=None,branch=None):
+    def pull(self,remotes=None,branch=None,_retried=False):
         if not branch:
             branch=self.branch
         if not remotes:
@@ -249,10 +299,24 @@ class Repository(object):
             r=self.do(args)
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
+                # BOUNDED (Kent 2026-08-31). This retried itself unconditionally:
+                # undo, move to a work branch, push, pull again — and if the
+                # merge fails the same way a second time (it usually will, the
+                # conflicting commits being unchanged), it recursed forever,
+                # calling checkout() on every pass. Together with checkout's own
+                # unbounded rename retry that is the "recursive" half of the
+                # field report. One retry is the whole value here: the point of
+                # the detour is to get off a branch that can't fast-forward, and
+                # if that doesn't work once it will not work by repetition.
+                if _retried:
+                    log.error(_("Automatic merge failed again after moving to a "
+                        "work branch; giving up rather than retrying. Result: "
+                        "{result}").format(result=r))
+                    return r
                 self.undo_pull()
                 self.checkout()
                 self.push(remotes,setupstream=True)
-                return self.pull(remotes)
+                return self.pull(remotes,_retried=True)
         return r #if we want results for each, do this once for each
     def push(self,remotes=None,setupstream=False):
         if not remotes:
