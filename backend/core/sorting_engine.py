@@ -367,11 +367,24 @@ class Sort(Categories):
             w.grid(row=1,column=0,sticky='ew')
             b=p.button(self.ui.runwindow.frame, text=_("OK"), command=w.destroy, anchor='c')
             b.grid(row=2,column=0,sticky='ew')
+            # getrunwindow() (no msg) created this window WITHDRAWN and withdrew
+            # the task window, so the waitdone() above had no active wait to
+            # reveal through — it is a no-op here. Reveal explicitly, as the join
+            # and glyph-rename pages do, or this wait_window blocks on a window
+            # the user can neither see nor dismiss.
+            if not self.ui.runwindow.exitFlag.istrue():
+                self.ui.runwindow.deiconify()
+                self.ui.runwindow.update_idletasks()
             self.ui.runwindow.wait_window(w)
             w.destroy()
         if self.ui.runwindow.exitFlag.istrue():
             return
-        self.ui.runwindow.wait()
+        # thenshow=True: without it showafterwait is winfo_viewable()|thenshow ==
+        # False on a window just created withdrawn, so the waitdone() in the
+        # finally below reveals NOTHING and wait_window(scroll) blocks invisibly.
+        # Same defect the changelog records as fixed in generator.getresults.
+        self.ui.runwindow.wait(msg=_("Building the ad hoc sort group page"),
+                                thenshow=True)
         try:
             p.label(self.ui.runwindow.frame,text=title,font='title',
                     ).grid(row=0,column=0,sticky='ew')
@@ -2295,6 +2308,16 @@ class Sort(Categories):
             buttontxt=_("Sort!")
             text=_("Not Trying Again; set a tone frame first!")
             self.sort_ui.label(self.ui.runwindow.frame, text=text).grid(row=0,column=0)
+            # This branch builds an error page and RETURNS to the event loop, so
+            # nothing downstream reveals anything. On a mature repo getrunwindow
+            # opened a thenshow wait that nobody ever closes — and a viewable
+            # wait window suppresses guardvisible by design, so the user is left
+            # with "Resetting unSorted items" forever, over a message they never
+            # see. On a new repo no wait opened, so nothing is visible at all.
+            self.ui.runwindow.waitdone()
+            if not self.ui.runwindow.exitFlag.istrue():
+                self.ui.runwindow.deiconify()
+                self.ui.runwindow.update_idletasks()
             return
         for item in senses:
             self.removeitemfromgroup(item)

@@ -707,47 +707,54 @@ class ToneFrameDrafter(ui.Window):
             # log.info("First status frame, or no example yet ({}).".format(e))
             pass
         self.fds=ui.Frame(self.content,row=1,column=0)
+        # The button/entry pairs editable() registers, keyed by field. Reset
+        # here because the rebuild just destroyed every widget they point at;
+        # any edit in flight goes with them, which is the right outcome — a
+        # rebuild only happens when the page's shape changed under the edit.
+        self.fields={}
+        self.active=None
         if 'field' not in self.forms:
             d=self.program.params.ftype()
             log.info("Didn't find field type; setting current ({}).".format(d))
             self.forms['field']=d
-        if 'name' not in self.forms:
-            log.info("Didn't find a name; prompting.")
-            self.promptwindow()
-            if ('name' not in self.forms or #not started
-                    isinstance(self.forms['name'],ui.StringVar) #i.e., not saved
-                    or not self.forms['name']): # empty
-                log.info("Name form not entered. Exiting. ({})"
-                        "".format(self.forms['name']))
-                self.on_quit()
-            # log.info(self.forms)
-            # log.info(self.ui.exitFlag.istrue())
-            return
+        # STRAIGHT TO THE FULL PAGE (Kent 2026-08-31). This used to open a modal
+        # child window demanding a name before it would show anything — so the
+        # user had to name a thing before seeing what it was, and abandoning the
+        # prompt quit the whole drafter. Two rules were collapsed into one: "may
+        # not proceed without a name" (wrong) and "may not FINISH without a
+        # name" (right). Only the second survives, and it was ALREADY enforced
+        # in the right place: exemplified() refuses an empty name, and submit()
+        # is reachable only from there. So the gate did not move — the up-front
+        # copy of it was simply deleted. An abandoned page still stores nothing,
+        # because nothing is written until submit().
+        self.forms.setdefault('name','')
         # log.info("Found name")
         # log.info("Starting status with self.form: {}".format(self.forms))
-        text=self.forms['name']
-        if text == '':
-            text=_("Give a frame name!")
         nametext=_("Frame name:")
-        # log.info("Frame name: {}".format(text))
         relief='raised' #flat, raised, sunken, groove, and ridge
         frameparams=ui.Frame(self.fds,columnspan=4,column=0,row=0,pady=50,
+                            # sticky='w': this row holds two controls that swap
+                            # for wider editors. Centred, every swap re-centred
+                            # the whole row — the label slid sideways and the
+                            # far control was pushed out of the scroll frame.
+                            # Anchored left, an editor grows rightward into
+                            # empty space and nothing else moves.
+                            sticky='w',
                             # highlightthickness=5,
                             # highlightbackground=self.theme.activebackground
                             )
         nameframe=ui.Frame(frameparams,columnspan=2,column=0,row=0,padx=50)
         namelabel=ui.Label(nameframe,text=nametext,column=0,row=0)
-        namebutton=ui.Button(nameframe, relief=relief,
-                            cmd=self.promptwindow,
-                            text=text,column=1,row=0)
-        ui.ToolTip(namebutton,text=_("Set the frame name for status table and reports"))
+        self.editable(nameframe,('name',None),
+                    placeholder=_("Give a frame name!"),
+                    tooltip=_("Set the frame name for status table and reports"),
+                    column=1,row=0)
         fieldname=_("Field to frame:")
         ftypeframe=ui.Frame(frameparams,column=2,row=0)
         ftypelabel=ui.Label(ftypeframe,text=fieldname,column=0,row=0)
-        ftypebutton=ui.Button(ftypeframe,text=self.fieldtypename(),
-                            cmd=self.getfieldtype,
-                            relief=relief,
-                            column=1,row=0)
+        self.editable(ftypeframe,('field',None),
+                    tooltip=_("Which dictionary field this frame applies to"),
+                    column=1,row=0)
         ui.ToolTip(ftypelabel)
         self.forms['field']
         #order glosslangs first, then other options:
@@ -789,40 +796,18 @@ class ToneFrameDrafter(ui.Window):
                     tword=_("<word>")
                 else:
                     tword=_("<{lang} word>").format(lang=langname)
-                try:
-                    text=self.forms[l]['before']
-                    if text == '':
-                        text=nothing
-                except KeyError:
-                    try:
-                        self.forms[l]={'before':''}
-                        text=nothing
-                    except Exception:
-                        text='<'+_("No {lang} frame info").format(
-                                lang=self.program.settings.languagenames[l])+'>'
-                button=ui.Button(lineframe,text=text,
-                                relief=relief,
-                                cmd=lambda l=l, context='before':
-                                        self.promptwindow(l,context),
+                # editable() reads the value itself and falls back to the
+                # placeholder, so the old try/except-per-slot text juggling is
+                # gone; all these two lines still owe is that the key exists.
+                self.forms[l].setdefault('before','')
+                self.editable(lineframe,(l,'before'),placeholder=nothing,
+                                tooltip=self.promptstrings(l,'before')['prompt'],
                                 column=1,row=0,padx=0,ipadx=0)
-                ui.ToolTip(button)
-                if l not in self.forms:
-                    continue
                 ui.Label(lineframe,text=tword,column=2,row=0,padx=0,ipadx=0)
-                try:
-                    text=self.forms[l]['after']
-                    if text == '':
-                        text=nothing
-                except KeyError:
-                    if 'before' in self.forms[l]:
-                        self.forms[l]={'after':''} #in case it got deleted
-                        text=nothing
-                button=ui.Button(lineframe,text=text,
-                                relief=relief,
-                                cmd=lambda l=l, context='after':
-                                        self.promptwindow(l,context),
+                self.forms[l].setdefault('after','')
+                self.editable(lineframe,(l,'after'),placeholder=nothing,
+                                tooltip=self.promptstrings(l,'after')['prompt'],
                                 column=3,row=0,padx=0,ipadx=0)
-                ui.ToolTip(button)
             else:
                 text=_("Add {lang} gloss").format(lang=langname)
                 button=ui.Button(self.fds,text=text,
@@ -838,14 +823,283 @@ class ToneFrameDrafter(ui.Window):
                             columnspan=2,column=0,row=n+2)
         exemplify.update_idletasks()
         self.scroll.reflow()  # grow canvas to cover the rebuilt status frame
-        self.parent.withdraw() #just in case it's visible
-    def setfieldtype(self,choice,window):
-        self.forms['field']=choice
-        window.on_quit()
-        self.status()
+        # `self.parent.withdraw()` used to run here, on EVERY rebuild. Dropped:
+        # Tone.addframe is the only thing that builds a drafter and it already
+        # withdrew the task window before constructing one, so this was a no-op
+        # with a side effect — a withdraw firing on every keystroke-commit, in a
+        # page whose whole problem was withdraws changing what is on screen.
+    def _value(self,key):
+        """Current value behind an editable key. Keys are ('name',None),
+        ('field',None) and (lang,'before'|'after') — one flat vocabulary, so the
+        active-field bookkeeping never has to care which kind it is holding."""
+        lang,context=key
+        if lang in ('name','field'):
+            return self.forms.get(lang,'')
+        return self.forms.get(lang,{}).get(context,'')
+    def _store(self,key,value):
+        lang,context=key
+        if lang in ('name','field'):
+            self.forms[lang]=value
+        else:
+            self.forms.setdefault(lang,{})[context]=value
+    STRUCTURAL={('field',None)}
+    """Keys whose commit changes the SHAPE of the page, not just a value.
+
+    Only the field type qualifies: analangftypecode() is `analang_<field>`, so
+    changing it re-keys every analysis-language row in self.forms and self.langs.
+    Everything else is one button's text, and rebuilding for that would throw
+    away the widgets the user is looking at to change a label."""
+    def _drop_examples(self):
+        """Examples illustrate the frame AS DEFINED, so any change to the
+        definition invalidates them — examples that outlive their frame are
+        worse than none (Kent 2026-08-31). status() does this as part of its
+        rebuild; an in-place commit has to do it deliberately, and this is the
+        one line that was ever the rebuild's real job on a text edit."""
+        if hasattr(self,'exf'):
+            try:
+                self.exf.destroy()
+            except Exception:
+                pass
+            del self.exf
+    def _reflow(self):
+        try:
+            self.scroll.reflow()
+        except Exception:
+            log.info("TFDP: no scroll frame to reflow")
+    def _close_active(self):
+        pair=self.fields.get(self.active)
+        self.active=None
+        if pair is None:
+            return
+        try:
+            pair['entry'].grid_remove()
+            pair['button'].grid()
+        except Exception:
+            pass #the widgets went away under us; a rebuild will restore them
+    def edit(self,key):
+        """Make one field active: swap its button for its entry, in place.
+
+        ONE AT A TIME is enforced here rather than by convention — opening a
+        field closes whatever was open, so there is no state in which two edits
+        are live and no question about which one a Return belongs to."""
+        if key not in self.fields:
+            return
+        self._close_active()
+        self.active=key
+        pair=self.fields[key]
+        pair['button'].grid_remove()
+        pair['entry'].grid()
+        combo=pair.get('combo')
+        if combo is not None:
+            # Re-derive from the stored code, same rule as the entry fields
+            # below: what the control shows must describe the definition, not
+            # whatever it held when it was last closed.
+            pair['var'].set(self.fieldtypename())
+        field=pair.get('field')
+        if field is not None:
+            # Start from the STORED value each time, not from whatever the entry
+            # held when it was last abandoned: the widget outlives the edit now,
+            # so a var left over from an escaped edit would silently reappear as
+            # if it were the saved value. The BOX is re-derived from the stored
+            # form for the same reason and by the same rule as at build time —
+            # the definition so far is what it must describe, never a leftover
+            # from an edit the user walked away from.
+            pair['var'].set(self._value(key))
+            if pair.get('wordbreak') is not None:
+                pair['wordbreak'].set(self._wordbreak(key))
+            # Size the field to its content, as the alphabet page does
+            # (`edit_title`: width = len(value)+5). A default-width Entry is far
+            # wider than the button it replaces, so opening one grew the row and
+            # RE-CENTRED it — the label slid left and the field-type control was
+            # pushed off the side of the scroll frame (Kent 2026-08-31, with a
+            # screenshot). Floor of 12 so an empty field is still worth typing
+            # in; ceiling of 40 so a long value cannot do the same damage again.
+            try:
+                field['width']=min(max(len(self._value(key))+5,12),40)
+            except Exception:
+                pass #width is cosmetic; never lose the edit over it
+            # Focus immediately. The alphabet page records this same gap twice
+            # (edit_title, edit_copyright): without it the entry appears but
+            # takes no keyboard focus, so the first keystrokes go nowhere.
+            field.focus_set()
+            field.icursor('end')
+        # An entry is taller and wider than the button it replaced, and a
+        # ScrollingFrame's canvas is not sized to its content until reflow()
+        # runs — the defect that made three boards look empty (fixed 08-28).
+        # Swapping widgets in a scroll frame without reflowing is the same bug.
+        self._reflow()
+    def commit(self,key=None,value=None):
+        """Take the value — or, with no key, abandon the edit.
+
+        Committing is the ONLY thing that writes, which is what makes Escape
+        safe to offer: a field the user walks away from changes nothing."""
+        # Compose BEFORE closing the edit: _compose reads the checkbox, and
+        # _close_active is where the entry (and its box) goes back into hiding.
+        if key is not None:
+            value=self._compose(key,value)
+        self._close_active()
+        if key is None:
+            return
+        self._store(key,value)
+        if key in self.STRUCTURAL:
+            self.status() #re-keys the language rows; also drops the examples
+            return
+        pair=self.fields.get(key)
+        if pair is not None:
+            pair['button']['text']=self._display(key)
+        self._drop_examples()
+        self._reflow()
+    WORDBREAK_MARK='·'
+    """How a word break is SHOWN on a button (display only; never stored).
+
+    A trailing space and no trailing space look identical, which is the whole
+    complaint. U+00B7 rather than U+2423 (␣, the conventional symbol): this text
+    is drawn in the analysis font, and a missing glyph would render as tofu —
+    strictly worse than the invisible space it is meant to expose. U+00B7 is
+    Latin-1 and present in every font this app can be asked to use."""
+    def _wordbreak(self,key):
+        """Does the STORED value carry a space at the word boundary? The stored
+        form is the authority — the checkbox is initialised from this, not the
+        other way round, so what the page shows always describes what is on
+        disk (see [[cvprofile is data, not analysis]]: same rule, other data)."""
+        lang,context=key
+        value=self._value(key)
+        if context=='before':
+            return value.endswith(' ')
+        if context=='after':
+            return value.startswith(' ')
+        return False
+    def _compose(self,key,text):
+        """Build the value the frame will actually use, from the text the user
+        typed PLUS the word-break box.
+
+        Kent's rule (2026-08-31), and the substance of the whole item: the form
+        is separated from the neighbouring word by a space IF AND ONLY IF the
+        box is checked, WHATEVER the user typed. So the box is the authority and
+        the typed text cannot smuggle a boundary space past it — an invisible
+        character stops being something you acquire by accident and becomes an
+        explicit, single-valued decision.
+
+        Only the boundary edge is touched: 'before' abuts the word on its RIGHT
+        ('before'+'__'+'after'), 'after' on its LEFT. Whitespace at the far edge
+        is left alone — it is not what the box is about, and silently trimming
+        it would be an edit nobody asked for."""
+        lang,context=key
+        pair=self.fields.get(key) or {}
+        box=pair.get('wordbreak')
+        if box is None or context not in ('before','after'):
+            return text
+        if context=='before':
+            text=text.rstrip()
+            return text+' ' if box.get() else text
+        text=text.lstrip()
+        return ' '+text if box.get() else text
+    def _pick_fieldtype(self,key,label):
+        """The dropdown deals in LABELS ("Citation form"); self.forms stores
+        CODES ('lc'). Map back here rather than storing the label, or the code
+        that keys every analysis-language row would become display text."""
+        code=next((c for c,l in self.fieldtypes() if l==label),None)
+        if code is None:
+            log.info("TFDP: no field type matches {!r}; ignoring".format(label))
+            return
+        self.commit(key,code)
+    def _display(self,key,placeholder=None):
+        """What the button shows. The field type is the one key whose stored
+        value ('lc') is not what a user should read, so it renders through
+        fieldtypename(); everything else shows its value, or the placeholder it
+        was built with when there is nothing stored yet — with any word break
+        marked, since an unmarked one is invisible."""
+        if key in self.STRUCTURAL:
+            return self.fieldtypename()
+        if placeholder is None:
+            placeholder=self.fields[key]['placeholder']
+        value=self._value(key)
+        if not value:
+            return placeholder
+        lang,context=key
+        if context=='before' and value.endswith(' '):
+            return value[:-1]+self.WORDBREAK_MARK
+        if context=='after' and value.startswith(' '):
+            return self.WORDBREAK_MARK+value[1:]
+        return value
+    def editable(self,parent,key,placeholder='',tooltip=None,**grid):
+        """A button showing a value, which BECOMES an entry field in place.
+
+        This is the alphabet page's idiom (`frontend/alphabet_chart.py`
+        edit_title/_set_chart_title: a permanent pair sharing one cell, swapped
+        with grid()/grid_remove()), and it replaces four modal child windows —
+        the frame name, each language's before/after text, and the field-type
+        chooser. Those windows were confusing on their own terms (Kent
+        2026-08-31) AND were the concrete case that made both visibility guards
+        guess wrong: each was a toplevel parented to a drafter that withdrew
+        ITSELF to show them, so the app was left with a mapped window whose
+        ancestor was hidden, and 'what is the user looking at' had no answer.
+        With every edit in place, this page never withdraws or deiconifies.
+
+        Both halves are built here and one is hidden, so editing is a swap
+        rather than a rebuild.
+        """
+        b=ui.Button(parent,text=self._display(key,placeholder),relief='raised',
+                    cmd=lambda k=key:self.edit(k),**grid)
+        ui.ToolTip(b,tooltip) if tooltip else ui.ToolTip(b)
+        f=ui.Frame(parent,**grid)
+        pair={'button':b,'entry':f,'placeholder':placeholder,'field':None,
+                'var':None}
+        self.fields[key]=pair
+        if key in self.STRUCTURAL:
+            # A pick-one, so an entry field would be the wrong instrument. A ROW
+            # OF BUTTONS was the wrong one too (Kent 2026-08-31): the options
+            # are as wide as their labels, so the row ran off the side of the
+            # scrolling frame — and a horizontal overflow inside a vertical
+            # scroll frame is simply unreachable. A dropdown is bounded by its
+            # widest label instead of by their sum.
+            labels=[label for code,label in self.fieldtypes()]
+            pair['var']=var=ui.StringVar(self,self.fieldtypename())
+            pair['combo']=ui.Combobox(f,textvariable=var,optionlist=labels,
+                        width=max([len(i) for i in labels]+[8])+2,
+                        command=lambda event=None,k=key,v=var:
+                                    self._pick_fieldtype(k,v.get()),
+                        row=0,column=0)
+        else:
+            pair['var']=var=ui.StringVar(self,self._value(key))
+            pair['field']=field=ui.EntryField(f,render=True,text=var,
+                                            row=0,column=0,sticky='')
+            field.rendered.grid(row=1,column=0,sticky='new')
+            take=lambda event=None,k=key,v=var:self.commit(k,v.get())
+            field.bind('<Return>',take)
+            field.bind('<Escape>',lambda event=None:self.commit())
+            ui.Button(f,text=_("OK"),cmd=take,row=0,column=1)
+            if key[1] in ('before','after'):
+                # THE WORD-BREAK BOX. Whether this text is separated from the
+                # word by a space is otherwise invisible — a leading, trailing
+                # or absent space all look the same — so it gets typed by
+                # accident and nobody can see it afterwards. Making it a box
+                # makes it a decision: _compose() then builds the stored form
+                # from the text AND the box, box winning.
+                #
+                # UNDER the entry and in the small font (Kent 2026-08-31, with a
+                # screenshot): beside it, at the inherited reading size, it was
+                # wider than the field it qualifies and pushed OK off the edge
+                # of the scrolling frame. It is a footnote to the value, not a
+                # peer of it, so it should read as one.
+                pair['wordbreak']=box=ui.BooleanVar()
+                box.set(self._wordbreak(key))
+                cb=ui.CheckButton(f,text=_("word break"),variable=box,
+                                font='small',
+                                row=2,column=0,columnspan=2,sticky='w')
+                ui.ToolTip(cb,_("Separate this text from the word with a "
+                            "space. Shown as ‘{mark}’ when set.").format(
+                            mark=self.WORDBREAK_MARK))
+        f.grid_remove() #hidden until edit() swaps it in
+        return b
     def fieldtypename(self):
-        return [i[1] for i in self.fieldtypes()
-                    if i[0] == self.forms['field']][0]
+        # Fall back to the raw code rather than IndexError: the page now BUILDS
+        # before anything is settled, so a stored field type that is not in this
+        # ps's option list must render as something clickable, not crash the
+        # page out from under the user.
+        return next((i[1] for i in self.fieldtypes()
+                    if i[0] == self.forms.get('field')),
+                    str(self.forms.get('field','')))
     def fieldtypes(self):
         # try:
         #     log.info("{}".format(self.program.settings.pluralname))
@@ -864,23 +1118,23 @@ class ToneFrameDrafter(ui.Window):
         elif self.ps == self.program.settings.verbalps:
             opts.append((self.program.settings.imperativename, _("Imperative form")))
         return [(i,j) for (i,j) in opts if i]
-    def getfieldtype(self,event=None):
-        w=ui.Window(self,
-                        # row=1,column=0,
-                        # sticky='ew',
-                        padx=25,pady=25)
-        w.title(_("Select which field to frame"))
-        ui.ButtonFrame(w.frame,optionlist=self.fieldtypes(),
-                        command=self.setfieldtype,
-                        window=w,
-                        row=0,column=0)
+    # getfieldtype() lived here: a child ui.Window holding a ButtonFrame of the
+    # field-type options. Replaced by editable()'s ('field',None) branch, which
+    # shows the same options inline. So did setfieldtype(choice,window), whose
+    # only extra job was closing that window.
     def exemplified(self,event=None):
         log.info("Giving example now")
         checktoadd=self.forms['name']
         if hasattr(self,'exf'):
             self.exf.destroy()
         self.exf=ui.Frame(self.content,row=2,column=0,sticky='w')
-        if checktoadd in ['', None]:
+        # THE NAME GATE, and now the ONLY one. The up-front prompt is gone, so
+        # this is what keeps a frame from being finished unnamed — and it holds,
+        # because the "Use this tone frame" button that calls submit() is built
+        # below, inside this method, after this return. .strip() added with the
+        # gate move: a name of spaces passed `in ['',None]` and would have been
+        # stored as a frame nobody could tell from another.
+        if not str(checktoadd or '').strip():
             text=_('Sorry, empty name! \nPlease provide at least \na frame '
                 'name, to distinguish it \nfrom other frames.')
             log.error(rx.delinebreak(text))
@@ -975,7 +1229,13 @@ class ToneFrameDrafter(ui.Window):
                 kind=_('gloss')
                 ok=_("Use this {lang} form {context} the dictionary gloss").format(lang=lname,
                                 context=_(context))
-                self.glosslangs.append(lang)
+                # `self.glosslangs.append(lang)` was here — a mutation hidden in
+                # a string builder. It has to go now that this is called once
+                # per language per rebuild to make a tooltip (it would grow
+                # without bound), and nothing loses anything: the attribute is
+                # written only here and read only by SortT.addtonefieldpron,
+                # which is a DIFFERENT class's attribute and is marked "unused;
+                # leads to broken lift fn" in its own signature line.
             if context == 'before':
                 text+='\n'+_("What text goes *before* \n<==the {lang} word *{kind}* "
                         "\nin the frame?").format(lang=lname,kind=kind)
@@ -988,79 +1248,23 @@ class ToneFrameDrafter(ui.Window):
                             lang=self.program.settings.languagenames[self.analang])
             ok=_("Use this name")
         return {'lang':lang, 'prompt':text, 'ok':ok}
-    def promptwindow(self,lang=None,context=None,event=None):
-        def submitform(event=None):
-            log.info("context: {}; lang: {}".format(context,lang))
-            log.info("Form: {}".format(self.forms))
-            clearNull()
-            if lang and context:
-                log.info("Form.get: {}".format(v.get()))
-                log.info("type: {}".format(type(v)))
-                log.info("value: {}".format(v.__dict__))
-                self.forms[lang][context]=v.get()
-            else:
-                log.info("name.get: {}".format(v.get()))
-                self.forms['name']=v.get()
-            log.info("Forms: {}".format(self.forms))
-            self.w.on_quit()
-            self.status()
-        def clearNull(event=None):
-            if v.get() == null:
-                v.set('')
-        def setNull(event=None):
-            if v.get() == '':
-                v.set(null)
-        log.info("context: {}; lang: {}".format(context,lang))
-        strings=self.promptstrings(lang,context)
-        self.w=ui.Window(self,
-                        # row=1,column=0,
-                        # sticky='ew',
-                        padx=25,pady=25)
-        if lang and context:
-            self.w.title('{} {}'.format(context,lang))
-        else:
-            self.w.title(_("New {ps} Tone frame for {lang}: Name the Frame").format(
-                        ps=self.ps,lang=self.program.settings.languagenames[self.analang]))
-        self.withdraw() #Don't show status when asking for a value
-        getform=ui.Label(self.w.frame,text=strings['prompt'],
-                        font='read',row=0,column=0,
-                        wraplength=self.wraplength/2, #inherit()ed; program.root doesn't exist
-                        padx=self.padx,
-                        pady=self.pady)
-        #field rendering is better in another frame, with no sticky!:
-        eff=ui.Frame(self.w.frame,row=1,column=0,sticky='')
-        null=initval='<no content>'
-        if lang and context:
-            try:
-                initval=self.forms[lang][context]
-                v=ui.StringVar(self,initval)
-            except KeyError:
-                v=ui.StringVar(self,initval)
-                try:
-                    self.forms[lang][context]=v
-                except KeyError:
-                    self.forms[lang]={context:v} #because this isn't there yet
-        else:
-            try:
-                initval=self.forms['name']
-                v=ui.StringVar(self,initval)
-            except KeyError:
-                v=self.forms['name']=ui.StringVar(self,initval)
-        formfield = ui.EntryField(eff, render=True,
-                                text=v,
-                                row=1,column=0,
-                                sticky='')
-        formfield.focus_set()
-        formfield.bind('<Return>',submitform)
-        formfield.bind('<FocusIn>',clearNull)
-        formfield.bind('<FocusOut>',setNull)
-        formfield.rendered.grid(row=2,column=0,sticky='new')
-        sub_btn=ui.Button(self.w.frame,text = strings['ok'],
-                            command = submitform,
-                            anchor ='c',row=2,column=0,sticky='')
-        sub_btn.wait_window(formfield) #then move to next step
-        if not self.exitFlag.istrue():
-            self.deiconify()
+    # promptwindow() lived here — the modal child window behind every edit on
+    # this page, and the direct cause of the 1.14.3 no-window report: it created
+    # a toplevel and then WITHDREW ITS OWN PARENT (`self.withdraw()`, "Don't
+    # show status when asking for a value"), leaving a mapped window whose
+    # ancestor was hidden. Replaced by editable() above.
+    #
+    # Two of its mechanisms are deliberately NOT carried over:
+    #  - the '<no content>' placeholder, swapped in and out on focus. It existed
+    #    because a blank field in a bare modal looked broken; inline, the
+    #    surrounding labels say what the slot is. It was also a live hazard —
+    #    a placeholder that silently becomes the stored value, which is exactly
+    #    what the name-gate item warned against. An empty value now stays empty.
+    #  - stashing a StringVar INTO self.forms when a key was missing, so an
+    #    abandoned prompt left a widget object where a string belonged. That is
+    #    why status() had to test `isinstance(self.forms['name'],ui.StringVar)`
+    #    to decide whether the user had really answered. Nothing writes to
+    #    self.forms now except commit().
     def submit(self,checkdefntoadd,checktoadd,event=None):
         log.info("Submitting {} frame with these values: {}".format(
                                                 checktoadd,checkdefntoadd
@@ -1143,6 +1347,11 @@ class ToneFrameDrafter(ui.Window):
         ui.Label(self.frame,text=t,font='title',row=0,column=0)
         self.scroll=ui.ScrollingFrame(self.frame,row=1,column=0)
         self.content=self.scroll.content
+        # Which field is being edited, or None, and the button/entry pairs it
+        # indexes. Set here as well as in status(), because status() returns
+        # early when the window is already exiting.
+        self.active=None
+        self.fields={}
         self.status()
 
     def store(self):

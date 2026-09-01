@@ -19,6 +19,88 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.14.3
+
+- **GLOBAL no-window watchdog (`frontend/visibility.py`), the mechanism answer to
+  the whole "app running with nothing on screen" class.** Enumerating producers
+  cannot finish this job: `getrunwindow` has 16 call sites and a name, but the real
+  class is *any* `withdraw()` whose matching `deiconify()` is not in a `finally`,
+  and the ones that bite are the abandon/exception paths nobody exercises. So
+  `VisibilityWatchdog` asks only "does the user have a window right now?", every 5 s,
+  for the life of the app, and is indifferent to who hid what. Five deliberate
+  choices, each paid for by an earlier attempt: it POLLS rather than firing once, so
+  a second occurrence later in a session is still reported; it needs 5 consecutive
+  misses (≈25 s), because a page legitimately withdraws one window before revealing
+  the next, and because that is strictly LATER than the scoped guard's 15 s, which
+  knows which run window belongs to the call in flight and must get first refusal (a
+  test guards that ordering); it ARMS ON FIRST SIGHTING, since boot has no window on
+  purpose; it reports ONCE PER EPISODE, so a stuck app cannot bury the first and most
+  useful line; and it never reveals an empty window, but — unlike the scoped guard —
+  does not get to decline, falling back to the task chooser, because after 25 s the
+  user is owed a target. It logs the state of every candidate window before revealing
+  anything: a user with no window cannot file a useful report, so the log must.
+  What it is NOT: a cure for a wedged UI. It runs on `after()`, so it is dead
+  whenever the main thread is blocked (`App.restart`'s `time.sleep` loop being the
+  known case). It reports WITHDRAWN windows, never WEDGED ones.
+- The "what counts as viewable" rule now lives in ONE place (`visibility.py`), shared
+  by both guards. The `guard_ambient` discovery — that the always-open message window
+  silently disabled the scoped guard for the whole 2026-08 hunt — was expensive to
+  make once and must not be re-derived differently by two callers. Fixed en route: the
+  shared check walks the toplevel TREE, where the old one looked at `root.winfo_children()`
+  only. A run window is a child of its TASK window, so one level down cannot see it —
+  the scoped guard escaped that only because it passes its own run window in by hand,
+  and a global guard built the same way would have reported NO WINDOW with a run window
+  on screen. The walk descends through toplevels only, never into frames, so page
+  content does not make it expensive.
+
+- **`getrunwindow` audit finished: four pages could leave the app with no usable
+  window, all the same defect.** `getrunwindow()` builds the run window WITHDRAWN
+  and withdraws the task window too, revealing something only if it opened a
+  `thenshow` wait — which needs BOTH a `msg` AND a mature repo. Every caller that
+  passes no msg therefore has to reveal for itself, and four did not. All four now
+  use the idiom already documented at the join and glyph-rename pages: `waitdone()`
+  (in case a wait covered the build), then a `deiconify()` + `update_idletasks()`
+  guarded on `exitFlag`.
+  - **Ad hoc sort group page** (`Categories.addmodadhocsort`): `runwindow.wait()`
+    without `thenshow` sets `showafterwait = winfo_viewable()|thenshow`, which is
+    False on a window just created withdrawn — so the `finally: waitdone()`
+    revealed nothing and `wait_window(scroll)` blocked on a window the user could
+    neither see nor dismiss. Byte-for-byte the defect the 1.3-era changelog records
+    as fixed in `generator.getresults`; this copy was missed. The wait also showed
+    "No Particular Reason" (no msg was passed) and now names what it is doing. The
+    over-70-senses warning branch had the same hole one step earlier — its
+    `waitdone()` ran before any wait existed, then it blocked on `wait_window(w)`.
+  - **Add-morpheme prompt** (`Segments.promptwindow`): `lift()` cannot map an
+    unmapped window and the `waitdone()` beside it was a no-op, so the form blocked
+    invisibly — once per gloss language.
+  - **Segment Interpretation page** (`setSdistinctions`): built the whole page and
+    ended on a no-op `waitdone()`. It is an Advanced-menu command, so it returns
+    straight to the event loop and nothing downstream reveals anything: this is a
+    plain "no window at all" until `guardvisible` fires. Its
+    language-not-in-segment-dictionary early return also left both windows hidden
+    behind the notice, and now hands the screen back via `on_quit()`.
+  - **`tryNAgain`'s no-check error branch**: builds an error page and returns. On a
+    mature repo `getrunwindow(msg=…)` opened a wait that nobody ever closed — and a
+    viewable wait window suppresses `guardvisible` by design, so the user sat on
+    "Resetting unSorted items" forever, over a message they never saw. This was the
+    one hole the watchdog could not have caught.
+
+- **The same bug outside `getrunwindow`: a `withdraw()` whose `deiconify()` is not in
+  a `finally`.** Kent's point, and correct — `getrunwindow` is the producer with a
+  name, not the class. Two more found and fixed:
+  - **`Tone.addframe`**: hid the task window for `ToneFrameDrafter`'s sake, and only
+    the drafter's `submit` put it back. Abandon the drafter instead of submitting and
+    both windows stayed hidden with nothing coming — reachable in two clicks from the
+    ‘Add Tone frame’ menu item, needing no sort state at all.
+  - **`Segments.parse_foreground`**: withdraw → parse → reveal was straight-line, so
+    any exception out of the parse skipped the reveal: traceback to the log, blank
+    screen to the user.
+  Both now `try/finally`. NOT fixed, recorded in the agenda item as a decision:
+  `App.restart` withdraws both windows and then waits on the write with
+  `while self.writing: time.sleep(1)` on the Tk main thread — no window by design, and
+  `guardvisible` (an `after()` callback) cannot fire at all while that loop sleeps, so
+  a failed restart reproduces the original field report exactly, watchdog included.
+
 # Version 1.14.2
 
 - **UI scale is now the screen's DPI, not a ratio against one developer's laptop.**

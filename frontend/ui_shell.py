@@ -8,6 +8,7 @@ import collections
 import re
 import datetime
 from frontend import ui
+from frontend import visibility
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns, executables
 from io_put import lift
@@ -2684,52 +2685,25 @@ class TaskDressing(HasMenus,ui.Window):
         the app. Rather than audit ~15 call sites and hope, make the mechanism
         incapable of it — if nothing is viewable when this fires, reveal the run
         window (empty is better than absent) and log it loudly, since a user with
-        no window cannot file a useful report."""
+        no window cannot file a useful report.
+
+        This is the SCOPED guard, and it is now the junior partner: since 1.14.3
+        `frontend.visibility.VisibilityWatchdog` polls for the same condition
+        globally, for the life of the app, regardless of who withdrew what. Keep
+        this one anyway — it knows WHICH run window belongs to the call in
+        flight, so it can reveal the right page at 15s where the global one can
+        only offer a generic target at 25s. Do not let the global poll drop below
+        RUNWINDOW_GUARD_MS; a test guards that ordering."""
         if delay is None:
             delay=self.RUNWINDOW_GUARD_MS
-        def anythingviewable():
-            widgets=[w for w in (self,getattr(self,'runwindow',None))
-                    if w is not None]
-            try:
-                root=ui.default_root()
-            except Exception:
-                root=None
-            if root is not None:
-                widgets.append(root)
-                try:
-                    widgets+=list(root.winfo_children())
-                except Exception:
-                    pass
-            for w in widgets:
-                try:
-                    # Skip AMBIENT windows (guard_ambient): ones that are
-                    # viewable but are not a surface the user can work in. The
-                    # status/message window is parented to the root and stays
-                    # open all session by design, so counting it silently
-                    # disabled this whole guard from the first notify onward —
-                    # which is why no NO WINDOW line was ever logged, including
-                    # while the user sat looking at nothing at all (Kent
-                    # 2026-08-27). Wait dialogs and real modals still count:
-                    # those mean "something is happening", which is exactly the
-                    # evidence this guard should accept.
-                    if getattr(w,'guard_ambient',False):
-                        continue
-                    if w.winfo_exists() and w.winfo_viewable():
-                        return True
-                except Exception:
-                    continue #a dead or half-built widget just isn't evidence
-            return False
-        def haschildren(w):
-            # w.frame, NOT w: ui.Window puts its own Exit button in
-            # `outsideframe`, not in `frame` (both backends), so
-            # testing the window itself would count a bare run window as
-            # "built" — which is precisely the empty-kiosk-with-a-quit-button
-            # this guard must never show. Load-bearing; don't simplify to w.
-            try:
-                return bool(w is not None and w.winfo_exists()
-                            and w.frame.winfo_children())
-            except Exception:
-                return False
+        # The predicates live in frontend/visibility.py, shared with the GLOBAL
+        # watchdog. One rule for "what counts as viewable", in one place: the
+        # guard_ambient discovery (2026-08-27) had to be made once and must not
+        # be re-derived differently by the two guards. This one passes its own
+        # windows as extras, since it knows which call is in flight.
+        anythingviewable=lambda: visibility.anything_viewable(
+                                    self,getattr(self,'runwindow',None))
+        haschildren=visibility.has_content
         def check():
             try:
                 if self.exitFlag.istrue():
@@ -4206,6 +4180,12 @@ class Settings(object):
                     ]
             log.info(_("Variable keys to check: {vars}").format(vars=vars))
         else:
+            # Both windows are hidden at this point (getrunwindow withdrew the
+            # task window), and the half-built run window is not worth revealing,
+            # so hand the screen back the way JoinUFgroups' no-groups branch
+            # does: on_quit → runwindowcleanup → deiconify the task window.
+            # Returning without this leaves NO window once the notice is closed.
+            self.program.task.runwindow.on_quit()
             ErrorNotice(_("Something happened! "
                         "(language not keyed in segment dictionary)"))
             return
@@ -4294,7 +4274,15 @@ class Settings(object):
                         anchor='e',
                         row=0,column=0,sticky='e',
                         pady=options.pady)
+        # getrunwindow() (no msg) created the window WITHDRAWN and withdrew the
+        # task window, so this waitdone() has no active wait to reveal through —
+        # a no-op. This method is a menu command: it returns straight to the
+        # event loop, so NOTHING downstream reveals the page it just built, and
+        # the app is left with no window at all until guardvisible fires.
         self.program.task.runwindow.waitdone()
+        if not self.program.task.runwindow.exitFlag.istrue():
+            self.program.task.runwindow.deiconify()
+            self.program.task.runwindow.update_idletasks()
     def getexamplespergrouptorecord(self):
         log.info(_("this sets the number of examples per group to record"))
         self.npossible=[

@@ -866,8 +866,16 @@ class WordCollection(Segments):
                                 text = strings['skip'],
                                 command = skipform,
                                 row=1,column=1,sticky='')
+        # addmorpheme's getrunwindow() passes no msg, so the window was created
+        # WITHDRAWN with no wait covering the build: this waitdone() is a no-op
+        # and lift() cannot map an unmapped window. Deiconify explicitly (as the
+        # join and glyph-rename pages do) or wait_window blocks on a window the
+        # user can neither see nor dismiss — once per gloss language.
         self.ui.runwindow.lift()
         self.ui.runwindow.waitdone()
+        if not self.ui.runwindow.exitFlag.istrue():
+            self.ui.runwindow.deiconify()
+            self.ui.runwindow.update_idletasks()
         sub_btn.wait_window(self.ui.runwindow.frame2) #then move to next step
     def addmorpheme(self):
         p = self.lex_ui
@@ -1844,13 +1852,20 @@ class Parse(Segments):
         self.ui.withdraw()
         self.updatereturnbind()
         self.userresponse.rootchange=False #reset for each root
-        self.parse(**kwargs)
-        self.updateparseUI()
-        if self.ui.iswaiting():
-            self.ui.waitdone()
-        if self.winfo_exists():
-            self.ui.deiconify()
-            self.updatereturnbind()
+        # finally: the reveal was straight-line code, so ANY exception out of
+        # parse()/updateparseUI() left the task window withdrawn and the user with
+        # no window — the traceback goes to the log, the user gets a blank screen.
+        # A withdraw whose deiconify is not in a finally is a producer of this
+        # item's symptom no matter which window it is.
+        try:
+            self.parse(**kwargs)
+            self.updateparseUI()
+        finally:
+            if self.ui.iswaiting():
+                self.ui.waitdone()
+            if self.winfo_exists():
+                self.ui.deiconify()
+                self.updatereturnbind()
     def parse(self,**kwargs):
         # These functions return nothing when the parse goes through, 1 when
         # not done. If the user exits, self.exited is set
@@ -2089,10 +2104,21 @@ class Tone(Senses):
         from tasks.tasks import ToneFrameDrafter #local: backend can't import tasks at module level
         if 'window' in kwargs:
             kwargs['window'].destroy() #in any case; if fails, try again.
+        # The task window is hidden for the drafter's sake, and ONLY
+        # ToneFrameDrafter.submit puts it back (tasks.py, self.task.deiconify()).
+        # So abandoning the drafter — closing it, or exiting before it opens —
+        # left the app with no window at all, reachable straight from the
+        # ‘Add Tone frame’ menu item. Restore it on every exit path; if the
+        # caller is about to open a run window (aframe → runcheck) that withdraws
+        # it again, which is a flash, not a hang.
         self.ui.withdraw()
-        t=ToneFrameDrafter(self)
-        if not t.exitFlag.istrue():
-            self.ui.wait_window(t)
+        try:
+            t=ToneFrameDrafter(self)
+            if not t.exitFlag.istrue():
+                self.ui.wait_window(t)
+        finally:
+            if not self.ui.exitFlag.istrue():
+                self.ui.deiconify()
     def aframe(self):
         self.ui.runwindow.on_quit()
         self.addframe()

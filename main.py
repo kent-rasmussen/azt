@@ -13,7 +13,7 @@ except ImportError: #psutil not installed yet — only true on a machine's
     pass            #very first boot, when nothing can be racing anyway;
                     #py_modules below installs it, so every later boot gates.
 import utilities.py_modules #This tries importing, and installs on failure
-__version__='1.14.2' #This is a string...
+__version__='1.14.3' #This is a string...
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
@@ -674,6 +674,14 @@ class App:
         # StatusDict(filename,dict,self) #needs filename,dict
         UISettings(self)
         TaskChooser(self) #TaskChooser MainApplication
+        # GLOBAL no-window watchdog. Started here, last, because this is the
+        # first moment the app is supposed to HAVE a window — everything above
+        # legitimately runs with nothing but the splash on screen. It arms
+        # itself on the first window it actually sees, so an unusually slow
+        # boot below this line still can't produce a false alarm.
+        from frontend.visibility import VisibilityWatchdog
+        self.visibility_watchdog=VisibilityWatchdog(self)
+        self.visibility_watchdog.start()
     def run(self):
         # global program
         log.info("Running main function on {} ({})".format(platform.system(),
