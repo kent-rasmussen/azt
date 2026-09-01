@@ -1358,7 +1358,30 @@ class App:
             # The daemon is detached and outlives azt restarts; new
             # server code does nothing until it is bounced.
             from backend.core import collab
-            if collab.restart_collab_daemon():
+            # COVER THIS. The update's wait is closed back in updateazt's poll,
+            # BEFORE this method runs — so this daemon bounce, which is network
+            # work and can take tens of seconds, ran with every window withdrawn
+            # and nothing on screen. The global watchdog caught it on a fresh
+            # clone: "found no viewable window in 5 polls (25.0s)", with the Wait
+            # withdrawn too and two task windows sitting there content=True,
+            # unrevealed (Kent's log, 2026-09-01). thenshow=True so waitdone also
+            # puts a window back, which is the half that was missing.
+            parent=kwargs.get('parent')
+            try:
+                if parent is not None:
+                    parent.wait(msg=_("Restarting the collaboration service…"),
+                                thenshow=True)
+            except Exception as e:
+                log.info("could not cover the daemon restart: %s",e)
+            try:
+                bounced=collab.restart_collab_daemon()
+            finally:
+                try:
+                    if parent is not None:
+                        parent.waitdone()
+                except Exception as e:
+                    log.info("could not close the daemon-restart wait: %s",e)
+            if bounced:
                 t+='\n'+_("(Collaboration service restarted with its "
                             "update)")
         button=False
@@ -1379,7 +1402,12 @@ class App:
                     or any(s[1]=='updated' for s in sisters.values()):
                 # sister 'updated' needs a restart too: azt has the old
                 # azt_collab_client already imported in-process.
-                button=(_("Restart Now"),sysrestart)
+                # reason=: this is the restart most worth naming in a marker —
+                # a restart AFTER AN UPDATE is the one whose failure to come back
+                # strands the user on a half-updated install. Without it the
+                # marker said 'unspecified' (Kent's log, 2026-09-01).
+                button=(_("Restart Now"),
+                        lambda event=None:sysrestart(reason='after update'))
         try:
             try:
                 title=_("Update (Git) output")

@@ -50,6 +50,19 @@
   - `restartmark.mark()` returns None when the write failed, because a confirmed restart
     waits for the marker to DISAPPEAR and an absent one would read as instant confirmation
     of a successor that has not started.
+- **The update path left the screen empty for 25 s, and the new watchdog is how we know.**
+  `updateazt`'s poll closes the update's wait BEFORE `updateaztdone` runs, and that tail
+  bounces the collab daemon when `azt-collab` was updated — network work that can take tens
+  of seconds, with every window withdrawn and nothing on screen. Caught on a fresh clone:
+  `found no viewable window in 5 polls (25.0s)`, and the dump showed the Wait itself
+  withdrawn with two task windows sitting there `content=True`, unrevealed. The daemon
+  bounce now runs inside its own wait (`thenshow=True`, so closing it also puts a window
+  back — the half that was missing), in a `try/finally` so a failing bounce cannot leave
+  the dialog up. This is precisely the class the no-window item defined and the watchdog was
+  built to name: nobody would have found it by reading, and it produced no evidence before.
+- The update page's "Restart Now" passes `reason='after update'`. A restart after an update
+  is the one whose failure to come back strands the user on a half-updated install, so it is
+  the most worth naming; its marker previously said `unspecified`.
 - `__version__` moved to the top of `main.py`, above the duplicate gate and the
   `utilities.py_modules` import. It is a bare string with no imports behind it, so nothing
   was gained by defining it later and something was lost: `ensure_venv()` runs DURING that
