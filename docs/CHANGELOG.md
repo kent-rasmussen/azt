@@ -50,6 +50,12 @@
   - `restartmark.mark()` returns None when the write failed, because a confirmed restart
     waits for the marker to DISAPPEAR and an absent one would read as instant confirmation
     of a successor that has not started.
+- `__version__` moved to the top of `main.py`, above the duplicate gate and the
+  `utilities.py_modules` import. It is a bare string with no imports behind it, so nothing
+  was gained by defining it later and something was lost: `ensure_venv()` runs DURING that
+  import and writes a restart marker, which reads the version off `__main__` — so the
+  first-run venv relaunch, the producer whose failures are hardest to diagnose, recorded
+  `'version': None`. Observed on a fresh clone, 2026-09-01.
 - **The venv relaunch leaves a breadcrumb too — and would have cried wolf without a second
   signal.** `py_modules.ensure_venv` is the other restart producer, and the earliest: a
   relaunch that failed to come back was completely silent. It now writes a marker with

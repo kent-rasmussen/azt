@@ -2,7 +2,15 @@
 # coding=UTF-8
 """Consider making the above work for a venv"""
 """This file runs the actual GUI for lexical file manipulation/checking"""
-# Duplicate gate FIRST: py_modules MUTATES shared state (creates the venv,
+# VERSION FIRST — before the duplicate gate and before py_modules. It is a bare
+# string assignment with no imports behind it, so nothing is gained by defining
+# it later, and something is lost: py_modules.ensure_venv() runs DURING the
+# import below and writes a restart marker, which reads the version off
+# __main__. Defined after that import, it was still unset, so the first-run venv
+# relaunch — the one producer where a failure is hardest to diagnose — recorded
+# `'version': None` (observed on a fresh clone, 2026-09-01).
+__version__='1.15.4' #This is a string...
+# Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
 try:
@@ -13,7 +21,6 @@ except ImportError: #psutil not installed yet — only true on a machine's
     pass            #very first boot, when nothing can be racing anyway;
                     #py_modules below installs it, so every later boot gates.
 import utilities.py_modules #This tries importing, and installs on failure
-__version__='1.15.4' #This is a string...
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
