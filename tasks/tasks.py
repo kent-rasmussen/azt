@@ -1160,6 +1160,7 @@ class ToneFrameDrafter(ui.Window):
                 cb=ui.CheckButton(f,text=_("word break"),variable=box,
                                 font='small',
                                 image_pixels=12,image_scaleto='height',
+                                ipady=0,
                                 row=1,column=0,columnspan=2,sticky='w')
                 ui.ToolTip(cb,_("Separate this text from the word with a "
                             "space. Shown as ‘{mark}’ when set.").format(
@@ -1247,6 +1248,14 @@ class ToneFrameDrafter(ui.Window):
                 row=row,column=0,
                 sticky='w',#columnspan=2,
                 padx=padx,pady=pady)
+        # wrap() or CLIP. Nothing here had a wraplength, so Tk simply cut the
+        # text off at the canvas edge — "Examples for NewFrame Citation fo|"
+        # (Kent 2026-09-01). wrap() takes min(inherited wraplength, maxwidth),
+        # i.e. it already clamps to what is actually available, so this is the
+        # existing answer rather than a new one. The padx of 50 A SIDE was
+        # spending 100px of that width on margins, which is why a title that
+        # nearly fits didn't.
+        lt.wrap()
         if not formdict:
             l1=ui.Label(self.exf,
                     text=_("None!"),
@@ -1267,6 +1276,7 @@ class ToneFrameDrafter(ui.Window):
                     row=row,column=0,
                     sticky='w',
                     padx=padx,pady=pady)
+            l1.wrap() #a long form or gloss clips exactly as the title did
             log.info('langlabel:{}'.format(text))
         """toneframes={'Nom':
                         {'name/location (e.g.,"By itself")':
@@ -1283,9 +1293,10 @@ class ToneFrameDrafter(ui.Window):
                                             n=checktoadd: self.submit(x,n),
                           row=0,column=0,
                           )
-        ui.Label(subframe, text=_("<= No changes after this! \nPlease check that "
+        warn=ui.Label(subframe, text=_("<= No changes after this! \nPlease check that "
                                 "the above looks good on several examples!"),
                                 justify='left', row=0, column=1, padx=15)
+        warn.wrap() #it was clipped mid-sentence at "on severa|"
         # log.info('sub_btn:{}'.format(stext))
         sub_btn.update_idletasks()
         # grow the canvas to cover the example frame just built, then scroll to
