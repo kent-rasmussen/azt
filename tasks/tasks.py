@@ -862,10 +862,41 @@ class ToneFrameDrafter(ui.Window):
                 pass
             del self.exf
     def _reflow(self):
+        """Re-measure AFTER the event loop has applied the widget swap.
+
+        Called inline this measured the OLD geometry: the entry gridded a
+        moment earlier had not been mapped yet, so the row kept the width of
+        the button it replaced and the page only straightened itself out once
+        the user typed and some later event forced a relayout (Kent 2026-08-31:
+        "fixed after typing, but not before. same for other row issue"). Same
+        family as the three boards that built content into a ScrollingFrame and
+        never reflowed — measuring before the thing is mapped.
+
+        Scheduled with after_idle and a viewability retry, copying
+        TaskDressing._reflow_board_soon — the shape this codebase already
+        settled on for exactly this hazard. after_idle (not after(1)) because
+        grid() queues the requested-size recompute as an IDLE task: a 1 ms
+        timer can fire before that idle work has run, which is a re-measure of
+        the same stale geometry the inline call saw. Do NOT reach for
+        update_idletasks here — reflow() does its own platform-scoped flush,
+        and a bare one write-deadlocks XWayland."""
+        def go(n=10):
+            try:
+                if self.exitFlag.istrue() or not self.scroll.winfo_exists():
+                    return
+                if not self.scroll.winfo_toplevel().winfo_viewable():
+                    if n>0:
+                        self.after(50,lambda:go(n-1))
+                    else:
+                        log.info("TFDP reflow skipped: window never mapped")
+                    return
+                self.scroll.reflow()
+            except Exception as e:
+                log.info("TFDP reflow failed: %s",e)
         try:
-            self.scroll.reflow()
-        except Exception:
-            log.info("TFDP: no scroll frame to reflow")
+            self.after_idle(go)
+        except Exception as e:
+            log.info("TFDP: could not schedule reflow: %s",e)
     def _close_active(self):
         pair=self.fields.get(self.active)
         self.active=None
@@ -912,10 +943,19 @@ class ToneFrameDrafter(ui.Window):
             # wider than the button it replaces, so opening one grew the row and
             # RE-CENTRED it — the label slid left and the field-type control was
             # pushed off the side of the scroll frame (Kent 2026-08-31, with a
-            # screenshot). Floor of 12 so an empty field is still worth typing
-            # in; ceiling of 40 so a long value cannot do the same damage again.
+            # screenshot).
+            #
+            # The bounds differ by KIND, because the two kinds hold different
+            # things. A frame name is a phrase and gets room. A before/after
+            # fragment is a word or two ('a', 'un', 'the') sitting INLINE
+            # between the label and the <word> marker, so every character of
+            # width shoves the rest of the row rightward — at the name's floor
+            # of 12 it pushed the 'after' button off the edge of the scroll
+            # frame (Kent, second screenshot). Narrow is not a cosmetic
+            # preference here; it is what keeps the rest of the row reachable.
+            floor,ceiling=(12,40) if key[1] is None else (5,16)
             try:
-                field['width']=min(max(len(self._value(key))+5,12),40)
+                field['width']=min(max(len(self._value(key))+2,floor),ceiling)
             except Exception:
                 pass #width is cosmetic; never lose the edit over it
             # Focus immediately. The alphabet page records this same gap twice
@@ -1064,7 +1104,19 @@ class ToneFrameDrafter(ui.Window):
             pair['var']=var=ui.StringVar(self,self._value(key))
             pair['field']=field=ui.EntryField(f,render=True,text=var,
                                             row=0,column=0,sticky='')
-            field.rendered.grid(row=1,column=0,sticky='new')
+            # field.rendered is DELIBERATELY NOT GRIDDED. The old modal showed
+            # this rendered-text preview under the entry, and inline it is what
+            # made the page jump: empty, the label reserves a default height,
+            # and the first keystroke makes the renderer draw and the label
+            # shrink to the rendering — so the row was ~45px too tall until you
+            # typed, which pushed every row below it down and left the row's own
+            # label vertically off-centre (Kent 2026-09-01, screenshot pairs for
+            # both the name and the analang rows). It was NOT the reflow timing,
+            # which is why deferring the reflow did not touch it.
+            #
+            # If a preview is wanted back for a non-Latin analysis orthography,
+            # it needs a home whose height does not depend on whether it has
+            # rendered yet — not a cell in the row being edited.
             take=lambda event=None,k=key,v=var:self.commit(k,v.get())
             field.bind('<Return>',take)
             field.bind('<Escape>',lambda event=None:self.commit())
@@ -1086,7 +1138,7 @@ class ToneFrameDrafter(ui.Window):
                 box.set(self._wordbreak(key))
                 cb=ui.CheckButton(f,text=_("word break"),variable=box,
                                 font='small',
-                                row=2,column=0,columnspan=2,sticky='w')
+                                row=1,column=0,columnspan=2,sticky='w')
                 ui.ToolTip(cb,_("Separate this text from the word with a "
                             "space. Shown as ‘{mark}’ when set.").format(
                             mark=self.WORDBREAK_MARK))
