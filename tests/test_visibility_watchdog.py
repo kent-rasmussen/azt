@@ -44,8 +44,12 @@ def _watchdog(monkeypatch, viewable, program=None, windows=None):
     monkeypatch.setattr(wd, "_schedule", lambda: None)
     monkeypatch.setattr(wd, "_shutting_down", lambda: False)
     monkeypatch.setattr(wd, "_reveal_candidates", lambda: list(windows or []))
-    monkeypatch.setattr(visibility, "anything_viewable",
-                        lambda *a, **k: viewable())
+    # first_viewable, not anything_viewable: _tick needs the WINDOW so it can
+    # tell a work surface from the boot splash. A plain _FakeWindow (no
+    # boot_only) stands in for "something usable is on screen".
+    _seen = _FakeWindow()
+    monkeypatch.setattr(visibility, "first_viewable",
+                        lambda *a, **k: _seen if viewable() else None)
     return wd
 
 
@@ -152,6 +156,127 @@ def test_reveals_the_first_window_with_content(monkeypatch):
     wd.misses = wd.STRIKES
     wd._report_and_reveal()
     assert (empty.deiconified, built.deiconified) == (0, 1)
+
+
+def test_first_window_hook_skips_the_splash(monkeypatch):
+    """The hook clears the restart marker, so it must mean "the app is usable",
+    not "a window exists". The splash is visible for the whole of boot, and
+    everything that can fail happens after it (Kent 2026-09-01)."""
+    fired = []
+    splash = _FakeWindow(); splash.boot_only = True
+    chooser = _FakeWindow()
+    seen = [splash]
+    wd = visibility.VisibilityWatchdog(_FakeProgram(),
+                                       on_first_window=lambda: fired.append(1))
+    wd.running = True
+    monkeypatch.setattr(wd, "_schedule", lambda: None)
+    monkeypatch.setattr(wd, "_shutting_down", lambda: False)
+    monkeypatch.setattr(wd, "_reveal_candidates", lambda: [])
+    monkeypatch.setattr(visibility, "first_viewable", lambda *a, **k: seen[0])
+
+    wd._tick()
+    assert fired == [], "cleared the marker on the splash"
+    assert wd.armed, "a visible splash must still arm the alarm"
+
+    seen[0] = chooser
+    wd._tick()
+    assert fired == [1], "never fired once a work surface appeared"
+    wd._tick()
+    assert fired == [1], "fired more than once"
+
+
+class _FakeFrame:
+    def __init__(self, children=()):
+        self._children = list(children)
+
+    def winfo_exists(self):
+        return True
+
+    def winfo_children(self):
+        return list(self._children)
+
+
+class _FakePage:
+    """A window with an Exit button, as QuitOnlyGuard cares about."""
+    def __init__(self, children=(), viewable=True, waiting=False, exitbtn=True):
+        self.frame = _FakeFrame(children)
+        self.exitButton = object() if exitbtn else None
+        self._viewable = viewable
+        self._waiting = waiting
+
+    def winfo_exists(self):
+        return True
+
+    def winfo_viewable(self):
+        return self._viewable
+
+    def iswaiting(self):
+        return self._waiting
+
+    def title(self):
+        return "a page"
+
+
+def _guard(monkeypatch, windows):
+    g = visibility.QuitOnlyGuard(_FakeProgram())
+    g.running = True
+    monkeypatch.setattr(g, "_schedule", lambda: None)
+    monkeypatch.setattr(visibility, "candidate_windows", lambda *a: list(windows))
+    filled = []
+    monkeypatch.setattr(g, "_fill", lambda w: filled.append(w))
+    monkeypatch.setattr(g, "_unfill", lambda w: None)
+    return g, filled
+
+
+def test_quit_only_page_is_acted_on_after_strikes(monkeypatch):
+    page = _FakePage(children=[])
+    g, filled = _guard(monkeypatch, [page])
+    for _ in range(g.STRIKES - 1):
+        g._tick()
+    assert filled == [], "acted before the strike count"
+    g._tick()
+    assert filled == [page]
+
+
+def test_a_wait_dialog_excuses_an_empty_frame(monkeypatch):
+    """A wait covering the window IS the sanctioned way to have an empty frame —
+    both innocent readings (still building, just torn down) use one."""
+    page = _FakePage(children=[], waiting=True)
+    g, filled = _guard(monkeypatch, [page])
+    for _ in range(g.STRIKES * 3):
+        g._tick()
+    assert filled == []
+
+
+def test_a_brief_gap_does_not_count(monkeypatch):
+    """A teardown on its way to a withdraw, or a rebuild that lands promptly, is
+    over in milliseconds. Strikes must reset when content appears."""
+    page = _FakePage(children=[])
+    g, filled = _guard(monkeypatch, [page])
+    g._tick()
+    page.frame._children = [object()]  # the rebuild landed
+    g._tick()
+    page.frame._children = []          # a later, different gap
+    g._tick()
+    assert filled == [], "strikes carried across an intervening good poll"
+
+
+def test_a_page_with_content_is_never_touched(monkeypatch):
+    page = _FakePage(children=[object()])
+    g, filled = _guard(monkeypatch, [page])
+    for _ in range(g.STRIKES * 3):
+        g._tick()
+    assert filled == []
+
+
+def test_a_window_without_an_exit_button_is_not_this_symptom(monkeypatch):
+    """exit=False windows (the sound settings window) show no Quit at all, so an
+    empty frame there is ugly but not the harm this guards against."""
+    page = _FakePage(children=[], exitbtn=False)
+    g, filled = _guard(monkeypatch, [page])
+    for _ in range(g.STRIKES * 3):
+        g._tick()
+    assert filled == []
 
 
 def test_global_watchdog_waits_longer_than_the_scoped_guard():

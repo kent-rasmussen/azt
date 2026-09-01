@@ -2557,6 +2557,42 @@ class Window(Toplevel):
             self.progress(value)
         except Exception as e:
             log.info(f"Exception updating progress: {e}")
+    def deiconify(self):
+        """Reveal — and NAME the caller if this page has nothing to show.
+
+        NOTHING BUT QUIT. The Exit button lives in `outsideframe`, not `frame`,
+        so a window revealed with an empty `frame` is a fullscreen block of
+        theme colour whose ONLY control is Quit. Kent watched a user on a Zoom
+        call come close to pressing it precisely because it was the only thing
+        on screen (2026-09-01), so this belongs with data loss rather than with
+        cosmetics: the page solicits the most destructive action available, at
+        the moment the user is most confused.
+
+        LOGS, DOES NOT REFUSE. Refusing would trade this symptom for the worse
+        one — no window at all — wherever the caller has no retry, and this
+        codebase has now been wrong four separate times about when a window
+        should be revealed (2s timer, 15s timer, reveal-on-content, the global
+        watchdog). The log line is the safe half, and it is the half that was
+        missing: `guardvisible` declines to reveal an empty window, but an
+        explicit deiconify() from a page builder has never said anything at
+        all. Grep the log for NOTHING BUT QUIT to get the producer by name.
+
+        A wait dialog covering the window is not a producer — an empty frame is
+        expected mid-build, which is exactly what the wait is for.
+        """
+        try:
+            if (getattr(self,'exitButton',None) is not None
+                    and hasattr(self,'frame') and self.frame.winfo_exists()
+                    and not self.frame.winfo_children()
+                    and not self.iswaiting()):
+                log.warning("NOTHING BUT QUIT: revealing %r with an empty "
+                        "frame — the user gets a fullscreen page whose only "
+                        "control is Exit. Build content before revealing, or "
+                        "cover the gap with waiting(thenshow=True).",
+                        self.title())
+        except Exception:
+            pass #a diagnostic must never stop a reveal
+        return super().deiconify()
     def resetframe(self):
         """Blank the content frame. INVARIANT: never call this on a VIEWABLE
         window outside a waiting() block. The Exit button lives in

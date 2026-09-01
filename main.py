@@ -13,7 +13,7 @@ except ImportError: #psutil not installed yet — only true on a machine's
     pass            #very first boot, when nothing can be racing anyway;
                     #py_modules below installs it, so every later boot gates.
 import utilities.py_modules #This tries importing, and installs on failure
-__version__='1.14.3' #This is a string...
+__version__='1.15.4' #This is a string...
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
@@ -362,6 +362,17 @@ class App:
         this fires inside wait_window's nested loop too, the freeze could
         land mid-sort. Nothing here is load-bearing, per the paragraph
         above, so it must never be able to block the UI."""
+        if getattr(self,'_restarting',False):
+            # A confirmed restart keeps this process alive while the successor
+            # boots (see _confirm_restart), and the successor attaches to the
+            # same project. Two clients polling and offering reloads on one
+            # working tree is exactly what the handover is meant to avoid, so
+            # stop polling the moment we start handing over. RESCHEDULED, not
+            # abandoned: a restart can fail, and then this copy is live again
+            # and should be polling — dropping the loop here would leave a
+            # working app quietly not noticing peer changes for the session.
+            self.tk_root.after(10000,self.collab_poll)
+            return
         session=getattr(self,'collab',None)
         if not session:
             return #project disconnected mid-session; stop polling
@@ -609,6 +620,15 @@ class App:
         For pywebview this runs in a background thread after webview.start()
         has loaded, so that blocking calls like wait_window() can work.
         """
+        # Did the run BEFORE this one try to restart and never come back? Asked
+        # first, before any of the slow work below, and deliberately without
+        # clearing: if this boot also fails, the next one must still find it.
+        # See utilities/restartmark.py.
+        try:
+            from utilities import restartmark
+            restartmark.report()
+        except Exception as e:
+            log.info("restart marker check skipped: %s",e)
         lastcommit=self.source_repo.lastcommitdate()
         self.tk_root.wraplength=self.tk_root.winfo_screenwidth()-300 #exit button
         self.tk_root.wraplength=int(self.tk_root.winfo_screenwidth()*.7) #exit button
@@ -679,9 +699,27 @@ class App:
         # legitimately runs with nothing but the splash on screen. It arms
         # itself on the first window it actually sees, so an unusually slow
         # boot below this line still can't produce a false alarm.
-        from frontend.visibility import VisibilityWatchdog
-        self.visibility_watchdog=VisibilityWatchdog(self)
+        # THE RESTART SUCCEEDED — but only a window that actually reaches the
+        # SCREEN says so, which is why clearing the marker is handed to the
+        # watchdog rather than done here. Two ways the obvious placement (a
+        # clear at the end of this method) gets it wrong: _run_setup returns
+        # BEFORE mainloop() is entered, so it would claim success while the app
+        # could still wedge before ever painting; and if anything above blocks —
+        # the chooser opening its own window, say — the clear is never reached
+        # at all, and a restart that plainly worked keeps its marker (observed,
+        # Kent 2026-09-01). The watchdog already computes "a window is
+        # viewable", from the event loop, in order to arm itself.
+        from frontend.visibility import VisibilityWatchdog, QuitOnlyGuard
+        from utilities import restartmark
+        self.visibility_watchdog=VisibilityWatchdog(self,
+                                        on_first_window=restartmark.clear)
         self.visibility_watchdog.start()
+        # Global guard against the nothing-but-Quit page. Same reasoning as the
+        # watchdog and started in the same place: that page is bad no matter who
+        # produced it, so ask about the SCREEN rather than auditing producers
+        # one at a time (Kent 2026-09-01).
+        self.quit_only_guard=QuitOnlyGuard(self)
+        self.quit_only_guard.start()
     def run(self):
         # global program
         log.info("Running main function on {} ({})".format(platform.system(),
@@ -715,13 +753,23 @@ class App:
             # sys.exit()
         self.run_problem()
     def run_problem(self):
+        # self.restart(), NOT sysrestart(): these two switch the SOURCE BRANCH and
+        # then restart, which makes them the likeliest of all the restart callers
+        # to fail to come back — a bad checkout means the successor may not start
+        # at all. So they get the confirmed path (a held "Restarting…" dialog, and
+        # the old copy handed back with an explanation if the new one dies) rather
+        # than the fire-and-forget one.
+        #
+        # NB self.restart() RETURNS, where sysrestart() never did: it opens the
+        # wait and schedules the confirm loop. So the destroy() below now actually
+        # runs — which is what it was always meant to do and never could.
         def reverttomain(event=None):
             self.source_repo.reverttomain()
-            sysrestart()
+            self.restart(reason='revert to main branch')
             revertb.destroy()
         def testversion(event=None):
             self.source_repo.testversion()
-            sysrestart()
+            self.restart(reason='switch to testing branch')
             tryb.destroy()
         # global _
         try:
@@ -983,7 +1031,11 @@ class App:
         else:
             self.taskchooser.gettask() #re-present the chooser
         log.info("In-place reload: done")
-    def restart(self,filename=None):
+    def restart(self,filename=None,reason=None):
+        # `reason` reaches the restart marker, and it is the field worth having:
+        # an update that fails to come back is a different diagnosis from a
+        # branch switch that does. Callers that don't say get 'App.restart',
+        # which at least distinguishes this path from the menu buttons.
         log.info(_("Restarting from App"))
         file.writefilename(self.filename)
         for loc in [self,self.mainwindow]:
@@ -993,22 +1045,147 @@ class App:
         if self.towrite: #Do even if not closed by user
             log.info(_("Final write to lift"))
             self.maybewrite(definitely=True)
-        try:
-            self.task.withdraw() #so users don't do stuff while waiting
-        except (AttributeError, Exception):
-            log.info("There doesn't seem to be a task to hide; moving on.")
-        try:
-            self.task.runwindow.withdraw() #so users don't do stuff while waiting
-        except (AttributeError, Exception):
-            log.info(_("There doesn’t seem to be a runwindow to hide; moving on."))
-        while self.writing:
-            # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
-            #     self.towrite,self.writing,self.taskchooser.writing))
+        # NO withdraw(), and no time.sleep() loop. Both were here to stop the
+        # user acting during the wait, and together they produced the failure
+        # this whole item exists for: every window hidden, and a dead main loop
+        # so nothing — not after(), not a repaint, not either visibility guard —
+        # could run or report. A WAIT DIALOG does the same job honestly: it
+        # blocks input, it says what is happening, and it is the one thing both
+        # guards accept as "something is happening and the user is being told".
+        self._restart_reason=reason or 'App.restart'
+        self._restart_child=None
+        self._restart_childgone=None
+        # Set BEFORE the wait opens: from here on this process is handing over,
+        # so background work that touches the project must stop (collab_poll
+        # checks this). Cleared only by _restart_failed, where we genuinely are
+        # the live copy again.
+        self._restarting=True
+        w=self._restart_holder()
+        if w is not None:
+            try:
+                w.wait(msg=_("Restarting {name}…").format(name=self.name))
+            except Exception as e:
+                log.info("no restart wait dialog: %s",e)
+        self._await_write_then_restart()
+    def _restart_holder(self):
+        """The window that holds the "Restarting…" dialog and, if the restart
+        fails, is handed back to the user. The task if there is one, else the
+        chooser — the same preference order the visibility watchdog uses."""
+        for owner in (getattr(self,'task',None),getattr(self,'taskchooser',None)):
+            if owner is None:
+                continue
+            win=getattr(owner,'ui',owner)
+            try:
+                if win.winfo_exists():
+                    return win
+            except Exception:
+                continue
+        return None
+    RESTART_POLL_MS=500
+    RESTART_EXIT_GRACE_S=15 #a successor may re-exec once (venv relaunch)
+    RESTART_BACKSTOP_S=300
+    def _await_write_then_restart(self):
+        """Drive the write-wait from after(), not sleep(). Same wait, but the
+        event loop stays alive — which is the prerequisite for everything below:
+        a dialog that can paint, and a confirm loop that can run at all."""
+        if self.writing:
             log.info(_("Waiting to finish writing to lift"))
-            time.sleep(1)
-            self.check_if_write_done() #because after() isn't working here...
-        # log.info("Not writing to lift")
-        sysrestart()
+            self.check_if_write_done()
+            self.tk_root.after(1000,self._await_write_then_restart)
+            return
+        self._spawn_and_confirm()
+    def _spawn_and_confirm(self):
+        from utilities.utilities import spawn_successor
+        self._restart_child=spawn_successor(reason=self._restart_reason)
+        if self._restart_child is None:
+            # The launch itself failed, so there is no successor to wait for and
+            # we are still a working app. Say so and stay up; a silent return to
+            # a half-torn-down UI is what we are trying to stop.
+            self._restart_failed(_("Could not start a new copy of {name}. "
+                        "Your work is saved and this window is still usable."
+                        ).format(name=self.name))
+            return
+        from utilities import restartmark
+        if restartmark.pending() is None:
+            # No marker means no signal: its DISAPPEARANCE is what we wait on,
+            # so an absent one would read as instant confirmation of a successor
+            # that has not started. The successor is already launched and this
+            # is only a diagnostic failure, so hand over the old way rather than
+            # pretending to confirm.
+            log.warning("no restart marker to watch (could not be written); "
+                    "handing over unconfirmed")
+            sysshutdown()
+            return
+        self._restart_started=time.monotonic()
+        self._confirm_restart()
+    def _confirm_restart(self):
+        """Wait for the successor to say it is up, and recover if it cannot.
+
+        THE SIGNAL IS THE MARKER: level 1 already has the successor delete it
+        once a real work surface is on screen, so its disappearance is exactly
+        "I am up" — no second channel, and the thing we wait for is the thing we
+        actually care about (a window the user can use), not merely a process
+        that exists.
+
+        The failure we can detect precisely is the successor EXITING, which
+        poll() reports at once — far better than a wall-clock timeout, which on
+        a slow machine with a big lexicon would cry failure on a boot that was
+        simply taking its time. But an exited child is not proof on its own: a
+        successor may legitimately re-exec once (the venv relaunch Popens and
+        exits), orphaning a grandchild we cannot see. So an exit only counts
+        after a grace period in which the marker is still uncleared."""
+        from utilities import restartmark
+        try:
+            if restartmark.pending() is None:
+                log.info("successor confirmed up; predecessor exiting")
+                sysshutdown()
+                return
+            if self._restart_child.poll() is not None:
+                now=time.monotonic()
+                if self._restart_childgone is None:
+                    self._restart_childgone=now
+                    log.info("successor process exited; waiting %ss in case it "
+                            "re-execed (venv relaunch) before calling it a "
+                            "failure",self.RESTART_EXIT_GRACE_S)
+                elif now-self._restart_childgone>self.RESTART_EXIT_GRACE_S:
+                    self._restart_failed(_("{name} could not restart: the new "
+                            "copy stopped before it opened. Your work is saved "
+                            "and this window is still usable."
+                            ).format(name=self.name))
+                    return
+            elif time.monotonic()-self._restart_started>self.RESTART_BACKSTOP_S:
+                # Still running after a very long time. Do NOT hand the UI back:
+                # two live copies on one project is worse than a long wait, and
+                # the successor owns the project from here.
+                log.warning("successor still unconfirmed after %ss but alive; "
+                        "exiting anyway rather than risk two live copies",
+                        self.RESTART_BACKSTOP_S)
+                sysshutdown()
+                return
+        except Exception:
+            log.exception("restart confirmation failed")
+        self.tk_root.after(self.RESTART_POLL_MS,self._confirm_restart)
+    def _restart_failed(self,text):
+        """Give the user their window back, and say why. This is the whole point
+        of level 2: a failed restart becomes a sentence instead of a blank
+        screen."""
+        log.error("RESTART FAILED: %s",text)
+        # We are the live copy again, so background work resumes. Do this first:
+        # everything below can raise, and a stuck _restarting flag would leave a
+        # working app quietly not polling.
+        self._restarting=False
+        w=self._restart_holder()
+        if w is not None:
+            try:
+                w.waitdone()
+                if not w.exitFlag.istrue():
+                    w.deiconify()
+            except Exception:
+                log.exception("could not restore the UI after a failed restart")
+        try:
+            ErrorNotice(text,title=_("Restart failed"))
+        except Exception:
+            log.exception("could not report the failed restart")
     def prep_to_write(self):
         self.writeable=0 #start the count
         self.towrite=False

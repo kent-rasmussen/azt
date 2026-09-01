@@ -445,6 +445,18 @@ def ensure_venv():
     # above already carries any inherited value through.
     _prior=[p for p in env.get('AZT_PREDECESSOR_PIDS','').split(',') if p]
     env['AZT_PREDECESSOR_PIDS']=','.join((_prior+[str(os.getpid())])[-8:])
+    # BREADCRUMB. This is the SECOND restart producer (sysrestart is the other),
+    # and the earliest: a venv relaunch that fails to come back used to be
+    # completely silent. restartmark._path() has a pathlib-only fallback exactly
+    # for here, because this runs at import time in a process whose job is to
+    # obtain the dependencies utilities.file needs. The successor reports and
+    # clears it like any other; note it is identified by AZT_VENV_RELAUNCHED
+    # rather than --restart, which this hop does not add.
+    try:
+        from utilities import restartmark
+        restartmark.mark(reason='venv relaunch')
+    except Exception as e:
+        log.info("restart marker skipped for the venv relaunch: {}".format(e))
     try:
         subprocess.Popen([py]+sys.argv,env=env)
     except Exception as e:

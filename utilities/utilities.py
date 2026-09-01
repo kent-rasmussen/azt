@@ -292,34 +292,74 @@ def openweburl(url):
 def sysshutdown():
     logsetup.shutdown()
     sys.exit()
-def sysrestart(event=None):
-    osys=platform.system()
-    logsetup.shutdown()
-    if osys == 'Linux':
-        os.execl(sys.executable, sys.executable, *sys.argv, '--restart')
-    elif osys == 'Windows':
-        # Popen, NOT run: run() waits, so restart chains stacked one live
-        # "waiter" process per restart and tripped the duplicate gate
-        # (3 found, 2026-07-16). Exit as soon as the successor is launched.
-        #
-        # HAND THE SUCCESSOR OUR PID (2026-07-30). Popen + sys.exit() does not
-        # mean we are gone: a Tk app with live worker threads takes a while to
-        # finalize, so the successor's duplicate check often runs while we are
-        # still listed. duplicates.running_file skips its ANCESTORS for that
-        # reason — but it walks ppid, so ONE dead intermediate truncates the walk
-        # and a still-lingering grandparent gets counted as a duplicate. That is
-        # the "too many processes" on restart-after-update, where the chain is
-        # longer (update → restart, plus a venv relaunch if requirements moved).
-        # An explicit, inherited list of predecessor pids doesn't depend on the
-        # process tree at all. Trimmed so a long session can't grow the env.
+def spawn_successor(reason=None):
+    """Launch the successor and RETURN, without exiting or shutting down logging.
+
+    The other half of a confirmed restart: `sysrestart` hands over and dies, so
+    nothing is left to notice a successor that never comes up. This lets the
+    caller keep its UI and its log, watch for the successor to signal that it is
+    up, and recover if it does not. Returns the Popen handle, or None if the
+    launch itself failed (in which case the caller still has a working app).
+
+    ALWAYS Popen, on every platform. `os.execl` cannot be used here by
+    definition — it replaces the process image, so there would be no caller left
+    to wait. That also retires the last reason Linux was on exec at all
+    (level 3 of restart_recovery_handshake), and it hands over
+    AZT_PREDECESSOR_PIDS the way the Windows branch always has, which is what
+    keeps the successor's duplicate gate from counting us.
+    """
+    thislog=logsetup.getlog(__name__)
+    try:
+        from utilities import restartmark
+        restartmark.mark(reason=reason)
+    except Exception as e:
+        thislog.info("restart marker skipped: %s",e)
+    try:
         env=dict(os.environ)
         prior=[p for p in env.get('AZT_PREDECESSOR_PIDS','').split(',') if p]
         env['AZT_PREDECESSOR_PIDS']=','.join((prior+[str(os.getpid())])[-8:])
-        # Don't let --restart accumulate: sys.argv already carries it when THIS
-        # process was itself started by a restart, and every hop was appending
-        # another copy.
         argv=[a for a in sys.argv if a != '--restart']
-        subprocess.Popen([sys.executable, *argv, '--restart'], env=env)
+        child=subprocess.Popen([sys.executable, *argv, '--restart'], env=env)
+        thislog.info("successor launched: pid %s (reason: %s)",child.pid,reason)
+        return child
+    except Exception:
+        thislog.exception("could not launch successor")
+        return None
+def sysrestart(event=None,reason=None):
+    """Hand over to a fresh copy and exit, WITHOUT waiting to be told it came up.
+
+    The unconfirmed restart, for callers that only need to go: menu buttons, the
+    branch switches, the VCS pages. `App.restart` is the CONFIRMED one — it holds
+    a "Restarting…" dialog and waits for the successor's signal (see
+    `spawn_successor` and `App._confirm_restart`), which is what a caller wants
+    if a failure to come back would leave the user stranded.
+
+    ONE PATH FOR EVERY PLATFORM (level 3 of restart_recovery_handshake), by
+    delegating to `spawn_successor`, which is already that path. What this
+    replaces:
+      - `os.execl` on Linux. Unrecoverable by construction — the process image is
+        replaced, so nothing survives to notice a successor that never starts —
+        and already the odd one out, since `py_modules.ensure_venv` has used
+        Popen everywhere all along. It also PRESERVED THE PID, which made the
+        predecessor and successor indistinguishable by pid (observed 2026-09-01).
+      - A `Windows`-only Popen branch, whose `AZT_PREDECESSOR_PIDS` handover was
+        therefore Windows-only too. That handover is now REQUIRED on Linux as
+        well: with Popen the predecessor lingers, and without the pid list the
+        successor's duplicate gate can count it. It was never needed under exec
+        because there was no predecessor left to count.
+      - **A silent no-op on macOS.** `osys` matched neither branch, so a restart
+        on Darwin fell through to `sys.exit()` — the app simply quit and never
+        came back. Nobody has hit it, but it was there.
+
+    If the launch FAILS we do not exit: an app that is still working beats an app
+    that quit into nothing, which is the whole lesson of this item.
+    """
+    child=spawn_successor(reason=reason) #marks the breadcrumb, then launches
+    if child is None:
+        logsetup.getlog(__name__).error("restart aborted: could not launch a "
+                "successor. Staying up — this copy still works.")
+        return
+    logsetup.shutdown()
     sys.exit()
 if __name__ == '__main__':
     from utilities import logsetup

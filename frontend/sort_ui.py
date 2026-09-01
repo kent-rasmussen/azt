@@ -668,6 +668,31 @@ class SortPresenter(PresenterBase):
             if not runwindow.exitFlag.istrue():
                 runwindow.deiconify()
                 runwindow.update_idletasks()
+                # REFLOW WITH THE CANARY IN IT. Nothing did, and that is the
+                # whole bug (field, OBT's Windows machine, 2026-09-01): the OK
+                # button is gridded into the scroll content just above, but the
+                # only reflow armed for this page was scheduled at the END of
+                # SortButtonFrame.__init__ — BEFORE the canary existed — so the
+                # FIFO idle queue could run _do_configure_interior on a stale
+                # reqheight and set the scrollregion to end at the last group
+                # button. The button was built and alive the whole time, simply
+                # outside the scrollable area, with the scrollbar already at its
+                # end: nothing to scroll to. Confirmed by test — removing one
+                # group row mutated the content, re-fired <Configure>, and the
+                # button appeared.
+                #
+                # WORSE THAN COSMETIC, which is why this is a small fix to a
+                # serious bug: the page blocks on wait_window(verifycanary), so
+                # with OK unreachable the page can only be QUIT, never finished.
+                #
+                # Placed HERE rather than beside the grid() call: reflow() reads
+                # content.winfo_reqheight(), and grid() only queues that
+                # recompute as an idle task — the update_idletasks() above is
+                # what makes the measurement true. Exactly the trap
+                # ScrollingFrame.reflow's own docstring documents, and the
+                # non-macrosort branch's resume_configure() at the end of its
+                # word list is the same move.
+                buttonframe.reflow()
         else:
             buttonframe = ui.ScrollingFrame(f, row=1, column=1, rowspan=2,
                                             sticky='wsn')

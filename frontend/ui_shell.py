@@ -2989,6 +2989,18 @@ class ImageFrame(ui.Frame):
         else:
             self.citationframe()
 class Splash(ui.Window):
+    # BOOT ONLY: visible, but not a surface the user can work in. It still
+    # counts for the visibility guards — a splash on screen means "something is
+    # happening", which is exactly the evidence they should accept — but it must
+    # NOT count as "the app came up", because the whole of _run_setup
+    # (FileParser, repocheck, Settings, the analyzers) runs after it, and that
+    # is the failure window the restart marker exists to describe. So the
+    # marker's clear waits for the chooser or a task window. Kent, 2026-09-01:
+    # "So it should clear as soon as we see the 'loading' splash screen?" No.
+    # Any other window that is visible during boot but not yet usable should
+    # carry this flag too. Distinct from guard_ambient, which means "viewable
+    # but never a work surface, at any point in the session".
+    boot_only = True
     def maketexts(self):
         if self.exitFlag.istrue():
             return

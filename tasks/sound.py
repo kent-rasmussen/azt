@@ -208,8 +208,33 @@ class Record(BackendRecord, Sound):
                     return 1
                 self.program.slices.ps(psprofile[1])
                 self.program.slices.profile(psprofile[0])
+                def _nextgroup(event=None):
+                    # OPEN THE WAIT BEFORE BLANKING THE PAGE. This button used
+                    # to be wired straight to resetframe, which is precisely
+                    # what resetframe's own docstring forbids: it empties
+                    # `frame` on a VIEWABLE window, and the Exit button lives in
+                    # `outsideframe`, so the user was left looking at a
+                    # fullscreen block of theme colour containing nothing but
+                    # Quit for as long as the next group's page took to build.
+                    # That is the nothing-but-Quit page, on the recording flow,
+                    # produced by a deliberate click — and Kent watched a user
+                    # on a Zoom call come close to pressing that Quit, because
+                    # it was the only thing on screen (2026-09-01).
+                    #
+                    # The wait withdraws the window and covers the screen. The
+                    # next page's own wait (showentryformstorecordpage, which
+                    # opens one and calls resetframe itself) finds this one
+                    # already active and reuses it, so its exit does the single
+                    # reveal — no extra withdraw/deiconify cycle. Exactly the
+                    # handover documented at showentryformstorecordpage's head.
+                    try:
+                        self.ui.runwindow.wait(msg=_("Getting the next group…"),
+                                            thenshow=True)
+                    except Exception as e:
+                        log.info("could not cover the next-group gap: {}".format(e))
+                    self.ui.runwindow.resetframe()
                 nextb = ui.Button(self.ui.runwindow, text="Next Group",
-                                  cmd=self.ui.runwindow.resetframe)
+                                  cmd=_nextgroup)
                 nextb.grid(row=0, column=1, sticky='ne')
                 self.showentryformstorecordpage()
             self.program.slices.ps(ps)

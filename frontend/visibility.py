@@ -1,10 +1,29 @@
 # coding=UTF-8
-"""Is there anything on screen? — the shared answer, and the global watchdog.
+"""Is there anything on screen? — the shared answers, and the global guards.
 
-Two consumers, one rule. `TaskDressing.guardvisible` is the SCOPED guard: it
-fires once, 15 s after `getrunwindow`, because that call is a known producer of
-"both windows withdrawn". `VisibilityWatchdog` is the GLOBAL one: it polls for
-the life of the app and does not care who withdrew what.
+THREE GUARDS, ONE RULE SET. They must play nicely together (Kent 2026-09-01),
+because the two symptoms are opposite ends of one dependency and a remedy for
+either can produce the other — which is not hypothetical: the 2026-07-29 fix for
+"no window at all" (`_get_safe_window` deiconifying a fresh run window) was
+caught by the nothing-but-Quit guard on its first live run as a producer of
+nothing-but-Quit.
+
+  | guard | asks | acts? |
+  |---|---|---|
+  | `TaskDressing.guardvisible` (scoped, in ui_shell) | is anything viewable 15 s after THIS `getrunwindow`? | yes — it knows which run window belongs to the call in flight, so it can reveal the right one |
+  | `VisibilityWatchdog` (global, below) | is anything viewable at all, ever? | NO, reports only — its signal cannot separate "the user has nothing" from "I failed to find what they are looking at" |
+  | `QuitOnlyGuard` (global, below) | is a VIEWABLE window empty? | yes — that signal's innocent readings are excluded by `iswaiting()` and by strikes, and its action cannot cause the other symptom |
+
+THE RULES THAT KEEP THEM FROM FIGHTING:
+ 1. **Nothing a guard adds is content.** `has_content()` ignores QuitOnlyGuard's
+    placeholder, so a filled-in empty page never reads to the other two as a
+    legitimate page to reveal.
+ 2. **A wait dialog suppresses everything.** It is the sanctioned way to have an
+    empty or hidden window, and it is what a producer should use instead of
+    being caught by a guard.
+ 3. **Never reveal an empty window; never withdraw the last one.** The first
+    would produce nothing-but-Quit, the second no-window-at-all. Between them
+    those two prohibitions are the whole contract.
 
 The global one exists because enumerating producers cannot finish the job.
 `getrunwindow` has 16 call sites and a name, but the real class is *any*
@@ -27,6 +46,7 @@ can break the app is worse than no watchdog.
 """
 from utilities import logsetup
 log=logsetup.getlog(__name__)
+from utilities.i18n import _
 from frontend import ui
 
 
@@ -79,8 +99,15 @@ def candidate_windows(*extra):
     return widgets
 
 
-def anything_viewable(*extra):
-    """True if the user can see SOME window right now.
+def first_viewable(*extra):
+    """The first window the user can actually see, or None.
+
+    Returns the WIDGET, not a bool, because two different questions are asked of
+    this one walk and they need different answers: "is anything on screen?" (the
+    watchdog's alarm — a splash counts, the user can see something happening)
+    and "is the app usable?" (clearing the restart marker — a splash must NOT
+    count, since the whole of boot happens after it). Only the caller knows
+    which it is asking, so hand back the window and let it decide.
 
     Skips AMBIENT windows (`guard_ambient`): viewable, but not a surface the
     user can work in. The status/message window is parented to the root and
@@ -96,10 +123,16 @@ def anything_viewable(*extra):
             if getattr(w,'guard_ambient',False):
                 continue
             if w.winfo_exists() and w.winfo_viewable():
-                return True
+                return w
         except Exception:
             continue #a dead or half-built widget just isn't evidence
-    return False
+    return None
+
+
+def anything_viewable(*extra):
+    """True if the user can see SOME window right now. See first_viewable for
+    which windows count and why."""
+    return first_viewable(*extra) is not None
 
 
 def has_content(w):
@@ -110,10 +143,22 @@ def has_content(w):
     bare run window as built — which is precisely the empty-kiosk-with-a-
     quit-button that must never be revealed (Kent 2026-08-24, on "Sort!").
     Load-bearing; don't simplify to `w`.
+
+    AND IT DOES NOT COUNT WHAT A GUARD PUT THERE ITSELF. QuitOnlyGuard fills an
+    empty page with a notice, which would otherwise read here as "this page has
+    content" and make an NBQ page a legitimate reveal target for the other two
+    guards. That cannot happen today only because placeholders go only on
+    VIEWABLE windows while this is asked of withdrawn ones — sequencing, not a
+    guarantee, and the guards must not depend on each other's timing to avoid
+    feeding each other false evidence (Kent 2026-09-01: they "need to play
+    nicely together"). So the rule is explicit: nothing a guard ADDS is content.
     """
     try:
-        return bool(w is not None and w.winfo_exists()
-                    and w.frame.winfo_children())
+        if w is None or not w.winfo_exists():
+            return False
+        placeholder=getattr(w,QuitOnlyGuard.ATTR,None)
+        return bool([c for c in w.frame.winfo_children()
+                    if c is not placeholder])
     except Exception:
         return False
 
@@ -138,6 +183,160 @@ def window_state(w):
         return " ".join(bits)
     except Exception as e:
         return f"probe failed: {e}"
+
+
+class QuitOnlyGuard:
+    """Global guard against the NOTHING-BUT-QUIT page.
+
+    Kent, 2026-09-01: *"set up a global guard like the invisible watchdog, since
+    that page is bad no matter who did (or ever would) produce it."* Which is the
+    right frame: a fullscreen block of theme colour whose only control is Exit
+    solicits the most destructive action available, at the moment the user is
+    most confused, and it is the only thing they can do. He watched a user on a
+    Zoom call come close to pressing it for exactly that reason. Hunting
+    producers one at a time cannot finish — the audit of `resetframe` callers
+    found and fixed one, and the shape can be reached by any page that reveals
+    before it builds — so this asks the question about the SCREEN instead.
+
+    WHY THIS ONE MAY ACT, WHERE THE WATCHDOG MAY NOT. The watchdog's signal is
+    ambiguous in a way that matters: "I found no viewable window" conflates "the
+    user has nothing" with "I failed to find what they are looking at", and
+    acting on the second wrecked a live page (1.14.3). This signal has two
+    innocent readings — a page still BUILDING, and a page just TORN DOWN (Kent's
+    correction; that is the `resetframe` gap) — and CRUCIALLY WE DO NOT NEED TO
+    TELL THEM APART, because the remedy is the same either way and neither
+    survives the filters:
+      - `iswaiting()`: a wait dialog covering the window is the sanctioned way
+        to have an empty frame, and both innocent cases are supposed to use one.
+      - STRIKES: a teardown on its way to a withdraw, or a rebuild that lands
+        promptly, is over in milliseconds. Three seconds of an empty page is not
+        a gap; it is the ~10s page Kent measured.
+    So what is left is a page that is wrong, whichever direction it was heading.
+
+    AND WHAT IT DOES IS THE SAFE ACTION. Not withdrawing the window, which would
+    trade this symptom for its worse sibling (no window at all,
+    `no_window_left_hang`). Not disabling Exit, which leaves a blank page with
+    no way out. It PUTS SOMETHING IN THE FRAME: once there is a sentence there,
+    Exit is no longer the only thing on screen, the user is told this is a bug
+    rather than their fault, and nothing that was going to happen is prevented.
+    The placeholder removes itself the moment real content arrives.
+    """
+    POLL_MS=1000
+    STRIKES=3
+    ATTR='_nbq_placeholder'
+
+    def __init__(self,program):
+        self.program=program
+        self.running=False
+        self.strikes={} #id(window) -> consecutive observations
+
+    def start(self):
+        if self.running:
+            return
+        self.running=True
+        log.info("quit-only guard: polling every %sms, acting after %s strikes",
+                self.POLL_MS,self.STRIKES)
+        self._schedule()
+
+    def stop(self):
+        self.running=False
+
+    def _schedule(self):
+        try:
+            root=ui.default_root()
+            if root is None:
+                self.running=False
+                return
+            root.after(self.POLL_MS,self._tick)
+        except Exception:
+            log.exception("quit-only guard: could not schedule")
+            self.running=False
+
+    def _real_children(self,w):
+        """The frame's children that are not our own placeholder."""
+        try:
+            ph=getattr(w,self.ATTR,None)
+            return [c for c in w.frame.winfo_children() if c is not ph]
+        except Exception:
+            return []
+
+    def _is_quit_only(self,w):
+        try:
+            if getattr(w,'exitButton',None) is None:
+                return False #no Exit button: not this symptom (e.g. exit=False)
+            if not (w.winfo_exists() and w.winfo_viewable()):
+                return False
+            if w.iswaiting():
+                return False #covered by a wait: an empty frame is expected
+            if not w.frame.winfo_exists():
+                return False
+            return not self._real_children(w)
+        except Exception:
+            return False #a half-built widget is not evidence
+
+    def _tick(self):
+        try:
+            if not self.running:
+                return
+            seen=set()
+            for w in candidate_windows():
+                key=id(w)
+                seen.add(key)
+                if self._is_quit_only(w):
+                    self.strikes[key]=self.strikes.get(key,0)+1
+                    if self.strikes[key]==self.STRIKES:
+                        self._fill(w)
+                else:
+                    self.strikes.pop(key,None)
+                    self._unfill(w)
+            for gone in [k for k in self.strikes if k not in seen]:
+                self.strikes.pop(gone,None)
+        except Exception:
+            log.exception("quit-only guard failed") #never break the app
+        finally:
+            if self.running:
+                self._schedule()
+
+    def _fill(self,w):
+        """Say something, so Exit is not the only thing on the page."""
+        try:
+            log.warning("NOTHING BUT QUIT: %r has been visible for %ss with an "
+                    "empty frame and no wait covering it. Filling it with a "
+                    "notice so Exit is not the only control. Find the producer: "
+                    "this page revealed itself before it had content.",
+                    w.title(),self.POLL_MS*self.STRIKES/1000)
+        except Exception:
+            pass
+        if getattr(w,self.ATTR,None) is not None:
+            return
+        try:
+            # Gridded high so it cannot collide with a real build's rows, and
+            # removed as soon as one arrives.
+            f=ui.Frame(w.frame,row=9999,column=0,sticky='ew')
+            l=ui.Label(f,font='read',row=0,column=0,sticky='ew',
+                    text=_("There is nothing on this page.\n\nThis is a fault "
+                        "in the program, not something you did wrong. Please "
+                        "report it, and say what you were doing."))
+            try:
+                l.wrap()
+            except Exception:
+                pass
+            setattr(w,self.ATTR,f)
+        except Exception:
+            log.exception("quit-only guard: could not fill the empty page")
+
+    def _unfill(self,w):
+        ph=getattr(w,self.ATTR,None)
+        if ph is None:
+            return
+        try:
+            ph.destroy()
+        except Exception:
+            pass
+        try:
+            setattr(w,self.ATTR,None)
+        except Exception:
+            pass
 
 
 class VisibilityWatchdog:
@@ -196,12 +395,19 @@ class VisibilityWatchdog:
     sees every window a user can be in.
     """
 
-    def __init__(self,program):
+    def __init__(self,program,on_first_window=None):
         self.program=program
         self.misses=0
         self.armed=False    # see choice 3
         self.reported=False # see choice 4
         self.running=False
+        # Called ONCE, the first time a window is actually viewable. This class
+        # already has to compute that to arm itself, and it is the only place in
+        # the app that computes it FROM THE EVENT LOOP — setup code can only
+        # report that it finished constructing, which is not the same claim.
+        # Used to clear the restart marker: "the restart worked" means a window
+        # reached the screen, not that _run_setup returned.
+        self.on_first_window=on_first_window
 
     def start(self):
         """Begin polling. Idempotent — a second call is a no-op, so wiring it
@@ -260,7 +466,23 @@ class VisibilityWatchdog:
             # walk: the list it can offer the user and the list it counts as
             # evidence must be the same list, or it can report NO WINDOW about
             # a window it is holding a reference to.
-            if anything_viewable(*self._reveal_candidates()):
+            seen=first_viewable(*self._reveal_candidates())
+            if seen is not None:
+                # The hook wants the first WORK SURFACE, so it stays pending
+                # while only a boot_only window (the splash) is up — and keeps
+                # being retried on later ticks, rather than being spent on the
+                # splash and lost. Kent asked exactly this: "should it clear as
+                # soon as we see the 'loading' splash screen?" No — the whole of
+                # boot happens after the splash, so that is the failure window
+                # the marker exists to describe.
+                if (self.on_first_window is not None
+                        and not getattr(seen,'boot_only',False)):
+                    try:
+                        self.on_first_window()
+                    except Exception:
+                        log.exception("visibility watchdog: on_first_window failed")
+                    finally:
+                        self.on_first_window=None #once, not every tick
                 self.armed=True     # something has been seen: arm (choice 3)
                 self.misses=0
                 self.reported=False # a new episode may now be reported

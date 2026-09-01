@@ -858,8 +858,12 @@ class WordCollection(Segments):
         formfield.focus_set()
         formfield.bind('<Return>',lambda event,l=lang:self.submitform(l))
         formfield.rendered.grid(row=2,column=0,sticky='new')
+        # submitform(self,lang) REQUIRES the language; tkinter calls a button
+        # command with no arguments, so this raised TypeError on every click and
+        # the only working way forward was the <Return> binding (which does pass
+        # it). Same closure-over-the-loop-variable shape as that binding.
         sub_btn=p.button(self.ui.runwindow.frame2,text = strings['ok'],
-                            command = self.submitform,
+                            command = lambda l=lang: self.submitform(l),
                             anchor ='c',row=2,column=0,sticky='')
         if strings['skip']:
             sub_btnNo=p.button(self.ui.runwindow.frame2,

@@ -247,11 +247,27 @@ class Sort(Categories):
             # (field 2026-07-29: "closing that window left them with nothing at
             # all, so we had to restart"). We are about to drive work in this
             # window, so it has to be visible.
+            #
+            # BUT NOT BY DEICONIFYING IT. A window straight out of
+            # getrunwindow() has an EMPTY frame, and the Exit button lives in
+            # outsideframe — so revealing it here produced a fullscreen page
+            # whose only control was Quit, which is the sibling bug
+            # (fullscreen_with_only_quit). Caught by the new QuitOnlyGuard on
+            # its first live run, 2026-09-01, logging exactly this window: the
+            # 2026-07-29 cure for "no window at all" was the cause of "nothing
+            # but Quit". Both symptoms come off the same dependency, and a WAIT
+            # is the answer to both — it is visible, it says what is happening,
+            # and it is the one thing both visibility guards accept as evidence.
+            #
+            # Safe to leave open: both callers of this method drive_work() on the
+            # window immediately, and drive_work closes the wait on StopIteration
+            # AND on a None generator. A wait nobody closes is the tryNAgain
+            # hole, so that guarantee is the precondition for doing this here.
             try:
                 if w is not None and not w.winfo_viewable():
-                    w.deiconify()
+                    w.wait(msg=_("Getting ready to sort…"),thenshow=True)
             except Exception as ex:
-                log.info("run window reveal in _get_safe_window: %s", ex)
+                log.info("run window cover in _get_safe_window: %s", ex)
             return w
 
     def _safe_quit_runwindow(self):

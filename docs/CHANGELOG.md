@@ -19,6 +19,305 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.4
+
+- **A restart now holds a window and waits to be told the new copy is up.** Level 2 of
+  `restart_recovery_handshake`, verified live. `App.restart` used to withdraw both windows
+  and then block on `while self.writing: time.sleep(1)` — every window hidden AND a dead
+  main loop, so nothing could paint, run, or report. That pair *was* the "no window"
+  failure. Both are gone: the write-wait is driven from `after(1000)`, and a
+  **"Restarting A‑Z+T…" wait dialog** covers the handover — which does the same job
+  honestly, since it blocks input, says what is happening, and is the one thing both
+  visibility guards accept as evidence. `utilities.spawn_successor()` launches the
+  successor and RETURNS (always `Popen`; a caller that has `exec`ed is gone by definition,
+  which retires the last reason Linux was on `exec` for this path).
+  - The signal is the restart marker from 1.15.1: the successor deletes it once a real
+    work surface is on screen, so its disappearance means "I am up" — no second channel,
+    and we wait on a usable window rather than on a process merely existing. Consequence
+    Kent saw and accepted: the wait lasts until the task chooser paints, not until the
+    successor's splash appears, because the splash is precisely the window in which the
+    rest of boot can still fail.
+  - Failure is detected with `poll()`, not a clock — a timeout would cry failure on a slow
+    boot with a big lexicon. An exit only counts after a 15s grace period, because a
+    successor may legitimately re-exec once (the venv relaunch `Popen`s and exits,
+    orphaning a grandchild we cannot see).
+  - The UI is handed back ONLY if the successor is dead. Alive but unconfirmed after the
+    300s backstop, we exit anyway: two live copies on one project is worse than a long
+    wait, and the successor owns the project from that point. Relatedly `_restarting` now
+    gates `collab_poll`, since this process stays alive while the successor attaches to the
+    same project — rescheduled rather than abandoned, so a failed restart leaves a live app
+    that is still polling.
+  - `restartmark.mark()` returns None when the write failed, because a confirmed restart
+    waits for the marker to DISAPPEAR and an absent one would read as instant confirmation
+    of a successor that has not started.
+- **The venv relaunch leaves a breadcrumb too — and would have cried wolf without a second
+  signal.** `py_modules.ensure_venv` is the other restart producer, and the earliest: a
+  relaunch that failed to come back was completely silent. It now writes a marker with
+  `reason='venv relaunch'`, which needed two supports. `restartmark._path()` gained a
+  pathlib-only fallback, because that hop runs at import time in a process whose whole job
+  is to obtain the dependencies `utilities.file` needs, so on a first boot that import can
+  legitimately fail — the earliest producer should not be the one unable to leave a note.
+  And `launched_by_restart()` now also accepts `AZT_VENV_RELAUNCHED`: this hop relaunches
+  with `sys.argv` UNCHANGED, so keying only on `--restart` would have reported every
+  successful venv relaunch as a restart that never landed. (`AZT_BOOTSTRAP_PARENT_PID`
+  would be the more precise signal, but `duplicates.running_file` pops it at import time,
+  long before this is asked.)
+- The two branch-switch restarts — "revert to main" and "try testing" (`main.py`
+  `run_problem`) — now use the CONFIRMED path (`App.restart`) rather than fire-and-forget.
+  They change the source branch and then restart, which makes them the likeliest of all
+  restart callers to fail to come back, so they are the ones that want a held window and
+  an explanation. NB `App.restart` returns where `sysrestart` never did, so the
+  `destroy()` after each call now actually runs — which is what it was always meant to do.
+- **`os.execl` is gone: one restart path for every platform.** Level 3, and it turned out
+  to be a deletion rather than a port — `spawn_successor` already IS the unified path, so
+  `sysrestart` now delegates to it. What went away: `os.execl` on Linux (unrecoverable by
+  construction, and it preserved the pid, so predecessor and successor were
+  indistinguishable); a Windows-ONLY Popen branch, whose `AZT_PREDECESSOR_PIDS` handover
+  was therefore also Windows-only — and that handover is now REQUIRED on Linux, because
+  with Popen the predecessor lingers and the successor's duplicate gate would otherwise
+  count it (it was never needed under exec, since no predecessor survived); and **a silent
+  no-op on macOS**, where `platform.system()` matched neither branch, so a restart fell
+  through to `sys.exit()` and the app simply quit without coming back. Also: if the launch
+  fails, `sysrestart` no longer exits — an app that still works beats an app that quit into
+  nothing, which is this item's whole lesson.
+- **The three visibility guards now have a written contract, because two of them collided.**
+  `frontend/visibility.py`'s docstring records which guard asks what and which may act:
+  the scoped `guardvisible` reveals (it knows which run window belongs to the call in
+  flight), `VisibilityWatchdog` only reports (its signal cannot separate "the user has
+  nothing" from "I failed to find what they are looking at"), and `QuitOnlyGuard` acts on a
+  signal whose innocent readings are excluded by `iswaiting()` and by strikes. Three rules
+  keep them from fighting, and the first one is now enforced rather than incidental:
+  **nothing a guard adds is content** — `has_content()` ignores QuitOnlyGuard's placeholder,
+  so a filled-in empty page can never read to the other two as a legitimate page to reveal.
+  It could not bite yet only because placeholders go on viewable windows while
+  `has_content` is asked of withdrawn ones; guards must not depend on each other's timing.
+- **First producer the new guard caught, and it was one of our own fixes.**
+  `Sort._get_safe_window()` creates a run window and then deiconifies it, on the reasoning
+  (2026-07-29) that "we are about to drive work in this window, so it has to be visible" —
+  which cured "no window at all". But a window straight out of `getrunwindow()` has an
+  EMPTY frame, and the Exit button lives in `outsideframe`, so what it actually revealed
+  was a fullscreen page whose only control was Quit. One item's cure was the other item's
+  cause; `QuitOnlyGuard` named it by window title on its first live run. It now opens a
+  WAIT instead of revealing the bare window — visible, says what is happening, and the one
+  thing both visibility guards accept as evidence. Safe to leave open because both callers
+  `drive_work()` immediately, and `drive_work` closes the wait on `StopIteration` and on a
+  `None` generator; a wait nobody closes is the `tryNAgain` hole, so that guarantee is the
+  precondition for doing this here rather than a detail.
+
+# Version 1.15.3
+
+- **Global guard against the nothing-but-Quit page.** A fullscreen block of theme colour
+  whose only control is Exit solicits the most destructive action available, at the moment
+  the user is most confused, and it is the only thing they can do — Kent watched a user on
+  a Zoom call come close to pressing it for exactly that reason. Hunting producers one at
+  a time cannot finish (the shape is reachable by any page that reveals before it builds),
+  so `QuitOnlyGuard` in `frontend/visibility.py` asks about the SCREEN instead, the way
+  the visibility watchdog does: poll for a mapped window that has an Exit button, an empty
+  content frame, and no wait dialog covering it.
+  - **Why this one is allowed to act, where the watchdog is not.** The watchdog's signal
+    conflates "the user has nothing" with "I failed to find what they are looking at", and
+    acting on the second wrecked a live page in 1.14.3. This signal has two innocent
+    readings — a page still building, and a page just torn down — and neither needs to be
+    distinguished, because the remedy is the same and neither survives the filters:
+    `iswaiting()` (a wait dialog is the sanctioned way to have an empty frame, and both
+    innocent cases are supposed to use one) and three strikes at 1s (a teardown heading
+    for a withdraw, or a rebuild that lands promptly, is over in milliseconds; three
+    seconds of an empty page is the ~10s page that was actually reported).
+  - **What it does is the safe action.** Not withdrawing the window, which would trade
+    this symptom for its worse sibling, no window at all. Not disabling Exit, which leaves
+    a blank page with no way out. It puts a sentence in the frame: Exit stops being the
+    only thing on screen, the user is told this is a fault in the program rather than
+    something they did, and nothing that was going to happen is prevented. The placeholder
+    removes itself as soon as real content arrives.
+- `ui.Window.deiconify()` now logs `NOTHING BUT QUIT` when it reveals a window whose frame
+  is empty and which has an Exit button, with the window's title. It LOGS and does not
+  refuse: refusing would trade this symptom for no-window wherever the caller has no
+  retry, and this codebase has been wrong four separate times about when to reveal.
+  `guardvisible` already declines to reveal an empty window, but an explicit `deiconify()`
+  from a page builder had never said anything at all — so the producer was unnameable.
+- **One producer found and fixed** by auditing `resetframe`'s callers against its own
+  documented invariant ("never call this on a VIEWABLE window outside a `waiting()`
+  block"): in the Record Dictionary Words task, the multi-group path wired its "Next
+  Group" button straight to `resetframe`, so clicking it blanked the visible page and left
+  Exit alone until the next group's page finished building. It now opens the wait first,
+  and the next page's own wait reuses it — the handover already documented at
+  `showentryformstorecordpage`'s head. The other four callers were already correct:
+  two are inside waits, one runs pre-map in `__init__`, and the sound-settings window is
+  built with `exit=False`, so it has no Quit button and an empty frame there is not this
+  symptom.
+
+# Version 1.15.2
+
+- **Macrosort verify page: the OK button was outside the scrollregion, so the page could
+  only be quit, never finished.** Field report from OBT's Windows machine (1.14.3, nml,
+  SortC): on letter 'f' the group rows were there, no OK button, and the scrollbar was
+  ALREADY AT ITS END — nothing to scroll to. The button was built and alive the whole
+  time; it was simply outside the scrollable area. Nothing reflowed after the OK row was
+  gridded into the scroll content: the only reflow armed for that page is scheduled at the
+  END of `SortButtonFrame.__init__`, i.e. BEFORE the canary exists, so the FIFO idle queue
+  could run `_do_configure_interior` on a stale `reqheight` and clamp the scrollregion to
+  the last group button. Letter 'h' minutes earlier worked, which is what pointed at
+  idle-queue ordering rather than anything about the letter — and removing one group row
+  made the button appear, because that mutated the content and re-fired `<Configure>`.
+  Now `buttonframe.reflow()` runs after the window's `update_idletasks()`, which is what
+  makes `reqheight` true — `grid()` only queues that recompute as an idle task, exactly
+  the trap `ScrollingFrame.reflow`'s own docstring documents. The non-macrosort branch has
+  always done the equivalent via `resume_configure()` at the end of its word list.
+  NOT fixed here, and tracked with the scaling work instead: on that machine `availablexy`
+  computed a viewport of 69px out of 1080 (siblings measured as 2936px of a 1080px
+  screen), floored to 200px against 136px rows — that is
+  `ui_scaling_dpi_and_real_estate` + `buttons_excessive_ipadx`, and fixing it there
+  touches this page's viewport too.
+
+# Version 1.15.1
+
+- **A restart that never lands now says so.** AZT restarts itself — after an update,
+  after an `ensure_venv` re-exec, after a collab reconnect — and until now a restart
+  that did not come back produced NO EVIDENCE AT ALL. That is the 2026-07-29 field
+  report: console only, closing it lost everything, the machine had to be restarted,
+  and nothing in the log named what had been attempted. Nothing could: `sysrestart` is
+  `os.execl` on Linux, which REPLACES the process image, so Python, Tk, the event loop
+  and every pending `after()` cease to exist inside that call; on Windows it is `Popen`
+  then `sys.exit()`, where the predecessor leaves as soon as the successor is *launched*
+  and never checks that it *started*. No in-process mechanism can observe that gap —
+  the new visibility watchdog least of all — so the evidence has to outlive both
+  processes. `utilities/restartmark.py` writes a marker (pid, UTC time, version, argv,
+  and the REASON, which is the field that earns its keep: an update failing to come
+  back is a different diagnosis from a branch switch failing) immediately before the
+  restart, and the successor clears it once its UI is genuinely up. Level 1 of
+  `azt/agenda/restart_recovery_handshake.md`; it makes the failure NAMEABLE, not yet
+  survivable.
+- Two things it took live testing to get right, both about *when* a marker means
+  something:
+  - **A marker is present in the successor too**, because the predecessor wrote it
+    moments earlier and only a UI that comes up clears it — so a marker on its own means
+    "a restart is in flight", not "a restart failed". The first version warned there,
+    crying wolf on every successful restart. The question is whether THIS process is the
+    one the restart launched: `--restart` in argv, the same signal
+    `duplicates.running_file` already uses. If it is, nothing to report. If it is not,
+    the user started this copy by hand while a marker was outstanding — which is exactly
+    the field symptom.
+  - **"The UI is up" is not "setup finished."** Clearing at the end of `_run_setup` was
+    wrong twice: that method returns BEFORE `mainloop()` is entered, so it would claim
+    success while the app could still wedge before ever painting; and if anything above
+    it blocks — the chooser opening its own window — the line is never reached at all,
+    so a restart that plainly worked kept its marker. The clear is now driven by the
+    watchdog, which already computes "a window is viewable" from the event loop in order
+    to arm itself. `first_viewable()` therefore returns the WINDOW rather than a bool,
+    because one walk now answers two different questions.
+  - Relatedly, `Splash` carries a new `boot_only` flag. It still counts for the
+    visibility alarm (a visible splash *is* "something is happening") but not as "the
+    app came up", because the whole of boot runs after it and that is the failure window
+    the marker exists to describe. Distinct from `guard_ambient`, which means "never a
+    work surface"; `boot_only` means "not usable yet". The clear waits for the chooser
+    or a task window, and stays pending across polls rather than being spent on the
+    splash.
+- `report()` deliberately never clears, on either path: if this boot also fails, the
+  next one must still find the marker. Guarded by `tests/test_restartmark.py`, along
+  with the rule that nothing here may raise — a corrupt or unwritable marker must cost
+  a log line, never a restart or a startup.
+- **`--restart` no longer accumulates on Linux.** The de-duplication added in 1.3-era
+  (2026-07-16) was only ever applied to `sysrestart`'s Windows branch; the `os.execl`
+  branch appended the flag unconditionally, so a two-hop restart ran with
+  `['main.py','--restart','--restart']` (visible in the new marker's own argv field,
+  which is how it was spotted). Harmless to the duplicate gate, which does a membership
+  test, but argv grew without bound across a restart chain and anything that COUNTED the
+  flag would have been silently wrong. Deduped once, for both platforms.
+- Fixed en route: `utilities/utilities.py` defines `log` only inside its `__main__`
+  block, so the obvious `log.info` in `sysrestart`'s new handler would have raised
+  `NameError` in the one place that must never raise.
+- Noted for the next level of this work: `os.execl` PRESERVES the pid, so on Linux the
+  predecessor and successor are the same process — a handshake cannot use pid identity to
+  distinguish them, which is why the marker's discriminator is argv.
+
+# Version 1.15.0
+
+- **The tone frame definition page edits in place. Its four modal child windows are
+  gone.** The frame name, each language's before/after text, and the field-type
+  chooser each used to open a toplevel — and `promptwindow` created one and then
+  **withdrew its own parent** ("Don't show status when asking for a value"), leaving a
+  mapped window whose ancestor was hidden. That is not just confusing to users (Kent's
+  words) but the state in which "which window is the user in?" has no answer, and it is
+  what made the new global visibility watchdog reveal the task window on top of the page
+  he was working in. `editable()` now builds a button AND a hidden entry in the same grid
+  cell and swaps them with `grid()`/`grid_remove()` — the alphabet chart's idiom
+  (`edit_title`/`_set_chart_title`), copied as behaviour rather than code, since TFDP is
+  flat and has no counterpart to that page's levels. `self.active` holds the one open
+  field and `edit()` closes whatever was open first, so one-field-at-a-time is structural
+  rather than a convention. **This page no longer withdraws or deiconifies anything.**
+  Return, Tab and OK all commit; Escape abandons and writes nothing, which is safe
+  because `commit()` is now the only writer even in memory.
+- **The page opens straight to the full form.** The name prompt demanded a name before
+  showing anything — you had to name a thing before seeing what it was, and abandoning
+  the prompt quit the whole drafter. Deleting it cost nothing, because the rule that
+  matters was already enforced in the right place: `exemplified()` refuses an empty name,
+  and the "Use this tone frame" button is built inside it, after that check. Two rules had
+  been collapsed into one and only the wrong one was enforced up front. The surviving
+  check now also rejects whitespace-only, which previously passed `in ['',None]` and would
+  have stored a frame indistinguishable from another.
+- **Word-break checkbox on the before/after fields.** Whether a frame form is separated
+  from the neighbouring word by a space was invisible — leading, trailing and absent
+  spaces all look identical — so it was acquired by accident and could not be audited.
+  The box is now the authority: the stored value is composed from the typed text AND the
+  box, and the form is separated by a space if and only if the box is checked, whatever
+  was typed. The box is derived from the stored form on open, so it always describes the
+  definition; a set break shows as `·` on the button (display only, never stored). Only
+  the word-boundary edge is touched — `before` on its right, `after` on its left — and the
+  far edge is left as typed. NB unchecking therefore REMOVES a space: that is what makes
+  the box an authority rather than a hint, bounded by the fact that nothing is normalised
+  until you open that field and commit, so existing frames are not rewritten behind you.
+  Covered by `tests/test_tone_frame_wordbreak.py`, since it writes to the definition.
+- Rebuild policy: `status()` rebuilds only for structural changes — the field type (it
+  re-keys every analysis-language row through `analangftypecode()`) and add/skip language.
+  A text commit updates the button in place, drops the examples and reflows. The examples
+  must go on any change, deliberately: they illustrate the frame as defined, so examples
+  outliving their frame are worse than none.
+- Layout fixes on that page, each from a field screenshot:
+  - Field-type chooser is a **dropdown**, not a row of buttons whose combined width ran
+    off the scrolling frame. A dropdown is bounded by its widest label instead of by their
+    sum. Labels map back to codes, so `'lc'` never becomes display text.
+  - `ui_tkinter.CheckButton` now scales `selectimage` by `image_pixels` too. It never did,
+    so asking for a smaller box produced a small unchecked box and a full-size checked one
+    — a control that changed size when you clicked it. The word-break box uses this.
+  - Editors are **sized to their content** (as the alphabet page does), with bounds that
+    differ by kind: a frame name is a phrase and gets room, while a before/after fragment
+    sits inline between a label and the `<word>` marker, where every character of width
+    shoves the rest of the row — at the name's floor it pushed the 'after' button off the
+    edge. The params row is `sticky='w'` so an editor grows into empty space instead of
+    re-centring the row and sliding its own label sideways.
+  - **The page was mis-laid-out until you typed a character.** Not reflow timing — it was
+    `field.rendered`, the rendered-text preview: empty it reserves a default height, and
+    the first keystroke makes the renderer draw and the label shrink to fit. It is no
+    longer gridded. If a preview is wanted back for a non-Latin analysis orthography it
+    needs a home whose height does not depend on whether it has rendered yet.
+  - 'Get Example' output is built below the fold, so all three exits from `exemplified()`
+    reflow and THEN scroll to the bottom (that order: `reflow()` is what sets the
+    scrollregion). Its labels call `.wrap()`, which they never did, so long text was
+    clipped at the canvas edge instead of wrapping.
+- Deleted with the child windows, each recorded in a comment at its old site: the
+  `'<no content>'` placeholder that swapped in and out on focus and could silently become
+  the stored value; stashing a `StringVar` into `self.forms` for a missing key (which is
+  why `status()` had to ask `isinstance(...,ui.StringVar)` to tell whether the user had
+  actually answered); `status()`'s trailing `self.parent.withdraw()`, which ran on every
+  rebuild and was already a no-op; and `promptstrings`'s hidden `self.glosslangs.append()`,
+  which is now called once per language per rebuild for a tooltip and would have grown
+  without bound (nothing reads it — the only reader is a different class's attribute,
+  marked "unused; leads to broken lift fn").
+- **Add Morpheme's OK button worked at last.** `command=self.submitform` passed no
+  argument to `submitform(self,lang)`, so every click raised `TypeError` and the only way
+  through the form was the `<Return>` binding, which does pass the language. Found while
+  auditing the no-window holes on that page; a page whose OK button does nothing is close
+  kin to a page you cannot see.
+- **The global visibility watchdog reports but no longer reveals.** Shipped revealing in
+  1.14.3 and immediately interrupted a live page: it could not find the tone frame drafter
+  and deiconified the drafter's own parent over it. A global watchdog knows one thing — "I
+  found no viewable window" — and cannot tell "the user has nothing" from "I failed to
+  find what the user is looking at"; acting on the second destroys work the first would
+  only stall. Its message now says *found no viewable window*, not *there is no window*,
+  and it dumps the state of every window its walk reached, not just its reveal candidates
+  — which is what the 1.14.3 occurrence lacked. The scoped `guardvisible` still reveals,
+  because it knows which run window belongs to the call in flight.
+
 # Version 1.14.3
 
 - **GLOBAL no-window watchdog (`frontend/visibility.py`), the mechanism answer to
