@@ -156,25 +156,57 @@ def _make_link(target, lp):
     return True
 
 
-def ensure(name):
-    """Make REPOS[name] available (clone and/or link as needed). Every
-    failure path logs and returns False; never raises."""
+def ensure_detail(name):
+    """Make REPOS[name] available (clone and/or link as needed), and say HOW.
+
+    Returns ``(ok, how)`` where how is one of:
+      ``'present'``  already available; nothing was found to manage and nothing
+                     was done — see the warning below, this is the state that
+                     looks fine and can never be updated;
+      ``'linked'``   an existing clone was found and linked; nothing fetched;
+      ``'cloned'``   no clone existed, so one was fetched;
+      ``''``         failed (every failure path logs and returns False).
+
+    The distinction exists because `update()` collapsed all three into the code
+    `installed`, whose docstring claimed "no clone existed; ensure() fetched
+    one" — which was FALSE, and misleadingly so: a fresh copy reported
+    `images_CAWL: newly installed` having cloned nothing at all (Kent,
+    2026-09-01). Callers drive display and logic off that code, so it has to
+    mean what it says.
+
+    Never raises."""
     spec = REPOS[name]
     try:
         if available(name, spec):
-            return True
+            lp = linkpath(spec)
+            if lp and os.path.isdir(lp) and not os.path.islink(lp):
+                # THE SILENT STATE. `available()` is satisfied by a populated
+                # real directory at the link path, so we return here — before
+                # _make_link, whose warning for exactly this case is therefore
+                # unreachable. The pictures work, so nothing looks wrong; but
+                # there is no clone to pull, so this repo can never be updated
+                # and `update()` will keep reporting success. Seen on a copy
+                # made with cp -r, which dereferenced the symlink into ~1700
+                # real files (Kent, 2026-09-01).
+                log.warning(_("{link} is a real directory, not a link to a "
+                            "managed clone of {name}. It works, but {name} can "
+                            "never be updated this way. Move it aside and "
+                            "restart to have {name} managed properly."
+                            ).format(link=lp, name=name))
+            return True, 'present'
         target = None  # an existing clone, else make one
         for c in _candidates(name, spec):
             if _has_marker(c, spec.get('marker')):
                 target = c
                 break
+        how = 'linked'
         if target is None:
             dest = os.path.join(suite_root(), name)
             if os.path.exists(dest):
                 log.warning(_("{dest} exists but doesn’t look like {name}; "
                             "not touching it. Move it aside (or fix it) and "
                             "restart.").format(dest=dest, name=name))
-                return False
+                return False, ''
             git = shutil.which('git')
             if not git:
                 log.info(_("No git executable found; can’t fetch {name}."
@@ -184,7 +216,26 @@ def ensure(name):
                         name=name, url=spec['url'], dest=dest))
             if spec.get('size_note'):
                 log.info(spec['size_note'])
-            subprocess.check_call([git, 'clone', spec['url'], dest],
+            # SHALLOW BY DEFAULT (Kent 2026-09-01: "all our cloning should be
+            # shallow clones. we don't need history for any users"). These are
+            # rollout assets, not anybody's work: nothing here reads history,
+            # `update()` only ever `pull --ff-only`s the tip, and images_CAWL is
+            # a few hundred MB, so depth 1 is the difference between a usable
+            # first run and a long one on a field connection.
+            #
+            # NB --depth implies --single-branch, so a shallow clone has ONE
+            # remote-tracking branch. That is fine for these three (no caller
+            # switches their branches) but would NOT be for the azt source
+            # clone, where `hard_checkout` names origin/<branch> explicitly and
+            # "try the testing version" would break. Per-repo `depth` override
+            # (set it to 0 or None for a full clone) so that distinction stays
+            # visible in the table rather than being rediscovered later.
+            args = [git, 'clone']
+            depth = spec.get('depth', 1)
+            if depth:
+                args += ['--depth', str(depth)]
+            args += [spec['url'], dest]
+            subprocess.check_call(args,
                                   stdin=subprocess.DEVNULL,
                                   env=_git_noninteractive(),
                                   timeout=spec.get('timeout', 600))

@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.4' #This is a string...
+__version__='1.15.6' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -1119,9 +1119,8 @@ class App:
             # that has not started. The successor is already launched and this
             # is only a diagnostic failure, so hand over the old way rather than
             # pretending to confirm.
-            log.warning("no restart marker to watch (could not be written); "
-                    "handing over unconfirmed")
-            sysshutdown()
+            self._leave_to_successor("no restart marker to watch (could not be "
+                    "written); handing over unconfirmed")
             return
         self._restart_started=time.monotonic()
         self._confirm_restart()
@@ -1144,8 +1143,7 @@ class App:
         from utilities import restartmark
         try:
             if restartmark.pending() is None:
-                log.info("successor confirmed up; predecessor exiting")
-                sysshutdown()
+                self._leave_to_successor("successor confirmed up")
                 return
             if self._restart_child.poll() is not None:
                 now=time.monotonic()
@@ -1164,14 +1162,39 @@ class App:
                 # Still running after a very long time. Do NOT hand the UI back:
                 # two live copies on one project is worse than a long wait, and
                 # the successor owns the project from here.
-                log.warning("successor still unconfirmed after %ss but alive; "
-                        "exiting anyway rather than risk two live copies",
-                        self.RESTART_BACKSTOP_S)
-                sysshutdown()
+                self._leave_to_successor("successor still unconfirmed after "
+                        "{}s but alive; leaving anyway rather than risk two "
+                        "live copies".format(self.RESTART_BACKSTOP_S))
                 return
         except Exception:
             log.exception("restart confirmation failed")
         self.tk_root.after(self.RESTART_POLL_MS,self._confirm_restart)
+    def _leave_to_successor(self,why):
+        """Hand the machine over and GO, from inside an after() callback.
+
+        `sys.exit()` DOES NOT WORK HERE, and that is the bug this method exists
+        for: tkinter catches exceptions raised in a callback (and this app adds
+        its own catcher in frontend/tkintermod.py), so the SystemExit was
+        swallowed and the callback simply returned. Both exit paths of
+        _confirm_restart — the confirmed one and the 300s backstop — therefore
+        did nothing, and the predecessor sat there indefinitely: Kent's
+        duplicate-process gate found two live copies, 1934s and 1216s old, on
+        one project (2026-09-01). Two live copies is the exact outcome the
+        confirm loop was written to prevent, so it was worse than no handshake.
+
+        quit() ends the main loop instead, and App.run() falls through to
+        sysshutdown() at top level, where sys.exit() means something. No final
+        write on the way out, deliberately: the successor owns the project now,
+        and this process already wrote before it spawned."""
+        log.info("%s; predecessor leaving",why)
+        try:
+            self.tk_root.quit()
+        except Exception:
+            # Nothing left to be careful with: the successor is up, this copy
+            # must not linger, and os._exit skips the interpreter shutdown that
+            # a wedged Tk could otherwise block.
+            log.exception("could not end the main loop; forcing exit")
+            os._exit(0)
     def _restart_failed(self,text):
         """Give the user their window back, and say why. This is the whole point
         of level 2: a failed restart becomes a sentence instead of a blank

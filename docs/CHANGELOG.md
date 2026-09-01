@@ -19,6 +19,90 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.6
+
+- **"Cannot delete branch main" — caught in the act, both halves.** `try_pull_main` read
+  `old_branch=self.branch` AFTER its pull returned; `pull()` calls `try_pull_main()` for
+  every remote, and `try_pull_main` calls `pull()` — mutual recursion. The inner call
+  checks out `main`, so the outer frame then read `self.branch` as `main` and asked to
+  delete the branch it was standing on. That is the recursion AND the impossible delete
+  from the 2026-08-31 field report, in one stack. It was the `remove_branch` guard added
+  that same day — "THIS CALL SHOULD NOT HAPPEN", with a stack dump — that finally produced
+  the evidence, on Kent's fresh copy. Fixed twice over: the branch is captured BEFORE the
+  pull, and never deleted when it equals `main`; and `pull(..., _main_attempted=True)`
+  stops the nested call from starting the dance again, since one attempt to get onto main
+  is the entire point and repeating it per remote per recursion level is how it ran away.
+- **`git pull u main`, `git pull s main`, `git pull s main`… — a URL was being iterated one
+  character at a time.** `pull()` handed `try_pull_main` a single remote as a `str`, and
+  `try_pull_main` handed that same string straight back to `pull(remotes=…)`, whose
+  `for remote in remotes` then walked the URL letter by letter — one `fatal: 'u' does not
+  appear to be a git repository` per character of `kent-rasmussen/azt`. Long-standing, and
+  only visible when `self.branch != self.main`, since `try_pull_main` returns early on
+  main. Fixed at the choke point with `_remotelist()` rather than at the one call site:
+  `pull`, `push`, `fetch` and `share` all share that `for remote in remotes` shape, so any
+  of them could be handed a single remote and none would complain — they would simply do
+  something absurd.
+- **…and it refreshes `origin/<branch>` EVERY time, not only when the ref is missing.**
+  `hard_checkout` resets the working tree to `origin/<branch>`, and nothing else in the app
+  ever updates a remote-tracking ref — `pull()` and `fetch()` are called with a URL, which
+  writes `FETCH_HEAD` and leaves `origin/*` exactly as the original clone left it. So on any
+  install more than a few days old, "try the testing version" would have reset you to a
+  months-old `origin/testing` and reported success: the branch name is right and the switch
+  works, so nothing looks wrong. Found because Kent asked "didn't pull?" on seeing testing
+  come up as 1.13.21, five weeks old — which there was honest (that IS what is published),
+  but only because the clone was hours old.
+- **"Try the testing version" fetches the branch instead of inventing one.** Kent:
+  *"knowing that trap is there isn't as good as fixing it proactively"* — and it is safe to
+  fetch precisely because the name is OURS (`program.testversionname` / `main`), not a guess
+  at a user's branch. `hard_checkout` now calls `fetch_tracking_branch()` when
+  `origin/<branch>` is missing, with an explicit refspec
+  (`<b>:refs/remotes/origin/<b>`, internet remotes only), and only then decides.
+  - Found while writing it, and it is why this mattered more than it looked: **the app
+    pulls and fetches BY URL** (`pull <url> <branch>`), which updates `FETCH_HEAD` and
+    never a remote-tracking ref. So `origin/<branch>` was only ever as fresh as the
+    original `git clone` — stale on any long-lived install, and absent entirely on a
+    shallow one. A bare `fetch <url> <b>` would not have fixed it either: on a
+    single-branch clone that writes no tracking ref, which is the hole itself.
+  - **The fallback no longer invents a branch.** With no local branch, `checkout()` took
+    its `-b` path and created it AT HEAD with no upstream, so "try testing" reported
+    success — the caller only checks that the branch NAME matches — while running exactly
+    the code it was already running. It now switches to a local branch of that name if one
+    exists (saying plainly that it did NOT reset it to the published version), and
+    otherwise refuses with a message naming the branch you are still on. Failing loudly
+    beats lying about which code is running. Closes the live half of
+    `checkout_b_from_head_not_remote`.
+- **Sister repos clone shallow** (`--depth 1`, per-repo `depth` override in the table).
+  Nothing reads their history — `update()` only ever `pull --ff-only`s the tip — and
+  `images_CAWL` is a few hundred MB, so on a field connection this is the difference
+  between a usable first run and a long one. Recorded at the clone site, because
+  `--depth` implies `--single-branch` and that WOULD matter for the azt source clone:
+  `hard_checkout` names `origin/<branch>` explicitly, so a single-branch source clone has
+  no `origin/testing` and "try the testing version" silently runs main's code instead. The
+  installer owns that clone, and the constraint is now written into its agenda item.
+  `vcs.py`'s `clonetoUSB`/`clonefromUSB` stay FULL clones, with a docstring saying why:
+  they serve data repos, where history is the user's own record and the base the collab
+  three-way merge needs, and `clonetoUSB` makes a bare clone it then adds as a remote —
+  depth on a two-way sync channel is a footgun, not an optimisation.
+# Version 1.15.5
+
+- **FIX to 1.15.4's confirmed restart: the predecessor never exited.** `sys.exit()` inside
+  a Tk `after()` callback does not end the process — tkinter catches exceptions raised in a
+  callback, and this app installs its own catcher (`frontend/tkintermod.py`) — so the
+  `SystemExit` was swallowed and the callback merely returned. BOTH exit paths of
+  `_confirm_restart` were affected, the confirmed one and the 300s backstop, so the old copy
+  sat there indefinitely: the duplicate-process gate found two live copies, 1934s and 1216s
+  old, on one project. That is the exact outcome the confirm loop was written to prevent,
+  which made the handshake worse than none. All three hand-over points now go through
+  `_leave_to_successor()`, which calls `tk_root.quit()` — ending the main loop so `App.run()`
+  falls through to `sysshutdown()` at top level, where `sys.exit()` means something — and
+  falls back to `os._exit(0)` if even that fails, since a wedged Tk must not be able to keep
+  a superseded copy alive.
+  - Related and worth knowing when testing this: **Ctrl-C does not kill either copy.** A Tk
+    app parked in Tcl's event loop never acts on SIGINT (Python can only raise
+    `KeyboardInterrupt` between bytecodes in the main thread), so an interrupted restart
+    leaves both processes running and the next launch is correctly refused by the duplicate
+    gate. `kill` them by pid.
+
 # Version 1.15.4
 
 - **A restart now holds a window and waits to be told the new copy is up.** Level 2 of

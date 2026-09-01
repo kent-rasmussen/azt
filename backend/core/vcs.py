@@ -214,6 +214,24 @@ class Repository(object):
     def status(self):
         args=['status']
         log.info(self.do(args))
+    """THESE TWO CLONES ARE DELIBERATELY NOT SHALLOW.
+
+    Sister-repo clones went to `--depth 1` on 2026-09-01 ("we don't need history
+    for any users"), and for rollout assets that is plainly right. It is NOT
+    right here, and the distinction is worth stating rather than rediscovering:
+
+      - These methods serve DATA repos as well as the source, and a project's
+        history is not a developer luxury — it is the user's own record of their
+        work, and it is the merge base the collab three-way merge needs. A
+        shallow project repo can lose the ability to merge with a peer.
+      - `clonetoUSB` makes a BARE clone and then `addremote`s it, i.e. the clone
+        becomes a two-way sync channel. `--depth` on a repo used as a remote in
+        both directions is a footgun, not an optimisation.
+
+    If the AZT SOURCE clone-to-USB specifically should be shallow (it is only an
+    offline installer payload), split it out from the shared method first — do
+    not add a depth flag here.
+    """
     def clonefromUSB(self,directory):
         log.info(_("Preparing to clone to {dir} from USB repo").format(dir=directory))
         #this should be a pathlib object
@@ -265,6 +283,7 @@ class Repository(object):
     def undo_pull(self):
         self.do(['reset','--hard','@{1}'])
     def share(self,remotes=None,noclone=False,nocommit=False):
+        remotes=self._remotelist(remotes) #never iterate one URL's characters
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes and not noclone:
@@ -278,6 +297,7 @@ class Repository(object):
             r=self.push(remotes)
         return r #ok if we don't track results for each
     def fetch(self,remotes=None,noclone=False):
+        remotes=self._remotelist(remotes) #never iterate one URL's characters
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes and not noclone:
@@ -292,23 +312,55 @@ class Repository(object):
             r=self.do(args)
             # log.info("Pull return: {}".format(r))
         return r #if we want results for each, do this once for each
+    def _remotelist(self,remotes):
+        """Always a LIST of remotes, never one remote's characters.
+
+        A single remote is a str (a URL) or a path — both ITERABLE — so
+        `for remote in remotes` walked a URL one character at a time and ran
+        `git pull u main`, `git pull s main`, `git pull s main`, … one fatal
+        per letter of 'kent-rasmussen/azt' (Kent's log, 2026-09-01). The path
+        in was pull() handing try_pull_main a `str(remote)`, and try_pull_main
+        handing that same str straight back to pull(). Normalised at the choke
+        point rather than trusting four call sites and every future one: pull,
+        push, fetch and share all have the same `for remote in remotes` shape,
+        so any of them could be handed a single remote and none of them would
+        complain — they would just do something absurd."""
+        if remotes is None:
+            return None
+        if isinstance(remotes,(str,bytes)) or hasattr(remotes,'__fspath__'):
+            return [remotes]
+        return list(remotes)
     def try_pull_main(self,remotes):
-        if self.branch == self.main:
+        # CAPTURE THE BRANCH FIRST. This used to read self.branch AFTER the pull
+        # below, and pull() calls try_pull_main() for every remote, which calls
+        # pull() again — mutual recursion. The inner call checks out main, so
+        # the outer frame then read self.branch as 'main' and asked to delete
+        # the branch it was standing on: "cannot delete branch main", the field
+        # report from 2026-08-31, in both its halves (the recursion AND the
+        # impossible delete). Caught in the act by remove_branch's own guard,
+        # which logged the stack (Kent, 2026-09-01).
+        old_branch=self.branch
+        if old_branch == self.main:
             return
+        remotes=self._remotelist(remotes)
         try:
-            r=self.pull(remotes,branch=self.main)
+            # _main_attempted: do not let the nested pull start this dance
+            # again. One attempt to get onto main is the whole point; repeating
+            # it per remote, per recursion level, is how it ran away.
+            r=self.pull(remotes,branch=self.main,_main_attempted=True)
             log.info(_("Pulled from {repo} {branch} ; {result}").format(
                         repo=self.repotypename,
                         branch=self.main,
                         result=r))
-            old_branch=self.branch
             self.checkout(self.main)
-            self.remove_branch(old_branch) #only if fully merged
+            if old_branch != self.main: #never the branch we just moved onto
+                self.remove_branch(old_branch) #only if fully merged
         except Exception as err:
             self.undo_pull()
-    def pull(self,remotes=None,branch=None,_retried=False):
+    def pull(self,remotes=None,branch=None,_retried=False,_main_attempted=False):
         if not branch:
             branch=self.branch
+        remotes=self._remotelist(remotes) #never iterate one URL's characters
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
@@ -321,7 +373,8 @@ class Repository(object):
             elif self.code == 'hg':
                 args=['pull','-u',str(remote),branch]
             log.info("Pulling: {}".format(args))
-            self.try_pull_main(str(remote))
+            if not _main_attempted: #or pull↔try_pull_main recurse (see there)
+                self.try_pull_main([str(remote)])
             r=self.do(args)
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
@@ -342,9 +395,11 @@ class Repository(object):
                 self.undo_pull()
                 self.checkout()
                 self.push(remotes,setupstream=True)
-                return self.pull(remotes,_retried=True)
+                return self.pull(remotes,_retried=True,
+                                _main_attempted=_main_attempted)
         return r #if we want results for each, do this once for each
     def push(self,remotes=None,setupstream=False):
+        remotes=self._remotelist(remotes) #never iterate one URL's characters
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
@@ -1096,17 +1151,94 @@ class GitReadOnly(Git):
         TODO that sat in reverttomain: the reset is no longer a missing separate
         step, it is what this does."""
         start='origin/'+branchname
+        # ALWAYS refresh, not just when the ref is missing. This checks the
+        # branch out AT origin/<b>, and nothing else in the app ever updates a
+        # remote-tracking ref: pull() and fetch() are called with a URL, which
+        # writes FETCH_HEAD and leaves origin/* exactly as the original clone
+        # left it. So on any install older than a few days, "try the testing
+        # version" would reset you to a MONTHS-OLD origin/testing and report
+        # success — silently right-looking, since the branch name and the
+        # switch both work. (Kent asked "didn't pull?" seeing testing at
+        # 1.13.21 / five weeks old; there it was honest — that IS what is
+        # published — but only because the clone was hours old.)
+        # It also covers the ref being ABSENT, not merely stale. Kent
+        # 2026-09-01: "if a user calls trytesting when there is no
+        # origin/testing, we want to track on origin/testing explicitly…
+        # knowing that trap is there isn't as good as fixing it proactively."
+        # Safe precisely because the name is OURS (program.testversionname /
+        # 'main'), not a guess at something a user might have: if it ever goes
+        # away, that is our doing and our problem to see.
+        self.fetch_tracking_branch(branchname)
         if self.do(['rev-parse','--verify','--quiet',start]):
             r=self.do(['checkout','-f','-B',branchname,start])
-        else:
-            # No such remote branch (offline clone, or never published): fall
-            # back to an ordinary switch rather than inventing a reset target.
-            log.info(_("No {start}; switching to ‘{branch}’ without resetting "
-                        "it.").format(start=start,branch=branchname))
+        elif self.do(['rev-parse','--verify','--quiet',
+                        'refs/heads/'+branchname]):
+            # A local branch of that name already exists: switching to it is a
+            # real answer, just not a RESET one. Say which we did.
+            log.warning(_("No {start} (and could not fetch it); switching to "
+                        "the existing local ‘{branch}’ WITHOUT resetting it to "
+                        "the published version.").format(start=start,
+                        branch=branchname))
             r=self.checkout(branchname)
+        else:
+            # DO NOT fall through to checkout() here. With no local branch it
+            # takes its `-b` path, creating the branch AT HEAD with no upstream
+            # — so "try the testing version" reported success (the caller only
+            # checks that self.branch matches the NAME) while running exactly
+            # the code it was already running. Silent and self-confirming, and
+            # the reason azt/agenda/checkout_b_from_head_not_remote.md exists.
+            # Better to fail loudly and stay put than to lie about which code
+            # is running.
+            r=_("Could not switch to ‘{branch}’: there is no published "
+                "{start} to take it from, and no local ‘{branch}’ to switch "
+                "to. Nothing was changed — you are still on ‘{now}’."
+                ).format(branch=branchname,start=start,now=self.branch)
+            log.error(r)
         log.info(r)
         self.branchname() #because this changes
         return r
+    def fetch_tracking_branch(self,branchname):
+        """Put `refs/remotes/origin/<branchname>` where hard_checkout can use it.
+
+        WHY THIS IS NEEDED AT ALL, which is not obvious: this app pulls and
+        fetches BY URL (`pull <url> <branch>`, see pull()), and that updates
+        FETCH_HEAD — never a remote-tracking ref. So `origin/<branch>` is only
+        ever as fresh as the original `git clone`, and on a shallow clone
+        (`--depth 1` implies `--single-branch`) it does not exist at all. Both
+        cases sent hard_checkout down its fallback, where the old code invented
+        a branch at HEAD.
+
+        The refspec is explicit — `<b>:refs/remotes/origin/<b>` — rather than a
+        bare `fetch <url> <b>`, because a bare fetch on a single-branch clone
+        updates FETCH_HEAD and may write no tracking ref at all, which is the
+        very hole being closed. Writing that ref does not require a git remote
+        NAMED origin to exist; it is just a ref.
+
+        Internet remotes only: a USB clone can be stale or a bare mirror of this
+        same machine, and "the published version" means the published one.
+        Returns True when the ref is there afterwards."""
+        start='origin/'+branchname
+        try:
+            remotes=self.findpresentremotes() or []
+        except Exception as e:
+            log.info(_("Could not list remotes to fetch ‘{branch}’: {error}"
+                        ).format(branch=branchname,error=e))
+            return False
+        spec='{b}:refs/remotes/origin/{b}'.format(b=branchname)
+        for remote in remotes:
+            try:
+                if not self.isinternet(remote):
+                    continue
+                log.info(_("No {start} yet; fetching ‘{branch}’ from {remote}."
+                            "").format(start=start,branch=branchname,
+                            remote=remote))
+                self.do(['fetch',str(remote),spec])
+                if self.do(['rev-parse','--verify','--quiet',start]):
+                    return True
+            except Exception as e:
+                log.info(_("Fetching ‘{branch}’ from {remote} failed: {error}"
+                            ).format(branch=branchname,remote=remote,error=e))
+        return bool(self.do(['rev-parse','--verify','--quiet',start]))
     def reverttomain(self,event=None):
         r=self.hard_checkout('main')
         log.info(r)
