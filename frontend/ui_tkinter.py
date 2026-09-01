@@ -2319,8 +2319,18 @@ class CheckButton(Childof,Gridded,Text,UI,tkinter.Checkbutton):
         img_names=['uncheckedbox','checkedbox']
         if not kwargs.pop('large_images',False):
             img_names=[f'{i}_sm' for i in img_names]
-        kwargs['selectimage']=kwargs.get('selectimage',
-                                        parent.theme.photo[img_names[1]].scaled)
+        # image_pixels/image_scaleto reach TextBase, which scales `image` — but
+        # `selectimage` never went through it, so asking for a smaller box gave
+        # a small unchecked one and a full-size checked one, i.e. a control that
+        # changed size when you clicked it. Scale both by the same rule.
+        _sel=parent.theme.photo[img_names[1]]
+        if kwargs.get('image_pixels'):
+            _sel=_sel.scale(parent.theme.scale,
+                        pixels=kwargs['image_pixels'],
+                        scaleto=kwargs.get('image_scaleto') or 'height')
+        else:
+            _sel=_sel.scaled
+        kwargs['selectimage']=kwargs.get('selectimage',_sel)
         #image has a helper that expects a string name; selectimage doesn't.
         #Probably not worth the time to generalize for just these two.
         if kwargs.get('selectimage'):
@@ -2620,7 +2630,8 @@ class Window(Toplevel):
         # self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
         if exit:
             e=(_("Exit")) #This should be the class, right?
-            self.exitButton=Button(self.outsideframe, width=10, text=e,
+            self.exitButton=Button(self.outsideframe, #width=10, 
+                                text=e,
                                 command=self.on_quit,
                                 font='small',
                                 column=2,row=2

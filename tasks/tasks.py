@@ -861,8 +861,13 @@ class ToneFrameDrafter(ui.Window):
             except Exception:
                 pass
             del self.exf
-    def _reflow(self):
+    def _reflow(self,tobottom=False):
         """Re-measure AFTER the event loop has applied the widget swap.
+
+        tobottom=True also scrolls the new content into view — for 'Get
+        Example', whose output is built BELOW the fold, so without it the click
+        produced no visible change at all and read as a dead button (Kent
+        2026-09-01).
 
         Called inline this measured the OLD geometry: the entry gridded a
         moment earlier had not been mapped yet, so the row kept the width of
@@ -891,6 +896,11 @@ class ToneFrameDrafter(ui.Window):
                         log.info("TFDP reflow skipped: window never mapped")
                     return
                 self.scroll.reflow()
+                if tobottom:
+                    # AFTER the reflow, which is what sets the scrollregion —
+                    # scrolling to a bottom the canvas doesn't know about yet
+                    # goes nowhere.
+                    self.scroll.tobottom()
             except Exception as e:
                 log.info("TFDP reflow failed: %s",e)
         try:
@@ -1117,8 +1127,15 @@ class ToneFrameDrafter(ui.Window):
             # If a preview is wanted back for a non-Latin analysis orthography,
             # it needs a home whose height does not depend on whether it has
             # rendered yet — not a cell in the row being edited.
-            take=lambda event=None,k=key,v=var:self.commit(k,v.get())
+            def take(event=None,k=key,v=var):
+                self.commit(k,v.get())
+                # 'break' so Tab COMPLETES the entry instead of also doing its
+                # default job — moving focus, which would land it on the entry
+                # we just hid, or on whatever follows in an order the page
+                # never defined.
+                return 'break'
             field.bind('<Return>',take)
+            field.bind('<Tab>',take)
             field.bind('<Escape>',lambda event=None:self.commit())
             ui.Button(f,text=_("OK"),cmd=take,row=0,column=1)
             if key[1] in ('before','after'):
@@ -1136,8 +1153,13 @@ class ToneFrameDrafter(ui.Window):
                 # peer of it, so it should read as one.
                 pair['wordbreak']=box=ui.BooleanVar()
                 box.set(self._wordbreak(key))
+                # font='small' shrank the LABEL but not the box: CheckButton
+                # draws its own from theme images (indicatoron=False), so the
+                # image is what set the height. image_pixels sizes both states
+                # now, so this is the actual knob.
                 cb=ui.CheckButton(f,text=_("word break"),variable=box,
                                 font='small',
+                                image_pixels=12,image_scaleto='height',
                                 row=1,column=0,columnspan=2,sticky='w')
                 ui.ToolTip(cb,_("Separate this text from the word with a "
                             "space. Shown as ‘{mark}’ when set.").format(
@@ -1196,7 +1218,7 @@ class ToneFrameDrafter(ui.Window):
                         justify=ui.LEFT,anchor='w',
                         row=0,column=0,
                         sticky='w')
-            self.scroll.reflow() #or the label stays invisible
+            self._reflow(tobottom=True) #or the label stays invisible
             return
         #don't give exs w/o all glosses
         """Define the new frame"""
@@ -1233,7 +1255,7 @@ class ToneFrameDrafter(ui.Window):
                     row=row,column=0,
                     sticky='w',
                     padx=padx,pady=pady)
-            self.scroll.reflow() #or the label stays invisible
+            self._reflow(tobottom=True) #or the label stays invisible
             return
         for lang,forms in formdict.items():
             row+=1
@@ -1266,7 +1288,10 @@ class ToneFrameDrafter(ui.Window):
                                 justify='left', row=0, column=1, padx=15)
         # log.info('sub_btn:{}'.format(stext))
         sub_btn.update_idletasks()
-        self.scroll.reflow()  # grow canvas to cover the example frame just built
+        # grow the canvas to cover the example frame just built, then scroll to
+        # it: the examples land below the fold, so without the scroll the click
+        # looked like nothing happened.
+        self._reflow(tobottom=True)
     def promptstrings(self,lang=None,context=None):
         #None of this changes in editing. Is that what we want?
         if lang:
