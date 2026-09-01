@@ -242,15 +242,24 @@ def ensure_detail(name):
             target = dest
         lp = linkpath(spec)
         if lp:
-            return _make_link(target, lp)
-        return True
+            return _make_link(target, lp), how
+        return True, how
     except subprocess.TimeoutExpired:
         log.info(_("Fetching {name} timed out; will try again next start."
                     "").format(name=name))
     except Exception as e:
         log.info(_("Couldn’t set up {name} ({error}); maybe no internet? "
                     "Will try again next start.").format(name=name, error=e))
-    return False
+    return False, ''
+
+
+def ensure(name):
+    """Availability as a plain bool — what almost every caller wants
+    (``py_modules.ensure_sister_repos``, and the ``ensure_available()``
+    wrappers in ``images/to_select_update.py`` and
+    ``lift_templates/SILCAWL_update.py``). Use ``ensure_detail`` when you need
+    to know HOW it became available."""
+    return ensure_detail(name)[0]
 
 
 def update(name):
@@ -292,15 +301,24 @@ def update(name):
                 log.info(_("Pull failed ({error}); continuing with the "
                             "existing clone.").format(error=e))
             break
-    ok = ensure(name)
+    ok, how = ensure_detail(name)
     if not code:
-        code = 'installed' if ok else 'missing'
+        # `installed` now means CLONED, which is what its docstring always
+        # claimed. It used to be returned for anything that ended up available
+        # without a pull, so a copy whose images sat in a plain directory
+        # reported "newly installed" having fetched nothing (Kent, 2026-09-01).
+        code = {'cloned': 'installed',
+                'linked': 'linked',
+                'present': 'present'}.get(how, 'missing' if not ok else 'present')
     return ok, code, output
 
 
 def describe(code):
     """Translated one-phrase summary of an update() code, for display."""
     return {
+        'linked': _("found on this computer and linked (not downloaded)"),
+        'present': _("already in place (not a managed copy, so it can’t be "
+                    "updated)"),
         'updated': _("updated (restart to use)"),
         'current': _("already up to date"),
         'pull-failed': _("could not update; keeping the current copy"),
