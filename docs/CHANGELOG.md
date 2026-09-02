@@ -45,6 +45,16 @@
 - Tightened with it: the tar is opened inside a `try`, and a file that fails to be added is
   logged WITH ITS NAME, so a locked or vanished part says which one instead of leaving an
   anonymous exception.
+- **`IndentationError` at startup, same change, caught on testing by Kent.** Removing the
+  single-file branch left three of its lines stranded after the `return`, which is a SYNTAX
+  error, so `logsetup` could not be imported and the app could not start at all — the
+  import happens in `py_modules`, before anything is on screen. `tests/test_imports.py`
+  would have failed on it; run `pytest` before pushing to testing, always, because this
+  class of error is invisible to reading and total in effect.
+- Dropped the now-unused module-level `import lzma` from `logsetup` while there: on a
+  hand-built CPython lacking `_lzma` (missing `liblzma-dev` at configure time) that import
+  would likewise have killed startup, for the sake of a feature used only when bundling
+  logs. `tarfile` pulls lzma in on demand, inside the `try` that already reports failure.
 
 # Version 1.15.7
 

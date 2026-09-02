@@ -10,7 +10,6 @@ import logging
 import logging.handlers
 import tarfile
 import datetime
-import lzma
 import re
 import pathlib
 import os
@@ -336,10 +335,6 @@ def writelzma(filename=None):
         log.info("Compressed files: {}".format(f.getnames()))
     finally:
         f.close()
-    return compressedurl
-        with lzma.open(compressedurl) as ch:
-            data2 = ch.read().decode("utf-8")
-            ch.close()
     return compressedurl
 log = logging.getLogger() #this is the root; set level with setlevel
 setlevel('INFO') #If not set elsewhere
