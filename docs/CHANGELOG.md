@@ -21,6 +21,17 @@
 
 # Version 1.15.8
 
+- **FIX to 1.15.6: `fetch_tracking_branch` called a helper with UI side effects.** It used
+  `findpresentremotes()`, which is not a read-only lookup — it offers the user a USB drive
+  and does `self.program.taskchooser.withdraw()` — so a git primitive was reaching into UI
+  that need not exist yet, and it raised `'App' object has no attribute 'taskchooser'`
+  (Kent 2026-09-02). It failed SAFELY (logged, returned False, and the existing
+  `origin/testing` carried the checkout) but silently skipped the refresh, which is the
+  entire reason the call is there: on an install older than its clone, `origin/testing` is
+  stale and you would be reset to old code with no sign of it. Now reads `remoteurls()` —
+  the stored dict, no side effects — plus git's own remote NAMES, which are equally valid
+  fetch targets and which `isinternet()` resolves to URLs.
+
 - **`writelzma()` made two archives and returned the wrong one**, so every caller named a
   file holding a fraction of the evidence — spotted by Kent, seeing the email name
   `log_…Z.xz`. It wrote a plain-lzma copy of the CURRENT PART only (the original one-file

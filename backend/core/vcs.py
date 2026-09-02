@@ -1218,8 +1218,20 @@ class GitReadOnly(Git):
         same machine, and "the published version" means the published one.
         Returns True when the ref is there afterwards."""
         start='origin/'+branchname
+        # remoteurls(), NOT findpresentremotes(). The latter is not a read-only
+        # lookup: it offers the user a USB drive and does
+        # `self.program.taskchooser.withdraw()` — so calling it from here, a git
+        # primitive that can run before the chooser exists, raised "'App' object
+        # has no attribute 'taskchooser'" (Kent 2026-09-02). We only want the
+        # published URL, and remoteurls() is the stored dict, with no side
+        # effects and nothing to prompt about.
         try:
-            remotes=self.findpresentremotes() or []
+            # Both sources findpresentremotes draws on, minus its prompting:
+            # the URLs stored in settings, and git's own remote NAMES (a name is
+            # a fine fetch target, and isinternet() resolves it to a URL).
+            remotes=list((self.remoteurls() or {}).values())
+            remotes+=[n for n in (getattr(self,'remotenames',None) or [])
+                        if n not in remotes]
         except Exception as e:
             log.info(_("Could not list remotes to fetch ‘{branch}’: {error}"
                         ).format(branch=branchname,error=e))
