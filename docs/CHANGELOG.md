@@ -21,6 +21,58 @@
 
 # Version 1.15.7
 
+- **"Email my log to support" in the Help menu — you no longer have to crash first.** The
+  only way to package a log was the error page, so a machine that merely MISBEHAVED (wrong
+  page, dead button, a page with nothing but Quit) had no way to hand one over at all — and
+  every field-diagnosis item on the agenda stalls on precisely that. Placed after Update and
+  try/revert: those are what you try first, and this is what you do when they didn't help.
+  Deliberately NOT gated on `source_repo` like its neighbours: it needs no repo, no internet
+  and no daemon, and the moment you most need it is the moment something else is broken.
+  Shared with the error page as `App.email_log()`.
+- **The error page's mailto: link was malformed and reportedly did nothing.** Three faults,
+  any one sufficient: **nothing was encoded**, while 50 raw log lines went into the query
+  string — `&` ends the `body` parameter, `#` starts a fragment and drops the rest, a bare
+  `%` is an invalid escape that makes handlers reject the whole URI, and spaces and newlines
+  are illegal outright; it was **far too long**, 5–10 kB against the ~2 kB `ShellExecute` and
+  browsers accept; and the lines were joined with `%0d%0a` when `readlines()` had already
+  left a real newline on each. Subject and body are now `urllib.parse.quote`d and the log is
+  out of the URL entirely — it cannot usefully go there, since **`mailto:` cannot attach a
+  file**: RFC 6068 lists the headers a handler may honour and says attachment parameters
+  must not be, because otherwise any web page could make a mail client exfiltrate a local
+  file.
+  - Kent: the 50-line excerpt "has been useful in the past", so the single most identifying
+    line now goes in the **subject**, where it costs nothing and is better placed — the
+    failure is visible in the inbox, so a report can be triaged and duplicates spotted
+    without opening anything. The error page still displays all 50; the attachment has the
+    whole run.
+  - **The file is now revealed, not merely named.** New `utilities.reveal_file()` opens the
+    containing folder with the file HIGHLIGHTED (`explorer /select,` on Windows, `open -R` on
+    macOS, the freedesktop `FileManager1.ShowItems` interface on Linux with a folder-open
+    fallback), so attaching is one drag with no searching. Naming a path in the body is not
+    enough for a field user — Kent: "I can't count on people finding it on their own." The
+    reveal happens BEFORE the mail dispatch, so the file is in front of the user whether or
+    not a client exists.
+  - **A missing mail client is now reported instead of doing nothing.**
+    `webbrowser.open_new` can't tell us — it reports whether a browser launched, not whether
+    anything handled the scheme — so on a machine with no mail client the click was silent
+    and indistinguishable from the app ignoring it (Kent: "I've seen that silent error
+    before"). New `utilities.open_mailto()` asks properly: `os.startfile` raises `OSError`
+    (WinError 1155) on Windows, `open` exits nonzero on macOS, and `xdg-open` documents exit
+    **3** as "no application found", distinct from 4 ("action failed"), so a missing client
+    is separable from a broken one. Runs off the calling thread, because `xdg-open` can sit
+    on a desktop portal. Reports only a DEFINITE failure — an ambiguous exit says nothing,
+    since a false alarm here is worse than silence — and when it does, it names the two facts
+    the user needs: where the file is and who to send it to.
+- **FIX, same session: `availablexy`'s new burst summary crashed the app.** It scheduled
+  its `after_idle` on THE WIDGET BEING MEASURED — page content, destroyed on every rebuild
+  — and tkinter deletes an `after()` command AFTER running it, while `Misc.destroy()` sets
+  `_tclCommands` to None. So a pending summary on a destroyed Label raised
+  `AttributeError: 'NoneType' object has no attribute 'remove'` from inside
+  `tkinter.callit`, which `tkintermod` re-raised straight out of `mainloop`, killing a live
+  sort. Now scheduled on the ROOT, which outlives every page — the warning `guardvisible`
+  already carried, in the likeliest possible place to ignore it. The same exposure in the
+  tone frame page's new reflow retry (scheduled on the drafter window, which closes) was
+  fixed with it.
 - **The nothing-but-Quit guard now raises a WAIT instead of writing a notice into the
   page**, per Kent's ordering (2026-09-01): *"a full screen of nothing but theme color —
   nothing would be better than that, and a wait window would be better than nothing, if it

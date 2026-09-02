@@ -562,6 +562,114 @@ def open_file(path):
         os.startfile(path)
     else:                                   # linux variants
         subprocess.Popen(('xdg-open', path))
+def open_mailto(url,on_result=None):
+    """Hand a mailto: URL to the mail client, and REPORT whether one took it.
+
+    `webbrowser.open_new` cannot tell us: it reports whether it launched a
+    browser, not whether anything handled the scheme — so a machine with no mail
+    client configured produced a click that did nothing at all, which is
+    indistinguishable from the app ignoring the click (Kent has seen this).
+    Every platform can actually answer:
+
+      * Windows — os.startfile raises OSError (WinError 1155, "No application
+        is associated…") when no handler is registered. Precise.
+      * macOS — `open` exits nonzero when it cannot handle the URL.
+      * Linux — xdg-open documents exit 3 as "no application found", distinct
+        from 4 ("action failed"), so a missing client is separable from a broken
+        one.
+
+    Runs OFF THE CALLING THREAD, because xdg-open can sit on a desktop portal
+    for a long time and this must never block the UI — the reason open_file
+    dispatches with Popen rather than run. `on_result(ok)` is called with True
+    (a client took it), False (none is configured — tell the user), or None
+    (cannot tell; say nothing, since a false alarm here is worse than silence).
+    on_result runs on the worker thread, so route UI work through the
+    thread-safe notifier."""
+    import threading
+    thislog=logsetup.getlog(__name__)
+    def _work():
+        ok=None
+        try:
+            osys=platform.system()
+            if osys == 'Windows':
+                try:
+                    os.startfile(url)
+                    ok=True
+                except OSError as e:
+                    thislog.info("no mail client for mailto: ({})".format(e))
+                    ok=False
+            elif osys == 'Darwin':
+                r=subprocess.run(['open',url],capture_output=True,timeout=30)
+                ok=(r.returncode == 0)
+            else:
+                r=subprocess.run(['xdg-open',url],capture_output=True,timeout=30)
+                if r.returncode == 3: #documented: no application found
+                    ok=False
+                elif r.returncode == 0:
+                    ok=True
+                else:
+                    #1 syntax, 2 file not found, 4 action failed — a handler may
+                    #well exist and have failed for another reason, so don't
+                    #claim "not configured".
+                    thislog.info("xdg-open returned {} for mailto:".format(
+                                r.returncode))
+                    ok=None
+        except Exception as e:
+            thislog.info("could not dispatch mailto: ({})".format(e))
+            ok=None
+        if on_result:
+            try:
+                on_result(ok)
+            except Exception:
+                thislog.exception("mailto result handler failed")
+    threading.Thread(target=_work,daemon=True,name='mailto').start()
+def reveal_file(path):
+    """Open the containing folder with `path` SELECTED, where the OS can.
+
+    Not open_file(): that launches the file in its default application, which
+    for a .tar.xz means an archive viewer, and the user still cannot find the
+    file to attach it. What they need is the folder open with the thing
+    highlighted, so attaching is one drag with no searching.
+
+    This exists because a mailto: link CANNOT attach a file — RFC 6068 lists the
+    headers a handler may honour and says attachment parameters must not be,
+    since otherwise any web page could make a mail client exfiltrate a local
+    file. So the error page can never hand the log over by itself, and "the file
+    is at <path>" is not good enough for a field user (Kent 2026-09-02: "I can't
+    count on people finding it on their own"). Highlighting it is the closest an
+    app can get.
+
+    Never blocks: xdg-open can sit on a desktop portal for a long time, so this
+    dispatches and returns, as open_file does."""
+    thislog=logsetup.getlog(__name__)
+    p=os.path.abspath(str(path))
+    osys=platform.system()
+    try:
+        if osys == 'Windows':
+            # /select, needs the comma and NO space, and the path unquoted-ish;
+            # explorer returns nonzero even on success, so don't check it.
+            subprocess.Popen(['explorer','/select,{}'.format(p)])
+            return True
+        if osys == 'Darwin':
+            subprocess.Popen(['open','-R',p]) # -R = reveal in Finder
+            return True
+        # Linux: no portable "select". Try the freedesktop file-manager
+        # interface first (nautilus/dolphin/nemo implement ShowItems and DO
+        # highlight), and fall back to opening the folder.
+        try:
+            subprocess.Popen(['dbus-send','--session','--print-reply',
+                    '--dest=org.freedesktop.FileManager1',
+                    '/org/freedesktop/FileManager1',
+                    'org.freedesktop.FileManager1.ShowItems',
+                    'array:string:file://{}'.format(p),'string:'],
+                    stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            return True
+        except Exception:
+            subprocess.Popen(['xdg-open',os.path.dirname(p)])
+            return True
+    except Exception as e:
+        thislog.info("could not reveal {}: {}".format(p,e))
+        return False
 def unlist(l, ignore=[None]):
     from io_put import lift
     if l and isinstance(l[0], lift.et.Element):

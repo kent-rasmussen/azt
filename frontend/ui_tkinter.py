@@ -1743,10 +1743,22 @@ def _floored(attr,value,total,widget,otherwidth,otherheight,floor):
         d['sib']=(otherwidth,otherheight)
     if d['n']>1:
         return #a summary is already scheduled for this burst
+    # SCHEDULE ON THE ROOT, never on the widget being measured. tkinter's
+    # after() wrapper deletes its own Tcl command AFTER running the callback,
+    # and Misc.destroy() sets _tclCommands to None — so if the widget is gone by
+    # then, `self._tclCommands.remove(name)` raises AttributeError from inside
+    # tkinter, which tkintermod re-raises straight out of mainloop and kills the
+    # app. The widgets measured here are page content, destroyed on every
+    # rebuild, so this was the likeliest possible place to make that mistake —
+    # and it crashed a live sort (Kent 2026-09-02). guardvisible carries the
+    # same warning for the same reason: the root outlives every page.
     try:
-        widget.after_idle(lambda a=attr:_floored_summary(a))
+        host=default_root()
+        if host is None:
+            raise RuntimeError('no root yet')
+        host.after_idle(lambda a=attr:_floored_summary(a))
     except Exception:
-        _floored_summary(attr) #no event loop (or a dead widget): say it now
+        _floored_summary(attr) #no event loop yet: say it now rather than lose it
 def _floored_summary(attr):
     d=_floor_hits.pop(attr,None)
     if not d:

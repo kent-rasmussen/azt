@@ -81,6 +81,7 @@ import importlib.util
 import collections
 from random import randint
 import os
+import urllib.parse #mailto: on the error page must be properly encoded
 # Stack dumper for diagnosing freezes: when the UI hangs, run `kill -USR1 <pid>`
 # (pid logged just below) and the Python stacks of all threads are written to
 # /tmp/azt_stacks.txt — works even when stuck in a C-level Tk/X call, so it
@@ -759,6 +760,96 @@ class App:
             # raise
             # sys.exit()
         self.run_problem()
+    def email_log(self,event=None,bundle=None,lastlines=None):
+        """Compress this run's log, open a mail draft, and SHOW the user the file.
+
+        Reachable two ways, deliberately: the Help menu (a normal page, nothing
+        has gone wrong) and the error page (something has). Until now only the
+        error page could package a log at all, so a machine that merely
+        MISBEHAVED had no way to hand one over — which is why field diagnosis
+        keeps stalling on "ask the linguist to find and send a file".
+
+        THE MAIL DRAFT CANNOT CARRY THE LOG, and that is not a limitation of
+        this code: RFC 6068 lists the headers a mailto: handler may honour and
+        says attachment parameters must NOT be, since otherwise any web page
+        could make a mail client exfiltrate a local file. So the best available
+        is: draft addressed and described, and the folder opened with the file
+        HIGHLIGHTED, so attaching is one drag with no searching. Naming a path
+        in the body is not enough for a field user (Kent 2026-09-02: "I can't
+        count on people finding it on their own").
+
+        The previous URL was malformed and reportedly did nothing when clicked.
+        Three faults, any one sufficient: NOTHING WAS ENCODED, while 50 raw log
+        lines went into the query string — '&' ends the body parameter, '#'
+        starts a fragment and drops the rest, a bare '%' is an invalid escape
+        that makes handlers reject the whole URI, and spaces and newlines are
+        illegal outright; it was TOO LONG, 5-10 kB against the ~2 kB that
+        ShellExecute and browsers accept; and the lines were joined with
+        '%0d%0a' when readlines() had already left a real newline on each.
+
+        The log no longer travels in the URL. Kent: the 50-line excerpt "has
+        been useful in the past" — so the single most identifying line goes in
+        the SUBJECT, where it costs nothing and is better placed, because the
+        failure is then visible in the inbox and a report can be triaged, and
+        duplicates spotted, without opening anything. The error page still
+        DISPLAYS all 50, and the attachment holds the whole run."""
+        try:
+            if bundle is None:
+                bundle=str(logsetup.writelzma())
+            if lastlines is None:
+                try:
+                    lastlines=logsetup.contents(50)
+                except Exception:
+                    lastlines=[]
+            failure=''
+            for line in reversed([l.strip() for l in lastlines if l.strip()]):
+                if 'Error' in line or 'Exception' in line:
+                    failure=line[-120:] #the tail: the message, not the prefix
+                    break
+            subject=_("Please help with {name}").format(name=self.name)
+            if failure:
+                subject+=': '+failure
+            body='\n'.join([
+                    _("Please replace this text with a description of what you "
+                        "just did."),
+                    '',
+                    _("IMPORTANT: please attach the file named below. It is "
+                        "the only thing that says what went wrong."),
+                    str(bundle),
+                    ])
+            eurl='mailto:{addr}?subject={subject}&body={body}'.format(
+                        addr=urllib.parse.quote(str(self.Email)),
+                        subject=urllib.parse.quote(subject),
+                        body=urllib.parse.quote(body))
+            # Show the file FIRST, so it is in front of the user whether or not
+            # a mail client exists — the folder is the part that always works.
+            reveal_file(bundle)
+            def _mail_result(ok):
+                if ok is not False:
+                    return #took it, or we cannot tell: a false alarm is worse
+                # THE SILENT FAILURE, now spoken (Kent 2026-09-02: "I've seen
+                # that silent error before"). No mail client is configured, so
+                # the click genuinely did nothing, which reads as the app
+                # ignoring it. Say so, and give the two facts they need: where
+                # the file is, and who to send it to.
+                NotifyUser(text=_("This computer has no email program set up, "
+                            "so {name} could not start a message for you.\n\n"
+                            "Please send this file to {addr} yourself — it is "
+                            "in the folder that just opened:\n\n{bundle}"
+                            ).format(name=self.name,addr=self.Email,
+                            bundle=bundle),
+                            title=_("No email program"))
+            open_mailto(eurl,on_result=_mail_result)
+            return bundle
+        except Exception as e:
+            log.exception("could not prepare a log to email")
+            try:
+                ErrorNotice(_("Could not prepare your log to send ({error}). "
+                            "Your log files are in {dir}.").format(
+                            error=e,dir=file.getlogdir()),
+                            title=_("Couldn’t send the log"))
+            except Exception:
+                pass
     def run_problem(self):
         # self.restart(), NOT sysrestart(): these two switch the SOURCE BRANCH and
         # then restart, which makes them the likeliest of all the restart callers
@@ -834,22 +925,16 @@ class App:
                 )
         lcontents=logsetup.contents(50)
         addr=self.Email
-        eurl='mailto:{addr}?subject=Please help with {name} installation'.format(addr=addr,
-                                                                    name=self.name)
-        eurl+='&body='
-        eurl+=_("Please replace this text with a description of what you just did.")
-        eurl+='%0d%0a'
-        eurl+=_("If the log below doesn’t include the text ‘{text}’, or if it happened "
-                "after a longer work session, please attach "
-                "your compressed log file").format(
-                text='Traceback (most recent call last): ')+' ('+(file)+')'
-        eurl+='%0d%0a--log info--%0d%0a{info}'.format(info='%0d%0a'.join(lcontents))
+        def _email_log(event=None):
+            self.email_log(bundle=file,lastlines=lcontents)
         n=ui.Label(errorw.frame,text=_("\n\nIf this information doesn’t help "
-            "you fix this, please click on this text to Email me your log (to {addr})"
+            "you fix this, click this text to Email me your log (to {addr}). "
+            "Your log file will also be shown in a folder window — please "
+            "attach it to the message."
             "").format(addr=addr),justify='left', font='default',
-            row=3,column=0
+            row=5,column=0
             )
-        n.bind("<Button-1>", lambda e: openweburl(eurl))
+        n.bind("<Button-1>", _email_log)
         o=ui.Label(errorw.frame,text=_("The end of {log} / {file} are below:"
                                     "").format(log=logsetup.getlogfilename(),file=file),
                                     justify='left',

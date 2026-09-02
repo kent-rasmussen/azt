@@ -885,13 +885,24 @@ class ToneFrameDrafter(ui.Window):
         the same stale geometry the inline call saw. Do NOT reach for
         update_idletasks here — reflow() does its own platform-scoped flush,
         and a bare one write-deadlocks XWayland."""
+        # Scheduled on the ROOT, not on this window: tkinter deletes an after()
+        # command AFTER running it, and a destroyed widget has _tclCommands set
+        # to None, so a pending callback on a closed drafter raises
+        # AttributeError from inside tkinter and tkintermod re-raises it out of
+        # mainloop. That crashed a live sort from availablexy's summary the same
+        # way (2026-09-02). The root outlives every page.
+        def _host():
+            try:
+                return ui.default_root() or self
+            except Exception:
+                return self
         def go(n=10):
             try:
                 if self.exitFlag.istrue() or not self.scroll.winfo_exists():
                     return
                 if not self.scroll.winfo_toplevel().winfo_viewable():
                     if n>0:
-                        self.after(50,lambda:go(n-1))
+                        _host().after(50,lambda:go(n-1))
                     else:
                         log.info("TFDP reflow skipped: window never mapped")
                     return
@@ -904,7 +915,7 @@ class ToneFrameDrafter(ui.Window):
             except Exception as e:
                 log.info("TFDP reflow failed: %s",e)
         try:
-            self.after_idle(go)
+            _host().after_idle(go)
         except Exception as e:
             log.info("TFDP: could not schedule reflow: %s",e)
     def _close_active(self):

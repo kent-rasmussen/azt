@@ -579,6 +579,18 @@ class Menus(ui.Menu):
             else:
                 helpitems+=[(_("Revert to {azt} main version").format(azt=self.program.name),
                                 self.parent.reverttomainazt)]
+        # SENDING A LOG WITHOUT CRASHING FIRST. Until now the only way to
+        # package a log was the error page, so a machine that merely MISBEHAVED
+        # — the wrong page, a button that did nothing, a page with only Quit —
+        # had no way to hand one over at all, and every field-diagnosis item on
+        # the agenda stalls on exactly that. Placed after Update and
+        # test/revert per Kent (2026-09-02): those are what you try first, and
+        # this is what you do when they did not help.
+        #
+        # NOT gated on source_repo like the items above: this needs no repo, no
+        # internet and no daemon, and the moment you most need it is the moment
+        # something else is broken.
+        helpitems+=[(_("Email my log to support"),self.program.email_log)]
         helpitems+=[(_("What’s with the New Interface?"),
                         self.parent.helpnewinterface)
                     ]
