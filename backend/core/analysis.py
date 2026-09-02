@@ -1343,23 +1343,51 @@ class StatusDict(dict):
                 p+=[kwargs['profile']]
         # log.info(_("Profiles with kwargs {kwargs}: {profiles}").format(kwargs=kwargs,profiles=p))
         return p
+    def _drop_foreign(self,checks):
+        """Filter the FILE-DERIVED check set (annotation names) against what can
+        be a check at all.
+
+        azt's checks are internally defined (renewchecks), but these two getters
+        read status[cvt][ps][profile], which is built from annotation NAMES — a
+        name space shared with the collab daemon's merge markers. See
+        CheckParameters.is_foreign_annotation. Filtered HERE, at the two getters,
+        rather than at each display site, so every consumer is covered by one
+        edit: the status board (ui_shell), the task check lists, reports.
+
+        Says what it dropped, ONCE per run — the presence of markers is itself
+        the diagnostic, and the count is what distinguishes a real conflict from
+        the known false-marker batch (azt-collab 0.54.20 stripped 1284 of them
+        from a workshop nml)."""
+        foreign=self.program.params.is_foreign_annotation
+        kept=[c for c in checks if not foreign(c)]
+        if len(kept) != len(checks) and not getattr(self,'_said_foreign',False):
+            self._said_foreign=True
+            log.warning("Ignoring %s annotation(s) that are not checks: %s. "
+                    "These are written by the collab daemon, not by a sort; a "
+                    "conflict marker means the merge kept BOTH sides of an "
+                    "entry and someone should look at the data.",
+                    len(checks)-len(kept),
+                    sorted(set(checks)-set(kept)))
+        return kept
     def allcheckswCVdata(self):
-        return list(set([i for j in [self.program.status[cvt][ps][profile]
+        return self._drop_foreign(
+                        list(set([i for j in [self.program.status[cvt][ps][profile]
                                     for cvt in self.program.status
                                     if cvt != 'T'
                                     for ps in self.program.status[cvt]
                                     for profile in self.program.status[cvt][ps]
                                     if ps in self.program.status[cvt]
                                     ]
-                                for i in j]))
+                                for i in j])))
     def allcheckswdata(self, **kwargs): #needs cvt and ps
         cvt=kwargs.get('cvt',self.program.params.cvt())
         ps=kwargs.get('ps',self.program.slices.ps())
-        return list(set([i for j in [self.program.status[cvt][ps][profile]
+        return self._drop_foreign(
+                        list(set([i for j in [self.program.status[cvt][ps][profile]
                                     for profile in self.program.status[cvt][ps]
                                     ]
                             for i in j
-                        ]))
+                        ])))
     def checks(self, **kwargs):
         """This method is designed for tone, which depends on ps, not profile.
         we'll need to rethink it, when working on CV checks, which depend on

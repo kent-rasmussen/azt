@@ -562,29 +562,89 @@ def open_file(path):
         os.startfile(path)
     else:                                   # linux variants
         subprocess.Popen(('xdg-open', path))
+def mailto_configured():
+    """Is a mail client registered for mailto:? True / False / None (unknown).
+
+    ASKED, NOT ATTEMPTED, and that is the point. The first version of this
+    inferred the answer from what happened when it dispatched the URL, and on
+    Linux that inference is simply WRONG (Kent 2026-09-02, watching a user click
+    "send log": the folder opened, no mail client appeared, and nothing was
+    said). xdg-open does document exit 3 as "no application found", but in a
+    live desktop session it delegates to `gio open`/kde-open/etc., and those
+    exit 0 whether or not anything handled the scheme — so the caller was told
+    "a client took it" and stayed quiet. Exit codes describe the launcher, not
+    the handler.
+
+    Asking is also better placed in time: the answer arrives BEFORE the click
+    appears to do nothing, instead of after a dispatch that may sit on a desktop
+    portal for thirty seconds.
+
+      * Linux — `xdg-mime query default x-scheme-handler/mailto` names the
+        .desktop file, and prints nothing when there is no handler. This is the
+        registration itself, which is what we asked about.
+      * Windows — the HKEY_CLASSES_ROOT\\mailto\\shell\\open\\command key IS the
+        association; reading it needs no subprocess and cannot be slow. (Its
+        absence is what makes os.startfile raise WinError 1155.)
+      * macOS — no cheap query without pyobjc, so None: `open` remains the only
+        real test, and open_mailto still reports its exit code.
+
+    None means "say nothing" everywhere: a false "you have no email program" is
+    worse than silence, because it sends the user off to configure something
+    that already works."""
+    thislog=logsetup.getlog(__name__)
+    osys=platform.system()
+    try:
+        if osys == 'Windows':
+            import winreg
+            try:
+                with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT,
+                            r'mailto\shell\open\command') as k:
+                    cmd=winreg.QueryValueEx(k,'')[0]
+                return bool(str(cmd).strip())
+            except FileNotFoundError:
+                thislog.info("no mailto: handler registered (no HKCR\\mailto)")
+                return False
+        if osys == 'Darwin':
+            return None
+        r=subprocess.run(['xdg-mime','query','default',
+                    'x-scheme-handler/mailto'],capture_output=True,timeout=15)
+        if r.returncode != 0:
+            thislog.info("xdg-mime query failed ({}): {}".format(
+                        r.returncode,r.stderr[:200]))
+            return None #xdg-utils missing or broken: not an answer about mail
+        handler=r.stdout.decode('utf-8','replace').strip()
+        if not handler:
+            thislog.info("no mailto: handler registered (xdg-mime says none)")
+            return False
+        thislog.info("mailto: handler is {}".format(handler))
+        return True
+    except Exception as e:
+        thislog.info("could not ask about the mailto: handler ({})".format(e))
+        return None
 def open_mailto(url,on_result=None):
     """Hand a mailto: URL to the mail client, and REPORT whether one took it.
 
-    `webbrowser.open_new` cannot tell us: it reports whether it launched a
-    browser, not whether anything handled the scheme — so a machine with no mail
-    client configured produced a click that did nothing at all, which is
-    indistinguishable from the app ignoring the click (Kent has seen this).
-    Every platform can actually answer:
+    Ask mailto_configured() FIRST — see there for why this function's exit codes
+    cannot answer "is there a mail client" on Linux. What is left here is the
+    dispatch, plus the one platform where the attempt IS the only test:
 
       * Windows — os.startfile raises OSError (WinError 1155, "No application
         is associated…") when no handler is registered. Precise.
-      * macOS — `open` exits nonzero when it cannot handle the URL.
-      * Linux — xdg-open documents exit 3 as "no application found", distinct
-        from 4 ("action failed"), so a missing client is separable from a broken
-        one.
+      * macOS — `open` exits nonzero when it cannot handle the URL. This is the
+        only signal available there, since mailto_configured() returns None.
+      * Linux — exit 3 is documented as "no application found" and is honoured
+        when it appears, but 0 means only that the launcher ran, NOT that
+        anything handled the URL, so 0 is reported as unknown rather than True.
 
     Runs OFF THE CALLING THREAD, because xdg-open can sit on a desktop portal
     for a long time and this must never block the UI — the reason open_file
     dispatches with Popen rather than run. `on_result(ok)` is called with True
     (a client took it), False (none is configured — tell the user), or None
     (cannot tell; say nothing, since a false alarm here is worse than silence).
-    on_result runs on the worker thread, so route UI work through the
-    thread-safe notifier."""
+
+    on_result RUNS ON THE WORKER THREAD, so it must not touch a widget: Tk is
+    main-thread-only, and building a window from here is how a notice silently
+    never appears (or the interpreter crashes). Marshal with root.after()."""
     import threading
     thislog=logsetup.getlog(__name__)
     def _work():
@@ -606,7 +666,12 @@ def open_mailto(url,on_result=None):
                 if r.returncode == 3: #documented: no application found
                     ok=False
                 elif r.returncode == 0:
-                    ok=True
+                    # NOT True. In a desktop session xdg-open delegates to `gio
+                    # open`/kde-open, which exit 0 regardless of whether the
+                    # scheme was handled — the fault that made a missing mail
+                    # client silent (Kent 2026-09-02). mailto_configured() is
+                    # the one that can answer this on Linux.
+                    ok=None
                 else:
                     #1 syntax, 2 file not found, 4 action failed — a handler may
                     #well exist and have failed for another reason, so don't

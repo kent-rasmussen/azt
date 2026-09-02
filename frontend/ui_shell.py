@@ -590,7 +590,7 @@ class Menus(ui.Menu):
         # NOT gated on source_repo like the items above: this needs no repo, no
         # internet and no daemon, and the moment you most need it is the moment
         # something else is broken.
-        helpitems+=[(_("Email my log to support"),self.program.email_log)]
+        helpitems+=[(_("Email log"),self.program.email_log)]
         helpitems+=[(_("What’s with the New Interface?"),
                         self.parent.helpnewinterface)
                     ]

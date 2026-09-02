@@ -123,6 +123,30 @@ class Categories:
         else: #unless specifically doing otherwise, marking should unverify:
             self.rmverification(sense,profile,check)
         self.setitemgroup(sense,check,group)
+        # A SKIP HAS TO ACTUALLY UN-SORT THE WORD. Skip wrote the parking group
+        # 'NA' into the sort annotation and nothing else, which left the word
+        # still carrying its CONFIRMED …-x-cvprofile — and that is what slicing
+        # and verification read, so the word remained a verified member of the
+        # profile it had just been skipped out of. The only observable effect
+        # was the Task-2 board drawing the cell unsorted (sorting_engine.py:1337
+        # reads this annotation), i.e. a visible contradiction with no
+        # substance: "essentially did nothing" (Kent 2026-09-02, from a
+        # deliberate skip on a CV word that stayed lc=CV verified). NA is
+        # documented as PARKING — "NA parks unsortable words" (alphabet.py:333),
+        # "not this one now… so it comes back" (sorting_engine.py:1489) — and
+        # neither held, because nothing thought the word had left.
+        #   Only the confirmed profile is cleared. The leftover 'lc=<profile>'
+        # codes in the whole-word / profile-class verification fields are
+        # DELIBERATELY left alone (Kent's call): they are indistinguishable from
+        # the leftover verification any re-profiled word carries, which the
+        # design already acknowledges, and clearing them means hunting every
+        # field that records the same code.
+        #   Same write the verify path uses for an unverified group
+        # (sorting_engine.py:326, `group if verified else False`).
+        if group=='NA' and getattr(self,'cvt',None)=='S':
+            ftype=self.program.params.ftype()
+            if check==ftype:
+                sense.cvprofilevalue(ftype,False)
         # This group's membership just changed, so the cached example nodes for
         # it are stale. removeitemfromgroup has always cleared the cache; ADDING
         # never did, so ExampleDict.getexample kept serving the prefetched

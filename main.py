@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.8' #This is a string...
+__version__='1.15.9' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -834,14 +834,13 @@ class App:
             # Show the file FIRST, so it is in front of the user whether or not
             # a mail client exists — the folder is the part that always works.
             reveal_file(bundle)
-            def _mail_result(ok):
-                if ok is not False:
-                    return #took it, or we cannot tell: a false alarm is worse
+            def _nomailclient():
                 # THE SILENT FAILURE, now spoken (Kent 2026-09-02: "I've seen
-                # that silent error before"). No mail client is configured, so
-                # the click genuinely did nothing, which reads as the app
-                # ignoring it. Say so, and give the two facts they need: where
-                # the file is, and who to send it to.
+                # that silent error before", then watched it happen: folder
+                # opened, no mail client, no message). No mail client is
+                # configured, so the click genuinely did nothing, which reads as
+                # the app ignoring it. Say so, and give the two facts they need:
+                # where the file is, and who to send it to.
                 NotifyUser(text=_("This computer has no email program set up, "
                             "so {name} could not start a message for you.\n\n"
                             "Please send this file to {addr} yourself — it is "
@@ -849,6 +848,25 @@ class App:
                             ).format(name=self.name,addr=self.Email,
                             bundle=bundle),
                             title=_("No email program"))
+            # ASK BEFORE DISPATCHING. Cheap, synchronous, ON THIS THREAD (so the
+            # notice below is built where Tk allows it), and it answers before
+            # the click has had time to look ignored. mailto_configured() is
+            # also the only thing that can answer on Linux at all — xdg-open
+            # exits 0 with no handler.
+            if mailto_configured() is False:
+                _nomailclient()
+                return bundle
+            def _mail_result(ok):
+                if ok is not False:
+                    return #took it, or we cannot tell: a false alarm is worse
+                # WORKER THREAD — hand the notice to the main loop rather than
+                # building a window here. Tk is main-thread-only, and this is
+                # exactly how the first version of this warning never appeared.
+                root=ui.default_root()
+                if root is None:
+                    log.info("no mail client, and no root to say so on")
+                    return
+                root.after(0,_nomailclient)
             open_mailto(eurl,on_result=_mail_result)
             return bundle
         except Exception as e:

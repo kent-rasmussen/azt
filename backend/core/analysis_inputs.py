@@ -180,6 +180,27 @@ class CheckParameters(object):
         if not (beg and syls and end):
             return None
         return self.compose_profile_class(beg,syls,end)
+    def illegal_profile_symbols(self,profile):
+        """The characters in `profile` that are not profile symbols at all.
+
+        profile_fits_class answers SHAPE (which edges, how many syllables) and
+        cannot answer VOCABULARY: _segment_type reads anything that isn't
+        V/Ṽ as a consonant, so every stray letter is a legal-looking C and a
+        hand-typed 'NAV' satisfies C-initial/V-final/1-syllable perfectly.
+        Field repro 2026-09-02 (OBT's nml): a group 'NAV' with 9 words in it,
+        annotation lc=NAV on each, machine profile 'CV', nothing verified — and
+        no 'NA' anywhere in the file, so it was typed on the by-hand page, not
+        derived. The uppercase in submit() means a typed 'nav' arrives as 'NAV'.
+
+        Same test the machine path already applies (profiles.getprofileofsense
+        clamps a non-profilelegit result to 'Invalid'), so the two agree on what
+        a profile may contain. Returns [] when it can't find the vocabulary,
+        rather than guessing — refusing on an unknown inventory would block
+        legitimate entry."""
+        legit=getattr(getattr(self.program,'profiles',None),'profilelegit',None)
+        if not legit:
+            return []
+        return sorted({c for c in str(profile or '') if c not in set(legit)})
     def profile_fits_class(self,profile,beg,syls,end):
         """Is `profile` (a CV string) COMPATIBLE with a class's primitives?
 
@@ -600,6 +621,40 @@ class CheckParameters(object):
         # the three sorts that establish the profile class (run on the whole
         # wordlist); none of them join.
         return (check or self.check()) in ('#C','C#','syls')
+    # Annotation names that are NOT checks, however they got into the file.
+    #
+    # azt's checks are INTERNALLY defined (Analysis.renewchecks: _checknames per
+    # cvt for segmental, ftype for 'S', program.toneframes for 'T'); nothing
+    # about them comes from the lexicon. But the STATUS set is file-derived —
+    # status[cvt][ps][profile] is populated from annotation NAMES
+    # (lift.annotation_values_by_ps_profile), and that name space is shared with
+    # the collab daemon, which stamps
+    # <annotation name="azt-lift-conflict" value="ours|theirs"/> on the parent of
+    # a merge conflict (azt_collabd/lift_merge.py:45). So the marker arrived as a
+    # check with groups 'ours'/'theirs' — and since no sense carries an
+    # 'azt-lift-conflict=ours' verification code, as a slice that can NEVER
+    # verify: permanent outstanding work in the status field, offering itself for
+    # verification (Kent 2026-09-02, seeing it there).
+    #
+    # NOT added to is_syllable_primitive_check: that tuple is a semantic claim
+    # about the three prep sorts — is_syllable_boolean_check and
+    # syllable_prep_complete read the same concept — so listing a merge marker
+    # there would gate Task-1 completion on verifying it.
+    #
+    # The PREFIX carries the general case: 'azt-' is reserved for annotations
+    # written by the TOOLING rather than by the linguist, which is already the
+    # daemon's own practice ('azt-lift-conflict', 'azt-lift-conflict-fields'), so
+    # a marker added there later is ignored without a change here. A user check
+    # can't collide: check codes are generated ('V1', 'C1=C2'), ftypes come from
+    # the lexicon's field types ('lc', 'lx', 'Plural'), and tone frames are named
+    # in settings. The explicit name stays for greppability.
+    FOREIGN_ANNOTATIONS=('azt-lift-conflict',)
+    FOREIGN_ANNOTATION_PREFIX='azt-'
+    def is_foreign_annotation(self,name=None):
+        """True for an annotation name that must never be treated as a check."""
+        name=str(name if name is not None else self.check() or '')
+        return (name in self.FOREIGN_ANNOTATIONS
+                or name.startswith(self.FOREIGN_ANNOTATION_PREFIX))
     def is_syllable_boolean_check(self,check=None):
         # the CLOSED binary checks: no new-group ("Other"), no sort page (the
         # presort defaults every word). syls is NOT here — it's a small but OPEN

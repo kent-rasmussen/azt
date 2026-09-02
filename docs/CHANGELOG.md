@@ -19,7 +19,116 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.9
+
+Four field-diagnosed faults, all from OBT's nml project and Kent's own reproduction.
+
+- **NBQ: found the producer, and closed the class.** A task on its way out re-reveals its
+  parent — `ui_tkinter.py:1378`, `if not self.parent.iswaiting(): self.parent.deiconify()` —
+  and `chooser.gettask` withdraws the chooser one line *before* calling the outgoing task's
+  `on_quit`, so the chooser came straight back up with no notebook built and sat there for
+  the whole `whatsdone()` + tab build (~2.8 s on a field machine) showing nothing but the
+  `outsideframe` Exit button. Traced from a log where all three tab lists built
+  successfully, which is what ruled out the build and pointed at the reveal; the
+  `set TNotebook.Tab.background` lines identify it as the FIRST build, reached from
+  `chooser.py:99`.
+  - Fixed at the call site: the rebuild now runs inside `self.ui.waiting(…)`, so
+    `iswaiting()` is true when `on_quit` gets there and the premature reveal is suppressed —
+    the wait is load-bearing, not decoration, and the user gets a named wait instead of a
+    blank page.
+  - Fixed as a **class**, per Kent: *"we shouldn't be making pages visible, counting on them
+    having meaning later."* That deiconify now also requires `has_content(parent)`, so no
+    window is ever revealed with an empty `frame`. Reuses `visibility.has_content` — the
+    same predicate `QuitOnlyGuard` uses for this exact question, and it tests `w.frame`
+    because Exit lives in `outsideframe`; a second copy would drift the way `_is_syl_prep`
+    already has between `ui_shell` and `alphabet_chart`. Imported in-function, since
+    `visibility` does `from frontend import ui`. **The skip is logged**: a page that should
+    have appeared and now doesn't is named in the log rather than becoming a silent
+    no-window for the watchdog to describe vaguely. The webview backend needs no parallel
+    change — its `on_quit` never deiconifies a parent.
+- **The collab daemon's merge marker was showing up as a CHECK in the status field.** azt's
+  checks are internally defined (`Analysis.renewchecks`), but the STATUS set is
+  file-derived: `generate_status_by_annotations` reads annotation NAMES, and that name space
+  is shared with `azt_collabd`, which stamps
+  `<annotation name="azt-lift-conflict" value="ours|theirs"/>` on the parent of a merge
+  conflict. Nothing reserved a namespace, so it arrived as a check with groups
+  `ours`/`theirs` — and since no sense carries an `azt-lift-conflict=ours` code, as a slice
+  that can NEVER verify: permanent outstanding work. Worse, `cvt_of_check` returns None for
+  it and `checkslicetypecurrent` (`analysis.py:2062-2065`) DELETES None kwargs and
+  substitutes the CURRENT value, so it was filed under whichever cvt happened to be selected
+  — a real branch, participating in that cvt's `tosort`/`done` bookkeeping. Three layers,
+  each doing something the others can't:
+  - **Admission gate** — `generate_status_by_annotations` now refuses any name
+    `cvt_of_check` can't place. That IS the allow-list Kent asked for; `_checkcodes_by_cvt`
+    is the registry and needs no second list, and it fails CLOSED. Tone is unaffected
+    (`generate_status_by_tone_groups` is separate and hardcodes `cvt='T'`). NB this also now
+    excludes the `#C-slice`/`C#-slice`/`syls-slice` annotations, consistent with
+    `_is_syl_prep` already stripping them from the board.
+  - **Scrub** — `scrub_foreign_status` clears what is already stored, because the cycle
+    cannot self-heal: `StatusDict.__init__` copies the stored dict in verbatim,
+    `dictcheck`/`build` only ADD, and `storesettingsfile` dumps the whole object back over
+    the JSON, so a bad node loaded at boot is written straight back out for ever.
+    Deliberately NARROWER than the gate — it removes only names affirmatively known not to
+    be ours (`is_foreign_annotation`), since a check code from an older build fails the gate
+    too and may hold real work. **Fail closed on writes, conservative on deletes.**
+  - **Read filter** — `allcheckswdata`/`allcheckswCVdata` filter at the two file-derived
+    getters, covering the board, task check lists and reports in one edit, and keeping a
+    stale board clean in the window before a refresh runs.
+  - Reserved prefix `azt-` for tooling-written annotations (already the daemon's own
+    practice), so the next marker it adds is ignored without another edit. Not `x-`: `-x-` is
+    the private-use subtag in every lang tag here.
+- **A hand-typed profile could be any letters at all** — the `NAV` hunt. Page 2 of the
+  phase-2 profile picker validated SHAPE only, and `_segment_type` reads anything that isn't
+  `V`/`Ṽ` as a consonant, so `profile_fits_class('NAV','C','1','V')` returns True: `NAV`
+  reads as C-initial, V-final, one syllable. With `submit()`'s `.upper()`, a typed `nav`
+  became a real sort group that 9 words were then sorted into (annotation `lc=NAV`, machine
+  profile `CV`, nothing verified, and no `NA` anywhere in the file — so not a skip). New
+  `params.illegal_profile_symbols` applies the SAME `profilelegit` test the machine path
+  already applies (`profiles.py:336` clamps to `Invalid`), checked BEFORE the shape test,
+  naming the offending characters: *"‘A’ is not C or V."* Ruled out along the way: skip
+  (`setitemgroup` writes the group verbatim, and `:137-140` asserts the round-trip — Kent
+  confirmed by deliberate skip, which wrote `lc="NA"`), and `_default_profile` (builds
+  `'CV'*s` literally, only TESTS the edges).
+  - **Still open**: `sorting_engine.py:326` writes a group name into `…-x-cvprofile` with no
+    legality check. The entry page is now guarded, but that writer trusts whatever group
+    exists — it is what turned a typo into stored profile data. And OBT's 9 words still
+    carry `lc="NAV"`; this stops new ones and repairs nothing.
+- **Skip did essentially nothing.** It wrote the parking group `NA` into the sort annotation
+  and left the CONFIRMED `…-x-cvprofile` in place — and that is what slicing and
+  verification read, so the word stayed a verified member of the profile it had just been
+  skipped out of. The only observable effect was the Task-2 board drawing the cell unsorted
+  (`sorting_engine.py:1337` reads the annotation): a visible contradiction with no
+  substance. `NA` is documented as parking — *"NA parks unsortable words"*
+  (`alphabet.py:333`), *"not this one now… so it comes back"* (`sorting_engine.py:1489`) —
+  and neither held, because nothing thought the word had left. `marksortgroup` now clears
+  the confirmed profile when parking a word in `NA` on the profile sort, the same write the
+  verify path makes for an unverified group. Per Kent, the leftover `lc=<profile>` codes in
+  the whole-word / profile-class fields are left alone: indistinguishable from the leftover
+  verification any re-profiled word carries, which the design already acknowledges.
+
 # Version 1.15.8
+
+- **"No email program" still said nothing, watched live by Kent** (a user clicked send-log:
+  folder opened, no mail client appeared, no message). Two independent faults, either
+  sufficient:
+  - **The detection was inferred from the dispatch, and on Linux that inference is wrong.**
+    `xdg-open` does document exit 3 as "no application found", but in a desktop session it
+    delegates to `gio open`/kde-open, which exit **0** whether or not anything handled the
+    scheme — so we concluded "a client took it" and stayed quiet by design. New
+    `utilities.mailto_configured()` ASKS instead: `xdg-mime query default
+    x-scheme-handler/mailto` (the registration itself) on Linux, the
+    `HKCR\mailto\shell\open\command` key on Windows (no subprocess), None on macOS where
+    there is no cheap query and `open`'s exit code remains the only test. Exit 0 from
+    xdg-open now reports *unknown*, not success. Asked BEFORE dispatching, so the answer
+    also arrives before the click has had time to look ignored, rather than after a
+    30-second wait on a desktop portal.
+  - **The notice was built on the worker thread.** `open_mailto` runs off-thread (xdg-open
+    can block for a long time) and its `on_result` therefore runs there too — and the
+    handler called `NotifyUser` directly, which constructs a Toplevel and calls
+    `winfo_exists`/`after_idle`. Tk is main-thread-only, so the window silently never
+    appeared. Now the synchronous check reports on the calling thread, and the macOS
+    fallback path marshals through `root.after(0, …)`. The docstring says so in capitals,
+    because this is invisible in code review and produces no error.
 
 - **FIX to 1.15.6: `fetch_tracking_branch` called a helper with UI side effects.** It used
   `findpresentremotes()`, which is not a read-only lookup — it offers the user a USB drive

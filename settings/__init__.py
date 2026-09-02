@@ -871,8 +871,50 @@ class Settings(SettingsUI):
                 if isinstance(x[k],dict) and isinstance(y[k],dict):
                     report(x[k],y[k],k)
         report(x,y)
+    def scrub_foreign_status(self):
+        """Remove check nodes that were never checks from program.status.
+
+        NEEDED because the status cycle cannot self-heal: StatusDict.__init__
+        copies the stored dict in verbatim, dictcheck/build only ADD branches,
+        and storesettingsfile dumps the whole object back over the JSON — so a
+        bad node loaded at boot is written straight back out, every run, for
+        ever. It also survived the LIFT data that produced it, the status file
+        being independent of the lexicon.
+
+        DELIBERATELY NARROWER THAN THE WRITE GATE. The gate in
+        generate_status_by_annotations refuses anything cvt_of_check can't
+        place (fail closed — right for what we ADD). Deleting on that test
+        would be wrong: a check code from an older build, or an older '-slice'
+        spelling, also fails it, and those may hold real verification work the
+        user did. So removal is limited to names we affirmatively know are not
+        ours (is_foreign_annotation — the collab daemon's merge markers), and
+        every removal is named in the log. Fail closed on writes, conservative
+        on deletes."""
+        status=getattr(self.program,'status',None)
+        if not status:
+            return
+        foreign=self.program.params.is_foreign_annotation
+        gone=[]
+        for cvt in list(status):
+            for ps in list(status.get(cvt) or {}):
+                for profile in list(status[cvt].get(ps) or {}):
+                    node=status[cvt][ps].get(profile) or {}
+                    if not hasattr(node,'items'):
+                        continue
+                    for check in [c for c in list(node) if foreign(c)]:
+                        del node[check]
+                        gone.append((cvt,ps,profile,check))
+        if gone:
+            _log.warning("Removed %s status node(s) for names that are not "
+                    "checks: %s. These were written into the status file "
+                    "before the write gate existed, under whichever cvt was "
+                    "selected at the time, and could not clear on their own.",
+                    len(gone),gone[:20])
+            self.storesettingsfile(setting='status')
     def generate_status_by_annotations(self,**kwargs):
         _log.info(_("Refreshing annotations from LIFT"))
+        # Clear anything an earlier build let in, before adding to it.
+        self.scrub_foreign_status()
         start_at=kwargs.get('startat',0)
         end_at=kwargs.get('endat',100)
         d=self.program.db.annotation_values_by_ps_profile()
@@ -887,6 +929,41 @@ class Settings(SettingsUI):
                     if k['check'].isdigit():
                         continue
                     k['cvt']=self.program.params.cvt_of_check(k['check'])
+                    if k['cvt'] is None:
+                        # NOT ONE OF OUR CHECKS — don't put it in the status
+                        # tree. azt's checks are internally defined
+                        # (Analysis.renewchecks), and _checkcodes_by_cvt is that
+                        # registry, so cvt_of_check returning None IS the
+                        # allow-list test; it needs no separate list, and it
+                        # fails CLOSED. Tone is unaffected: frame names aren't
+                        # check codes, which is why generate_status_by_tone_groups
+                        # is a separate generator that hardcodes cvt='T'.
+                        #   Without this, a name that isn't a check did NOT get
+                        # parked harmlessly under a None key: node() →
+                        # checkslicetypecurrent (analysis.py:2062-2065) DELETES
+                        # None kwargs and substitutes the CURRENT value, so the
+                        # foreign name was filed under whichever cvt happened to
+                        # be selected when the refresh ran — a real branch, and a
+                        # different one from run to run. That is why it shows up
+                        # in the status field's check list. It was then PERSISTED
+                        # to the data domain and reloaded at every boot
+                        # (loadsettingsfile loads status once, from JSON), so it
+                        # outlived the LIFT data that produced it. The live case
+                        # is the collab daemon's
+                        # <annotation name="azt-lift-conflict" value="ours|theirs"/>
+                        # merge marker (azt_collabd/lift_merge.py:45), which shares
+                        # this name space and reached the status field as a check
+                        # with groups 'ours'/'theirs' that can never verify
+                        # (Kent 2026-09-02).
+                        if not getattr(self,'_said_notacheck',False):
+                            self._said_notacheck=True
+                            _log.warning("Not a check, so not going into the "
+                                    "status: %r (annotation names are shared "
+                                    "with the collab daemon's merge markers; "
+                                    "azt-lift-conflict means the merge kept "
+                                    "BOTH sides of an entry and the DATA wants "
+                                    "a look).", k['check'])
+                        continue
                     groups=[i for i in groups if i]
                     self.program.status.groups(groups, wsorted=True, **k)
                     # Segmental only: 'S' (syllable-prep) done is per-slice, not

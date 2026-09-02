@@ -90,24 +90,40 @@ class TaskChooser(Task):
     def gettask(self,event=None):
         """This function pulls user out of a task, to select from any
         of tasks whose prerequisites are minimally satisfied."""
-        self.ui.withdraw()
-        self.i_am_mainwindow()
-        if self.program.task and self.task.ui.winfo_exists():
-            self.program.task.ui.on_quit()
-        self.whatsdone()
-        if not hasattr(self.ui,'notebook'):
-            self.ui._build_chooser_tabs(self.makeoptions_for,self.maketask)
-        else:
-            self.ui._populate_chooser_tabs()
-        # Select the right tab
-        if self.showreports:
-            self.ui._select_chooser_tab('reports')
-            self.showreports=False
-            self.showingreports=True
-        elif self.showingreports:
-            self.showingreports=False
-        else:
-            self.ui._select_chooser_tab('datacollection')
+        # THE WAIT IS LOAD-BEARING, not decoration — it is what keeps this from
+        # being a full screen of nothing but Quit (NBQ, seen repeatedly in the
+        # field; Kent 2026-09-02, "I saw NBQ here" with all three tab lists
+        # built in the same log). The withdraw() below does NOT hold: the
+        # outgoing task's on_quit RE-DEICONIFIES its parent —
+        #     if not self.parent.iswaiting():
+        #         self.parent.deiconify()          # ui_tkinter.py:1378
+        # — so the chooser came back up EMPTY (first call: no notebook at all)
+        # and stayed visible through whatsdone() plus the tab build, ~2.8s on a
+        # field machine, with the outsideframe Exit button as the only control.
+        # A live wait is precisely the condition that suppresses that reveal, so
+        # wrapping the rebuild fixes the cause rather than covering it, and the
+        # user gets a named wait instead of a blank page.
+        #   thenshow=True: waitdone() reveals the chooser, which is what the
+        # trailing deiconify() did.
+        with self.ui.waiting(_("Getting your task list…"),thenshow=True):
+            self.ui.withdraw()
+            self.i_am_mainwindow()
+            if self.program.task and self.task.ui.winfo_exists():
+                self.program.task.ui.on_quit()
+            self.whatsdone()
+            if not hasattr(self.ui,'notebook'):
+                self.ui._build_chooser_tabs(self.makeoptions_for,self.maketask)
+            else:
+                self.ui._populate_chooser_tabs()
+            # Select the right tab
+            if self.showreports:
+                self.ui._select_chooser_tab('reports')
+                self.showreports=False
+                self.showingreports=True
+            elif self.showingreports:
+                self.showingreports=False
+            else:
+                self.ui._select_chooser_tab('datacollection')
         self.ui.deiconify()
         # Post-PDF blank-chooser freezes (3× by 2026-07-13, always after the
         # chart PDF opened a viewer over us): the chooser deiconifies while

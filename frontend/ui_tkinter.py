@@ -1375,7 +1375,40 @@ class Exitable():
             if (self.parent and
                 self.parent.winfo_exists() and
                 not isinstance(self.parent,Root)):
-                if not self.parent.iswaiting():
+                # NEVER REVEAL AN EMPTY PAGE. This deiconify was a confirmed
+                # producer of the nothing-but-Quit screen: a task on its way out
+                # re-revealed its parent, and if the parent's frame had just
+                # been emptied (or never built), the user got a fullscreen
+                # kiosk page whose only control was the outsideframe Exit
+                # button — which a field user came close to pressing, "the very
+                # reason to NEVER have that kind of page visible". Traced from
+                # OBT's log 2026-09-02: chooser withdrawn, outgoing task's
+                # on_quit put it straight back up, then ~2.8s of building.
+                #   Kent's rule, and the reason this is a guard rather than a
+                # fix at the one call site: "we shouldn't be making pages
+                # visible, counting on them having meaning later." Either it has
+                # content, or it does not take the screen.
+                #   has_content, not a local reimplementation: it tests
+                # w.frame (Exit lives in outsideframe, so testing the window
+                # would count a bare page as built) and it is the SAME predicate
+                # QuitOnlyGuard uses to decide this exact question — two copies
+                # of it would drift. Imported in-function: visibility does
+                # `from frontend import ui`, so a module-level import here is
+                # circular.
+                #   The trade, accepted deliberately: a flow that relied on
+                # being revealed while momentarily empty now stays hidden, which
+                # the visibility watchdog reports as NO WINDOW. That is why the
+                # skip is logged — a page that should have appeared is then
+                # named here, not left to be guessed at.
+                from frontend.visibility import has_content
+                if self.parent.iswaiting():
+                    pass #a wait is already covering the screen; it will reveal
+                elif not has_content(self.parent):
+                    log.info("not revealing %s on the way out of %s: its frame "
+                            "is empty, and an empty page shows nothing but "
+                            "Quit. If a page is missing here, this is why.",
+                            self.parent,self)
+                else:
                     self.parent.deiconify()
         self.cleanup()
         self.destroy() #do this for everything

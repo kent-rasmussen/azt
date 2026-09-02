@@ -250,6 +250,20 @@ class SortButtonFrame(ui.ScrollingFrame):
                     columnspan=2,sticky='ew')
         def submit():
             prof=(var.get() or '').strip().upper()
+            # VOCABULARY FIRST. profile_fits_class only asks about shape, and
+            # _segment_type reads anything that isn't V as a consonant — so
+            # 'NAV' passes as C-initial, V-final, 1 syllable, and a typo becomes
+            # a real sort group with real words in it (OBT's nml, 2026-09-02).
+            bad=params.illegal_profile_symbols(prof)
+            if bad:
+                msg.configure(text=_("‘{p}’ isn’t made of profile symbols: "
+                            "{bad} {isare} not C or V. Please use only C and V "
+                            "(for example {eg})."
+                            ).format(p=prof,bad=', '.join(
+                                    '‘{}’'.format(c) for c in bad),
+                                    isare=_("is") if len(bad)==1 else _("are"),
+                                    eg=eg))
+                return
             if not params.profile_fits_class(prof,beg,syls,end):
                 # Say which dimension actually failed and what the entry reads as.
                 # The old message asserted all three at once ("isn't C-initial,
