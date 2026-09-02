@@ -173,6 +173,8 @@ class CollabSession:
         #                          "nothing changed".
         self._peers_known = False  # does any paired peer share this
         self._peers_checked_at = 0.0  # project? (cached; see _lan_has_peers)
+        self._peers_unavailable = False  # set once if this client has no
+        # lan_peer_sync at all: a permanent gap, so stop asking (see there)
         self._warned_uncommitted = False
         self._reload_offered_at = 0.0
         self._last_detected_head = ''  # newest peer head we've seen
@@ -385,6 +387,11 @@ class CollabSession:
         hard rule 1 exists to forbid. Cached for a minute: pairing changes
         are rare, and § 17c says don't spend an RPC per tick on it."""
         import time
+        if getattr(self, '_peers_unavailable', False):
+            # THIS CLIENT CANNOT ANSWER, and it never will while we run — see
+            # the AttributeError branch below. Asking again every minute is
+            # asking a question whose answer is fixed.
+            return self._peers_known
         now = time.time()
         if now - self._peers_checked_at < 60:
             return self._peers_known
@@ -393,7 +400,37 @@ class CollabSession:
             rows = _client.lan_peer_sync() or []
             self._peers_known = any(
                 r.get('langcode') == self.langcode for r in rows)
+        except AttributeError as e:
+            # A PERMANENT CAPABILITY GAP, not a transient — and the two used to
+            # land in one handler and read identically in the log. This client
+            # has no lan_peer_sync at all (an older azt_collab_client than this
+            # azt expects), so:
+            #   * stop probing: the answer cannot change in this process, and
+            #     re-asking every 60 s logged the same line over and over, which
+            #     reads as something intermittent and worth waiting out. It is
+            #     not (field log, 2026-09-02).
+            #   * say it ONCE, at warning, and name WHICH client — the module is
+            #     resolved at runtime by _ensure_client_importable (symlink, env
+            #     var, or a sibling clone), so "which copy" is the whole
+            #     question and the answer is not guessable from the outside.
+            #   * be explicit about the consequence, because it is silent
+            #     otherwise: _peers_known keeps its initial False, so
+            #     ambient_status renders LAN:— , whose meaning is "no paired
+            #     peer shares this project". A user who HAS a paired peer is
+            #     therefore told they do not. That is a definite claim made from
+            #     a failed measurement.
+            # check_server_compat guards the DAEMON's version this way already;
+            # nothing guarded client-side attributes, which is the real gap.
+            self._peers_unavailable = True
+            log.warning("This azt_collab_client cannot report LAN peers "
+                    "(%s at %s). The LAN indicator will read '—' for the rest "
+                    "of this session even if a peer does share this project. "
+                    "Update azt-collab to match this azt.",
+                    e, getattr(_client, '__file__', 'unknown location'))
         except Exception as e:
+            # Genuinely transient (daemon busy, socket dropped): keep the last
+            # answer and retry on the next 60 s tick, which is what the cache is
+            # for.
             log.info(f"lan_peer_sync probe: {e}") # keep the last answer
         return self._peers_known
 

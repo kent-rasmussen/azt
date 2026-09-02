@@ -144,21 +144,18 @@ def has_content(w):
     quit-button that must never be revealed (Kent 2026-08-24, on "Sort!").
     Load-bearing; don't simplify to `w`.
 
-    AND IT DOES NOT COUNT WHAT A GUARD PUT THERE ITSELF. QuitOnlyGuard fills an
-    empty page with a notice, which would otherwise read here as "this page has
-    content" and make an NBQ page a legitimate reveal target for the other two
-    guards. That cannot happen today only because placeholders go only on
-    VIEWABLE windows while this is asked of withdrawn ones — sequencing, not a
-    guarantee, and the guards must not depend on each other's timing to avoid
+    NOTHING A GUARD ADDS IS CONTENT — the rule that keeps the three from
     feeding each other false evidence (Kent 2026-09-01: they "need to play
-    nicely together"). So the rule is explicit: nothing a guard ADDS is content.
+    nicely together"). It costs nothing to state now that QuitOnlyGuard raises
+    a WAIT rather than gridding a notice into the frame, but it was a live
+    hazard while it did, and it is the reason that action was changed: anything
+    a guard puts in `frame` reads here as "this page has content" and makes an
+    empty page a legitimate reveal target for the other two.
     """
     try:
         if w is None or not w.winfo_exists():
             return False
-        placeholder=getattr(w,QuitOnlyGuard.ATTR,None)
-        return bool([c for c in w.frame.winfo_children()
-                    if c is not placeholder])
+        return bool(w.frame.winfo_children())
     except Exception:
         return False
 
@@ -213,13 +210,24 @@ class QuitOnlyGuard:
         a gap; it is the ~10s page Kent measured.
     So what is left is a page that is wrong, whichever direction it was heading.
 
-    AND WHAT IT DOES IS THE SAFE ACTION. Not withdrawing the window, which would
-    trade this symptom for its worse sibling (no window at all,
-    `no_window_left_hang`). Not disabling Exit, which leaves a blank page with
-    no way out. It PUTS SOMETHING IN THE FRAME: once there is a sentence there,
-    Exit is no longer the only thing on screen, the user is told this is a bug
-    rather than their fault, and nothing that was going to happen is prevented.
-    The placeholder removes itself the moment real content arrives.
+    WHAT IT DOES, per Kent's ordering (2026-09-01): *"a full screen of nothing
+    but theme color — nothing would be better than that, and a wait window would
+    be better than nothing, if it is over ~3s."* So, worst to best:
+
+        blank themed page  <  no window at all  <  a wait window
+
+    It therefore raises a WAIT on the offending window. That is the app's own
+    sanctioned cover for a page that is not ready: it withdraws the window (so
+    the blank page and its lone Exit stop being on screen — the "nothing"
+    Kent prefers) and puts a dialog there saying something is happening (the
+    "better than nothing"). Both guards accept a wait as evidence, so this does
+    not fight them.
+
+    THE WAIT IS CLOSED WHEN CONTENT ARRIVES, and that half is not optional: a
+    wait nobody closes is the `tryNAgain` hole — the user parked on a dialog
+    forever, with the watchdog suppressed because a wait window is viewable.
+    So the guard keeps watching what it covered and calls waitdone() the moment
+    the frame has real children, which also reveals the page.
     """
     POLL_MS=1000
     STRIKES=3
@@ -253,10 +261,11 @@ class QuitOnlyGuard:
             self.running=False
 
     def _real_children(self,w):
-        """The frame's children that are not our own placeholder."""
+        """What the page has actually built. The guard adds nothing to the
+        frame any more — it raises a wait instead — so every child here is the
+        page's own."""
         try:
-            ph=getattr(w,self.ATTR,None)
-            return [c for c in w.frame.winfo_children() if c is not ph]
+            return list(w.frame.winfo_children())
         except Exception:
             return []
 
@@ -282,13 +291,20 @@ class QuitOnlyGuard:
             for w in candidate_windows():
                 key=id(w)
                 seen.add(key)
+                if getattr(w,self.ATTR,False):
+                    # Ours, and covered. Uncover ONLY on real content — not on
+                    # "no longer looks quit-only", which is true the instant we
+                    # cover it (a wait is up, the window is withdrawn) and would
+                    # undo the cover on the very next poll.
+                    if self._real_children(w):
+                        self._uncover(w)
+                    continue
                 if self._is_quit_only(w):
                     self.strikes[key]=self.strikes.get(key,0)+1
                     if self.strikes[key]==self.STRIKES:
-                        self._fill(w)
+                        self._cover(w)
                 else:
                     self.strikes.pop(key,None)
-                    self._unfill(w)
             for gone in [k for k in self.strikes if k not in seen]:
                 self.strikes.pop(gone,None)
         except Exception:
@@ -297,46 +313,37 @@ class QuitOnlyGuard:
             if self.running:
                 self._schedule()
 
-    def _fill(self,w):
-        """Say something, so Exit is not the only thing on the page."""
+    def _cover(self,w):
+        """Replace the blank page with a wait dialog."""
         try:
             log.warning("NOTHING BUT QUIT: %r has been visible for %ss with an "
-                    "empty frame and no wait covering it. Filling it with a "
-                    "notice so Exit is not the only control. Find the producer: "
-                    "this page revealed itself before it had content.",
+                    "empty frame and no wait covering it. Raising a wait over "
+                    "it. Find the producer: this page revealed itself before "
+                    "it had content.",
                     w.title(),self.POLL_MS*self.STRIKES/1000)
         except Exception:
             pass
-        if getattr(w,self.ATTR,None) is not None:
-            return
         try:
-            # Gridded high so it cannot collide with a real build's rows, and
-            # removed as soon as one arrives.
-            f=ui.Frame(w.frame,row=9999,column=0,sticky='ew')
-            l=ui.Label(f,font='read',row=0,column=0,sticky='ew',
-                    text=_("There is nothing on this page.\n\nThis is a fault "
-                        "in the program, not something you did wrong. Please "
-                        "report it, and say what you were doing."))
-            try:
-                l.wrap()
-            except Exception:
-                pass
-            setattr(w,self.ATTR,f)
+            # thenshow=True so waitdone() below REVEALS the page rather than
+            # leaving it withdrawn — otherwise curing the blank page would
+            # produce the other symptom, no window at all.
+            w.wait(msg=_("Please wait…"),thenshow=True)
+            setattr(w,self.ATTR,True)
         except Exception:
-            log.exception("quit-only guard: could not fill the empty page")
+            log.exception("quit-only guard: could not cover the empty page")
 
-    def _unfill(self,w):
-        ph=getattr(w,self.ATTR,None)
-        if ph is None:
-            return
+    def _uncover(self,w):
+        """Content arrived: close our wait, which also reveals the page."""
         try:
-            ph.destroy()
+            setattr(w,self.ATTR,False)
         except Exception:
             pass
         try:
-            setattr(w,self.ATTR,None)
+            log.info("quit-only guard: %r has content now; revealing it",
+                    w.title())
+            w.waitdone()
         except Exception:
-            pass
+            log.exception("quit-only guard: could not uncover the page")
 
 
 class VisibilityWatchdog:

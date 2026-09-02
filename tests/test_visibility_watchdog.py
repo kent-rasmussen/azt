@@ -223,8 +223,8 @@ def _guard(monkeypatch, windows):
     monkeypatch.setattr(g, "_schedule", lambda: None)
     monkeypatch.setattr(visibility, "candidate_windows", lambda *a: list(windows))
     filled = []
-    monkeypatch.setattr(g, "_fill", lambda w: filled.append(w))
-    monkeypatch.setattr(g, "_unfill", lambda w: None)
+    monkeypatch.setattr(g, "_cover", lambda w: filled.append(w))
+    monkeypatch.setattr(g, "_uncover", lambda w: None)
     return g, filled
 
 
@@ -236,6 +236,22 @@ def test_quit_only_page_is_acted_on_after_strikes(monkeypatch):
     assert filled == [], "acted before the strike count"
     g._tick()
     assert filled == [page]
+
+
+def test_a_covered_page_is_uncovered_only_by_real_content(monkeypatch):
+    """Once covered, the page no longer LOOKS quit-only — a wait is up and the
+    window is withdrawn — so uncovering on "not quit-only" would undo the cover
+    on the very next poll. Only content counts."""
+    page = _FakePage(children=[])
+    g, _ = _guard(monkeypatch, [page])
+    uncovered = []
+    monkeypatch.setattr(g, "_uncover", lambda w: uncovered.append(w))
+    setattr(page, g.ATTR, True)          # pretend we covered it
+    g._tick()
+    assert uncovered == [], "uncovered a still-empty page"
+    page.frame._children = [object()]    # the build landed
+    g._tick()
+    assert uncovered == [page]
 
 
 def test_a_wait_dialog_excuses_an_empty_frame(monkeypatch):

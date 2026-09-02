@@ -19,6 +19,73 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.7
+
+- **One log per RUN, five runs kept — because a cut field log is an undiagnosable one.**
+  A log arrived from a field machine already rotated past its startup banner, so the
+  version could not be established and the page under investigation was gone. Rotation
+  stopped being a tidiness item at that point. Old scheme:
+  `RotatingFileHandler(mode='w', maxBytes=500k, backupCount=5)` on a DATE-stamped name
+  with an unconditional `doRollover()` at import — so rotation was driven by PROCESS
+  STARTS, and six launches in a day pushed the first off the end. New scheme, per Kent's
+  spec ("one log per run, not counting restarts for updates or venv; then keep five of
+  those"):
+  - `log_<YYYY-MM-DD>T<HHMMSS>_<NNN>.txt`. The run id is the fresh start's UTC time (no
+    colons — illegal on Windows, and the old ISO-slicing existed only to strip them), and
+    it sorts chronologically. Parts are numbered FORWARD and **never renamed**, which is
+    the point: `RotatingFileHandler` shifts `.1→.2` so the newest is always the base name
+    and the START of a run ends up wherever the shuffle left it. `_001` is immutable and
+    always holds the banner.
+  - **A restart inherits the run id** (`AZT_LOG_RUN`), gated on
+    `restartmark.launched_by_restart()` — the same `--restart`/`AZT_VENV_RELAUNCHED`
+    signal the restart marker uses, so "is this a new run?" has one definition in the app.
+  - **One part per process**, not per run: since spawn-and-confirm, predecessor and
+    successor are briefly alive together, and two processes appending to one file
+    interleaves and risks a Windows lock. The boundary also marks where the restart was.
+  - Retention keeps the newest five runs ENTIRE, then drops whole runs oldest-first above
+    ~200 MB. Whole runs only — a run whose `_001` was deleted is worthless, and a test
+    guards that invariant. The current run is never dropped.
+  - A 10 MB per-part cap rolls FORWARD to a new part rather than truncating, so a runaway
+    log is bounded into parts without overwriting its own beginning. Kent, correcting my
+    first proposal: the tail is not the part he needs — the head is, to establish the
+    version.
+  - `logsetup.runfiles()` is new: one run is now several files, and callers that want the
+    run rather than the current part (`writelzma`, the log-to-server bundle) should use it.
+- **The `lan_peer_sync` probe says its piece once, and stops.** That failure was an
+  `AttributeError` — this install's `azt_collab_client` has no such function — which is a
+  PERMANENT capability gap, not a transient. It shared one handler with genuine RPC
+  failures, so both read identically in the log, and the 60 s cache kept re-asking a
+  question whose answer cannot change in-process: the same INFO line over and over, which
+  reads as something intermittent and worth waiting out. `AttributeError` is now caught
+  separately, sets a flag that stops the probing, and logs ONCE at warning — naming which
+  copy of the client is loaded (it is resolved at runtime by `_ensure_client_importable`
+  from a symlink, an env var, or a sibling clone, so "which copy" is the whole question)
+  and stating the consequence, which was otherwise silent: `_peers_known` keeps its
+  initial `False`, so `ambient_status` renders `LAN:—`, whose meaning is "no paired peer
+  shares this project". A user who HAS a paired peer was being told they do not — a
+  definite claim made from a failed measurement. Genuine transients still keep the last
+  answer and retry on the next tick, which is what the cache is for.
+  NB `check_server_compat` already guards the DAEMON's version this way; nothing guarded
+  client-side attribute availability, and that is the real gap this exposes.
+- **A dedupe filter on the log — this is what actually ate the field log.** `availablexy`
+  logged at INFO once per widget, dozens of byte-identical lines per page; so do
+  `update_active_cell` and the `lan_peer_sync` probe. 500 kB was being spent on
+  diagnostics nobody reads. A record identical to the one before it is now suppressed, and
+  when the message finally changes the tally rides that line: `[previous line repeated
+  86×] …`. Chosen over demoting those call sites because it needs no judgement about what
+  matters, covers every present and future flood, and loses nothing — and 86 as a count is
+  easier to read than 86 lines. Deliberately compares the FORMATTED message, so two calls
+  with different arguments stay distinct. The tally is attached to the next line rather
+  than flushed on a timer, so it cannot be stranded behind a crash — exactly when the log
+  matters most.
+- **`availablexy` now reports the burst, not each hit.** One line per page build:
+  `availablexy floored maxheight on 12 widget(s); worst -3566 of 1080 (siblings measured
+  100/3960)`. Strictly better evidence than a dozen near-identical lines, which say the
+  same thing twelve times and bury the thirteenth, different one. Raised INFO→WARNING: a
+  measurement claiming there is no room is a defect, and it has to survive a field
+  installation's log level. Aggregated to the next idle, which is one page's worth of
+  measuring.
+
 # Version 1.15.6
 
 - **"Cannot delete branch main" — caught in the act, both halves.** `try_pull_main` read

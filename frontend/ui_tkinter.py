@@ -1239,10 +1239,8 @@ class Gridded():
         self.maxheight=h-otherheight
         for attr,total in (('maxwidth',w),('maxheight',h)):
             if getattr(self,attr) < self.MIN_AVAILABLE:
-                log.info("availablexy: %s came out %d of %d for %s — siblings "
-                        "measured %d/%d; flooring to %d rather than laying out "
-                        "against a bad measurement.",attr,getattr(self,attr),
-                        total,self,otherwidth,otherheight,self.MIN_AVAILABLE)
+                _floored(attr,getattr(self,attr),total,self,
+                        otherwidth,otherheight,self.MIN_AVAILABLE)
                 setattr(self,attr,self.MIN_AVAILABLE)
     def __init__(self, *args, **kwargs):
         """this removes gridding kwargs from the widget calls"""
@@ -1720,6 +1718,44 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
         if compile_now:
             self.compile()
 """below here has UI"""
+_floor_hits = {}
+def _floored(attr,value,total,widget,otherwidth,otherheight,floor):
+    """Record ONE availablexy flooring, and report the BURST rather than each hit.
+
+    This logged per widget at INFO, dozens of near-identical lines per page
+    ("maxheight came out -150 of 1080 … siblings measured 438/1230", repeated
+    for every item). That flood is what ate a field log before its version
+    banner, making the bug in it undiagnosable (2026-09-02). The summary is also
+    strictly better evidence: "floored 12 of 14 widgets, worst -3566 of 1080"
+    says the page is unlayoutable, where twelve identical lines say it twelve
+    times and bury the thirteenth, different one.
+
+    Aggregated to the next idle, which is one page build's worth of measuring —
+    the granularity a reader actually wants. WARNING, not INFO: a measurement
+    claiming there is no room is a defect, and it must survive a field
+    installation's log level."""
+    d=_floor_hits.setdefault(attr,{'n':0,'worst':None,'total':total,
+                                    'sib':(otherwidth,otherheight)})
+    d['n']+=1
+    d['total']=total
+    if d['worst'] is None or value<d['worst']:
+        d['worst']=value
+        d['sib']=(otherwidth,otherheight)
+    if d['n']>1:
+        return #a summary is already scheduled for this burst
+    try:
+        widget.after_idle(lambda a=attr:_floored_summary(a))
+    except Exception:
+        _floored_summary(attr) #no event loop (or a dead widget): say it now
+def _floored_summary(attr):
+    d=_floor_hits.pop(attr,None)
+    if not d:
+        return
+    log.warning("availablexy floored %s on %d widget(s); worst %d of %d "
+            "(siblings measured %d/%d). A measurement saying there is no room "
+            "is wrong — laying out against it is what produces one-character "
+            "lines and unreachable buttons.",
+            attr,d['n'],d['worst'],d['total'],d['sib'][0],d['sib'][1])
 _app_root = None  # the application's main themed ui.Root (set in Root.post_tk_init)
 def default_root():
     """Return the application's main themed ui.Root — the real program's root,
