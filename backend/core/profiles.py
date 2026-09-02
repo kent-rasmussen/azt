@@ -300,6 +300,43 @@ class ProfileAnalyzer:
         becomes a presort group (e.g. 'CVCV' → 'CVC' for a confirmed C_1_C word).
         No-op until primitives are verified. Logging: conversions and invalid
         results once per INPUT profile; syls=None once per sense id."""
+        # 'NA' IS NOT A PROFILE — and this is where 'NAV' came from (Kent found
+        # it 2026-09-02, in this function's own log line: "Syllable presort:
+        # NA → NAV to fit confirmed primitives (#C=C C#=V syls=1)").
+        #   The chain: a user skips a word, which parks it in the 'NA' group;
+        # 'NA' then arrives here as the SELECTED sort value — not the machine
+        # analysis, whatever this function's `profile` parameter and docstring
+        # suggest: scrub_sorts_to_primitives passes the lc ANNOTATION, and the
+        # _MT form still reads 'CV' throughout; the conformer
+        # dutifully makes it fit the confirmed primitives by appending the V
+        # that C#=V demands; and the result PASSES validation, because
+        # _segment_type reads anything that isn't V/Ṽ as a consonant — so 'NAV'
+        # is C-initial, V-final, one vowel run, exactly the confirmed class.
+        # A sentinel went in, a well-formed-looking profile came out, and 9 of
+        # OBT's words were sorted into a group named after a typo-shaped string
+        # that no analysis ever produced (their machine profile is 'CV').
+        #   THE LESSON, worth more than the fix: conforming an input that isn't
+        # of the expected KIND doesn't fail, it launders. The output satisfies
+        # every constraint we thought to check and is still nonsense. So refuse
+        # by VOCABULARY at the door — the same profilelegit test the machine path
+        # applies (getprofileofsense clamps a non-legit result to 'Invalid') and
+        # the by-hand entry page now applies to typed input.
+        #   Returned UNCHANGED, not as 'Invalid': 'NA' is a meaningful parking
+        # value ("NA parks unsortable words", alphabet.py:333). A skipped word
+        # must stay skipped, not become invalid.
+        bad = self.program.params.illegal_profile_symbols(profile)
+        if bad:
+            seen = getattr(self, '_nonprofile_logged', None)
+            if seen is None:
+                seen = self._nonprofile_logged = set()
+            if profile not in seen:
+                seen.add(profile)
+                log.warning("Syllable presort: %r is not a profile (%s not C "
+                        "or V), so NOT fitting it to the primitives — that is "
+                        "how 'NA' became 'NAV'. Left as-is; e.g. sense %s.",
+                        profile, ', '.join(repr(c) for c in bad),
+                        getattr(sense, 'id', '?'))
+            return profile
         beg, end, syls = self._confirmed_primitives(sense, ftype)
         if beg is None and end is None and syls is None:
             return profile  # nothing confirmed → leave the machine analysis alone
@@ -629,8 +666,16 @@ class ProfileAnalyzer:
         fixed_sort = cleared_verif = 0
         for s in self.program.db.senses:
             anno = s.annotationvaluebyftypelang(ftype, analang, ftype)
-            if not anno or anno == 'Invalid':
-                continue  # (1) missing sort — never auto-add
+            # ('NA','Invalid') — the pair, as everywhere else that reads a sort
+            # annotation (sorting_engine.py:1337). This site had only 'Invalid',
+            # so a word PARKED by a skip was fed to the conformer, which fitted
+            # 'NA' to the confirmed primitives by appending the V that C#=V
+            # wants and wrote 'NAV' back as the word's legal sort AND its
+            # confirmed profile (Kent reproduced it end to end on 'to',
+            # 2026-09-02). NA is not a profile to repair, it is a decision to
+            # leave alone: the user said "not this one now".
+            if not anno or anno in ('NA','Invalid'):
+                continue  # (1) missing sort, or parked — never auto-add
             legal = self.constrain_presort_profile(s, anno, ftype)  # (2)
             if legal and legal != 'Invalid' and legal != anno:
                 s.annotationvaluebyftypelang(ftype, analang, ftype, legal)

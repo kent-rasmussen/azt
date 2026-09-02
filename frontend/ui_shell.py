@@ -2023,12 +2023,12 @@ class TaskDressing(HasMenus,ui.Window):
         for child in frame.winfo_children():
             child.destroy()
         tasktuples=self._makeoptions_fn(category)
-        bpr=3
+        # buttons per row. optionlist_maxi is the last INDEX, not the count, so
+        # `== 3` means FOUR items → a 2×2 grid rather than 3+1. The old
+        # `elif optionlist_maxi > 9: bpr=3` was dead — bpr is already 3 — so it
+        # is gone; it read as though 11+ items were a special case.
         optionlist_maxi=len(tasktuples)-1
-        if optionlist_maxi == 3:
-            bpr=2
-        elif optionlist_maxi > 9:
-            bpr=3
+        bpr=2 if optionlist_maxi == 3 else 3
         columnspan=1
         for n,o in enumerate(tasktuples):
             if n == optionlist_maxi and int(n/bpr):
@@ -2058,12 +2058,44 @@ class TaskDressing(HasMenus,ui.Window):
                         row=int(n/bpr),
                         compound='top',
                         image=o[2],
-                        wraplength=int(screen_wrap/bpr),
+                        # × columnspan: the LAST button spans the rest of its
+                        # row (see above), so a 1-cell wraplength on a 3-cell
+                        # button wrapped its text at a third of its own width
+                        # and left the remainder empty — text in a narrow strip
+                        # with a large gap to the cell edge (Kent 2026-09-02).
+                        # columnspan is 1 for every other button, so this is the
+                        # same number as before everywhere else.
+                        wraplength=int(screen_wrap*columnspan/bpr),
                         anchor='n',
                         sticky='nesw',
                         norender=True,
                         columnspan=columnspan
                         )
+            # DIAG chooser_button_xpad: labels wrapping after 3-4 letters with
+            # massive space to the cell edge (Kent 2026-09-02, "it isn't cell
+            # width driving the wrap, except through padx"). Reading the code
+            # gives two candidate mechanisms and cannot separate them: the
+            # wraplength we ASK for here (avail*.8/bpr) versus what Label.wrap()
+            # may reduce it to (min(wraplength,maxwidth), and availablexy floors
+            # maxwidth at MIN_AVAILABLE=200 after _measure_siblings counts the
+            # OTHER COLUMNS' buttons as consumers of this button's width). So
+            # print the numbers for the first button of each tab, once, the way
+            # DIAG-rowheight settled the button height rather than arguing about
+            # it. `avail` is named too: the winfo_width()-or-screen choice above
+            # is the other place a small number can come from.
+            if not n:
+                try:
+                    log.info("DIAG-chooser-xpad %s: asked wraplength=%s | live=%s"
+                            " | avail=%s (root w=%s) | bpr=%s | maxwidth=%s"
+                            " | padx=%s ipadx=%s | font=%s size=%s | req w=%s",
+                            category,int(screen_wrap/bpr),b.cget('wraplength'),
+                            int(avail),self.program.tk_root.winfo_width(),bpr,
+                            getattr(b,'maxwidth','(unset — wrap() never ran)'),
+                            b.cget('padx'),getattr(b,'ipadx','?'),
+                            b.cget('font'),self.theme.fonts['default']['size'],
+                            b.winfo_reqwidth())
+                except Exception as e:
+                    log.info("DIAG-chooser-xpad failed: %s",e)
             try:
                 ui.ToolTip(b, o[0].tooltip(None))
             except AttributeError:

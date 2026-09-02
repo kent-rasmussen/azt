@@ -19,9 +19,93 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.10
+
+- **`NAV`: root cause found, and it was laundering, not corruption.** Kent found it in this
+  function's own log line — *"Syllable presort: NA → NAV to fit confirmed primitives
+  (#C=C C#=V syls=1)"* — and reproduced it end to end on the word `to`. The chain: a user
+  skips a word, which parks it in the `NA` group; `scrub_sorts_to_primitives` (a load-time
+  pass) reads that sort annotation and hands it to `constrain_presort_profile` as the word's
+  profile; the conformer makes it fit the confirmed primitives by appending the `V` that
+  `C#=V` demands; and the result **passes validation**, because `_segment_type` reads
+  anything that isn't `V`/`Ṽ` as a consonant — so `NAV` is C-initial, V-final, one vowel
+  run, exactly the confirmed class. It was then written back as both the legal sort and the
+  confirmed `…-x-cvprofile`, while `whole-word lc verification` still said `lc=CV`.
+  - **The general lesson, worth more than the fix:** conforming an input that isn't of the
+    expected KIND doesn't fail, it launders. The output satisfies every constraint we
+    thought to check and is still nonsense — and it looks enough like a profile to survive
+    review, which a crash would not have.
+  - `constrain_presort_profile` now refuses by VOCABULARY at the door
+    (`illegal_profile_symbols`, the same `profilelegit` test the machine path and the
+    by-hand entry page apply), returning the input UNCHANGED rather than `Invalid`, because
+    `NA` is a meaningful parking value and a skipped word must stay skipped.
+  - `scrub_sorts_to_primitives` now skips `('NA','Invalid')` — the pair every other reader
+    of a sort annotation uses (`sorting_engine.py:1337`). It had only `Invalid`, which is
+    the whole bug at the caller: `NA` is not a profile to repair, it is a decision to leave
+    alone.
+  - **Not repaired:** OBT's 9 words and Kent's `to` still carry `lc="NAV"` and, in `to`'s
+    case, `…-x-cvprofile=NAV`. This stops new ones; existing ones need a decision (see the
+    open question below).
+
+**Ships to a field machine for a log — the DIAG line added in 1.15.9 is the point of this
+build.** Two independent causes of early wrapping are fixed and one measurement is
+deliberately left alone; the log says which was actually biting.
+
+- **An unmeasurable `availablexy` result is no longer used as a layout number.** The floor
+  (`MIN_AVAILABLE=200`) stopped absurd values reaching layout, but 200 then *became* the
+  layout number — and nobody measured 200. `availablexy` now records
+  `maxwidth_measured` / `maxheight_measured`, and the two places that laid out against the
+  floored value stop doing so:
+  - `Label.wrap()` — `min(asked, 200)` wraps text after 3–4 letters at the button font size
+    while the button stays full width, leaving the label in a narrow strip with a large gap
+    to the cell edge. When the measurement failed it now uses what the caller asked for
+    (computed from the window or screen), falling back to the work area.
+  - `Frame` auto-sizing — `min(200, content)` shrinks a frame to a 200px box whatever it
+    holds, which is the *unreachable buttons* half of what that warning has been predicting
+    since 2026-08-31. When unmeasured, the content decides; a frame bigger than the screen
+    is a visible problem rather than a silent one.
+  - **The measurement itself is untouched, on purpose.** `_measure_siblings` subtracts
+    siblings from the SCREEN, so any page whose content is legitimately larger than the
+    display (worst observed: 4689px of siblings against 1080) goes negative *by
+    construction*. Budgeting against the parent's allocation instead is a real change to how
+    every page sizes itself, and not something to do in the same build as a field
+    diagnostic. Until then the honest thing is to know when the answer is unusable, which is
+    what these flags provide. Raised by Kent after it came up three times in one day:
+    *"can we not address those more directly?"*
+- **The chooser's last button wrapped at a third of its own width.** `columnspan` is correct
+  — item `n` sits at column `n%bpr`, so `bpr - n%bpr` columns remain — but `wraplength` was
+  `screen_wrap/bpr` regardless, one cell's worth. On the Reports tab (13 items, `n=12`,
+  column 0) that is a button spanning all three columns with text wrapped at ~512px of
+  ~1900px. Now `screen_wrap*columnspan/bpr`; unchanged for every other button, whose span
+  is 1.
+- Removed a dead branch in `_populate_chooser_tab`: `elif optionlist_maxi > 9: bpr=3` set
+  `bpr` to the value it already had, while reading as though 11+ items were a special case.
+  Collapsed to one expression with the off-by-one stated — `optionlist_maxi` is the last
+  INDEX, so `== 3` means FOUR items → a 2×2 grid.
+- **Still unfixed, and the DIAG's main question:** `avail = tk_root.winfo_width()` with
+  `if avail < 100` falling back to the screen. That threshold catches only an *unmapped*
+  root (which reports 1). A root mapped at, say, 300px passes it and yields
+  `int(300*.8/3) = 80px` — 3–4 letters, in a cell still a third of the screen wide. This is
+  the closest match to the reported symptom, but changing the threshold on a guess would
+  mask the evidence, so it waits for the log. `maxwidth` showing
+  `(unset — wrap() never ran)` will mean `availablexy` was never involved for these buttons
+  and the asked-for wraplength is the whole story.
+
 # Version 1.15.9
 
 Four field-diagnosed faults, all from OBT's nml project and Kent's own reproduction.
+
+- **DIAG-chooser-xpad** (diagnostic, no behaviour change): chooser labels wrap after 3–4
+  letters with a large gap to the cell edge on a field machine. Reading the code yields two
+  candidate mechanisms it cannot separate — the wraplength `_populate_chooser_tab` asks for
+  (`avail*.8/bpr`), versus what `Label.wrap()` reduces it to (`min(wraplength,maxwidth)`,
+  where `availablexy` floors `maxwidth` at `MIN_AVAILABLE=200` after `_measure_siblings`
+  counts the OTHER columns' buttons as consumers of this button's width). One line per tab
+  now prints asked-vs-live wraplength, `avail`, the root width, `maxwidth` (or "wrap() never
+  ran"), padx/ipadx, font size and requested width. An earlier guess that
+  `uniform=category+str(c)` caused this is **withdrawn** — putting each column in its own
+  uniform group of one does defeat the intended equal thirds, but that produces uneven
+  columns, not a 3-letter wrap.
 
 - **NBQ: found the producer, and closed the class.** A task on its way out re-reveals its
   parent — `ui_tkinter.py:1378`, `if not self.parent.iswaiting(): self.parent.deiconify()` —

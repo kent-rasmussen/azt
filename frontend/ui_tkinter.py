@@ -1237,11 +1237,30 @@ class Gridded():
         w,h=self.workarea()
         self.maxwidth=w-otherwidth
         self.maxheight=h-otherheight
+        # RECORD THAT A MEASUREMENT IS WRONG — don't just clamp it and carry on
+        # (Kent 2026-09-02: "can we not address those more directly?", after this
+        # came up three times in one day). The floor stopped the absurd values
+        # from reaching layout, but 200 is then STILL a layout number, and it is
+        # a number nobody measured: text wrapped at 200px is 3-4 letters at the
+        # button font's size, which is exactly the "one-character lines" this
+        # warning has been predicting all along. The docstring above already
+        # says a measurement claiming there is no room must be treated as WRONG
+        # rather than laid out against; these flags are what let callers do that.
+        #   The measurement itself is left alone deliberately: _measure_siblings
+        # subtracts siblings from the SCREEN, so any page whose content is
+        # legitimately taller or wider than the display (worst seen: 4689 of
+        # 1080) goes negative by construction. Fixing that means budgeting
+        # against the PARENT's allocation instead, which is a real change to how
+        # every page sizes itself. Until then, the honest thing is to know when
+        # the answer is unusable.
+        self.maxwidth_measured=True
+        self.maxheight_measured=True
         for attr,total in (('maxwidth',w),('maxheight',h)):
             if getattr(self,attr) < self.MIN_AVAILABLE:
                 _floored(attr,getattr(self,attr),total,self,
                         otherwidth,otherheight,self.MIN_AVAILABLE)
                 setattr(self,attr,self.MIN_AVAILABLE)
+                setattr(self,attr+'_measured',False)
     def __init__(self, *args, **kwargs):
         """this removes gridding kwargs from the widget calls"""
         self._grid=False
@@ -2115,11 +2134,25 @@ class Text(TextBase):
         if i and self.text:
             self.wrap()
     def wrap(self):
+        """Set the wrap width, IGNORING a maxwidth nobody could measure.
+
+        The min() below is right when maxwidth is real — the label shouldn't
+        wrap wider than the room it has. It is actively harmful when maxwidth
+        came from the MIN_AVAILABLE floor: 200px is not a measurement, and
+        min(asked,200) wraps text after 3-4 letters inside a button that is
+        still full width, leaving the label in a narrow strip with a large gap
+        to the cell edge — the field symptom (Kent 2026-09-02). So when
+        availablexy says it could not measure, use what the caller ASKED for,
+        which was computed from the window or the screen; failing that, the work
+        area, which is at least a number someone measured."""
         self.availablexy()
-        if not hasattr(self,'wraplength'):
+        asked=getattr(self,'wraplength',None)
+        if not self.maxwidth_measured:
+            wraplength=asked or self.workarea()[0]
+        elif asked is None:
             wraplength=self.maxwidth
         else:
-            wraplength=min(self.wraplength,self.maxwidth)
+            wraplength=min(asked,self.maxwidth)
         self.config(wraplength=wraplength)
     def render(self, **kwargs):
         # log.info(f"Calling render {kwargs=}")
@@ -2207,12 +2240,20 @@ class Frame(Childof,Gridded,UI,tkinter.Frame):
         self.availablexy()
         contentrw=self.winfo_reqwidth()
         contentrh=self.winfo_reqheight()
+        # Same rule as Label.wrap(): an UNMEASURED max is not a size to clamp
+        # to. min(200,content) shrinks the frame to a 200px box whatever it
+        # holds, which is the "unreachable buttons" half of what the availablexy
+        # warning has been predicting. When the measurement failed, let the
+        # content decide — that at least reflects something real, and a frame
+        # bigger than the screen is a visible problem rather than a silent one.
+        capw=self.maxwidth if self.maxwidth_measured else contentrw
+        caph=self.maxheight if self.maxheight_measured else contentrh
         if ((self.winfo_width() < contentrw)
-                or (self.winfo_width() > self.maxwidth)):
-                self.config(width=min(self.maxwidth,contentrw))
+                or (self.winfo_width() > capw)):
+            self.config(width=min(capw,contentrw))
         if ((self.winfo_height() < contentrh)
-                or (self.winfo_height() > self.maxheight)):
-            self.config(height=min(self.maxheight,contentrh))
+                or (self.winfo_height() > caph)):
+            self.config(height=min(caph,contentrh))
         self.configured+=1
     def __init__(self, parent, *args, **kwargs):
         # log.info("Initializing Frame object")
