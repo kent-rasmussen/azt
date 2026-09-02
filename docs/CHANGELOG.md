@@ -73,7 +73,17 @@
     first proposal: the tail is not the part he needs — the head is, to establish the
     version.
   - `logsetup.runfiles()` is new: one run is now several files, and callers that want the
-    run rather than the current part (`writelzma`, the log-to-server bundle) should use it.
+    run rather than the current part should use it. **`writelzma()` now does**, which it
+    had to: its old `glob(<current name>*)` worked when rollovers were siblings of one base
+    name, but with per-run parts it would have bundled only the part being written and lost
+    `_001` — the banner. A bundle without that is the exact failure that made the field log
+    undiagnosable.
+  - **`writelzma()` also includes any `restart_in_progress*.json`** (Kent 2026-09-02). A
+    marker still present IS the evidence that a restart was attempted and never landed —
+    it carries the reason, version, argv and time — and it is the only artefact that says
+    so, because the process that would have logged it is gone. It sits in the same
+    directory, so a bundle omitting it discards the one file that explains why the logs
+    stop where they do.
 - **The `lan_peer_sync` probe says its piece once, and stops.** That failure was an
   `AttributeError` — this install's `azt_collab_client` has no such function — which is a
   PERMANENT capability gap, not a transient. It shared one handler with genuine RPC

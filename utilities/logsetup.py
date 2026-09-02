@@ -297,7 +297,25 @@ def writelzma(filename=None):
     if not filename:
         filename=getlogfilename()
     log.info("Using filename {}".format(filename))
-    filenames=list(logdir.glob(pathlib.Path(filename).name+'*'))
+    # EVERY PART OF THIS RUN, not a glob on the current part's name. That glob
+    # worked under the old naming because rollovers were siblings of one base
+    # name (log_<date>.txt, .1, .2); with per-run parts it would have matched
+    # only the part being written — losing _001, which is the one carrying the
+    # version banner and the startup state. Sending a bundle without it is the
+    # exact failure that made a field log undiagnosable (2026-09-02).
+    filenames=list(runfiles())
+    if not filenames:
+        filenames=list(logdir.glob(pathlib.Path(filename).name+'*'))
+    # RESTART MARKERS TOO (Kent 2026-09-02). A marker still present IS the
+    # evidence that a restart was attempted and never landed — it carries the
+    # reason, the version, the argv and the time — and it is the only artefact
+    # that says so, because the process that would have logged it is gone. It
+    # lives in this same directory, so a bundle that omits it throws away the
+    # one file explaining why the logs stop where they do. Whatever is there:
+    # normally at most one, but a name-glob costs nothing and cannot miss a
+    # variant.
+    filenames+=[p for p in logdir.glob('restart_in_progress*.json')
+                if p not in filenames]
     f=tarfile.open(name=str(compressedurl)+'.tar.xz', mode='x:xz',
                     encoding='utf-8', preset=9,
                     debug=3
