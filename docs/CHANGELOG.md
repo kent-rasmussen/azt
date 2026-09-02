@@ -19,8 +19,171 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.12
+
+`pytest` green.
+
+- **Stopped predicting widths: one `<Configure>`-driven wrapper for both pages.** New
+  `ui.wrap_to_container(container, cols, reserve)` binds on a container and, on each real
+  width change, sets every descendant's `wraplength` to `width/cols − reserve`. The premise
+  is that **a width predicted from anything other than the box the widget is actually in is
+  a guess** — and both pages that needed it were guessing wrong in opposite directions:
+  - the chooser asked `tk_root.winfo_width()`, the HIDDEN root, permanently 200×200 →
+    53px wraps, breaking words mid-syllable. Substituting the window's own width then
+    *overshot*, because the buttons live in a notebook narrower than the window (~763px of
+    ~1140px in Kent's capture) — 304px of wrap in a 254px cell.
+  - the verify page passed **no wraplength at all**, so each row was as wide as its string.
+    A form plus two glosses ran ~1350px, off the right edge, taking its profile tag with
+    it; and since that frame does not scroll horizontally (Kent), the text was simply
+    unreachable. Kent's `midrib` row.
+  - Reads each widget's own `columnspan` from `grid_info`, so the chooser's row-filling last
+    button gets its full span without the caller tracking it. Subtracts an image's width
+    only when `compound` is `left`/`right` — the verify page's row illustration costs text
+    width, the chooser's `compound='top'` icon doesn't.
+  - Three hazards handled, each of which would have made it useless or harmful: **8px
+    hysteresis**, because setting `wraplength` relayouts and re-fires `<Configure>`;
+    **target-count tracking**, because verify rows are STREAMED in by `drive_work` after the
+    bind, so a width-only guard would wrap the first rows and none of the rest; and
+    **`add='+'`** on the bind, so it can't displace `ScrollingFrame`'s own `<Configure>`
+    handler. No `update()`/`update_idletasks()` inside it, per
+    `azt/agenda/wayland_freeze_audit.md`.
+  - No-op mirror added to `ui_webview`, which would otherwise `AttributeError` on the
+    chooser: a browser wraps text in its containing box already, which is what the tkinter
+    helper is emulating by hand.
+  - Build-time `wraplength` values are kept as starting points, so a page that never gets a
+    `<Configure>` still has something. `reserve=96` on the verify page is the one number
+    picked rather than derived — it's the dial if `midrib` still clips or wraps early.
+  - **Not changed:** verify row frames stay `sticky='w'`, so rows remain content-sized
+    rather than uniform full-width. Wrapping alone should return `midrib` and its tag to the
+    page; making rows uniform is a separate look-and-feel call.
+
+# Version 1.15.11
+
+`pytest` green.
+
+- **THE CHOOSER WRAP IS SOLVED — from a screenshot, not the field log.** Kent's Zoom capture
+  of OBT's screen showed the labels breaking **mid-word**: `Ajou/ter`, `Enre/gistr/er`,
+  `sylla/bes`. A mid-word break means `wraplength` is narrower than one word — ~4-5
+  characters, ~50px — and working back through `int(avail*.8/bpr)` puts `avail` at about
+  **200**. 200 is **Tk's default root geometry**: `avail` was reading
+  `self.program.tk_root.winfo_width()`, and since every real window in this app is a
+  Toplevel, the Root has no children, never grows past 200×200, and reports 200 for the life
+  of the process. The `if avail < 100` guard only ever caught the *unmapped* root (which
+  reports 1).
+  - Now reads `self.winfo_width()` — the chooser window the buttons actually live in — with
+    the fallback threshold raised to 400px (no real chooser window is narrower, so anything
+    smaller is Tk's default or a stale read from the withdrawn rebuild in `gettask`), and
+    the fallback is the work area rather than the raw screen.
+  - This is the cause `azt/agenda/chooser_wrap_xpad.md` listed as the open question and
+    `DIAG-chooser-xpad` was added to answer, so **the field round-trip is no longer needed
+    for it** — though the DIAG stays, since it will now confirm the fix in one line
+    (`avail` should come back as the window width, not 200).
+  - Not yet done, and the remaining imprecision: the wraplength is still computed once at
+    build time from a window width, so a resized window keeps the old wrap. Recomputing on
+    `<Configure>` is the complete answer.
+
+**This is the version going to the field**, so the number is here to be the one in OBT's
+banner — the other fixes are described under 1.15.10, which never shipped; nothing is
+duplicated here.
+
+What the returning log should be read for, in order of what it settles:
+
+- **`DIAG-chooser-xpad`** — one line per tab. The whole reason for the trip. `avail` small
+  ⇒ the `avail < 100` threshold is the wrap bug; `maxwidth (unset — wrap() never ran)` ⇒
+  `availablexy` was never involved for those buttons and the asked-for wraplength is the
+  whole story. See `azt/agenda/chooser_wrap_xpad.md` for the full reading table.
+- **`Profile scrub: … is not a profile … clearing the sort and the confirmed profile`** —
+  the `NAV` repair firing. Expect it for their 9 words, once each. Its absence means the
+  scrub didn't run, not that the data was clean.
+- **`waitdone: NOT revealing … nothing was built in its frame`** and
+  **`not revealing … on the way out of …`** — the two NBQ guards declining. Each one is a
+  page that would previously have been a fullscreen Exit-only screen.
+- **`waitdone: revealed … without draining`** — Wayland only, so NOT expected from a
+  Windows machine. If it appears there, display detection is wrong.
+- **`Not a check, so not going into the status`** — now once per distinct name, and it no
+  longer blames the collab daemon for azt's own `#C-slice`.
+- **`availablexy floored …`** — still warns, but the floored value is no longer used as a
+  layout number.
+- One pack per run, named `azt_log_<runid>.tar.xz`, sharing the timestamp with
+  `log_<runid>_00N.txt`.
+
 # Version 1.15.10
 
+- **BLACK SCREEN / HANG: `waitdone` now maps before draining on every display server.** Kent
+  hit a completely black screen with the main thread wedged inside Tk's `update()` at the
+  `else` branch of `waitdone` — and with **no Python frame above it**, so it was stuck in
+  Tk's C code, not waiting on any of the app's own threads. That branch drains into a window
+  that is still WITHDRAWN, which is exactly the shape the Wayland branch was written to
+  avoid (faulthandler-confirmed once before, 2026-07-13, wedged revealing a verify page).
+  - **CORRECTION, same day: the branch removal is NOT the fix for that hang.** I first read
+    the `Display server: ? (USING_WAYLAND=False; …)` boot line as evidence and concluded the
+    unsafe branch had been taken by fallback — but that line is from OBT's WINDOWS machine,
+    while the traceback is from Kent's Linux box (`/usr/lib/python3.13`, `/home/kentr/…`).
+    Reasoning across two machines, for the second time in one day. In the build where
+    `waitdone` line 1600 was executable, 1600 is the `parent.update()` INSIDE
+    `if USING_WAYLAND:` — i.e. after `deiconify()`, the map-first order. So that machine had
+    `USING_WAYLAND=True`, already took the safe order, and `update()` deadlocked regardless.
+    Kent then confirmed it directly: `Display server: wayland (USING_WAYLAND=True; Wayland
+    update guard OFF)`.
+    **`update()` can wedge in Tk's C code with the window already mapped**, which is what
+    `WAYLAND_UPDATE_GUARD` exists for — and that toggle defaults OFF, so `UI.update` called
+    straight through (visible as `ui_tkinter.py:1320 update` in the stack).
+  - The branch removal is kept on its own merits — one order is simpler than two and
+    map-first is safe everywhere — but it closes a hazard for machines whose display server
+    is UNKNOWN, not the hang actually observed. Map-first is ordinary
+    X11 practice — and the only argument for the other order was cosmetic (paint while
+    hidden so no unpainted window shows), which doesn't apply: the wait dialog is still up
+    and covering the screen, as the function's own header says. Nothing was left to weigh
+    against a hang.
+  - **On Wayland, `waitdone` no longer drains at all** — it reveals and lets Tk repaint from
+    its own event loop, logging that it skipped the drain. Done at this call site rather
+    than by flipping the `WAYLAND_UPDATE_GUARD` default, because a global rendering change
+    deserves its own decision; but note the guard being OFF on Wayland is now implicated in
+    two separate wedges (this one, and the `_configure_canvas → update_idletasks` freeze
+    recorded at `ui_tkinter.py:1411-1415`), so that default is the standing hazard. Cost of
+    the skip: a heavy page can show unpainted for a frame after the dialog goes, instead of
+    being painted behind it. Not in the same category as a hung app.
+  - Not the cause, but visible in the same traceback: two worker threads waiting in
+    `socket.create_connection` for the collab daemon. The timeout IS passed
+    (`urlopen(req, timeout=timeout)`), so they were not hung — but `rpc.call` defaults to
+    300s, and for a **loopback** connect that is the wrong ceiling: `127.0.0.1` connects in
+    microseconds or fails. Meanwhile the blocked thread is a LIFT write, so `self.writing`
+    stays true for up to five minutes and the app's own write/restart paths wait on it. A
+    short connect timeout with the long timeout kept for the response belongs in
+    `azt_collab_client` (canonical, shared with the recorder and viewer) — not changed here.
+- **NBQ producer #2: `waitdone` revealed a page before anyone knew there was anything in
+  it.** From Kent's log — `waitdone: update+reveal 1.1s` revealed the sort window, and only
+  THEN did `maybesort` find `'groups': []` for (Noun, CCVCVC, V1) and return without
+  building anything and without withdrawing. `waitdone` now applies the same rule as
+  `on_quit`'s parent reveal: no window is revealed whose `frame` is empty, and the skip is
+  logged so a missing page is named rather than guessed at. The wait still deactivates
+  either way — this changes WHICH window is left up, not whether the wait closes.
+  - **That input is normal, not an anomaly** (Kent): a slice-check with `tosort=True` and no
+    groups yet is how EVERY slice-check begins — groups come into existence as the user
+    sorts. So the empty reveal was reachable in ordinary first-time use of any unsorted
+    slice, not in some corner case. Both of Kent's sightings were the same slice reaching
+    that state.
+  - Fixed at the reveal rather than in `maybesort` because the ordering is the general
+    shape: raise a wait, do the work, and only afterwards learn whether there was anything
+    to show. Many callers have that shape; the reveal is the one place they all pass
+    through.
+- **A log line of mine named a cause it hadn't established.** The new
+  "not a check" warning explained every rejected annotation as a collab merge marker — and
+  the first one it actually reported was `#C-slice`, azt's own bookkeeping annotation
+  (Kent saw it). Same fault as announcing an action before its gate: it points the reader
+  the wrong way and costs a round trip. Now it reports the fact, adds the daemon note only
+  when the name really is one of theirs, and speaks once per distinct NAME rather than once
+  per run.
+- **The log pack is named for the RUN, not for the moment it was made.** It used the current
+  time, so a run whose parts were `log_2026-09-02T154319_001/_002.txt` produced
+  `azt_log_2026-09-02T154553Z.tar.xz` — three different timestamps in one directory for one
+  run, costing a moment each time to see they belong together (Kent 2026-09-02). Now
+  `azt_log_<runid>.tar.xz`, sharing the id with its parts. Safe because **a later pack is a
+  strict superset of an earlier one**: the bundle is `runfiles()` (every part of the run)
+  plus any restart marker, so a second pack holds the same parts with more appended to the
+  tail one. Nothing is lost by keeping one per run, and the newest is always the most
+  complete — hence `tarfile` mode `'w'` instead of `'x'`, which would otherwise refuse the
+  second pack and hand the caller the path of the older, smaller one.
 - **`NAV`: root cause found, and it was laundering, not corruption.** Kent found it in this
   function's own log line — *"Syllable presort: NA → NAV to fit confirmed primitives
   (#C=C C#=V syls=1)"* — and reproduced it end to end on the word `to`. The chain: a user
@@ -43,9 +206,23 @@
     of a sort annotation uses (`sorting_engine.py:1337`). It had only `Invalid`, which is
     the whole bug at the caller: `NA` is not a profile to repair, it is a decision to leave
     alone.
-  - **Not repaired:** OBT's 9 words and Kent's `to` still carry `lc="NAV"` and, in `to`'s
-    case, `…-x-cvprofile=NAV`. This stops new ones; existing ones need a decision (see the
-    open question below).
+  - **Repaired in this build, per Kent** ("ship the repair with this build"), so a field
+    file self-heals on open rather than needing a second round trip.
+    `scrub_sorts_to_primitives` gained a case (1b): a sort annotation that is not made of
+    profile symbols has BOTH the annotation and the confirmed profile cleared, and the sense
+    is named in the log. Necessary as a separate case because the new door guard returns
+    such an input unchanged, so case (2) sees `legal == anno` and does nothing. The remedy
+    is the one this pass already applies at (3) — the word loses its trusted profile, drops
+    out of segmental slicing, and the profile-setup trigger asks the user — which is the
+    honest state, since nothing ever legitimately sorted these words. The
+    `'<profile> lc verification'` fields are left alone, as at (3).
+  - **A silent no-op caught while writing that repair**, worth recording because it would
+    have passed review: clearing the annotation with `False` does nothing.
+    `Annotation.myvalue` clears only on `''` (`elif value == '':`), and `False == ''` is
+    False in Python, so `False` falls through both branches and returns the unchanged value
+    — while the log line above it claimed a repair. `cvprofilevalue(…, False)` IS the clear
+    idiom on its own path, which is what makes the mistake easy. Two neighbouring APIs, two
+    different sentinels.
 
 **Ships to a field machine for a log — the DIAG line added in 1.15.9 is the point of this
 build.** Two independent causes of early wrapping are fixed and one measurement is

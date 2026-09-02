@@ -955,14 +955,30 @@ class Settings(SettingsUI):
                         # this name space and reached the status field as a check
                         # with groups 'ours'/'theirs' that can never verify
                         # (Kent 2026-09-02).
-                        if not getattr(self,'_said_notacheck',False):
-                            self._said_notacheck=True
+                        # Say only what is established. The first version of
+                        # this line explained every rejected name as a collab
+                        # merge marker, and the first one it actually reported
+                        # was '#C-slice' — azt's OWN bookkeeping annotation,
+                        # nothing to do with the daemon (Kent saw it,
+                        # 2026-09-02). Naming a cause the code has not
+                        # established is the same fault as announcing an action
+                        # before its gate: it sends the reader in the wrong
+                        # direction, and costs a round trip. So report the fact,
+                        # and add the daemon note ONLY for a name that really is
+                        # one of theirs.
+                        if not getattr(self,'_said_notacheck',set()):
+                            self._said_notacheck=set()
+                        if k['check'] not in self._said_notacheck:
+                            self._said_notacheck.add(k['check'])
+                            extra=''
+                            if self.program.params.is_foreign_annotation(
+                                                            k['check']):
+                                extra=(" This one is written by the collab "
+                                    "daemon, not by a sort: a conflict marker "
+                                    "means the merge kept BOTH sides of an "
+                                    "entry, and the DATA wants a look.")
                             _log.warning("Not a check, so not going into the "
-                                    "status: %r (annotation names are shared "
-                                    "with the collab daemon's merge markers; "
-                                    "azt-lift-conflict means the merge kept "
-                                    "BOTH sides of an entry and the DATA wants "
-                                    "a look).", k['check'])
+                                    "status: %r.%s", k['check'], extra)
                         continue
                     groups=[i for i in groups if i]
                     self.program.status.groups(groups, wsorted=True, **k)

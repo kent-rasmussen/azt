@@ -1578,7 +1578,26 @@ class StatusDict(dict):
             if g is not None:
                 self._groups=sn['groups']=g
             if not self._groups:
-                log.info(_("No groups to sort into! (using {kwargs} node {sn})"
+                # SAYS WHAT IT IS, not what it guesses someone wanted. This
+                # read is generic — anyone asking for the sorted groups of a
+                # slice lands here, including the status refresh — but it
+                # announced "No groups to sort into!", naming the sort as the
+                # purpose. That sent the NBQ diagnosis at the sort path twice in
+                # two logs (2026-09-02) before Kent corrected it: SORT does not
+                # need groups to begin with; an empty group list is the normal
+                # starting state of every slice-check, and groups come into
+                # existence as the user sorts. It is VERIFY and JOIN that
+                # require a group and must not run or build a page without one.
+                # So this line cannot say anything is wrong — it is reporting
+                # the ordinary initial condition.
+                # Nor does it claim sort WILL build: sort needs a WORD to sort,
+                # which is a different question from groups, and after a presort
+                # has assigned everything there may be none (Kent 2026-09-02).
+                # Groups absent is simply not the deciding fact for sort.
+                log.info(_("No sorted groups recorded yet for this slice — "
+                    "normal before sorting starts. Groups aren’t what sort "
+                    "needs (it needs a word to sort); verify and join do need "
+                    "one. (using {kwargs} node {sn})"
                     ).format(kwargs=kwargs,sn=sn))
                 return []
             return self.order_groups(self._groups)

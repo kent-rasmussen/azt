@@ -1671,6 +1671,17 @@ class Wait(Window):
 
 # ── Root ──────────────────────────────────────────────────────────────
 
+def wrap_to_container(container, cols=1, reserve=0, minimum=60, maxdepth=2):
+    """No-op mirror of ui_tkinter.wrap_to_container, so consumers can call
+    `ui.wrap_to_container(...)` regardless of backend (the chooser and the
+    verify page both do; without this they'd AttributeError here).
+
+    Nothing to do: the tkinter version exists because Tk needs a wraplength in
+    PIXELS, computed from a width only known at <Configure> time. In a browser
+    the containing box wraps text itself, which is what the tkinter helper is
+    laboriously emulating. Returns a callable so a caller that re-applies after
+    a build still has something to call."""
+    return lambda event=None: None
 _app_root = None  # the application's main themed Root (set in Root.__init__)
 def default_root():
     """The app's main themed Root (with .theme/.photo), or None — mirror of

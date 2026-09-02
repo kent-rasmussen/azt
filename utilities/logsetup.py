@@ -295,9 +295,20 @@ def writelzma(filename=None):
     subset of the tar, so it is gone rather than fixed."""
     from utilities import file as _file
     logdir=_file.getlogdir()
-    stamp=datetime.datetime.now(datetime.timezone.utc).replace(
-                tzinfo=None).strftime('%Y-%m-%dT%H%M%SZ')
-    compressedurl=logdir.joinpath('azt_log_{}.tar.xz'.format(stamp))
+    # NAMED FOR THE RUN, NOT FOR NOW (Kent 2026-09-02). The pack used the
+    # CURRENT time, so a run whose parts were log_<runid>_001/_002 produced
+    # azt_log_<some later time>.tar.xz — three different timestamps in one
+    # directory for one run, and a moment's work every time to see they belong
+    # together. Sharing the run id makes the relationship visible in the
+    # filename.
+    #   Safe because A LATER PACK IS A STRICT SUPERSET of an earlier one: the
+    # bundle is runfiles() (every part of this run) plus any restart marker, so
+    # a second pack holds the same parts with more appended to the tail one.
+    # Nothing is lost by there being only one per run, and the last one made is
+    # always the most complete — which is why the mode below is 'w' rather than
+    # 'x'.
+    runid=os.environ.get(RUN_ENV,'') or _runid()
+    compressedurl=logdir.joinpath('azt_log_{}.tar.xz'.format(runid))
     if not filename:
         filename=getlogfilename()
     log.info("Using filename {}".format(filename))
@@ -321,7 +332,11 @@ def writelzma(filename=None):
     filenames+=[p for p in logdir.glob('restart_in_progress*.json')
                 if p not in filenames]
     try:
-        f=tarfile.open(name=str(compressedurl), mode='x:xz',
+        # 'w', not 'x': one pack per run, REPLACED on each request. Exclusive
+        # create would refuse the second pack of a run and hand the caller the
+        # path of the older, smaller one — the opposite of what is wanted, since
+        # the later pack is a superset (see above).
+        f=tarfile.open(name=str(compressedurl), mode='w:xz',
                         encoding='utf-8', preset=9)
     except Exception as e:
         log.info("could not open {}: {}".format(compressedurl,e))

@@ -2042,9 +2042,27 @@ class TaskDressing(HasMenus,ui.Window):
             # 2782, 3616). Also dropped *theme.scale: winfo_* are already pixels,
             # and scaling a pixel width by the FONT scale wrapped later than the
             # column is wide on a scaled display.
-            avail=self.program.tk_root.winfo_width()
-            if avail < 100: #unmapped (1) or absurd → the screen is a safe proxy
-                avail=self.program.tk_root.winfo_screenwidth()
+            # THE WIDTH OF THIS WINDOW, NOT OF THE HIDDEN ROOT. Kent's
+            # screenshot 2026-09-02 settled this: labels broke MID-WORD —
+            # "Ajou/ter", "Enre/gistr/er", "sylla/bes" — so the wraplength was
+            # narrower than one word, ~4-5 characters, ~50px. Working back
+            # through int(avail*.8/bpr) puts avail at about 200, and 200 is
+            # TK'S DEFAULT ROOT GEOMETRY: every real window in this app is a
+            # Toplevel, so tk_root has no children, never grows past 200x200,
+            # and reports 200 forever. The old `avail < 100` guard catches only
+            # the UNMAPPED root (which reports 1) and sails straight past that.
+            #   `self` is the chooser window itself, which is the thing these
+            # buttons are actually laid out in — so ask it. The threshold is
+            # well above Tk's default: no real chooser window is 400px wide, so
+            # anything smaller is a default or a stale/withdrawn read, not a
+            # measurement (this method runs from gettask, which withdraws the
+            # window before rebuilding).
+            avail=self.winfo_width()
+            if avail < 400:
+                try:
+                    avail=self.workarea()[0]
+                except Exception:
+                    avail=self.winfo_screenwidth()
             screen_wrap=avail*.8
             # sticky='nesw' (kept, per Kent 2026-07-28: content-sized buttons
             # looked ugly). The columns below are weight=1 + uniform, so this
@@ -2102,6 +2120,14 @@ class TaskDressing(HasMenus,ui.Window):
                 log.info(_("Task {task} doesn\u2019t seem to have a tooltip.").format(task=o[0]))
         for c in range(bpr):
             frame.grid_columnconfigure(c, weight=1, uniform=category+str(c))
+        # THE REAL WIDTH, WHEN IT EXISTS. Everything above only sets a starting
+        # wraplength from a predicted width; this keeps it matched to the tab
+        # frame the buttons are actually in, on every resize. It also handles the
+        # last button's columnspan (read from its own grid_info) and its
+        # compound='top' image (no text-width cost, so not subtracted). See
+        # ui.wrap_to_container for why predicting was hopeless here.
+        ui.wrap_to_container(frame,cols=bpr,
+                            reserve=int(16*getattr(self.theme,'scale',1) or 16))
     def _select_chooser_tab(self,tab_name):
         tab_map={
             'datacollection':self.tab_datacollection,

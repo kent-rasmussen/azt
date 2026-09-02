@@ -1583,31 +1583,98 @@ class Waitable(Exitable):
         ww=self._waitwindow(create=False)
         if ww is None or not ww.active:
             return
+        # In-function: visibility does `from frontend import ui`, so importing
+        # it at module scope here is circular.
+        from frontend.visibility import has_content
         parent=ww.reveal_parent
-        if ww.do_reveal and parent is not None and parent.winfo_exists() \
+        # SAME RULE AS on_quit's parent reveal: never make an empty page
+        # visible. Confirmed producer, from Kent's log 2026-09-02 — the wait
+        # closed and revealed the sort window ("waitdone: update+reveal 1.1s"),
+        # and only THEN did maybesort discover `'groups': []` for
+        # (Noun, CCVCVC, V1) and return without building anything and without
+        # withdrawing. The user was left on a fullscreen kiosk page whose only
+        # control was the outsideframe Exit button.
+        #   AND THAT INPUT IS NORMAL, not an anomaly: a slice-check with
+        # tosort=True and no groups yet is how EVERY slice-check begins (Kent
+        # 2026-09-02) — groups come into existence as the user sorts. So the
+        # empty reveal was reachable in ordinary first-time use of any unsorted
+        # slice, which is why this guard belongs here and not in a special case
+        # for a suspect node.
+        #   Fixing it here rather than in maybesort because the ordering is the
+        # general shape — a wait is raised, the wait ends, and only afterwards
+        # is it known whether there was anything to show. Every caller with that
+        # shape is a candidate, and there are many; the reveal is the one place
+        # they all pass through. Kent's rule: "we shouldn't be making pages
+        # visible, counting on them having meaning later."
+        #   The wait dialog is still deactivated below, so the screen is handed
+        # back either way — this changes WHICH window is left up, not whether
+        # the wait closes. A page that stays hidden is then the visibility
+        # watchdog's business, and the skip is logged so it is named rather than
+        # guessed at.
+        if (ww.do_reveal and parent is not None and parent.winfo_exists()
+                and not parent.exitFlag.istrue()
+                and parent is not parent._root()
+                and not has_content(parent)):
+            log.info("waitdone: NOT revealing %s — nothing was built in its "
+                    "frame, and an empty page shows nothing but Quit. Whatever "
+                    "raised this wait finished without content; if a page is "
+                    "missing here, this is why.",parent)
+        elif ww.do_reveal and parent is not None and parent.winfo_exists() \
                 and not parent.exitFlag.istrue() and parent is not parent._root():
             _u=time.perf_counter()
+            # MAP FIRST, DRAIN SECOND — ONE ORDER, on every display server.
+            #
+            # XWayland DEADLOCKS draining a big render backlog into a WITHDRAWN
+            # window (faulthandler-confirmed twice: 2026-07-13 revealing a
+            # verify page, and 2026-09-02 — a black screen with the main thread
+            # wedged inside Tk's update() at this line, with NO Python frame
+            # above it, i.e. stuck in Tk's C code and not waiting on any of the
+            # app's own threads).
+            #
+            # The 2026-09-02 one happened WITH USING_WAYLAND TRUE — "Display
+            # server: wayland (USING_WAYLAND=True; Wayland update guard OFF)" —
+            # so it was already on the map-first path and the drain hung with
+            # the window MAPPED. (I first read it the other way, off a boot line
+            # that turned out to be from a different machine. The ordering here
+            # is not what saved or sank that run; see the Wayland skip below,
+            # which is the actual remedy.)
+            #
+            # The branch is nonetheless gone rather than made smarter, on its
+            # own merits: one order is simpler than two, mapping before draining
+            # is ordinary X11 practice, and the only argument for the other
+            # order was cosmetic (paint while hidden so no unpainted window
+            # shows) — which does not apply, since the wait dialog is still up
+            # and covering the screen, as this function's own header says. It
+            # also removes the risk for a machine whose display server is
+            # UNKNOWN, where USING_WAYLAND falls back to False and would
+            # otherwise get the drain-into-withdrawn order.
+            try:
+                parent.deiconify()
+            except tkinter.TclError:
+                pass
+            # AND ON WAYLAND, DON'T DRAIN AT ALL. Kent's black screen
+            # (2026-09-02) was the main thread wedged inside Tk's update() at
+            # this call with USING_WAYLAND TRUE — i.e. the map-first order was
+            # already in force and the drain hung anyway, window mapped. So the
+            # ordering above is not sufficient; the drain itself is the hazard,
+            # which is what WAYLAND_UPDATE_GUARD was built for (it defaults OFF,
+            # so UI.update called straight through — the ui_tkinter:1320 frame
+            # in the traceback).
+            #   Skipped HERE rather than by flipping that global default,
+            # because this one call site has now hung twice and a global
+            # rendering change deserves its own decision.
+            #   What it costs: the paint is no longer front-loaded while the
+            # wait dialog covers the screen, so a heavy page can appear
+            # unpainted for a frame after the dialog goes. Tk repaints from its
+            # own event loop immediately after. A frame of unpainted window is
+            # not in the same category as a hung app.
             if USING_WAYLAND:
-                # XWayland DEADLOCKS draining a big render backlog into a
-                # WITHDRAWN window (faulthandler-confirmed 2026-07-13:
-                # waitdone→update() wedged revealing a verify page). Map the
-                # window FIRST — the wait dialog still covers it, so the UX
-                # is unchanged — then drain.
-                try:
-                    parent.deiconify()
-                except tkinter.TclError:
-                    pass
-                parent.update()
+                log.info("waitdone: revealed %s without draining (Wayland: "
+                        "update() here has deadlocked twice)",parent)
             else:
-                # Original 1.3.38 order elsewhere: render while hidden, then
-                # reveal — the slow paint stays covered by the dialog.
                 parent.update()
-                try:
-                    parent.deiconify()
-                except tkinter.TclError:
-                    pass
-            log.info("waitdone: update+reveal %.1fs (covered by wait dialog)",
-                     time.perf_counter()-_u)
+                log.info("waitdone: update+reveal %.1fs (covered by wait "
+                        "dialog)",time.perf_counter()-_u)
         ww.deactivate()
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1821,6 +1888,104 @@ def _floored_summary(attr):
             "lines and unreachable buttons.",
             attr,d['n'],d['worst'],d['total'],d['sib'][0],d['sib'][1])
 _app_root = None  # the application's main themed ui.Root (set in Root.post_tk_init)
+def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2):
+    """Keep descendant labels'/buttons' `wraplength` matched to the container's
+    REAL width, recomputed on <Configure>.
+
+    THE POINT IS TO STOP GUESSING A WIDTH AT BUILD TIME. Both pages that needed
+    this were predicting one and getting it wrong in opposite directions
+    (2026-09-02):
+
+      * the task chooser asked `tk_root.winfo_width()`, i.e. the HIDDEN ROOT,
+        which has no children and so keeps Tk's default 200x200 for the life of
+        the process — `int(200*.8/3)=53px`, narrower than one word, so labels
+        broke mid-word ("Ajou/ter"). Substituting the window's own width then
+        overshot, because the buttons live in a notebook narrower than the
+        window.
+      * the verify page passed no wraplength at all, so a row was as wide as its
+        string — a form plus two glosses ran ~1350px, off the edge of the page,
+        taking its profile tag with it and (no horizontal scrolling here)
+        putting the text out of reach entirely.
+
+    A width predicted from anything other than the box the widget is actually in
+    is a guess. <Configure> is the moment the real number exists.
+
+    `cols` = grid columns to divide by; a widget spanning n columns gets n cells
+    (read from its own grid_info, so callers needn't track it). `reserve` = px
+    to hold back per cell for borders/tags. An image is subtracted
+    automatically, but ONLY when `compound` puts it beside the text — a
+    compound='top' image sits above and costs no text width.
+
+    Notes on the two hazards:
+      * <Configure> fires continuously during a drag, and setting wraplength
+        relayouts, which fires <Configure> again. Hence the hysteresis: act only
+        on a width change of >=8px, or on a change in how many targets exist.
+      * the target count matters because verify rows are STREAMED in by
+        drive_work, so the children arrive after the bind; a pure width guard
+        would wrap the first rows and none of the rest.
+      * bound with add='+' so it never displaces an existing <Configure>
+        handler — ScrollingFrame has its own, and losing it would break
+        scrolling.
+      * NO update()/update_idletasks() anywhere in here: this runs on Wayland,
+        where a synchronous round-trip during a layout change is the documented
+        deadlock (see azt/agenda/wayland_freeze_audit.md).
+
+    Returns the apply function, so a caller that knows a build has finished can
+    call it once more."""
+    state={'w':-1,'n':-1}
+    def _collect(parent,out,depth=0):
+        if depth>maxdepth:
+            return
+        try:
+            kids=parent.winfo_children()
+        except Exception:
+            return
+        for ch in kids:
+            try:
+                if 'wraplength' in ch.keys():
+                    out.append(ch)
+                else:
+                    _collect(ch,out,depth+1)
+            except Exception:
+                continue
+    def _apply(event=None):
+        try:
+            if not container.winfo_exists():
+                return
+            width=container.winfo_width()
+        except Exception:
+            return
+        if width<=1: #not laid out yet; a later <Configure> will carry the size
+            return
+        targets=[]
+        _collect(container,targets)
+        if abs(width-state['w'])<8 and len(targets)==state['n']:
+            return
+        state['w']=width; state['n']=len(targets)
+        cell=int(width/max(cols,1))
+        for t in targets:
+            try:
+                span=int(t.grid_info().get('columnspan',1) or 1)
+            except Exception:
+                span=1
+            extra=reserve
+            try:
+                if str(t.cget('compound')) in ('left','right'):
+                    im=t.cget('image')
+                    if im:
+                        extra+=int(t.tk.call('image','width',im))
+            except Exception:
+                pass
+            try:
+                t.config(wraplength=max(cell*span-extra,minimum))
+            except Exception:
+                continue
+    try:
+        container.bind('<Configure>',_apply,add='+')
+    except Exception as e:
+        log.info("wrap_to_container: could not bind <Configure> (%s)",e)
+    _apply()
+    return _apply
 def default_root():
     """Return the application's main themed ui.Root — the real program's root,
     carrying the full image theme (.theme/.photo) — or None if none currently

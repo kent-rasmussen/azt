@@ -676,6 +676,39 @@ class ProfileAnalyzer:
             # leave alone: the user said "not this one now".
             if not anno or anno in ('NA','Invalid'):
                 continue  # (1) missing sort, or parked — never auto-add
+            # (1b) REPAIR a sort annotation that is not a profile at all — the
+            # 'NAV' words already in the field (Kent 2026-09-02: ship the repair
+            # with this build). The guards added upstream stop new ones, but a
+            # word already carrying 'NAV' would otherwise keep it for ever: the
+            # conformer now returns such an input UNCHANGED, so (2) below sees
+            # legal == anno and does nothing.
+            #   Clearing both the annotation and the confirmed profile is the
+            # SAME remedy this pass already applies at (3): the word loses its
+            # trusted profile, drops out of segmental slicing, and the
+            # profile-setup trigger asks the user to set it — which is the
+            # honest state, since nothing ever legitimately sorted these words.
+            # The '<profile> lc verification' fields are left alone, as at (3):
+            # they are tagged by the profile they were confirmed under.
+            bad = self.program.params.illegal_profile_symbols(anno)
+            if bad:
+                log.warning("Profile scrub: %r is not a profile (%s not C or "
+                        "V) — clearing the sort and the confirmed profile so "
+                        "the word can be sorted properly; sense %s.",
+                        anno, ', '.join(repr(c) for c in bad),
+                        getattr(s, 'id', '?'))
+                # '', NOT False. Annotation.myvalue clears only on '' —
+                #     if value:          self.set(...)
+                #     elif value == '':  del self.attrib[self.valuename]
+                # — and `False == ''` is False in Python, so passing False
+                # falls through BOTH branches and silently does nothing while
+                # the log above claims a repair. (cvprofilevalue(…, False) is a
+                # different path and does clear; the two idioms differ.)
+                s.annotationvaluebyftypelang(ftype, analang, ftype, '')
+                if s.cvprofilevalue(ftype):
+                    s.cvprofilevalue(ftype, False)
+                    cleared_verif += 1
+                fixed_sort += 1
+                continue
             legal = self.constrain_presort_profile(s, anno, ftype)  # (2)
             if legal and legal != 'Invalid' and legal != anno:
                 s.annotationvaluebyftypelang(ftype, analang, ftype, legal)

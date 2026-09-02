@@ -744,6 +744,19 @@ class SortPresenter(PresenterBase):
                 self.attach_group_rename([titlelabel, i, okbutton], runwindow,
                             sort_obj, group,
                             on_renamed=verifycanary.destroy)
+                # WRAP THE ROWS TO THE PAGE, before the reflow that sizes it.
+                # These rows carried NO wraplength at all, so each was as wide as
+                # its string — a form plus two glosses ran ~1350px, off the right
+                # edge, taking its profile tag with it, and with no horizontal
+                # scrolling here the text was simply unreachable (Kent's 'midrib'
+                # row, 2026-09-02). Bound to the CONTENT frame, so the number is
+                # the page's real width rather than a prediction; re-applies as
+                # drive_work streams more rows in (the helper watches the target
+                # count as well as the width, for exactly that reason).
+                #   reserve leaves room for the row frame's border/pad and the
+                # profile tag to its right; the illustration is subtracted by the
+                # helper, since compound='left' makes it cost text width.
+                ui.wrap_to_container(buttonframe.content,cols=bc,reserve=96)
                 _r=time.perf_counter()
                 buttonframe.resume_configure() # one reflow now the list is whole
                 self._reflow_t+=time.perf_counter()-_r
