@@ -1,5 +1,6 @@
 # coding=UTF-8
 from io_put.cawl import loadCAWL
+from io_put import dekereke, lift
 # include WordCollection.addCAWLentries
 from utilities.i18n import _
 from utilities import file,logsetup
@@ -16,6 +17,7 @@ class WordListTemplate():
     to fill it in before writing it to file.
     On error, stop and leave error text in self.error_text
     """
+    fill_images=True #CAWL ships images; an imported database has its own data
     def verify_code(self,code):
         log.info(f"verify_code: code={code}")
         # self.analang=code
@@ -57,7 +59,8 @@ class WordListTemplate():
         #     return _("The directory {newfile} already exists and isn't empty!").format(newfile=self.filename.parent)
         if file.exists(self.filename):
             return _("The file {newfile} already exists!").format(newfile=self.filename)
-        self.db.set_filename(self.filename) #This was done once on template load; now to new location.
+        if self.db: #a Dekereke import writes its own file; there is no stock db
+            self.db.set_filename(self.filename) #This was done once on template load; now to new location.
         log.info(_("Going to write to {newfile}").format(newfile=self.filename))
     def fill_db_images(self):    
         yield from self.db.fill_db_images()
@@ -97,4 +100,38 @@ class CAWL(WordListTemplate):
             self.db.strip_lxlc_forms() #OK for demo; forms come from glosses
             # self.db.collect_and_sort_plausible_lang_codes() #depends on lx/lc/ph in database
         log.info("Done initializing CAWL")
-        
+
+class Dekereke(WordListTemplate):
+    """This starts a project from a Dekereke phonology database the user
+    already has, rather than from a stock wordlist. There is no template to
+    copy: io_put/dekereke writes the LIFT file from their own data, and we
+    open it."""
+    fill_images=False
+    def __init__(self,program,source=None,columnmap=None,**kwargs):
+        log.info(_("Starting a project from a Dekereke database"))
+        self.source=source
+        self.columnmap=columnmap
+        self.db=None
+        self.entries=0
+        super().__init__(program,**kwargs)
+    def init_w_code_and_filename(self,analang,**kwargs):
+        self.error_text=self.verify_code(analang)
+        if self.error_text:
+            return
+        self.columnmap.analang=self.analang
+        self.error_text=self.verify_writeable(**kwargs)
+        if self.error_text:
+            return
+        try:
+            self.entries=dekereke.tolift(self.source,self.columnmap,
+                                                            self.filename)
+        except dekereke.Error as e:
+            self.error_text=str(e)
+            return
+        try:
+            self.db=lift.LiftXML(str(self.filename))
+        except lift.BadParseError:
+            self.error_text=_("Something went wrong converting {file}."
+                                ).format(file=self.source.filename.name)
+            return
+        self.db.init_post_analang(self.analang)

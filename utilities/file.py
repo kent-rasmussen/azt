@@ -418,6 +418,20 @@ def lift():
     if not filename:
         return
     return writefilename(filename)
+def dekerekefile():
+    """Pick a Dekereke database to import. Unlike lift(), this does NOT record
+    the choice as the current file: what A-Z+T opens afterwards is the LIFT
+    file written from it."""
+    Tk().withdraw()
+    filename=askopenfilename(initialdir=gethome(),
+                            title=_("Select Dekereke Database File"),
+                            filetypes=[
+                                    ("Dekereke Database",'.xml','TEXT'),
+                                    ("Dekereke Database",'.XML','TEXT'),
+                                    ]
+                            )
+    if filename:
+        return filename
 def escapecommas(x):
     if ',' in x:
         if not '"' in x:

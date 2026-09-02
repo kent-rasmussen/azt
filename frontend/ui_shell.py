@@ -24,6 +24,7 @@ from backend.core.lexicon import Tone, Segments, WordCollection, Parse
 from backend.core.analysis import Analysis, StatusDict, SyllableSliceDict
 from backend.core import templates
 from io_put.cawl import loadCAWL
+from io_put import dekereke
 
 
 def _option_dialog(parent, title, text, optionlist, command,
@@ -3167,13 +3168,14 @@ class LiftChooser(ui.Window,HasMenus):
         filename=None
         with self.waiting(msg=_("Setting up new LIFT file now."), thenshow=True):
             log.info("Beginning Copy of stock to new LIFT file.")
-            t=templates.CAWL(self.program,analang=self.code)
+            t=self.newtemplate()
             if t.error_text:
                 error_text=t.error_text
             else:
                 self.template_obj=t
-                for p in self.template_obj.fill_db_images():
-                    self.waitprogress(p)
+                if t.fill_images:
+                    for p in self.template_obj.fill_db_images():
+                        self.waitprogress(p)
                 self.template_obj.db.write()
                 self.store_analang()
                 self.program.db=self.template_obj.db
@@ -3184,6 +3186,19 @@ class LiftChooser(ui.Window,HasMenus):
             ErrorNotice(error_text,wait=True)
             return
         return filename
+    def newtemplate(self):
+        """A new project comes either from the stock wordlist or from a
+        Dekereke database the user picked a moment ago."""
+        source=getattr(self,'dekerekesource',None)
+        if not source:
+            return templates.CAWL(self.program,analang=self.code)
+        columnmap=dekereke.ColumnMap(source.columns,analang=self.code,
+                                    glosslangs=['en'])
+        columnmap.automap()
+        if not self.askcolumnmap(source,columnmap):
+            return templates.Dekereke(self.program) #no analang: does nothing
+        return templates.Dekereke(self.program,source=source,
+                                columnmap=columnmap,analang=self.code)
     def clonefromUSB(self):
         def makenewrepo(repoclass,mediadir):
             repo=repoclass(mediadir)
@@ -3337,6 +3352,87 @@ class LiftChooser(ui.Window,HasMenus):
             ErrorNotice(error_text,wait=True)
             return
         return filename
+    def importdekereke(self):
+        """Start a project from a Dekereke phonology database. The language
+        code is asked for first, by the same page a new project uses, and the
+        column mapping is confirmed after that — the gloss columns need to know
+        what languages the project has."""
+        filename=file.dekerekefile()
+        if not filename:
+            return
+        try:
+            self.dekerekesource=dekereke.DekerekeXML(filename)
+        except dekereke.Error as e:
+            ErrorNotice(str(e),wait=True)
+            return
+        if not self.dekerekesource.columns:
+            ErrorNotice(_("There are no columns in {file}."
+                        ).format(file=file.getfilenamefrompath(filename)),
+                        wait=True)
+            return
+        try:
+            return self.startnewfile() #asks for the code, then comes back
+        finally:
+            self.dekerekesource=None
+    def askcolumnmap(self,source,columnmap):
+        """Dekereke column names are chosen by whoever built the database, so
+        A-Z+T can only guess what each one holds. Guessing silently would be
+        worse than asking once, so this shows the guesses for confirmation."""
+        w=ui.Window(self,title=_("Dekereke columns"))
+        ui.Label(w.frame,row=0,column=0,columnspan=3,sticky='w',font='title',
+                text=_("What is in each column of {file}?").format(
+                            file=source.filename.name))
+        ui.Label(w.frame,row=1,column=0,columnspan=3,sticky='w',
+                text=_("These are {azt}’s guesses; change any that are wrong. "
+                        "Exactly one column must be the form to sort and "
+                        "analyze.").format(azt=self.program.name))
+        labels=dekereke.rolelabels()
+        names=[l for r,l in labels]
+        byname={l:r for r,l in labels}
+        byrole={r:l for r,l in labels}
+        rows=ui.ScrollingFrame(w.frame,row=2,column=0,columnspan=3,sticky='nsew')
+        vars={}
+        langs={}
+        for n,column in enumerate(source.columns):
+            ui.Label(rows.frame,text=column,row=n,column=0,sticky='w')
+            var=ui.StringVar()
+            var.set(byrole.get(columnmap.role(column),byrole['field']))
+            ui.Combobox(rows.frame,optionlist=names,textvariable=var,
+                        row=n,column=1,sticky='ew',state='readonly')
+            vars[column]=var
+            lang=ui.StringVar()
+            lang.set(columnmap.langs.get(column,''))
+            ui.EntryField(rows.frame,textvariable=lang,row=n,column=2,
+                        sticky='ew',width=6)
+            langs[column]=lang
+        ui.Label(w.frame,row=3,column=0,columnspan=3,sticky='w',
+                text=_("The last box is the language code for a meaning "
+                        "column (like ‘en’ or ‘id’); leave it empty otherwise."))
+        def use(event=None):
+            for column in source.columns:
+                role=byname.get(vars[column].get(),'field')
+                columnmap.roles[column]=role
+                lang=langs[column].get().strip()
+                if lang:
+                    columnmap.langs[column]=lang
+                elif column in columnmap.langs:
+                    del columnmap.langs[column]
+            columnmap.glosslangs=[columnmap.langs[c]
+                            for c in source.columns
+                            if columnmap.role(c)=='gloss' and c in columnmap.langs
+                            ] or columnmap.glosslangs
+            if error:=columnmap.check():
+                ErrorNotice(error,wait=True)
+                return
+            w.exitFlag.setfalse()
+            w.destroy()
+        ui.Button(w.frame,text=_("Use these"),command=use,row=4,column=0,
+                sticky='ew')
+        ui.Button(w.frame,text=_("Cancel"),command=w.destroy,row=4,column=2,
+                sticky='ew')
+        w.exitFlag.settrue() #closing the window any other way means cancel
+        self.wait_window(w)
+        return not w.exitFlag.istrue()
     def submitdemolang(self,choice,window): #event=None):
         # log.info(_("picked {choice}, from {glosslangs}").format(choice=choice, glosslangs=self.cawldb.glosslangs))
         self.demolang=choice
@@ -3367,6 +3463,9 @@ class LiftChooser(ui.Window,HasMenus):
             log.info("trying clone from USB")
             name=self.clonefromUSB()
             # restart=True #Why would this be necessary?
+        elif choice == 'Dekereke':
+            log.info("Importing a Dekereke database")
+            name=self.importdekereke()
         elif choice == 'Demo':
             log.info("Making a CAWL demo database")
             name=self.makeCAWLdemo()
@@ -3428,6 +3527,8 @@ class LiftChooser(ui.Window,HasMenus):
         else:
             self.other=_("Select a database on my computer") #use later
         optionlist+=[('Other',self.other)]
+        if dekereke.available():
+            optionlist+=[('Dekereke',_("Import a Dekereke phonology database"))]
         optionlist+=[('Demo',_("Make a demo database to try out {azt}"
                                 ).format(azt=self.program.name))]
         buttonFrame1=ui.ScrollingButtonFrame(self.frame,
