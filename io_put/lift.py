@@ -675,13 +675,13 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 for ps in self.ps_profiles
                 }
     def slicebyerror(self):
-        keys=set([(i.cawln,', '.join(i.collectionglosses)) for i in self.senses
+        keys=set([(i.word_list_n,', '.join(i.collectionglosses)) for i in self.senses
                     if not i.imgselectiondir
                 ])
         errors={k:
                     [i.id for i in self.senses
                             if not i.imgselectiondir
-                            if i.cawln == k[0]
+                            if i.word_list_n == k[0]
                             if ', '.join(i.collectionglosses) == k[1]
                     ]
                 for k in keys
