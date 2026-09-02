@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.7' #This is a string...
+__version__='1.15.8' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -350,7 +350,17 @@ class App:
                     #don't worry about hg, if not there already
                     log.info(_("No Git data repository found; creating."))
                     repo[r].init()
-                    repo[r].add(self.liftfilename)
+                    # self.filename, NOT self.liftfilename: that name belongs to
+                    # SettingsManager (settings/__init__.py, set FROM
+                    # program.filename) and has never existed on App — so this
+                    # line raised AttributeError every time it was reached. It
+                    # survived because it is reached only when there is no git
+                    # data repo yet AND git is present, i.e. creating a data
+                    # repo from scratch; collab projects let the daemon own the
+                    # repo, so nobody hit it until a fresh legacy project
+                    # (2026-09-02). Nor would self.settings work here: repocheck
+                    # runs before Settings(self) exists.
+                    repo[r].add(self.filename)
                     repo[r].commit()
                     self.data_repo[r]=repo[r]
     def repo_commit(self):

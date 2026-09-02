@@ -19,8 +19,32 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.8
+
+- **`writelzma()` made two archives and returned the wrong one**, so every caller named a
+  file holding a fraction of the evidence — spotted by Kent, seeing the email name
+  `log_…Z.xz`. It wrote a plain-lzma copy of the CURRENT PART only (the original one-file
+  assumption) *and* a tar of every part, the latter named `<already .xz> + '.tar.xz'`, hence
+  the doubled extension. The return value was never updated when the tar was added. Now one
+  archive, `azt_log_<timestamp>.tar.xz`, containing the run's parts and any restart marker,
+  and that is what is returned and named. The single-file copy is deleted rather than fixed:
+  its contents are a strict subset of the tar, nothing in azt ever opened it, and neither
+  format opens natively in Windows Explorer, so there was no convenience argument for it
+  either. NB anything globbing `log_*.xz` should look for `azt_log_*.tar.xz` now.
+- Tightened with it: the tar is opened inside a `try`, and a file that fails to be added is
+  logged WITH ITS NAME, so a locked or vanished part says which one instead of leaving an
+  anonymous exception.
+
 # Version 1.15.7
 
+- **Creating a git data repo from scratch crashed startup** with `'App' object has no
+  attribute 'liftfilename'`. That name belongs to `SettingsManager` (set FROM
+  `program.filename`) and has never existed on `App`, so the line raised every time it was
+  reached — it just wasn't reached often: only when a project has no git data repo yet AND
+  git is installed. Collab projects let the daemon own the repo, so it took a fresh legacy
+  project to hit it. Now `self.filename`, which `get_lift_file()` has already set;
+  `self.settings.liftfilename` would not have worked either, since `repocheck()` runs
+  before `Settings(self)` exists.
 - **"Email my log to support" in the Help menu — you no longer have to crash first.** The
   only way to package a log was the error page, so a machine that merely MISBEHAVED (wrong
   page, dead button, a page with nothing but Quit) had no way to hand one over at all — and

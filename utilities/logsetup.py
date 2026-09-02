@@ -281,19 +281,24 @@ def contents(self,lastlines=0):
     with open(getlogfilename(),'r', encoding='utf-8') as d:
         return d.readlines()[-lastlines:]
 def writelzma(filename=None):
+    """Bundle this run's logs into ONE .tar.xz and return its path.
+
+    It used to make TWO archives and return the wrong one (Kent 2026-09-02, who
+    spotted the email naming the lesser file):
+      * `log_<iso>Z.xz` — plain lzma of the CURRENT PART only, the original
+        one-file assumption; and
+      * `log_<iso>Z.xz.tar.xz` — the tar of every part, added later for the
+        rotated `.1`-`.5` siblings, with a doubled extension because the name
+        was built as `<already .xz> + '.tar.xz'`.
+    The return value was never updated when the tar was added, so every caller
+    — the error page's mail body, the conversion notice — named a file
+    containing a fraction of the evidence. The single-file copy is a strict
+    subset of the tar, so it is gone rather than fixed."""
     from utilities import file as _file
-    try:
-        import lzma
-        pass
-    except ImportError:
-        log.error("LZMA import error.")
-        from backports import lzma
-    """This writes changes back to XML."""
-    """When this goes into production, change this:"""
-    compressed='log_'+datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat()[:-7]+'Z'+'.xz'
-    compressed=re.sub(':','-',compressed)
     logdir=_file.getlogdir()
-    compressedurl=logdir.joinpath(compressed)
+    stamp=datetime.datetime.now(datetime.timezone.utc).replace(
+                tzinfo=None).strftime('%Y-%m-%dT%H%M%SZ')
+    compressedurl=logdir.joinpath('azt_log_{}.tar.xz'.format(stamp))
     if not filename:
         filename=getlogfilename()
     log.info("Using filename {}".format(filename))
@@ -316,25 +321,22 @@ def writelzma(filename=None):
     # variant.
     filenames+=[p for p in logdir.glob('restart_in_progress*.json')
                 if p not in filenames]
-    f=tarfile.open(name=str(compressedurl)+'.tar.xz', mode='x:xz',
-                    encoding='utf-8', preset=9,
-                    debug=3
-                    ) #as f:
-    for fn in filenames:
-        # log.info("Compressing file {}".format(fn))
-        try:
-            f.add(fn,arcname=pathlib.Path(fn).name)
-            # log.info("Compressed file {}".format(fn))
-        except Exception as e:
-            log.info(e)
-    log.info("Compressed files: {}".format(f.getnames()))
-    f.close()
-    with open(filename,'r', encoding='utf-8') as d:
-        with lzma.open(compressedurl, "wt", encoding='utf-8') as f:
-            data=d.read()
-            f.write(data)
-            f.close()
-            d.close()
+    try:
+        f=tarfile.open(name=str(compressedurl), mode='x:xz',
+                        encoding='utf-8', preset=9)
+    except Exception as e:
+        log.info("could not open {}: {}".format(compressedurl,e))
+        return compressedurl
+    try:
+        for fn in filenames:
+            try:
+                f.add(fn,arcname=pathlib.Path(fn).name)
+            except Exception as e:
+                log.info("{} not added: {}".format(fn,e))
+        log.info("Compressed files: {}".format(f.getnames()))
+    finally:
+        f.close()
+    return compressedurl
         with lzma.open(compressedurl) as ch:
             data2 = ch.read().decode("utf-8")
             ch.close()
