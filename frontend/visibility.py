@@ -228,10 +228,21 @@ class QuitOnlyGuard:
     forever, with the watchdog suppressed because a wait window is viewable.
     So the guard keeps watching what it covered and calls waitdone() the moment
     the frame has real children, which also reveals the page.
+
+    ITS ONE STRUCTURAL BLIND SPOT, and it is not fixable here: this runs on
+    `after()`, and `after()` callbacks do not fire until `mainloop()` is
+    entered. Everything in `App._run_setup` — including `TaskChooser`'s own
+    construction — happens BEFORE that. So a page that sits blank during boot
+    is invisible to this guard AND to the watchdog AND to `guardvisible`, no
+    matter when they are started, because no timer runs at all yet. Kent hit
+    exactly this (2026-09-02: NBQ seen, nothing in the log, the tail showing the
+    chooser being built). The remedy for boot-time blankness is therefore a WAIT
+    OPENED BY THE BUILDER, not a guard — the same conclusion `App.restart`'s
+    `time.sleep` loop forced, and for the same reason.
     """
     POLL_MS=1000
     STRIKES=3
-    ATTR='_nbq_placeholder'
+    ATTR='_nbq_covered'
 
     def __init__(self,program):
         self.program=program

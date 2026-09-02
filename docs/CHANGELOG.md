@@ -21,6 +21,29 @@
 
 # Version 1.15.7
 
+- **The nothing-but-Quit guard now raises a WAIT instead of writing a notice into the
+  page**, per Kent's ordering (2026-09-01): *"a full screen of nothing but theme color —
+  nothing would be better than that, and a wait window would be better than nothing, if it
+  is over ~3s."* So: blank themed page < no window < a wait window. A wait is the app's own
+  sanctioned cover for a page that is not ready — it withdraws the window, so the blank
+  page and its lone Exit leave the screen, and says something is happening. It also means
+  the guard no longer puts anything in `frame`, which retires the hazard that made
+  `has_content()` have to exclude it. Closed on real content via `waitdone()`, which also
+  reveals the page — not optional: a wait nobody closes is the `tryNAgain` hole, and the
+  guard uncovers only on CONTENT, never on "no longer looks quit-only", which is true the
+  instant it covers something.
+- **Recorded, because it explains a report we could not otherwise account for: neither
+  guard can see a blank page during boot.** `after()` callbacks do not fire until
+  `mainloop()` is entered, and all of `App._run_setup` — including `TaskChooser`'s own
+  construction — runs before that. So a page blank during startup is invisible to
+  `QuitOnlyGuard`, `VisibilityWatchdog` AND `guardvisible` regardless of when they are
+  started, because no timer runs yet. Kent saw NBQ with nothing in the log and the tail
+  showing the chooser being built; that is this. The remedy for boot-time blankness is a
+  wait opened by the BUILDER, not a guard — the same conclusion `App.restart`'s
+  `time.sleep` loop forced, for the same reason. Also worth knowing when reading a report:
+  `ui.Window.deiconify()`'s `NOTHING BUT QUIT` line only fires for windows that actually
+  have an `exitButton` (i.e. `exit=True`), so a window showing Exit by another route is
+  invisible to it.
 - **One log per RUN, five runs kept — because a cut field log is an undiagnosable one.**
   A log arrived from a field machine already rotated past its startup banner, so the
   version could not be established and the page under investigation was gone. Rotation
