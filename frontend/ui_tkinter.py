@@ -1429,6 +1429,39 @@ class Exitable():
                                 type(getattr(self,'task',self)).__name__))
                 else:
                     self.parent.deiconify()
+                    # COMMIT THE SURFACE, ON A LATER TURN. This reveal has
+                    # never drained, and on Wayland a deiconify that is not
+                    # followed by a commit can leave the window MAPPED BUT
+                    # BLANK AND INPUT-DEAF — "nothing but theme", less even the
+                    # Exit button, because nothing paints at all. Kent hit it
+                    # 2026-09-03 (and the same shape is the parked 2026-07-13
+                    # incident in azt/agenda/wayland_freeze_audit.md).
+                    #   The evidence for this path specifically: the blank
+                    #   window appears right after "Shutting down runwindow",
+                    #   i.e. it is the PARENT revealed here; there is no
+                    #   EMPTY PAGE (on_quit) line, so has_content was true and
+                    #   the page did have content that never reached the
+                    #   screen; and the faulthandler shows mainloop IDLE, so
+                    #   the app is healthy and only the surface is dead.
+                    #   after_idle, NOT an inline update(): a synchronous
+                    # round-trip inside a deiconify's flight window is
+                    # precisely the XWayland deadlock (both ingredients at
+                    # once), which is what a bare drain here would reintroduce
+                    # and what removing the drain in waitdone was trying to
+                    # avoid. Deferring gets the commit without putting the
+                    # round-trip inside the transition — the audit's principle
+                    # 2, "geometry that needs a settled layout runs in the
+                    # loop, not synchronously".
+                    #   NB this reveal races the status window's own
+                    # deiconify + -topmost + synchronous reflow when a
+                    # NotifyUser fires at the same moment (as it did: "Not
+                    # Done!"). If blanking survives this change, that collision
+                    # is the next suspect — see wait_below_status_window.md.
+                    try:
+                        self.parent.after_idle(self.parent.update)
+                    except Exception as e:
+                        log.info("could not schedule the post-reveal surface "
+                                "commit for %s: %s",self.parent,e)
         self.cleanup()
         self.destroy() #do this for everything
     def __init__(self, *args, **kwargs):
@@ -1893,10 +1926,29 @@ def _floored_summary(attr):
     d=_floor_hits.pop(attr,None)
     if not d:
         return
+    # WHAT THIS ACTUALLY MEANS, established from a full run (Kent 2026-09-03).
+    # The sibling total climbs MONOTONICALLY as sort-group buttons are added,
+    # +126px each, and maxheight follows it straight through zero:
+    #     1033 → 1159 → 1285 → … → 2671
+    #      137     11    -115   …   -1501
+    # So there is ONE condition here, not two, and the sign is incidental — an
+    # earlier version of this line split on it and claimed a small positive
+    # value meant the page was genuinely full. It doesn't; 137 and 11 are just
+    # the last two positive readings before the same run goes far negative.
+    #   The diagnosis is that 11 groups × 126px = 1386px of buttons against a
+    # 1170px screen is a stack living INSIDE A SCROLLER, where exceeding the
+    # screen is normal and expected. _measure_siblings is subtracting scrollable
+    # CONTENT from the screen as though it were consumed real estate. Its guard
+    # skips siblings whose immediate parent is a Canvas/ScrollingFrame, but the
+    # walk goes UP through ancestors, so the enclosing levels are still summed.
+    #   The fix therefore belongs in the measurement — stop the walk at a
+    # scrolling ancestor, because content inside a scroller is not bounded by
+    # the screen — not in the floor, and not in a layout response.
     log.warning("availablexy floored %s on %d widget(s); worst %d of %d "
-            "(siblings measured %d/%d). A measurement saying there is no room "
-            "is wrong — laying out against it is what produces one-character "
-            "lines and unreachable buttons.",
+            "(siblings measured %d/%d). Siblings exceeding the screen means "
+            "they are SCROLLABLE CONTENT, not consumed real estate — "
+            "subtracting them measures nothing, and laying out against the "
+            "result produces one-character lines and unreachable buttons.",
             attr,d['n'],d['worst'],d['total'],d['sib'][0],d['sib'][1])
 _app_root = None  # the application's main themed ui.Root (set in Root.post_tk_init)
 def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
@@ -1982,6 +2034,39 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
             return
         state['w']=width; state['n']=len(targets)
         cell=int(width/max(cols,1))
+        # SAY WHAT WAS COMPUTED, once per container. `reserve` is a caller's
+        # estimate of the row chrome it cannot see from where it stands (group
+        # label, play button, profile tag, borders), and when it is short the
+        # symptom is a long row overflowing and losing its tag off the right
+        # edge — which is a number being wrong, not a mechanism being wrong
+        # (Kent 2026-09-03: "the math here is not quite right"). Printing the
+        # inputs makes the dial arithmetic instead of another guess.
+        if not state.get('said'):
+            state['said']=True
+            try:
+                log.info("DIAG-wrap budget: container=%s width=%s cols=%s "
+                        "cell=%s reserve=%s → budget=%s (before per-target "
+                        "image subtraction) | %s target(s)",
+                        container,width,cols,cell,reserve,
+                        max(cell-reserve,minimum),len(targets))
+            except Exception:
+                pass
+        # HUG, THEN EXPAND, THEN WRAP — Kent's rule (2026-09-03): "most
+        # scrollingframes should hug short, unwrapped content, and expand to
+        # available window/screen size as possible, before forcing wrapping.
+        # then they should wrap nicely on that most available space."
+        #
+        # So wrapping is a CONSEQUENCE of running out of layout width, never a
+        # cause of the box's size. Step 1 is what the old code skipped: it
+        # imposed `cell` on every target unconditionally, so a short label that
+        # already fitted got wrapped anyway at whatever the container happened
+        # to be — which is how one-word-per-line survived every previous fix.
+        #
+        # Measuring the natural width means asking what the target wants with NO
+        # wrap: set wraplength=0, read winfo_reqwidth(). reqwidth is computed by
+        # Tk when the content changes and needs no update()/flush, so this costs
+        # no synchronous round-trip — which matters here (see
+        # azt/agenda/wayland_freeze_audit.md).
         for t in targets:
             try:
                 span=int(t.grid_info().get('columnspan',1) or 1)
@@ -1995,8 +2080,16 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                         extra+=int(t.tk.call('image','width',im))
             except Exception:
                 pass
+            budget=max(cell*span-extra,minimum)
             try:
-                t.config(wraplength=max(cell*span-extra,minimum))
+                t.config(wraplength=0) #unwrapped: what does it actually want?
+                natural=t.winfo_reqwidth()
+            except Exception:
+                natural=0
+            try:
+                if natural and natural<=budget:
+                    continue #step 1: it fits. Leave it unwrapped and hug it.
+                t.config(wraplength=budget) #steps 2-3: all the room, then wrap
             except Exception:
                 continue
     try:
@@ -3416,17 +3509,41 @@ class ScrollingFrame(Frame):
             -the max dimensions, from above."""
         #This should maybe be pulled out to another method?
         #scrolling window width
+        # THE CAP COMES FROM THE LAYOUT, NOT FROM THE SCREEN.
+        #
+        # This min() is ALREADY Kent's rule (2026-09-03) — "hug short,
+        # unwrapped content, and expand to available window/screen size as
+        # possible, before forcing wrapping" — so the structure was right all
+        # along. What was wrong is the second term: maxwidth/maxheight come from
+        # availablexy, i.e. screen minus _measure_siblings, which counts
+        # SCROLLABLE CONTENT as consumed real estate. His log shows the sibling
+        # total climbing +126px per sort-group button, 1033→2671 against a
+        # 1170px screen, driving maxheight through zero (137 → 11 → -115 → …
+        # → -1501) — eleven buttons that legitimately exceed the screen BECAUSE
+        # they are in a scroller, where that is normal.
+        #
+        # The allotted space is what the parent gives us. That also breaks the
+        # circle measured in DIAG-verify-wrap (content=615 canvas=1
+        # scrollframe=1 runwindow.frame=1489): the box stops being sized by what
+        # is inside it, so children can finally be wrapped to the box.
+        # REVERTED 2026-09-03, same session it was tried. Capping from the
+        # PARENT's width instead of maxwidth clipped the status board's progress
+        # table to ~110px — one and a half columns of a wide table. The approach
+        # is wrong for the same reason the old one is: a parent that is ITSELF
+        # content-sized hands down a small number, so "ask the parent" just
+        # moves the content-drives-box circularity one level up. The allotted
+        # space has to come from something whose size is set by the layout all
+        # the way up, which is what scrollframe_sizes_from_layout.md now has to
+        # work out; MIN_PLAUSIBLE=300 was not enough of a guard.
         if contentrw > self.maxwidth and not self.ignore_maxwidth:
             width=self.maxwidth
         else:
-            width=contentrw #self.config(width=contentrw)
-        # if self.winfo_width() > self.maxwidth:
-        #     self.config(width=self.maxwidth)
+            width=contentrw
         #scrolling window height
         if contentrh > self.maxheight:
-            height=self.maxheight #self.config(height=self.maxheight)
-        else: #if self.winfo_height() < contentrh:
-            height=contentrh# self.config(height=contentrh)
+            height=self.maxheight
+        else:
+            height=contentrh
         self.config(height=height, width=width)
         log.log(4,"height={}, width={}".format(height, width))
         # if self.winfo_height() > self.maxheight:

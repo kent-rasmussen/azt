@@ -467,6 +467,24 @@ class SortPresenter(PresenterBase):
                                      macrosort=macrosort,
                                      joinable=True,
                                      row=1, sticky='nsew', columnspan=2)
+        # WRAP THESE ROWS TOO. The verify page got this on 2026-09-02 and this
+        # page did not, because they are separate builders — so `midrib` still
+        # ran off the right edge here, clipped mid-word at the scrollbar, while
+        # the verify page had been fixed (Kent 2026-09-03, same session).
+        #   groupsFrame, NOT the scroller: it is grid column 1 with weight 1, so
+        # its width comes from the LAYOUT (the window minus the icon column),
+        # where a ScrollingFrame's canvas/content are sized by what is inside
+        # them and cannot be measured to size their own children.
+        #   maxdepth=5: rows here are deeper than on the verify page —
+        # buttonframe → SortGlyphGroupButtonFrame → row frame → the labelled
+        # button — and the helper's default of 2 would not reach them.
+        #   reserve is A STARTING GUESS, not a measurement: each row also holds
+        # the group label, the play button and the profile tag as siblings of
+        # the text, and I cannot read their widths from here. The helper logs
+        # the width it used, so one run says whether this is right; over-wide is
+        # visible and reportable, under-wide reads as a font bug.
+        ui.wrap_to_container(groupsFrame,cols=1,reserve=400,
+                        targets_parent=buttonframe,maxdepth=5)
         return groupsFrame, buttonframe
 
     def attach_group_rename(self, widgets, parent, task, group,

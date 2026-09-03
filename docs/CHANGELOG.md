@@ -19,6 +19,83 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.15
+
+**Row wrapping confirmed fixed by Kent on the sort-into-groups page, the verify page and
+`midrib`** — the original complaint from 2026-09-02. Rows that fit stay on one line, long
+ones wrap inside the viewport, and every row keeps its profile tag on screen.
+
+- **`wrap_to_container` now HUGS BEFORE IT WRAPS**, which is what made it finally work.
+  Kent's rule: *"most scrollingframes should hug short, unwrapped content, and expand to
+  available window/screen size as possible, before forcing wrapping. then they should wrap
+  nicely on that most available space."* The helper had been imposing the cell width on
+  every target unconditionally — so a label that already fitted got wrapped anyway, which is
+  how one-word-per-line survived several rounds of "fixes". Now it sets `wraplength=0`, reads
+  `winfo_reqwidth()` (computed by Tk without any flush, so no synchronous X round-trip), and
+  leaves the target alone if it fits; only an over-long one gets the full budget and wraps
+  to that.
+- **It also never ran at all before that.** `_apply()` was called once at bind time, when the
+  container is still 1px wide, so it bailed on `width<=1`; the container then reached its
+  final size without emitting another `<Configure>`, so nothing re-fired. Added a settled-
+  geometry pass via `after_idle`. The symptom was not a wrong width but the OLD behaviour
+  persisting, which is why two boxes on one page wrapped at two different widths.
+- **Container chosen by measurement rather than a fourth guess.** New `DIAG-verify-wrap`
+  printed the chain: `content=615 canvas=1 scrollframe=1 runwindow.frame=1489 toplevel=1920`.
+  The canvas and the ScrollingFrame never get a width at all — so binding to either could
+  not have worked in any timing, which also corrects my earlier claim that a
+  content↔canvas feedback loop was to blame. `content` has a width but it derives from its
+  children, so sizing children from it is circular. `runwindow.frame` is the shallowest
+  widget whose width comes from the layout, and a new `targets_parent` argument separates
+  what is measured from what is wrapped.
+- **The sort-into-groups page was never wired.** `build_sort_layout` is a separate builder
+  from `build_verify_layout`, so `midrib` still ran off the edge there while the verify page
+  was fixed. Wired to `groupsFrame` (grid column 1, weight 1) with `maxdepth=5`, since those
+  rows nest deeper. `reserve=400` was an explicit guess and has landed about right.
+- **Status window, first message: two remaining causes.** `_wraplength()` asked
+  `self.scroll` BEFORE `self`, i.e. the one widget carrying `grid_propagate(0)` and therefore
+  sitting at a small default, and accepted anything over **120px** as reality — ~140 passes,
+  returns 100, one word per line. Window first now, floor raised to 400. And `_rewrap()` ran
+  only from `_on_resize`, which bails when the size hasn't changed, so a window that reached
+  its size and stayed there never repaired its first message; `add()` now schedules a rewrap
+  after idle, debounced through the same job.
+- **`Progressbar.current()`'s throttle removed.** It was making the wait dialog arrive late —
+  *"showing half painted, then fully painting just before closing, making it not really do
+  what it's there for"*. A late wait is worse than none: the user sees exactly the half-built
+  page it exists to hide, and it now matters structurally because the empty-page guards
+  depend on a live wait. Only the `update_idletasks()` → `update()` swap is kept.
+- **`runcheck`'s preparation wait no longer asks to reveal.** Named by the guard's own new
+  stack line — `EMPTY PAGE (waitdone) | the wait said 'Getting ready to sort…' | called
+  from: … ← sorting_engine.py:651:runcheck`. That wait covers the presort and hands off to
+  `maybesort`, which raises its own wait and builds; asking to reveal on completion asked to
+  reveal a page it never fills. `thenshow=False`.
+- **The empty-page report says something useful now.** `'Run Window'` is every run window's
+  title, so the first version identified nothing (*"Wow; that's not very informative"*).
+  Every occurrence logs at INFO with the **wait's own message** and the task; once per
+  distinct **call path** a WARNING adds the azt-only caller trail. The task is found by
+  walking up to four hops, since a run window is `ui.Window(task_window)` and the task hangs
+  off its parent.
+- **`availablexy`'s flooring message rewritten** after a full run showed the sibling total
+  climbing monotonically, +126px per sort-group button, `1033 → 2671` against a 1170px
+  screen, with maxheight following it through zero (`137 → 11 → −115 → … → −1501`). One
+  condition, not two — an earlier same-day version of this line split on the sign and claimed
+  a small positive value meant the page was genuinely full. It doesn't: eleven buttons at
+  126px exceed the screen **because they are in a scroller**, where that is normal.
+  `_measure_siblings` is subtracting scrollable CONTENT from the screen as though it were
+  consumed real estate; its guard skips siblings whose immediate parent is a
+  Canvas/ScrollingFrame, but the walk goes UP, so enclosing levels are still summed.
+- **Tried and reverted the same session: capping `ScrollingFrame` from its parent's width.**
+  It clipped the status board's progress table to ~110px. "Ask the parent" moves the
+  content-drives-box circularity up one level rather than breaking it — a parent that is
+  itself content-sized hands down a small number — and a `MIN_PLAUSIBLE=300` floor let a bad
+  number through while looking like caution. Filed as
+  `azt/agenda/scrollframe_sizes_from_layout.md`, whose first task is now establishing, by
+  measurement per page, which widget has a layout-derived width all the way up.
+- Logging: `PART_BYTES` back to **10MB** (settled by measurement — 3.5MB of parts compress
+  22:1, so part size never governed emailability, only how big one file is to read);
+  `restartmark.mark()` stamps **`'test': True`** via a now-public `logsetup.under_pytest()`,
+  so a marker says it came from a test instead of leaving that to be inferred from a missing
+  version.
+
 # Version 1.15.14
 
 `pytest` green. **Four NBQ pages were avoided in one of Kent's runs** — the first hard
