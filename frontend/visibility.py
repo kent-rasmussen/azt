@@ -47,6 +47,7 @@ can break the app is worse than no watchdog.
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 from utilities.i18n import _
+from utilities.error_handler import notify_user as NotifyUser
 from frontend import ui
 
 
@@ -133,6 +134,64 @@ def anything_viewable(*extra):
     """True if the user can see SOME window right now. See first_viewable for
     which windows count and why."""
     return first_viewable(*extra) is not None
+
+
+_reported_empty=set()
+
+
+def report_empty_page(where,window=None,outcome=''):
+    """An empty page was detected. Log it, and TELL THE USER WE NOTICED.
+
+    Kent's framing (2026-09-03), which is the reason this exists rather than
+    just more log lines: neither NBQ ("nothing but Quit") nor NWAA ("no window
+    at all") is finished until they stop appearing, and the two are the same
+    finding — an empty page — differing only in what the guard did about it. So
+    the useful distinction is not which symptom appeared, but WHETHER WE SAW IT:
+
+      * noticed  → "go to the log and report the line showing the problem"
+      * unnoticed → "find the stack trace and start figuring it out from cold"
+
+    A notice turns every remaining instance into the first kind. That is worth
+    more than any particular remedy, because the remedy is caller-specific:
+    whether an empty page should be rebuilt, skipped, or merely revealed later
+    depends on what the caller was trying to do, and a guard cannot know that.
+    Detection and notification are the guard's whole job.
+
+    THE STATUS WINDOW, NOT THE FRAME. notify_user appends to the one session
+    status window — a separate Toplevel that surfaces itself above a fullscreen
+    kiosk page. Gridding a notice into the page's `frame` would make
+    has_content() read the page as BUILT and hand the other two guards a
+    legitimate-looking reveal target; see the capitalised warning in
+    has_content. This is the same reason QuitOnlyGuard raises a wait rather than
+    gridding a message.
+
+    Once per `where` per session: these fire from polled guards and per-reveal
+    hooks, and a notice that repeats teaches the user to ignore it.
+
+    Never raises: a diagnostic that dies on the interesting case is worse than
+    none (the isrunwindow lesson)."""
+    try:
+        if where in _reported_empty:
+            return
+        _reported_empty.add(where)
+        try:
+            title=window.title() if window is not None else '?'
+        except Exception:
+            title='?'
+        log.warning("EMPTY PAGE (%s): %r had nothing in its frame%s. This line "
+                "is the report — grep EMPTY PAGE.",
+                where,title,(' — '+outcome) if outcome else '')
+        NotifyUser(text=_("A page had nothing on it, so {name} did not show "
+                    "it. Your work and your data are fine.\n\nIf you were "
+                    "expecting something here, please send your log (Help "
+                    "▸ Email my log to support) — what happened is recorded "
+                    "in it.").format(name=_("A-Z+T")),
+                    title=_("An empty page was skipped"))
+    except Exception as e:
+        try:
+            log.info("report_empty_page failed: %s",e)
+        except Exception:
+            pass
 
 
 def has_content(w):

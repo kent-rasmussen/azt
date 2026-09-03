@@ -19,9 +19,48 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
-# Version 1.15.12
+# Version 1.15.13
 
-`pytest` green.
+`pytest` green. The logging build Kent is about to run one test against — the venv-part fix
+and the 1MB cap are what that test is for.
+
+- **The venv relaunch no longer starts a new log part.** Every run was leaving a ~370-byte
+  `_001` holding exactly two lines — "Relaunching inside the virtual environment" and the
+  restart marker — with the real run in `_002` (Kent 2026-09-03). The per-process rule is
+  paid for by the CONFIRMED restart, where the predecessor deliberately stays alive until the
+  successor signals and both log throughout; the venv relaunch is not that, since the parent
+  writes those two lines and exits. So a new part bought nothing and cost noise in the
+  directory plus an extra member in every pack. Gated on `AZT_VENV_RELAUNCHED`
+  specifically — NOT `launched_by_restart()`, which is true for both kinds of continuation
+  and only one of them is safe to share a file with. Safe because the handler opens
+  `mode='a'`, so it appends after those two lines. Worst case is a two-line interleave in
+  the moment between the parent's last write and its exit.
+- **`PART_BYTES` temporarily 1MB** (was 10MB), so a rollover is observable in a normal
+  session — at 10MB it needs a very long or very chatty run, which is why the rolling
+  machinery had never actually been watched work. What 1MB proves is `_nextpart` allocating
+  FORWARD and `sweep` keeping `RUNS_KEPT` runs, neither of which depends on the threshold,
+  so this is a test convenience and not yet a policy decision. Kent to decide after the run;
+  the trade is recorded in `azt/agenda/modernize_logging_rotation.md` (10MB = few large
+  parts; 1MB = more parts per run, numbered forward, so a long day can reach `_020`).
+- **An empty page now says so on screen**, not only in the log. New
+  `visibility.report_empty_page(where, window, outcome)` logs `EMPTY PAGE` (the grep token)
+  and posts one status-window notice per site per session, from all three detection points:
+  `deiconify` (which still reveals), `waitdone` and `on_quit` (which now decline).
+  - Kent's framing, and the reason this is worth more than another log line: NBQ ("nothing
+    but Quit") and NWAA ("no window at all") are the same finding — an empty page — differing
+    only in what the guard did about it. The useful distinction is whether **we noticed**:
+    noticed means "go to the log and report the line", unnoticed means "find the stack trace
+    and start from cold". A notice turns every remaining instance into the first kind.
+  - It also accepts that the REMEDY is caller-specific — rebuild, skip, or reveal later
+    depends on what the caller was attempting, and a guard cannot know that. Detection and
+    notification are the guard's whole job.
+  - Goes to the STATUS WINDOW, never into the page's `frame`: a notice gridded into `frame`
+    would make `has_content()` read the page as built and hand the other two guards a
+    legitimate-looking reveal target. Same reason `QuitOnlyGuard` raises a wait rather than
+    gridding a message. User-facing text says the page was skipped, the data is fine, and to
+    send the log.
+
+# Version 1.15.12
 
 - **Stopped predicting widths: one `<Configure>`-driven wrapper for both pages.** New
   `ui.wrap_to_container(container, cols, reserve)` binds on a container and, on each real

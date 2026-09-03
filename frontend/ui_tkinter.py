@@ -1427,6 +1427,8 @@ class Exitable():
                             "is empty, and an empty page shows nothing but "
                             "Quit. If a page is missing here, this is why.",
                             self.parent,self)
+                    from frontend.visibility import report_empty_page
+                    report_empty_page('on_quit',self.parent,'not revealed')
                 else:
                     self.parent.deiconify()
         self.cleanup()
@@ -1619,6 +1621,8 @@ class Waitable(Exitable):
                     "frame, and an empty page shows nothing but Quit. Whatever "
                     "raised this wait finished without content; if a page is "
                     "missing here, this is why.",parent)
+            from frontend.visibility import report_empty_page
+            report_empty_page('waitdone',parent,'not revealed')
         elif ww.do_reveal and parent is not None and parent.winfo_exists() \
                 and not parent.exitFlag.istrue() and parent is not parent._root():
             _u=time.perf_counter()
@@ -2140,14 +2144,44 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
             value=int(value*100)
         if 0 <= value <= 100:
             self['value']=value
-        # LOAD-BEARING (1.3.27): this per-tick synchronous flush also COMMITS the
-        # Wayland surface, so it's what paints the window during the build. Guarding
-        # it (1.3.26) removed the large-slice deadlock but left the window unpainted
-        # (nothing commits) — confirmed: no visible UI at 150/page. So it stays; the
-        # freeze is avoided by keeping slices small (where it doesn't deadlock). A
-        # non-deadlocking per-tick commit (e.g. update(), which DRAINS the event
-        # queue instead of only flushing) is the #3 fix needed to enable large slices.
-        self.update_idletasks()
+        # LOAD-BEARING (1.3.27): this per-tick commit also COMMITS the Wayland
+        # surface, so it's what paints the window during the build. Guarding it
+        # (1.3.26) removed the large-slice deadlock but left the window
+        # unpainted (nothing commits) — confirmed: no visible UI at 150/page. So
+        # it cannot simply be skipped; that direction is tried and reverted.
+        #
+        # DOING THE #3 FIX THIS COMMENT ASKED FOR (Kent wedged here again
+        # 2026-09-02: faulthandler shows update_idletasks at this line, reached
+        # via progress → waitprogress → sort_buttons:497 during a verify build,
+        # with a half-drawn wait dialog. It is freeze point 3 in
+        # azt/agenda/wayland_freeze_audit.md, listed there since June and never
+        # closed; 1.3.24 scope-guarded the same call in Wait.__init__ and left
+        # this one). Two changes, both aimed at the same hazard:
+        #
+        #   1. update(), not update_idletasks(). update_idletasks flushes idle
+        #      work and BLOCKS waiting on the server; update() DRAINS the event
+        #      queue, so the client can answer the compositor's configure/frame
+        #      requests instead of sitting on them — which is the half of the
+        #      mutual wait we control. This is what the old comment prescribed.
+        #   2. AT MOST ~10 COMMITS A SECOND. The deadlock needs a synchronous
+        #      round-trip to land WHILE a window-state transition is in flight,
+        #      so it is a coincidence with a probability — and one round-trip per
+        #      item on a 150-item page is 150 chances. Throttling cuts the
+        #      exposure roughly in proportion while keeping the bar visibly
+        #      moving. 100 always commits, so the finished state paints.
+        #
+        # HONEST LIMIT: update() is NOT proven safe here — it deadlocked in
+        # waitdone earlier the same day (with a deiconify in flight). This
+        # reduces exposure and follows the documented prescription; it is not a
+        # proof. The real fix is the audit's Phase 1/2 (stop needing synchronous
+        # round-trips at all), filed as its own item.
+        now=time.perf_counter()
+        if value>=100 or now-getattr(self,'_last_commit',0.0)>=0.1:
+            self._last_commit=now
+            try:
+                self.update()
+            except tkinter.TclError:
+                pass #destroyed mid-build; the caller's canary handles it
     def __init__(self, parent, *args, **kwargs):
         if 'orient' not in kwargs:
             kwargs['orient']='horizontal' #or 'vertical'
@@ -2877,6 +2911,13 @@ class Window(Toplevel):
                         "control is Exit. Build content before revealing, or "
                         "cover the gap with waiting(thenshow=True).",
                         self.title())
+                # AND SAY SO ON SCREEN. This one still REVEALS (see above), so
+                # the user is looking at the bad page — which is exactly the
+                # case where they need to know it was noticed, rather than
+                # concluding the app is broken and unrecoverable.
+                from frontend.visibility import report_empty_page
+                report_empty_page('deiconify',self,
+                                'revealed anyway (caller has no retry)')
         except Exception:
             pass #a diagnostic must never stop a reveal
         return super().deiconify()

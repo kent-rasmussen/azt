@@ -85,7 +85,18 @@ def dorootloghandlers(self):
     tryfilehandler(self)
 RUN_ENV='AZT_LOG_RUN'      #run id, inherited by restarts
 RUNS_KEPT=5                #whole runs retained, newest first
-PART_BYTES=10*1024*1024    #size cap per part
+PART_BYTES=1*1024*1024     #size cap per part — 1MB TEMPORARILY (Kent
+                           #2026-09-02: "set PART_BYTES to 1MB for now, so I can
+                           #see the new roll. then I'll decide"). At 10MB a roll
+                           #needs a very long or very chatty run, which is why
+                           #the rolling machinery had never been watched work.
+                           #What 1MB proves is _nextpart allocating FORWARD and
+                           #sweep keeping RUNS_KEPT runs; neither depends on the
+                           #threshold, so the value is a test convenience, not a
+                           #policy decision. Revisit: 10MB means few large parts
+                           #(easier to read, fewer files); 1MB means more parts
+                           #per run, numbered forward, so a long day can reach
+                           #_020. See azt/agenda/modernize_logging_rotation.md.
 TOTAL_BYTES=200*1024*1024  #drop whole runs, oldest first, above this
 
 
@@ -136,6 +147,28 @@ def _nextpart(logdir,runid):
             highest=max(highest,int(p.stem.rsplit('_',1)[1]))
         except (IndexError,ValueError):
             continue
+    # EXCEPT AFTER A VENV RELAUNCH, WHICH CONTINUES THE PART IT INHERITED.
+    # The per-process rule above is paid for by the CONFIRMED restart, where the
+    # predecessor deliberately stays alive until the successor signals and both
+    # log the whole time. The venv relaunch is not that: the parent writes
+    # exactly two lines — "Relaunching inside the virtual environment" and the
+    # restart marker — and exits. Nothing follows it into the file, so a new
+    # part buys nothing and costs a ~370-byte _001 on EVERY run, which is noise
+    # in the directory and one more member in every log pack (Kent 2026-09-03:
+    # "is there a reason that is better than just continuing 002 on the third
+    # line, given that the venv relaunch will result in that same two lines
+    # (only) each time?" — there isn't).
+    #   AZT_VENV_RELAUNCHED, not launched_by_restart(): the latter is TRUE for
+    # both kinds of continuation (it also matches `--restart`), and only this
+    # one is safe to share a file with. Keeping them distinct here is the whole
+    # point.
+    #   Safe because the handler opens mode='a': continuing appends after those
+    # two lines rather than truncating them. If the inherited part is already at
+    # the cap, _PartRollingHandler rolls forward on the next record as usual.
+    #   Worst case is those two lines interleaving with the successor's first
+    # ones, in the moment between the parent's last write and its exit.
+    if highest and os.environ.get('AZT_VENV_RELAUNCHED'):
+        return highest
     return highest+1
 
 
