@@ -1423,12 +1423,10 @@ class Exitable():
                 if self.parent.iswaiting():
                     pass #a wait is already covering the screen; it will reveal
                 elif not has_content(self.parent):
-                    log.info("not revealing %s on the way out of %s: its frame "
-                            "is empty, and an empty page shows nothing but "
-                            "Quit. If a page is missing here, this is why.",
-                            self.parent,self)
                     from frontend.visibility import report_empty_page
-                    report_empty_page('on_quit',self.parent,'not revealed')
+                    report_empty_page('on_quit',self.parent,'not revealed',
+                            'closing {}'.format(
+                                type(getattr(self,'task',self)).__name__))
                 else:
                     self.parent.deiconify()
         self.cleanup()
@@ -1617,12 +1615,21 @@ class Waitable(Exitable):
                 and not parent.exitFlag.istrue()
                 and parent is not parent._root()
                 and not has_content(parent)):
-            log.info("waitdone: NOT revealing %s — nothing was built in its "
-                    "frame, and an empty page shows nothing but Quit. Whatever "
-                    "raised this wait finished without content; if a page is "
-                    "missing here, this is why.",parent)
+            # No line of its own: report_empty_page now logs every occurrence
+            # (naming the wait's message and the task) plus one stack per
+            # distinct caller. The line that used to be here named the widget
+            # path — ".!taskwindow.!taskwindow.!window3" — which identified
+            # nothing.
             from frontend.visibility import report_empty_page
-            report_empty_page('waitdone',parent,'not revealed')
+            # The wait's own message names the operation that finished with
+            # nothing to show ("Gathering groups", "Setting up the sort page…"),
+            # which is the single most useful fact available here.
+            try:
+                said=ww.l1['text']
+            except Exception:
+                said=''
+            report_empty_page('waitdone',parent,'not revealed',
+                            'the wait said {!r}'.format(said) if said else '')
         elif ww.do_reveal and parent is not None and parent.winfo_exists() \
                 and not parent.exitFlag.istrue() and parent is not parent._root():
             _u=time.perf_counter()
@@ -1892,7 +1899,8 @@ def _floored_summary(attr):
             "lines and unreachable buttons.",
             attr,d['n'],d['worst'],d['total'],d['sib'][0],d['sib'][1])
 _app_root = None  # the application's main themed ui.Root (set in Root.post_tk_init)
-def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2):
+def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
+                    targets_parent=None):
     """Keep descendant labels'/buttons' `wraplength` matched to the container's
     REAL width, recomputed on <Configure>.
 
@@ -1936,6 +1944,13 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2):
 
     Returns the apply function, so a caller that knows a build has finished can
     call it once more."""
+    # MEASURE ONE WIDGET, WRAP THE CHILDREN OF ANOTHER. Needed because binding
+    # both to a ScrollingFrame's `content` collapsed the verify page to ~2
+    # characters per line (Kent 2026-09-03): content carries grid_propagate(0)
+    # and is sized BY its children, so measuring it and then sizing its children
+    # from that measurement is circular. Measure the CANVAS — the fixed viewport
+    # — and wrap what scrolls inside it.
+    targets_parent=container if targets_parent is None else targets_parent
     state={'w':-1,'n':-1}
     def _collect(parent,out,depth=0):
         if depth>maxdepth:
@@ -1962,7 +1977,7 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2):
         if width<=1: #not laid out yet; a later <Configure> will carry the size
             return
         targets=[]
-        _collect(container,targets)
+        _collect(targets_parent,targets)
         if abs(width-state['w'])<8 and len(targets)==state['n']:
             return
         state['w']=width; state['n']=len(targets)
@@ -1989,6 +2004,23 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2):
     except Exception as e:
         log.info("wrap_to_container: could not bind <Configure> (%s)",e)
     _apply()
+    # AND ONCE AFTER IDLE — without this the whole helper could silently never
+    # run (Kent 2026-09-03). The immediate call above lands BEFORE geometry has
+    # settled, so the container is still 1px wide and _apply bails on
+    # `width<=1`; the container then reaches its final size without emitting a
+    # further <Configure>, so nothing re-fires and no wraplength is ever set.
+    # The symptom is not a wrong width but the OLD behaviour persisting —
+    # Label.wrap()'s per-label availablexy fallback, which is why two boxes on
+    # one page wrapped at two different widths (~447px and ~533px) instead of
+    # sharing one.
+    #   after_idle, not update_idletasks: no synchronous X round-trip, per
+    # azt/agenda/wayland_freeze_audit.md. Idempotent — _apply's hysteresis makes
+    # a redundant call free.
+    try:
+        container.after_idle(_apply)
+    except Exception as e:
+        log.info("wrap_to_container: could not schedule the settled-geometry "
+                "pass (%s)",e)
     return _apply
 def default_root():
     """Return the application's main themed ui.Root — the real program's root,
@@ -2333,26 +2365,45 @@ class Text(TextBase):
         if i and self.text:
             self.wrap()
     def wrap(self):
-        """Set the wrap width, IGNORING a maxwidth nobody could measure.
+        """Set the wrap width. AN EXPLICIT `wraplength` WINS; maxwidth is the
+        fallback for callers that have no better number.
 
-        The min() below is right when maxwidth is real — the label shouldn't
-        wrap wider than the room it has. It is actively harmful when maxwidth
-        came from the MIN_AVAILABLE floor: 200px is not a measurement, and
-        min(asked,200) wraps text after 3-4 letters inside a button that is
-        still full width, leaving the label in a narrow strip with a large gap
-        to the cell edge — the field symptom (Kent 2026-09-02). So when
-        availablexy says it could not measure, use what the caller ASKED for,
-        which was computed from the window or the screen; failing that, the work
-        area, which is at least a number someone measured."""
-        self.availablexy()
+        THIS USED TO TAKE min(asked, maxwidth), AND THAT WAS THE TRAP (Kent
+        2026-09-03, "go ahead and fix wrap()"). `availablexy`'s maxwidth is
+        screen-minus-siblings — the right question ONLY for a fullscreen kiosk
+        page. Everywhere else the caller knows the box it is in, and min() threw
+        that knowledge away whenever the screen-derived figure happened to be
+        smaller. Three separate bugs in two days were that one line:
+
+          * the status window computed its own width in `_wraplength()`
+            explicitly to avoid the screen figure, set it, called wrap(), and
+            had it overridden — with a comment asserting min() would "bound it
+            to the window", which is not what min() does. Its `_rewrap()`, whose
+            whole purpose was repairing the first message once the window was
+            mapped, re-clobbered its own good value every time.
+          * chooser button labels wrapped at 3-4 letters inside full-width
+            cells.
+          * frames clamped to 200px boxes — the "unreachable buttons" half of
+            the same `availablexy` warning.
+
+        Two call sites had worked around it by hand and a third had documented
+        the wrong mental model of it, which is the signal that the default was
+        backwards rather than that three callers were careless.
+
+        maxwidth is still used when the caller has NOT set a wraplength, and a
+        floored (unmeasured) maxwidth still falls back to the work area rather
+        than to 200px, which is a number nobody measured."""
         asked=getattr(self,'wraplength',None)
-        if not self.maxwidth_measured:
-            wraplength=asked or self.workarea()[0]
-        elif asked is None:
-            wraplength=self.maxwidth
-        else:
-            wraplength=min(asked,self.maxwidth)
-        self.config(wraplength=wraplength)
+        if asked:
+            # The caller measured something real. Don't second-guess it: a label
+            # wider than its box is a visible, reportable bug, whereas a label
+            # silently narrowed to a few characters looks like a font problem
+            # and has cost days.
+            self.config(wraplength=asked)
+            return
+        self.availablexy()
+        self.config(wraplength=self.maxwidth if self.maxwidth_measured
+                    else self.workarea()[0])
     def render(self, **kwargs):
         # log.info(f"Calling render {kwargs=}")
         if not self.renderer.isactive:

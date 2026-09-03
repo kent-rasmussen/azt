@@ -83,6 +83,17 @@ def mark(reason=None):
             'platform':platform.system(),
             'argv':list(sys.argv),
             }
+    # SAY IT, don't leave it to be inferred (Kent 2026-09-03: "can we not
+    # explicitly know when the restart is spawned by a test?"). The test suite
+    # exercises mark/report/clear against the real marker path, so its markers
+    # appear in the log alongside real ones — and if a test run is interrupted
+    # before clear(), one is left behind and the next real start reports a
+    # restart that never happened. That was diagnosable already (a test marker
+    # has version None, since the tests don't set __version__) but only by
+    # noticing an ABSENCE, which is the weakest kind of evidence.
+    #   Only stamped when true, so a real marker is byte-for-byte what it was.
+    if logsetup.under_pytest():
+        data['test']=True
     try:
         p=_path()
         with open(p,'w',encoding='utf-8') as f:

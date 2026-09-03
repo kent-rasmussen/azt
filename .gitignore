@@ -38,6 +38,10 @@ XLingPaperPDFTemp/**
 __pycache__/**
 *(copy)*
 userlogs/**
+#pytest's own logs (logsetup._test_logdir). Needs its own line: the patterns
+#above contain a slash, so git anchors them to the repo root and they do not
+#match a nested userlogs/.
+tests/userlogs/**
 *test*wav
 excess/**
 images/archive/**

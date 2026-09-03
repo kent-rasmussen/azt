@@ -756,7 +756,68 @@ class SortPresenter(PresenterBase):
                 #   reserve leaves room for the row frame's border/pad and the
                 # profile tag to its right; the illustration is subtracted by the
                 # helper, since compound='left' makes it cost text width.
-                ui.wrap_to_container(buttonframe.content,cols=bc,reserve=96)
+                #   MEASURE THE CANVAS, WRAP THE CONTENT. Binding both to
+                # `content` collapsed the rows to ~2 characters ("be/gg/a/—/'be
+                # /gg/ar'", Kent 2026-09-03): content carries grid_propagate(0)
+                # and is sized BY its children, so measuring it to size those
+                # same children is circular and settles small. The canvas is the
+                # fixed viewport and is the only honest width here.
+                #   MEASURE THE RUN WINDOW'S FRAME. Settled by measurement
+                # rather than by a third guess (DIAG-verify-wrap, Kent
+                # 2026-09-03): content=831 canvas=1 scrollframe=1
+                # runwindow.frame=1470 toplevel=1920 — and on a second page
+                # every one of them was 1.
+                #   So the canvas and the ScrollingFrame have NO WIDTH at build
+                # time, which also corrects my previous reading: measuring the
+                # canvas did not lose to a content↔canvas feedback loop, it
+                # never ran, because wrap_to_container returns early on
+                # width<=1. `content` has a width (831) but it is derived from
+                # its children, so it is unusable by construction — never size a
+                # child from a parent whose size comes from its children.
+                # runwindow.frame is the shallowest widget whose width comes
+                # from the LAYOUT, and the all-1s case is what the <Configure>
+                # binding is for.
+                #   KNOWN IMPRECISION: the frame also holds the group-button
+                # column as a grid sibling (~200px), so this overestimates the
+                # list's share by roughly that much. Deliberate — an over-wide
+                # label is visible and reportable, an under-wide one looks like
+                # a font bug and has cost days — and `reserve` is the dial.
+                ui.wrap_to_container(runwindow.frame,cols=bc,reserve=96,
+                                targets_parent=buttonframe.content)
+                # DIAG verify_wrap_container: WHICH widget has an honest width?
+                # Two guesses have now been wrong, and the second failed for a
+                # structural reason worth writing down: ScrollingFrame sizes its
+                # canvas FROM the content (`if contentrw > self.maxwidth …
+                # width=self.maxwidth`, else it tracks contentrw), so
+                # canvas ← content ← wraplength ← canvas is a CLOSED LOOP that
+                # settles at whatever it started small at and cannot grow. Any
+                # container whose width is derived from its children is
+                # unusable here by construction.
+                #   So print the whole chain once, after idle so the numbers are
+                # real, and pick the widest thing whose width comes from the
+                # LAYOUT rather than from what is inside it. after_idle, not
+                # update_idletasks: no synchronous round-trip (Wayland).
+                def _diag_widths():
+                    try:
+                        w=[]
+                        for name,widget in (('content',buttonframe.content),
+                                        ('canvas',buttonframe.canvas),
+                                        ('scrollframe',buttonframe),
+                                        ('runwindow.frame',runwindow.frame),
+                                        ('toplevel',runwindow)):
+                            try:
+                                w.append('{}={}'.format(name,
+                                            widget.winfo_width()))
+                            except Exception as e:
+                                w.append('{}=?({})'.format(name,e))
+                        log.info("DIAG-verify-wrap widths: %s | bc=%s | "
+                                "reserve=96",' '.join(w),bc)
+                    except Exception as e:
+                        log.info("DIAG-verify-wrap failed: %s",e)
+                try:
+                    runwindow.after_idle(_diag_widths)
+                except Exception:
+                    pass
                 _r=time.perf_counter()
                 buttonframe.resume_configure() # one reflow now the list is whole
                 self._reflow_t+=time.perf_counter()-_r

@@ -185,8 +185,13 @@ class StatusWindow(ui.Window):
         try:
             for w in self.scroll.content.winfo_children():
                 try:
+                    # Directly, NOT via wrap() — see the note in add(). wrap()
+                    # takes min(wraplength, maxwidth), so it re-clobbers the
+                    # window-derived figure with the screen-derived one, which
+                    # is why this re-wrap could never rescue the first message
+                    # it exists for.
                     w.wraplength = n
-                    w.wrap()
+                    w.config(wraplength=n)
                 except Exception:
                     continue # not a wrappable Label; leave it alone
             self.scroll.reflow()
@@ -207,11 +212,40 @@ class StatusWindow(ui.Window):
         l = ui.Label(self.scroll.content, text=line, anchor='w',
                     row=self._row, column=0, sticky='ew')
         try:
-            # Set it BEFORE wrap(): wrap() takes min(self.wraplength, maxwidth)
-            # when the attribute exists, so this bounds it to the window instead
-            # of the screen. See _wraplength.
+            # SET IT DIRECTLY; DO NOT GO THROUGH wrap(). The old code set the
+            # attribute and then called wrap(), on the reasoning that "wrap()
+            # takes min(self.wraplength, maxwidth), so this bounds it to the
+            # window instead of the screen" — but min() does not bound it to the
+            # window, it takes WHICHEVER IS SMALLER. So availablexy's
+            # screen-minus-siblings maxwidth still wins whenever it is the
+            # smaller of the two, which is precisely what happens here as the
+            # list grows: this window gains a sibling per message, maxwidth
+            # walks down, and later messages wrap narrower and narrower.
+            # Kent's screenshot 2026-09-03: one message wrapped at three words
+            # ("An empty / page was / skipped:") while others on the same window
+            # wrapped near full width. Messages stack NEWEST ON TOP, so the bad
+            # one was the FIRST — which picks the second of the two causes
+            # status_window_narrow_wrap.md offered: not accumulation of siblings
+            # (that would make LATER messages worse), but TIMING. It is the
+            # symptom _wraplength's own docstring describes: before the window
+            # is mapped, a ScrollingFrame carries grid_propagate(0) and sits at
+            # some small default, so the first message wraps to a fraction of
+            # the eventual width.
+            #   _rewrap() exists to repair exactly that once the window IS
+            # mapped — and could not, because it called wrap() too and so
+            # re-clobbered its own good figure every time. Both are fixed the
+            # same way.
+            #   NB not covered by the maxwidth_measured guard added the same
+            # day: that rescues a measurement which falls BELOW
+            # MIN_AVAILABLE=200; an unmapped ScrollingFrame's default width is
+            # wrong but plausible, so the floor never engages. A
+            # plausible-but-wrong number needs the caller to stop asking.
+            #   _wraplength() is already the honest figure (this window's own
+            # width, measured only when mapped); wrap() can only make it worse.
+            # The attribute is still set, so anything that later reads
+            # .wraplength sees the same value.
             l.wraplength = self._wraplength()
-            l.wrap()
+            l.config(wraplength=l.wraplength)
         except Exception as e:
             log.info("status message wrap failed: %s", e)
         try:

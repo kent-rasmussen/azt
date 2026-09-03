@@ -265,7 +265,22 @@ class Sort(Categories):
             # hole, so that guarantee is the precondition for doing this here.
             try:
                 if w is not None and not w.winfo_viewable():
-                    w.wait(msg=_("Getting ready to sort…"),thenshow=True)
+                    # thenshow=FALSE: this is a PREPARATION wait, and it does
+                    # not build the page. Both callers drive_work() and then
+                    # hand off — runcheck to maybesort, which raises its OWN
+                    # wait ("Setting up the sort page…") and builds there. So
+                    # asking to reveal on completion asked to reveal a page this
+                    # wait was never going to fill: before the waitdone guard
+                    # that was a genuine empty flash between the two waits, and
+                    # after it, it is the guard declining every single time.
+                    #   Named by the guard's own stack (Kent 2026-09-03):
+                    #     EMPTY PAGE (waitdone) | the wait said 'Getting ready
+                    #     to sort…' | called from: … ← sorting_engine.py:651:
+                    #     runcheck
+                    # which is the caller-specific remedy the notice was built
+                    # to make findable. The page still gets revealed — by the
+                    # wait that actually builds it.
+                    w.wait(msg=_("Getting ready to sort…"),thenshow=False)
             except Exception as ex:
                 log.info("run window cover in _get_safe_window: %s", ex)
             return w

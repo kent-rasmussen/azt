@@ -82,21 +82,36 @@ def dorootloghandlers(self):
     console.setLevel(0) #Let the loglevel determine what to show
     console.setFormatter(logformat('simpleformat'))
     self.addHandler(console)
-    tryfilehandler(self)
+    # Under pytest, log to tests/userlogs/ instead of the user's directory —
+    # see _test_logdir for why (a test run was minting run ids in userlogs/ and
+    # could sweep real app logs away). Gated on the AUTOMATIC install only, so a
+    # test calling tryfilehandler directly still controls its own destination.
+    tryfilehandler(self,logdir=_test_logdir() if under_pytest() else None)
 RUN_ENV='AZT_LOG_RUN'      #run id, inherited by restarts
 RUNS_KEPT=5                #whole runs retained, newest first
-PART_BYTES=1*1024*1024     #size cap per part — 1MB TEMPORARILY (Kent
-                           #2026-09-02: "set PART_BYTES to 1MB for now, so I can
-                           #see the new roll. then I'll decide"). At 10MB a roll
-                           #needs a very long or very chatty run, which is why
-                           #the rolling machinery had never been watched work.
-                           #What 1MB proves is _nextpart allocating FORWARD and
-                           #sweep keeping RUNS_KEPT runs; neither depends on the
-                           #threshold, so the value is a test convenience, not a
-                           #policy decision. Revisit: 10MB means few large parts
-                           #(easier to read, fewer files); 1MB means more parts
-                           #per run, numbered forward, so a long day can reach
-                           #_020. See azt/agenda/modernize_logging_rotation.md.
+PART_BYTES=10*1024*1024    #size cap per part. SETTLED 2026-09-03 after
+                           #measurement, and the reasoning is worth keeping
+                           #because two criteria turned out not to apply:
+                           # * ATTACHMENT SIZE DOESN'T APPLY. Kent measured 3.5MB
+                           #   of parts compressing to 157kB in the tar.xz —
+                           #   about 22:1 — and writelzma() bundles the whole run
+                           #   however it is split. So the cap never governed
+                           #   what gets emailed, only how big one file is to
+                           #   open. (An earlier 10MB-field/1MB-dev split rested
+                           #   on the opposite assumption and is retired.)
+                           # * LOSS DOESN'T APPLY EITHER: parts roll FORWARD, so
+                           #   _001 keeps the version banner whatever the cap is,
+                           #   and nothing is overwritten.
+                           #What survives is HAND-READING, the one cost actually
+                           #observed: at 1MB a routine 3.5MB run is four files
+                           #and a busy day is dozens, and Kent spent a session
+                           #working out which part held what. 10MB holds
+                           #essentially every real run in ONE file, leaving the
+                           #cap to do the job it is actually for — bounding a
+                           #RUNAWAY log — rather than splitting routine ones.
+                           #1MB was a temporary test value so a roll could be
+                           #watched at all (verified: _003 → _004, forward).
+                           #See azt/agenda/modernize_logging_rotation.md.
 TOTAL_BYTES=200*1024*1024  #drop whole runs, oldest first, above this
 
 
@@ -210,7 +225,50 @@ def sweep(logdir=None,runid=None):
         log.info("log sweep skipped: {}".format(e))
 
 
-def tryfilehandler(self,lessiso=None):
+def under_pytest():
+    """Are we running inside the test suite? PUBLIC — restartmark stamps it into
+    the marker too, so a marker can SAY it came from a test instead of leaving
+    the reader to infer it from a missing version (Kent 2026-09-03: "can we not
+    explicitly know when the restart is spawned by a test?").
+
+    Three signals because no one of them is reliable at IMPORT time, which is
+    when the root handlers get installed: PYTEST_CURRENT_TEST only exists once a
+    test is running, sys.modules is only populated if pytest imported first (it
+    normally has), and argv[0] misses `python -m pytest`."""
+    try:
+        return bool('pytest' in sys.modules
+                or os.environ.get('PYTEST_CURRENT_TEST')
+                or os.path.basename(sys.argv[0] if sys.argv else ''
+                                    ).startswith('pytest'))
+    except Exception:
+        return False
+
+
+def _test_logdir():
+    """`tests/userlogs/` — where a pytest run's logs belong.
+
+    NOT the user's userlogs/, and NOT nowhere (Kent 2026-09-03: "do we really
+    not want pytest logging anything? wouldn't using tests/userlogs/ for this be
+    better?" — right on both counts; a failing test's log is worth having, it
+    just isn't an app run).
+
+    What went wrong without this: importing logsetup installs a file handler, so
+    a test run wrote into the real userlogs/ as though it were an app run,
+    minting its own run id — which is the puzzling `_001` that appeared while
+    the app was writing `_003`, full of _FakeWindow objects, SimpleNamespace
+    fakes and monkeypatched argv.
+
+    THE CONFUSION WAS THE SMALL HALF: sweep() keeps RUNS_KEPT=5 whole runs and
+    every pytest invocation counts as one, so half a dozen test runs in a day
+    could sweep away every real app log — destroying the field-diagnosis
+    capability this logging work exists to build, silently. Sweeping still
+    happens HERE, which is wanted: the test directory stays bounded too."""
+    d=pathlib.Path(__file__).resolve().parent.parent.joinpath('tests','userlogs')
+    d.mkdir(parents=True,exist_ok=True)
+    return d
+
+
+def tryfilehandler(self,lessiso=None,logdir=None):
     """One file per part of one run; retention counted in RUNS, not rollovers.
 
     Replaces RotatingFileHandler(mode='w', maxBytes=500k, backupCount=5) plus an
@@ -221,7 +279,11 @@ def tryfilehandler(self,lessiso=None):
     and ignored, for old callers."""
     from utilities import file as _file
     try:
-        logdir=_file.getlogdir()
+        # An explicit logdir wins — that is how the logging tests point the
+        # rolling/sweeping machinery at a tmp_path, and it must not be
+        # second-guessed here.
+        if logdir is None:
+            logdir=_file.getlogdir()
         runid=_runid()
         filename=logdir.joinpath('log_{}_{:03d}.txt'.format(
                     runid,_nextpart(logdir,runid)))

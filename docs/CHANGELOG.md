@@ -19,6 +19,63 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.14
+
+`pytest` green. **Four NBQ pages were avoided in one of Kent's runs** — the first hard
+evidence the guards catch real events rather than hypothetical ones. Everything here follows
+from what that log then failed to tell him.
+
+- **`Label.wrap()` no longer overrides a caller that measured its own width.** It took
+  `min(asked, maxwidth)`, and `availablexy`'s maxwidth is screen-minus-siblings — the right
+  question ONLY for a fullscreen kiosk page. Everywhere else the caller knows the box it is
+  in, and `min()` discarded that knowledge whenever the screen-derived figure was smaller.
+  **One line, three bugs in two days:**
+  - the status window computed its own width in `_wraplength()` precisely to avoid the screen
+    figure, set it, called `wrap()`, and had it overridden — with a comment asserting `min()`
+    would "bound it to the window", which is not what `min()` does. Its `_rewrap()`, whose
+    entire purpose is repairing the first message once the window is mapped, re-clobbered its
+    own good value every time, which is why that repair never worked.
+  - chooser labels wrapping at 3–4 letters inside full-width cells.
+  - frames clamped to 200px boxes — the "unreachable buttons" half of the same warning.
+  - Two call sites had hand-worked around it and a third documented the wrong model of it;
+    that's the signal the DEFAULT was backwards, not that three callers were careless. Now an
+    explicit `wraplength` wins outright and `maxwidth` is the fallback for callers with no
+    better number. A label wider than its box is a visible, reportable bug; a label silently
+    narrowed to a few characters looks like a font problem and has cost days.
+- **Status window: the bad wrap was the FIRST message, not the last.** Kent corrected my
+  reading — messages stack newest-on-top — which picks the *timing* cause over the
+  sibling-accumulation one: before the window is mapped a `ScrollingFrame` sits at a small
+  default, exactly as `_wraplength`'s own docstring warns. `add()` and `_rewrap()` both now
+  set `wraplength` directly instead of via `wrap()`. Note this was NOT covered by the
+  `maxwidth_measured` guard added the day before: that rescues a measurement below
+  `MIN_AVAILABLE=200`, and an unmapped ScrollingFrame's default is wrong but plausible, so
+  the floor never engages.
+- **`wrap_to_container` was measuring the wrong widget on the verify page.** I bound it to
+  `buttonframe.content` — the frame that scrolls *inside* the viewport. It carries
+  `grid_propagate(0)` and is sized BY its children, so measuring it to size those same
+  children is circular and settles small: rows collapsed to ~2 characters
+  (`be/gg/a/—/'be/gg/ar'`). New `targets_parent` argument separates what is measured from
+  what is wrapped; the verify page now measures `buttonframe.canvas`, the fixed viewport.
+- **The empty-page report said nothing useful, twice over.** `'Run Window'` is every run
+  window's title, and the site lines named the widget path
+  (`.!taskwindow.!taskwindow.!window3`) — so four avoided pages produced four lines that
+  identified none of them, and a single deduped report line. Kent: *"Wow; that's not very
+  informative."* Rebuilt around what the caller is actually hunting:
+  - Every occurrence now logs at INFO with the **wait's own message** and the task —
+    `EMPTY PAGE (waitdone) | not revealed | the wait said 'Gathering groups' | task SortV,
+    window 'Run Window'`. The wait message names the operation that finished with nothing to
+    show, and it was already in `ww.l1['text']`.
+  - Once per **distinct call path**, a WARNING adds the azt-only caller trail
+    (`… ← sorting_engine.py:768:maybesort ← …`), which is what distinguishes one bug hit four
+    times from four bugs. Dedupe was keyed on the site alone, which collapsed Kent's four
+    events into one line and threw away three quarters of the evidence.
+  - The user notice stays once per site: four notices for four pages in one run teaches the
+    user to ignore it.
+  - The sites' own log lines are deleted as duplicates. `NOTHING BUT QUIT` is kept — it is an
+    established grep token in the docs and the agenda.
+  - Own-module frames are dropped by FILENAME, not by a frame count, so the trail can't be
+    silently shifted by an edit to the reporter.
+
 # Version 1.15.13
 
 `pytest` green. The logging build Kent is about to run one test against — the venv-part fix

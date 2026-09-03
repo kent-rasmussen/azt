@@ -44,6 +44,7 @@ Everything here uses only `ui_interface` methods (`winfo_exists`,
 holds for the webview backend too, and every step is wrapped: a watchdog that
 can break the app is worse than no watchdog.
 """
+import traceback
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 from utilities.i18n import _
@@ -136,10 +137,40 @@ def anything_viewable(*extra):
     return first_viewable(*extra) is not None
 
 
-_reported_empty=set()
+_detailed_empty=set() #(site,callpath) → one WARNING-with-stack each
+_notified_empty=set() #site → one USER notice each
 
 
-def report_empty_page(where,window=None,outcome=''):
+def _callers(keep=6):
+    """A compressed trail of the app's own frames above us, innermost first.
+
+    The point of the whole notice is to turn "find the stack trace" into "read
+    the log line", and a line that names only the WINDOW does not do that: every
+    run window is titled 'Run Window', so `EMPTY PAGE (waitdone): 'Run Window'
+    had nothing in its frame` identified nothing (Kent 2026-09-03: "Wow; that's
+    not very informative"). The caller is the thing being hunted, and it is
+    already on the stack.
+
+    azt frames only — tkinter's `callit` and the threading machinery are noise,
+    and the path test works on both platforms (Windows paths are normalised, and
+    the install directory is `azt` there too)."""
+    try:
+        out=[]
+        for f in reversed(traceback.extract_stack()):
+            fn=str(f.filename).replace('\\','/')
+            if '/azt/' not in fn:
+                continue
+            if fn.endswith('/visibility.py'):
+                continue #our own frames; dropped by NAME, not by a frame count
+            out.append('{}:{}:{}'.format(fn.rsplit('/',1)[-1],f.lineno,f.name))
+            if len(out)>=keep:
+                break
+        return ' ← '.join(out) or '?'
+    except Exception:
+        return '?'
+
+
+def report_empty_page(where,window=None,outcome='',detail=''):
     """An empty page was detected. Log it, and TELL THE USER WE NOTICED.
 
     Kent's framing (2026-09-03), which is the reason this exists rather than
@@ -171,16 +202,59 @@ def report_empty_page(where,window=None,outcome=''):
     Never raises: a diagnostic that dies on the interesting case is worse than
     none (the isrunwindow lesson)."""
     try:
-        if where in _reported_empty:
-            return
-        _reported_empty.add(where)
+        # DEDUPE PER PRODUCER, NOT PER SITE. Keying on `where` alone reported
+        # ONE line for four distinct avoided pages in a single run (Kent
+        # 2026-09-03) — and the enriched line is the one carrying the caller, so
+        # collapsing them threw away three quarters of the evidence. The site's
+        # own per-occurrence line still fires every time; this one now fires
+        # once per distinct CALL PATH, which is what "how many producers are
+        # there" needs.
+        #   The user notice stays per SITE: four notices for four pages in one
+        # run teaches them to ignore it.
+        callers=_callers()
+        key=(where,callers)
         try:
             title=window.title() if window is not None else '?'
         except Exception:
             title='?'
-        log.warning("EMPTY PAGE (%s): %r had nothing in its frame%s. This line "
-                "is the report — grep EMPTY PAGE.",
-                where,title,(' — '+outcome) if outcome else '')
+        # WALK UP FOR THE TASK. A run window is ui.Window(task_window), so the
+        # task hangs off its PARENT, not off it — which is why the first line
+        # Kent got said "task ?" (2026-09-03) while naming a window whose title
+        # is 'Run Window' on every page in the app. Bounded walk; the task
+        # window is one hop, and anything deeper is not worth chasing.
+        tasktype=''
+        try:
+            w=window
+            for _hop in range(4):
+                if w is None:
+                    break
+                task=getattr(w,'task',None)
+                if task is not None and task is not w:
+                    tasktype=type(task).__name__
+                    break
+                w=getattr(w,'parent',None)
+        except Exception:
+            tasktype=''
+        bits=['EMPTY PAGE ({})'.format(where)]
+        if outcome:
+            bits.append(outcome)
+        if detail:
+            bits.append(detail)
+        bits.append('task {}, window {!r}'.format(tasktype or '?',title))
+        # EVERY OCCURRENCE gets this much, at INFO — the count is the thing the
+        # per-producer line below cannot give, and the sites' own lines used to
+        # provide it by naming the WIDGET PATH
+        # (".!taskwindow.!taskwindow.!window3"), which identified nothing (Kent
+        # 2026-09-03, twice). Same facts, said usefully.
+        log.info(' | '.join(bits))
+        if key in _detailed_empty:
+            return
+        _detailed_empty.add(key)
+        bits.append('called from: '+callers)
+        log.warning(' | '.join(bits))
+        if where in _notified_empty:
+            return
+        _notified_empty.add(where)
         NotifyUser(text=_("A page had nothing on it, so {name} did not show "
                     "it. Your work and your data are fine.\n\nIf you were "
                     "expecting something here, please send your log (Help "
