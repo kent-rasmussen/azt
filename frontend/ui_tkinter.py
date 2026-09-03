@@ -2195,25 +2195,27 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
         #      queue, so the client can answer the compositor's configure/frame
         #      requests instead of sitting on them — which is the half of the
         #      mutual wait we control. This is what the old comment prescribed.
-        #   2. AT MOST ~10 COMMITS A SECOND. The deadlock needs a synchronous
-        #      round-trip to land WHILE a window-state transition is in flight,
-        #      so it is a coincidence with a probability — and one round-trip per
-        #      item on a 150-item page is 150 chances. Throttling cuts the
-        #      exposure roughly in proportion while keeping the bar visibly
-        #      moving. 100 always commits, so the finished state paints.
-        #
-        # HONEST LIMIT: update() is NOT proven safe here — it deadlocked in
-        # waitdone earlier the same day (with a deiconify in flight). This
-        # reduces exposure and follows the documented prescription; it is not a
-        # proof. The real fix is the audit's Phase 1/2 (stop needing synchronous
-        # round-trips at all), filed as its own item.
-        now=time.perf_counter()
-        if value>=100 or now-getattr(self,'_last_commit',0.0)>=0.1:
-            self._last_commit=now
-            try:
-                self.update()
-            except tkinter.TclError:
-                pass #destroyed mid-build; the caller's canary handles it
+        # A ~10/SECOND THROTTLE WAS TRIED HERE AND DROPPED THE SAME DAY (Kent
+        # 2026-09-03). The reasoning for it was that the deadlock needs a
+        # synchronous round-trip to coincide with a window-state transition, so
+        # fewer round-trips means less exposure. The reasoning against it is
+        # better: this commit is what PAINTS the wait dialog, and throttling it
+        # made the dialog arrive late — "showing half painted, then fully
+        # painting just before closing, making it not really do what it's there
+        # for". A wait that arrives late is worse than none: the user sees
+        # exactly the half-built page the wait exists to hide, and the cover
+        # appears as it stops being needed. It also matters structurally now,
+        # since the empty-page guards depend on a live wait (iswaiting()
+        # suppresses a premature reveal), so a late wait still suppresses
+        # correctly while telling the user nothing.
+        #   So: commit every tick, as before. Only the update_idletasks() →
+        # update() swap is kept, which is what this comment's older half
+        # prescribed anyway. Exposure is managed by not NEEDING the round-trip
+        # (the audit's Phase 1/2), not by doing it more rarely.
+        try:
+            self.update()
+        except tkinter.TclError:
+            pass #destroyed mid-build; the caller's canary handles it
     def __init__(self, parent, *args, **kwargs):
         if 'orient' not in kwargs:
             kwargs['orient']='horizontal' #or 'vertical'
