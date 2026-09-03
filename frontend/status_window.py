@@ -152,11 +152,21 @@ class StatusWindow(ui.Window):
         grid_propagate(0) and sits at some small default, so the FIRST message
         was wrapping to a fraction of the eventual width and only came right when
         the window was resized by hand (Kent 2026-08-27). The width we asked for
-        is the better estimate until reality is available."""
+        is the better estimate until reality is available.
+
+        THE WINDOW FIRST, AND 120px IS NOT A PLAUSIBLE WIDTH. This asked
+        `self.scroll` before `self`, which is backwards: the ScrollingFrame is
+        the one widget here carrying grid_propagate(0), so it is exactly the
+        thing that sits at a small default, while the window's own width comes
+        from the geometry we asked for. And the `> 120` floor accepted that
+        default as reality — ~140px passes, returns 100, and the first message
+        wrapped to one word per line (Kent 2026-09-03, twice). A Messages window
+        is never legitimately narrower than a few hundred pixels, so anything
+        that small is a default being misread as a measurement."""
         try:
             if self.winfo_ismapped():
-                for w in (self.scroll.winfo_width(), self.winfo_width()):
-                    if w and w > 120:
+                for w in (self.winfo_width(), self.scroll.winfo_width()):
+                    if w and w > 400:
                         return w - 40 # scrollbar + a little breathing room
         except Exception as e:
             log.info("status window width probe failed: %s", e)
@@ -246,6 +256,23 @@ class StatusWindow(ui.Window):
             # .wraplength sees the same value.
             l.wraplength = self._wraplength()
             l.config(wraplength=l.wraplength)
+            # AND RE-WRAP ONCE GEOMETRY HAS SETTLED. Setting it correctly here
+            # is not enough for the FIRST message: at that moment the window may
+            # not be mapped, or may be mapped at a default, so _wraplength falls
+            # back to an estimate. _rewrap exists to repair that — but it only
+            # ran from _on_resize, i.e. on a real <Configure> whose size
+            # DIFFERED from the last one, so a window that reaches its size and
+            # stays there never triggered it and the first message kept its
+            # estimate for the life of the session (Kent 2026-09-03).
+            #   Debounced through the same _rewrap_job as _on_resize, so a burst
+            # of messages collapses to one pass over the labels.
+            job=getattr(self,'_rewrap_job',None)
+            if job:
+                try:
+                    self.after_cancel(job)
+                except Exception:
+                    pass
+            self._rewrap_job=self.after_idle(self._rewrap)
         except Exception as e:
             log.info("status message wrap failed: %s", e)
         try:
