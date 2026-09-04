@@ -2034,6 +2034,57 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                     _collect(ch,out,depth+1)
             except Exception:
                 continue
+    def _right_chrome(t,stop):
+        """Total width of everything gridded to the RIGHT of `t`, at every level
+        between `t` and `stop`. Measured, never estimated.
+
+        THIS IS A CONTROL, NOT A MARGIN, and that is why it gets measured.
+        Kent specified it before any of this was written: the refresh/cycle
+        button sits on the RIGHT of each row, so a row that overflows pushes off
+        the page the exact control that would fix it. On the macrosort page the
+        button AND its profile tag were both gone (2026-09-04) — the row was
+        granted the width they needed. "the right sided refresh needs to work
+        more than the left-sided one."
+
+        `reserve` cannot do this job: the same builder produces rows with the
+        button and tag (macrosort) and rows without (the plain sort page), so
+        any single number is wrong for one of them — which is the labelled/
+        unlabelled problem that was already solved on the LEFT by measuring the
+        target's own offset. This is that fix, mirrored.
+
+        Walks UP because the tag and button are usually siblings of the text's
+        PARENT, not of the text: the row nests [label | [play, image, text] |
+        [refresh, tag]]. reqwidth, not winfo_width, so it is correct before the
+        row has ever been mapped and needs no flush (no synchronous X
+        round-trip — azt/agenda/wayland_freeze_audit.md)."""
+        total=0
+        node=t
+        for _hop in range(6):
+            parent=getattr(node,'master',None)
+            if parent is None or node is stop:
+                break
+            try:
+                gi=node.grid_info() or {}
+                nrow=int(gi.get('row',0))
+                ncol=int(gi.get('column',0))
+                nspan=int(gi.get('columnspan',1) or 1)
+                for sib in parent.winfo_children():
+                    if sib is node:
+                        continue
+                    sgi=sib.grid_info() or {}
+                    if not sgi:
+                        continue #not gridded: pack/place, no column to compare
+                    if int(sgi.get('row',-1))!=nrow:
+                        continue
+                    if int(sgi.get('column',-1))<ncol+nspan:
+                        continue #at or left of us
+                    total+=sib.winfo_reqwidth()
+            except Exception:
+                pass
+            if parent is stop:
+                break
+            node=parent
+        return total
     def _apply(event=None):
         try:
             if not container.winfo_exists():
@@ -2065,6 +2116,59 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
             return
         state['w']=width; state['n']=len(targets); state['sig']=sig
         cell=int(width/max(cols,1))
+        # THE SCROLLER'S CAP IS THE REAL CEILING, NOT THE CONTAINER'S WIDTH.
+        #
+        # Two independent sizing authorities is the whole bug. This helper
+        # budgets from `container`, which on the sort page is the entire 1920px
+        # task window, so a row at x=545 was granted 1920-545-120 = 1255px of
+        # text — while the scroller it lives in had a 1034px viewport and no
+        # horizontal scrollbar. The 220px difference is Kent's clipped `rɛgim`
+        # row, cut off mid-word inside the viewport (2026-09-04).
+        #   Cap, never widen: `min` with whatever the container allowed. The cap
+        # can only pull a budget down to what the viewport can actually show, so
+        # this cannot reintroduce the over-wrapping it replaced.
+        #   `capw`, NOT the current canvas width, and that distinction is the
+        # point. Budgeting from the live viewport would close the loop
+        # content→box→viewport→wrap→content, which is exactly the 1440↔1034
+        # oscillation (cellw 1040↔837) running down the tail of that log. capw
+        # is what the scroller MAY grow to — it held at 1479 across every pass —
+        # so wrapping settles once instead of chasing its own result. That is
+        # also Kent's rule in the right order: expand to the available space
+        # first, then wrap against it.
+        scroller=None
+        try:
+            w=targets_parent
+            for _hop in range(6):
+                if w is None:
+                    break
+                if isinstance(w,ScrollingFrame):
+                    scroller=w
+                    break
+                w=getattr(w,'master',None)
+        except Exception as e:
+            log.log(2,"no enclosing scroller found (%s)",e)
+        scrollcap=None
+        if scroller is not None:
+            try:
+                _capw,_caph,_cellw,_cellh,_winw=scroller._caps()
+                # THE WINDOW IS THE CEILING FOR WRAPPING, even though `capw` is
+                # the ceiling for SIZING — and the difference is not a nuance.
+                # capw takes the LARGEST of three candidates on purpose, so the
+                # box may grow into the page's deliberate margins. But one of
+                # those candidates is `maxwidth` from availablexy, which is
+                # screen-minus-siblings and documented to overshoot badly when
+                # the siblings are themselves scrollable content
+                # (azt/agenda/scrollframe_sizes_from_layout.md). Budgeting text
+                # against width the layout cannot actually deliver puts the row
+                # past the viewport edge and clips it: on the macrosort page
+                # capw read 1479 against a viewport of ~1360 (Kent 2026-09-04).
+                #   `winw` is the honest number — the toplevel minus this
+                # scroller's own left offset minus a right allowance — so take
+                # the smaller. Growing MAY be optimistic; wrapping may not.
+                _ceiling=_capw if _winw is None else min(_capw,_winw)
+                scrollcap=_ceiling-getattr(scroller,'yscrollbarwidth',15)
+            except Exception as e:
+                log.log(2,"scroller cap unavailable for wrapping (%s)",e)
         # SAY WHAT WAS COMPUTED, once per container. `reserve` is a caller's
         # estimate of the row chrome it cannot see from where it stands (group
         # label, play button, profile tag, borders), and when it is short the
@@ -2083,9 +2187,9 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
             try:
                 log.info("DIAG-wrap budget: container=%s width=%s cols=%s "
                         "cell=%s reserve=%s → budget=%s (before per-target "
-                        "image subtraction) | %s target(s)",
+                        "image subtraction) | scrollcap=%s | %s target(s)",
                         container,width,cols,cell,reserve,
-                        max(cell-reserve,minimum),len(targets))
+                        max(cell-reserve,minimum),scrollcap,len(targets))
             except Exception:
                 pass
         # HUG, THEN EXPAND, THEN WRAP — Kent's rule (2026-09-03): "most
@@ -2104,6 +2208,7 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         # Tk when the content changes and needs no update()/flush, so this costs
         # no synchronous round-trip — which matters here (see
         # azt/agenda/wayland_freeze_audit.md).
+        applied=[];naturals=[];wrapped=[0]
         for t in targets:
             # SPAN ONLY COUNTS IN THE CONTAINER'S OWN GRID. columnspan is
             # meaningful against `cols`, which describes THIS container — but a
@@ -2158,17 +2263,70 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                 budget=max(width-off-reserve,minimum)
             else:
                 budget=max(cell*span-extra,minimum)
+            # Offset measured inside the SCROLLER this time, not the container:
+            # what the viewport can show this target is the cap less everything
+            # to its left within the scroller (group label, cycle button,
+            # illustration) less the scrollbar.
+            if scrollcap:
+                try:
+                    soff=max(0,t.winfo_rootx()-scroller.winfo_rootx())
+                except Exception:
+                    soff=0
+                budget=max(min(budget,
+                            scrollcap-soff-_right_chrome(t,scroller)),
+                        minimum)
+            applied.append(budget)
             try:
                 t.config(wraplength=0) #unwrapped: what does it actually want?
                 natural=t.winfo_reqwidth()
             except Exception:
                 natural=0
+            naturals.append(natural)
             try:
                 if natural and natural<=budget:
                     continue #step 1: it fits. Leave it unwrapped and hug it.
                 t.config(wraplength=budget) #steps 2-3: all the room, then wrap
+                wrapped[0]+=1
             except Exception:
                 continue
+        # TELL THE SCROLLER, because growth is INVISIBLE to it.
+        #
+        # A scroller recomputes on <Configure> of its content, which fires when
+        # the content's ACTUAL geometry changes. Shrinking does that; growing
+        # does not, because the canvas pins the content frame at its current
+        # width — so only the content's REQUESTED width rises and nothing
+        # schedules a re-measure. Kent's DIAG shows it exactly: cycling to a
+        # shorter word logged `content=955 | canvas 1133→955`, and cycling back
+        # to the longer one logged NOTHING AT ALL, leaving the row clipped at
+        # the smaller canvas (2026-09-04).
+        #   We are the one place that knows a word changed (the text signature
+        # above), so poke the nearest enclosing scroller. `_configure_interior`,
+        # not `reflow()`: the debounced scheduler, because reflow() flushes
+        # synchronously and that is the XWayland deadlock shape.
+        #   No loop: a reflow changes neither the container's width nor the text
+        # signature, so the guard above stops the next pass dead.
+        # WHAT WAS ACTUALLY APPLIED, once per distinct result. The pre-loop
+        # DIAG reports the container's budget BEFORE the per-target offset,
+        # right-chrome and scroller cap come off it, so on the pages that
+        # misbehave it reports a number nothing used — `budget=1800` while the
+        # rows were getting ~830 (Kent's macrosort log, 2026-09-04). An overrun
+        # is then unattributable: too generous a budget and a budget that was
+        # never applied look identical from the log.
+        if applied:
+            try:
+                _sig=(min(applied),max(applied),max(naturals or [0]),
+                    wrapped[0],len(targets),scrollcap)
+                if _sig!=state.get('saidapplied'):
+                    state['saidapplied']=_sig
+                    log.info("DIAG-wrap applied: budget %s-%s | widest natural "
+                            "%s | wrapped %s of %s | scrollcap=%s",*_sig)
+            except Exception:
+                pass
+        try:
+            if scroller is not None:
+                scroller._configure_interior()
+        except Exception as e:
+            log.log(2,"could not ask the scroller to re-measure (%s)",e)
     try:
         container.bind('<Configure>',_apply,add='+')
     except Exception as e:
@@ -2657,11 +2815,26 @@ class Frame(Childof,Gridded,UI,tkinter.Frame):
     def windowsize(self):
         if not hasattr(self,'configured'):
             self.configured=0
-        if self.configured>10:
-            return
         self.availablexy()
         contentrw=self.winfo_reqwidth()
         contentrh=self.winfo_reqheight()
+        # A LOOP GUARD, NOT A LIFETIME BUDGET (Kent 2026-09-04). `configured>10`
+        # used to bail BEFORE measuring, so after ten reconfigures this frame
+        # stopped resizing for the life of the page. Cycling examples spends
+        # that budget quickly, and the symptom is exactly what he saw: swapping
+        # to a shorter word shrank the content but the viewport did not follow,
+        # and swapping back to the longer one left it CUT OFF where it had
+        # displayed correctly before.
+        #   The guard is still wanted — it stops an oscillation where sizing
+        # triggers a <Configure> that triggers sizing — but it should only
+        # suppress repeats at the SAME requested size. A genuine content change
+        # is new information and re-earns the budget.
+        want=(contentrw,contentrh)
+        if want!=getattr(self,'_sized_for',None):
+            self._sized_for=want
+            self.configured=0
+        elif self.configured>10:
+            return
         # Same rule as Label.wrap(): an UNMEASURED max is not a size to clamp
         # to. min(200,content) shrinks the frame to a 200px box whatever it
         # holds, which is the "unreachable buttons" half of what the availablexy
@@ -3492,9 +3665,80 @@ class ScrollingFrame(Frame):
         # if self.content.winfo_reqwidth() > self.content.winfo_width():
         #     # update the canvas's width to fit the inner frame
         #     self.content.config(width=self.content.winfo_reqwidth())
-        if self.content.winfo_reqwidth() != self.canvas.winfo_width():
-            # update the canvas's width to fit the inner frame
-            self.canvas.config(width=self.content.winfo_reqwidth())
+        # THE VIEWPORT MUST BE WIDE ENOUGH TO SHOW THE CONTENT — rows that fit
+        # in the available space "shouldn't wrap, they should show" (Kent
+        # 2026-09-04).
+        #
+        # This set the canvas to EXACTLY the content's requested width, with no
+        # floor, so the viewport was only ever as wide as the content was when
+        # this last ran. A row that grew afterwards — a longer word cycled in —
+        # was then CLIPPED MID-WORD at the old canvas edge, well inside the box,
+        # which is neither the wrap point nor the box's border. It also made the
+        # behaviour asymmetric: shrinking matched, growing did not, because the
+        # new request had not propagated when the comparison ran.
+        #
+        # NO FLOOR — HUGGING IS THE POINT when the content really is small
+        # (Kent 2026-09-04). I briefly floored this at the box's own width,
+        # which was both wrong in intent and INERT in fact: `width` above is
+        # min(contentrw, capw), so width <= contentrw always, and
+        # max(contentrw, width) is just contentrw. It could not have fixed the
+        # clip and could not have broken hugging; it only read as though it did.
+        #
+        # So the clip is a STALE `contentrw`: the box and the canvas both read
+        # it in this same pass, so when a row's new requested width has not
+        # propagated yet, both come out narrow together and the grown row is cut
+        # at the old canvas edge. The remedy is to run again once the request is
+        # current — which the <Configure>/after_idle path does, and which it can
+        # now actually do since `windowsize`'s lifetime `configured>10` cap
+        # became a per-size loop guard.
+        #
+        # The cap stays: `capw` is the same available figure the wrap budget
+        # uses, so the viewport and the text agree about how much room exists.
+        capw,caph,cellw,cellh,winw=self._caps()
+        wantcanvas=min(size[0],capw)
+        canvasnow=self.canvas.winfo_width()
+        if wantcanvas and wantcanvas!=canvasnow:
+            self.canvas.config(width=wantcanvas)
+        # DIAG scroller_pass: every DISTINCT pass, so the PROGRESSION is visible.
+        # The clip is believed to be a stale `contentrw` — the box and the canvas
+        # read it in the same pass, so a row whose new requested width has not
+        # propagated makes both come out narrow together and cuts the grown row
+        # at the old canvas edge. That is only decidable by watching the numbers
+        # across passes: if contentrw rises on a later pass and the canvas
+        # follows, the re-measure is working; if contentrw never rises, the
+        # request itself is not being recomputed and the fix is upstream of
+        # here. Deduped on the whole tuple, so a settled page prints once.
+        try:
+            sig=(size,capw,caph,wantcanvas)
+            if sig!=getattr(self,'_said_pass',None):
+                self._said_pass=sig
+                log.info("scroller pass: content=%sx%s | cap=%sx%s "
+                        "(maxw=%s cellw=%s winw=%s) | canvas %s→%s | box=%s",
+                        size[0],size[1],capw,caph,self.maxwidth,cellw,winw,
+                        canvasnow,wantcanvas,self.winfo_width())
+        except Exception:
+            pass
+        # SIZE THE BOX IN THE SAME PASS. The canvas is gridded sticky='nsew'
+        # with columnconfigure(0, weight=1), so its ACTUAL width is the box's
+        # inner width no matter what we request of it — `config(width=957)`
+        # above changes only its requested size. Kent's DIAG shows the
+        # consequence: `canvas 1133→957` three passes running, with canvasnow
+        # stuck at 1133, because the box stayed at 1150 and stretched the canvas
+        # to fill it. So cycling to a SHORTER word did not hug (2026-09-04).
+        #   Calling windowsize() here means the box and the canvas are set from
+        # the same numbers in the same pass, which is also the only way they
+        # cannot drift — the failure mode this whole area keeps returning to.
+        try:
+            self.windowsize()
+        except Exception as e:
+            # WARNING, not log.log(2). Swallowing this at level 2 made a failing
+            # box re-size indistinguishable from one that never ran: the canvas
+            # stayed stretched to the old width, `canvasnow` never moved off
+            # 1133, and no `scroller cap` line appeared — which reads exactly
+            # like the call not being there (Kent 2026-09-04). A diagnostic path
+            # that can fail invisibly costs more than it saves.
+            log.warning("scroller box re-size failed, so the canvas will stay "
+                    "stretched to its old width: %s",e)
         # Cap the viewport HEIGHT at the available screen space. The scrollregion
         # set above is the FULL content height, so content taller than the cap
         # stays scrollable. Without the cap, sizing the canvas (and, when hugging,
@@ -3640,9 +3884,7 @@ class ScrollingFrame(Frame):
         # attempt lacked: that one REPLACED maxwidth with a parent-derived
         # number and clipped the status board's progress table to ~110px.
         # max() cannot narrow anything, so the worst case here is no change.
-        cellw,cellh=self._cellsize()
-        capw=self.maxwidth if cellw is None else max(self.maxwidth,cellw)
-        caph=self.maxheight if cellh is None else max(self.maxheight,cellh)
+        capw,caph,cellw,cellh,winw=self._caps()
         if contentrw > capw and not self.ignore_maxwidth:
             width=capw
         else:
@@ -3652,11 +3894,16 @@ class ScrollingFrame(Frame):
             height=caph
         else:
             height=contentrh
-        if not getattr(self,'_said_cap',False):
-            self._said_cap=True
-            log.info("scroller cap: maxw=%s cellw=%s → capw=%s | maxh=%s "
-                    "cellh=%s → caph=%s | content=%sx%s → %sx%s",
-                    self.maxwidth,cellw,capw,self.maxheight,cellh,caph,
+        # Deduped by TUPLE, not once per scroller: printing only the first pass
+        # made it impossible to tell whether this ran again after a cycle, which
+        # was exactly the question (Kent 2026-09-04).
+        _capsig=(self.maxwidth,cellw,winw,capw,self.maxheight,cellh,caph,
+                contentrw,contentrh,width,height)
+        if _capsig!=getattr(self,'_said_cap',None):
+            self._said_cap=_capsig
+            log.info("scroller cap: maxw=%s cellw=%s winw=%s → capw=%s | "
+                    "maxh=%s cellh=%s → caph=%s | content=%sx%s → %sx%s",
+                    self.maxwidth,cellw,winw,capw,self.maxheight,cellh,caph,
                     contentrw,contentrh,width,height)
         self.config(height=height, width=width)
         log.log(4,"height={}, width={}".format(height, width))
@@ -3686,6 +3933,48 @@ class ScrollingFrame(Frame):
         self.hwinfo(event)
         # if self.winfo_height() > self.maxheight:
         #     self.config(height=self.maxheight)
+    def _caps(self):
+        """(capw, caph, cellw, cellh, winw) — how wide/tall this scroller MAY be.
+
+        ONE definition, called by both `windowsize` (which sizes the box) and
+        `_do_configure_interior` (which sizes the canvas). They were computing
+        it separately, which is precisely how the two numbers drift apart — and
+        drift is the whole bug history here: a viewport capped tighter than the
+        wrap budget wrapped rows that had room, and one capped looser let a row
+        grow past the canvas and be CLIPPED mid-word (Kent 2026-09-04, both
+        symptoms in one sitting). It also crashed once as a NameError, which was
+        the honest version of the same mistake.
+
+        Three candidates, and the LARGEST wins — widen only, never narrow:
+          * `maxwidth`/`maxheight` from availablexy: screen minus
+            _measure_siblings, which undercounts badly when the siblings are
+            themselves scrollable content (Kent's log: +126px per group button,
+            1033→2671 against a 1170px screen, so a scroller gets told it has
+            200px in a 1920px window);
+          * `_cellsize()`: what the geometry manager actually allotted;
+          * the WINDOW's available width — the toplevel minus this scroller's
+            own left offset minus a right allowance, i.e. everything from here
+            to the edge. This is what lets the box grow into the deliberate
+            margins rather than wrap inside them ("those margins are space that
+            I would expect we increase the scrolling frame into, rather than
+            wrap").
+        max() is the safety property the reverted attempt lacked: that one
+        REPLACED maxwidth with a parent-derived number and clipped the status
+        board's progress table to ~110px."""
+        self.availablexy()
+        cellw,cellh=self._cellsize()
+        winw=None
+        try:
+            top=self.winfo_toplevel()
+            off=max(0,self.winfo_rootx()-top.winfo_rootx())
+            tw=top.winfo_width()
+            if tw and tw>1:
+                winw=max(0,tw-off-120)
+        except Exception as e:
+            log.log(2,"scroller window-available unavailable (%s)",e)
+        capw=max([v for v in (self.maxwidth,cellw,winw) if v is not None])
+        caph=self.maxheight if cellh is None else max(self.maxheight,cellh)
+        return capw,caph,cellw,cellh,winw
     def _cellsize(self):
         """(width, height) the GEOMETRY MANAGER allotted this scroller, or
         (None, None).

@@ -19,6 +19,47 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.16
+
+**Scroller sizing and row wrapping now answer to ONE number.** Kent, on the sort-into-groups
+page: *"everything seems to be working correctly."* Rows hug when short, grow into the page's
+margins when long, and wrap at the viewport edge instead of being clipped mid-word.
+
+Three faults, all of them the same fault — two parts of the layout sizing themselves from
+different measurements:
+
+- **The box never followed the canvas.** `_do_configure_interior` set the canvas's *requested*
+  width, but the canvas is gridded `sticky='nsew'` in a weighted column, so its actual width
+  is the box's inner width and the request is ignored. The log said so plainly once it was
+  asked to: `canvas 1133→957` three passes running with the live width stuck at 1133, because
+  the box stayed at 1150 and stretched the canvas to fill it. Cycling to a shorter word
+  therefore never hugged. `_do_configure_interior` now calls `windowsize()` in the same pass,
+  so box and canvas come from one `_caps()` result and cannot drift.
+- **The wrap budget came from the window, not the viewport.** `wrap_to_container` measured
+  `container`, which on this page is the entire 1920px task window, and granted a row at
+  x=545 `1920-545-120 = 1255px` of text — inside a 1034px viewport with no horizontal
+  scrollbar. That 220px is exactly the clipped `rɛgim 'regime (of bananas)'` row. Each target's
+  budget is now additionally capped at `capw - scrollbar - (its offset inside the scroller)`.
+  A cap only, never a widening, so it cannot bring back the over-wrapping it replaced.
+- **It had to be `capw`, not the live viewport.** Budgeting from the current canvas width
+  closes the loop content→box→viewport→wrap→content, and that loop is visible as a 1440↔1034
+  oscillation (`cellw` 1040↔837) down the tail of the same log. `capw` is what the scroller
+  *may* grow to — pinned at 1479 across every pass — so the wrap settles in one pass instead
+  of chasing its own output. It is also Kent's rule in the correct order: expand into the
+  available space first, then wrap against it.
+
+Also: the `windowsize()` failure path inside `_do_configure_interior` was logging at level 2,
+below INFO. A failing box re-size was therefore indistinguishable from one that never ran —
+identical symptoms, no evidence either way. Now WARNING. A diagnostic that can fail invisibly
+costs more than it saves.
+
+Known and harmless: `box=` trails `content=` by one pass, so a shorter row can briefly sit in
+a viewport slightly wider than it needs — blank space to the right, never a clip.
+
+Still open, in `azt/agenda/scrollframe_sizes_from_layout.md`: the per-site `reserve` values
+are still picked rather than derived, and `availablexy` still walks up through scrolling
+ancestors, counting scrollable content as consumed screen space.
+
 # Version 1.15.15
 
 **Row wrapping confirmed fixed by Kent on the sort-into-groups page, the verify page and
