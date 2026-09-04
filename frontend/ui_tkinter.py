@@ -2034,9 +2034,24 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                     _collect(ch,out,depth+1)
             except Exception:
                 continue
-    def _right_chrome(t,stop):
-        """Total width of everything gridded to the RIGHT of `t`, at every level
-        between `t` and `stop`. Measured, never estimated.
+    def _chrome(t,stop):
+        """Total width of everything BESIDE `t` — either side — plus the borders
+        and pads, at every level between `t` and `stop`. Measured, never
+        estimated, and NEVER from a screen position.
+
+        BOTH SIDES, because position-based measurement cannot survive a row
+        below the fold. The left offset used to come from
+        `winfo_rootx()` differences, which is correct only for a MAPPED widget:
+        `bʊsh` was built below the scroll viewport, reported roughly its
+        toplevel's origin instead of the ~365px of chrome to its left, and so
+        was granted the whole width and rendered as one long clipped line
+        (Kent 2026-09-04, who named the cause: "this was below the scrollwindow
+        when the page was made"). Skipping unmapped targets does not fix that —
+        a row below the fold STAYS unmapped until someone scrolls to it, so it
+        would be skipped indefinitely and then appear unwrapped.
+        Sibling widths and grid options are available before any of it is on
+        screen, so this walk gives the same answer at build time as after
+        mapping.
 
         THIS IS A CONTROL, NOT A MARGIN, and that is why it gets measured.
         Kent specified it before any of this was written: the refresh/cycle
@@ -2063,8 +2078,35 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
             parent=getattr(node,'master',None)
             if parent is None or node is stop:
                 break
+            # BORDERS AND PADS, AT EVERY LEVEL. The last ~50px of overrun was
+            # here: `sɑjd` and `træck` kept their text and pushed the refresh
+            # button and profile tag off the edge (Kent 2026-09-04). Siblings
+            # are only part of what sits between the text and the viewport edge
+            # — each nested frame also contributes its own 3D border, its
+            # highlight ring and its grid padding, twice over, and this page
+            # nests four or five deep in raised frames.
+            #   Deliberately NOT solved by asking the ROW for its requested
+            # width, which looks like the elegant aggregate measurement and was
+            # tried: on this page the tree is content → GROUP frame → row, so
+            # the walk returns the group's width — the widest row in the glyph
+            # group — and every short row in it gets charged for the longest
+            # one. Kent: "in fact, everything is wrapped" (2026-09-04).
+            try:
+                for _opt in ('bd','highlightthickness'): #bd IS borderwidth
+                    try:
+                        total+=2*int(float(parent.cget(_opt) or 0))
+                    except Exception:
+                        continue
+            except Exception:
+                pass
             try:
                 gi=node.grid_info() or {}
+                for _pad in ('padx','ipadx'):
+                    _v=gi.get(_pad,0)
+                    if isinstance(_v,(list,tuple)):
+                        total+=sum(int(x or 0) for x in _v)
+                    else:
+                        total+=2*int(_v or 0)
                 nrow=int(gi.get('row',0))
                 ncol=int(gi.get('column',0))
                 nspan=int(gi.get('columnspan',1) or 1)
@@ -2076,9 +2118,10 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                         continue #not gridded: pack/place, no column to compare
                     if int(sgi.get('row',-1))!=nrow:
                         continue
-                    if int(sgi.get('column',-1))<ncol+nspan:
-                        continue #at or left of us
-                    total+=sib.winfo_reqwidth()
+                    _sc=int(sgi.get('column',-1))
+                    if ncol<=_sc<ncol+nspan:
+                        continue #overlapping our own columns
+                    total+=sib.winfo_reqwidth() #left OR right; see docstring
             except Exception:
                 pass
             if parent is stop:
@@ -2208,8 +2251,21 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         # Tk when the content changes and needs no update()/flush, so this costs
         # no synchronous round-trip — which matters here (see
         # azt/agenda/wayland_freeze_audit.md).
-        applied=[];naturals=[];wrapped=[0]
+        applied=[];naturals=[];wrapped=[0];collapsed=[0];pending=[0]
         for t in targets:
+            # NOT GATED ON winfo_ismapped(). The obvious guard here — skip a
+            # target with no geometry yet — is wrong for this page: a row built
+            # below the scroll viewport stays unmapped until someone scrolls to
+            # it, so it would be skipped indefinitely and then appear unwrapped.
+            # `_chrome` measures from siblings and grid options instead, which
+            # are available before anything is on screen, so no target needs to
+            # be deferred. `pending` counts what LOOKS unmapped, as evidence
+            # only.
+            try:
+                if not t.winfo_ismapped():
+                    pending[0]+=1
+            except Exception:
+                pass
             # SPAN ONLY COUNTS IN THE CONTAINER'S OWN GRID. columnspan is
             # meaningful against `cols`, which describes THIS container — but a
             # target nested deeper sits in some inner frame's grid, where a span
@@ -2268,23 +2324,54 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
             # to its left within the scroller (group label, cycle button,
             # illustration) less the scrollbar.
             if scrollcap:
-                try:
-                    soff=max(0,t.winfo_rootx()-scroller.winfo_rootx())
-                except Exception:
-                    soff=0
-                budget=max(min(budget,
-                            scrollcap-soff-_right_chrome(t,scroller)),
-                        minimum)
-            applied.append(budget)
+                # A MEASUREMENT STILL NEEDS THE SANITY CAP. `extra` has had one
+                # since 2026-09-03 because a caller's `reserve` could exceed the
+                # whole cell; the measured right chrome can do the same thing
+                # and worse. If any level of the walk finds a right-sibling that
+                # is not chrome at all — another group frame, a second column of
+                # rows — its reqwidth is ~1400, not ~90, and the budget goes
+                # negative and floors at `minimum`. That is Kent's kidney row
+                # wrapped to ONE CHARACTER per line (2026-09-04), which is far
+                # worse than the overrun it was trying to prevent, and it
+                # appeared only on refresh, i.e. only once the layout changed.
+                #   40% of the ceiling, matching the existing cap: real chrome
+                # (a refresh button and a profile tag, ~150) is nowhere near it,
+                # so a correct measurement passes untouched and a wrong one
+                # degrades the wrap instead of destroying it.
+                # 60%, not 40%: this now covers BOTH sides of the target, and
+                # the row's chrome legitimately dominates a short row — a glyph
+                # label, cycle button, illustration, refresh button and profile
+                # tag around `de 'day' 'jour'` really are most of its width.
+                chrome=min(_chrome(t,scroller),int(scrollcap*0.6))
+                budget=max(min(budget,scrollcap-chrome),minimum)
             try:
                 t.config(wraplength=0) #unwrapped: what does it actually want?
                 natural=t.winfo_reqwidth()
             except Exception:
                 natural=0
             naturals.append(natural)
+            applied.append(budget)
             try:
                 if natural and natural<=budget:
                     continue #step 1: it fits. Leave it unwrapped and hug it.
+                # A COLLAPSED BUDGET IS A FAILED MEASUREMENT, NOT AN INSTRUCTION
+                # TO WRAP AT 60px. `minimum` was acting as a floor to wrap TO,
+                # which is how a 4-character profile tag ends up one character
+                # per line and how Kent's kidney row became a vertical column
+                # (2026-09-04). Nothing on these pages is legitimately 60px
+                # wide, so reaching the floor means this target's offset or
+                # right-chrome measurement is wrong — and leaving it unwrapped
+                # risks an overrun, while wrapping it guarantees garbage.
+                #   Counted and reported rather than silently skipped, because
+                # the count is the evidence for which targets are being
+                # mismeasured: `wrap_to_container` collects ANY widget with a
+                # `wraplength` key, so at maxdepth=5 the macrosort page yields
+                # 231 targets — the row text plus every glyph label, occurrence
+                # count and profile tag. The chrome sits far right, so its
+                # budget collapses first.
+                if budget<=minimum:
+                    collapsed[0]+=1
+                    continue
                 t.config(wraplength=budget) #steps 2-3: all the room, then wrap
                 wrapped[0]+=1
             except Exception:
@@ -2315,11 +2402,12 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         if applied:
             try:
                 _sig=(min(applied),max(applied),max(naturals or [0]),
-                    wrapped[0],len(targets),scrollcap)
+                    wrapped[0],len(targets),collapsed[0],pending[0],scrollcap)
                 if _sig!=state.get('saidapplied'):
                     state['saidapplied']=_sig
                     log.info("DIAG-wrap applied: budget %s-%s | widest natural "
-                            "%s | wrapped %s of %s | scrollcap=%s",*_sig)
+                            "%s | wrapped %s of %s | declined %s | unmapped %s "
+                            "| scrollcap=%s",*_sig)
             except Exception:
                 pass
         try:
