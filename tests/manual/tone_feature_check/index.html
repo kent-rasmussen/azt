@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tone feature check &mdash; A-Z+T</title>
+<style>
+  body { font: 15px/1.45 system-ui, sans-serif; margin: 0; padding: 18px 22px 60px;
+         color: #111; background: #fff; max-width: 1200px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 16px; margin: 26px 0 8px; border-bottom: 1px solid #ddd;
+       padding-bottom: 4px; }
+  .hint { color: #444; margin: 6px 0 12px; }
+  .kill { border-left: 4px solid #b00; background: #fff4f4; padding: 8px 12px;
+          margin: 10px 0; }
+  code, kbd { font-family: ui-monospace, Consolas, monospace; font-size: .92em; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 4px; }
+  th, td { border: 1px solid #ddd; padding: 6px 8px; vertical-align: middle; }
+  th { background: #f6f6f6; text-align: left; font-weight: 600; font-size: 13px; }
+  th.feat { font-family: ui-monospace, Consolas, monospace; font-weight: 600; }
+  td.rowlab { font-size: 12px; color: #333; width: 210px; }
+  td.rowlab .cps { color: #777; font-size: 11px; display: block; margin-top: 3px;
+                   word-break: break-all; }
+  .sample { font-size: 46px; line-height: 1.25; white-space: nowrap; }
+  .sample.sm { font-size: 20px; }
+  .env { background: #f7f7f9; border: 1px solid #e2e2e6; padding: 10px 12px;
+         font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+         white-space: pre-wrap; }
+  .bar { margin: 12px 0; display: flex; gap: 10px; flex-wrap: wrap;
+         align-items: center; }
+  button { font: inherit; padding: 6px 12px; cursor: pointer; }
+  select { font: inherit; padding: 4px; }
+  #drop { border: 2px dashed #aaa; border-radius: 6px; padding: 14px;
+          text-align: center; color: #555; background: #fafafa; }
+  #drop.over { border-color: #06c; background: #eef5ff; color: #06c; }
+  #dropped { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+             margin-top: 6px; }
+  .ok { color: #076; font-weight: 600; }
+  .bad { color: #b00; font-weight: 600; }
+  .rulerwrap { margin: 10px 0; }
+  .ruler { position: relative; width: 100mm; height: 34px;
+           border: 1px solid #333; border-top: none; background: #fff; }
+  .ruler i { position: absolute; top: 0; width: 1px; height: 11px;
+             background: #333; }
+  .ruler i.maj { height: 20px; }
+  .ruler b { position: absolute; top: 20px; font-size: 10px;
+             font-weight: normal; transform: translateX(-50%); }
+  .inch { width: 4in; }
+  .q { margin: 6px 0; }
+  .q b { display: inline-block; min-width: 26px; }
+  .q label { margin-right: 12px; }
+  textarea#report { width: 100%; height: 220px; font-family: ui-monospace,
+                    Consolas, monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Tone feature check</h1>
+<p class="hint">
+  <b>One question: can a browser render A-Z+T's tone letters the way the app must show
+  them &mdash; joined into contours, and (where wanted) without staves?</b>
+  Judge it <b>by eye</b>; nothing here knows what your orthography should look like.
+  This is a companion to the Keyman input check: that one was about
+  <i>typing</i>, this one is about <i>rendering</i>.
+</p>
+<div class="kill">
+  <b>Kill condition</b> (from <code>agenda/webview_when_to_finish.md</code>, Step&nbsp;2):
+  if adjacent tone letters <b>do not join</b>, and <code>cv92</code> <b>does not hide
+  staves</b>, and a dropped <code>-tstv</code> font file does not do it either, then
+  <b>tone pages cannot be ported</b> to a webview and the whole item shrinks to
+  non-tone pages. Any one of the three working is enough to proceed.
+</div>
+
+<h2>1. Environment</h2>
+<div class="env" id="env">measuring&hellip;</div>
+
+<h2>2. Ruler &mdash; hold a real ruler against the screen</h2>
+<p class="hint">
+  The bar below is <b>100&nbsp;mm</b> in CSS millimetres, the second is
+  <b>4&nbsp;inches</b>. If they measure short or long, this machine's browser is
+  scaling in a way a ported layout would have to account for. (CSS assumes
+  96&nbsp;px&nbsp;=&nbsp;1&nbsp;inch regardless of the real display, so a mismatch is
+  expected on a scaled screen &mdash; record it, don't fix it.)
+</p>
+<div class="rulerwrap">
+  <div class="ruler" id="ruler-mm"></div>
+</div>
+<div class="rulerwrap">
+  <div class="ruler inch" id="ruler-in"></div>
+</div>
+
+<h2>3. Font under test</h2>
+<div class="bar">
+  <label>Family:
+    <select id="family"></select>
+  </label>
+  <label>Size:
+    <select id="size">
+      <option value="46">46 px</option>
+      <option value="32">32 px</option>
+      <option value="72">72 px</option>
+      <option value="20">20 px</option>
+    </select>
+  </label>
+  <button id="btn-refresh">Re-detect fonts</button>
+</div>
+<div id="drop">
+  <b>Drop a <code>.ttf</code> here</b>, or use the picker:
+  <input type="file" id="file" accept=".ttf,.otf,.woff,.woff2">
+  &mdash; for a <code>-tstv</code> build such as
+  <code>CharisSIL-tstv-Regular.ttf</code>, which is the app's current staveless
+  mechanism. Loaded straight from the file, so no install is needed.
+  <div style="font-size:12.5px;color:#666;margin-top:6px">
+    <b>In pywebview the drop may do nothing</b> &mdash; an embedded webview does
+    not always hand a dropped file to the page. Use the picker, or just let
+    <code>run_pywebview.py</code> find a <code>-tstv</code> file and inject it
+    on its own (it says so on the console when it does).
+  </div>
+  <div id="dropped">nothing loaded</div>
+  <div id="features"></div>
+</div>
+<div class="bar">
+  <label>Extra feature column:
+    <input id="featinput" size="34" placeholder='e.g. &quot;cv92&quot; 1, &quot;ss01&quot; 1'>
+  </label>
+  <button id="btn-feat">Apply</button>
+  <span style="font-size:12.5px;color:#666">
+    Any <code>font-feature-settings</code> value. Use it to try a tag the font
+    actually has &mdash; the list above says which those are.
+  </span>
+</div>
+
+<h2>4. The matrix</h2>
+<p class="hint">
+  Columns are OpenType feature settings, applied with CSS
+  <code>font-feature-settings</code> &mdash; something tkinter cannot express at all.
+  Per SIL's own feature page, <code>cv92</code> hides tone-contour staves,
+  <code>cv91</code> gives tone numbers, <code>cv90</code> is Chinantec tones; both
+  <code>cv91</code> and <code>cv92</code> are marked <i>"not supported in TypeTuner
+  Web"</i>, and <code>cvNN</code> variants are <b>off by default</b> &mdash; which is
+  why the "no features" column should look like the app's default.
+</p>
+<table id="matrix"></table>
+<div class="env" id="diag">—</div>
+<p class="hint">
+  <b>Read the box above before concluding anything.</b> It reports what the browser
+  <i>actually computed</i> for one cell. If <code>font-feature-settings</code> comes
+  back <code>normal</code>, or the resolved family is not the one you picked, then the
+  CSS never reached the text and the rendering below is meaningless — that is a bug in
+  this page, not an answer about the font.
+</p>
+<p class="hint">
+  <b>What "joined" means:</b> in the contour rows, <code>&#x2E5;&#x2E9;</code> should
+  render as <b>one</b> falling contour on a shared stave, not as two separate letters
+  sitting next to each other. That is font behaviour a HarfBuzz-based shaper applies;
+  both WebKitGTK and Chromium are HarfBuzz-based, so a difference between them is
+  itself diagnostic.
+</p>
+
+<h2>5. All families, one string</h2>
+<p class="hint">Same string in every family this machine resolves &mdash; the fastest way
+  to see which installed font is actually doing the work.</p>
+<table id="families"></table>
+
+<h2>6. Verdict &mdash; the part that matters</h2>
+<p class="hint">Answer by eye. <b>Read this off the screen; the report below is a
+  bonus, not the result.</b></p>
+<div id="questions"></div>
+
+<h2>7. Report (optional)</h2>
+<div class="bar">
+  <button id="btn-report">Build report &rarr;</button>
+  <button id="btn-copy">Copy report</button>
+</div>
+<textarea id="report" readonly placeholder="Press Build report."></textarea>
+
+<script>
+"use strict";
+
+/* Family aliases copied from utilities/fonts.py - the v6/v7 problem is that
+   "Charis SIL" and "Charis" are the SAME font under different names, so both
+   must be asked for. Keep in step with CHARIS_FAMILIES et al. */
+var FAMILIES = [
+  "Charis SIL", "Charis",
+  "Doulos SIL",
+  "Andika", "Andika SIL", "Andika New Basic",
+  "Gentium Plus", "Gentium", "Gentium SIL",
+  "Gentium Book Plus", "Gentium Book Basic",
+  "DejaVu Sans",
+  "Chariss SIL"          /* deliberately WRONG - shows the silent fallback */
+];
+var WRONG = "Chariss SIL";
+var DROPPED = "AZTDroppedFont";
+
+var FEATURES = [
+  { key: "none",  label: "no features",   css: "normal" },
+  { key: "cv92",  label: '"cv92" 1',      css: '"cv92" 1', note: "hide staves" },
+  { key: "cv92n", label: '"cv92" 0',      css: '"cv92" 0', note: "staves explicit" },
+  { key: "cv91",  label: '"cv91" 1',      css: '"cv91" 1', note: "tone numbers" },
+  { key: "cv90",  label: '"cv90" 1',      css: '"cv90" 1', note: "Chinantec" }
+];
+
+var ROWS = [
+  { id: "chao",     lab: "Chao tone letters U+02E5–02E9",
+    text: "˥ ˦ ˧ ˨ ˩" },
+  { id: "chaorev",  lab: "Right-stem U+A712–A716",
+    text: "꜒ ꜓ ꜔ ꜕ ꜖" },
+  { id: "contour2", lab: "2-letter contours — MUST JOIN",
+    text: "˥˩ ˩˥ ˧˥ ˥˧ ˨˦" },
+  { id: "contour3", lab: "3-letter contours — MUST JOIN",
+    text: "˥˧˩ ˩˧˥ ˧˨˧" },
+  { id: "chin",     lab: "Chinantec marks U+02CB 02C8 02C9 02CA",
+    text: "ˋ ˈ ˉ ˊ" },
+  { id: "word",     lab: "Tone-marked words",
+    text: "ka˥˩ ta˩˥ na˧" },
+  { id: "ortho",    lab: "Modifier letters (from the Keyman run)",
+    text: "ajᵃpijeʲj" }
+];
+
+var QUESTIONS = [
+  { id: "join",  q: "Do adjacent tone letters JOIN into one contour? (rows 3–4)" },
+  { id: "cv92",  q: "Does <code>\"cv92\" 1</code> hide the staves?" },
+  { id: "tstv",  q: "Does a dropped <code>-tstv</code> file render staveless?" },
+  { id: "cv91",  q: "Does <code>\"cv91\" 1</code> give tone numbers?" },
+  { id: "cv90",  q: "Does <code>\"cv90\" 1</code> change the Chinantec marks?" },
+  { id: "match", q: "Does the app's own output (Tk <code>Renderer</code>) match any column here?" },
+  { id: "ruler", q: "Do the rulers measure true against a real ruler?" }
+];
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;");
+}
+function cps(s) {
+  var out = [], i = 0, c;
+  for (i = 0; i < s.length; i++) {
+    c = s.codePointAt(i);
+    if (c > 0xFFFF) { i++; }
+    out.push("U+" + c.toString(16).toUpperCase().padStart(4, "0"));
+  }
+  return out.join(" ");
+}
+
+/* ---- font presence, by measurement (no API tells us directly) ---- */
+var resolved = {};
+function hasFamily(name) {
+  var probe = "mmmwwwiiiABC˥˩ˋ";
+  var ctx = hasFamily.ctx ||
+            (hasFamily.ctx = document.createElement("canvas").getContext("2d"));
+  var bases = ["monospace", "serif", "sans-serif"], i, w0, w1;
+  for (i = 0; i < bases.length; i++) {
+    ctx.font = '72px ' + bases[i];
+    w0 = ctx.measureText(probe).width;
+    ctx.font = '72px "' + name + '", ' + bases[i];
+    w1 = ctx.measureText(probe).width;
+    if (w1 !== w0) { return true; }
+  }
+  return false;
+}
+function detectFonts() {
+  FAMILIES.forEach(function (f) { resolved[f] = hasFamily(f); });
+  if (loadedFontName) { resolved[DROPPED] = true; }
+  buildFamilySelect();
+  buildFamilyTable();
+  showEnv();
+}
+
+/* ---- environment ---- */
+function pxPerMm() {
+  var d = document.createElement("div");
+  d.style.cssText = "position:absolute;visibility:hidden;width:100mm;height:0";
+  document.body.appendChild(d);
+  var w = d.getBoundingClientRect().width;
+  document.body.removeChild(d);
+  return w / 100;
+}
+function showEnv() {
+  var ppm = pxPerMm();
+  var lines = [
+    "A-Z+T tone feature check",
+    "when: " + new Date().toISOString(),
+    "userAgent: " + navigator.userAgent,
+    "platform:  " + (navigator.platform || "?"),
+    "devicePixelRatio: " + window.devicePixelRatio,
+    "window inner: " + window.innerWidth + "x" + window.innerHeight,
+    "screen: " + screen.width + "x" + screen.height +
+      "  avail: " + screen.availWidth + "x" + screen.availHeight,
+    "CSS px per mm: " + ppm.toFixed(4) + "   (CSS nominal 3.7795)",
+    "CSS px per in: " + (ppm * 25.4).toFixed(2) + "   (CSS nominal 96)",
+    "dropped font: " + (loadedFontName || "none"),
+    "",
+    "families resolvable by name:"
+  ];
+  FAMILIES.forEach(function (f) {
+    lines.push("  " + (resolved[f] ? "yes" : "NO ") + "  " + f +
+               (f === WRONG ? "   <- deliberately wrong; 'yes' here means the "
+                            + "detection is unreliable on this engine" : ""));
+  });
+  $("env").textContent = lines.join("\n");
+  return lines.join("\n");
+}
+
+/* ---- rulers ---- */
+function buildRulers() {
+  var mm = $("ruler-mm"), i, tick, lab;
+  for (i = 0; i <= 100; i += 5) {
+    tick = document.createElement("i");
+    tick.style.left = i + "mm";
+    if (i % 10 === 0) { tick.className = "maj"; }
+    mm.appendChild(tick);
+    if (i % 10 === 0) {
+      lab = document.createElement("b");
+      lab.style.left = i + "mm";
+      lab.textContent = i;
+      mm.appendChild(lab);
+    }
+  }
+  var inch = $("ruler-in");
+  for (i = 0; i <= 16; i++) {
+    tick = document.createElement("i");
+    tick.style.left = (i / 4) + "in";
+    if (i % 4 === 0) { tick.className = "maj"; }
+    inch.appendChild(tick);
+    if (i % 4 === 0) {
+      lab = document.createElement("b");
+      lab.style.left = (i / 4) + "in";
+      lab.textContent = (i / 4) + '"';
+      inch.appendChild(lab);
+    }
+  }
+}
+
+/* ---- loading a font FILE (three ways in, because one is not enough) ----
+   1. drag-and-drop      - works in a browser; an embedded webview may not
+                           deliver the drop to the page at all.
+   2. the file picker     - goes through the native file dialog, so it works
+                           where the drop does not.
+   3. window.aztInstallFontB64(name, base64)
+                         - called by run_pywebview.py, which finds the file
+                           itself and injects the bytes. Needs no drop, no
+                           dialog, and no reachable URL. */
+var loadedFontName = "";
+
+/* ---- what features does this font FILE actually have? ----
+   The Python side of this question is `has_feature(path, 'cv92')` in §3 of the
+   agenda item: walk GSUB's FeatureList for the tag. Doing it here is strictly
+   better for a gate, because it turns "cv92 did nothing" into two
+   distinguishable answers: the font has no such feature, or it has it and the
+   engine ignored it. Only possible for a font we hold the BYTES of - an
+   installed font asked for by name cannot be inspected from a page. */
+function sfntFeatureTags(buffer) {
+  var dv = new DataView(buffer), i, tag, off, len;
+  var num, base = 0;
+  if (dv.getUint32(0) === 0x74746366) {   /* 'ttcf' - first font in collection */
+    base = dv.getUint32(12);
+  }
+  num = dv.getUint16(base + 4);
+  var tables = {};
+  for (i = 0; i < num; i++) {
+    var rec = base + 12 + i * 16;
+    tag = String.fromCharCode(dv.getUint8(rec), dv.getUint8(rec + 1),
+                              dv.getUint8(rec + 2), dv.getUint8(rec + 3));
+    tables[tag] = { off: dv.getUint32(rec + 8), len: dv.getUint32(rec + 12) };
+  }
+  var out = {};
+  ["GSUB", "GPOS"].forEach(function (which) {
+    var t = tables[which];
+    if (!t) { return; }
+    var flOff = t.off + dv.getUint16(t.off + 6);   /* FeatureList offset */
+    var count = dv.getUint16(flOff), j;
+    for (j = 0; j < count; j++) {
+      var r = flOff + 2 + j * 6;
+      var ft = String.fromCharCode(dv.getUint8(r), dv.getUint8(r + 1),
+                                   dv.getUint8(r + 2), dv.getUint8(r + 3));
+      out[ft] = (out[ft] ? out[ft] + "+" : "") + which;
+    }
+  });
+  return { tags: out, hasGraphite: !!(tables.Silf || tables.Glat),
+           hasOT: !!(tables.GSUB || tables.GPOS) };
+}
+function showFontFeatures(buffer, label) {
+  var info;
+  try {
+    info = sfntFeatureTags(buffer);
+  } catch (e) {
+    $("features").innerHTML = '<span class="bad">could not read the font tables</span>' +
+      " (" + esc(e.message || e) + ") &mdash; a .woff/.woff2 is compressed and " +
+      "cannot be inspected this way; use the .ttf.";
+    return;
+  }
+  var tags = Object.keys(info.tags).sort();
+  var cvs = tags.filter(function (t) { return /^(cv\d\d|ss\d\d)$/.test(t); });
+  var html = "<b>" + esc(label) + " declares:</b><br>";
+  html += "OpenType tables: " + (info.hasOT ? '<span class="ok">yes</span>'
+                                            : '<span class="bad">NO</span>');
+  html += " &nbsp; Graphite tables (Silf/Glat): " +
+    (info.hasGraphite ? '<span class="ok">yes</span>'
+                      : '<span class="bad">no</span>');
+  html += "<br>character/stylistic variants: " +
+    (cvs.length ? '<span class="ok">' + esc(cvs.join(" ")) + "</span>"
+                : '<span class="bad">NONE — this font exposes no cvNN/ssNN, so ' +
+                  "font-feature-settings has nothing to switch on</span>");
+  html += "<br>cv90 " + (info.tags.cv90 ? "yes" : "no") +
+          " &nbsp; cv91 " + (info.tags.cv91 ? "yes" : "no") +
+          " &nbsp; <b>cv92 " + (info.tags.cv92 ?
+            '<span class="ok">yes — the staveless feature IS in this file</span>' :
+            '<span class="bad">NO — this file cannot hide staves via cv92</span>') +
+          "</b>";
+  html += "<br>all feature tags: " + esc(tags.join(" ") || "(none)");
+  $("features").innerHTML = html;
+}
+
+function installFont(label, buffer) {
+  /* Parse BEFORE handing the buffer to FontFace, which may detach it. */
+  showFontFeatures(buffer.slice(0), label);
+  try {
+    var face = new FontFace(DROPPED, buffer);
+    return face.load().then(function (f) {
+      document.fonts.add(f);
+      loadedFontName = label;
+      resolved[DROPPED] = true;
+      $("dropped").innerHTML = '<span class="ok">loaded:</span> ' + esc(label) +
+        " &mdash; now selectable as <b>" + DROPPED + "</b>";
+      buildFamilySelect(DROPPED);
+      buildFamilyTable();
+      render();
+      showEnv();
+      return true;
+    }).catch(function (e) {
+      $("dropped").innerHTML = '<span class="bad">could not load ' +
+        esc(label) + ":</span> " + esc(e.message || e);
+      return false;
+    });
+  } catch (e) {
+    $("dropped").innerHTML = '<span class="bad">FontFace failed:</span> ' +
+      esc(e.message || e);
+    return Promise.resolve(false);
+  }
+}
+function loadFontFile(file) {
+  var reader = new FileReader();
+  reader.onload = function () { installFont(file.name, reader.result); };
+  reader.onerror = function () {
+    $("dropped").innerHTML = '<span class="bad">could not read the file</span>';
+  };
+  reader.readAsArrayBuffer(file);
+}
+/* Entry point for run_pywebview.py. Base64 because it crosses evaluate_js as
+   a string literal. */
+window.aztInstallFontB64 = function (label, b64) {
+  try {
+    var bin = atob(b64), n = bin.length, buf = new Uint8Array(n), i;
+    for (i = 0; i < n; i++) { buf[i] = bin.charCodeAt(i); }
+    installFont(label, buf.buffer);
+    return "ok";
+  } catch (e) {
+    $("dropped").innerHTML = '<span class="bad">injection failed:</span> ' +
+      esc(e.message || e);
+    return "error: " + (e.message || e);
+  }
+};
+
+/* ---- the matrix ---- */
+/* Styles are set through the CSSOM, NEVER by building a style="..." string.
+   Both of the values here contain double quotes - a family name is quoted, and
+   a feature setting is literally '"cv92" 1' - so interpolating them into a
+   double-quoted HTML attribute terminates the attribute and silently drops the
+   whole declaration. That bug shipped in the first version of this page and
+   presented as "cv92 does nothing", which is indistinguishable by eye from the
+   font not supporting it. Hence the diagnostic box. */
+function familyValue(name) {
+  return '"' + name + '"';
+}
+function sampleCell(fam, featureCss, text, size) {
+  var td = document.createElement("td");
+  var d = document.createElement("div");
+  d.className = "sample" + (size ? "" : " sm");
+  d.style.fontFamily = familyValue(fam);
+  if (size) { d.style.fontSize = size + "px"; }
+  if (featureCss && featureCss !== "normal") {
+    d.style.fontFeatureSettings = featureCss;
+  }
+  d.textContent = text;
+  td.appendChild(d);
+  return td;
+}
+function headerCell(label, note) {
+  var th = document.createElement("th");
+  th.className = "feat";
+  th.textContent = label;
+  if (note) {
+    var s = document.createElement("span");
+    s.style.cssText = "font-weight:normal;color:#666";
+    s.textContent = note;
+    th.appendChild(document.createElement("br"));
+    th.appendChild(s);
+  }
+  return th;
+}
+function buildFamilySelect(select) {
+  var sel = $("family"), cur = select || sel.value || "Charis SIL", i, opt;
+  sel.innerHTML = "";
+  var list = FAMILIES.slice();
+  if (loadedFontName) { list.unshift(DROPPED); }
+  for (i = 0; i < list.length; i++) {
+    opt = document.createElement("option");
+    opt.value = list[i];
+    opt.textContent = list[i] +
+      (list[i] === DROPPED ? "  (dropped file)"
+        : resolved[list[i]] ? "" : "  (NOT on this machine)") +
+      (list[i] === WRONG ? "  ← wrong on purpose" : "");
+    sel.appendChild(opt);
+  }
+  sel.value = list.indexOf(cur) >= 0 ? cur : list[0];
+}
+var customFeature = "";
+function render() {
+  var fam = $("family").value;
+  var size = $("size").value;
+  var t = $("matrix"), r, f, tr, td, span, probe = null;
+  var feats = FEATURES.slice();
+  if (customFeature) {
+    feats.push({ key: "custom", label: customFeature, css: customFeature,
+                 note: "yours" });
+  }
+  t.innerHTML = "";
+  tr = document.createElement("tr");
+  td = document.createElement("th");
+  td.textContent = "string";
+  tr.appendChild(td);
+  for (f = 0; f < feats.length; f++) {
+    tr.appendChild(headerCell(feats[f].label, feats[f].note));
+  }
+  t.appendChild(tr);
+  for (r = 0; r < ROWS.length; r++) {
+    tr = document.createElement("tr");
+    td = document.createElement("td");
+    td.className = "rowlab";
+    td.appendChild(document.createTextNode(ROWS[r].lab));
+    span = document.createElement("span");
+    span.className = "cps";
+    span.textContent = cps(ROWS[r].text);
+    td.appendChild(span);
+    tr.appendChild(td);
+    for (f = 0; f < FEATURES.length; f++) {
+      td = sampleCell(fam, FEATURES[f].css, ROWS[r].text, size);
+      if (ROWS[r].id === "contour2" && FEATURES[f].key === "cv92") {
+        probe = td.firstChild;
+      }
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+  showDiag(probe, fam);
+}
+function showDiag(probe, fam) {
+  if (!probe) { $("diag").textContent = "—"; return; }
+  var cs = window.getComputedStyle(probe);
+  var feat = cs.fontFeatureSettings;
+  var ok = feat && feat !== "normal";
+  $("diag").innerHTML =
+    "probe cell: 2-letter contours, \"cv92\" 1 column, family " + esc(fam) + "\n" +
+    "  font-feature-settings computed: " +
+      (ok ? '<span class="ok">' + esc(feat) + "</span>"
+          : '<span class="bad">' + esc(feat || "(empty)") +
+            "  <- the CSS did NOT reach the text</span>") + "\n" +
+    "  font-family computed:           " + esc(cs.fontFamily) + "\n" +
+    "  font-size computed:             " + esc(cs.fontSize) + "\n" +
+    "  family present on this machine: " +
+      (fam === DROPPED ? "dropped file"
+        : resolved[fam] ? '<span class="ok">yes</span>'
+                        : '<span class="bad">NO - you are looking at a fallback ' +
+                          "font, which will never show a tone feature</span>");
+}
+function buildFamilyTable() {
+  var t = $("families"), i, f, tr, td;
+  var list = FAMILIES.slice();
+  if (loadedFontName) { list.unshift(DROPPED); }
+  var s = "˥˩ ˩˥ ˥˧˩";
+  t.innerHTML = "";
+  tr = document.createElement("tr");
+  ["family", "on this machine", "no features", '"cv92" 1'].forEach(
+    function (h) {
+      var th = document.createElement("th");
+      th.textContent = h;
+      tr.appendChild(th);
+    });
+  t.appendChild(tr);
+  for (i = 0; i < list.length; i++) {
+    f = list[i];
+    tr = document.createElement("tr");
+    td = document.createElement("td");
+    td.textContent = f + (f === WRONG ? "  (wrong on purpose)" : "");
+    tr.appendChild(td);
+    td = document.createElement("td");
+    td.innerHTML = f === DROPPED ? '<span class="ok">dropped file</span>'
+      : resolved[f] ? '<span class="ok">yes</span>'
+                    : '<span class="bad">no</span>';
+    tr.appendChild(td);
+    tr.appendChild(sampleCell(f, "normal", s, 0));
+    tr.appendChild(sampleCell(f, '"cv92" 1', s, 0));
+    t.appendChild(tr);
+  }
+}
+
+/* ---- verdict ---- */
+function buildQuestions() {
+  var d = $("questions"), html = "", i, q;
+  for (i = 0; i < QUESTIONS.length; i++) {
+    q = QUESTIONS[i];
+    html += '<div class="q"><b>' + (i + 1) + ".</b> " + q.q + "&nbsp; " +
+      ["yes", "no", "n/a"].map(function (v) {
+        return '<label><input type="radio" name="q-' + q.id + '" value="' + v +
+               '"> ' + v + "</label>";
+      }).join("") + "</div>";
+  }
+  d.innerHTML = html;
+}
+function answers() {
+  return QUESTIONS.map(function (q) {
+    var el = document.querySelector('input[name="q-' + q.id + '"]:checked');
+    return "  " + q.id.padEnd(7) + (el ? el.value : "(unanswered)") + "   " +
+           q.q.replace(/<[^>]+>/g, "");
+  }).join("\n");
+}
+
+function buildReport() {
+  var out = showEnv() + "\n\nfamily shown in matrix: " + $("family").value +
+    "  at " + $("size").value + "px\n\nVERDICT:\n" + answers() +
+    "\n\nstrings tested:\n" +
+    ROWS.map(function (r) {
+      return "  " + r.id.padEnd(9) + r.text + "\n             " + cps(r.text);
+    }).join("\n");
+  $("report").value = out;
+}
+
+/* ---- wiring ---- */
+window.addEventListener("DOMContentLoaded", function () {
+  buildRulers();
+  buildQuestions();
+  detectFonts();
+  render();
+
+  $("family").addEventListener("change", render);
+  $("size").addEventListener("change", render);
+  $("btn-refresh").addEventListener("click", function () {
+    detectFonts(); render();
+  });
+  $("btn-report").addEventListener("click", buildReport);
+  $("btn-feat").addEventListener("click", function () {
+    customFeature = $("featinput").value.trim();
+    render();
+  });
+  $("featinput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { $("btn-feat").click(); }
+  });
+  $("btn-copy").addEventListener("click", function () {
+    if (!$("report").value) { buildReport(); }
+    $("report").select();
+    try { document.execCommand("copy"); } catch (e) { /* manual copy then */ }
+  });
+  $("file").addEventListener("change", function (e) {
+    if (e.target.files && e.target.files[0]) { loadFontFile(e.target.files[0]); }
+  });
+  /* The WHOLE PAGE is the drop target, not just the dashed box. A drop that
+     lands anywhere the document has not called preventDefault() on is handled
+     by the browser instead - which navigates away from the page, or silently
+     does nothing. Aiming at a small box is exactly how that happens. */
+  var drop = $("drop");
+  ["dragenter", "dragover"].forEach(function (ev) {
+    document.addEventListener(ev, function (e) {
+      e.preventDefault();
+      if (e.dataTransfer) { e.dataTransfer.dropEffect = "copy"; }
+      drop.classList.add("over");
+    });
+  });
+  ["dragleave", "dragend"].forEach(function (ev) {
+    document.addEventListener(ev, function (e) {
+      if (!e.relatedTarget) { drop.classList.remove("over"); }
+    });
+  });
+  document.addEventListener("drop", function (e) {
+    e.preventDefault();
+    drop.classList.remove("over");
+    var dt = e.dataTransfer;
+    if (dt && dt.files && dt.files.length) {
+      loadFontFile(dt.files[0]);
+    } else {
+      $("dropped").innerHTML = '<span class="bad">that drop carried no file</span>' +
+        " &mdash; use the picker, or let run_pywebview.py inject one.";
+    }
+  });
+  /* Fonts can finish loading after first paint; re-measure once they have. */
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { detectFonts(); render(); });
+  }
+});
+</script>
+</body>
+</html>

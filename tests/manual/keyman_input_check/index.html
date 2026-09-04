@@ -69,7 +69,9 @@
 <p class="hint">
   Type <b>your own real orthography</b> with your own keyboard — there is no target string
   and nothing here knows what is "correct". The test is <b>consistency</b>: type a line,
-  press <kbd>Enter</kbd> to record it, then type the same line again. Identical typing must
+  press <kbd>Enter</kbd> to record it — <b>in the middle box (textarea) use
+  <kbd>Shift</kbd>+<kbd>Enter</kbd></b>, because plain Enter has to stay a newline there —
+  then type the same line again. Identical typing must
   produce identical codepoints. Do a few hundred keystrokes in each of the three boxes.
 </p>
 
@@ -108,7 +110,7 @@
 </div>
 
 <div class="bar">
-  <button id="btn-record">Record line (or press Enter)</button>
+  <button id="btn-record">Record line (or press Enter — Shift+Enter in the textarea)</button>
   <button id="btn-clear">Clear boxes</button>
   <button id="btn-reset">Reset counters &amp; log</button>
   <button id="btn-report">Build report &rarr;</button>
