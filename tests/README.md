@@ -49,6 +49,16 @@ create a Tk root. (Tests that would need a live display should be marked
 - **For UI logic**, prefer testing the real method with a fake `self` (as
   `test_waiting_contract.py` does) over standing up a Tk root.
 
+## Manual tests — `tests/manual/`
+
+Things a **human** runs and judges, which no assertion can decide. Not collected
+by pytest (no `test_` prefix), no dependencies, and they ship in the repo so a
+machine that has only done `git pull` can run them.
+
+| Folder | Run it | Answers |
+|---|---|---|
+| `manual/keyman_input_check/` | double-click `run_edge.cmd` (nothing to install), or `python run_pywebview.py` | Does **Keyman** type *consistently* into a browser engine, as it already does into tkinter? Type your own orthography, record a line, type it again — identical typing must give identical codepoints. See its `README.md`; it is the first gate of `agenda/webview_when_to_finish.md`. |
+
 ## Conventions
 
 - `conftest.py` puts `azt/` on `sys.path` so `import backend…` works from anywhere.

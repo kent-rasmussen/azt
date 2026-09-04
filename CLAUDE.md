@@ -90,7 +90,7 @@ Bidirectional `__getattr__` links them:
 - `TaskBase.__getattr__` delegates unknown attrs to `self.ui`
 - `TaskWindow.__getattr__` delegates unknown attrs to `self.task` (via `object.__getattribute__` to prevent recursion)
 
-The `tasks/ui_protocol.py` module defines `TaskUI`, the abstract interface that backend mixins use for UI operations (`show_run_window`, `hide`, `show`, `wait_for_window`, etc.).
+The `tasks/ui_protocol.py` module defines `TaskUI`, a semantic interface that backend mixins were *intended* to use for UI operations (`show_run_window`, `hide`, `show`, `wait_for_window`, etc.). **It is not adopted: nothing imports it.** Backend/tasks code instead calls the TaskWindow's Tk-shaped API through the `__getattr__` bridges above (`getrunwindow`, `withdraw`, `deiconify`, `wait_window`, `waitdone`, `runwindow.…`) — `drive_work` is the one member the two agree on. Finish-or-delete is an open decision: `agenda/ui_protocol_finish_or_kill.md`.
 
 Sound tasks use a mixin split: `backend/core/sound.py` (headless audio logic) and `tasks/sound.py` (UI task mixin inheriting from it + `frontend/sound_ui.py`).
 
@@ -150,7 +150,7 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
   - `sound.py` — Sound task UI mixin (bridges `backend/core/sound.py` + `frontend/sound_ui.py`).
   - `chooser.py` — `TaskChooser`: task selection logic, category lists. UI lives in TaskDressing.
   - `transcribe_glyph.py` — `GlyphTranscribeHelper`: shared glyph transcription UI for Transcribe and `name_new_glyphs`.
-  - `ui_protocol.py` — `TaskUI` abstract interface for task window operations.
+  - `ui_protocol.py` — `TaskUI`, a semantic task↔window interface. **Unadopted — imported by nothing**; see `agenda/ui_protocol_finish_or_kill.md`.
 - **`backend/core/`** — Domain logic (zero frontend imports):
   - `lexicon.py` — `Senses`, `Segments`, `WordCollection`, `Parse`, `Tone`.
   - `categories.py` — `Categories` mixin: group creation, renaming, reassignment, verification node manipulation. Inherited by both Sort and Transcribe.

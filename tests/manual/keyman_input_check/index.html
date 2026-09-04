@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyman input check — A-Z+T</title>
+<!--
+  Manual test. Self-contained on purpose: no external CSS/JS/fonts, so it works
+  from file:// on a machine that has only done `git pull`.
+  See README.md in this folder for what a pass looks like.
+-->
+<style>
+  :root { --ok:#1a7f37; --bad:#b42318; --warn:#9a6700; --line:#d0d7de; --bg:#fbfbfa; }
+  body { font: 15px/1.45 system-ui, sans-serif; margin: 0; padding: 16px 20px 40px;
+         background: var(--bg); color: #1f2328; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 20px 0 6px; text-transform: uppercase;
+       letter-spacing: .04em; color: #57606a; }
+  p.hint { margin: 4px 0 12px; color: #57606a; max-width: 70ch; }
+  .fields { display: flex; flex-wrap: wrap; gap: 14px; }
+  .field { flex: 1 1 300px; min-width: 280px; border: 1px solid var(--line);
+           border-radius: 6px; background: #fff; padding: 10px; }
+  .field h3 { font-size: 13px; margin: 0 0 6px; color: #57606a; font-weight: 600; }
+  /* The tone-capable stack, in the app's own preference order. No @font-face:
+     this test is about INPUT, and we want whatever the machine really has. */
+  .type { font-family: "Charis SIL", "Charis", "Doulos SIL", "Gentium Plus",
+                       "Andika", "DejaVu Sans", serif;
+          font-size: 26px; width: 100%; box-sizing: border-box; padding: 6px 8px;
+          border: 1px solid var(--line); border-radius: 4px; background: #fff;
+          color: #1f2328; }
+  textarea.type { height: 4.2em; resize: vertical; }
+  div.type { min-height: 4.2em; white-space: pre-wrap; overflow-wrap: anywhere; }
+  div.type:empty::before { content: "(click here and type)"; color: #8c959f;
+                           font-size: 15px; font-family: system-ui, sans-serif; }
+  .cps { font: 12px/1.5 ui-monospace, Consolas, monospace; color: #57606a;
+         margin-top: 6px; word-break: break-all; min-height: 1.5em; }
+  .counters { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 4px; }
+  .c { border: 1px solid var(--line); border-radius: 6px; background: #fff;
+       padding: 8px 12px; min-width: 108px; }
+  .c b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .c span { font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+            color: #57606a; }
+  .c.bad b { color: var(--bad); }
+  .c.ok b { color: var(--ok); }
+  button { font: 14px system-ui, sans-serif; padding: 7px 12px; cursor: pointer;
+           border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  button:hover { background: #f3f4f6; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+  table { border-collapse: collapse; width: 100%; font: 12px/1.4 ui-monospace, Consolas, monospace; }
+  th, td { border-bottom: 1px solid var(--line); padding: 3px 6px; text-align: left;
+           vertical-align: top; }
+  th { position: sticky; top: 0; background: var(--bg); font-weight: 600; }
+  .log { max-height: 300px; overflow: auto; border: 1px solid var(--line);
+         border-radius: 6px; background: #fff; }
+  .lines { border: 1px solid var(--line); border-radius: 6px; background: #fff;
+           max-height: 240px; overflow: auto; }
+  tr.diff td { background: #fff5f5; color: var(--bad); }
+  tr.same td { background: #f2fbf4; }
+  .tag { display: inline-block; padding: 0 5px; border-radius: 3px; font-size: 11px;
+         background: #eaeef2; color: #57606a; }
+  .env { font: 12px/1.6 ui-monospace, Consolas, monospace; color: #57606a;
+         background: #fff; border: 1px solid var(--line); border-radius: 6px;
+         padding: 8px 10px; word-break: break-all; }
+  textarea#report { width: 100%; height: 160px; font: 12px ui-monospace, Consolas, monospace; }
+</style>
+</head>
+<body>
+
+<h1>Keyman input check</h1>
+<p class="hint">
+  Type <b>your own real orthography</b> with your own keyboard — there is no target string
+  and nothing here knows what is "correct". The test is <b>consistency</b>: type a line,
+  press <kbd>Enter</kbd> to record it, then type the same line again. Identical typing must
+  produce identical codepoints. Do a few hundred keystrokes in each of the three boxes.
+</p>
+
+<div class="counters">
+  <div class="c"><b id="c-keys">0</b><span>keydowns</span></div>
+  <div class="c"><b id="c-inputs">0</b><span>input events</span></div>
+  <div class="c" id="w-swallow"><b id="c-swallow">0</b><span>swallowed?</span></div>
+  <div class="c" id="w-spurious"><b id="c-spurious">0</b><span>spurious?</span></div>
+  <div class="c"><b id="c-lines">0</b><span>lines recorded</span></div>
+  <div class="c" id="w-mismatch"><b id="c-mismatch">0</b><span>repeat mismatches</span></div>
+</div>
+<p class="hint" style="margin-top:0">
+  <b>The repeat mismatches box is the verdict.</b> "Swallowed" and "spurious" are hints only:
+  a keystroke that produced no text, and text that appeared with no keystroke. Some keyboards
+  legitimately do both (dead keys, reordering, composition), so read them alongside the log —
+  not as failures on their own.
+</p>
+
+<h2>Type here</h2>
+<div class="fields">
+  <div class="field">
+    <h3>1 &middot; &lt;input type="text"&gt;</h3>
+    <input class="type" id="f-input" type="text" autocomplete="off" spellcheck="false">
+    <div class="cps" id="cp-input"></div>
+  </div>
+  <div class="field">
+    <h3>2 &middot; &lt;textarea&gt;</h3>
+    <textarea class="type" id="f-textarea" autocomplete="off" spellcheck="false"></textarea>
+    <div class="cps" id="cp-textarea"></div>
+  </div>
+  <div class="field">
+    <h3>3 &middot; contenteditable</h3>
+    <div class="type" id="f-editable" contenteditable="true" spellcheck="false"></div>
+    <div class="cps" id="cp-editable"></div>
+  </div>
+</div>
+
+<div class="bar">
+  <button id="btn-record">Record line (or press Enter)</button>
+  <button id="btn-clear">Clear boxes</button>
+  <button id="btn-reset">Reset counters &amp; log</button>
+  <button id="btn-report">Build report &rarr;</button>
+  <button id="btn-copy">Copy report</button>
+</div>
+
+<h2>Recorded lines — repeats are compared to their first occurrence</h2>
+<div class="lines">
+  <table>
+    <thead><tr><th style="width:3em">#</th><th style="width:5em">box</th><th>text</th>
+      <th style="width:34%">codepoints</th><th style="width:8em">vs first</th></tr></thead>
+    <tbody id="lines"></tbody>
+  </table>
+</div>
+
+<h2>Event log (newest first, last 400)</h2>
+<div class="log">
+  <table>
+    <thead><tr><th style="width:5em">t+ms</th><th style="width:5em">box</th>
+      <th style="width:9em">event</th><th style="width:7em">key</th>
+      <th style="width:7em">code</th><th style="width:4em">comp</th>
+      <th>value codepoints</th></tr></thead>
+    <tbody id="log"></tbody>
+  </table>
+</div>
+
+<h2>Environment</h2>
+<div class="env" id="env"></div>
+
+<h2>Report</h2>
+<p class="hint">Press <b>Build report</b>, then <b>Copy report</b>, and paste it back.</p>
+<textarea id="report" readonly></textarea>
+
+<script>
+(function () {
+  "use strict";
+
+  var t0 = Date.now();
+  var counters = { keys: 0, inputs: 0, swallow: 0, spurious: 0, lines: 0, mismatch: 0 };
+  var logRows = [];        // newest first
+  var lines = [];          // {n, box, text, cps}
+  var firstByText = {};    // normalised keystroke-line -> first cps seen
+  var pendingKey = null;   // {key, at, box} awaiting an input event
+  var lastInputAt = 0;
+  var SWALLOW_MS = 300;    // a keystroke that yields no input within this is suspicious
+  var SPURIOUS_MS = 600;   // input with no keydown this recently is suspicious
+
+  var boxes = [
+    { id: "f-input",    name: "input",    cp: "cp-input" },
+    { id: "f-textarea", name: "textarea", cp: "cp-textarea" },
+    { id: "f-editable", name: "editable", cp: "cp-editable" }
+  ];
+
+  function $(id) { return document.getElementById(id); }
+
+  function valueOf(el) {
+    return ("value" in el && el.tagName !== "DIV") ? el.value : el.innerText;
+  }
+
+  function cps(s) {
+    var out = [], i, c;
+    for (i = 0; i < s.length; i++) {
+      c = s.codePointAt(i);
+      if (c > 0xffff) { i++; }                 // surrogate pair consumed
+      if (c === 10) { out.push("LF"); continue; }
+      out.push("U+" + c.toString(16).toUpperCase().padStart(4, "0"));
+    }
+    return out.join(" ");
+  }
+
+  function setCounter(k) {
+    $("c-" + k).textContent = counters[k];
+  }
+  function refreshCounters() {
+    Object.keys(counters).forEach(setCounter);
+    $("w-mismatch").className = "c " + (counters.mismatch ? "bad" : (counters.lines ? "ok" : ""));
+    $("w-swallow").className  = "c " + (counters.swallow  ? "bad" : "");
+    $("w-spurious").className = "c " + (counters.spurious ? "bad" : "");
+  }
+
+  function log(box, ev, key, code, comp, val) {
+    logRows.unshift({ t: Date.now() - t0, box: box, ev: ev, key: key, code: code,
+                      comp: comp, val: val });
+    if (logRows.length > 400) { logRows.pop(); }
+    renderLog();
+  }
+
+  function esc(s) {
+    return String(s === undefined || s === null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  var logPending = false;
+  function renderLog() {
+    if (logPending) { return; }
+    logPending = true;
+    requestAnimationFrame(function () {
+      logPending = false;
+      var html = logRows.map(function (r) {
+        return "<tr><td>" + r.t + "</td><td>" + esc(r.box) + "</td><td>" + esc(r.ev) +
+               "</td><td>" + esc(r.key) + "</td><td>" + esc(r.code) + "</td><td>" +
+               (r.comp ? "yes" : "") + "</td><td>" + esc(r.val) + "</td></tr>";
+      }).join("");
+      $("log").innerHTML = html;
+    });
+  }
+
+  function renderLines() {
+    $("lines").innerHTML = lines.map(function (l) {
+      var cls = l.verdict === "differs" ? "diff" : (l.verdict === "matches" ? "same" : "");
+      return "<tr class=\"" + cls + "\"><td>" + l.n + "</td><td>" + esc(l.box) +
+             "</td><td style=\"font-size:16px\">" + esc(l.text) + "</td><td>" +
+             esc(l.cps) + "</td><td>" + esc(l.verdict || "first") + "</td></tr>";
+    }).join("");
+  }
+
+  // A line is "the same line typed again" if its visible text matches a previous
+  // one. We then compare CODEPOINTS: same text, different codepoints = a real
+  // inconsistency (different normalisation or a dropped/reordered mark).
+  function recordLine(box, el) {
+    var text = valueOf(el).replace(/\n+$/, "");
+    if (!text) { return; }
+    var key = text;
+    var c = cps(text);
+    var entry = { n: ++counters.lines, box: box, text: text, cps: c, verdict: "" };
+    if (Object.prototype.hasOwnProperty.call(firstByText, key)) {
+      if (firstByText[key] === c) {
+        entry.verdict = "matches";
+      } else {
+        entry.verdict = "differs";
+        counters.mismatch++;
+      }
+    } else {
+      firstByText[key] = c;
+      entry.verdict = "first";
+    }
+    lines.push(entry);
+    renderLines();
+    refreshCounters();
+    log(box, "RECORD", "", "", false, c);
+    if ("value" in el && el.tagName !== "DIV") { el.value = ""; } else { el.innerText = ""; }
+    showCps(box, el);
+  }
+
+  function showCps(name, el) {
+    var b = boxes.filter(function (x) { return x.name === name; })[0];
+    if (b) { $(b.cp).textContent = cps(valueOf(el)); }
+  }
+
+  function printableish(e) {
+    // Keys we EXPECT to produce text. Keyman often reports 'Process',
+    // 'Unidentified' or a dead key; those count too.
+    if (e.ctrlKey || e.altKey || e.metaKey) { return false; }
+    if (e.key === "Dead" || e.key === "Process" || e.key === "Unidentified") { return true; }
+    return typeof e.key === "string" && Array.from(e.key).length === 1;
+  }
+
+  boxes.forEach(function (b) {
+    var el = $(b.id);
+
+    el.addEventListener("keydown", function (e) {
+      counters.keys++;
+      log(b.name, "keydown", e.key, e.code, e.isComposing, cps(valueOf(el)));
+      if (e.key === "Enter" && !e.shiftKey && b.name !== "textarea") {
+        e.preventDefault();
+        recordLine(b.name, el);
+        refreshCounters();
+        return;
+      }
+      if (e.key === "Enter" && e.ctrlKey === false && b.name === "textarea" && e.shiftKey) {
+        e.preventDefault();
+        recordLine(b.name, el);
+        refreshCounters();
+        return;
+      }
+      if (printableish(e) && !e.isComposing) {
+        var mine = { key: e.key, at: Date.now(), box: b.name };
+        pendingKey = mine;
+        setTimeout(function () {
+          if (pendingKey === mine) {       // nothing consumed it
+            counters.swallow++;
+            log(b.name, "!! no input after keydown", mine.key, "", false, cps(valueOf(el)));
+            refreshCounters();
+            pendingKey = null;
+          }
+        }, SWALLOW_MS);
+      }
+      refreshCounters();
+    });
+
+    ["compositionstart", "compositionupdate", "compositionend"].forEach(function (ev) {
+      el.addEventListener(ev, function (e) {
+        pendingKey = null;               // composition is a legitimate consumer
+        log(b.name, ev, e.data, "", true, cps(valueOf(el)));
+      });
+    });
+
+    el.addEventListener("beforeinput", function (e) {
+      log(b.name, "beforeinput", e.data, e.inputType, e.isComposing, cps(valueOf(el)));
+    });
+
+    el.addEventListener("input", function (e) {
+      counters.inputs++;
+      var now = Date.now();
+      if (!pendingKey && (now - lastInputAt) > SPURIOUS_MS && !e.isComposing &&
+          e.inputType !== "insertFromPaste") {
+        counters.spurious++;
+        log(b.name, "!! input with no recent keydown", e.data, e.inputType, e.isComposing,
+            cps(valueOf(el)));
+      }
+      pendingKey = null;
+      lastInputAt = now;
+      log(b.name, "input", e.data, e.inputType, e.isComposing, cps(valueOf(el)));
+      showCps(b.name, el);
+      refreshCounters();
+    });
+  });
+
+  $("btn-record").addEventListener("click", function () {
+    var el = document.activeElement;
+    var b = boxes.filter(function (x) { return $(x.id) === el; })[0];
+    if (!b) { b = boxes[0]; el = $(b.id); }
+    recordLine(b.name, el);
+  });
+
+  $("btn-clear").addEventListener("click", function () {
+    boxes.forEach(function (b) {
+      var el = $(b.id);
+      if ("value" in el && el.tagName !== "DIV") { el.value = ""; } else { el.innerText = ""; }
+      $(b.cp).textContent = "";
+    });
+  });
+
+  $("btn-reset").addEventListener("click", function () {
+    Object.keys(counters).forEach(function (k) { counters[k] = 0; });
+    logRows = []; lines = []; firstByText = {};
+    renderLog(); renderLines(); refreshCounters();
+  });
+
+  // NOT document.fonts.check(): that reports whether the string is renderable
+  // with *some* available font, so it answers "yes" for families that are not
+  // installed. Measure instead — a family that is present changes the width of
+  // a test string against every generic fallback.
+  function haveFamily(fam) {
+    var probe = "mmmMMMWWWiiil1AoO˥˩꜒꜖";
+    var generics = ["monospace", "serif", "sans-serif"];
+    var span = document.createElement("span");
+    span.style.cssText = "position:absolute;left:-9999px;top:-9999px;" +
+                         "font-size:72px;white-space:nowrap;visibility:hidden";
+    span.textContent = probe;
+    document.body.appendChild(span);
+    var differs = 0, i, base, withFam;
+    for (i = 0; i < generics.length; i++) {
+      span.style.fontFamily = generics[i];
+      base = span.offsetWidth;
+      span.style.fontFamily = "\"" + fam + "\"," + generics[i];
+      withFam = span.offsetWidth;
+      if (withFam !== base) { differs++; }
+    }
+    document.body.removeChild(span);
+    // Present iff it displaced every generic. (A family that happens to match
+    // one generic's metrics exactly would still differ from the other two.)
+    return differs === generics.length;
+  }
+
+  function fontReport() {
+    var fams = ["Charis SIL", "Charis", "Doulos SIL", "Gentium Plus", "Andika"];
+    return fams.map(function (f) {
+      var ok;
+      try { ok = haveFamily(f); } catch (e) { ok = null; }
+      return f + "=" + (ok === null ? "?" : (ok ? "yes" : "no"));
+    }).join("  ");
+  }
+
+  var env = [
+    "userAgent: " + navigator.userAgent,
+    "platform:  " + (navigator.userAgentData ? navigator.userAgentData.platform
+                                             : navigator.platform),
+    "languages: " + (navigator.languages || []).join(",") + "   dpr: " +
+      window.devicePixelRatio + "   inner: " + window.innerWidth + "x" + window.innerHeight,
+    "fonts resolvable by name: " + fontReport()
+  ].join("\n");
+  $("env").textContent = env;
+
+  $("btn-report").addEventListener("click", function () {
+    var out = [];
+    out.push("A-Z+T Keyman input check");
+    out.push("when: " + new Date().toISOString());
+    out.push(env);
+    out.push("");
+    out.push("counters: keydowns=" + counters.keys + " inputs=" + counters.inputs +
+             " swallowed=" + counters.swallow + " spurious=" + counters.spurious +
+             " lines=" + counters.lines + " REPEAT-MISMATCHES=" + counters.mismatch);
+    out.push("");
+    out.push("recorded lines:");
+    lines.forEach(function (l) {
+      out.push("  #" + l.n + " [" + l.box + "] " + l.verdict + " | " + l.text +
+               " | " + l.cps);
+    });
+    out.push("");
+    out.push("event log (newest first):");
+    logRows.forEach(function (r) {
+      out.push("  +" + r.t + "ms [" + r.box + "] " + r.ev + " key=" + r.key +
+               " code=" + r.code + (r.comp ? " composing" : "") + " -> " + r.val);
+    });
+    $("report").value = out.join("\n");
+  });
+
+  $("btn-copy").addEventListener("click", function () {
+    var ta = $("report");
+    if (!ta.value) { $("btn-report").click(); }
+    ta.select();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value);
+      } else {
+        document.execCommand("copy");
+      }
+    } catch (e) { /* selection is still there to copy by hand */ }
+  });
+
+  refreshCounters();
+  $("f-input").focus();
+})();
+</script>
+</body>
+</html>

@@ -19,6 +19,58 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.17
+
+**The webview question is answered on paper, and the first thing that could sink it is now a
+test anyone can run.** Documentation and one manual test; **no application code changed**.
+
+- **NEW `tests/manual/keyman_input_check/`** — a self-contained page (plus `run_edge.cmd`
+  and `run_pywebview.py`) that asks whether **Keyman types consistently into a browser
+  engine**, the way it already does into tkinter. It ships in the repo, so a machine that has
+  done `git pull` has it; tier 1 is a double-click and installs nothing. No target string:
+  you type your own orthography, record a line, type it again, and the page diffs the
+  codepoints — the failure mode in the one unresolved SIL report is *sporadic*, so a
+  single-character check would only give false confidence. `tests/README.md` gains a
+  **Manual tests** section. Not collected by pytest (`tests` is already in the import
+  smoke test's `EXCLUDE_DIRS` and absent from its `PACKAGES`).
+- **NEW `docs/adr/0004-ui-backend-direction.md`** — eight decisions (D1–D8) that were
+  previously implicit and mutually contradictory across `Electron_Conversion.md`,
+  `UIvTasks.md`, `CLAUDE.md` and the code. The load-bearing ones: tkinter keeps shipping and
+  the selector must **fall back**, not start windowless; the second backend is **view-model
+  pages**, not a widget-parity port; a mixed-backend page runs in a **subprocess** because
+  `webview.start()` and Tk's `mainloop()` both demand the main thread; fonts stay
+  installed-only with tone behaviour driven by the **`cv92`** font feature; and nothing
+  enters `requirements.txt` until a page has replaced its Tk counterpart in the field.
+- **NEW `requirements-webview.txt`** — opt-in, deliberately *not* `requirements.txt`, which
+  is the rollout mechanism. Records that pywebview 6.2.1 is pure-Python and that pythonnet
+  ships cp313 Windows wheels, so the `allosaurus` failure mode (a missing Windows py3.13
+  wheel taking down the whole `-r`) does not repeat here.
+- **`agenda/webview_when_to_finish.md` rewritten** with the research it asked for. The item's
+  own gating unknown — WebView2 on Windows — is **answered: not a blocker** (in-box on
+  Win11, on "the vast majority" of Win10 devices per Microsoft, per-user installable without
+  admin from a 2 MB bootstrapper, one registry read to detect, Fixed Version as a floor). The
+  "trigger" it asked for is replaced by a **value:cost ledger**, per Kent: *"The trigger …
+  is its value outweighing its cost, in my opinion."*
+- **Corrected, on the record, why the tone `Renderer` exists**: **font features** — tone
+  letters with ligatures and without staves — **not** combining-mark stacking. Tk can only
+  name a font *family*, so it can never reach a tuned build; PIL opens a *path*, which is
+  why `utilities/fonts.py` lists the `-tstv` files first. SIL exposes the same behaviour as
+  OpenType `cv92` (hide tone contour staves), `cv91`, `cv90` — which CSS can request
+  directly and Tk cannot express at all. The `-tstv` preference is **not** to be removed:
+  machines that have such a file get stave-free output, and removing it would take that away
+  from everyone who has it.
+- **FIX `CLAUDE.md`** stated that `TaskDressing` implements `tasks/ui_protocol.py::TaskUI`.
+  It does not — **nothing imports `TaskUI`**. It is Phase 0 of the TaskBase/TaskWindow split
+  (`UIvTasks.md:105-155`, *"Risk: Zero — no existing code changes"*), and the later phases
+  shipped without it because the `__getattr__` bridges let Tk's names keep working. Only
+  `drive_work` was ever adopted. Now described accurately, with the finish-or-delete decision
+  filed as an agenda item rather than left as a doc that misdescribes the seam.
+- **Three agenda items filed** out of this work: `ui_protocol_finish_or_kill`,
+  `lexicon_bare_after_nameerror` (verified: `backend/core/lexicon.py:2020-2022` calls a bare
+  `after(10*100, callback=…)` inside a `while` — `after` is undefined in that module and not
+  exported by `utilities/`, so it raises `NameError` if reached), and
+  `tstv_font_availability`.
+
 # Version 1.15.16
 
 **Scroller sizing and row wrapping now answer to ONE number.** Kent, on the sort-into-groups
