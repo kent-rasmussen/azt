@@ -1429,6 +1429,24 @@ class Exitable():
                                 type(getattr(self,'task',self)).__name__))
                 else:
                     self.parent.deiconify()
+                    # REVERTED 2026-09-03, minutes after being added: scheduling
+                    # the commit with after_idle DEADLOCKED — faulthandler
+                    # showed `callit → UI.update → tkinter update` wedged, i.e.
+                    # the deferred callback itself. Worse than the symptom it
+                    # targeted: mapped-but-blank leaves mainloop IDLE with only
+                    # a dead surface, whereas this stopped the event loop.
+                    #   THE LESSON, which generalises past this call site: one
+                    # idle turn is NOT outside the transition's flight window.
+                    # Deferring does not make a synchronous X round-trip safe
+                    # near a window-state change; it only makes it later. So
+                    # there is no placement of update() that fixes this, which
+                    # is the audit's own conclusion arrived at from the other
+                    # direction — the fix has to REMOVE the round-trip (inline
+                    # progress, no second window to paint), not reposition it.
+                    # See azt/agenda/wayland_freeze_audit.md.
+                    #
+                    # ORIGINAL RATIONALE, kept because the diagnosis stands and
+                    # only the remedy failed:
                     # COMMIT THE SURFACE, ON A LATER TURN. This reveal has
                     # never drained, and on Wayland a deiconify that is not
                     # followed by a commit can leave the window MAPPED BUT
@@ -1457,11 +1475,8 @@ class Exitable():
                     # NotifyUser fires at the same moment (as it did: "Not
                     # Done!"). If blanking survives this change, that collision
                     # is the next suspect — see wait_below_status_window.md.
-                    try:
-                        self.parent.after_idle(self.parent.update)
-                    except Exception as e:
-                        log.info("could not schedule the post-reveal surface "
-                                "commit for %s: %s",self.parent,e)
+                    # (the after_idle(update) that stood here is gone — see
+                    # REVERTED above)
         self.cleanup()
         self.destroy() #do this for everything
     def __init__(self, *args, **kwargs):
@@ -2030,9 +2045,25 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
             return
         targets=[]
         _collect(targets_parent,targets)
-        if abs(width-state['w'])<8 and len(targets)==state['n']:
+        # ALSO WATCH THE TEXT. Width and target-count miss the case that matters
+        # most for verifying any of this: CYCLING an example replaces a word's
+        # TEXT and changes neither, so a word cycled in after the build keeps
+        # the previous word's wrap (Kent 2026-09-04, 'aunt'). That is worse than
+        # cosmetic here — the cycle button between group frames sits on the
+        # RIGHT, so an overflowing row pushes the control that produced it off
+        # the page.
+        #   A length sum, not the text: cheap for the ~20 targets on these
+        # pages, and it changes whenever any word does. Collisions are possible
+        # in principle (two words of identical total length) and cost nothing —
+        # the next real change re-applies.
+        try:
+            sig=sum(len(str(t.cget('text') or '')) for t in targets)
+        except Exception:
+            sig=None
+        if (abs(width-state['w'])<8 and len(targets)==state['n']
+                and sig==state.get('sig')):
             return
-        state['w']=width; state['n']=len(targets)
+        state['w']=width; state['n']=len(targets); state['sig']=sig
         cell=int(width/max(cols,1))
         # SAY WHAT WAS COMPUTED, once per container. `reserve` is a caller's
         # estimate of the row chrome it cannot see from where it stands (group
@@ -2041,8 +2072,14 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         # edge — which is a number being wrong, not a mechanism being wrong
         # (Kent 2026-09-03: "the math here is not quite right"). Printing the
         # inputs makes the dial arithmetic instead of another guess.
-        if not state.get('said'):
-            state['said']=True
+        # ONE LINE PER DISTINCT WIDTH, not one per container. Reporting only the
+        # FIRST pass showed `width=380 reserve=400 → budget=60` — the unsettled
+        # measurement, i.e. the least informative one, while the pass that
+        # actually produced the visible layout went unreported (Kent's log,
+        # 2026-09-03). Deduping on width keeps it to a couple of lines and shows
+        # the progression instead of hiding it.
+        if width not in state.setdefault('said',set()):
+            state['said'].add(width)
             try:
                 log.info("DIAG-wrap budget: container=%s width=%s cols=%s "
                         "cell=%s reserve=%s → budget=%s (before per-target "
@@ -2068,8 +2105,17 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         # no synchronous round-trip — which matters here (see
         # azt/agenda/wayland_freeze_audit.md).
         for t in targets:
+            # SPAN ONLY COUNTS IN THE CONTAINER'S OWN GRID. columnspan is
+            # meaningful against `cols`, which describes THIS container — but a
+            # target nested deeper sits in some inner frame's grid, where a span
+            # of 3 or 4 is routine and multiplying the container's width by it
+            # is nonsense. That is what made rows render ~845px of text from a
+            # 686px container with a 256px budget (Kent's DIAG, 2026-09-03):
+            # the budget being reported was not the budget being applied.
             try:
-                span=int(t.grid_info().get('columnspan',1) or 1)
+                span=1
+                if t.winfo_parent()==str(container):
+                    span=int(t.grid_info().get('columnspan',1) or 1)
             except Exception:
                 span=1
             extra=reserve
@@ -2080,7 +2126,38 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                         extra+=int(t.tk.call('image','width',im))
             except Exception:
                 pass
-            budget=max(cell*span-extra,minimum)
+            # RESERVE CANNOT DOMINATE THE CELL. `reserve` is a caller's estimate
+            # of row chrome it cannot measure from where it stands, so on a
+            # narrow or not-yet-settled container it can EXCEED the whole cell —
+            # `width=380 reserve=400` gave budget 60, the `minimum` floor, for
+            # 229 targets at once (Kent's log 2026-09-03). Capping it at 40% of
+            # the cell means a wrong estimate degrades the wrap a little instead
+            # of collapsing it to one character, and it costs nothing when the
+            # estimate is sane (400 of a 1400px cell is well under the cap).
+            extra=min(extra,int(cell*span*0.4))
+            # MEASURE THE LEFT CHROME; ONLY THE RIGHT MARGIN IS ESTIMATED.
+            #
+            # `reserve` as "all the row's chrome" cannot work: the same builder
+            # produces a labelled variant (group label ~180 + profile tag ~90 →
+            # ~500) and an unlabelled one (~230), so one number is wrong on one
+            # of them — Kent's two DIAG sets, 2026-09-04. Everything to the LEFT
+            # of the text is already measurable once mapped: the target's own
+            # x-offset inside the container is exactly the group label plus the
+            # play button plus the illustration, whatever they happen to be.
+            #   So offset is measured and `reserve` shrinks to its honest
+            # meaning: how much to leave free on the RIGHT (profile tag,
+            # scrollbar), which is small and genuinely constant.
+            #   cols==1 only. A multi-column grid (the chooser) wants cell
+            # arithmetic, where an offset would hand column 0 all the width to
+            # the window's right edge.
+            if cols==1:
+                try:
+                    off=max(0,t.winfo_rootx()-container.winfo_rootx())
+                except Exception:
+                    off=0
+                budget=max(width-off-reserve,minimum)
+            else:
+                budget=max(cell*span-extra,minimum)
             try:
                 t.config(wraplength=0) #unwrapped: what does it actually want?
                 natural=t.winfo_reqwidth()
@@ -3136,6 +3213,18 @@ class Window(Toplevel):
         self.outsideframe=Frame(self, # border=True,
                                 row=1, column=1, sticky='nsew',
                                 )
+        # NO WEIGHT HERE — the centring is DELIBERATE. I briefly added
+        # grid_rowconfigure/columnconfigure(1, weight=1) to make outsideframe
+        # fill the window, on the reasoning that the dead margins (~390px left,
+        # ~420px right of 1920) were an oversight. They are not: Kent
+        # 2026-09-04, "the whole block is centred with dead margins: yes, this
+        # is intentional." Stretching everything to the edges would trade a
+        # wrapping problem for a design change nobody asked for.
+        #   What he wants instead is narrower: those margins are space the
+        # SCROLLING FRAME may grow into rather than wrap. So the fix belongs in
+        # what the wrap budget is measured against — the available width,
+        # margins included — not in how this window lays itself out. See the
+        # wrap_to_container call in sort_ui.build_sort_layout.
         self.resetframe()
         # self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
         if exit:
@@ -3535,15 +3624,40 @@ class ScrollingFrame(Frame):
         # space has to come from something whose size is set by the layout all
         # the way up, which is what scrollframe_sizes_from_layout.md now has to
         # work out; MIN_PLAUSIBLE=300 was not enough of a guard.
-        if contentrw > self.maxwidth and not self.ignore_maxwidth:
-            width=self.maxwidth
+        # EXPAND BEFORE WRAPPING (Kent's rule), and WIDEN ONLY.
+        #
+        # The cap here is availablexy's maxwidth/maxheight = screen minus
+        # _measure_siblings, which UNDERCOUNTS badly whenever the siblings are
+        # themselves scrollable content: Kent's log shows the sibling total
+        # climbing +126px per sort-group button, 1033→2671 against a 1170px
+        # screen. So a scroller told "you have 200px" sits at 200px in a 1920px
+        # window — "hugs too tightly", with rows wrapping that had room to be
+        # one line (`heagoat` needed ~765 in a ~750 box, with ~1100px unused to
+        # its right).
+        #
+        # `_cellsize()` asks the geometry manager what it actually allotted.
+        # Taking the LARGER of the two is the safety property my reverted
+        # attempt lacked: that one REPLACED maxwidth with a parent-derived
+        # number and clipped the status board's progress table to ~110px.
+        # max() cannot narrow anything, so the worst case here is no change.
+        cellw,cellh=self._cellsize()
+        capw=self.maxwidth if cellw is None else max(self.maxwidth,cellw)
+        caph=self.maxheight if cellh is None else max(self.maxheight,cellh)
+        if contentrw > capw and not self.ignore_maxwidth:
+            width=capw
         else:
-            width=contentrw
+            width=contentrw #hug: it fits, so take only what it needs
         #scrolling window height
-        if contentrh > self.maxheight:
-            height=self.maxheight
+        if contentrh > caph:
+            height=caph
         else:
             height=contentrh
+        if not getattr(self,'_said_cap',False):
+            self._said_cap=True
+            log.info("scroller cap: maxw=%s cellw=%s → capw=%s | maxh=%s "
+                    "cellh=%s → caph=%s | content=%sx%s → %sx%s",
+                    self.maxwidth,cellw,capw,self.maxheight,cellh,caph,
+                    contentrw,contentrh,width,height)
         self.config(height=height, width=width)
         log.log(4,"height={}, width={}".format(height, width))
         # if self.winfo_height() > self.maxheight:
@@ -3572,6 +3686,27 @@ class ScrollingFrame(Frame):
         self.hwinfo(event)
         # if self.winfo_height() > self.maxheight:
         #     self.config(height=self.maxheight)
+    def _cellsize(self):
+        """(width, height) the GEOMETRY MANAGER allotted this scroller, or
+        (None, None).
+
+        `master.grid_bbox(col,row)` is the honest question — "what is this
+        cell" — and it is the one I had not asked. The reverted attempt asked
+        the PARENT's width instead, which is a different question: a parent that
+        is itself content-sized hands down a small number, and the status
+        board's progress table clipped to ~110px (2026-09-03).
+
+        Still not immune to circularity — a weighted column's share depends on
+        the parent having space to distribute — which is why the caller only
+        ever WIDENS with this, never narrows."""
+        try:
+            gi=self.grid_info()
+            bbox=self.master.grid_bbox(int(gi['column']),int(gi['row']))
+            if bbox and len(bbox)>=4:
+                return bbox[2] or None,bbox[3] or None
+        except Exception as e:
+            log.log(2,"scroller cell size unavailable (%s)",e)
+        return None,None
     def tobottom(self):
         self.update_idletasks()
         self.canvas.yview_moveto(1)

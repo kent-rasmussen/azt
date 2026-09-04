@@ -3975,9 +3975,29 @@ class Sense(Node,FieldParent):
         v=self.verificationtextvalue(profile,ftype)
         try:
             v.remove(value)
-            self.verificationtextvalue(profile,ftype,value=v) #remove on []
+        except ValueError:
+            # THE NORMAL CASE, and the old line reported it as a suspected
+            # fault: "tried to remove what wasn't there? (list.remove(x): x not
+            # in list)", at INFO, once per sense. Kent saw six in a row beside
+            # six "Field removal succeeded!" lines and read the pair as the two
+            # stores disagreeing (2026-09-03).
+            #   They are not the same store. categories.removeitemfromgroup
+            # clears the GROUP ANNOTATION — that is the "succeeded" line — while
+            # this clears a VERIFICATION CODE. A word the user is removing from
+            # a group is usually one that was never verified INTO it, so there
+            # is no code to remove and nothing has gone wrong. Say that, at a
+            # level that does not draw the eye.
+            log.log(2,"no %r to remove from the %s %s verification list "
+                    "(it was never verified into it)",value,profile,ftype)
+            return
         except Exception as e:
-            log.info(_("tried to remove what wasn’t there? ({error})").format(error=e))
+            # A real failure — a missing/None list, not an absent member. The
+            # old blanket `except Exception` gave this the same soothing
+            # question-mark message as the no-op above.
+            log.error("could not remove %r from the %s %s verification list: "
+                    "%s",value,profile,ftype,e)
+            return
+        self.verificationtextvalue(profile,ftype,value=v) #remove on []
     def rmverificationnode(self,profile,ftype):
         key=self.verificationkey(profile,ftype)
         # log.info(f"Removing {key} verification from {self}")

@@ -130,8 +130,35 @@ class StatusWindow(ui.Window):
         constructor (Kent's faulthandler dump, 2026-08-25). Raising a window is a
         WM round trip, and under XWayland those are exactly the calls that wedge;
         see azt/agenda/wayland_freeze_audit.md. One call, and it is the one that
-        also makes the window visible over a fullscreen kiosk page."""
+        also makes the window visible over a fullscreen kiosk page.
+
+        NEVER INLINE — ALWAYS ONE BEAT LATER (Kent 2026-09-03: "waiting a beat
+        is nothing compared to freezing the app"). Both calls below are
+        window-state transitions, and this method is invoked from arbitrary
+        points in OTHER windows' lifecycles — including from `notify_user`
+        during `on_quit`, which is deiconifying a page at that same instant.
+        Two transitions in flight together is ingredient (B) of the XWayland
+        deadlock twice over, and the observed result is a page mapped but never
+        painted: "nothing but theme", input-dead, mainloop idle.
+
+        This is NOT the "defer the round-trip" idea that failed earlier the same
+        day. That tried to make a synchronous `update()` safe by scheduling it,
+        and it deadlocked in the deferred callback — one idle turn is not
+        outside a transition's flight window. Here there is no round-trip to
+        move: the point is to stop two TRANSITIONS overlapping, which needs only
+        that they not start together. Hence a real delay rather than
+        `after_idle`, which would land in the same flight window.
+
+        Cost: a message appears a beat later than the event that caused it."""
         try:
+            self.after(150, self._surface_now)
+        except Exception as e:
+            log.info("status window surface scheduling failed: %s", e)
+    def _surface_now(self):
+        """The two transitions themselves. Only ever reached via `_surface`."""
+        try:
+            if not self.winfo_exists():
+                return
             if not self.winfo_viewable():
                 self.deiconify()
             self.attributes('-topmost', True)

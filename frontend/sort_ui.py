@@ -483,7 +483,39 @@ class SortPresenter(PresenterBase):
         # the text, and I cannot read their widths from here. The helper logs
         # the width it used, so one run says whether this is right; over-wide is
         # visible and reportable, under-wide reads as a font bug.
-        ui.wrap_to_container(groupsFrame,cols=1,reserve=400,
+        #   runwindow.frame, NOT groupsFrame — measured, not guessed (Kent's
+        # DIAG, 2026-09-03): groupsFrame settles at 656-686px while its rows
+        # render ~1200, so it is not the width the rows actually get, whereas
+        # the verify page's runwindow.frame reports 1438 and lays out correctly.
+        # Same container as the verify page, which is one less thing to differ.
+        #   reserve=500 is now ARITHMETIC rather than an estimate: the row
+        # carries a group label (~180), a play button (~100), the profile tag
+        # (~90) and borders (~40) beside the text, ≈440, plus the scrollbar. On
+        # a 1438px frame that leaves ~938, less the ~60px illustration the
+        # helper subtracts per target, ≈878 — which is the ~870 the overflowing
+        # rows needed.
+        # reserve=120 now means only the RIGHT margin — profile tag + scrollbar.
+        # Everything left of the text (group label, play button, illustration)
+        # is measured from the target's own offset, so the labelled and
+        # unlabelled variants of this page no longer need different numbers.
+        #   THE WINDOW is the container — the AVAILABLE width, margins included.
+        #
+        # Not the box (`buttonframe`): the box hugs its content and the content
+        # is what we are wrapping, so measuring it is circular — it wrapped too
+        # early before a refresh and CLIPPED after (Kent 2026-09-04). Not
+        # `runwindow.frame` either: that stops at the centred block's edge, and
+        # the dead margins around it are DELIBERATE but are also space the
+        # scroller may grow INTO rather than wrap ("those margins are space that
+        # I would expect we increase the scrolling frame into, rather than
+        # wrap").
+        #
+        # So the budget is the window minus what is actually to the row's left,
+        # minus a right margin. The offset is MEASURED from the container's left
+        # edge to each target, so it absorbs the left margin, the icon column
+        # and the row's own chrome without any of them being estimated — which
+        # is what stops the labelled and unlabelled variants needing different
+        # numbers. `reserve` is only the right-hand allowance.
+        ui.wrap_to_container(runwindow,cols=1,reserve=120,
                         targets_parent=buttonframe,maxdepth=5)
         return groupsFrame, buttonframe
 
