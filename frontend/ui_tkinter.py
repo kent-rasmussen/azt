@@ -2034,100 +2034,124 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                     _collect(ch,out,depth+1)
             except Exception:
                 continue
-    def _chrome(t,stop):
-        """Total width of everything BESIDE `t` — either side — plus the borders
-        and pads, at every level between `t` and `stop`. Measured, never
-        estimated, and NEVER from a screen position.
-
-        BOTH SIDES, because position-based measurement cannot survive a row
-        below the fold. The left offset used to come from
-        `winfo_rootx()` differences, which is correct only for a MAPPED widget:
-        `bʊsh` was built below the scroll viewport, reported roughly its
-        toplevel's origin instead of the ~365px of chrome to its left, and so
-        was granted the whole width and rendered as one long clipped line
-        (Kent 2026-09-04, who named the cause: "this was below the scrollwindow
-        when the page was made"). Skipping unmapped targets does not fix that —
-        a row below the fold STAYS unmapped until someone scrolls to it, so it
-        would be skipped indefinitely and then appear unwrapped.
-        Sibling widths and grid options are available before any of it is on
-        screen, so this walk gives the same answer at build time as after
-        mapping.
-
-        THIS IS A CONTROL, NOT A MARGIN, and that is why it gets measured.
-        Kent specified it before any of this was written: the refresh/cycle
-        button sits on the RIGHT of each row, so a row that overflows pushes off
-        the page the exact control that would fix it. On the macrosort page the
-        button AND its profile tag were both gone (2026-09-04) — the row was
-        granted the width they needed. "the right sided refresh needs to work
-        more than the left-sided one."
-
-        `reserve` cannot do this job: the same builder produces rows with the
-        button and tag (macrosort) and rows without (the plain sort page), so
-        any single number is wrong for one of them — which is the labelled/
-        unlabelled problem that was already solved on the LEFT by measuring the
-        target's own offset. This is that fix, mirrored.
-
-        Walks UP because the tag and button are usually siblings of the text's
-        PARENT, not of the text: the row nests [label | [play, image, text] |
-        [refresh, tag]]. reqwidth, not winfo_width, so it is correct before the
-        row has ever been mapped and needs no flush (no synchronous X
-        round-trip — azt/agenda/wayland_freeze_audit.md)."""
-        total=0
-        node=t
-        for _hop in range(6):
-            parent=getattr(node,'master',None)
-            if parent is None or node is stop:
-                break
-            # BORDERS AND PADS, AT EVERY LEVEL. The last ~50px of overrun was
-            # here: `sɑjd` and `træck` kept their text and pushed the refresh
-            # button and profile tag off the edge (Kent 2026-09-04). Siblings
-            # are only part of what sits between the text and the viewport edge
-            # — each nested frame also contributes its own 3D border, its
-            # highlight ring and its grid padding, twice over, and this page
-            # nests four or five deep in raised frames.
-            #   Deliberately NOT solved by asking the ROW for its requested
-            # width, which looks like the elegant aggregate measurement and was
-            # tried: on this page the tree is content → GROUP frame → row, so
-            # the walk returns the group's width — the widest row in the glyph
-            # group — and every short row in it gets charged for the longest
-            # one. Kent: "in fact, everything is wrapped" (2026-09-04).
+    def _unwrap_and_measure(targets):
+        """Unwrap every target, then report each one's natural width."""
+        for t in targets:
             try:
-                for _opt in ('bd','highlightthickness'): #bd IS borderwidth
-                    try:
-                        total+=2*int(float(parent.cget(_opt) or 0))
-                    except Exception:
-                        continue
+                t.config(wraplength=0)
+            except Exception:
+                continue
+        nat=[]
+        for t in targets:
+            try:
+                nat.append(t.winfo_reqwidth())
+            except Exception:
+                nat.append(0)
+        return nat
+    def _cap_all(targets,nat,W):
+        """Apply ONE wraplength cap to every target.
+
+        A cap above a label's natural width is a no-op in Tk, so a short row is
+        untouched by construction — that is hugging, for free, with no test for
+        it and no per-row measurement."""
+        for t,n in zip(targets,nat):
+            try:
+                t.config(wraplength=0 if (not n or n<=W) else W)
+            except Exception:
+                continue
+    def _contentw(scroller):
+        try:
+            return scroller.content.winfo_reqwidth()
+        except Exception:
+            return 0
+    def _fit(targets,scroller,scrollcap):
+        """ITERATE TO FIT instead of predicting a budget.
+
+        Every earlier version of this computed a per-target budget from a
+        PREDICTION of the row's final width — reserve estimates, rootx offsets,
+        sibling-and-pad walks, the row's requested width — and each was wrong in
+        at least one direction, because it ran while neither the row nor the box
+        had settled. Kent's last log shows the end state of that approach: passes
+        ALTERNATING between `budget 1800-1800 | wrapped 0 | content 1313` and
+        `budget 60-1800 | wrapped 5 | content 1451`, with whichever landed last
+        deciding what he saw (2026-09-04).
+
+        So stop predicting and measure the thing we actually care about: the
+        content's own requested width, which has been reliable in every log all
+        day. One cap `W` for all targets; content width is monotone
+        non-decreasing in `W`; binary search the largest `W` that still fits.
+
+        Order is Kent's rule exactly:
+          1. unwrapped content fits → leave everything alone (HUG);
+          2. otherwise search the widest cap that fits (EXPAND to the most
+             available space);
+          3. wrap to that (WRAP on that space).
+
+        Costs ~9 reqwidth reads, no update()/update_idletasks(), so no
+        synchronous X round-trip (azt/agenda/wayland_freeze_audit.md)."""
+        # A MEASUREMENT MUST BE FLUSHED TO BE WORTH ANYTHING. Setting
+        # `wraplength` updates the LABEL's own requested width at once, but the
+        # content frame's requested width is recomputed on the idle queue — so
+        # an unflushed read returns the PREVIOUS layout's number. Kent's log
+        # said so in one field: `cap=200 | content 1613→1613 | wrapped 95 of
+        # 231`, the search groping to its floor because every probe looked too
+        # wide (2026-09-04).
+        #   `content.update_idletasks()` is what ScrollingFrame.windowsize
+        # already calls on this same widget, so this is established practice in
+        # this file rather than a new synchronous-X hazard, and it is a
+        # measurement flush with no window transition in flight — see
+        # azt/agenda/wayland_freeze_audit.md, which now says that is the safe
+        # shape. It is still a flush, so the count is kept small.
+        def _settle():
+            try:
+                scroller.content.update_idletasks()
             except Exception:
                 pass
-            try:
-                gi=node.grid_info() or {}
-                for _pad in ('padx','ipadx'):
-                    _v=gi.get(_pad,0)
-                    if isinstance(_v,(list,tuple)):
-                        total+=sum(int(x or 0) for x in _v)
-                    else:
-                        total+=2*int(_v or 0)
-                nrow=int(gi.get('row',0))
-                ncol=int(gi.get('column',0))
-                nspan=int(gi.get('columnspan',1) or 1)
-                for sib in parent.winfo_children():
-                    if sib is node:
-                        continue
-                    sgi=sib.grid_info() or {}
-                    if not sgi:
-                        continue #not gridded: pack/place, no column to compare
-                    if int(sgi.get('row',-1))!=nrow:
-                        continue
-                    _sc=int(sgi.get('column',-1))
-                    if ncol<=_sc<ncol+nspan:
-                        continue #overlapping our own columns
-                    total+=sib.winfo_reqwidth() #left OR right; see docstring
-            except Exception:
-                pass
-            if parent is stop:
+        nat=_unwrap_and_measure(targets)
+        hi=max(nat or [0])
+        if not hi:
+            return None
+        # FLUSH BEFORE THE HUG TEST, not just inside the search. Without this,
+        # `before` is the width of the layout as it was BEFORE the unwrap above
+        # — so arriving from a state where anything was wrapped, the content
+        # looks like it fits, `_fit` concludes "nothing to do", and every target
+        # is left unwrapped with the longest row running off the viewport.
+        # Kent: "tatoo was correct, then cycled back to it, and got this"
+        # (2026-09-04). First visit was right only because nothing had been
+        # wrapped yet, which is why this hid behind a cycle.
+        _settle()
+        before=_contentw(scroller)
+        if before<=scrollcap:
+            return (hi,before,before,0) #hugs unwrapped: nothing to do
+        # SEED WITH ARITHMETIC, THEN CORRECT BY MEASUREMENT. `before` is the
+        # unwrapped content width and is trustworthy, so the overshoot is known:
+        # take it off the widest target and the first probe is usually already
+        # right. Binary search then only has to confirm or nudge, which keeps
+        # this to one or two flushes instead of nine.
+        floor=max(minimum,200) #never search into one-character-per-line
+        lo=floor
+        guess=max(floor,hi-(before-scrollcap))
+        _cap_all(targets,nat,guess); _settle()
+        if _contentw(scroller)<=scrollcap:
+            lo=guess #fits: try to give some of it back
+        else:
+            hi=guess #still too wide: search below the guess
+        # 6 STEPS, NOT 4. Each step halves the remaining range, so 4 left ~50px
+        # on the table — `cap=900 | content 1605→1315` against a 1365 cap, i.e.
+        # a row wrapped that had 50px of room (Kent's log, 2026-09-04). Two more
+        # flushes buy ~13px granularity, and under-using the width is the
+        # failure Kent has objected to most consistently all day.
+        for _i in range(6):
+            mid=(lo+hi)//2
+            if mid<=lo or mid>=hi:
                 break
-            node=parent
-        return total
+            _cap_all(targets,nat,mid); _settle()
+            if _contentw(scroller)<=scrollcap:
+                lo=mid
+            else:
+                hi=mid
+        _cap_all(targets,nat,lo); _settle()
+        return (lo,before,_contentw(scroller),sum(1 for n in nat if n>lo))
     def _apply(event=None):
         try:
             if not container.winfo_exists():
@@ -2208,8 +2232,41 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                 #   `winw` is the honest number — the toplevel minus this
                 # scroller's own left offset minus a right allowance — so take
                 # the smaller. Growing MAY be optimistic; wrapping may not.
-                _ceiling=_capw if _winw is None else min(_capw,_winw)
+                # `capw` ALONE. Taking min() with `winw` looked like the
+                # conservative choice — winw is the honest window-derived number
+                # and capw can overshoot by ~50 — but winw is
+                # `toplevel - this scroller's rootx offset - 120`, i.e. POSITION
+                # DERIVED, and this block is deliberately centred. So every time
+                # the box hugged down, its left edge moved RIGHT, winw got
+                # smaller, the next budget got tighter, and the box shrank
+                # again: a ratchet, not an oscillation. Kent: "It did eventually
+                # hug to the next longest button, but then when I switch it
+                # back, that button was cut off even more than in the last pic"
+                # (2026-09-04).
+                #   capw is max(maxwidth, cellw, winw) and is dominated here by
+                # `maxwidth`, which does not move, so the ceiling stays put
+                # across a hug. A bounded ~50px overshoot is a far better
+                # failure than a feedback loop that tightens on every cycle.
+                _ceiling=_capw
                 scrollcap=_ceiling-getattr(scroller,'yscrollbarwidth',15)
+                # THE SCROLLER'S OWN SHELL. `capw` is the width of the BOX,
+                # measured from its outer edge, but a row starts inside three
+                # nested borders — the scroller's, the canvas's and the content
+                # frame's — and `_chrome` stops AT the scroller, so it never
+                # counts them. That is the whole of the residual overrun: it
+                # only ever caught the single row whose natural width landed
+                # just inside the budget, which is why one row misbehaved while
+                # every other row on the page was correct. `feavʊr` needed ~940
+                # with ~912 truly available (Kent 2026-09-04).
+                for _w in (scroller,getattr(scroller,'canvas',None),
+                        getattr(scroller,'content',None)):
+                    if _w is None:
+                        continue
+                    for _opt in ('bd','highlightthickness'):
+                        try:
+                            scrollcap-=2*int(float(_w.cget(_opt) or 0))
+                        except Exception:
+                            continue
             except Exception as e:
                 log.log(2,"scroller cap unavailable for wrapping (%s)",e)
         # SAY WHAT WAS COMPUTED, once per container. `reserve` is a caller's
@@ -2225,16 +2282,17 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         # actually produced the visible layout went unreported (Kent's log,
         # 2026-09-03). Deduping on width keeps it to a couple of lines and shows
         # the progression instead of hiding it.
+        # DROPPED FROM THE FIELD LOG (Kent 2026-09-04: "we don't need budget").
+        # `DIAG-wrap fit` carries what a field report actually needs — the cap
+        # chosen, the content before and after, how many rows wrapped, and the
+        # box — and this line reported inputs to a budget the scroller pages no
+        # longer use. Kept at level 2 for the chooser's cell arithmetic, which
+        # still computes one.
         if width not in state.setdefault('said',set()):
             state['said'].add(width)
-            try:
-                log.info("DIAG-wrap budget: container=%s width=%s cols=%s "
-                        "cell=%s reserve=%s → budget=%s (before per-target "
-                        "image subtraction) | scrollcap=%s | %s target(s)",
-                        container,width,cols,cell,reserve,
-                        max(cell-reserve,minimum),scrollcap,len(targets))
-            except Exception:
-                pass
+            log.log(2,"wrap budget: container=%s width=%s cols=%s cell=%s "
+                    "reserve=%s | scrollcap=%s | %s target(s)",
+                    container,width,cols,cell,reserve,scrollcap,len(targets))
         # HUG, THEN EXPAND, THEN WRAP — Kent's rule (2026-09-03): "most
         # scrollingframes should hug short, unwrapped content, and expand to
         # available window/screen size as possible, before forcing wrapping.
@@ -2251,8 +2309,44 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         # Tk when the content changes and needs no update()/flush, so this costs
         # no synchronous round-trip — which matters here (see
         # azt/agenda/wayland_freeze_audit.md).
-        applied=[];naturals=[];wrapped=[0];collapsed=[0];pending=[0]
+        # ITERATE TO FIT, where there is a viewport to fit INTO. cols>1 (the
+        # chooser) keeps the cell arithmetic: its buttons are a grid whose
+        # columns define the width, there is no single widest row to search
+        # against, and it works.
+        if scrollcap and cols==1 and targets:
+            res=_fit(targets,scroller,scrollcap)
+            if res is not None:
+                try:
+                    _box=scroller.winfo_width()
+                except Exception:
+                    _box=None
+                _sig=res+(len(targets),scrollcap,_box)
+                if _sig!=state.get('saidfit'):
+                    state['saidfit']=_sig
+                    log.info("DIAG-wrap fit: cap=%s | content %s→%s | wrapped "
+                            "%s of %s | scrollcap=%s | box=%s",*_sig)
+            # GROW THE BOX IN THIS PASS, not on the debounced reflow. `_fit`
+            # targets `scrollcap`, i.e. what the box MAY become — but the box
+            # only actually grows inside `_configure_interior`, which is
+            # scheduled. Arriving back from a hugged state, the box is still
+            # small when the user sees it, so a correctly-fitted row is clipped
+            # by the difference: Kent's return to `midrib` had content needing
+            # ~1350 in a box of 1330, losing the edge of its `CVCC` tag
+            # (2026-09-04). The content is already flushed by `_fit`, so
+            # `windowsize()` has honest numbers to read right now.
+            try:
+                scroller.windowsize()
+            except Exception as e:
+                log.warning("scroller box re-size after fit failed, so a "
+                        "fitted row may clip: %s",e)
+            try:
+                scroller._configure_interior()
+            except Exception as e:
+                log.log(2,"could not ask the scroller to re-measure (%s)",e)
+            return
+        applied=[];naturals=[];wrapped=[0];collapsed=[0];pending=[0];worst=[]
         for t in targets:
+            chrome=None
             # NOT GATED ON winfo_ismapped(). The obvious guard here — skip a
             # target with no geometry yet — is wrong for this page: a row built
             # below the scroll viewport stays unmapped until someone scrolls to
@@ -2312,38 +2406,27 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
             # arithmetic, where an offset would hand column 0 all the width to
             # the window's right edge.
             if cols==1:
-                try:
-                    off=max(0,t.winfo_rootx()-container.winfo_rootx())
-                except Exception:
-                    off=0
-                budget=max(width-off-reserve,minimum)
+                # MEASURED, NOT POSITIONAL — for the same reason as the scroller
+                # branch below. This used to be `t.winfo_rootx() -
+                # container.winfo_rootx()`, which is only meaningful for a
+                # MAPPED widget, and most targets on this page are below the
+                # fold. An unmapped target's rootx is wrong in BOTH directions:
+                # ~0 for `bʊsh`, which then got the whole width and rendered as
+                # one clipped line, and ~1430 for `pɪtea`, which got a 370px
+                # budget with 900px available and wrapped to two lines (Kent
+                # 2026-09-04, one screenshot each). Since the two branches are
+                # combined with min(), a single bad reading in either one
+                # decides the result — so neither may consult a position.
+                # A LOOSE OUTER BOUND ONLY. This used to subtract a per-target
+                # offset — first from `rootx` (meaningless for the 147 targets
+                # below the fold) and then from the sibling walk (unreliable, as
+                # above). Both were wrong often enough to decide the result,
+                # because these branches combine with min(). The row constraint
+                # below is the one that has to be right, so this contributes
+                # nothing but the window's own width.
+                budget=max(width-reserve,minimum)
             else:
                 budget=max(cell*span-extra,minimum)
-            # Offset measured inside the SCROLLER this time, not the container:
-            # what the viewport can show this target is the cap less everything
-            # to its left within the scroller (group label, cycle button,
-            # illustration) less the scrollbar.
-            if scrollcap:
-                # A MEASUREMENT STILL NEEDS THE SANITY CAP. `extra` has had one
-                # since 2026-09-03 because a caller's `reserve` could exceed the
-                # whole cell; the measured right chrome can do the same thing
-                # and worse. If any level of the walk finds a right-sibling that
-                # is not chrome at all — another group frame, a second column of
-                # rows — its reqwidth is ~1400, not ~90, and the budget goes
-                # negative and floors at `minimum`. That is Kent's kidney row
-                # wrapped to ONE CHARACTER per line (2026-09-04), which is far
-                # worse than the overrun it was trying to prevent, and it
-                # appeared only on refresh, i.e. only once the layout changed.
-                #   40% of the ceiling, matching the existing cap: real chrome
-                # (a refresh button and a profile tag, ~150) is nowhere near it,
-                # so a correct measurement passes untouched and a wrong one
-                # degrades the wrap instead of destroying it.
-                # 60%, not 40%: this now covers BOTH sides of the target, and
-                # the row's chrome legitimately dominates a short row — a glyph
-                # label, cycle button, illustration, refresh button and profile
-                # tag around `de 'day' 'jour'` really are most of its width.
-                chrome=min(_chrome(t,scroller),int(scrollcap*0.6))
-                budget=max(min(budget,scrollcap-chrome),minimum)
             try:
                 t.config(wraplength=0) #unwrapped: what does it actually want?
                 natural=t.winfo_reqwidth()
@@ -4060,7 +4143,46 @@ class ScrollingFrame(Frame):
                 winw=max(0,tw-off-120)
         except Exception as e:
             log.log(2,"scroller window-available unavailable (%s)",e)
-        capw=max([v for v in (self.maxwidth,cellw,winw) if v is not None])
+        # `winw` IS LOGGED BUT NO LONGER CAPS. It is
+        # `toplevel - self.winfo_rootx() offset - 120`, so it is position
+        # derived, and this block is centred: it reads high while the layout is
+        # unsettled and low after a hug. Combined with the widest-seen memory
+        # below, a single early high reading got REMEMBERED — Kent's log shows
+        # `capw=1432` standing while `maxw=1382 cellw=891 winw=1400`, i.e. the
+        # cap preserving a stale number rather than a good one, and 1432 against
+        # a box that settles at 1382 is precisely the ~50px that kept one row
+        # per page unwrapped and clipped.
+        #   maxwidth and cellw are both layout-derived and consult no position,
+        # so they are safe to remember. If a page now hugs too tightly, that is
+        # availablexy under-measuring (the known _measure_siblings fault) and
+        # will show up as maxw being small in this very line — visible and
+        # attributable, which the old rescue-by-winw was not.
+        capw=max([v for v in (self.maxwidth,cellw) if v is not None])
+        # THE CAP MAY NOT SHRINK BECAUSE THE BOX HUGGED. All three candidates
+        # move the SAME way when the content gets shorter — `maxwidth` is the
+        # screen minus _measure_siblings, `cellw` is grid_bbox of a box that
+        # just got narrower, and `winw` is derived from this scroller's rootx,
+        # which moves right when a centred block shrinks — so max() protects
+        # nothing here: the cap falls, the next long word is capped lower, and
+        # the row is clipped worse on every cycle. Kent: "It did eventually hug
+        # to the next longest button, but then when I switch it back, that
+        # button was cut off even more" (2026-09-04), and crucially "it wasn't
+        # more wrapping, it was more clipping" — the text kept its width and the
+        # VIEWPORT failed to come back.
+        #   So remember the widest cap seen, keyed on the TOPLEVEL's width: the
+        # window is the one thing here that does not move when the box hugs.
+        # A real window resize changes the key and re-baselines, so this cannot
+        # strand an over-large cap after the user makes the window smaller.
+        try:
+            _key=self.winfo_toplevel().winfo_width()
+        except Exception:
+            _key=None
+        if _key and _key>1:
+            if getattr(self,'_capw_key',None)==_key:
+                capw=max(capw,getattr(self,'_capw_max',0) or 0)
+            else:
+                self._capw_key=_key
+            self._capw_max=capw
         caph=self.maxheight if cellh is None else max(self.maxheight,cellh)
         return capw,caph,cellw,cellh,winw
     def _cellsize(self):
