@@ -1,4 +1,7 @@
-/* Theme CSS — populated at runtime via JS from Python Theme object */
+/* Theme CSS — variables populated at runtime via JS from the Python Theme
+   object (see Theme.css_vars). Sizes here are UNSCALED bases: --scale does the
+   scaling, so these numbers must match Theme.fonts' arithmetic BEFORE its
+   int(... * scale). */
 :root {
     --background: #d9d9d9;
     --activebackground: #ececec;
@@ -13,6 +16,55 @@
     --scale: 1.0;
 }
 
+/* ── Fonts ──────────────────────────────────────────────────────────────
+   THE ALIAS PROBLEM: Charis v6 ships the family "Charis SIL", v7 renames it
+   to "Charis", and a machine can carry either. The dev box resolves
+   "Charis SIL" and NOT "Charis" (measured 2026-09-04); this file used to
+   name only one of them, so the other machine fell through to DejaVu
+   silently. The fix is the missing alias, not a mechanism.
+
+   NO @font-face, deliberately. It would only earn its place with a url() —
+   bundling, or a base64 data: URI built from utilities.fonts.findfontfile,
+   which is how tests/manual/tone_feature_check gets a font in — and we do
+   not bundle. Kent, 2026-09-04: "as legal as this would be, I hope most
+   people already have it, and it should be covered in our install process,
+   so that would be dead weight in most cases." A local()-only @font-face is
+   an indirection that does exactly what the plain font stack below already
+   does, and it would have to invent a family name that exists nowhere in
+   utilities/fonts.py — which is the ONE table that knows what these fonts
+   are called, and exists precisely to stop that kind of drift.
+
+   Keep this list in step with utilities/fonts.py CHARIS_FAMILIES and
+   GENTIUM_FAMILIES. Bundling stays available as an escape hatch (Charis
+   ships official WOFF/WOFF2) if "most people already have it" turns out
+   false. */
+:root {
+    --font-reading: 'Charis SIL', 'Charis', 'Gentium Plus', 'Gentium',
+                    'DejaVu Sans', sans-serif;
+}
+
+/* ── Tone rendering ─────────────────────────────────────────────────────
+   The capability the Tk backend structurally CANNOT have. Tk asks for fonts
+   by FAMILY NAME and can never select a particular file, which is the whole
+   reason frontend/ui_tkinter.Renderer exists: it opens a `-tstv`
+   (hidden-staves) FILE by path with PIL and draws a bitmap. Here the stock
+   installed font is asked for the feature directly, per element.
+
+   VERIFIED 2026-09-04 on WebKitGTK and WebView2 (tests/manual/
+   tone_feature_check): cv92 hides staves and cv92 0 restores them, cv91
+   gives tone numbers, and adjacent tone letters JOIN into one contour with
+   no feature at all. cvNN variants are off by default, so plain tone text
+   keeps its staves — which is what the app does today.
+
+   Do NOT delete the -tstv mechanism in ui_tkinter on the strength of this:
+   a machine with a tuned font legitimately renders differently from one
+   without, and pulling it would take stave-free output away from anyone who
+   has the file. See agenda/tstv_font_availability.md. */
+.tone-staveless  { font-feature-settings: "cv92" 1; }
+.tone-staves     { font-feature-settings: "cv92" 0; }
+.tone-numbers    { font-feature-settings: "cv91" 1; }
+.tone-chinantec  { font-feature-settings: "cv90" 1; }
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -21,20 +73,29 @@
 
 body {
     background: var(--background);
-    font-family: 'Charis SIL', 'Gentium Plus', 'DejaVu Sans', sans-serif;
-    font-size: calc(12px * var(--scale));
+    font-family: var(--font-reading);
+    font-size: calc(18px * var(--scale));
     color: #000;
     overflow: hidden;
 }
 
-/* Font classes matching theme.fonts keys */
-.font-title   { font-size: calc(24px * var(--scale)); font-weight: bold; }
-.font-big     { font-size: calc(18px * var(--scale)); }
-.font-normal  { font-size: calc(12px * var(--scale)); }
-.font-read    { font-size: calc(14px * var(--scale)); }
-.font-readbig { font-size: calc(18px * var(--scale)); }
-.font-small   { font-size: calc(10px * var(--scale)); }
-.font-tiny    { font-size: calc(8px * var(--scale)); }
-.font-default { font-size: calc(12px * var(--scale)); }
-.font-italic  { font-style: italic; }
-.font-fixed   { font-family: monospace; }
+/* Font classes matching theme.fonts keys.
+   THESE NUMBERS ARE NOT ARBITRARY and were wrong until 2026-09-04: they read
+   12/24/18/12/10/8 while Theme.fonts computes from default_size = 18*scale
+   with title = 2x, read/big = 5/3x, instructions/normal = 4/3x,
+   report/small/fixed = 2/3x, tiny = 1/2x. A backend whose type sizes
+   disagree with its own theme object is not a backend you can compare
+   layouts against. */
+.font-title        { font-size: calc(36px * var(--scale)); font-weight: bold; }
+.font-instructions { font-size: calc(24px * var(--scale)); }
+.font-normal       { font-size: calc(24px * var(--scale)); }
+.font-read         { font-size: calc(30px * var(--scale)); }
+.font-big          { font-size: calc(30px * var(--scale)); }
+.font-readbig      { font-size: calc(36px * var(--scale)); font-weight: bold; }
+.font-report       { font-size: calc(12px * var(--scale)); }
+.font-reportheader { font-size: calc(12px * var(--scale)); font-style: italic; }
+.font-small        { font-size: calc(12px * var(--scale)); }
+.font-tiny         { font-size: calc(9px * var(--scale)); }
+.font-default      { font-size: calc(18px * var(--scale)); }
+.font-italic       { font-size: calc(18px * var(--scale)); font-style: italic; }
+.font-fixed        { font-size: calc(12px * var(--scale)); font-family: monospace; }

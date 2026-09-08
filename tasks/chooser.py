@@ -146,6 +146,9 @@ class TaskChooser(Task):
         # log.info("getting default from option list {}".format(
         #                                             [i[1] for i in optionlist]))
         if self.program.testing and hasattr(self.program,'testtask'):
+            if self.program.testtask is None:
+                self.gettask()
+                return
             self.maketask(self.program.testtask)
         else: #we need better logic here
             if SortV in [i[0] for i in optionlist]:
@@ -548,6 +551,10 @@ class TaskChooser(Task):
         self.program.splash.progress(100)
         if self.program.splash.exitFlag.istrue():
             sysshutdown()
+        if (self.program.testing and hasattr(self.program,'testtask') 
+                and self.program.testtask == "NoChooser"):
+            # self.gettask()
+            return
         self.program.splash.destroy()
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories

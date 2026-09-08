@@ -9,11 +9,17 @@ A-Z+T is a desktop GUI for linguistic fieldwork — sorting, transcribing, recor
 ## Running
 
 ```bash
-# Activate the venv (Python 3.13, built from source at ~/IT/Python-3.13.7)
-source env/bin/activate
+# Activate the venv (Python 3.13, built from source at ~/IT/Python-3.13.7).
+# It is the SUITE venv one level up, not azt/env — there is no azt/env.
+source ../env/bin/activate
 
 # Run the app
 python main.py
+
+# Force a UI backend (default tkinter). --webview needs pywebview AND a host
+# toolkit visible to this venv; it refuses and falls back with a reason if not.
+python main.py --webview
+python main.py --tkinter
 
 # Install dependencies (CPU-only torch)
 pip install -r requirements.txt
@@ -176,6 +182,21 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
 
 ## Build Notes
 
-- Python 3.13 from a custom build (`~/IT/Python-3.13.7`), used via the `env/` virtualenv.
+- Python 3.13 from a custom build (`~/IT/Python-3.13.7`), used via the **suite** virtualenv
+  at `AZT/env/` — shared with the rest of the suite. There is **no `azt/env/`**; this file
+  said there was until 2026-09-04, which makes every `source env/bin/activate` line copied
+  out of it fail.
+- The venv has `include-system-site-packages = true` (set 2026-09-05 in
+  `AZT/env/pyvenv.cfg`) so it can import apt-installed bindings — specifically `gi`, which
+  pip cannot supply and which pywebview's GTK backend needs. Before that, `gi` was
+  invisible no matter how many `gir1.2-*` packages were installed, and the webview backend
+  fell back to Qt.
+  - Consequence worth knowing: system site-packages are a **fallback**, not an override —
+    the venv's own packages still win — but a module that is absent from the venv will now
+    resolve to the system copy instead of failing. If a suite app starts importing
+    something nobody pinned, this is why.
+  - pywebview's GTK backend wants **Gtk 3.0** and **WebKit2 4.1** (`gi.require_version` in
+    `webview/platforms/gtk.py`): `gir1.2-gtk-3.0`, `gir1.2-webkit2-4.1`, `gir1.2-soup-3.0`.
+    `gir1.2-gtk-4.0` does nothing for it.
 - PyTorch is CPU-only (`torch==2.7.1+cpu` via `--extra-index-url`).
 - PyAudio requires system `portaudio` headers (`sudo apt install portaudio19-dev`).

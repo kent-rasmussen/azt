@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.17' #This is a string...
+__version__='1.15.18' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -95,8 +95,51 @@ try:
              "/tmp/azt_stacks.txt", os.getpid())
 except (AttributeError, ValueError, OSError) as e:
     log.info("faulthandler not armed: %s", e)  # e.g. Windows
-if os.environ.get('AZT_UI_BACKEND', '').lower() == 'webview':
+# ONE decider, not two. This used to read AZT_UI_BACKEND directly while
+# frontend/__init__ read it separately; that agreed only while neither could
+# refuse. Once the frontend gained a fallback for "webview asked for but no
+# pywebview / no GTK or Qt host", they disagreed and this line set
+# program['tkinter']=False against a tkinter root — reaching mainloop() with
+# the webview signature:
+#   TypeError: Misc.mainloop() got an unexpected keyword argument
+#              'setup_callback'
+# utilities.ui_backend is outside the frontend package on purpose: asking it
+# here must not import frontend, which would import a backend before the Tk
+# error catcher below is installed.
+from utilities import ui_backend as _ui_backend
+if _ui_backend.chosen() == 'webview':
     program['tkinter'] = False
+
+
+class _NoSplash:
+    """Stands in for Splash where a splash is not wanted.
+
+    Swallows the whole splash API — draw/progress/withdraw/destroy/
+    maketexts/deiconify — and reports `winfo_exists()` False so the
+    reveal at frontend/ui_shell.py:3661 skips it rather than deiconifying
+    a window that isn't there. `exitFlag.istrue()` is False because the
+    splash's flag is how the user cancels during boot
+    (tasks/chooser.py:493,549) and a missing splash must never read as
+    "the user asked to quit"."""
+
+    class _Flag:
+        def istrue(self):
+            return False
+
+        def true(self):
+            pass
+
+        def false(self):
+            pass
+
+    def __init__(self):
+        self.exitFlag = self._Flag()
+
+    def winfo_exists(self):
+        return False
+
+    def __getattr__(self, name):
+        return lambda *args, **kwargs: None
 if program['tkinter']:
     import tkinter #as gui
     import tkinter.font
@@ -674,7 +717,26 @@ class App:
         self.prep_to_write()
         langtags.Languages(self)
         self.get_lift_file() #self.filename, maybe LiftChooser (NOT self.analang)
-        self.splash = Splash(self)
+        # THE SPLASH IS THE FIRST WINDOW A USER SEES: under tkinter the root
+        # is withdrawn and never shown, so the splash is the whole of what
+        # "the app started" looks like. It is therefore the first screen the
+        # webview port should make work, not something to route around — a
+        # logo, a progress bar and some text, no tabs, no icon grid, no
+        # wraplength arithmetic, and it stays up for the whole of boot so no
+        # hide/show race can lose it.
+        #
+        # It was briefly suppressed under webview (2026-09-07) while nothing
+        # rendered at all and an empty themed splash was being mistaken for a
+        # broken chooser. AZT_WEBVIEW_NO_SPLASH=1 still does that, for when
+        # it is in the way of testing something else.
+        #
+        # _NoSplash is a null object rather than a guard at each call site:
+        # `splash` is touched in ~15 places across main.py,
+        # tasks/chooser.py and frontend/ui_shell.py (draw, progress,
+        # withdraw, destroy, maketexts, exitFlag, winfo_exists), and every
+        # one would need the same condition.
+        self.splash = (_NoSplash() if os.environ.get('AZT_WEBVIEW_NO_SPLASH')
+                       else Splash(self))
         self.splash.draw()
         FileParser(self) #needs self.filename, pick up self.analang from settings or file
         # Collab seam: no-op unless this project opted in (per-project
@@ -1569,16 +1631,20 @@ class App:
         self.default_task='WordCollectnParse'
         self.loglevel=logsetup.loglevel_default #'INFO'
         if self.aztdir.parent.stem == 'AZT': 
+            log.info("Running with dev settings")
             self.testing=True #eliminates Error screens and zipped logs and repo commits
             # self.production=True #True for making screenshots (default theme)
             self.me=True
             self.testlift='Demo_en' #portion of filename
+            # self.testtask='NoChooser' #stop at splash, before Chooser
+            self.testtask=None #Just open Chooser
             # self.testtask='SortT' #Will convert from string to class later
-            self.testtask='SortV' #Will convert from string to class later
+            # self.testtask='SortV' #Will convert from string to class later
             # self.testtask='SortSyllables' #Will convert from string to class later
             # self.testtask='WordCollectnParsewRecordings'
             # self.default_task='WordCollectnParse'
         else:
+            log.info("Running without dev settings")
             self.me=False
             self.production=True #True for making screenshots (default theme)
             self.testing=False #True eliminates Error screens and zipped logs

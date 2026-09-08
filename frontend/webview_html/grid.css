@@ -151,6 +151,73 @@
     white-space: nowrap;
 }
 
+/* Notebook — tab strip above, one panel at a time below.
+   The tab strip wraps rather than clipping: the chooser's three tab labels
+   are translated, so their width is not knowable in advance. */
+.wv-notebook {
+    min-width: 0;
+    min-height: 0;
+}
+.wv-tabstrip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    align-items: flex-end;
+}
+.wv-tab {
+    padding: var(--ipady) calc(var(--ipadx) * 4);
+    background: var(--background);
+    border: 1px solid rgba(0, 0, 0, .25);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+.wv-tab:hover {
+    background: var(--activebackground);
+}
+.wv-tab-selected {
+    background: var(--offwhite);
+    font-weight: bold;
+}
+.wv-tabpanels {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    background: var(--offwhite);
+    border: 1px solid rgba(0, 0, 0, .25);
+    padding: var(--pady) var(--padx);
+    overflow: auto;
+}
+.wv-tabpanel {
+    width: 100%;
+}
+
+/* Image + text on a label or button (tkinter's `compound`).
+   The image is capped rather than fixed: a chooser icon must not force its
+   cell wider than the layout allows - the case that produced 3-letter word
+   wraps under Tk. */
+.wv-compound {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--ipady) * 2);
+    min-width: 0;
+}
+.wv-compound-top, .wv-compound-bottom { flex-direction: column; }
+.wv-compound-left, .wv-compound-right  { flex-direction: row; }
+.wv-img {
+    max-width: 100%;
+    height: auto;
+    flex: 0 0 auto;
+}
+.wv-img-text {
+    min-width: 0;
+    overflow-wrap: break-word;
+    text-align: center;
+}
+
 /* Window (toplevel) */
 .wv-window {
     display: grid;

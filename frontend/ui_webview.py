@@ -14,6 +14,7 @@ import base64
 import io
 import json
 import os
+import sys
 import threading
 import unicodedata
 from contextlib import contextmanager
@@ -116,6 +117,137 @@ class _JsonApi:
 # Singleton API instance — shared across all widgets in a window
 _api = _JsonApi()
 
+# ── Engine selection ─────────────────────────────────────────────────
+# Which native host renders the page. Kent, 2026-09-04: Qt gives this machine
+# engine parity with the Windows field (QtWebEngine IS Chromium), but "for
+# anyone running Ubuntu (including myself) it would look oddly different than
+# everything else on the desktop" — the page is our own HTML either way; what
+# differs is the NATIVE CHROME (window decorations, native dialogs, menus).
+#
+# It matters more than cosmetics on Linux, though: the first --webview run
+# segfaulted under Qt on this box while GTK was solid, so being able to say
+# which engine is a diagnostic, not a preference.
+#
+# pywebview reads PYWEBVIEW_GUI itself and nothing here used to override it,
+# so that already worked by accident. AZT_WEBVIEW_ENGINE and --engine= are
+# ours, and take precedence.
+ENGINES = ('gtk', 'qt', 'cef', 'edgechromium', 'mshtml')
+
+
+def _engine():
+    """The pywebview backend to ask for, or None to let it choose."""
+    for arg in sys.argv:
+        if arg.startswith('--engine='):
+            return arg.split('=', 1)[1].strip().lower() or None
+    name = (os.environ.get('AZT_WEBVIEW_ENGINE')
+            or os.environ.get('PYWEBVIEW_GUI') or '').strip().lower()
+    if not name:
+        return None
+    if name not in ENGINES:
+        log.warning("Unknown webview engine {!r}; letting pywebview choose. "
+                    "Known: {}".format(name, ', '.join(ENGINES)))
+        return None
+    return name
+
+
+# EVERY pywebview window we create, held strongly and forever.
+#
+# The Qt segfault is a GARBAGE COLLECTION, not a destroy — the native
+# backtrace shows sipWrapper_dealloc -> forgetObject ->
+# ~sipQMainWindow -> ~QWidget -> close -> hideChildren -> hideEvent ->
+# QWebEnginePage::setVisible, running under _Py_HandlePending inside a
+# loadFinished slot. Something dropped the last Python reference to the
+# window and CPython collected it mid-Qt-event.
+#
+# This list makes that impossible from OUR side, which is worth doing on its
+# own terms (a UI window should not be collectable while its page is live)
+# and also splits the question: if the crash survives this, the reference
+# being dropped is inside pywebview's Qt backend, not ours.
+_all_wv_windows = []
+
+
+def _badge(window, label):
+    """Stamp a corner badge naming the window, so a page on screen can be
+    identified.
+
+    Every window loads the SAME base.html and, until a task builds into it,
+    looks identical — an empty themed box. So "the app shows a blank green
+    window" could not be told from "the app shows the WRONG blank green
+    window", and it turned out to matter: the visible window was the root
+    (empty by design; task widgets go into Toplevels) while the window that
+    had 408 widget calls flushed into it was somewhere unseen. Debug aid, and
+    it should go once windows reliably show what they contain."""
+    if not window:
+        return
+    code = ('(function(){'
+            'var b=document.getElementById("wv-badge");'
+            'if(!b){b=document.createElement("div");b.id="wv-badge";'
+            'b.style.cssText="position:fixed;top:0;right:0;z-index:99999;'
+            'background:#000;color:#0f0;font:12px monospace;padding:2px 6px;'
+            'opacity:0.8;pointer-events:none";'
+            'document.body.appendChild(b);}'
+            'b.textContent=' + json.dumps(label) + ';'
+            '})()')
+    _js(window, code)
+
+
+def _close_native_window(owner, label='window'):
+    """Retire a pywebview window — by HIDING it, not destroying it.
+
+    WHY, and it took a native backtrace to see: destroying a window under the
+    Qt backend segfaults. Qt tears the QMainWindow down through a posted
+    deferred-delete, and on the way down QWidget::~QWidget closes the window,
+    which hides its children, which fires hideEvent on the QWebEngineView,
+    which touches a QWebEnginePage that is already gone:
+
+        sendPostedEvents -> sipQMainWindow::~sipQMainWindow
+        -> QWidget::~QWidget -> QWindow::close -> hide_helper
+        -> hideChildren -> sipQWebEngineView::hideEvent
+        -> QWebEnginePage::setVisible   <-- SIGSEGV
+
+    That is what "Release of profile requested but WebEnginePage still not
+    deleted" was warning about all along. It appears in runs that do NOT
+    crash, which is why it was dismissed as noise; it is a teardown-order
+    signal that is necessary but not sufficient.
+
+    HIDING SUITS A-Z+T ANYWAY. tkinter windows here are already reused
+    rather than rebuilt — Wait is explicitly "built ONCE on the root and then
+    withdrawn/deiconified rather than destroyed/rebuilt per wait" — and
+    creating a pywebview window means a fresh page load, an HTTP round trip
+    and a JS bridge handshake, so destroying one to make another is the
+    expensive choice as well as the crashing one.
+
+    KNOWN COST, stated rather than hidden: hidden windows are never freed, so
+    a long session accumulates them. That is a leak, and it is preferable to
+    a segfault; if it starts to matter the fix is a pool that reuses a hidden
+    window for the next page, which is what the app's own idiom already
+    suggests. Real teardown happens when the process exits."""
+    wv = getattr(owner, '_wv_window', None)
+    if not wv or not _started.is_set():
+        return
+    try:
+        wv.hide()
+        log.info("{} hidden rather than destroyed (see _close_native_window: "
+                 "destroying crashes QtWebEngine)".format(label))
+    except Exception as e:
+        log.debug("could not hide {}: {}".format(label, e))
+
+
+def _start_kwargs(program=None):
+    """Arguments for webview.start().
+
+    `debug=True` was unconditional, which opens the remote-debugging server
+    and devtools on a FIELD machine — visible in the run log as
+    "Remote debugging server started successfully". Gated on the app's own
+    testing flag now."""
+    kwargs = {'debug': bool(getattr(program, 'testing', False))}
+    engine = _engine()
+    if engine:
+        kwargs['gui'] = engine
+        log.info("Using webview engine {}".format(engine))
+    return kwargs
+
+
 # ── Startup state ────────────────────────────────────────────────────
 _started = threading.Event()      # set once webview.start() has loaded
 _js_queue = []                     # [(window, code), ...] queued before start
@@ -157,21 +289,75 @@ def _js(window, code):
             log.debug(f"JS eval failed: {e}")
     return None
 
+# How many queued statements to send in one evaluate_js. Each call is a
+# synchronous round trip into the web engine, so a page that queues 408 of
+# them (a real number, from the first sort page to render) pays 408 of those
+# before it can paint. They are all fire-and-forget statements whose results
+# nobody reads, so they can travel together.
+_JS_BATCH = 100
+
+
+def _eval_batched(window, codes):
+    """Send *codes* to *window* in batches rather than one at a time.
+
+    ONE FAILING STATEMENT MUST NOT TAKE ITS BATCH WITH IT: each statement is
+    wrapped in its own try/catch in the page, so a bad call logs there and
+    the rest of the batch still runs — which is what the one-at-a-time loop
+    gave us for free and is worth keeping."""
+    if not window or getattr(window, '_destroyed', False):
+        return
+    batch = []
+
+    def send():
+        if not batch:
+            return
+        wrapped = ''.join(
+            'try{%s}catch(e){console.error("azt js:", e, %s)}\n'
+            % (code, json.dumps(code[:120])) for code in batch)
+        try:
+            window.evaluate_js(wrapped)
+        except Exception as e:
+            log.debug(f"Batched JS failed ({len(batch)} statements): {e}")
+        batch.clear()
+
+    for code in codes:
+        batch.append(code)
+        if len(batch) >= _JS_BATCH:
+            send()
+    send()
+
+
 def _flush_js_queue():
     """Execute all queued JS commands. Called once after root webview loads."""
     with _js_queue_lock:
         queue = list(_js_queue)
         _js_queue.clear()
+    # Group consecutive calls by window so each window's batch travels whole.
+    run, current = [], None
     for window, code in queue:
-        if window and not getattr(window, '_destroyed', False):
-            try:
-                window.evaluate_js(code)
-            except Exception as e:
-                log.debug(f"Queued JS failed: {e}")
+        if window is not current and run:
+            _eval_batched(current, run)
+            run = []
+        current = window
+        run.append(code)
+    if run:
+        _eval_batched(current, run)
 
 # ── Base Widget ───────────────────────────────────────────────────────
 class _WebviewWidget:
     """Base for all webview widgets. Mirrors the tkinter widget API."""
+
+    # Toplevel and Root set this True. A window is NOT a DOM element, so a
+    # widget parented to one has no DOM parent to find — that is the normal
+    # case, not a fault, and the page must not warn about it.
+    is_window = False
+
+    # ── Sizing ────────────────────────────────────────────────────────
+    # Extra room for the window's own chrome and a possible scrollbar when
+    # fitting a window to its content. Small on purpose: too much and every
+    # window carries dead margin.
+    _FIT_PAD = 28
+    _FIT_MIN = (420, 260)
 
     # Grid kwargs that get extracted before widget init (same as ui_tkinter.Gridded)
     _gridkwargs = {'sticky', 'row', 'rowspan', 'column', 'columnspan', 'colspan',
@@ -247,6 +433,9 @@ class _WebviewWidget:
             'props': {k: v for k, v in self._props.items()
                       if isinstance(v, (str, int, float, bool, type(None)))},
             'grid': self._grid_opts if self._has_grid else None,
+            # Lets the page tell "parented to a window" (normal — the window
+            # is the page) from "parent genuinely missing" (a real fault).
+            'parent_is_window': bool(getattr(self.parent, 'is_window', False)),
         })
         _js(wv, f'createWidget({spec})')
 
@@ -333,6 +522,16 @@ class _WebviewWidget:
         _api.unregister(self._wid)
         wv = getattr(self, '_wv_window', None)
         _js(wv, f'destroyWidget({self._wid})')
+
+    def cget(self, key):
+        """tkinter's option reader. Missing entirely, which is what
+        "DIAG-chooser-xpad failed: 'Button' object has no attribute 'cget'"
+        was — the chooser's own wrap/xpad diagnostic asking a button for its
+        configured values. Reads back what was set, so a caller sees what it
+        put in rather than a guess at what the browser computed."""
+        if key in self._config:
+            return self._config[key]
+        return self._props.get(key, '')
 
     def winfo_exists(self):
         return self._exists
@@ -425,6 +624,19 @@ class _WebviewWidget:
     def after_cancel(self, timer_id):
         if isinstance(timer_id, threading.Timer):
             timer_id.cancel()
+
+    def after_idle(self, func=None, *args):
+        """tkinter's "run when the event loop is next idle".
+
+        There is no idle queue here to join from Python, and calling *func*
+        inline would change ordering at every call site, so this is after(0):
+        a timer that fires as soon as the interpreter reaches it. Missing
+        entirely until now — `status_window` logged
+        "could not schedule board reflow: 'StatusFrame' object has no
+        attribute 'after_idle'" and simply skipped the reflow."""
+        if func is None:
+            return None
+        return self.after(0, lambda: func(*args))
 
     def focus_set(self):
         wv = getattr(self, '_wv_window', None)
@@ -655,7 +867,47 @@ class Theme:
         self.ipadx = kwargs.get('ipadx', 2)
         self.ipady = kwargs.get('ipady', 2)
 
-        # Fonts — same sizes as ui_tkinter, using _FontInfo instead of tkinter.font.Font
+        self._build_fonts(scale)
+
+        # Images
+        self.photo = {}
+        self.image_cache = {}
+        if not noimagescaling:
+            self._load_images(scale)
+
+    def setscale(self, scale=None, window=None):
+        """Change the UI scale and push it to the page.
+
+        NOT from devicePixelRatio, and that is a measured decision rather than
+        an omission. `devicePixelRatio` reports DEVICE pixels per CSS pixel and
+        says nothing about physical size: on the Linux dev box it reads 1.0
+        while a real ruler against the page shows CSS inches running about ¾ of
+        an inch (2026-09-04, tests/manual/tone_feature_check). Trusting it there
+        renders everything at 75 % — the same under-scaling as
+        agenda/ui_scaling_dpi_and_real_estate.md, arriving through a different
+        API. On Windows it does track the OS 'Scale and layout' setting, so it
+        is a reasonable input THERE and useless here.
+
+        So the scale comes from the caller (program.scale, the same dpi/96
+        model ui_tkinter.Theme.setscale was rewritten to in 1.14.2), and the
+        CSS variable does the work: every font class is
+        calc(<base>px * var(--scale))."""
+        if scale is None:
+            scale = getattr(self.program, 'scale', None) or 1.0
+        self.scale = scale = float(scale)
+        self._build_fonts(scale)
+        if window is None:
+            window = getattr(_app_root, '_wv_window', None)
+        _js(window, 'document.documentElement.style.setProperty("--scale", {})'
+                    ''.format(json.dumps(str(scale))))
+        return scale
+
+    def _build_fonts(self, scale):
+        """Font sizes, kept in ONE place because webview_html/theme.css
+        mirrors this arithmetic and the two had drifted — the stylesheet said
+        12/24/18/12/10/8 while this said 18/36/30/24/12/9. The CSS holds the
+        UNSCALED bases and multiplies by --scale, so these two agree only if
+        the ratios below are the ratios there."""
         default_size = int(18 * scale)
         title_size = int(default_size * 2)
         big_size = int(default_size * 5 / 3)
@@ -680,23 +932,35 @@ class Theme:
         # Alias: 'big' → same as 'read'
         self.fonts['big'] = self.fonts['read']
 
-        # Images
-        self.photo = {}
-        self.image_cache = {}
-        if not noimagescaling:
-            self._load_images(scale)
-
     def _load_images(self, scale):
+        """Load the theme's images.
+
+        THE PATH WAS WRONG and every single image failed silently: this asked
+        for `../images/`, i.e. `AZT/images/`, one level above the app. They
+        live in `azt/images/`. It logged at DEBUG, so a run produced 45 lines
+        of nothing visible unless you were watching at INFO — and then the
+        NAMES leaked through as image sources, so the page requested
+        `GET /transparent` and got a 404. Resolved the way
+        ui_tkinter.Theme.mkimg does it (:183), from `program.aztdir`."""
         from utilities import file as fileu
+        base = getattr(self.program, 'aztdir', None) or fileu.cwd()
+        failed = []
         for name, filename in self.imagelist:
             try:
-                imgurl = fileu.pathname_from_base_dir(
-                    fileu.getdiredurl('../images/', filename))
+                imgurl = base / 'images' / filename
                 self.photo[name] = Image(str(imgurl))
                 if scale != 1 and self.photo[name].base_img:
                     self.photo[name].scale(scale, pixels=0)
             except Exception as e:
+                failed.append(name)
                 log.debug(f"Image {name} not loaded: {e}")
+        if failed:
+            # One WARNING beats 45 DEBUG lines: all-of-them failing is a
+            # broken path, not 45 missing files.
+            log.warning("{} of {} theme images failed to load from {} — "
+                        "buttons and icons will be blank"
+                        "".format(len(failed), len(self.imagelist),
+                                  base / 'images'))
 
     def css_vars(self):
         """Return dict of CSS variable values for the current theme."""
@@ -713,6 +977,162 @@ class Theme:
             'ipady': f'{self.ipady}px',
             'scale': str(self.scale),
         }
+
+
+# ── Style ─────────────────────────────────────────────────────────────
+class Style:
+    """ttk.Style's job, done in CSS.
+
+    Missing entirely until now, and it is a HARD AttributeError at
+    ui_shell.py:2006 — which is why the chooser could not render at all
+    under this backend.
+
+    The translation is closer than it looks: ttk.Style is a
+    name -> options table that widgets consult, and CSS is a
+    selector -> declarations table that elements consult. So a style name
+    becomes a selector and the options become declarations. `map()`'s states
+    become pseudo-classes and marker classes. What does NOT translate is
+    ttk's element/layout machinery (`element_create`, `layout`), and nothing
+    in azt uses it.
+    """
+
+    # ttk style name → CSS selector. Unknown names fall back to a data
+    # attribute selector so a call is never silently dropped.
+    SELECTORS = {
+        'TNotebook': '.wv-notebook',
+        'TNotebook.Tab': '.wv-tab',
+        'TFrame': '.wv-frame',
+        'TLabel': '.wv-label',
+        'TButton': '.wv-button',
+        'TEntry': '.wv-entry',
+        'TCombobox': '.wv-combobox',
+        'TCheckbutton': '.wv-checkbutton',
+        'TRadiobutton': '.wv-radiobutton',
+        'TProgressbar': '.wv-progressbar',
+    }
+    # ttk state name → how to reach it in CSS, relative to the base selector.
+    STATES = {
+        'active': ':hover',
+        'hover': ':hover',
+        'pressed': ':active',
+        'focus': ':focus',
+        'disabled': ':disabled',
+        'selected': '.wv-tab-selected',
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.theme = kwargs.pop('theme', None)
+        self._window = kwargs.pop('window', None)
+
+    # ── helpers ───────────────────────────────────────────────────────
+    def _selector(self, name):
+        if name in self.SELECTORS:
+            return self.SELECTORS[name]
+        log.info("Style: no CSS selector for ttk style {!r}; using a data "
+                 "attribute so the rule is at least addressable".format(name))
+        return '[data-ttk-style="{}"]'.format(name)
+
+    @staticmethod
+    def _decls(options):
+        """ttk options → CSS declarations. Unknown options are logged and
+        skipped rather than guessed at."""
+        out = {}
+        for k, v in options.items():
+            if v is None:
+                continue
+            if k in ('background', 'fieldbackground'):
+                out['background'] = v
+            elif k in ('foreground',):
+                out['color'] = v
+            elif k in ('font',):
+                size = getattr(v, 'size', None)
+                family = getattr(v, 'family', None)
+                if size:
+                    out['font-size'] = '{}px'.format(int(size))
+                if family:
+                    out['font-family'] = '"{}", var(--font-reading)'.format(family)
+                if getattr(v, 'weight', None) == 'bold':
+                    out['font-weight'] = 'bold'
+                if getattr(v, 'slant', None) == 'italic':
+                    out['font-style'] = 'italic'
+            elif k in ('padding', 'padx', 'pady'):
+                if isinstance(v, (tuple, list)):
+                    out['padding'] = ' '.join('{}px'.format(int(n)) for n in v)
+                else:
+                    out['padding'] = '{}px'.format(int(v))
+            elif k in ('borderwidth',):
+                out['border-width'] = '{}px'.format(int(v))
+            elif k in ('relief', 'anchor', 'sticky', 'expand', 'side'):
+                pass  # ttk layout vocabulary; CSS has no counterpart here
+            else:
+                log.info("Style: no CSS mapping for option {!r}".format(k))
+        return out
+
+    @property
+    def _target_window(self):
+        """Callers construct this as `ui.Style(theme=...)` with no window —
+        ttk.Style has no window argument — so fall back to the application
+        root. Resolved per call, not at construction: Style can be built
+        before the window exists, and _js() queues anyway."""
+        if self._window is not None:
+            return self._window
+        return getattr(_app_root, '_wv_window', None)
+
+    def _push(self, selector, decls):
+        if not decls:
+            return
+        _js(self._target_window,
+            'setStyleRule({}, {})'.format(json.dumps(selector),
+                                          json.dumps(decls)))
+
+    # ── ttk.Style API ─────────────────────────────────────────────────
+    def configure(self, style_name, **options):
+        self._push(self._selector(style_name), self._decls(options))
+
+    def map(self, style_name, **options):
+        """ttk: {option: [(state, value), ...]}. Each state becomes its own
+        CSS rule on the base selector."""
+        base = self._selector(style_name)
+        perstate = {}
+        for option, pairs in options.items():
+            for pair in pairs or []:
+                if not isinstance(pair, (tuple, list)) or len(pair) < 2:
+                    continue
+                state, value = pair[0], pair[-1]
+                perstate.setdefault(state, {})[option] = value
+        for state, opts in perstate.items():
+            suffix = self.STATES.get(state)
+            if suffix is None:
+                log.info("Style.map: no CSS form for state {!r}".format(state))
+                continue
+            self._push(base + suffix, self._decls(opts))
+
+    def apply_theme(self, style_name):
+        """Mirrors ui_tkinter.Style.apply_theme: push the theme's colours at
+        one style name. Most of what that does is already carried by the CSS
+        custom properties Theme emits, so this only sets what a ttk style
+        would genuinely override."""
+        if self.theme is None:
+            return
+        decls = {}
+        for attr, prop in (('background', 'background'),
+                           ('foreground', 'color')):
+            value = getattr(self.theme, attr, None)
+            if value:
+                decls[prop] = value
+        self._push(self._selector(style_name), decls)
+
+    def lookup(self, style_name, option, state=None, default=None):
+        return default
+
+    def theme_use(self, *args, **kwargs):
+        pass
+
+    def element_create(self, *args, **kwargs):
+        log.info("Style.element_create is ttk-only; ignored under webview")
+
+    def layout(self, *args, **kwargs):
+        log.info("Style.layout is ttk-only; ignored under webview")
 
 
 # ── Image ─────────────────────────────────────────────────────────────
@@ -917,6 +1337,74 @@ class Frame(_WebviewWidget):
         self.availablexy()
 
 
+def _text_of(value):
+    """The display string for a `text=`/`textvariable=` value.
+
+    A Variable passed as text used to reach the page as its REPR — visible
+    on the rendered chooser as
+    "<frontend.ui_variables.StringVar object at 0x70fd9ca76270>". Two ways in:
+    call sites that pass a StringVar as `text` (tkinter tolerates it because
+    it stringifies through Tcl), and `textvariable`, which Label/Button were
+    popping and discarding.
+
+    This reads the CURRENT value. It does not subscribe to changes — a
+    textvariable that updates later will not update the page yet, which is a
+    real gap and a smaller one than printing an object address to the user.
+    """
+    if value is None:
+        return ''
+    getter = getattr(value, 'get', None)
+    if callable(getter) and isinstance(value, (Variable, StringVar,
+                                               IntVar, BooleanVar)):
+        try:
+            return nfc(str(getter()))
+        except Exception:
+            return ''
+    return nfc(str(value))
+
+
+def _image_src(value, parent=None):
+    """A data: URI for whatever was passed as `image=`, or None.
+
+    Callers pass a ui.Image (usually straight out of theme.photo), and Image
+    already keeps its base64 data URI in `.img` — so the icons were reachable
+    all along; Label and Button simply threw the kwarg away.
+
+    A BARE NAME IS NOT A SOURCE. Some call sites pass the theme key
+    ('transparent', 'iconReport') rather than the Image, and returning that
+    unchanged put it straight into an <img src>, which the page dutifully
+    fetched: `GET /transparent HTTP/1.1" 404`. So a string is only used as-is
+    when it actually looks like a URI; otherwise it is looked up in the
+    theme, and failing that dropped with a log line."""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if value.startswith(('data:', 'http:', 'https:', 'file:', '/')):
+            return value
+        photo = getattr(getattr(parent, 'theme', None), 'photo', None)
+        found = photo.get(value) if isinstance(photo, dict) else None
+        if found is None:
+            log.info("image={!r} is neither a URI nor a theme image name; "
+                     "no image will be shown".format(value))
+            return None
+        return _image_src(found, parent)
+    # TWO CLASSES, TWO ATTRIBUTE NAMES, and they are not interchangeable:
+    # Image keeps its data URI in `.scaled` (set by Image.compile), while
+    # `.img` is Renderer's (set by Renderer.render). Call sites pass either —
+    # a theme icon or a rendered line of text — so both are accepted. Looking
+    # only at `.img` meant every genuine ui.Image was reported as failed to
+    # load, which is what "No data URI available for image
+    # <class 'frontend.ui_webview.Image'>" was: my bug, not a missing file.
+    for attr in ('scaled', 'img'):
+        src = getattr(value, attr, None)
+        if isinstance(src, str) and src:
+            return src
+    log.info("No data URI for image {!r} (filename={!r}) — it produced no "
+             "output; see the theme-image warning at startup"
+             "".format(type(value).__name__, getattr(value, 'filename', None)))
+    return None
+
+
 class Label(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
         # Handle font as a key name
@@ -925,14 +1413,19 @@ class Label(_WebviewWidget):
         kwargs.pop('norender', None)
         kwargs.pop('image_pixels', None)
         kwargs.pop('image_scaleto', None)
-        kwargs.pop('image', None)
-        kwargs.pop('compound', None)
-        kwargs.pop('textvariable', None)
+        image = _image_src(kwargs.pop('image', None), parent)
+        compound = kwargs.pop('compound', None)
+        if image:
+            kwargs['image'] = image
+            kwargs['compound'] = compound or 'top'
+        textvariable = kwargs.pop('textvariable', None)
         kwargs.pop('wraplength', None)
         kwargs['font'] = font
-        # Normalize text
+        # A Variable in either slot resolves to its VALUE, not its repr.
         if 'text' in kwargs:
-            kwargs['text'] = nfc(kwargs['text'])
+            kwargs['text'] = _text_of(kwargs['text'])
+        elif textvariable is not None:
+            kwargs['text'] = _text_of(textvariable)
         super().__init__(parent, widget_type='label', **kwargs)
         self._textvariable = None
 
@@ -947,8 +1440,11 @@ class Button(_WebviewWidget):
         choice = kwargs.pop('choice', None)
         window = kwargs.pop('window', None)
         kwargs.pop('anchor', None)
-        kwargs.pop('image', None)
-        kwargs.pop('compound', None)
+        image = _image_src(kwargs.pop('image', None), parent)
+        compound = kwargs.pop('compound', None)
+        if image:
+            kwargs['image'] = image
+            kwargs['compound'] = compound or 'top'
         kwargs.pop('relief', None)
         kwargs.pop('state', None)
         kwargs.pop('norender', None)
@@ -1013,17 +1509,63 @@ class Progressbar(_WebviewWidget):
 
 
 class Notebook(_WebviewWidget):
+    """Tabs. `add`/`select` were bare `pass` stubs, so the chooser's three tab
+    frames were created, never attached and never shown."""
+
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, widget_type='notebook', **kwargs)
+        self._tabs = []          # child widgets, in tab order
+        self._selected = None
 
     def add(self, child, **kwargs):
-        pass  # stub
+        text = kwargs.pop('text', '')
+        self._tabs.append(child)
+        wv = getattr(self, '_wv_window', None)
+        _js(wv, 'notebookAdd({}, {}, {})'.format(
+            self._wid, child._wid, json.dumps(nfc(text))))
+        if self._selected is None:
+            self._selected = child
 
     def select(self, tab_id=None):
-        pass  # stub
+        """No argument: return the current tab, as ttk does. With one: select
+        it. Accepts a child widget or an index."""
+        if tab_id is None:
+            return self._selected
+        child = tab_id
+        if isinstance(tab_id, int):
+            if not 0 <= tab_id < len(self._tabs):
+                return None
+            child = self._tabs[tab_id]
+        self._selected = child
+        wv = getattr(self, '_wv_window', None)
+        _js(wv, 'notebookSelect({}, {}, false)'.format(self._wid, child._wid))
+        return child
+
+    def index(self, child=None):
+        target = self._selected if child is None else child
+        try:
+            return self._tabs.index(target)
+        except ValueError:
+            return -1
+
+    def tabs(self):
+        return list(self._tabs)
 
     def bind(self, sequence, func, add=None):
-        pass  # stub
+        """Only ONE thing needs translating — the virtual event ttk emits on a
+        tab change. Everything else goes to the base binding.
+
+        The old override swallowed EVERY binding on a notebook, which is a
+        different bug wearing the same clothes: a widget that silently accepts
+        a callback and never calls it."""
+        if sequence == '<<NotebookTabChanged>>':
+            def _onchange(event, _f=func):
+                idx = getattr(event, 'index', None)
+                if isinstance(idx, int) and 0 <= idx < len(self._tabs):
+                    self._selected = self._tabs[idx]
+                return _f(event)
+            return super().bind('tabchanged', _onchange, add=add)
+        return super().bind(sequence, func, add=add)
 
 class Message(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
@@ -1389,9 +1931,33 @@ class ContextMenu:
 
 
 class ToolTip:
+    """Hover text. The CSS class (.wv-tooltip) has existed all along and
+    nothing ever created one, so ~38 call sites produced nothing."""
+
     def __init__(self, widget, text=''):
         self.widget = widget
         self.text = text
+        self._apply()
+
+    def _apply(self):
+        wid = getattr(self.widget, '_wid', None)
+        if wid is None:
+            return
+        wv = getattr(self.widget, '_wv_window', None)
+        _js(wv, 'setTooltip({}, {})'.format(wid, json.dumps(nfc(self.text or ''))))
+
+    def settext(self, text):
+        self.text = text
+        self._apply()
+
+    # Some call sites build the tooltip then update it; others expect the
+    # tkinter helper's show/hide entry points. Hovering is the browser's job,
+    # so these exist to keep those call sites working, not to do anything.
+    def showtip(self, event=None):
+        pass
+
+    def hidetip(self, event=None):
+        pass
 
 
 # ── Toplevel / Window ─────────────────────────────────────────────────
@@ -1418,6 +1984,25 @@ class Toplevel(_WebviewWidget):
         self._wv_loaded = threading.Event()
         self._wv_js_queue = []  # per-window JS queue
 
+        # WHY THIS IS NOT JUST A LATER hide(): `withdrawn` was ignored
+        # entirely, so a window asked for hidden was created VISIBLE and only
+        # hidden once its page had loaded — which is seconds later, because
+        # _wv_call defers until _on_loaded. Kent, 2026-09-05: "I saw flashes
+        # that looked like windows building, but none stuck around long
+        # enough to see clearly." Every task window is built withdrawn
+        # (tasks/chooser.py:527 passes withdrawn=True with the comment
+        # "don't show first on boot"), so the whole startup flashed.
+        # pywebview can create a window hidden, which is the honest
+        # equivalent of Tk's withdrawn state at creation.
+        withdrawn = bool(kwargs.pop('withdrawn', False))
+        self._withdrawn = withdrawn
+        # Kept separate from `withdrawn` ON PURPOSE: the log used to report
+        # "created HIDDEN" whenever `withdrawn` was true, which stayed true
+        # after hidden= was reverted — so the message claimed a state the
+        # window was not in, and hid the fact that the revert had landed.
+        create_hidden = bool(withdrawn
+                             and os.environ.get('AZT_WEBVIEW_HIDDEN'))
+
         # Inherit from parent
         if parent:
             for attr in ('theme', 'wraplength', 'renderer', 'exitFlag'):
@@ -1436,8 +2021,31 @@ class Toplevel(_WebviewWidget):
                 html='<div id="root"></div>' if not os.path.exists(html_path) else None,
                 js_api=_api,
                 width=800, height=600,
+                # NEVER CREATE HIDDEN — measured 2026-09-07, and this was my
+                # mistake. `hidden=True` looked like the honest equivalent of
+                # Tk's withdrawn state and it removed the startup flash, but
+                # tests/manual/webview_multiwindow/hide_show.py --start-hidden
+                # shows a window created hidden NEVER APPEARS: show() does not
+                # map it, then or later. Every task window is built withdrawn
+                # (tasks/chooser.py:527), so this alone hid the entire UI.
+                #
+                # Opt in with AZT_WEBVIEW_HIDDEN=1 only to re-test it.
+                # The flash it was meant to fix is cosmetic and comes back;
+                # it needs a different answer (see the item — most likely one
+                # window with page-level views instead of many OS windows).
+                hidden=create_hidden,
             )
             if self._wv_window:
+                # The url is logged because a window pointed at nothing loads
+                # pywebview's SERVER ROOT instead, which its own asset route
+                # cannot serve: `GET / -> 500`, and the window shows nothing.
+                log.info("window {}: created {}{}, url={}".format(
+                    self._wid,
+                    'HIDDEN' if create_hidden else 'visible',
+                    ' (asked withdrawn)' if withdrawn else '',
+                    html_path if os.path.exists(html_path) else '(NONE — will '
+                    'load the server root and fail)'))
+                _all_wv_windows.append(self._wv_window)
                 _register_window_owner(self._wv_window, self)
                 if _started.is_set():
                     # Window created after webview.start() — poll for readiness
@@ -1474,25 +2082,99 @@ class Toplevel(_WebviewWidget):
                     self._wv_window.evaluate_js(f'setThemeVars({json.dumps(css_vars)})')
                 except Exception as e:
                     log.debug(f"Theme push failed: {e}")
+        _badge(self._wv_window, 'window {}'.format(self._wid))
         # Flush per-window JS queue
-        for code in self._wv_js_queue:
-            if self._wv_window and not getattr(self._wv_window, '_destroyed', False):
-                try:
-                    self._wv_window.evaluate_js(code)
-                except Exception as e:
-                    log.debug(f"Per-window queued JS failed: {e}")
+        _eval_batched(self._wv_window, self._wv_js_queue)
         self._wv_js_queue.clear()
         # Flush deferred wv calls (title, hide/show, etc.)
         self._flush_wv_calls()
+        # Widgets are in the page now, so its content has a size — fit to it.
+        self.fit_to_content()
+
+    def fit_to_content(self):
+        """Grow the window until its content fits, capped to the screen.
+
+        WHY THIS IS NEEDED: pywebview windows are created at a fixed
+        800x600 (1024x768 for the root) and nothing since has related that to
+        what is in them, so the chooser opened too small and had to be
+        resized by hand before its task buttons could be seen — Kent,
+        2026-09-08: "will users have to ... manually move the window size and
+        shape to see all the contents (as now)?" No. Under tkinter a window
+        sizes to its content; this is the equivalent.
+
+        It only ever GROWS, and only when the content actually overflows:
+        `scrollWidth` of a box that fits equals its client width, so a page
+        with room to spare reports no change and is left alone. Capped to
+        `screen.avail*` so a long page cannot produce a window larger than
+        the display — the failure mode `availablexy` used to have in reverse.
+        """
+        wv = getattr(self, '_wv_window', None)
+        if not wv or not _started.is_set():
+            return
+        try:
+            measured = wv.evaluate_js(
+                '(function(){var r=document.getElementById("root")'
+                '||document.body;'
+                'return [Math.ceil(r.scrollWidth),Math.ceil(r.scrollHeight),'
+                'screen.availWidth,screen.availHeight,'
+                'window.innerWidth,window.innerHeight];})()')
+        except Exception as e:
+            log.debug("window {}: could not measure content: {}"
+                      "".format(self._wid, e))
+            return
+        try:
+            cw, ch, availw, availh, innerw, innerh = [int(n) for n in measured]
+        except (TypeError, ValueError):
+            log.debug("window {}: content measurement unusable: {!r}"
+                      "".format(self._wid, measured))
+            return
+        want_w = min(max(cw + self._FIT_PAD, innerw, self._FIT_MIN[0]), availw)
+        want_h = min(max(ch + self._FIT_PAD, innerh, self._FIT_MIN[1]), availh)
+        if want_w <= innerw and want_h <= innerh:
+            return
+        try:
+            wv.resize(want_w, want_h)
+            log.info("window {}: fitted to content {}x{} (was {}x{}, "
+                     "screen {}x{})".format(self._wid, want_w, want_h,
+                                            innerw, innerh, availw, availh))
+        except Exception as e:
+            log.debug("window {}: resize failed: {}".format(self._wid, e))
 
     def _wv_call(self, method, *args):
-        """Call a method on the pywebview window, deferring if not started."""
+        """Call a method on the pywebview window, deferring until the window
+        is ready.
+
+        TWO READINESS CONDITIONS, and only the first was checked: the global
+        `_started` (webview.start has run) AND this window's own page having
+        loaded. `_js()` has always had the per-window queue for exactly this
+        reason; `_wv_call` did not, so calls aimed at a window that existed
+        but had not loaded were issued and lost.
+
+        That is why no task window was ever visible. The log reads:
+
+            window 20: created HIDDEN (withdrawn=True)
+            window 20: WITHDRAW -> hide()
+            window 20: DEICONIFY -> show()      <- before the page exists
+            window 20: DEICONIFY -> show()      <- still before
+            GET /base.html                       <- page starts loading HERE
+            Toplevel 20 JS ready - flushing 408 queued calls
+
+        Both reveals landed on an unloaded window and evaporated; nothing
+        asked again afterwards, so a window created hidden stayed hidden
+        forever. Queuing preserves ORDER, which matters here — hide-then-show
+        must replay as hide, then show."""
         if not self._wv_window:
             return
-        if not _started.is_set():
-            # Defer — will be called from _flush_wv_calls after start
+        if not _started.is_set() or not self._wv_loaded.is_set():
+            # Defer — replayed by _flush_wv_calls once this window has loaded
             self._wv_deferred.append((method, args))
+            if method in ('show', 'hide'):
+                log.info("window {}: {}() deferred until its page loads"
+                         "".format(self._wid, method))
             return
+        if method in ('show', 'hide'):
+            log.info("window {}: pywebview {}() now".format(
+                getattr(self, '_wid', 'root'), method))
         try:
             getattr(self._wv_window, method)(*args)
         except Exception as e:
@@ -1500,6 +2182,29 @@ class Toplevel(_WebviewWidget):
 
     def _flush_wv_calls(self):
         """Execute deferred pywebview window calls."""
+        # COALESCE VISIBILITY: only the LAST show/hide matters. These were
+        # queued because the window was not ready, so replaying them
+        # literally makes the window blink through states the user was never
+        # meant to see — Kent, 2026-09-08, on the splash: "Are the first two
+        # flashes necessary? I can't see users not being affected by that."
+        # A queued hide followed by a queued show is a no-op in intent; the
+        # user should see the end state, not the journey to it.
+        if self._wv_deferred:
+            queued = list(self._wv_deferred)
+            last_vis = None
+            for method, args in queued:
+                if method in ('show', 'hide'):
+                    last_vis = (method, args)
+            kept = [(m, a) for m, a in queued if m not in ('show', 'hide')]
+            if last_vis is not None:
+                kept.append(last_vis)
+            dropped = len(queued) - len(kept)
+            self._wv_deferred = kept
+            log.info("window {}: replaying deferred {}{}".format(
+                getattr(self, '_wid', 'root'),
+                [m for m, _a in kept],
+                " (collapsed {} redundant show/hide)".format(dropped)
+                if dropped else ''))
         for method, args in self._wv_deferred:
             try:
                 getattr(self._wv_window, method)(*args)
@@ -1507,19 +2212,107 @@ class Toplevel(_WebviewWidget):
                 log.debug(f"Deferred wv_call {method} failed: {e}")
         self._wv_deferred.clear()
 
+    # VISIBILITY IS LOGGED AT INFO, DELIBERATELY. No task window has ever been
+    # seen on screen under this backend — the root shows as an empty themed
+    # box, task windows flashed and vanished, and nothing appears in the
+    # window list. That has two possible shapes and the log could not tell
+    # them apart: either nothing ever ASKS a window to show, or the ask is
+    # made and does not take. Every hide/show now says so, with the window id,
+    # so one run answers it. There is a known recurring class here on the Tk
+    # side too — a withdrawn run window never revealed — so "who asked for
+    # show" is worth being able to read off a log permanently, not just once.
     def withdraw(self):
+        log.info("window {}: WITHDRAW (hide) requested".format(self._wid))
         self._wv_call('hide')
 
     def deiconify(self):
+        log.info("window {}: DEICONIFY (show) requested".format(self._wid))
         self._wv_call('show')
 
     def title(self, text=None):
-        if text:
-            self._title_text = text
-            self._wv_call('set_title', text)
+        """tkinter's title() is a GETTER with no argument, and the ambient
+        collab status depends on that: `base = w.title().split(SEP)[0]`
+        (main.py:493). Returning None made every 10-second poll log
+        "collab_title_status: 'NoneType' object has no attribute 'split'"
+        for every visible window — five per tick in the first sort run."""
+        if text is None:
+            return getattr(self, '_title_text', '')
+        self._title_text = text
+        self._wv_call('set_title', text)
+        return text
 
     def attributes(self, *args):
-        pass
+        """tkinter's -fullscreen / -zoomed / -topmost, as far as pywebview
+        can honour them. Anything else is accepted and ignored, as it was
+        before — but fullscreen is NOT ignorable: TaskDressing.__init__
+        calls takekioskscreen() unconditionally."""
+        if len(args) >= 2 and args[0] in ('-fullscreen', '-zoomed'):
+            self._set_fullscreen(bool(args[1]))
+        return None
+
+    wm_attributes = attributes
+
+    def _set_fullscreen(self, want):
+        """pywebview exposes only a TOGGLE, so track the state ourselves —
+        calling toggle twice for the same intent would undo it.
+
+        OFF BY DEFAULT UNDER WEBVIEW, opt in with AZT_WEBVIEW_KIOSK=1.
+        `TaskDressing.__init__` calls `takekioskscreen()` on EVERY task
+        window, and before this method existed `attributes()` was a `pass`,
+        so nothing happened. Implementing it made every task window jump to
+        fullscreen and undecorated the instant it appeared — a behaviour
+        change introduced while chasing a crash, and the wrong thing while
+        the question is still "can we see this page at all". A fullscreen
+        undecorated window showing a half-built layout is also the state
+        that reads as a hung machine.
+
+        Kiosk mode is a real feature and this is not a rejection of it; it
+        needs to be turned on deliberately once pages render."""
+        if bool(getattr(self, '_is_fullscreen', False)) == bool(want):
+            return
+        if want and not os.environ.get('AZT_WEBVIEW_KIOSK'):
+            log.info("window {}: fullscreen requested, NOT applied "
+                     "(set AZT_WEBVIEW_KIOSK=1 to allow it)".format(self._wid))
+            return
+        self._is_fullscreen = bool(want)
+        self._wv_call('toggle_fullscreen')
+
+    def takekioskscreen(self, event=None):
+        """Kiosk mode: no window dressing, all the screen.
+
+        ui_tkinter (:3536) also binds Escape and double-click to leave. Here
+        the ESCAPE BINDING IS THE IMPORTANT HALF — a webview window in
+        fullscreen with no decorations and no way out is a machine that looks
+        hung, and this is called on EVERY task window
+        (ui_shell.py:2952), so getting it wrong strands the user everywhere
+        rather than on one page."""
+        self._set_fullscreen(True)
+        self.bind('<Escape>', self.releasefullscreen)
+        self.bind('<Double-Button-1>', self.releasefullscreen)
+
+    def takefullscreen(self, event=None):
+        """Maximise, keeping the window dressing. pywebview has no 'maximise'
+        that works across all backends, so this is kiosk mode with the same
+        escapes — the tkinter version falls back to exactly that when
+        '-zoomed' is unsupported (:3550)."""
+        self.takekioskscreen(event)
+
+    def releasefullscreen(self, event=None):
+        self._set_fullscreen(False)
+
+    # ── Global bindings ───────────────────────────────────────────────
+    # tkinter's bind_all/unbind_all reach every widget in the interpreter;
+    # in a page the equivalent target is the document. Used by
+    # lexicon.py:1329-1342 for navigation keys.
+    def bind_all(self, event, handler, add=None):
+        return self.bind(event, handler, add=add)
+
+    def unbind_all(self, event=None):
+        return self.unbind(event)
+
+    def _root(self):
+        """tkinter's Misc._root(). sort_ui.py:172 asks for it."""
+        return self._find_root() or self
 
     def mainloop(self, setup_callback=None):
         """Delegate to Root.mainloop() — mirrors tkinter where any widget can call mainloop."""
@@ -1553,11 +2346,24 @@ class Toplevel(_WebviewWidget):
         self._exists = False
         if hasattr(self, '_wait_event'):
             self._wait_event.set()
-        if self._wv_window and _started.is_set():
-            try:
-                self._wv_window.destroy()
-            except Exception:
-                pass
+        _close_native_window(self, 'Toplevel {}'.format(self._wid))
+
+    def destroy(self):
+        """Destroying a Toplevel must retire its WINDOW, not just its widgets.
+
+        `_WebviewWidget.destroy` only tells the page to remove DOM nodes,
+        which for a window means emptying it and leaving it on screen. The
+        splash is destroyed at `tasks/chooser.py:551`, so it sat there for the
+        whole session and was still up after Quit — Kent, 2026-09-08: "on
+        quit, the Splash is still up."
+
+        Retired by hiding rather than destroying, for the reason in
+        _close_native_window: destroying a pywebview window crashes
+        QtWebEngine, and A-Z+T reuses windows anyway."""
+        if not self._exists:
+            return
+        super().destroy()
+        _close_native_window(self, 'Toplevel {}'.format(self._wid))
 
     def iswaiting(self):
         # The reused wait window lives on the root; bubble up to Root.iswaiting
@@ -1565,6 +2371,83 @@ class Toplevel(_WebviewWidget):
         if self.parent:
             return self.parent.iswaiting()
         return False
+
+    # ── Waiting ───────────────────────────────────────────────────────
+    # wait()/waiting()/waitdone() existed ONLY on Root, but they are called on
+    # TASK windows — `tasks/chooser.py:108` does
+    #   with self.ui.waiting(_("Getting your task list…"), thenshow=True):
+    # which reached TaskWindow.__getattr__, fell through to the task, and
+    # raised AttributeError mid-boot. That is the §7 row "wait()/waiting()/
+    # waitdone only on Root", and it stopped the chooser from being built.
+    #
+    # The bodies mirror Root's deliberately rather than delegating: `wait()`
+    # hides the window that is waiting and reveals it again in `waitdone()`,
+    # so it has to run against THIS window, and Root's signature has no way
+    # to say "wait on someone else". A shared mixin is the tidy-up, and is
+    # not worth restructuring this file's MRO for today.
+    def _waitwindow(self, create=True):
+        """The one reused Wait window, owned by the app root."""
+        root = self._find_root() or default_root()
+        if root is None:
+            return None
+        return root._waitwindow(create=create)
+
+    @contextmanager
+    def waiting(self, msg=None, **kwargs):
+        """Context-manager form of wait()/waitdone(): closes the wait dialog
+        even if the body raises or returns early.
+
+        The `finally` is the point — `tests/test_waiting_contract.py` exists
+        to guard it, because the failure it prevents is a wait dialog left on
+        screen over a window nobody can reach."""
+        self.wait(msg=msg, **kwargs)
+        try:
+            yield self
+        finally:
+            self.waitdone()
+
+    def wait(self, msg=None, cancellable=False, thenshow=False):
+        ww = self._waitwindow()
+        if ww is None:
+            return
+        if ww.active:
+            if msg:
+                ww.msg(msg)
+            if cancellable:
+                ww.make_cancellable()
+            if thenshow:
+                self.showafterwait = True
+                ww.reveal_parent = self
+                ww.do_reveal = True
+            return
+        self.showafterwait = bool(self.winfo_viewable()) or bool(thenshow)
+        if self.showafterwait:
+            self.withdraw()
+        ww.activate(parent=self, msg=msg, cancellable=cancellable,
+                    reveal=self.showafterwait)
+
+    def waitdone(self):
+        ww = self._waitwindow(create=False)
+        if ww is None or not ww.active:
+            return
+        parent = ww.reveal_parent
+        if ww.do_reveal and parent is not None \
+                and getattr(parent, '_exists', False) \
+                and not parent.exitFlag.istrue():
+            try:
+                parent.deiconify()
+            except Exception:
+                pass
+        ww.deactivate()
+
+    def waitprogress(self, x):
+        ww = self._waitwindow(create=False)
+        if ww is None:
+            return
+        try:
+            ww.progress(x, r=4)
+        except Exception:
+            pass
 
     def cleanup(self):
         pass
@@ -1740,8 +2623,24 @@ class Root(_WebviewWidget):
                 html='<div id="root"></div>' if not os.path.exists(html_path) else None,
                 js_api=_api,
                 width=1024, height=768,
+                # THE ROOT IS NEVER SEEN, so create it hidden and spare the
+                # user a window that appears only to vanish. Under tkinter
+                # the root is withdrawn for the whole session and every
+                # visible window is a Toplevel; this backend was creating it
+                # visible purely because nothing passed `hidden=`, and the
+                # app withdraws it a moment later — the first of the two
+                # startup flashes.
+                #
+                # `hidden=True` is unusable for a window that must appear
+                # later (measured: show() never maps it — see
+                # tests/manual/webview_multiwindow/hide_show.py), and that is
+                # exactly why it is safe HERE and nowhere else: nothing shows
+                # the root. deiconify() logs a warning if anything tries.
+                hidden=True,
             )
+            self._created_hidden = True
             if self._wv_window:
+                _all_wv_windows.append(self._wv_window)
                 _register_window_owner(self._wv_window, self)
 
         if not hasattr(program, 'tk_root'):
@@ -1768,18 +2667,84 @@ class Root(_WebviewWidget):
         if not _started.is_set():
             self._wv_deferred.append((method, args))
             return
+        if method in ('show', 'hide'):
+            log.info("window {}: pywebview {}() now".format(
+                getattr(self, '_wid', 'root'), method))
         try:
             getattr(self._wv_window, method)(*args)
         except Exception as e:
             log.debug(f"Root wv_call {method} failed: {e}")
 
     def _flush_wv_calls(self):
+        # COALESCE VISIBILITY: only the LAST show/hide matters. These were
+        # queued because the window was not ready, so replaying them
+        # literally makes the window blink through states the user was never
+        # meant to see — Kent, 2026-09-08, on the splash: "Are the first two
+        # flashes necessary? I can't see users not being affected by that."
+        # A queued hide followed by a queued show is a no-op in intent; the
+        # user should see the end state, not the journey to it.
+        if self._wv_deferred:
+            queued = list(self._wv_deferred)
+            last_vis = None
+            for method, args in queued:
+                if method in ('show', 'hide'):
+                    last_vis = (method, args)
+            kept = [(m, a) for m, a in queued if m not in ('show', 'hide')]
+            if last_vis is not None:
+                kept.append(last_vis)
+            dropped = len(queued) - len(kept)
+            self._wv_deferred = kept
+            log.info("window {}: replaying deferred {}{}".format(
+                getattr(self, '_wid', 'root'),
+                [m for m, _a in kept],
+                " (collapsed {} redundant show/hide)".format(dropped)
+                if dropped else ''))
         for method, args in self._wv_deferred:
             try:
                 getattr(self._wv_window, method)(*args)
             except Exception as e:
                 log.debug(f"Root deferred wv_call {method} failed: {e}")
         self._wv_deferred.clear()
+
+    # Same window verbs as Toplevel — ui_shell asks for these on the root as
+    # well as on task windows (:2739 and :2952).
+    def attributes(self, *args):
+        if len(args) >= 2 and args[0] in ('-fullscreen', '-zoomed'):
+            self._set_fullscreen(bool(args[1]))
+        return None
+
+    wm_attributes = attributes
+
+    def _set_fullscreen(self, want):
+        """Off by default; see Toplevel._set_fullscreen for why."""
+        if bool(getattr(self, '_is_fullscreen', False)) == bool(want):
+            return
+        if want and not os.environ.get('AZT_WEBVIEW_KIOSK'):
+            log.info("root window: fullscreen requested, NOT applied "
+                     "(set AZT_WEBVIEW_KIOSK=1 to allow it)")
+            return
+        self._is_fullscreen = bool(want)
+        self._wv_call('toggle_fullscreen')
+
+    def takekioskscreen(self, event=None):
+        self._set_fullscreen(True)
+        self.bind('<Escape>', self.releasefullscreen)
+        self.bind('<Double-Button-1>', self.releasefullscreen)
+
+    def takefullscreen(self, event=None):
+        self.takekioskscreen(event)
+
+    def releasefullscreen(self, event=None):
+        self._set_fullscreen(False)
+
+    def bind_all(self, event, handler, add=None):
+        return self.bind(event, handler, add=add)
+
+    def unbind_all(self, event=None):
+        return self.unbind(event)
+
+    def _root(self):
+        return self
 
     def mainloop(self, setup_callback=None):
         """Start the pywebview event loop.
@@ -1795,6 +2760,7 @@ class Root(_WebviewWidget):
                 _started.set()
                 self._wv_loaded.set()
                 self._push_theme()
+                _badge(self._wv_window, 'ROOT (no task widgets live here)')
                 self._flush_wv_calls()
                 # Flush deferred calls on all child Toplevels
                 for child in self._children:
@@ -1812,18 +2778,33 @@ class Root(_WebviewWidget):
                     t.start()
             if self._wv_window:
                 self._wv_window.events.loaded += on_loaded
-            webview.start(debug=True)
+            webview.start(**_start_kwargs(self.program))
 
     def withdraw(self):
+        log.info("root window: WITHDRAW (hide) requested")
         self._wv_call('hide')
 
     def deiconify(self):
+        log.info("root window: DEICONIFY (show) requested")
+        if getattr(self, '_created_hidden', False):
+            # Not a refusal — the call still goes through — but a window
+            # created hidden does not map on show() under pywebview, so if
+            # this ever fires the root genuinely needs to be visible and
+            # creating it hidden was the wrong call. Say so rather than
+            # leaving a silently missing window.
+            log.warning("root window was created hidden, so show() will "
+                        "probably not map it — if the root is meant to be "
+                        "visible, stop creating it hidden")
         self._wv_call('show')
 
     def title(self, text=None):
-        if text:
-            self._title_text = text
-            self._wv_call('set_title', text)
+        """Getter with no argument, as on Toplevel — same reason (main.py:493
+        splits the result)."""
+        if text is None:
+            return getattr(self, '_title_text', '')
+        self._title_text = text
+        self._wv_call('set_title', text)
+        return text
 
     def protocol(self, name, func):
         pass

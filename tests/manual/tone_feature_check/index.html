@@ -87,6 +87,25 @@
 <div class="rulerwrap">
   <div class="ruler inch" id="ruler-in"></div>
 </div>
+<div class="bar">
+  <label><b>Hold real paper against the 4&nbsp;inch bar. It spans</b>
+    <input id="realin" size="6" placeholder="e.g. 3"> <b>real inches.</b></label>
+  <button id="btn-measured">Record</button>
+</div>
+<div class="env" id="measured">not entered</div>
+<p class="hint">
+  <b>On Windows, record your magnification too.</b> Settings &rarr; System &rarr;
+  Display &rarr; <i>Scale and layout</i> — and the Environment block's
+  <code>devicePixelRatio</code> should equal it (1.25 = 125&nbsp;%). A ruler that
+  measures true at 100&nbsp;% says nothing about 150&nbsp;%: those are different
+  code paths in the host, and the field runs both. If you can, measure at two
+  settings.<br>
+  <b>This is the only physical measurement on the page.</b> Everything the browser
+  reports about size is circular — CSS <i>defines</i> an inch as 96&nbsp;px, so
+  "CSS px per inch" always reads 96 no matter what the display does, and
+  <code>devicePixelRatio</code> reports device pixels, not physical size. A page
+  cannot know how big its own pixels are. Only paper can tell you.
+</p>
 
 <h2>3. Font under test</h2>
 <div class="bar">
@@ -117,6 +136,14 @@
   </div>
   <div id="dropped">nothing loaded</div>
   <div id="features"></div>
+  <div style="font-size:12.5px;color:#666;margin-top:6px">
+    <b>The feature and name readout below applies ONLY to a font loaded here</b>,
+    never to one picked in the Family list above. A web page can ask the system
+    for a family <i>by name</i> but can never read the installed FILE — so to see
+    what Charis declares, load <code>CharisSIL-Regular.ttf</code> itself.
+    <code>render_pil_baseline.py</code> prints the full path of the file the app
+    would use, and <code>run_pywebview.py &lt;path&gt;</code> takes one.
+  </div>
 </div>
 <div class="bar">
   <label>Extra feature column:
@@ -281,12 +308,22 @@ function showEnv() {
     "when: " + new Date().toISOString(),
     "userAgent: " + navigator.userAgent,
     "platform:  " + (navigator.platform || "?"),
-    "devicePixelRatio: " + window.devicePixelRatio,
+    /* On Windows this tracks the OS 'Scale and layout' setting, so it is the
+       one number that says WHICH magnification a ruler reading was taken at.
+       On Linux/WebKitGTK it read 1 on a display the paper said was ~4/3 out,
+       so it is only trustworthy on Windows. */
+    "devicePixelRatio: " + window.devicePixelRatio +
+      "   (Windows: this IS the OS scale - 1.0=100%, 1.25=125%, 1.5=150%. " +
+      "Check it against Settings > System > Display > Scale and layout)",
     "window inner: " + window.innerWidth + "x" + window.innerHeight,
     "screen: " + screen.width + "x" + screen.height +
       "  avail: " + screen.availWidth + "x" + screen.availHeight,
-    "CSS px per mm: " + ppm.toFixed(4) + "   (CSS nominal 3.7795)",
-    "CSS px per in: " + (ppm * 25.4).toFixed(2) + "   (CSS nominal 96)",
+    /* This is CSS's own arithmetic and will read ~3.7795 on every machine
+       ever. It is NOT a physical measurement and must not be quoted as one -
+       a page cannot know how big its pixels are. Only the paper can. */
+    "CSS px per mm: " + ppm.toFixed(4) + "   (tautological: CSS defines this " +
+      "as 96px/in. NOT a physical measurement)",
+    measuredLine(),
     "dropped font: " + (loadedFontName || "none"),
     "",
     "families resolvable by name:"
@@ -298,6 +335,23 @@ function showEnv() {
   });
   $("env").textContent = lines.join("\n");
   return lines.join("\n");
+}
+
+/* ---- rulers ----
+   The ONLY physical measurement on this page comes from the user with a real
+   ruler. Everything the browser can tell us about size is circular. */
+function measuredLine() {
+  var v = parseFloat(($("realin") || {}).value);
+  if (!v || v <= 0) {
+    return "measured against real paper: (not entered - the ruler result is " +
+           "the only physical datum here, so please enter it)";
+  }
+  var cssPerReal = 4 / v;               /* the bar claims 4 CSS inches */
+  return "measured against real paper: the 4in bar spans " + v +
+    " real inches -> 1 CSS inch = " + (v / 4).toFixed(3) +
+    " real inches, true display ~= " + Math.round(96 * cssPerReal) +
+    " dpi (CSS assumes 96). Content renders at " +
+    Math.round(100 * v / 4) + "% of intended physical size.";
 }
 
 /* ---- rulers ---- */
@@ -376,7 +430,39 @@ function sfntFeatureTags(buffer) {
     }
   });
   return { tags: out, hasGraphite: !!(tables.Silf || tables.Glat),
-           hasOT: !!(tables.GSUB || tables.GPOS) };
+           hasOT: !!(tables.GSUB || tables.GPOS),
+           names: sfntNames(dv, tables.name) };
+}
+
+/* The 'name' table, which answers a question CSS cares about and nothing
+   else can: a font stack matches on FAMILY NAME (id 1/16), while local()
+   inside @font-face can also match the full name (4) and the PostScript
+   name (6). Whether those differ on real SIL builds decides whether an
+   @font-face buys anything over a plain stack. */
+function sfntNames(dv, t) {
+  if (!t) { return {}; }
+  var count = dv.getUint16(t.off + 2), strBase = t.off + dv.getUint16(t.off + 4);
+  var want = { 1: "family", 2: "subfamily", 4: "full", 6: "postscript",
+               16: "typographic family", 17: "typographic subfamily" };
+  var out = {}, i;
+  for (i = 0; i < count; i++) {
+    var r = t.off + 6 + i * 12;
+    var plat = dv.getUint16(r), nameId = dv.getUint16(r + 6);
+    var len = dv.getUint16(r + 8), off = dv.getUint16(r + 10);
+    if (!want[nameId] || out[want[nameId]]) { continue; }
+    var s = "", j;
+    if (plat === 3) {                       /* Windows: UTF-16BE */
+      for (j = 0; j + 1 < len; j += 2) {
+        s += String.fromCharCode(dv.getUint16(strBase + off + j));
+      }
+    } else if (plat === 1) {                /* Mac: Latin-1 */
+      for (j = 0; j < len; j++) {
+        s += String.fromCharCode(dv.getUint8(strBase + off + j));
+      }
+    } else { continue; }
+    out[want[nameId]] = s;
+  }
+  return out;
 }
 function showFontFeatures(buffer, label) {
   var info;
@@ -407,6 +493,17 @@ function showFontFeatures(buffer, label) {
             '<span class="bad">NO — this file cannot hide staves via cv92</span>') +
           "</b>";
   html += "<br>all feature tags: " + esc(tags.join(" ") || "(none)");
+  /* Which of these a CSS font stack can reach: family (and typographic
+     family) only. full/postscript need local() in an @font-face. If they are
+     just the family with spaces removed, @font-face buys nothing here. */
+  var n = info.names || {}, keys = Object.keys(n);
+  if (keys.length) {
+    html += "<br><b>name table</b> (a CSS font stack matches <i>family</i> " +
+      "only; <i>full</i> and <i>postscript</i> need local() in @font-face):";
+    keys.forEach(function (k) {
+      html += "<br>&nbsp;&nbsp;" + esc(k) + ": " + esc(n[k]);
+    });
+  }
   $("features").innerHTML = html;
 }
 
@@ -645,6 +742,14 @@ window.addEventListener("DOMContentLoaded", function () {
   $("size").addEventListener("change", render);
   $("btn-refresh").addEventListener("click", function () {
     detectFonts(); render();
+  });
+  $("measured").textContent = measuredLine();
+  $("btn-measured").addEventListener("click", function () {
+    $("measured").textContent = measuredLine();
+    showEnv();
+  });
+  $("realin").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { $("btn-measured").click(); }
   });
   $("btn-report").addEventListener("click", buildReport);
   $("btn-feat").addEventListener("click", function () {

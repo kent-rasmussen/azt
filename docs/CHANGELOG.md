@@ -19,6 +19,90 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.18
+
+**The webview backend puts pixels on the screen for the first time: the splash and the
+task chooser both render.** Verified live on Linux/WebKitGTK — the chooser shows three
+notebook tabs that switch, eight task buttons with their icons, and labels that wrap to
+their cells; the splash shows its logo, version, progress bar and blurb. **The tkinter
+backend is unaffected** except for one guarded line in `main.py` (splash construction).
+
+Four faults kept every webview screen blank, and none of them was in the gap list the
+port was planning from:
+
+- **FIX (widgets were built and silently discarded).** `createWidget` resolved a widget's
+  parent through the JS widget registry, but **a window is not a DOM widget** —
+  `Toplevel`/`Root` create a pywebview window, never an element. So every widget parented
+  directly to a task window failed the `if (parentEl)` guard and **was never appended**,
+  taking its children with it: no error, empty console, blank themed window. An
+  unresolved parent now falls back to the page root (in a window, the window *is* the
+  page) and warns, so a genuinely missing parent can't hide the same way again.
+- **FIX (window reveals were lost).** `_wv_call` deferred only on the *global*
+  "webview has started" flag, never on the window's own page having loaded — unlike
+  `_js()`, which has had a per-window queue all along. `show()` aimed at a window that
+  existed but hadn't loaded evaporated, so a window that had been hidden stayed hidden
+  forever. Now queued per window and replayed in order, with queued show/hide **collapsed
+  to the net state** so the user never sees a window blink through states it was never
+  meant to show.
+- **FIX (`Toplevel.destroy()` left the window on screen).** It inherited the widget
+  destroy, which removes DOM nodes and nothing else — so `tasks/chooser.py`'s
+  `splash.destroy()` emptied the splash and left its window standing, still visible after
+  Quit. It now retires the window too (by hiding: destroying a pywebview window crashes
+  QtWebEngine, and A-Z+T reuses windows anyway).
+- **FIX (root window flash).** The root is withdrawn immediately and never shown again,
+  so it is now created hidden instead of appearing and vanishing at every startup.
+
+Also filled in, all previously stubs or absent: **`ui.Style`** (ttk style names → CSS
+selectors, `map()` states → pseudo-classes; it was a hard `AttributeError` and the reason
+the chooser could not be built at all), **`Notebook`** add/select/index/tabs plus a `bind`
+that translates `<<NotebookTabChanged>>` instead of swallowing every binding,
+**`ToolTip`**, **`wait()`/`waiting()`/`waitdone()` on task windows** (they existed only on
+the root, and the chooser calls them — `AttributeError` mid-boot), **`after_idle`**,
+**`cget`**, **`bind_all`/`unbind_all`/`_root()`**, **`takekioskscreen`** and friends, and
+**icons on `Label`/`Button`** (the `image=` kwarg was being discarded, and `Image` keeps
+its data URI in `.scaled`, not `.img`).
+
+- **FIX (theme images never loaded).** `Theme._load_images` looked in `../images/`, one
+  level above the app. All 45 failed silently at DEBUG; there is now one WARNING, because
+  all of them failing is a broken path rather than 45 missing files.
+- **FIX (`title()` is a getter).** Called with no argument it returned `None`, so the
+  ambient collab status (`main.py`, `w.title().split(SEP)`) raised on every 10-second poll
+  for every visible window.
+- **FIX (Variables rendered as their repr).** A `StringVar` passed as `text=`, or a
+  `textvariable=`, reached the page as `<frontend.ui_variables.StringVar object at 0x…>`.
+  It now resolves to the value. (It does not yet *track* changes — a real remaining gap.)
+- **FIX (per-widget IPC).** Queued JS is sent in batches of 100 rather than one
+  `evaluate_js` per statement; the first sort page queued 408, i.e. 408 synchronous round
+  trips before it could paint. Each statement keeps its own try/catch in the page so one
+  failure can't take its batch down.
+- **FIX (backend selection had two deciders).** `main.py` read `AZT_UI_BACKEND` itself
+  while `frontend/__init__` read it separately; that agreed only while neither could
+  refuse. Now `utilities/ui_backend.py` decides once — and it *can* refuse, checking for
+  pywebview **and** a GTK/Qt host on Linux, falling back to tkinter with the reason on
+  both the log and stderr. Previously `AZT_UI_BACKEND=webview` without a host toolkit
+  started the app with a backend that could never open a window, and with no watchdog
+  running to notice.
+- **NEW: `--webview` / `--tkinter` and `--engine=gtk|qt`.** The env var was the only way
+  in; the engine flag matters because Qt segfaults on this stack while GTK is solid
+  (upstream: pywebview 6.2.1 + Qt 6.11.0 — a refcount dealloc of pywebview's own Qt window
+  wrapper inside a `loadFinished` slot; `tests/manual/webview_multiwindow/` holds the
+  reproduction attempts). `webview.start(debug=…)` is now gated on `program.testing`
+  rather than unconditionally opening a devtools port.
+
+Known and deliberate: a debug badge naming each window is drawn in the corner of every
+webview page, kiosk/fullscreen is off unless `AZT_WEBVIEW_KIOSK=1`, and hidden windows are
+never freed (a leak, preferred over the QtWebEngine crash). `AZT_WEBVIEW_NO_SPLASH=1`
+suppresses the splash.
+
+**NEW `tests/manual/tone_feature_check/`** — the tone-rendering gate, and it **passed on
+both engines**: adjacent tone letters join into contours with no feature at all,
+`"cv92" 1` hides the staves and `"cv92" 0` restores them, `"cv91" 1` gives tone numbers,
+and a `-tstv` build loaded from disk renders staveless. `render_pil_baseline.py` reports
+every font file on the machine with its name records, Graphite/OpenType tables and
+cv90/91/92 — which found two files both claiming the family "Charis SIL" with different
+capabilities, and that the tuned builds carry their own family names (`Charis SIL tstv`),
+so they can be asked for by name rather than only opened by path.
+
 # Version 1.15.17
 
 **The webview question is answered on paper, and the first thing that could sink it is now a

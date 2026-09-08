@@ -1,29 +1,25 @@
 # coding=UTF-8
-"""Frontend package — selects ui backend based on settings or environment.
+"""Frontend package — resolves `ui` to the selected backend.
 
 Usage by consumer modules:
     from frontend import ui
 
-This gives either ui_tkinter or ui_webview depending on configuration.
-To force a backend, set the environment variable AZT_UI_BACKEND to
-'tkinter' or 'webview' before importing.
+Which backend that is comes from `utilities.ui_backend.chosen()`, which is
+the ONE place the question is decided — set AZT_UI_BACKEND=webview, or pass
+--webview / --tkinter on the command line.
+
+The selector deliberately lives outside this package: main.py needs the
+answer before it may import `frontend` (importing anything from here runs
+this file, which imports a backend), and two independent readers of the
+environment disagreed as soon as one of them gained the power to refuse.
+See utilities/ui_backend.py.
 """
-import os
+from utilities import ui_backend as _select
 
-def _get_backend():
-    """Determine which UI backend to use."""
-    # Environment variable takes priority
-    env = os.environ.get('AZT_UI_BACKEND', '').lower()
-    if env == 'webview':
-        return 'webview'
-    if env == 'tkinter':
-        return 'tkinter'
-    # Default to tkinter (stable)
-    return 'tkinter'
+backend_requested = _select.requested()
+backend = _select.chosen()
 
-_backend = _get_backend()
-
-if _backend == 'webview':
+if backend == 'webview':
     from frontend import ui_webview as ui
 else:
     from frontend import ui_tkinter as ui

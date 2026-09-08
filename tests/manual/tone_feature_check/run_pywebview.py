@@ -82,16 +82,22 @@ def font_dirs():
     return [d for d in dirs if os.path.isdir(d)]
 
 
-def find_tstv():
-    """First '*tstv*' font file on this machine, or None. The tstv builds are
-    what utilities/fonts.py puts FIRST for every family, so this is the file
-    the app itself would draw with."""
+def find_tstv(prefer='charis'):
+    """Every '*tstv*' font file on this machine, best first. The tstv builds
+    are what utilities/fonts.py puts FIRST for every family, so these are the
+    files the app itself would draw with.
+
+    Sorting matters more than it looks: taking the plain first hit picked
+    `Andika-tstv-R.ttf` on the dev box while the matrix was showing Charis SIL,
+    which compares a tstv build of one family against a stock build of
+    another. Files whose name contains *prefer* come first."""
+    found = []
     for d in font_dirs():
-        hits = sorted(glob.glob(os.path.join(glob.escape(d), '**', '*tstv*.tt*'),
-                                recursive=True))
-        if hits:
-            return hits[0]
-    return None
+        found += glob.glob(os.path.join(glob.escape(d), '**', '*tstv*.tt*'),
+                           recursive=True)
+    found = sorted(set(found))
+    want = prefer.lower()
+    return (sorted(found, key=lambda p: want not in os.path.basename(p).lower()))
 
 
 def inject_font(window, path):
@@ -149,12 +155,27 @@ def main():
         sys.stderr.write("Cannot find {}\n".format(PAGE))
         return 1
 
-    fontpath = sys.argv[1] if len(sys.argv) > 1 else find_tstv()
+    if len(sys.argv) > 1:
+        fontpath, others = sys.argv[1], []
+    else:
+        candidates = find_tstv()
+        fontpath = candidates[0] if candidates else None
+        others = candidates[1:]
     if fontpath and not os.path.exists(fontpath):
         sys.stderr.write("No such font file: {}\n".format(fontpath))
         return 1
     if fontpath:
-        print("Found a staveless build: {}".format(fontpath))
+        print("Loading staveless build: {}".format(fontpath))
+        if others:
+            # Which tstv builds a machine carries is the open question in
+            # agenda/tstv_font_availability.md, so print all of them.
+            print("Other tstv files on this machine (pass one as an argument "
+                  "to use it instead):")
+            for p in others:
+                print("    {}".format(p))
+        print("NOTE: compare like with like - if the matrix is showing Charis "
+              "SIL,\n      a tstv build of a DIFFERENT family is not the "
+              "comparison you want.")
     else:
         print("No '*tstv*' font file on this machine - so the page's dropped-font\n"
               "column will stay empty unless you pick a file by hand. That is\n"

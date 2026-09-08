@@ -56,8 +56,34 @@ function _applyGrid(el, opts) {
 
 function createWidget(spec) {
     // spec: {wid, type, parent_wid, props, grid}
+    //
+    // A WINDOW IS NOT A DOM WIDGET. Toplevel/Root create a pywebview window,
+    // never a DOM element, so they are absent from _widgets — and every
+    // widget parented directly to a task window therefore resolved
+    // parent_wid to `undefined`, hit `if (parentEl)` and was SILENTLY NEVER
+    // APPENDED. Its children inherited the same fate, so an entire page
+    // vanished with no error, an empty console and a blank window. (The
+    // debug badge stayed visible because it appends to <body> itself, which
+    // is what made the pages look like a visibility problem rather than a
+    // parenting one.)
+    //
+    // In a window the window IS the page, so an unresolved parent means the
+    // page root. Warn rather than fail quietly: a parent that is missing for
+    // any OTHER reason is a real bug and must not look like this again.
     let el;
-    const parentEl = spec.parent_wid != null ? _widgets.get(spec.parent_wid) : document.getElementById('root');
+    let parentEl = spec.parent_wid != null
+        ? _widgets.get(spec.parent_wid) : document.getElementById('root');
+    if (!parentEl) {
+        parentEl = document.getElementById('root');
+        // Only a WIDGET parent that cannot be found is a fault. Parented to a
+        // window is normal and must stay quiet, or the console fills with
+        // warnings about the expected case and real ones get lost in them.
+        if (!spec.parent_is_window) {
+            console.warn('azt: widget', spec.wid, '(' + spec.type + ') has no'
+                         + ' DOM parent for wid', spec.parent_wid,
+                         '- attaching to #root');
+        }
+    }
 
     switch (spec.type) {
         case 'frame':
@@ -69,12 +95,14 @@ function createWidget(spec) {
             el.className = 'wv-widget wv-label';
             if (spec.props.text) el.textContent = spec.props.text;
             if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound);
             break;
         case 'button':
             el = document.createElement('button');
             el.className = 'wv-widget wv-button';
             if (spec.props.text) el.textContent = spec.props.text;
             if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound);
             if (spec.props.disabled) el.disabled = true;
             el.addEventListener('click', () => {
                 if (window.pywebview && window.pywebview.api) {
@@ -164,6 +192,22 @@ function createWidget(spec) {
             el.className = 'wv-widget wv-menu wv-hidden';
             break;
         }
+        case 'notebook': {
+            // Tab strip above, one panel showing at a time below. Explicit
+            // display so the generic "make the parent a grid" below leaves it
+            // alone - a notebook is not a grid container, its PANELS are.
+            el = document.createElement('div');
+            el.className = 'wv-widget wv-notebook';
+            el.style.display = 'flex';
+            el.style.flexDirection = 'column';
+            const strip = document.createElement('div');
+            strip.className = 'wv-tabstrip';
+            const panels = document.createElement('div');
+            panels.className = 'wv-tabpanels';
+            el.appendChild(strip);
+            el.appendChild(panels);
+            break;
+        }
         default:
             el = document.createElement('div');
             el.className = 'wv-widget';
@@ -185,6 +229,137 @@ function createWidget(spec) {
     }
 
     return spec.wid;
+}
+
+// ── Images on labels and buttons ─────────────────────────────────────
+// Both used to DISCARD `image` (ui_webview popped it and never sent it), so
+// the chooser rendered as text-only buttons where the app shows icons.
+// `compound` mirrors tkinter's: where the image sits relative to the text.
+function _setImage(el, src, compound) {
+    const img = document.createElement('img');
+    img.className = 'wv-img';
+    img.src = src;
+    img.alt = '';
+    const text = el.textContent;
+    el.textContent = '';
+    el.classList.add('wv-compound', 'wv-compound-' + (compound || 'top'));
+    if (text) {
+        const span = document.createElement('span');
+        span.className = 'wv-img-text';
+        span.textContent = text;
+        // 'left'/'top' describe where the IMAGE goes, as in tkinter.
+        if (compound === 'right' || compound === 'bottom') {
+            el.appendChild(span);
+            el.appendChild(img);
+        } else {
+            el.appendChild(img);
+            el.appendChild(span);
+        }
+    } else {
+        el.appendChild(img);
+    }
+}
+
+// ── Notebook ─────────────────────────────────────────────────────────
+// add/select/bind were three bare `pass` stubs, which is what made the
+// chooser unreachable: its three tab frames were created, never attached,
+// and never shown.
+function _notebookParts(wid) {
+    const el = _widgets.get(wid);
+    if (!el) return null;
+    return {el: el,
+            strip: el.querySelector(':scope > .wv-tabstrip'),
+            panels: el.querySelector(':scope > .wv-tabpanels')};
+}
+
+function notebookAdd(wid, childWid, text) {
+    const p = _notebookParts(wid);
+    const child = _widgets.get(childWid);
+    if (!p || !child) return;
+    // createWidget already appended the child to the notebook itself; a tab
+    // panel belongs in the panels box, so move it.
+    p.panels.appendChild(child);
+    child.classList.add('wv-tabpanel');
+
+    const tab = document.createElement('div');
+    tab.className = 'wv-tab';
+    tab.textContent = text || '';
+    tab.dataset.panelWid = childWid;
+    tab.addEventListener('click', () => notebookSelect(wid, childWid, true));
+    p.strip.appendChild(tab);
+
+    // First tab added is the selected one, as ttk does.
+    if (p.strip.children.length === 1) notebookSelect(wid, childWid, false);
+}
+
+function notebookSelect(wid, childWid, notify) {
+    const p = _notebookParts(wid);
+    if (!p) return;
+    let index = -1, i = 0;
+    for (const tab of p.strip.children) {
+        const on = String(tab.dataset.panelWid) === String(childWid);
+        tab.classList.toggle('wv-tab-selected', on);
+        const panel = _widgets.get(Number(tab.dataset.panelWid));
+        if (panel) panel.classList.toggle('wv-hidden', !on);
+        if (on) index = i;
+        i += 1;
+    }
+    if (notify && window.pywebview && window.pywebview.api) {
+        window.pywebview.api.on_event(wid, 'tabchanged',
+                                      {index: index, panel_wid: childWid});
+    }
+}
+
+// ── ToolTip ──────────────────────────────────────────────────────────
+// The CSS class existed and nothing ever created one. ~38 call sites.
+function setTooltip(wid, text) {
+    const el = _widgets.get(wid);
+    if (!el) return;
+    if (!text) { delete el.dataset.tooltip; return; }
+    el.dataset.tooltip = text;
+    if (el._wvTipBound) return;
+    el._wvTipBound = true;
+    let tip = null;
+    const show = (ev) => {
+        if (tip || !el.dataset.tooltip) return;
+        tip = document.createElement('div');
+        tip.className = 'wv-tooltip';
+        tip.textContent = el.dataset.tooltip;
+        document.body.appendChild(tip);
+        const r = el.getBoundingClientRect();
+        tip.style.left = Math.round(r.left) + 'px';
+        tip.style.top = Math.round(r.bottom + 4) + 'px';
+    };
+    const hide = () => { if (tip) { tip.remove(); tip = null; } };
+    el.addEventListener('mouseenter', show);
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('click', hide);
+}
+
+// ── Style ────────────────────────────────────────────────────────────
+// ttk's Style is a name->options table consulted by widgets; CSS is a
+// name->options table consulted by elements. So a ttk style name maps to a
+// selector and the options to declarations, written into one stylesheet
+// that later calls can overwrite by rule name.
+const _styleSheet = (() => {
+    const s = document.createElement('style');
+    s.id = 'wv-ttk-styles';
+    document.head.appendChild(s);
+    return s;
+})();
+const _styleRules = new Map();   // selector -> {prop: value}
+
+function setStyleRule(selector, decls) {
+    const cur = _styleRules.get(selector) || {};
+    Object.assign(cur, decls);
+    _styleRules.set(selector, cur);
+    let css = '';
+    for (const [sel, d] of _styleRules) {
+        const body = Object.entries(d)
+            .map(([k, v]) => `${k}: ${v};`).join(' ');
+        if (body) css += `${sel} { ${body} }\n`;
+    }
+    _styleSheet.textContent = css;
 }
 
 function updateProp(wid, prop, value) {
