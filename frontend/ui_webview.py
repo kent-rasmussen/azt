@@ -1911,10 +1911,23 @@ class ListBox(_WebviewWidget):
         if self._raw_command:
             self._command(type('Event', (), dict(data))())
             return
-        # Same contract as the tkinter ListBox and as ButtonFrame's buttons:
-        # the callback gets the CHOICE, not the label the user happened to see.
-        if 0 <= idx < len(self.choices):
-            self._command(self.choices[idx], window=self._window)
+        if not 0 <= idx < len(self.choices):
+            return
+        code = self.choices[idx]
+        # EXACTLY ui_tkinter.ListBox._on_select's contract (:3264): the
+        # callback gets the CHOICE, and `window=` is passed ONLY when a window
+        # was given. That conditional is load-bearing — `ui_shell.py:3892`'s
+        # `on_select(event=None)` takes one positional and no window, and
+        # reads curselection() itself, so passing window= unconditionally
+        # (as this did for about ten minutes) raises TypeError there.
+        # `self._selection` is set above, before the callback, because that
+        # call site depends on curselection() already being current.
+        if self._window is not None:
+            self._command(code, window=self._window)
+        else:
+            log.info("ListBox {}: running command with code={!r}"
+                     "".format(self._wid, code))
+            self._command(code)
 
     def choice(self, index):
         """The value behind a row, as opposed to get()'s display text."""
@@ -2651,7 +2664,20 @@ class Toplevel(_WebviewWidget):
         self.takekioskscreen(event)
 
     def releasefullscreen(self, event=None):
+        """Leave fullscreen — and then fit the window to its content.
+
+        Without the refit the window snaps back to the size it was CREATED
+        at (800x600) while holding a page laid out for the whole screen, so
+        it clips on the right and bottom. fit_to_content() runs once at page
+        load and is skipped while fullscreen, so leaving fullscreen is the
+        only other moment its answer changes.
+
+        Deferred rather than immediate: the toggle has to reach the window
+        manager before the window's own dimensions mean anything, and
+        fit_to_content compares against them."""
         self._set_fullscreen(False)
+        if hasattr(self, 'fit_to_content'):
+            self.after(250, self.fit_to_content)
 
     # ── Global bindings ───────────────────────────────────────────────
     # tkinter's bind_all/unbind_all reach every widget in the interpreter;
@@ -3091,7 +3117,20 @@ class Root(_WebviewWidget):
         self.takekioskscreen(event)
 
     def releasefullscreen(self, event=None):
+        """Leave fullscreen — and then fit the window to its content.
+
+        Without the refit the window snaps back to the size it was CREATED
+        at (800x600) while holding a page laid out for the whole screen, so
+        it clips on the right and bottom. fit_to_content() runs once at page
+        load and is skipped while fullscreen, so leaving fullscreen is the
+        only other moment its answer changes.
+
+        Deferred rather than immediate: the toggle has to reach the window
+        manager before the window's own dimensions mean anything, and
+        fit_to_content compares against them."""
         self._set_fullscreen(False)
+        if hasattr(self, 'fit_to_content'):
+            self.after(250, self.fit_to_content)
 
     def bind_all(self, event, handler, add=None):
         return self.bind(event, handler, add=add)

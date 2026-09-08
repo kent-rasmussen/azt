@@ -462,9 +462,27 @@ function destroyWidget(wid) {
     }
 }
 
+// tkinter names a specific key; the DOM gives you keydown plus a `key` value.
+// Without this, `<Escape>` fell through as a literal event name that can never
+// fire — which is why nothing released kiosk mode.
+const _keyNames = {
+    '<Escape>': 'Escape', '<Return>': 'Enter', '<KP_Enter>': 'Enter',
+    '<Tab>': 'Tab', '<space>': ' ', '<BackSpace>': 'Backspace',
+    '<Delete>': 'Delete', '<Home>': 'Home', '<End>': 'End',
+    '<Prior>': 'PageUp', '<Next>': 'PageDown',
+    '<Up>': 'ArrowUp', '<Down>': 'ArrowDown',
+    '<Left>': 'ArrowLeft', '<Right>': 'ArrowRight',
+    '<F11>': 'F11',
+};
+
 function bindEvent(wid, eventName) {
-    const el = _widgets.get(wid);
-    if (!el) return;
+    // A WINDOW IS NOT A DOM WIDGET, so a binding made on a window found no
+    // element and was silently dropped — `takekioskscreen()` binds Escape and
+    // double-click on the WINDOW to leave fullscreen, so kiosk mode had no
+    // exit at all. Window-level bindings belong on the document: in a window,
+    // the window is the page, and events from any widget bubble up to it,
+    // which is also how tkinter's window-level binds behave.
+    const el = _widgets.get(wid) || document;
 
     // Map tkinter event names to DOM events
     const eventMap = {
@@ -481,8 +499,10 @@ function bindEvent(wid, eventName) {
         '<Motion>': 'mousemove',
     };
 
-    const domEvent = eventMap[eventName] || eventName;
+    const wantedKey = _keyNames[eventName];
+    const domEvent = wantedKey ? 'keydown' : (eventMap[eventName] || eventName);
     el.addEventListener(domEvent, (e) => {
+        if (wantedKey && e.key !== wantedKey) return;
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, eventName, {
                 x: e.clientX, y: e.clientY,

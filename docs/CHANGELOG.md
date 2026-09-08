@@ -129,6 +129,35 @@ through settings to a task. What that took:
   file passed to `webview.start`); tkinter gets these from `Tk(className='azt')` and an
   explicit `iconphoto`, and webview set neither, so the dock showed "python3".
 
+And the task pages, which needed four more fixes of the same family — a lookup that can
+legitimately fail, answered with silence:
+
+- **FIX (window-level bindings were all silently dropped).** `bindEvent` looked the target
+  up in the JS widget registry and gave up if absent — and a window is not a DOM widget.
+  So EVERY binding made on a window did nothing, including the Escape and double-click
+  that leave kiosk mode: a fullscreen undecorated task window had **no exit**. Window
+  bindings now attach to the document, where child events bubble to, as tkinter's
+  window-level binds behave.
+- **FIX (named keys never fired).** `<Escape>`, `<Return>`, `<Tab>`, the arrows, `<space>`,
+  `<Delete>`, `<F11>` were passed to `addEventListener` as literal strings, which can
+  never fire. They now map to `keydown` with a key filter, so any tkinter code binding a
+  named key works.
+- **FIX (kiosk and fit-to-content fought each other).** A task window went fullscreen and
+  was then resized to its content, leaving it undecorated, not filling the screen and not
+  resizable. Fullscreen now wins; leaving fullscreen refits the window, so Escape returns
+  a window sized to its page.
+- **FIX (content was clipped instead of scrollable).** `body { overflow: hidden }` threw
+  away anything past the window edge — a `next` button and the last profile row of a sort
+  board, reachable only by dragging the window bigger. A wrong window size is a bug;
+  unreachable content is a trap, and they should not be the same failure.
+- **FIX (`ListBox` showed values instead of labels).** Options arrive as strings, ints,
+  dicts with `code`/`name`, or 2/3/4-tuples; they are now normalised through
+  `regularize_choice` into parallel value and display lists, so the interface-language
+  list reads `Spanish` rather than `{'code': 'es', 'name': 'Spanish'}`. Selection fires
+  `command(code)` — with `window=` **only** when a window was given, matching
+  `ui_tkinter.ListBox._on_select` exactly, because several call sites take one positional
+  and read `curselection()` themselves.
+
 **Engine selection is now decided here rather than inherited.** Unspecified means GTK if
 its host is importable, else Qt (Linux), and `edgechromium` on Windows — because
 pywebview's own order depends on what is installed, so the same command could run a

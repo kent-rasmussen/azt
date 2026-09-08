@@ -84,7 +84,15 @@ body {
     font-family: var(--font-reading);
     font-size: calc(18px * var(--scale));
     color: #000;
-    overflow: hidden;
+    /* SCROLL, NEVER CLIP. `overflow: hidden` here meant that any window
+       smaller than its content threw the remainder away: after leaving kiosk
+       mode the sort board lost its `next` button off the right edge and its
+       last profile row off the bottom, with no way to reach either.
+       A window being the wrong size is a bug to fix; content being
+       UNREACHABLE is a trap, and the two should not be the same failure.
+       This is also the browser doing for free what `ScrollingFrame`'s 411
+       lines exist to do under Tk. */
+    overflow: auto;
 }
 
 /* Font classes matching theme.fonts keys.
