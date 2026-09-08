@@ -94,6 +94,61 @@ webview page, kiosk/fullscreen is off unless `AZT_WEBVIEW_KIOSK=1`, and hidden w
 never freed (a leak, preferred over the QtWebEngine crash). `AZT_WEBVIEW_NO_SPLASH=1`
 suppresses the splash.
 
+Then the same day, the pages that follow: the **splash**, the **LIFT chooser** (on
+**both** Linux engines) and a **sort board** render, and boot walks from the LIFT chooser
+through settings to a task. What that took:
+
+- **FIX (windows sized themselves wrongly).** `fit_to_content` measured `scrollWidth` of
+  a box that fills the window — which reports the WINDOW's size, so it could only ever
+  say "grow". It now measures the union of the children's bounding boxes, the real
+  content extent, and **shrinks as well as grows** (clamped by a minimum and by the
+  display, ignoring sub-8px differences). That surplus theme-coloured space below a short
+  page was this.
+- **FIX (headings wrapped with the window half empty).** A page's outermost grid columns
+  are implicit, so they defaulted to sharing the available width; tkinter widens a column
+  to its widest child. Top-level columns now size to `max-content`, with a 60em cap so no
+  single string can demand a column wider than the display.
+- **FIX (pictures clipped at the window edge).** `max-width: 100%` cannot help when the
+  percentage is of a column sized to the image; images are now capped in viewport units
+  with `object-fit: contain`, so a page looks right in whatever window it is given rather
+  than depending on a resize.
+- **FIX (`wait_window` deadlocked boot).** It ignored its argument and waited on an event
+  only `on_quit` set, so the LIFT chooser — retired by `destroy()` — never released it.
+  There is now a waiter registry keyed by widget id, on the base widget class where
+  tkinter puts it, so both idioms work: waiting on a window, and the ~30 sites that wait
+  on a **canary widget** because that widget's destruction is the signal.
+- **FIX (`waiting()`/`wait()`/`waitdone()` on task windows)** — they existed only on the
+  root, and the chooser calls them; plus **`cget`**, missing entirely.
+- **FIX (list options showed object reprs).** `ListBox` JSON-encoded raw items, so
+  language options arrived as `<... object at 0x...>`. tkinter renders these correctly, so
+  this was a port defect.
+- **The splash is centred** and its prose measured for reading, scoped by a new
+  `data-page` attribute so each window can be styled for what it is — a title card and a
+  dense board want opposite treatment.
+- **The dock icon and application identity** are set (`GLib.set_prgname`, plus the icon
+  file passed to `webview.start`); tkinter gets these from `Tk(className='azt')` and an
+  explicit `iconphoto`, and webview set neither, so the dock showed "python3".
+
+**Engine selection is now decided here rather than inherited.** Unspecified means GTK if
+its host is importable, else Qt (Linux), and `edgechromium` on Windows — because
+pywebview's own order depends on what is installed, so the same command could run a
+different engine on a different machine, and the engines are **not** equivalent. A named
+engine that cannot run is **reported and then substituted**, never silently swapped and
+never grounds for dropping all the way to tkinter; the engine actually in use is logged
+from its own userAgent on every run. MSHTML is called out by name, since it has no CSS
+Grid and would render these pages as rubbish rather than failing.
+
+**Switches, not environment variables** (`--no-splash`, `--no-kiosk`, `--webview-hidden`,
+`--engine=`), and **`--user`** runs a dev checkout as a user sees it: no devtools, no
+debug badge, no test lift, no auto-opened task. Kiosk (fullscreen task windows) is **on**
+by default, as under tkinter — it is the intended behaviour, not an accident of a stub.
+
+**NEW `tests/manual/webview_multiwindow/`** — `platform_probe.py` walks every window
+primitive the port needs and draws a PASS/FAIL table **in the page**, so a machine that
+cannot paste text still reports by photograph. It found the one hard engine difference: a
+window created hidden **never appears on GTK** and **does appear on Qt**. Nothing is
+identified by colour.
+
 **NEW `tests/manual/tone_feature_check/`** — the tone-rendering gate, and it **passed on
 both engines**: adjacent tone letters join into contours with no feature at all,
 `"cv92" 1` hides the staves and `"cv92" 0` restores them, `"cv91" 1` gives tone numbers,

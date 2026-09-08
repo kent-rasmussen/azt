@@ -151,6 +151,46 @@
     white-space: nowrap;
 }
 
+/* TOP-LEVEL COLUMNS SIZE TO THEIR CONTENT, like tkinter's grid.
+   A page's outermost columns are created implicitly (widgets.js sets
+   display:grid; nothing declares grid-template-columns), so they defaulted to
+   `auto` — which shares out the available width and made a heading wrap with
+   half the window empty beside it ("What do you want to / work on?" next to a
+   picture). tkinter widens a column to its widest child instead, which is why
+   the same page does not wrap there.
+
+   Scoped to #root ON PURPOSE, not to every .wv-frame: nested frames are where
+   the sort board's alignment problem lives, and changing their sizing while
+   that is unresolved would tangle two issues. The max-width is the safety
+   valve — without it one long unbroken string could demand a column wider
+   than the display. */
+#root {
+    grid-auto-columns: max-content;
+}
+#root > .wv-label,
+#root > .wv-frame > .wv-label {
+    max-width: 60em;
+}
+
+/* AN IMAGE MUST NEVER DEMAND MORE WIDTH THAN THE WINDOW HAS.
+   `max-content` columns size to their widest child, so a large picture makes
+   its column as wide as the picture — and if the window is not resized to
+   match, the picture is CLIPPED at the window edge (seen under Qt, which
+   appears to ignore resize()). `max-width: 100%` does not help: the
+   percentage is of the column, and the column is as wide as the image.
+   Viewport units are the constraint that actually binds, so the image can
+   shrink instead of overflowing.
+
+   THE POINT IS NOT TO DEPEND ON resize(): the page should look right in
+   whatever window it is given. Growing the window to fit is then an
+   improvement rather than a requirement — which matters because resize
+   support varies by backend and we have three. */
+#root .wv-img {
+    max-width: 45vw;
+    max-height: 60vh;
+    object-fit: contain;
+}
+
 /* Notebook — tab strip above, one panel at a time below.
    The tab strip wraps rather than clipping: the chooser's three tab labels
    are translated, so their width is not knowable in advance. */
@@ -230,13 +270,25 @@
 
    Scoped by data-page so nothing else is affected: a sort board wants the
    opposite treatment. */
-body[data-page="splash"] #root {
+body[data-page="splash"] #root,
+body[data-page="splash"] .wv-frame {
     justify-items: center;
     align-content: center;
     text-align: center;
+}
+body[data-page="splash"] #root {
     padding: var(--pady) var(--padx);
 }
-body[data-page="splash"] #root > * {
+/* TWO REASONS the first attempt centred only the title:
+   1. the splash's parts sit inside frames (outsideframe > frame), so
+      `#root > *` never reached them — hence `.wv-frame` above and below;
+   2. tkinter's `sticky` is translated to an INLINE `justify-self`, and an
+      inline style beats a container's `justify-items`. So any widget with a
+      sticky kept hugging its own edge, and `text-align: center` inside a
+      left-hugging box does nothing you can see. It has to be overridden. */
+body[data-page="splash"] #root > *,
+body[data-page="splash"] .wv-frame > * {
+    justify-self: center !important;
     margin-left: auto !important;
     margin-right: auto !important;
 }

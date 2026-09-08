@@ -57,6 +57,58 @@ def _venv_sees_system_site():
     return False
 
 
+# Which host module each engine needs, for the LINUX engines only. Duplicated
+# rather than imported from frontend.ui_webview on purpose: importing anything
+# from `frontend` runs its __init__, which imports a backend — the very thing
+# this module exists to decide. Keep in step with ui_webview.ENGINES.
+_ENGINE_HOSTS = {'gtk': 'gi', 'qt': 'qtpy'}
+_KNOWN_ENGINES = ('gtk', 'qt', 'cef', 'edgechromium', 'mshtml')
+
+
+def requested_engine():
+    """The engine named on the command line or in PYWEBVIEW_GUI, or None.
+
+    Mirrors frontend.ui_webview._engine's first two steps. Only the EXPLICIT
+    request is of interest here — a default we pick ourselves is chosen from
+    what is installed, so it cannot be missing."""
+    for arg in sys.argv:
+        if arg.startswith('--engine='):
+            return arg.split('=', 1)[1].strip().lower() or None
+    return (os.environ.get('PYWEBVIEW_GUI') or '').strip().lower() or None
+
+
+def engine_problem():
+    """Why the EXPLICITLY REQUESTED engine cannot run, or None.
+
+    Two gaps this closes, both found by Kent asking whether case 1 had a
+    fallback (2026-09-08). It did not:
+
+    1. `--engine=` was passed to pywebview unvalidated, so a typo
+       (`--engine=gkt`) went straight through and failed obscurely.
+    2. Nothing checked that the requested engine's host was installed —
+       `webview_problem()` asks only whether EITHER host is importable, so
+       `--engine=qt` on a GTK-only machine passed the backend check and then
+       raised inside webview.start().
+
+    This function only NAMES the problem. What to do about it belongs to the
+    caller: `frontend.ui_webview._engine()` reports it and then substitutes
+    the platform default, because asking for Qt and silently getting GTK
+    would make the measured engine differences impossible to reason about,
+    while refusing outright would drop to tkinter over a missing engine —
+    a much larger substitution than the other engine."""
+    engine = requested_engine()
+    if not engine:
+        return None
+    if engine not in _KNOWN_ENGINES:
+        return ("unknown webview engine {!r} (known: {})"
+                "".format(engine, ', '.join(_KNOWN_ENGINES)))
+    host = _ENGINE_HOSTS.get(engine)
+    if host and platform.system() == 'Linux' and not _importable(host):
+        return ("webview engine {!r} was requested but its host module {!r} "
+                "is not importable in {}".format(engine, host, sys.executable))
+    return None
+
+
 def webview_problem():
     """Why the webview backend cannot run in THIS interpreter, or None.
 
@@ -81,6 +133,12 @@ def webview_problem():
     if not _importable('webview'):
         return "pywebview is not installed in {} — pip install pywebview" \
                "".format(where)
+    # A MISSING *ENGINE* IS NOT A MISSING BACKEND. If `--engine=qt` cannot
+    # run but GTK can, dropping all the way to tkinter would be a far larger
+    # substitution than using the other engine — so that case is handled in
+    # frontend.ui_webview._engine(), which REPORTS the problem and then
+    # substitutes (Kent, 2026-09-08: "we could report then substitute").
+    # Only "no host at all" blocks the backend, below.
     if platform.system() != 'Linux':
         return None
     if _importable('gi') or _importable('qtpy'):

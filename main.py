@@ -727,15 +727,15 @@ class App:
         #
         # It was briefly suppressed under webview (2026-09-07) while nothing
         # rendered at all and an empty themed splash was being mistaken for a
-        # broken chooser. AZT_WEBVIEW_NO_SPLASH=1 still does that, for when
-        # it is in the way of testing something else.
+        # broken chooser. `--no-splash` still does that, for when it is in
+        # the way of testing something else.
         #
         # _NoSplash is a null object rather than a guard at each call site:
         # `splash` is touched in ~15 places across main.py,
         # tasks/chooser.py and frontend/ui_shell.py (draw, progress,
         # withdraw, destroy, maketexts, exitFlag, winfo_exists), and every
         # one would need the same condition.
-        self.splash = (_NoSplash() if os.environ.get('AZT_WEBVIEW_NO_SPLASH')
+        self.splash = (_NoSplash() if '--no-splash' in sys.argv
                        else Splash(self))
         self.splash.draw()
         FileParser(self) #needs self.filename, pick up self.analang from settings or file
@@ -1630,7 +1630,15 @@ class App:
             setattr(self,k,v)
         self.default_task='WordCollectnParse'
         self.loglevel=logsetup.loglevel_default #'INFO'
-        if self.aztdir.parent.stem == 'AZT': 
+        # `--user` runs the dev checkout AS A USER WOULD: no dev settings, no
+        # remembered test lift, no auto-opened task, error screens and log
+        # zipping back on. The dev branch is chosen by WHERE the code lives
+        # (parent dir 'AZT'), which is right for everyday work but leaves no
+        # way to see what a user sees without moving the checkout — and the
+        # two paths differ in ways that matter (`testing` gates the webview
+        # devtools panel and the debug window badge, `me` gates the help
+        # line, `production` picks the default theme).
+        if self.aztdir.parent.stem == 'AZT' and '--user' not in sys.argv:
             log.info("Running with dev settings")
             self.testing=True #eliminates Error screens and zipped logs and repo commits
             # self.production=True #True for making screenshots (default theme)

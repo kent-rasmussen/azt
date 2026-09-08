@@ -43,6 +43,14 @@
                     'DejaVu Sans', sans-serif;
 }
 
+/* ── Colour is decoration, never information ────────────────────────────
+   Kent is colourblind (standing rule, 2026-09-08), so nothing in this app's
+   UI may depend on colour to be understood: a state must be named, not
+   tinted. When adding a rule that colours something to mean something —
+   error, selected, done, at-risk — give it a label, icon or position that
+   carries the same meaning without it. --highlight below is an accent, not
+   a message. */
+
 /* ── Tone rendering ─────────────────────────────────────────────────────
    The capability the Tk backend structurally CANNOT have. Tk asks for fonts
    by FAMILY NAME and can never select a particular file, which is the whole

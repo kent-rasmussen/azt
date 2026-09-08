@@ -20,6 +20,22 @@ python main.py
 # toolkit visible to this venv; it refuses and falls back with a reason if not.
 python main.py --webview
 python main.py --tkinter
+python main.py --webview --engine=gtk    # or --engine=qt (Linux engine choice)
+
+# Run the dev checkout AS A USER WOULD: no dev settings, so error screens and
+# log zipping are on, no test lift or auto-opened task, and (under webview) no
+# devtools panel and no debug window badge. Dev settings are otherwise chosen
+# by the checkout's location (parent dir 'AZT'), with no other way to opt out.
+python main.py --user
+
+# Other webview switches (SWITCHES, not env vars — standing rule 2026-09-08):
+python main.py --webview --no-splash        # skip the splash (it can be in the way)
+python main.py --webview --no-kiosk        # DON'T make task windows fullscreen. Kiosk is
+                                           # the intended default (task windows fill the
+                                           # screen so users aren't distracted); this is
+                                           # for debugging layout.
+python main.py --webview --webview-hidden  # re-test creating windows hidden (known broken
+                                           # on GTK: show() never maps them)
 
 # Install dependencies (CPU-only torch)
 pip install -r requirements.txt

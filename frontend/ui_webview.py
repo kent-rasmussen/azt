@@ -11,9 +11,11 @@ Phase 3: Theme (reads same theme dicts as tkinter), Image (PIL + base64),
 Remaining widgets are stubs that log and no-op until Phase 4.
 """
 import base64
+import importlib.util
 import io
 import json
 import os
+import platform
 import sys
 import threading
 import unicodedata
@@ -134,15 +136,99 @@ _api = _JsonApi()
 ENGINES = ('gtk', 'qt', 'cef', 'edgechromium', 'mshtml')
 
 
+def _switch(name):
+    """Is a command-line switch present?
+
+    SWITCHES, NOT ENVIRONMENT VARIABLES (Kent, standing rule 2026-09-08).
+    Everything this module can be told to do differently is told on the
+    command line: a switch is visible in the process list, appears in the
+    "Called with arguments" log line at startup, can be typed into the dev
+    console's switches box, and does not persist invisibly into the next run
+    the way an exported variable does."""
+    return name in sys.argv
+
+
+def _default_engine():
+    """The engine to use when nobody said — CHOSEN BY US, not by pywebview.
+
+    Kent's rule, 2026-09-08: *"gtk if --webview only, if gtk installed. else
+    qt (if installed), else die."*
+
+    WHY IT MATTERS THAT WE CHOOSE: pywebview's own preference order is an
+    implementation detail of whatever is installed, so the same build and the
+    same command line can run a DIFFERENT engine on a different machine — and
+    the engines are not equivalent (created-hidden works on Qt and not GTK;
+    the Qt backend has a garbage-collection crash GTK does not). Deciding
+    here makes the common case identical everywhere and puts the decision
+    somewhere a reader can find it.
+
+    GTK first because it is the engine A-Z+T is known to work on. Qt second
+    because it renders correctly but still has that crash. "Else die" is
+    already handled upstream and better: `utilities.ui_backend` refuses the
+    webview backend when neither host is importable, and falls back to
+    tkinter with the reason on the log and on stderr — a refusal that names
+    itself, rather than an exit."""
+    if platform.system() == 'Windows':
+        # Named explicitly so a missing WebView2 runtime fails loudly instead
+        # of silently dropping to mshtml, which has no CSS Grid.
+        return 'edgechromium'
+    if platform.system() != 'Linux':
+        return None                     # macOS: pywebview uses Cocoa
+    for module, engine in (('gi', 'gtk'), ('qtpy', 'qt')):
+        try:
+            if importlib.util.find_spec(module) is not None:
+                log.info("no engine specified; defaulting to {} ({} is "
+                         "importable)".format(engine, module))
+                return engine
+        except (ImportError, ValueError):
+            continue
+    # Neither host present. ui_backend.webview_problem() should already have
+    # refused the backend before we got here; returning None lets pywebview
+    # produce its own error rather than us inventing one.
+    log.warning("no webview host toolkit found (neither gi nor qtpy); "
+                "pywebview will fail to start")
+    return None
+
+
 def _engine():
-    """The pywebview backend to ask for, or None to let it choose."""
-    for arg in sys.argv:
-        if arg.startswith('--engine='):
-            return arg.split('=', 1)[1].strip().lower() or None
-    name = (os.environ.get('AZT_WEBVIEW_ENGINE')
-            or os.environ.get('PYWEBVIEW_GUI') or '').strip().lower()
-    if not name:
-        return None
+    """The pywebview backend to ask for, or None to let it choose.
+
+    ON WINDOWS WE ASK FOR edgechromium EXPLICITLY, because the fallback is
+    worse than a failure: if the WebView2 runtime is missing, pywebview can
+    drop to **mshtml** — the legacy Trident/IE engine, which has no CSS Grid.
+    Our pages would then render as garbage rather than not rendering, and it
+    would look like our bug instead of a missing runtime. Naming the engine
+    makes a missing WebView2 raise at start, which the backend selector can
+    report and fall back to tkinter over. WebView2 ships with Windows 11 and
+    is present on most Windows 10, with a ~2MB bootstrapper otherwise, so a
+    loud failure is actionable.
+
+    An explicit --engine= or AZT_WEBVIEW_ENGINE still wins, so mshtml or cef
+    remain reachable deliberately."""
+    # An explicit request wins — but only if it can actually run. If it
+    # cannot, REPORT AND SUBSTITUTE: say plainly what was asked for, why it
+    # cannot be honoured, and what is being used instead. Neither silence
+    # (which makes the engine differences we measured unreasonable about) nor
+    # refusal (which would drop to tkinter over a missing *engine*, a much
+    # bigger substitution than the other engine).
+    #
+    # PYWEBVIEW_GUI is pywebview's OWN variable, honoured so its documented
+    # way of choosing an engine keeps working; we add no variable of our own
+    # (see _switch).
+    from utilities import ui_backend as _select
+    requested = _select.requested_engine()
+    if not requested:
+        return _default_engine()
+    problem = _select.engine_problem()
+    if not problem:
+        return requested
+    substitute = _default_engine()
+    if substitute and substitute != requested:
+        log.warning("{}; using {} instead".format(problem, substitute))
+        return substitute
+    log.warning("{}; no alternative engine is available either"
+                "".format(problem))
+    return None
     if name not in ENGINES:
         log.warning("Unknown webview engine {!r}; letting pywebview choose. "
                     "Known: {}".format(name, ', '.join(ENGINES)))
@@ -200,11 +286,18 @@ def _badge(window, label, program=None):
 def _close_native_window(owner, label='window'):
     """Retire a pywebview window — by HIDING it, not destroying it.
 
-    WHY, and it took a native backtrace to see: destroying a window under the
-    Qt backend segfaults. Qt tears the QMainWindow down through a posted
-    deferred-delete, and on the way down QWidget::~QWidget closes the window,
-    which hides its children, which fires hideEvent on the QWebEngineView,
-    which touches a QWebEnginePage that is already gone:
+    WHY: destroying a pywebview window is expensive to undo — a window costs
+    a page load, four HTTP round trips and a JS bridge handshake before a
+    single widget can be created — and A-Z+T reuses its windows anyway.
+
+    CORRECTED 2026-09-08: this comment used to say plainly that destroying a
+    window under Qt segfaults. It does not — the platform probe destroys a Qt
+    window and survives cleanly. What the app's crash trace actually shows is
+    a pywebview window wrapper being GARBAGE COLLECTED inside a loadFinished
+    slot, which is a reference-keeping problem, not a consequence of calling
+    destroy(). The teardown chain below is real and worth keeping as the
+    mechanism, but it is what happens when the object is freed at the wrong
+    MOMENT, not what happens whenever destroy() is called:
 
         sendPostedEvents -> sipQMainWindow::~sipQMainWindow
         -> QWidget::~QWidget -> QWindow::close -> hide_helper
@@ -237,6 +330,82 @@ def _close_native_window(owner, label='window'):
                  "destroying crashes QtWebEngine)".format(label))
     except Exception as e:
         log.debug("could not hide {}: {}".format(label, e))
+
+
+def _log_engine_in_use(window):
+    """Record which engine ACTUALLY rendered, not which one we asked for.
+
+    Without `--engine` we ask for nothing on Linux and pywebview picks —
+    GTK if its typelibs are importable, else Qt. So the same build and the
+    same command line can run a different engine on a different machine
+    (Kent, 2026-09-08), and the engines are NOT equivalent: created-hidden
+    works on Qt and not on GTK, and the Qt backend has a garbage-collection
+    crash the GTK one does not. A bug report that does not name the engine
+    cannot be read.
+
+    The userAgent is the engine's own self-report, so it cannot be wrong the
+    way an inference from installed packages can."""
+    ua = _js(window, 'navigator.userAgent') or ''
+    low = ua.lower()
+    if 'edg/' in low:
+        name = 'EdgeChromium/WebView2'
+    elif 'qtwebengine' in low:
+        name = 'QtWebEngine'
+    elif 'chrome' in low and 'version/' not in low:
+        name = 'Chromium (CEF?)'
+    elif 'version/' in low and 'safari' in low:
+        name = 'WebKitGTK'
+    elif 'trident' in low or 'msie' in low:
+        name = 'MSHTML/Trident — LEGACY IE, no CSS Grid; pages will be broken'
+    else:
+        name = 'unrecognised'
+    asked = _engine() or '(not specified — pywebview chose)'
+    log.info("webview engine IN USE: {} | asked for: {}".format(name, asked))
+    log.info("webview userAgent: {}".format(ua))
+    if 'LEGACY' in name:
+        log.warning("This engine cannot render A-Z+T's pages. Install the "
+                    "WebView2 runtime, or run with --tkinter.")
+
+
+def _app_identity(program):
+    """Tell the desktop what application this is, before the GUI starts.
+
+    tkinter gets this for free: `Tk(className='azt')` sets WM_CLASS, the
+    desktop matches it to azt's .desktop file, and the dock shows the right
+    icon and name. pywebview creates its own GTK/Qt application and sets
+    neither, so the dock showed "python3" with a generic icon.
+
+    GLib's prgname is the GTK equivalent and has to be set BEFORE the
+    application is created, which is why this runs on the way into
+    webview.start(). Harmless where gi is absent (Qt, Windows): those
+    backends take their identity elsewhere and the import simply fails."""
+    name = getattr(program, 'className', None) or 'azt'
+    try:
+        import gi
+        from gi.repository import GLib
+        GLib.set_prgname(name)
+        GLib.set_application_name('A-Z+T')
+        log.info("desktop identity set: prgname={}".format(name))
+    except Exception as e:
+        log.debug("could not set desktop identity ({}): {}".format(name, e))
+
+
+def _icon_path(program):
+    """A real file path for the window icon, or None.
+
+    `theme.photo['icon']` is a ui_webview.Image, which keeps the source path
+    it loaded from — so the icon the tkinter backend hands to iconphoto() is
+    reachable here as a path, which is what pywebview wants."""
+    theme = getattr(program, 'theme', None)
+    photo = getattr(theme, 'photo', None)
+    if not isinstance(photo, dict):
+        return None
+    for key in ('icon', 'icontall', 'transparent'):
+        img = photo.get(key)
+        path = getattr(img, 'filename', None)
+        if path and os.path.exists(str(path)):
+            return str(path)
+    return None
 
 
 def _start_kwargs(program=None):
@@ -577,6 +746,30 @@ class _WebviewWidget:
         if key in self._config:
             return self._config[key]
         return self._props.get(key, '')
+
+    def wait_window(self, widget=None):
+        """Block until *widget* is destroyed — or self, if none is given.
+
+        ON THE BASE CLASS because tkinter puts it on Misc, so ANY widget has
+        it. It was implemented only on Toplevel, and `ui_shell.py:2485` does
+        `buttonFrame1.wait_window(window)` on a ScrollingButtonFrame — one of
+        the canary-idiom sites — which raised AttributeError mid-settings.
+
+        The argument matters: ~30 sites pass a canary WIDGET rather than a
+        window, because that widget's destruction is the signal. Returns at
+        once if the target is already gone, which is the other half of the
+        deadlock."""
+        target = widget if widget is not None else self
+        wid = getattr(target, '_wid', None)
+        if wid is None:
+            log.info("wait_window given {!r}, which has no widget id; not "
+                     "waiting".format(type(target).__name__))
+            return
+        if not getattr(target, '_exists', True):
+            return
+        log.info("widget {}: waiting on widget {}".format(self._wid, wid))
+        _waiter_for(wid).wait()
+        log.info("widget {}: wait on widget {} released".format(self._wid, wid))
 
     def winfo_exists(self):
         return self._exists
@@ -1664,28 +1857,70 @@ class RadioButton(_WebviewWidget):
 
 
 class ListBox(_WebviewWidget):
+    """Options list, with the VALUE and the DISPLAY TEXT kept apart.
+
+    That separation is the whole point, and its absence was a visible bug:
+    options arrive as strings, ints, dicts with 'code'/'name', or 2/3/4-tuples,
+    and this class was storing them raw and shipping them to the page — so the
+    interface-language list read `{'code': 'es', 'name': 'Spanish'}` instead of
+    `Spanish`. tkinter's ListBox (ui_tkinter.py:3312) normalises every option
+    through `ButtonFrame.regularize_choice` into a `choice` and a `text`, keeps
+    two parallel lists, and fires `command(choice, window=window)`. This now
+    does the same, so the same option list renders the same on both backends
+    and the callback receives a code rather than a label.
+    """
+
     def __init__(self, parent, *args, **kwargs):
         font = kwargs.pop('font', 'default')
-        optionlist = kwargs.pop('optionlist', [])
+        optionlist = kwargs.pop('optionlist', []) or []
         self._command = kwargs.pop('command', None)
+        self._window = kwargs.pop('window', None)
+        self._raw_command = kwargs.pop('raw_command', False)
         kwargs['height'] = kwargs.pop('height', 10)
-        kwargs['width'] = kwargs.pop('width', 20)
+        kwargs['width'] = kwargs.pop('width', 40)
         kwargs.pop('selectmode', None)
+        kwargs.pop('listvariable', None)
         kwargs['font'] = font
         super().__init__(parent, widget_type='listbox', **kwargs)
-        self._items = []
+        self.choices = []        # the values, in display order
+        self._items = []         # what the user reads, same order
         self._selection = ()
         _api.register(self._wid, 'select',
                       lambda data: self._on_select(data))
-        if optionlist:
-            for item in optionlist:
-                self.insert(END, item)
+        for item in optionlist:
+            self.insert(END, item)
+
+    def _normalize(self, option):
+        """(value, display text) for one option, or None to skip it."""
+        if self._raw_command:
+            # Legacy mode: plain strings, fed through untouched, and the
+            # command wants the raw event rather than a choice.
+            return option, _text_of(option)
+        ck = ButtonFrame.regularize_choice(option)
+        if not ck:
+            return None
+        if ck.get('image'):
+            log.info("ListBox dropping image for {!r}".format(ck.get('code')))
+        return ck.get('code'), _text_of(ck.get('name', ck.get('code', '')))
 
     def _on_select(self, data):
         idx = data.get('index', 0)
         self._selection = (idx,)
-        if self._command:
-            self._command(None)
+        if not self._command:
+            return
+        if self._raw_command:
+            self._command(type('Event', (), dict(data))())
+            return
+        # Same contract as the tkinter ListBox and as ButtonFrame's buttons:
+        # the callback gets the CHOICE, not the label the user happened to see.
+        if 0 <= idx < len(self.choices):
+            self._command(self.choices[idx], window=self._window)
+
+    def choice(self, index):
+        """The value behind a row, as opposed to get()'s display text."""
+        if 0 <= index < len(self.choices):
+            return self.choices[index]
+        return None
 
     def curselection(self):
         return self._selection
@@ -1716,8 +1951,22 @@ class ListBox(_WebviewWidget):
         self._push_items()
 
     def _push_items(self):
+        """Send the items as DISPLAY TEXT.
+
+        `json.dumps(self._items)` sent the raw objects, which either raises
+        (not JSON-serialisable) or ships whatever the caller happened to have
+        stringified — and language options were reaching the page as object
+        reprs rather than names. tkinter renders these correctly (confirmed
+        2026-09-08), so this is a webview-side defect.
+
+        `_text_of` resolves Variables and falls back to str(), so a class with
+        a sensible __str__ displays properly and one without shows something
+        obviously wrong rather than crashing the list. The real fix for the
+        latter is at the CALL SITE — an option list should carry display
+        names — see agenda/language_options_show_objects.md."""
         wv = getattr(self, '_wv_window', None)
-        _js(wv, f'updateProp({self._wid}, "items", {json.dumps(self._items)})')
+        texts = [_text_of(item) for item in self._items]
+        _js(wv, f'updateProp({self._wid}, "items", {json.dumps(texts)})')
 
 
 class Combobox(_WebviewWidget):
@@ -2010,6 +2259,14 @@ class ToolTip:
 class Toplevel(_WebviewWidget):
     """A secondary window — creates a new pywebview window."""
 
+    # A window is not a DOM element, so a widget parented to one has no DOM
+    # parent to find — normal, and the page must not warn about it. This was
+    # declared False on the base with a comment saying Toplevel and Root set
+    # it True, and then never set: the third gate this session that always
+    # answered no. The symptom was the console warning firing for every
+    # window-parented widget, i.e. for the expected case.
+    is_window = True
+
     def __init__(self, parent, *args, **kwargs):
         self._wv_window = None  # Will be set after webview.create_window
         self.parent = parent
@@ -2045,8 +2302,7 @@ class Toplevel(_WebviewWidget):
         # "created HIDDEN" whenever `withdrawn` was true, which stayed true
         # after hidden= was reverted — so the message claimed a state the
         # window was not in, and hid the fact that the revert had landed.
-        create_hidden = bool(withdrawn
-                             and os.environ.get('AZT_WEBVIEW_HIDDEN'))
+        create_hidden = bool(withdrawn and _switch('--webview-hidden'))
 
         # Inherit from parent
         if parent:
@@ -2074,7 +2330,7 @@ class Toplevel(_WebviewWidget):
                 # map it, then or later. Every task window is built withdrawn
                 # (tasks/chooser.py:527), so this alone hid the entire UI.
                 #
-                # Opt in with AZT_WEBVIEW_HIDDEN=1 only to re-test it.
+                # Opt in with --webview-hidden only to re-test it.
                 # The flash it was meant to fix is cosmetic and comes back;
                 # it needs a different answer (see the item — most likely one
                 # window with page-level views instead of many OS windows).
@@ -2136,8 +2392,12 @@ class Toplevel(_WebviewWidget):
         _js(self._wv_window,
             'document.body.dataset.page={}'.format(
                 json.dumps(type(self).__name__.lower())))
+        # The program comes from the ROOT: `program` is not among the
+        # attributes a widget inherits from its parent, so reading it off
+        # `self` gave None and silently suppressed the badge even in dev —
+        # a gate that always says no is not a gate.
         _badge(self._wv_window, 'window {}'.format(self._wid),
-               getattr(self, 'program', None))
+               getattr(self._find_root() or default_root(), 'program', None))
         # Flush per-window JS queue
         _eval_batched(self._wv_window, self._wv_js_queue)
         self._wv_js_queue.clear()
@@ -2166,11 +2426,37 @@ class Toplevel(_WebviewWidget):
         wv = getattr(self, '_wv_window', None)
         if not wv or not _started.is_set():
             return
+        # A FULLSCREEN WINDOW IS ALREADY THE SIZE IT WANTS TO BE. Resizing one
+        # produces the worst of both: undecorated (because fullscreen) yet not
+        # filling the screen and not resizable — Kent, 2026-09-08: "my task
+        # window has no decoration, and I can't change it's size", with the
+        # log showing toggle_fullscreen replayed and then a resize to 918x745.
+        # Kiosk mode is the deliberate default for task windows, so it wins.
+        if getattr(self, '_is_fullscreen', False):
+            log.info("window {}: fullscreen, so not fitting to content"
+                     "".format(self._wid))
+            return
         try:
+            # MEASURE THE CONTENT, NOT THE CONTAINER. scrollWidth/Height of a
+            # box that fills the window reports the WINDOW's size, so it can
+            # only ever say "grow" — which is why a window created at 800x600
+            # with 490px of content kept the surplus as dead theme-coloured
+            # space. The union of the children's bounding boxes is the real
+            # extent, and it can be smaller than the window.
             measured = wv.evaluate_js(
-                '(function(){var r=document.getElementById("root")'
-                '||document.body;'
-                'return [Math.ceil(r.scrollWidth),Math.ceil(r.scrollHeight),'
+                '(function(){'
+                'var r=document.getElementById("root")||document.body;'
+                'var kids=r.querySelectorAll("*");'
+                'var base=r.getBoundingClientRect();'
+                'var w=0,h=0,i,b;'
+                'for(i=0;i<kids.length;i++){'
+                ' if(kids[i].offsetParent===null&&kids[i].tagName!=="IMG")'
+                '  continue;'
+                ' b=kids[i].getBoundingClientRect();'
+                ' if(!b.width&&!b.height) continue;'
+                ' w=Math.max(w,b.right-base.left);'
+                ' h=Math.max(h,b.bottom-base.top);}'
+                'return [Math.ceil(w),Math.ceil(h),'
                 'screen.availWidth,screen.availHeight,'
                 'window.innerWidth,window.innerHeight];})()')
         except Exception as e:
@@ -2183,9 +2469,17 @@ class Toplevel(_WebviewWidget):
             log.debug("window {}: content measurement unusable: {!r}"
                       "".format(self._wid, measured))
             return
-        want_w = min(max(cw + self._FIT_PAD, innerw, self._FIT_MIN[0]), availw)
-        want_h = min(max(ch + self._FIT_PAD, innerh, self._FIT_MIN[1]), availh)
-        if want_w <= innerw and want_h <= innerh:
+        if cw <= 0 or ch <= 0:
+            log.debug("window {}: no measurable content; leaving size alone"
+                      "".format(self._wid))
+            return
+        # SHRINKS AS WELL AS GROWS, which is what tkinter does and what the
+        # surplus space complaint was about. Clamped below by _FIT_MIN so a
+        # sparse page cannot collapse to a sliver, and above by the display.
+        want_w = min(max(cw + self._FIT_PAD, self._FIT_MIN[0]), availw)
+        want_h = min(max(ch + self._FIT_PAD, self._FIT_MIN[1]), availh)
+        # Ignore differences too small to be worth a resize flicker.
+        if abs(want_w - innerw) < 8 and abs(want_h - innerh) < 8:
             return
         try:
             wv.resize(want_w, want_h)
@@ -2311,23 +2605,27 @@ class Toplevel(_WebviewWidget):
         """pywebview exposes only a TOGGLE, so track the state ourselves —
         calling toggle twice for the same intent would undo it.
 
-        OFF BY DEFAULT UNDER WEBVIEW, opt in with AZT_WEBVIEW_KIOSK=1.
-        `TaskDressing.__init__` calls `takekioskscreen()` on EVERY task
-        window, and before this method existed `attributes()` was a `pass`,
-        so nothing happened. Implementing it made every task window jump to
-        fullscreen and undecorated the instant it appeared — a behaviour
-        change introduced while chasing a crash, and the wrong thing while
-        the question is still "can we see this page at all". A fullscreen
-        undecorated window showing a half-built layout is also the state
-        that reads as a hung machine.
+        ON BY DEFAULT, as under tkinter; `--no-kiosk` disables it.
 
-        Kiosk mode is a real feature and this is not a rejection of it; it
-        needs to be turned on deliberately once pages render."""
+        `TaskDressing.__init__` calls `takekioskscreen()` on EVERY task
+        window, and that is DELIBERATE — Kent, 2026-09-08: "I like it on most
+        task windows, to avoid distractions on the computer." A task window
+        filling the screen is the point: the people using these pages are
+        sorting words, not managing windows.
+
+        I briefly defaulted it OFF (2026-09-07) because implementing this
+        method turned every task window fullscreen while I was still trying
+        to establish whether windows appeared at all — my debugging
+        convenience overriding the design. Reverted. `--no-kiosk` exists for
+        exactly that debugging case, where a fullscreen undecorated window
+        showing a half-built layout is hard to work with (and reads as a hung
+        machine). Escape and double-click release fullscreen either way, so a
+        user is never trapped."""
         if bool(getattr(self, '_is_fullscreen', False)) == bool(want):
             return
-        if want and not os.environ.get('AZT_WEBVIEW_KIOSK'):
+        if want and _switch('--no-kiosk'):
             log.info("window {}: fullscreen requested, NOT applied "
-                     "(set AZT_WEBVIEW_KIOSK=1 to allow it)".format(self._wid))
+                     "(--no-kiosk is in force)".format(self._wid))
             return
         self._is_fullscreen = bool(want)
         self._wv_call('toggle_fullscreen')
@@ -2386,25 +2684,8 @@ class Toplevel(_WebviewWidget):
     def protocol(self, name, func):
         pass
 
-    def wait_window(self, widget=None):
-        """Block until *widget* is destroyed — this window if none is given.
-
-        THE ARGUMENT MATTERS and used to be ignored: ~30 call sites pass a
-        canary widget (`w.wait_window(self.l)` on a Label) rather than the
-        window, so waiting on `self` instead was waiting for the wrong thing.
-        Returns immediately if the target is already gone, which is the other
-        half of the deadlock — a widget destroyed before the wait began."""
-        target = widget if widget is not None else self
-        wid = getattr(target, '_wid', None)
-        if wid is None:
-            log.info("wait_window given {!r}, which has no widget id; not "
-                     "waiting".format(type(target).__name__))
-            return
-        if not getattr(target, '_exists', True):
-            return
-        log.info("window {}: waiting on widget {}".format(self._wid, wid))
-        _waiter_for(wid).wait()
-        log.info("window {}: wait on widget {} released".format(self._wid, wid))
+    # wait_window lives on _WebviewWidget — tkinter puts it on Misc, so every
+    # widget has it, and call sites use it from both windows and frames.
 
     def iconphoto(self, default, *args):
         pass
@@ -2649,6 +2930,8 @@ def default_root():
 class Root(_WebviewWidget):
     """The root window — starts the pywebview event loop."""
 
+    is_window = True   # see Toplevel.is_window
+
     def __init__(self, program=None, *args, **kwargs):
         log.info(f"Root called with {program=}")
         if not program:
@@ -2792,9 +3075,9 @@ class Root(_WebviewWidget):
         """Off by default; see Toplevel._set_fullscreen for why."""
         if bool(getattr(self, '_is_fullscreen', False)) == bool(want):
             return
-        if want and not os.environ.get('AZT_WEBVIEW_KIOSK'):
+        if want and _switch('--no-kiosk'):
             log.info("root window: fullscreen requested, NOT applied "
-                     "(set AZT_WEBVIEW_KIOSK=1 to allow it)")
+                     "(--no-kiosk is in force)")
             return
         self._is_fullscreen = bool(want)
         self._wv_call('toggle_fullscreen')
@@ -2832,6 +3115,7 @@ class Root(_WebviewWidget):
             def on_loaded():
                 _started.set()
                 self._wv_loaded.set()
+                _log_engine_in_use(self._wv_window)
                 self._push_theme()
                 _badge(self._wv_window, 'ROOT (no task widgets live here)')
                 self._flush_wv_calls()
@@ -2851,7 +3135,25 @@ class Root(_WebviewWidget):
                     t.start()
             if self._wv_window:
                 self._wv_window.events.loaded += on_loaded
-            webview.start(**_start_kwargs(self.program))
+            # Before the GUI toolkit exists: prgname/WM_CLASS is what the
+            # desktop matches against azt's .desktop file for the dock icon.
+            _app_identity(self.program)
+            kwargs = _start_kwargs(self.program)
+            icon = _icon_path(self.program)
+            if icon:
+                kwargs['icon'] = icon
+            try:
+                webview.start(**kwargs)
+            except TypeError as e:
+                # `icon=` is not accepted by every pywebview version or
+                # backend. Losing the icon must not stop the app, so drop it
+                # and say so rather than failing to start.
+                if 'icon' not in str(e) or 'icon' not in kwargs:
+                    raise
+                log.info("pywebview rejected icon= ({}); starting without it"
+                         "".format(e))
+                kwargs.pop('icon', None)
+                webview.start(**kwargs)
 
     def withdraw(self):
         log.info("root window: WITHDRAW (hide) requested")
