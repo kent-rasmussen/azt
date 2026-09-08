@@ -166,7 +166,7 @@ def _engine():
 _all_wv_windows = []
 
 
-def _badge(window, label):
+def _badge(window, label, program=None):
     """Stamp a corner badge naming the window, so a page on screen can be
     identified.
 
@@ -177,7 +177,13 @@ def _badge(window, label):
     (empty by design; task widgets go into Toplevels) while the window that
     had 408 widget calls flushed into it was somewhere unseen. Debug aid, and
     it should go once windows reliably show what they contain."""
+    # DEBUG ONLY. It was drawn unconditionally and reached a user's screen
+    # (Kent, 2026-09-08, on the non-dev splash) — a black-on-green "window 2"
+    # sticker over the app's own title area. Gated on the app's testing flag,
+    # like webview's devtools.
     if not window:
+        return
+    if not getattr(program, 'testing', False):
         return
     code = ('(function(){'
             'var b=document.getElementById("wv-badge");'
@@ -342,6 +348,42 @@ def _flush_js_queue():
         run.append(code)
     if run:
         _eval_batched(current, run)
+
+# ── Waiting on a widget's destruction ─────────────────────────────────
+# tkinter's wait_window(w) blocks until w is destroyed, and A-Z+T leans on it
+# two ways: on a WINDOW (the LIFT chooser blocks boot until a file is picked)
+# and on a CANARY WIDGET — ~30 sites do `w.wait_window(self.l)` on a Label,
+# because the label outlives the page build and its destruction is the signal.
+#
+# The old implementation waited on an event that only on_quit() ever set, and
+# ignored its argument entirely. So a window retired by destroy() rather than
+# quit left the waiter blocked forever — which is exactly where boot stopped
+# after choosing a LIFT file (2026-09-08): the chooser hid, was destroyed, and
+# nothing continued.
+#
+# A registry keyed by widget id fixes both cases at once and needs no change
+# at any call site, because _WebviewWidget.destroy is already recursive: a
+# window's destruction releases waiters on its children too.
+_waiter_lock = threading.Lock()
+_waiters = {}          # wid -> [threading.Event, ...]
+
+
+def _waiter_for(wid):
+    ev = threading.Event()
+    with _waiter_lock:
+        _waiters.setdefault(wid, []).append(ev)
+    return ev
+
+
+def _release_waiters(wid, why=''):
+    with _waiter_lock:
+        events = _waiters.pop(wid, [])
+    if events:
+        log.info("releasing {} waiter(s) on widget {}{}".format(
+            len(events), wid, ' ({})'.format(why) if why else ''))
+    for ev in events:
+        ev.set()
+
 
 # ── Base Widget ───────────────────────────────────────────────────────
 class _WebviewWidget:
@@ -522,6 +564,9 @@ class _WebviewWidget:
         _api.unregister(self._wid)
         wv = getattr(self, '_wv_window', None)
         _js(wv, f'destroyWidget({self._wid})')
+        # Anything blocked in wait_window() on this widget is now free. Last,
+        # so a released waiter sees the widget already gone.
+        _release_waiters(self._wid, 'destroyed')
 
     def cget(self, key):
         """tkinter's option reader. Missing entirely, which is what
@@ -2082,7 +2127,17 @@ class Toplevel(_WebviewWidget):
                     self._wv_window.evaluate_js(f'setThemeVars({json.dumps(css_vars)})')
                 except Exception as e:
                     log.debug(f"Theme push failed: {e}")
-        _badge(self._wv_window, 'window {}'.format(self._wid))
+        # Let CSS know WHICH page this is. Every window loads the same
+        # base.html, so without this a stylesheet cannot tell the splash from
+        # a sort board — and they want opposite treatment (one centred, one a
+        # dense aligned grid). `Splash(ui.Window)` reports "splash", a task
+        # window reports its own class, so this is the styling hook the port
+        # needs generally rather than a one-off for the splash.
+        _js(self._wv_window,
+            'document.body.dataset.page={}'.format(
+                json.dumps(type(self).__name__.lower())))
+        _badge(self._wv_window, 'window {}'.format(self._wid),
+               getattr(self, 'program', None))
         # Flush per-window JS queue
         _eval_batched(self._wv_window, self._wv_js_queue)
         self._wv_js_queue.clear()
@@ -2332,9 +2387,24 @@ class Toplevel(_WebviewWidget):
         pass
 
     def wait_window(self, widget=None):
-        """Block until this window is destroyed. Phase 5: threading.Event."""
-        self._wait_event = threading.Event()
-        self._wait_event.wait()
+        """Block until *widget* is destroyed — this window if none is given.
+
+        THE ARGUMENT MATTERS and used to be ignored: ~30 call sites pass a
+        canary widget (`w.wait_window(self.l)` on a Label) rather than the
+        window, so waiting on `self` instead was waiting for the wrong thing.
+        Returns immediately if the target is already gone, which is the other
+        half of the deadlock — a widget destroyed before the wait began."""
+        target = widget if widget is not None else self
+        wid = getattr(target, '_wid', None)
+        if wid is None:
+            log.info("wait_window given {!r}, which has no widget id; not "
+                     "waiting".format(type(target).__name__))
+            return
+        if not getattr(target, '_exists', True):
+            return
+        log.info("window {}: waiting on widget {}".format(self._wid, wid))
+        _waiter_for(wid).wait()
+        log.info("window {}: wait on widget {} released".format(self._wid, wid))
 
     def iconphoto(self, default, *args):
         pass
@@ -2346,6 +2416,9 @@ class Toplevel(_WebviewWidget):
         self._exists = False
         if hasattr(self, '_wait_event'):
             self._wait_event.set()
+        # Quitting must free waiters too, or closing a window leaves whoever
+        # was waiting on it blocked — the same deadlock by a different door.
+        _release_waiters(self._wid, 'quit')
         _close_native_window(self, 'Toplevel {}'.format(self._wid))
 
     def destroy(self):

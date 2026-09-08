@@ -218,6 +218,42 @@
     text-align: center;
 }
 
+/* ── Splash ─────────────────────────────────────────────────────────────
+   Centred, because it is a title card rather than a work surface — Kent,
+   2026-09-08: "I would prefer better alignment and wrapping… centering more".
+
+   Under tkinter the splash's parts carry their own padx/pady, which arrives
+   here as a per-widget margin and leaves a ragged left edge (the title at one
+   inset, the loading line at another, the blurb at a third). Centring removes
+   the problem rather than reconciling three insets, and it is what a title
+   card wants anyway.
+
+   Scoped by data-page so nothing else is affected: a sort board wants the
+   opposite treatment. */
+body[data-page="splash"] #root {
+    justify-items: center;
+    align-content: center;
+    text-align: center;
+    padding: var(--pady) var(--padx);
+}
+body[data-page="splash"] #root > * {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+/* Measure text for READING, not for the window: prose set to the full width
+   of a 1000px window wraps at a length nobody reads comfortably, and it is
+   what makes the last line look orphaned. */
+body[data-page="splash"] .wv-label {
+    max-width: 40em;
+}
+body[data-page="splash"] .wv-img {
+    max-height: 55vh;
+    object-fit: contain;
+}
+body[data-page="splash"] .wv-progressbar {
+    width: min(80%, 40em);
+}
+
 /* Window (toplevel) */
 .wv-window {
     display: grid;

@@ -3702,7 +3702,7 @@ class LiftChooser(ui.Window,HasMenus):
                                 )
         # make mediadir look for *.git
         ui.Label(self.frame, image=self.program.theme.photo['small'],
-                text=text, font='title', compound='top',
+                # text=text, font='title', compound='top',
                 column=1, row=1, ipadx=20)
         # if hasattr(self.program.taskchooser,'splash'):
         try:
