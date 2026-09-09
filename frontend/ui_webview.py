@@ -148,6 +148,25 @@ def _switch(name):
     return name in sys.argv
 
 
+def _supports_created_hidden():
+    """Can this engine create a window hidden and later show() it?
+
+    MEASURED on all four backends with
+    tests/manual/webview_multiwindow/platform_probe.py --start-hidden:
+
+        EdgeChromium / WebView2 (Windows 11)  yes
+        WebKit (macOS)                        yes
+        QtWebEngine (Linux)                   yes
+        WebKitGTK (Linux)                     NO — show() never maps it
+
+    So GTK is the exception, not the rule, and creating windows visible
+    everywhere costs every other platform a startup flash for nothing. Every
+    task window is built withdrawn (tasks/chooser.py), so on GTK a hidden
+    window would never appear at all — which is why this is a capability
+    question and not a preference."""
+    return _engine() != 'gtk'
+
+
 def _default_engine():
     """The engine to use when nobody said — CHOSEN BY US, not by pywebview.
 
@@ -353,6 +372,11 @@ def _log_engine_in_use(window):
         name = 'QtWebEngine'
     elif 'chrome' in low and 'version/' not in low:
         name = 'Chromium (CEF?)'
+    elif 'macintosh' in low and 'applewebkit' in low:
+        # macOS Cocoa/WKWebView. Its userAgent stops at "(KHTML, like Gecko)"
+        # — no Version/, no Chrome/ — so both other WebKit tests miss it and
+        # it reported as "unrecognised" on the first Mac run.
+        name = 'WebKit (macOS WKWebView)'
     elif 'version/' in low and 'safari' in low:
         name = 'WebKitGTK'
     elif 'trident' in low or 'msie' in low:
@@ -2315,7 +2339,8 @@ class Toplevel(_WebviewWidget):
         # "created HIDDEN" whenever `withdrawn` was true, which stayed true
         # after hidden= was reverted — so the message claimed a state the
         # window was not in, and hid the fact that the revert had landed.
-        create_hidden = bool(withdrawn and _switch('--webview-hidden'))
+        create_hidden = bool(withdrawn and (_supports_created_hidden()
+                                            or _switch('--webview-hidden')))
 
         # Inherit from parent
         if parent:
@@ -2335,18 +2360,15 @@ class Toplevel(_WebviewWidget):
                 html='<div id="root"></div>' if not os.path.exists(html_path) else None,
                 js_api=_api,
                 width=800, height=600,
-                # NEVER CREATE HIDDEN — measured 2026-09-07, and this was my
-                # mistake. `hidden=True` looked like the honest equivalent of
-                # Tk's withdrawn state and it removed the startup flash, but
-                # tests/manual/webview_multiwindow/hide_show.py --start-hidden
-                # shows a window created hidden NEVER APPEARS: show() does not
-                # map it, then or later. Every task window is built withdrawn
-                # (tasks/chooser.py:527), so this alone hid the entire UI.
+                # CREATED HIDDEN WHERE THE ENGINE SUPPORTS IT — which is
+                # everywhere except WebKitGTK (see
+                # _supports_created_hidden). On GTK a window created hidden
+                # never appears at all, and every task window is built
+                # withdrawn, so getting this wrong hides the entire UI; on
+                # Windows, macOS and Qt it removes the startup flash of a
+                # window appearing only to vanish.
                 #
-                # Opt in with --webview-hidden only to re-test it.
-                # The flash it was meant to fix is cosmetic and comes back;
-                # it needs a different answer (see the item — most likely one
-                # window with page-level views instead of many OS windows).
+                # --webview-hidden forces it on anyway, for re-testing GTK.
                 hidden=create_hidden,
             )
             if self._wv_window:

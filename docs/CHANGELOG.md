@@ -187,6 +187,84 @@ cv90/91/92 — which found two files both claiming the family "Charis SIL" with 
 capabilities, and that the tuned builds carry their own family names (`Charis SIL tstv`),
 so they can be asked for by name rather than only opened by path.
 
+**FIX AWAITING VERIFICATION (the webview progress bar was red).** `grid.css` painted the
+bar with `var(--highlight)`, and `highlight` is `'red'` in every theme in both backends —
+the one theme entry **nothing else in the program reads** (`ui_tkinter.py:309` and on; the
+only other reader was `ui_webview.py:1235`, which supplies the same default). tkinter
+styles the real bar from `TProgressbar` (`ui_tkinter.py:300`): bar = theme `background`,
+trough = `activebackground`. The webview bar now does the same, and carries a line at its
+leading edge so how far along it is reads by **shape**, not by telling two greens apart.
+
+**NEW `installfiles/RunMetoInstall_Mac.command`** — a first macOS install path,
+**drafted, not yet run on a Mac**. macOS became a live target when the platform probe
+passed every step there (WKWebView, pywebview 6.2.1, Darwin 22.6), leaving installation
+as the only untested part. Built around what the tested machine showed: the Xcode
+prompts it hit were **stub shims**, not compilation — macOS keeps stubs at
+`/usr/bin/{git,clang,python3}` and merely running one pops the developer-tools dialog, so
+the script never touches them while the tools are absent. git and python are installed
+without Xcode (git-scm.com's binary installer; python.org's `.pkg`, checked for tkinter
+rather than assumed — Homebrew can't help, since brew needs the tools itself), git is
+symlinked into `/usr/local/bin` because `backend/core/vcs.py` runs it by bare name, and
+PATH lines go into **both** `~/.zprofile` and `~/.bash_profile` — the Mac tested runs
+zsh, so the bash-only advice in circulation would have done nothing. The clone is
+shallow, per the standing decision. Both download URLs were checked by hand: python.org's
+pattern is confirmed (and `python-3.13.15-macos11.pkg` confirms 3.13.15 is real, so it
+replaces the 3.13.7 default copied from the Linux source build), while the git installer
+still downloads but its project is marked **abandoned** and serves **git 2.6.2, from
+2015** — it stays because Homebrew and MacPorts both need the Xcode tools. Checked against
+what `vcs.py` actually invokes, and nearly all of it predates 2015; the exception is
+`git init --initial-branch=main` (git 2.28), which `init()` already survives by retrying
+as plain `git init` — but that creates `master` where the program says `main`, so a repo
+**A-Z+T creates** on such a Mac lands on the wrong branch name. The installer detects git
+&lt; 2.28 and says so. Untestable from here: whether a 2015 git can still negotiate TLS with
+GitHub; the clone is itself that test, and its failure message now names TLS rather than
+saying only "clone failed".
+`--check-wheels` answers the real macOS question —
+whether every requirement has a wheel, given no compiler — with a pip dry run that
+installs nothing; the two known trouble spots are `torch==2.7.1+cpu` (that `+cpu` build
+exists only for Linux/Windows) and `PyAudio`. Switches throughout, no environment
+variables, and `--dry-run` for the first attempt. Details and open items in
+`agenda/rework_install_procedure.md`.
+
+**FOUND ON macOS, WORKED AROUND (not fixed): the venv relaunch dies under a terminal
+launcher.** First real run on the Mac installed fine, printed `Relaunching inside the
+virtual environment: …`, and then stopped — no window, no traceback. `ensure_venv()`
+starts the venv python with `subprocess.Popen(...)` and immediately `sys.exit(0)`
+(`py_modules.py:461-466`), never waiting; under a `.command` launcher that exiting process
+**is** the launcher, so Terminal's appended `; exit;` ends the session and the orphaned
+grandchild is SIGHUPed before it can print. Linux and Windows never showed it because
+neither launches through a terminal that closes. The macOS installer now builds `env/`
+itself and its launchers start `env/bin/python` **directly**, so `ensure_venv()` returns
+at `py_modules.py:318` and never forks — which removes the need for the hop on that
+platform but leaves the fragility in place. The real fix, deliberately not made in this
+version, is `os.execv` on POSIX: it keeps the controlling terminal and the exit status and
+cannot be orphaned. It is the shared bootstrap path with a history of hard-won Windows
+fixes, so it wants its own change and a three-platform retest.
+
+**macOS installs the python packages, and writes the stamp** — the first part of the
+"installer, not first run" item below, done early because the relaunch bug forced building
+`env/` anyway. Requirements go in with `--only-binary :all:` (no compiler, so anything
+needing a build must fail and say so), `PyAudio` is attempted separately since sound is
+optional, and `<venv>/azt_requirements.stamp` gets the sha256 of `requirements.txt` — the
+stamp `sync_requirements()` checks at `py_modules.py:491` — but **only** when everything
+installed cleanly, so a partial install still gets finished by the app on startup.
+
+**The Desktop item now has an icon.** A `.command` is a shell script and Finder always
+draws it with the generic script icon, whatever is done to the file — so macOS gets a real
+`A-Z+T.app` bundle (a plain folder: `Info.plist`, a shell script, an `.icns`, no developer
+tools involved). The `.icns` is built with `sips`, which is base-system, rather than
+`iconutil`, which is not. The `.command` stays in the A-Z+T folder as the diagnostic
+launcher, since Terminal showing the program's output is what made the relaunch failure
+diagnosable at all. Both set `PATH` themselves — essential for the `.app`, because launchd
+hands a GUI app a bare `PATH` and never reads `~/.zprofile`, so `which git` inside A-Z+T
+would otherwise find the `/usr/bin` stub.
+
+**AGENDA (decided, not yet done): the first dependency install belongs in the
+installer** for Linux and Windows too. Every installer stops at `git clone` today, so the first double-click spends
+minutes downloading dependencies — after the user was told the install had finished.
+`sync_requirements`' stamp check stays on the startup path (it is the rollout mechanism);
+the installers should do the first expensive pass so the stamp already matches.
+
 # Version 1.15.17
 
 **The webview question is answered on paper, and the first thing that could sink it is now a

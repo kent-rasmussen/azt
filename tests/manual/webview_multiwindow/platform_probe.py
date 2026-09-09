@@ -221,6 +221,11 @@ def main():
             fingerprint = 'EdgeChromium / WebView2'
         elif 'chrome' in low and 'safari' in low and 'version/' not in low:
             fingerprint = 'Chromium (Qt WebEngine or CEF)'
+        elif 'macintosh' in low and 'applewebkit' in low:
+            # macOS Cocoa/WKWebView: its userAgent ends at "(KHTML, like
+            # Gecko)" — no Version/, no Chrome/ — so it fell through both
+            # WebKit tests and reported "unrecognised" on the first Mac run.
+            fingerprint = 'WebKit (macOS WKWebView)'
         elif 'version/' in low and 'safari' in low:
             fingerprint = 'WebKit (WebKitGTK)'
         elif 'trident' in low or 'msie' in low:

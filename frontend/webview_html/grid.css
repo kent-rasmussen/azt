@@ -101,19 +101,32 @@
     padding: 2px 4px;
 }
 
-/* Progressbar */
+/* Progressbar — mirrors the tkinter TProgressbar style set in
+   ui_tkinter.py:300: bar = theme background, trough = activebackground.
+   NOT --highlight: that theme entry is 'red' in every theme and is read by
+   nothing else in the program, so using it here painted the bar red (fixed
+   2026-09-08). The fill's leading edge carries a border so how far along the
+   bar is stays readable by SHAPE, not by telling two greens apart. */
 .wv-progressbar {
-    background: #e0e0e0;
+    background: var(--activebackground);
     border: 1px solid #999;
     height: 20px;
     position: relative;
     overflow: hidden;
 }
 .wv-progressbar-fill {
-    background: var(--highlight);
+    background: var(--background);
+    border-right: 2px solid #555;
+    box-sizing: border-box;
     height: 100%;
     width: 0%;
     transition: width 0.2s;
+}
+/* At 0% and 100% the edge line would sit on the trough border; hide it so it
+   doesn't read as a stray tick. */
+.wv-progressbar-fill[style*="width: 0%"],
+.wv-progressbar-fill[style*="width: 100%"] {
+    border-right: 0;
 }
 
 /* ScrollingFrame */
