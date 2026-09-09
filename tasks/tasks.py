@@ -1851,7 +1851,7 @@ class TranscribeS(Transcribe,Segments):
     def go_back(self):
         log.info("Transcribe done for now (going back)")
         self.ui.runwindow.on_quit()
-        self.program.soundsettings.done_pyaudio()
+        self.program.soundsettings.done_audio()
         self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
                                         redo_glyph=self.group)
     def set_ok_w_form(self,error=False):
@@ -1868,7 +1868,7 @@ class TranscribeS(Transcribe,Segments):
             self._glyph_helper = GlyphTranscribeHelper(
                 self, glyphspossible=self.glyphspossible,
                 switch_text=self.switch_text, switch_tt=self.switch_tt,
-                on_done=lambda: self.program.soundsettings.done_pyaudio(),
+                on_done=lambda: self.program.soundsettings.done_audio(),
                 on_go_back=self._go_back_from_helper)
         self._glyph_helper.makewindow(glyph, event)
         # Sync state back for methods that reference self.xxx
@@ -1882,7 +1882,7 @@ class TranscribeS(Transcribe,Segments):
             self.status.updateglyphbuttons()
 
     def _go_back_from_helper(self):
-        self.program.soundsettings.done_pyaudio()
+        self.program.soundsettings.done_audio()
         self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
                                         redo_glyph=self._glyph_helper.group)
     def __init__(self, program, **kwargs):
@@ -1927,7 +1927,7 @@ class TranscribeT(Transcribe,Tone):
     def done(self):
         log.info("Transcribe done")
         self.submitform()
-        self.program.soundsettings.done_pyaudio()
+        self.program.soundsettings.done_audio()
     def set_ok_w_form(self):
         pass #maybe use some day?
     def makewindow(self, group=None, event=None):

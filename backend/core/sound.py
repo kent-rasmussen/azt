@@ -207,10 +207,10 @@ class SoundSettings(object):
 
     def getactual(self, test=False):
         self.cards = {'in': {}, 'out': {}, 'dict': {}}
-        hostinfo = self.pyaudio.get_host_api_info_by_index(0)
+        hostinfo = self.audio.get_host_api_info_by_index(0)
         numdevices = hostinfo.get('deviceCount')
         for i in range(numdevices):
-            devinfo = self.pyaudio.get_device_info_by_host_api_device_index(0, i)
+            devinfo = self.audio.get_device_info_by_host_api_device_index(0, i)
             d = {'code': i, 'name': devinfo['name']}
             if (devinfo.get('maxInputChannels')) > 0:
                 self.cards['in'][i] = {}
@@ -224,7 +224,7 @@ class SoundSettings(object):
                 for sf in self.hypothetical['sample_formats']:
                     try:
                         if test:
-                            self.pyaudio.is_format_supported(rate=fs,
+                            self.audio.is_format_supported(rate=fs,
                                                              input_device=card,
                                                              input_channels=1,
                                                              input_format=sf)
@@ -242,7 +242,7 @@ class SoundSettings(object):
                 for sf in self.hypothetical['sample_formats']:
                     try:
                         if test:
-                            self.pyaudio.is_format_supported(rate=fs,
+                            self.audio.is_format_supported(rate=fs,
                                                              output_device=card,
                                                              output_channels=1,
                                                              output_format=sf)
@@ -308,7 +308,7 @@ class SoundSettings(object):
 
     def check(self):
         try:
-            self.pyaudio.is_format_supported(rate=self.fs,
+            self.audio.is_format_supported(rate=self.fs,
                                              output_device=self.audio_card_out,
                                              output_channels=1,
                                              output_format=self.sample_format)
@@ -317,7 +317,7 @@ class SoundSettings(object):
                 self.next_card_out()
                 self.check()
         try:
-            self.pyaudio.is_format_supported(rate=self.fs,
+            self.audio.is_format_supported(rate=self.fs,
                                              input_device=self.audio_card_in,
                                              input_channels=1,
                                              input_format=self.sample_format)
@@ -431,21 +431,21 @@ class SoundSettings(object):
     def min_audio_file_size(self):
         return self.fs * self.min_audio_length_ms / 1000
 
-    def confirm_pyaudio(self):
-        if (hasattr(self.program, 'pyaudio')
-                and isinstance(self.program.pyaudio, AudioInterface)):
-            self.pyaudio = self.program.pyaudio
+    def confirm_audio(self):
+        if (hasattr(self.program, 'audio')
+                and isinstance(self.program.audio, AudioInterface)):
+            self.audio = self.program.audio
         else:
-            self.pyaudio = self.program.pyaudio = AudioInterface()
+            self.audio = self.program.audio = AudioInterface()
 
     # === Absorbed from former ``Sound`` mixin ===
 
-    def done_pyaudio(self):
-        """Terminate the PyAudio handle if running."""
+    def done_audio(self):
+        """Terminate the audio handle if running."""
         try:
-            self.pyaudio.terminate()
+            self.audio.terminate()
         except Exception:
-            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
+            log.info("Apparently self.audio doesn't exist, or isn't initialized.")
 
     def check_missing_attrs(self, include_input=False):
         """Return True if any required setting is missing or invalid."""
@@ -503,7 +503,7 @@ class SoundSettings(object):
 
     def __init__(self, program, pyaudio=None, analang_obj=None):
         self.program = program
-        self.confirm_pyaudio()
+        self.confirm_audio()
         self.sethypothetical()
         self.getactual()
         self.makedefaultifnot()

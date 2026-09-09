@@ -332,7 +332,7 @@ class Settings(SettingsUI):
         _log.info(_("Settings file {legacy} converted to {savefile}, with each value verified.")
                 .format(legacy=legacy,savefile=savefile))
         if setting == 'soundsettings':
-            self.soundsettings.pyaudio.stop() # when done here
+            self.soundsettings.audio.stop() # when done here
     def settingsfilecheck(self):
         """We need the namebase variable to make filenames for files
         that will be imported as python modules. To do that, they need

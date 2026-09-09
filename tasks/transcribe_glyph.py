@@ -301,7 +301,7 @@ class GlyphTranscribeHelper:
         # Sound settings (optional): the PROGRAM singleton. A Sound task already
         # holds it; anyone else must go through SoundSettings.ensure, the one
         # accessor that creates it, loads the persisted device choices, and (via
-        # confirm_pyaudio) owns program.pyaudio. Reading
+        # confirm_audio) owns program.audio. Reading
         # program.settings.soundsettings raw handed None to the Transcriber
         # whenever no Sound task had run this session — same miss as the sort
         # play button. Never raises: no audio here just means no tone beeps.
@@ -320,7 +320,7 @@ class GlyphTranscribeHelper:
                 log.info("No audio settings for glyph transcription: {}".format(e))
                 soundsettings = None
         if soundsettings is not None:
-            soundsettings.confirm_pyaudio()
+            soundsettings.confirm_audio()
 
         self.ok_done = False
         if glyph:

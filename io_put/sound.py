@@ -343,8 +343,12 @@ class SoundFilePlayer(object):
                      "in the background",timeout)
         else:
             self.wf.close()
-    def __init__(self,filenameURL,pyaudio,settings):
-        self.pa=pyaudio
+    def __init__(self,filenameURL,audio,settings):
+        # NOT named `pyaudio`: this module imports the pyaudio MODULE at the
+        # top, and a parameter of that name shadowed it for the whole method
+        # (renamed 2026-09-09). `self.pa` keeps its name — "pa" is PortAudio,
+        # which stays true whichever python binding reaches it.
+        self.pa=audio
         self.filenameURL=filenameURL
         self.settings=settings
 
@@ -566,11 +570,11 @@ class BeepGenerator(object):
             f.writeframes(self.wavdata)
             f.close()
         self.wavdata = self.wavdata.astype(numpy.float32).tobytes()
-    def __init__(self,pyAudio=None,settings=None):
-        if not pyAudio:
+    def __init__(self,audio=None,settings=None):
+        if not audio:
             self.p = AudioInterface()
         else:
-            self.p = pyAudio
+            self.p = audio
         if not settings:
             self.settings=SoundSettings(self.p)
         else:

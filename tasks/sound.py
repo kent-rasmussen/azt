@@ -25,17 +25,17 @@ class Sound(object):
         analang_obj = self.program.languages.get_obj(self.analang)
         ss = SoundSettings.ensure(self.program, analang_obj=analang_obj)
         self.soundsettings = ss
-        self.pyaudio = ss.pyaudio
+        self.audio = ss.audio
         if ss.soundcheck(include_input=getattr(self, 'is_record_task', False)):
             self.mikecheck()
 
     def mikecheck(self):
         self.ui.withdraw()
-        self.program.soundsettings.confirm_pyaudio()
+        self.program.soundsettings.confirm_audio()
         self.soundsettingswindow = sound_ui.SoundSettingsWindow(self)
         if not self.soundsettingswindow.exitFlag.istrue():
             self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        self.program.soundsettings.done_pyaudio()
+        self.program.soundsettings.done_audio()
         self.ui.deiconify()
         if (not self.ui.exitFlag.istrue()
                 and self.soundsettingswindow.winfo_exists()):
@@ -239,7 +239,7 @@ class Record(BackendRecord, Sound):
                 self.showentryformstorecordpage()
             self.program.slices.ps(ps)
             self.program.slices.profile(profile)
-        self.program.soundsettings.done_pyaudio()
+        self.program.soundsettings.done_audio()
 
     def showsenseswithexamplestorecord(self, senses=None, progress=None, skip=False):
         def setskip(event):
@@ -345,7 +345,7 @@ class Record(BackendRecord, Sound):
                 ui.Button(self.ui.runwindow.frame,
                           text="Continue to next syllable profile",
                           command=next_p).grid(row=1, column=0)
-        self.program.soundsettings.done_pyaudio()
+        self.program.soundsettings.done_audio()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

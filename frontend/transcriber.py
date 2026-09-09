@@ -85,12 +85,12 @@ class Transcriber(ui.Frame):
         self.namehash=ui.StringVar()
         self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
         # AUDIO HERE IS THE PROGRAM'S, NOT THIS WIDGET'S. SoundSettings owns the
-        # PyAudio handle (its confirm_pyaudio reuses program.pyaudio), so the
+        # audio handle (its confirm_audio reuses program.audio), so the
         # caller's settings object already carries the one to use. What was here
         # built a fresh AudioInterface for every Transcriber — a second handle
         # racing any stream an open Sound task already had (AUDIT_FINDINGS.md:354)
-        # — and its no-settings fallback, `SoundSettings(self.pyaudio)`, passed a
-        # PyAudio where the constructor wants `program`. That doesn't raise
+        # — and its no-settings fallback, `SoundSettings(self.audio)`, passed an
+        # audio handle where the constructor wants `program`. That doesn't raise
         # (`program` is only dereferenced in load/store_to_file), it silently
         # yields a THIRD handle and a second, never-persisted settings object
         # divergent from program.soundsettings. Callers hand us the singleton
@@ -98,11 +98,11 @@ class Transcriber(ui.Frame):
         # audio on this machine we simply have no beeps, which is a hidden play
         # button, not a traceback.
         self.soundsettings=soundsettings
-        self.pyaudio=getattr(soundsettings,'pyaudio',None)
+        self.audio=getattr(soundsettings,'audio',None)
         self.beeps=None
-        if self.pyaudio is not None:
+        if self.audio is not None:
             try:
-                self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
+                self.beeps=sound.BeepGenerator(audio=self.audio,
                                             settings=self.soundsettings)
             except Exception as e:
                 log.info("No tone beeps in this transcriber: {}".format(e))

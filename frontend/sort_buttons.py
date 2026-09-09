@@ -766,18 +766,19 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         ``(None,None)`` when this machine can't play.
 
         PLAYBACK IS A PROGRAM RESOURCE, NOT A TASK ONE (Kent 2026-07-29: "'SortV'
-        object has no attribute 'pyaudio'" three times in one evening — and "we
+        object has no attribute 'pyaudio'" — that attribute is now ``.audio``,
+        renamed 2026-09-09 — three times in one evening; and "we
         should have the button on that page playable, though"; 2026-07-31: the
         same miss one argument to the right, on `settings.soundsettings`). Both
         halves are made by ONE canonical accessor, ``SoundSettings.ensure``
         (backend/core/sound.py): it stores the singleton at
         ``program.settings.soundsettings`` AND ``program.soundsettings``, pulls
-        the persisted device choices in from file, and — via ``confirm_pyaudio``
-        in its ``__init__`` — reuses or builds ``program.pyaudio``. Only the Sound
+        the persisted device choices in from file, and — via ``confirm_audio``
+        in its ``__init__`` — reuses or builds ``program.audio``. Only the Sound
         task mixin (tasks/sound.py:26) had ever run it, so a sort page, which
         PLAYS but never records, found neither attribute. Reading either raw is
         the bug; asking a second accessor for the second half (as the first fix
-        did, re-implementing confirm_pyaudio's three steps here) just moves it.
+        did, re-implementing confirm_audio's three steps here) just moves it.
 
         Sound tasks stay different in the one way that matters, and that
         difference is why SortV/SortC must NOT become Sound subclasses: the Sound
@@ -823,16 +824,16 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                            'soundsettings',None))
         if ss is None:
             return None,None
-        pyaudio=(getattr(ss,'pyaudio',None)
-                 or getattr(self.task,'pyaudio',None)
-                 or getattr(self.program,'pyaudio',None))
-        return pyaudio,ss
+        audio=(getattr(ss,'audio',None)
+                 or getattr(self.task,'audio',None)
+                 or getattr(self.program,'audio',None))
+        return audio,ss
     def playbutton(self):
         """A play button, or a plain LABEL when this machine can't play at all.
         Returns True only when a player was made (makebuttons keys _playable on
         that, so nothing later reaches for self.player)."""
-        pyaudio,soundsettings=self._playback()
-        if pyaudio is None or soundsettings is None:
+        audio,soundsettings=self._playback()
+        if audio is None or soundsettings is None:
             # Genuinely no audio on this machine (import failed, 'nosound', no
             # device, or an unconfigured output): show the word rather than
             # crash, as a missing sound stack already did.
@@ -841,7 +842,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                     type(self.task).__name__, self._text)
             self.labelbutton()
             return
-        self.player=sound.SoundFilePlayer(self._filenameURL,pyaudio,
+        self.player=sound.SoundFilePlayer(self._filenameURL,audio,
                                             soundsettings)
         b=self._display=ui.Button(self, text=self._text,
                     cmd=self.player.play,

@@ -105,16 +105,16 @@ class RecordButtonFrame(ui.Frame):
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
         provided. The LIFT link to that sound file should already be there."""
-        # This class needs to be cleanup after closing, with check.donewpyaudio()
+        # This class needs to be cleanup after closing, with check.done_audio()
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
         self.id=id
         self.task=task
         try:
-            task.pyaudio.get_format_from_width(1) #get_device_count()
+            task.audio.get_format_from_width(1) #get_device_count()
         except AttributeError:
-            task.pyaudio=sound.AudioInterface()
-        self.pa=task.pyaudio
+            task.audio=sound.AudioInterface()
+        self.pa=task.audio
         if not hasattr(task,'soundsettings') or not hasattr(task,'program'):
             log.error("task missing a settings attr? "
                         f"(soundsettings:{hasattr(task,'soundsettings')}; "
@@ -943,7 +943,7 @@ class Task(ui.Window):
                             )
         #any sound task should find settings at self.soundsettings:
         self.soundsettings=program.soundsettings #Each task with sound should have this
-        self.pyaudio=program.soundsettings.pyaudio
+        self.audio=program.soundsettings.audio
         self.audiolang=True
 if __name__ == "__main__":
     try:
@@ -959,7 +959,7 @@ if __name__ == "__main__":
     program.analang='tbt-CD'
     from backend import langtags
     program.languages=langtags.Languages(program)
-    #This will normally pass self.pyaudio from task to SoundSettings, to keep
+    #This will normally pass self.audio from task to SoundSettings, to keep
     # one pyaudio instance, but if not, settings will create one.
     language=program.languages.get_obj(program.analang)
     program.soundsettings=sound.SoundSettings(program)
