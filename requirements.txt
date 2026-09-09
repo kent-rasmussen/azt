@@ -44,7 +44,13 @@ samplerate              # not imported (utilities/file.py has it commented; cand
 soundfile
 svglib                  # io_put/alphabet_comparison_pdf.py (SVG rendering)
 tgt                     # praatfns.py (TextGridTools)
-torch==2.7.1+cpu
+# torch: the '+cpu' local version exists ONLY in the Linux/Windows CPU wheel
+# sets. macOS has no such build — `No matching distribution found for
+# torch==2.7.1+cpu (from versions: none)`, measured on a Mac 2026-09-08 — and
+# its plain wheels are CPU-only anyway, so the marker split costs macOS
+# nothing and leaves Linux/Windows exactly as they were.
+torch==2.7.1+cpu; sys_platform != "darwin"
+torch==2.7.1; sys_platform == "darwin"
 tqdm
 transformers
 urllib3

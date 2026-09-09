@@ -20,10 +20,16 @@ line developer tools" dialog. The script never touches them, and installs the
 real tools from git-scm.com and python.org instead. Homebrew cannot be part of
 the answer — it requires those same tools.
 
-Fonts have no package manager here, so Charis SIL is not installed
-automatically: download it from <https://software.sil.org/charis/> and re-run
-with `--fonts=/path/to/that.zip`, or unzip it and drag the `.ttf` files onto
-Font Book.
+Fonts are downloaded and installed into `~/Library/Fonts` like python and git,
+because Charis isn't decoration — A-Z+T lays its screens out with it, and
+without it Tk substitutes a system font whose metrics differ from every other
+machine, so text wraps oddly and buttons come out the wrong size. macOS has no
+equivalent of the SIL package repository the Linux script uses, so the script
+tries a short list of download URLs and checks that what arrives really
+contains `.ttf` files. **Those URLs are not yet verified**, so if they've
+moved: download from <https://software.sil.org/charis/> and re-run with
+`--fonts=/path/to/that.zip`, or pass `--font-url=<URL>` — and tell the
+developer the working link so everyone else can skip the step.
 
 It also builds `env/` and installs the python packages, rather than leaving
 that to the first run as the Linux and Windows installers do. Two reasons: a

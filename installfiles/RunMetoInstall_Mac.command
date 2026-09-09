@@ -75,7 +75,40 @@ BRANCH=""
 PY_VERSION="3.13.15"     # confirmed available as python-3.13.15-macos11.pkg
 PYTHON_URL=""            # derived from PY_VERSION unless given
 GIT_URL="https://sourceforge.net/projects/git-osx-installer/files/latest/download"
-FONT_ZIP=""              # a Charis SIL zip you already downloaded
+FONT_ZIP=""              # a Charis zip you already downloaded
+FONT_URL=""              # exact zip to fetch; overrides everything below
+# WHERE THE FONTS COME FROM, in order: this API (which names the current
+# release, so nothing here needs editing when SIL publishes 7.001), then the
+# pinned URLs below as a fallback. Verified anonymous and listing
+# Charis-7.000.zip on 2026-09-09.
+FONT_API="https://api.github.com/repos/silnrsi/font-charis/releases/latest"
+# ONE fallback, and it is not a version-tracking mechanism — the API above is
+# that. This exists for a DIFFERENT failure: api.github.com being unreachable
+# (rate-limited behind a shared NAT, or a proxy that permits software.sil.org
+# but not GitHub). When that happens, a font one release behind beats no font
+# at all, since without Charis the whole layout goes wrong. So it needs no
+# urgent updating, and a second, older generation (CharisSIL-6.101.zip, also
+# verified) was dropped as redundant: it would only ever be reached in the
+# same situation, and brings a different family name for no benefit.
+# VERIFIED BY HAND (Kent, 2026-09-09). The pattern is
+#     https://software.sil.org/downloads/r/<family>/<Family>-<version>.zip
+# and the FILENAME IS CASE-SENSITIVE: `Charis-7.000.zip` serves, while
+# `charis-7.000.zip` does not — worth knowing before retyping it.
+#
+# A `github.com/silnrsi/font-charis/releases/latest/download/<asset>` URL was
+# tried and does NOT work, for a reason worth keeping: that form redirects to
+# a FIXED asset name within whatever release is latest, so it only works for
+# projects whose asset filenames stay the same release to release. This one's
+# embed the version (Kent 2026-09-09), so there is no stable name to ask for.
+# Don't re-add it in that form. Asking the API what the asset names ARE is the
+# way round it, which is what FONT_API above does.
+#
+# v7 renames the family from "Charis SIL" to "Charis". Safe either way here:
+# A-Z+T accepts both names (the missing-font check asks for ['Charis SIL',
+# 'Charis']) and the webview font stack lists both aliases. Only ONE
+# generation is ever installed — two builds claiming the same family with
+# different capabilities is a confusion already met in the tone work.
+FONT_URLS="https://software.sil.org/downloads/r/charis/Charis-7.000.zip"
 MIN_MINOR=11             # python 3.11+
 DO_PYTHON=yes
 DO_GIT=yes
@@ -96,10 +129,12 @@ Install A-Z+T on macOS, without Xcode.
   --python-version=X.Y.Z Python to install if none is usable (default 3.13.15)
   --python-url=URL       Exact python .pkg to install instead
   --git-url=URL          Exact git .dmg/.pkg to install instead
-  --fonts=PATH           A Charis SIL zip you have already downloaded
+  --fonts=PATH           A Charis zip you have already downloaded
+  --font-url=URL         Exact Charis zip to download instead
   --no-python            Don't install python, even if none is found
   --no-git               Don't install git, even if none is found
-  --no-fonts             Skip the fonts
+  --no-fonts             Skip the fonts (A-Z+T will lay out with a substitute
+                         font, so text may wrap oddly and buttons look wrong)
   --no-shortcut          Don't make the launcher, the app or the Desktop copy
   --no-deps              Make env/ but don't download the python packages
                          into it (A-Z+T will do it on its first run instead,
@@ -124,6 +159,7 @@ for arg in "$@"; do
         --python-url=*)     PYTHON_URL="${arg#*=}" ;;
         --git-url=*)        GIT_URL="${arg#*=}" ;;
         --fonts=*)          FONT_ZIP="${arg#*=}" ;;
+        --font-url=*)       FONT_URL="${arg#*=}" ;;
         --no-python)        DO_PYTHON=no ;;
         --no-git)           DO_GIT=no ;;
         --no-fonts)         DO_FONTS=no ;;
@@ -325,7 +361,21 @@ fi
 # `which git` happily returns the stub, and A-Z+T would pop the "install
 # developer tools" dialog from inside the program. macOS PATH order (from
 # /etc/paths) puts /usr/local/bin BEFORE /usr/bin, so a symlink there wins.
-if [ -n "$GIT" ] && [ "$GIT" != /usr/local/bin/git ]; then
+# NOTHING BELOW RUNS unless the git we settled on is somewhere the default
+# PATH does not already reach. That test is the whole gate, for both the
+# symlink and the profile lines, and it is what keeps this script's hands off
+# a Mac that is already in good order: with the developer tools installed,
+# /usr/bin/git is a REAL git and already first-class on PATH, so there is
+# nothing to fix — creating /usr/local/bin/git there would be pointless sudo,
+# and worse, that is exactly where Homebrew puts its own git on an Intel Mac.
+GIT_DIR_ON_PATH=""
+case "$(dirname "$GIT" 2>/dev/null)" in
+    /usr/local/bin|/usr/bin|/bin|.|"") : ;;  # already on the default PATH
+    *) GIT_DIR_ON_PATH="$(dirname "$GIT")" ;;
+esac
+if [ -z "$GIT_DIR_ON_PATH" ]; then
+    note "git is already where the system looks for it; nothing to adjust"
+else
     if [ -e /usr/local/bin/git ]; then
         note "/usr/local/bin/git already exists; leaving it as it is"
     else
@@ -334,23 +384,10 @@ if [ -n "$GIT" ] && [ "$GIT" != /usr/local/bin/git ]; then
         run sudo mkdir -p /usr/local/bin
         run sudo ln -sf "$GIT" /usr/local/bin/git
     fi
-fi
-# Belt and braces for interactive shells, and ONLY when it buys something:
-# the git we settled on has to live somewhere the default PATH does not
-# already cover. Writing a PATH line unconditionally (as this did briefly)
-# appends /usr/local/git/bin to both profiles even on a Mac whose git is
-# /usr/bin/git — a directory that does not exist, in a file the user has to
-# live with.
-# BOTH files when it does apply: macOS has defaulted to zsh since Catalina, so
-# writing only ~/.bash_profile (the advice you still find online) achieves
-# nothing on a current Mac — CONFIRMED on the Mac tested 2026-09-08, which was
-# running zsh.
-GIT_DIR_ON_PATH=""
-case "$(dirname "$GIT" 2>/dev/null)" in
-    /usr/local/bin|/usr/bin|/bin|.|"") : ;;  # already on the default PATH
-    *) GIT_DIR_ON_PATH="$(dirname "$GIT")" ;;
-esac
-if [ -n "$GIT_DIR_ON_PATH" ]; then
+    # Belt and braces for interactive shells. BOTH files: macOS has defaulted
+    # to zsh since Catalina, so writing only ~/.bash_profile (the advice you
+    # still find online) achieves nothing on a current Mac — CONFIRMED on the
+    # Mac tested 2026-09-08, which was running zsh.
     for profile in "$HOME/.zprofile" "$HOME/.bash_profile"; do
         if [ -f "$profile" ] && grep -q "$GIT_DIR_ON_PATH" "$profile" 2>/dev/null; then
             note "$(basename "$profile") already mentions it; leaving it alone"
@@ -409,6 +446,61 @@ else
         FONT_ZIP="$(find "$HOME/Downloads" -maxdepth 1 -iname '*charis*.zip' -print -quit 2>/dev/null)"
         [ -n "$FONT_ZIP" ] && note "found $FONT_ZIP in your Downloads"
     fi
+    # Download it, like python and git. Charis is not optional decoration: the
+    # program lays its screens out with it, and without it Tk substitutes
+    # '.AppleSystemUIFont', whose metrics differ from every other machine — so
+    # text wraps oddly and buttons come out the wrong size (measured on this
+    # Mac 2026-09-08; A-Z+T says so itself in a "Missing font!" notice).
+    #
+    # The URLs are verified (see FONT_URLS), but they are still VERSIONED, so
+    # they will go stale when SIL publishes 7.001. Hence: try each in turn,
+    # and check the download really contains .ttf files before installing
+    # anything — a 404 page saved as charis.zip must not count as success.
+    # `--font-url=` overrides the list; the manual path below still applies if
+    # every candidate has moved.
+    # Ask GitHub what the current release actually is, so this does not need
+    # editing every time SIL publishes. Verified 2026-09-09: the endpoint is
+    # anonymous for a public repo and lists Charis-<version>.zip among its
+    # assets. curl does the fetching (system TLS, and it does not depend on
+    # whether python's certificates were ever installed — the python.org
+    # installer leaves that to a separate step); python only parses what
+    # arrives, which it can do without a network or a cert store.
+    LATEST_URL=""
+    if [ -z "$FONT_ZIP" ] && [ -z "$FONT_URL" ] && [ "$DRY_RUN" = no ]; then
+        note "asking GitHub which Charis release is current"
+        API_JSON="$(curl -fsS "$FONT_API" 2>/dev/null)" || API_JSON=""
+        if [ -n "$API_JSON" ]; then
+            LATEST_URL="$(printf '%s' "$API_JSON" | "$PY" -c 'import json,sys
+try:
+    assets=json.load(sys.stdin).get("assets") or []
+except Exception:
+    sys.exit(1)
+for a in assets:
+    u=a.get("browser_download_url") or ""
+    if u.endswith(".zip"):      # .tar.xz and .asc are also published
+        print(u); break' 2>/dev/null)" || LATEST_URL=""
+        fi
+        if [ -n "$LATEST_URL" ]; then
+            note "current release: $LATEST_URL"
+        else
+            note "couldn't ask GitHub; falling back to the known links"
+        fi
+    fi
+    if [ -z "$FONT_ZIP" ] && [ "$DO_FONTS" = yes ]; then
+        for url in ${FONT_URL:-${LATEST_URL:-} $FONT_URLS}; do
+            [ "$DRY_RUN" = yes ] && { note "would try $url"; continue; }
+            cand="$(tmpdir)/charis.zip"
+            note "trying $url"
+            if curl -fL --silent --show-error -o "$cand" "$url" &&
+               unzip -l "$cand" 2>/dev/null | grep -qi '\.ttf'; then
+                note "downloaded the fonts"
+                FONT_ZIP="$cand"
+                break
+            fi
+            note "that one didn't work; trying the next"
+            rm -f "$cand"
+        done
+    fi
     if [ -n "$FONT_ZIP" ] && [ -f "$FONT_ZIP" ]; then
         UNZ="$(tmpdir)/fonts"
         if [ "$DRY_RUN" = yes ]; then
@@ -430,11 +522,14 @@ else
             warn "could not unpack $FONT_ZIP"
         fi
     else
-        note "No Charis SIL zip found. A-Z+T will run, but tone and IPA text"
-        note "will render with substituted fonts. To fix it:"
+        note "Could not get the Charis fonts automatically. A-Z+T will run, but"
+        note "text will be laid out with a substitute font, so words may wrap"
+        note "oddly and buttons may look wrong. To fix it:"
         note "  1. download the fonts from https://software.sil.org/charis/"
         note "  2. re-run this script with --fonts=/path/to/that.zip"
         note "     (or just unzip it and drag the .ttf files onto Font Book)"
+        note "If you know the direct link, --font-url=<URL> also works, and"
+        note "telling the developer what it is lets everyone skip this."
     fi
 fi
 
@@ -473,6 +568,50 @@ else
             || clone_failed
     fi
     note "cloned $REPO (shallow)"
+fi
+
+# ─── 4a. Make the shallow clone able to see the branches a user needs ───────
+# `--depth 1` implies `--single-branch`, which writes a refspec covering ONLY
+# the cloned branch. The clone then LOOKS normal but `git checkout testing`
+# fails with "did not match any file(s) known to git", because no ref for it
+# can ever arrive (Kent, 2026-09-09, on this Mac).
+#
+# NAMED BRANCHES, NOT '*' (Kent 2026-09-09: "we could just fetch main and
+# program.testversionname; those should be the only branches a normal user
+# would need"). That is exactly right, and the code agrees: vcs.py:1126
+# toggles `testversionname if self.branch=='main' else 'main'` — those two
+# names are the whole of what the update/test-version feature can reach. A '*'
+# refspec would also drag in every work branch on the remote, which no user
+# has any use for.
+#
+# The name is READ FROM main.py rather than hardcoded, so this keeps step with
+# program['testversionname'] if it ever changes.
+#
+# A-Z+T's own branch switching does not depend on any of this:
+# fetch_tracking_branch() (vcs.py:1200) fetches
+# `<branch>:refs/remotes/origin/<branch>` explicitly for exactly this reason.
+# This is for working on the clone BY HAND, which is how it was found.
+if [ -d "$DEST/.git" ] && [ "$DRY_RUN" = no ]; then
+    TESTBRANCH="$(sed -n "s/.*'testversionname' *: *'\([^']*\)'.*/\1/p" \
+                    "$DEST/main.py" 2>/dev/null | head -1)"
+    if [ -z "$TESTBRANCH" ]; then
+        TESTBRANCH=testing
+        note "couldn't read testversionname from main.py; assuming '$TESTBRANCH'"
+    fi
+    # set-branches REPLACES the list, so the cloned branch has to go back in
+    # too — otherwise asking for main and testing would strip a --branch=dev
+    # clone of its own refspec.
+    "$GIT" -C "$DEST" remote set-branches origin main 2>/dev/null
+    for b in "$TESTBRANCH" ${BRANCH:-}; do
+        [ "$b" = main ] && continue
+        "$GIT" -C "$DEST" remote set-branches --add origin "$b" 2>/dev/null
+    done
+    note "refspec now covers main and $TESTBRANCH${BRANCH:+ and $BRANCH}"
+    "$GIT" -C "$DEST" fetch -q --depth 1 origin \
+        && note "fetched those branch tips (still shallow)" \
+        || note "could not fetch them; \`git fetch --depth 1\` will retry"
+elif [ -d "$DEST/.git" ]; then
+    note "would point the refspec at main plus the test-version branch and fetch"
 fi
 
 # ─── 4b. The virtual environment — BUILT HERE, ON PURPOSE ───────────────────
@@ -516,17 +655,25 @@ fi
 # dependency that cannot be installed is reported NOW, to somebody who is
 # still watching, instead of during a silent first launch.
 #
-# --only-binary :all: is not optional on macOS: with no compiler present, a
+# WHEELS-ONLY, BUT ONLY WHEN THERE IS NO COMPILER. With no developer tools, a
 # package that needs building must FAIL AND SAY SO rather than invoke a clang
-# that is not there. Two entries need care first:
-#   torch==2.7.1+cpu  — that '+cpu' local version is built only for Linux and
-#                       Windows. macOS wheels are plain 2.7.1, CPU-only anyway.
-#   PyAudio           — historically needed portaudio and a compiler (the Linux
-#                       script installs portaudio19-dev for exactly that), so
-#                       it is attempted on its own: sound is optional in the
-#                       program (program['nosound']) and everything else should
-#                       not fail with it.
-# allosaurus already carries `sys_platform == "linux"`, so it is not our problem.
+# that is not there — measured 2026-09-08, when an unconstrained pip put a
+# modal "The ˋclangˊ command requires the command line developer tools" dialog
+# in front of the user mid-boot, and cryptography got as far as downloading
+# its own rustup and cargo. But on a Mac that HAS the tools, building is
+# legitimate and works, exactly as on Linux, so the constraint is lifted:
+# refusing source builds there would silently under-install (no sound, no
+# collab crypto) on a machine that could have had them.
+#
+# PyAudio is attempted on its own either way: sound is optional in the program
+# (program['nosound']), so its failure must not fail everything else. The
+# Linux script installs portaudio19-dev precisely because it can need a
+# compiler.
+#
+# torch needs nothing here any more: requirements.txt now carries the marker
+# split (`+cpu` for non-Darwin, plain 2.7.1 for Darwin), because `+cpu` is
+# built only for Linux/Windows and made the whole -r fail on this Mac.
+# allosaurus was already excluded by its own `sys_platform == "linux"`.
 #
 # The STAMP at the end is what makes this actually save the user time.
 # sync_requirements() (py_modules.py:491) skips its own install when
@@ -540,18 +687,26 @@ if [ "$DO_DEPS" = no ]; then
     say "Python packages: skipped (--no-deps); A-Z+T will install them on first run"
 elif [ "$DRY_RUN" = yes ]; then
     say "Python packages"
-    note "would install requirements.txt into env/ with --only-binary :all:"
+    note "would install requirements.txt into env/"
 else
     say "Installing the python packages (several minutes, needs the internet)"
     REQ="$DEST/requirements.txt"
     [ -f "$REQ" ] || die "no requirements.txt in $DEST"
     "$VPY" -m pip install --quiet --upgrade pip wheel >/dev/null 2>&1 \
         || note "could not update pip in the new env; carrying on"
+    # See the note above: wheels-only ONLY when there is no compiler to use.
+    WHEELS_ONLY=""
+    if [ "$CLT_PRESENT" = yes ]; then
+        note "developer tools are present, so packages needing a build may build"
+    else
+        WHEELS_ONLY="--only-binary=:all:"
+        note "no developer tools, so installing from wheels only: anything that"
+        note "would need compiling is reported instead of prompting for Xcode"
+    fi
     FILTERED="$(tmpdir)/requirements-macos.txt"
-    sed -e 's/^torch==2\.7\.1+cpu/torch==2.7.1/' -e '/^PyAudio/d' "$REQ" > "$FILTERED"
-    note "torch pin relaxed to 2.7.1 (there is no +cpu build for macOS)"
+    sed -e '/^PyAudio/d' "$REQ" > "$FILTERED"
     note "PyAudio held back for a separate attempt (sound is optional)"
-    if "$VPY" -m pip install --only-binary :all: -r "$FILTERED"; then
+    if "$VPY" -m pip install ${WHEELS_ONLY:+"$WHEELS_ONLY"} -r "$FILTERED"; then
         DEPS=yes
         note "packages installed"
     else
@@ -563,7 +718,7 @@ else
     fi
     # PyAudio on its own: sound is optional, so its failure is not the
     # install's failure.
-    if "$VPY" -m pip install --only-binary :all: PyAudio >/dev/null 2>&1; then
+    if "$VPY" -m pip install ${WHEELS_ONLY:+"$WHEELS_ONLY"} PyAudio >/dev/null 2>&1; then
         SOUND=yes
         note "PyAudio installed — recording and playback should work"
     else
@@ -716,10 +871,12 @@ if [ "$CHECK_WHEELS" = yes ]; then
         "$PY" -m venv "$WORK" || die "could not make a scratch venv"
         WPY="$WORK/bin/python"
         "$WPY" -m pip install --quiet --upgrade pip >/dev/null 2>&1
-        FILTERED="$(tmpdir)/requirements-macos.txt"
-        sed -e 's/^torch==2\.7\.1+cpu/torch==2.7.1/' -e '/^PyAudio/d' "$REQ" > "$FILTERED"
-        note "torch pin relaxed to 2.7.1 for this check (no +cpu build for macOS)"
+        FILTERED="$(tmpdir)/requirements-wheelcheck.txt"
+        sed -e '/^PyAudio/d' "$REQ" > "$FILTERED"
         note "PyAudio checked separately below"
+        # --only-binary stays unconditional HERE, unlike the install above:
+        # the question this switch answers is "does a wheel exist", and that
+        # does not change because the machine happens to own a compiler.
         if "$WPY" -m pip install --dry-run --only-binary :all: -r "$FILTERED" >"$(tmpdir)/wheels.log" 2>&1; then
             note "RESULT: every other requirement has a macOS wheel."
         else

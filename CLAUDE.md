@@ -196,6 +196,33 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
 - **`program` dict**: Created at `main.py:9`, threaded through most classes as `self.program`. Contains runtime config, flags, and references to major objects.
 - **Sound is optional**: `pyaudio`/sound imports are wrapped in try/except; `program['nosound']` gates audio features.
 
+## Shallow clones: widen the refspec before checking out a branch
+
+Clones are `--depth 1` by design (agenda/rework_install_procedure.md). That
+implies `--single-branch`, so the clone's refspec covers ONLY the default
+branch and `git checkout testing` fails with "did not match any file(s) known
+to git" — no ref for it can ever arrive. The clone looks normal; it isn't.
+
+Whenever you need another branch in a shallow clone:
+
+```bash
+git remote set-branches --add origin <branch>   # config edit; downloads nothing
+git fetch --depth 1                             # branch TIPS only, still shallow
+git checkout <branch>
+```
+
+**Name the branches; don't use `'*'`.** For an installed copy the only two a
+user can reach are `main` and `program['testversionname']` (`'testing'`,
+`main.py:30`) — `vcs.py:1126` toggles between exactly those and nothing else.
+A `'*'` refspec would also pull every work branch on the remote, which no
+install has any use for. The macOS installer sets this up at clone time and
+reads the test-branch name out of `main.py` rather than hardcoding it.
+
+**In-app branch switching is already handled** and needs none of this:
+`backend/core/vcs.py::fetch_tracking_branch()` fetches
+`<branch>:refs/remotes/origin/<branch>` with an explicit refspec for exactly
+this reason (its docstring says so) — don't "fix" that by widening refspecs.
+
 ## Build Notes
 
 - Python 3.13 from a custom build (`~/IT/Python-3.13.7`), used via the **suite** virtualenv

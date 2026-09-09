@@ -80,6 +80,18 @@ def pip_install(installs=[],secondtry=False):
         '-f', installfolder, #install the one in this folder, if there
         '--no-index' #This stops it from looking online
         ]
+        # macOS with no developer tools: never let pip reach for a compiler.
+        # THIS is the path that did it (measured 2026-09-08): the per-package
+        # backstop fetched the PyAudio, cryptography and openai-whisper
+        # SDISTS and started building — pyaudio's C extension and
+        # cryptography's Rust both ran `clang`/`cc`, which put a modal "The
+        # ˋclangˊ command requires the command line developer tools" dialog
+        # in front of the user mid-boot, and cryptography went as far as
+        # downloading its own rustup and cargo first. A missing optional
+        # engine is a degraded install that A-Z+T already reports and works
+        # around; a compiler prompt is an unanswerable question.
+        if _mac_without_compiler():
+            pyargs.extend(['--only-binary',':all:'])
         npyargs=len(pyargs)
         if secondtry:
             pyargs.extend(['--force-reinstall'])
@@ -466,6 +478,40 @@ def ensure_venv():
     sys.exit(0) #the venv process takes over from here
 ensure_venv()
 
+_MAC_NO_COMPILER=None #cached: asked once per process, not once per package
+
+def _mac_without_compiler():
+    """True on a macOS box with no Xcode command-line tools.
+
+    Cached, because the per-package installer below asks per package: that
+    would be ~25 `xcode-select` subprocesses on every boot of every Mac,
+    including ones where the answer is a flat no.
+
+    Why this exists: macOS keeps STUB SHIMS at /usr/bin for the developer
+    tools, and merely running one — which pip does the moment a package has
+    no wheel and has to build — pops a modal "The ˋclangˊ command requires
+    the command line developer tools. Would you like to install the tools
+    now?" dialog. In front of a linguist, mid-startup, that is unanswerable:
+    the tools may be several GB, the machine's owner may have refused them
+    already (2026-09-08), and nothing about A-Z+T needs them.
+
+    `xcode-select -p` is the safe way to ask. It reports the developer
+    directory or fails, and does NOT itself trigger the install dialog."""
+    global _MAC_NO_COMPILER
+    if _MAC_NO_COMPILER is not None:
+        return _MAC_NO_COMPILER
+    if platform.system() != 'Darwin':
+        _MAC_NO_COMPILER=False
+        return _MAC_NO_COMPILER
+    try:
+        subprocess.check_output(['xcode-select','-p'],
+                                stderr=subprocess.STDOUT,timeout=30)
+        _MAC_NO_COMPILER=False #tools present: building is allowed to work,
+                               #  exactly as it does on Linux and Windows
+    except Exception:
+        _MAC_NO_COMPILER=True
+    return _MAC_NO_COMPILER
+
 def sync_requirements():
     """Keep the venv in step with requirements.txt: any edit there (new
     dependency, version pin or bump) rolls out to EVERY install on its
@@ -500,6 +546,14 @@ def sync_requirements():
     base=[sys.executable,'-m','pip','install',
           '-f',os.path.join(root,'modulestoinstall'),
           '-r',req]
+    # See _mac_without_compiler(): on a Mac with no developer tools, refuse
+    # source builds rather than let pip invoke a compiler that is not there
+    # (and put a modal Xcode dialog in front of the user mid-boot).
+    if _mac_without_compiler():
+        base=base+['--only-binary',':all:']
+        log.info("macOS without developer tools: installing only from wheels. "
+                 "Any package with no macOS wheel will be reported as missing "
+                 "rather than built — that is deliberate.")
     for args in (base+['--no-index'],base): #offline-first, then online
         passname='offline' if '--no-index' in args else 'online'
         try:

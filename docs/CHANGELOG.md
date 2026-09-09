@@ -259,6 +259,48 @@ diagnosable at all. Both set `PATH` themselves — essential for the `.app`, bec
 hands a GUI app a bare `PATH` and never reads `~/.zprofile`, so `which git` inside A-Z+T
 would otherwise find the `/usr/bin` stub.
 
+**macOS downloads the Charis fonts too**, rather than asking the user for a zip — the
+first draft only asked because I had no verified URL, which was equally true of the python
+and git downloads it was happily making. It tries candidate URLs, verifies each download
+actually contains `.ttf` files before installing anything to `~/Library/Fonts`, and keeps
+`--fonts=<zip>`, the new `--font-url=<URL>`, and a `~/Downloads` scan as fallbacks. **The
+current release is looked up, not pinned:**
+`api.github.com/repos/silnrsi/font-charis/releases/latest` names the release's assets, so
+nothing needs editing when SIL publishes 7.001. That endpoint is anonymous for a public
+repo — no account or token — and its only limit, 60 requests/hour per IP, is unreachable
+for an installer. curl fetches and python only parses, deliberately: the python.org
+installer leaves certificate installation to a separate step the user may never have run,
+so a python-side HTTPS fetch can fail on an otherwise working machine. A
+`releases/latest/download/<asset>` URL was tried first and does **not** work, because that
+form redirects to a *fixed* asset name while this project's asset names embed the version —
+asking the API what the names are is the way round it. One verified `software.sil.org` URL
+stays as an availability net for GitHub being unreachable, **not** as version tracking
+(pattern `downloads/r/<family>/<Family>-<version>.zip`, filename **case-sensitive** —
+`Charis-7.000.zip` serves, `charis-7.000.zip` does not); the older `CharisSIL-6.101.zip`
+was dropped as redundant, since it could only be reached in that same situation and brings
+a different family name. Either family name is fine: the missing-font check accepts both.
+This is not cosmetic: the tested Mac fell back to
+`.AppleSystemUIFont`, whose metrics differ from every other machine — which is what the
+odd wrapping and wrong-sized buttons in the first macOS screenshots actually were.
+
+**A shallow clone can't check out another branch, and now says so.** `--depth 1` implies
+`--single-branch`, so the clone's refspec covers only the default branch and
+`git checkout testing` fails with "did not match any file(s) known to git" — no ref for it
+can ever arrive. The fix is two commands that cost nothing (`git remote set-branches --add
+origin <branch>`, then `git fetch --depth 1` for the branch tips), and the macOS installer
+now runs them right after cloning — for **named** branches, not `'*'`: an install can only
+ever reach `main` and `program['testversionname']` (`vcs.py:1126` toggles between exactly
+those two), so `'*'` would drag in every work branch on the remote for nothing. The
+installer reads that branch name out of `main.py` rather than hardcoding `'testing'`, and
+re-adds the branch it actually cloned, since `set-branches` replaces the list rather than
+appending. The protocol is written into `azt/CLAUDE.md` for hand work,
+and the Linux/Windows installers and `sister_repos.py::ensure()` need the same line when
+they go shallow. This settles the open question in the shallow-clone decision — something
+downstream *did* need other branches. **In-app branch switching was never affected**:
+`vcs.py::fetch_tracking_branch()` already fetches
+`<branch>:refs/remotes/origin/<branch>` explicitly, and its docstring names this exact
+case, which is why it surfaced as a hand-editing problem rather than a bug.
+
 **AGENDA (decided, not yet done): the first dependency install belongs in the
 installer** for Linux and Windows too. Every installer stops at `git clone` today, so the first double-click spends
 minutes downloading dependencies — after the user was told the install had finished.
