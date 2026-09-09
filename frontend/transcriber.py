@@ -202,8 +202,25 @@ if __name__ == "__main__":
     except:
         def _(x):
             return x
+    # REAL SETTINGS IF WE CAN GET THEM. Passing none left `soundsettings=None`
+    # → `self.beeps is None` → every audio path silently skipped, so running
+    # this alone could never have caught a beeps regression (2026-09-09). It
+    # stays optional: without settings you still get layout and typing, and
+    # the log says which you got.
+    soundsettings=None
+    try:
+        from backend import langtags   # the route io_put/sound.py __main__ takes
+        soundsettings=sound.SoundSettings(
+                    analang_obj=langtags.Languages().get_obj('tbt'))
+        log.info("standalone Transcriber: real sound settings, so the beeps "
+                 "should play (audio handle: {})".format(
+                                        getattr(soundsettings,'audio',None)))
+    except Exception as e:
+        log.info("standalone Transcriber: no sound settings ({}: {}), so no "
+                 "beeps; layout and typing still work.".format(
+                                                    type(e).__name__,e))
     r=ui.Root()
     r.title(_('Transcriber'))
-    Transcriber(r,initval='˥˥ ˩˩ ˧˧',column=1,row=1)
-    r.deiconify()# soundsettings=sound.SoundSettings()
+    Transcriber(r,initval='˥˥ ˩˩ ˧˧',soundsettings=soundsettings,column=1,row=1)
+    r.deiconify()
     r.mainloop()

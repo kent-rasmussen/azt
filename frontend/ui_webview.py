@@ -2613,6 +2613,41 @@ class Toplevel(_WebviewWidget):
         log.info("window {}: DEICONIFY (show) requested".format(self._wid))
         self._wv_call('show')
 
+    def lift(self, aboveThis=None):
+        """Bring this window to the front. MISSING UNTIL 2026-09-09, and its
+        absence was a NO-WINDOW bug rather than a stacking annoyance.
+
+        `ui_shell._option_dialog`'s two callers finish with `w.lift()`
+        (`ui_shell.py:2389`, `:2425`), so under this backend picking a sense
+        letter in Add and Parse Words with Audio raised
+        `AttributeError: 'Window' object has no attribute 'lift'`. That fires
+        inside a pywebview event callback, where `on_event` (line ~114) logs
+        the traceback and CONTINUES — so nothing crashed, the caller simply
+        stopped at that line, and the user got no window and no error.
+
+        Same bug shape as the four earlier misses in this port (`takekioskscreen`,
+        `after_idle`, `cget`, `wait_window`): a call that tkinter answers and
+        this backend did not, swallowed by a handler that keeps going. It is
+        also why implementing this is not enough on its own — see the note on
+        `on_event` swallowing in agenda/webview_when_to_finish.md.
+
+        pywebview has no stacking API, so `show()` is the honest equivalent: on
+        every engine it maps AND raises, and calling it on an already-visible
+        window is harmless. That also makes `lift()` do the useful thing the
+        two call sites actually wanted — the dialog they had just built was
+        hidden, and lift is what was meant to present it.
+        """
+        log.info("window {}: LIFT (show, no stacking API) requested"
+                 "".format(self._wid))
+        self._wv_call('show')
+
+    def lift(self, aboveThis=None):
+        """As Toplevel.lift: pywebview has no stacking API, so show() is the
+        honest equivalent. Here for the same reason — tkinter's root answers
+        `lift()`, so anything that calls it must not hit AttributeError."""
+        log.info("root window: LIFT (show, no stacking API) requested")
+        self._wv_call('show')
+
     def title(self, text=None):
         """tkinter's title() is a GETTER with no argument, and the ambient
         collab status depends on that: `base = w.title().split(SEP)[0]`

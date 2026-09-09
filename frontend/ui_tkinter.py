@@ -1420,14 +1420,46 @@ class Exitable():
                 # skip is logged — a page that should have appeared is then
                 # named here, not left to be guessed at.
                 from frontend.visibility import has_content
+                #   LOG THE DECISION, ALL THREE WAYS (2026-09-09). The watchdog
+                # reports state 25s later, which cannot say what was decided
+                # here: its `content=` is this very `has_content` (see
+                # visibility.py:312), so comparing the two tells us nothing —
+                # the open question is a SEQUENCE, not a predicate. On the
+                # 2026-09-09 NWAA (Add and Parse Words with Audio → pick a
+                # sense letter → nothing) has_content was true, which means
+                # this fell to the deiconify below and the window was withdrawn
+                # again by something else — OR iswaiting() was true here and
+                # the wait never revealed it. These lines distinguish those.
+                # See agenda/fullscreen_with_only_quit.md.
+                #   Never let a diagnostic break teardown: same rule as the
+                # resetframe guard.
+                try:
+                    log.info("on_quit reveal decision for {}: has_content={} "
+                             "iswaiting={} state={} (closing {})".format(
+                                self.parent,
+                                has_content(self.parent),
+                                self.parent.iswaiting(),
+                                self.parent.state(),
+                                type(getattr(self,'task',self)).__name__))
+                except Exception as e:
+                    log.info("on_quit reveal decision: couldn't report ({})"
+                             "".format(e))
                 if self.parent.iswaiting():
-                    pass #a wait is already covering the screen; it will reveal
+                    #a wait is already covering the screen; it will reveal.
+                    # If a NO WINDOW follows this line, that assumption is what
+                    # failed, and the wait is the thing to chase — not this guard.
+                    log.info("on_quit: leaving {} to the wait that covers it"
+                             "".format(self.parent))
                 elif not has_content(self.parent):
                     from frontend.visibility import report_empty_page
                     report_empty_page('on_quit',self.parent,'not revealed',
                             'closing {}'.format(
                                 type(getattr(self,'task',self)).__name__))
                 else:
+                    # If a NO WINDOW follows THIS line, the reveal happened and
+                    # something withdrew the window again afterwards — look for
+                    # the later withdraw, not for a missing deiconify.
+                    log.info("on_quit: revealing {}".format(self.parent))
                     self.parent.deiconify()
                     # REVERTED 2026-09-03, minutes after being added: scheduling
                     # the commit with after_idle DEADLOCKED — faulthandler
@@ -2538,6 +2570,21 @@ def default_root():
     return None
 class Root(Waitable,UI,tkinter.Tk):
     """this is the root of the tkinter GUI."""
+    def withdraw(self):
+        """As Toplevel.withdraw: say who hid it. The root shows as withdrawn in
+        every NO WINDOW dump, and whether that is normal for the run or the
+        actual fault has never been readable from the log."""
+        try:
+            import traceback as _tb
+            frame=_tb.extract_stack(limit=2)[0]
+            log.info("root window: WITHDRAW (hide) by {}:{} in {}()".format(
+                        frame.filename.rsplit('/',1)[-1],
+                        frame.lineno,frame.name))
+        except Exception as e:
+            log.info("root window: WITHDRAW (hide), caller unknown ({})"
+                     "".format(e))
+        super().withdraw()
+
     def on_quit(self,to_root=False):
         super().on_quit(to_root=to_root)
         logsetup.shutdown()
@@ -2632,6 +2679,37 @@ class Root(Waitable,UI,tkinter.Tk):
 class Toplevel(Childof,Waitable,UI,tkinter.Toplevel): #
     """This and all Childof classes should have a parent, to inherit a common
     theme. Otherwise, colors, fonts, and icons will be incongruous."""
+    def withdraw(self):
+        """Hide — and NAME WHO ASKED, which is the half the log never had.
+
+        The webview backend has logged every hide/show with the window id since
+        2026-09-04, and its own comment recommends this for here too: "There is
+        a known recurring class here on the Tk side too — a withdrawn run
+        window never revealed — so 'who asked for show' is worth being able to
+        read off a log permanently" (ui_webview.py:2599-2607).
+
+        Added 2026-09-09 for a concrete question the existing logging could not
+        answer. On the NWAA in Add and Parse Words with Audio, `on_quit`'s new
+        decision line proved the task window was `state=normal` when its child
+        dialog closed — visible — and 25 seconds later the watchdog found it
+        `withdrawn`. So something hid it in between, silently, and nothing in
+        the log said what. Reveals are already announced (Window.deiconify's
+        NOTHING BUT QUIT check, guardvisible, the watchdog); hides were not.
+
+        The caller frame, not a full traceback: the producer's file and line is
+        what identifies it, and a traceback per hide would bury the log. Never
+        let the diagnostic break the hide.
+        """
+        try:
+            import traceback as _tb
+            frame=_tb.extract_stack(limit=2)[0]
+            log.info("{}: WITHDRAW (hide) by {}:{} in {}()".format(
+                        self,frame.filename.rsplit('/',1)[-1],
+                        frame.lineno,frame.name))
+        except Exception as e:
+            log.info("{}: WITHDRAW (hide), caller unknown ({})".format(self,e))
+        super().withdraw()
+
     def post_tk_init(self):
         super().post_tk_init()
     def __init__(self, parent, *args, **kwargs):
