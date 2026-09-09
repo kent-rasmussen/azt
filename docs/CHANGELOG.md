@@ -259,6 +259,36 @@ diagnosable at all. Both set `PATH` themselves — essential for the `.app`, bec
 hands a GUI app a bare `PATH` and never reads `~/.zprofile`, so `which git` inside A-Z+T
 would otherwise find the `/usr/bin` stub.
 
+**No ASR engine is a no-brainer any more.** Three changes, all found on the Mac and all
+about one engine's absence taking out more than itself:
+
+- **`openai_whisper` is now marker-excluded on Intel macOS only** —
+  `sys_platform != "darwin" or platform_machine != "x86_64"`. It publishes no wheel at all
+  (sdist only, for years) and its `numba` dependency had no python-3.13 Intel-macOS wheel
+  either, so on a Mac without a compiler it cannot be installed — and that one failure was
+  failing the whole `-r requirements.txt`, so no requirements stamp was written and every
+  boot re-resolved the lot. Deliberately **not** the blanket `allosaurus` treatment:
+  Apple Silicon may have the wheels it needs, and that stays worth testing. Rosetta reports
+  `x86_64` and is excluded, which is right — the wheels that matter follow the
+  interpreter's architecture.
+
+- **FIX (a missing engine disabled all eight).** `backend/asr.py` imported `whisper` at
+  module scope, so openai-whisper's absence made the whole module unimportable — and
+  openai-whisper simply cannot be installed on a Mac without a compiler: it publishes no
+  wheel at all, and its own `numba` dependency had no python-3.13 Intel-macOS wheel
+  either. Meanwhile `faster_whisper` installs there fine. The import now lives inside
+  `load_whisper()`, matching `load_faster_whisper` and `load_allosaurus`, which already
+  import their engines in the loader for exactly this reason (allosaurus is linux-only).
+  Whisper is one engine of eight.
+- **FIX (a failed load was recorded as a success).** `load_models_by_kwarg` called each
+  loader bare, so the first failure — unbuildable package, dead model download, corrupt
+  cache, unreachable hub — aborted the whole batch, skipping every engine after it; and
+  the flag was then still set to enabled, so the app believed in a model it never loaded
+  and hit `KeyError` on `self.models[repo]` later. Each load is now guarded: the engine is
+  marked **off**, the reason is recorded in the new `ASR_PROBLEMS` (same shape as
+  `SOUND_PROBLEMS`, kept in `asr.py` because `sound.py` imports it), and the other engines
+  still load.
+
 **macOS downloads the Charis fonts too**, rather than asking the user for a zip — the
 first draft only asked because I had no verified URL, which was equally true of the python
 and git downloads it was happily making. It tries candidate URLs, verifies each download

@@ -5,12 +5,17 @@ log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 import numpy
 # import soundfile
-import whisper
 import torch
 import datetime, copy
 from data import whisper_codes_names
 from data import ethnologue_macrolanguages_members
 _MACRO_MEMBERS = ethnologue_macrolanguages_members.dict  # {macro: [member codes]}
+# Engines that were asked for and did not load, as (engine, reason) — the same
+# shape as SOUND_PROBLEMS in backend/core/sound.py, and kept here rather than
+# appended there because sound.py imports this module (a cycle the other way).
+# Populated by load_models_by_kwarg; read it to tell a user WHICH engine is
+# missing instead of only that transcription is off.
+ASR_PROBLEMS=[]
 WHISPER_SIZES=['tiny', 'base', 'small', 'medium', 'large-v1',
                 'large-v2', 'large-v3', 'large']
 # kwarg -> model repo, module-level so the draft-display filter can consult
@@ -51,6 +56,17 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 class ASRtoText(object):
     def load_whisper(self,size='base'):
+        # Imported HERE, not at module scope, because openai-whisper is one
+        # engine of eight and its absence must not disable the other seven.
+        # It publishes no wheel at all (sdist only), and its own dependency
+        # numba had no wheel for python 3.13 on Intel macOS either, so it
+        # simply cannot be installed on a Mac with no compiler — while
+        # faster_whisper, right below, installs there fine. A module-level
+        # `import whisper` made that one gap break ASR entirely (macOS,
+        # 2026-09-09). This matches load_faster_whisper and load_allosaurus,
+        # which already import their engines inside the loader for exactly
+        # this reason (allosaurus is linux-only).
+        import whisper
         repo=f"whisper-{size}"
         model_kwargs=copy.deepcopy(self.model_kwargs)
         try:
@@ -768,8 +784,28 @@ class ASRtoText(object):
         for k,v in kwargs.items():
             if k in self.repo_modelnames: #these are all we do here
                 if v:
-                    self.repo_methods[self.repo_modelnames[k]]()
-                    log.info(f"ASR model {k} loaded.")
+                    # NO ENGINE IS A NO-BRAINER (Kent 2026-09-09). Any loader
+                    # can fail for reasons that have nothing to do with this
+                    # code: its package isn't installable on the platform
+                    # (openai-whisper is sdist-only and its numba dependency
+                    # had no python-3.13 Intel-macOS wheel), a model download
+                    # died, a cache is corrupt, a hub is unreachable. Called
+                    # bare, the first such failure aborted the WHOLE batch —
+                    # every engine after it in this call was skipped, and the
+                    # `setattr` below still recorded the flag as ENABLED, so
+                    # the app went on believing in a model that was never
+                    # loaded and hit KeyError on self.models[repo] later.
+                    #
+                    # So: report it, mark that engine OFF, keep the others.
+                    try:
+                        self.repo_methods[self.repo_modelnames[k]]()
+                        log.info(f"ASR model {k} loaded.")
+                    except Exception as e:
+                        v=False #recorded by the setattr below: NOT available
+                        ASR_PROBLEMS.append((k,str(e)))
+                        log.error(f"ASR model {k} did NOT load ({e}); "
+                                  "continuing without it. Transcription will "
+                                  "use whichever other engines did load.")
                 elif self.return_ipa and k in kwargs_that_give_IPA:
                     log.info(f"ASR model {k} not unloaded (to preserve IPA).")
                 elif tone_should_be and k in kwargs_that_give_tone:

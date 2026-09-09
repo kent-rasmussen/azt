@@ -29,14 +29,44 @@ numpy>=2.1,<2.5         # direct: io_put/sound, core/sound, asr.
                         # <2.5: numba (openai-whisper dep) requires numpy<2.5 —
                         # uncapped, pip installed 2.5.1 and numba went
                         # ResolutionImpossible. Recheck when numba's cap moves.
-openai_whisper          # provides `import whisper`
+openai_whisper; sys_platform != "darwin" or platform_machine != "x86_64"
+                        # provides `import whisper`. ONE ASR engine of eight
+                        # (backend/asr.py has eight loaders), so its absence
+                        # degrades transcription rather than removing it —
+                        # faster_whisper installs where this doesn't.
+                        # The marker excludes ONLY Intel macOS, which is the
+                        # case measured 2026-09-09: this package publishes no
+                        # wheel at all (sdist only, for years), and its numba
+                        # dependency had no python-3.13 Intel-macOS wheel
+                        # either, so on a Mac with no compiler it cannot be
+                        # installed — and that failure alone was failing the
+                        # whole `-r`, which meant no requirements stamp and a
+                        # full re-resolve on EVERY boot.
+                        # NOT excluded from all of macOS (the blanket
+                        # allosaurus treatment): Apple Silicon may well have
+                        # the numba wheels this needs. Untested — narrow the
+                        # marker further if arm64 turns out to work, widen it
+                        # if it doesn't. Rosetta reports x86_64 and is
+                        # excluded, which is correct: the wheels that matter
+                        # follow the interpreter's architecture.
 packaging
 patiencediff
 praat-parselmouth       # praatfns.py
 Pillow
 polib                   # not imported by azt itself; translation tooling
 psutil
-PyAudio
+PyAudio                 # WINDOWS-ONLY WHEELS. Checked against PyPI
+                        # 2026-09-09: every release from 0.2.8 to 0.2.14
+                        # publishes win32/win_amd64 wheels and NOTHING else,
+                        # so Linux and macOS always build it from the sdist —
+                        # which is why the Linux installer needs
+                        # portaudio19-dev. On macOS without the Xcode tools it
+                        # therefore cannot be installed AT ALL, at any
+                        # version; that is not a gap waiting on an upload.
+                        # Sound is optional (program['nosound']), so this
+                        # degrades rather than blocks. The way out is a
+                        # library that ships PortAudio inside its wheel
+                        # (sounddevice): see agenda/rework_install_procedure.md.
 pydub                   # not imported by azt itself (candidate to drop post-workshop)
 reportlab               # PDF output (alphabet chart/booklet)
 samplerate              # not imported (utilities/file.py has it commented; candidate to drop)

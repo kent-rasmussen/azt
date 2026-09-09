@@ -182,13 +182,25 @@ run()  {   # every state-changing command goes through this, so --dry-run works
     "$@"
 }
 
-TMPDIR_AZT=""
-cleanup() { [ -n "$TMPDIR_AZT" ] && [ -d "$TMPDIR_AZT" ] && rm -rf "$TMPDIR_AZT"; }
+# ONE scratch directory, made once, eagerly. It used to be a lazy tmpdir()
+# function called in a command substitution — which cannot work: substitution
+# runs in a SUBSHELL, so the assignment never reached this shell, every call
+# made ANOTHER mktemp directory, the cleanup trap had nothing to remove, and
+# two places that wrote and then read "the" log file were using different
+# directories (found 2026-09-09 while chasing the font download).
+TMPDIR_AZT="$(mktemp -d -t azt-install)" || die "could not make a temporary folder"
+cleanup() { [ -n "${TMPDIR_AZT:-}" ] && [ -d "$TMPDIR_AZT" ] && rm -rf "$TMPDIR_AZT"; }
 trap cleanup EXIT
-tmpdir() {
-    [ -n "$TMPDIR_AZT" ] || TMPDIR_AZT="$(mktemp -d -t azt-install)" \
-        || die "could not make a temporary folder"
-    printf '%s' "$TMPDIR_AZT"
+
+# Does a file contain a match? NOT `... | grep -q`: under `set -o pipefail`
+# (on, above) grep -q exits at its first match, the writer upstream dies of
+# SIGPIPE with 141, and pipefail hands that back as the pipeline's status — so
+# the test reports FALSE precisely when the match was found. That is what
+# rejected every good font download (2026-09-09): the zip arrived, `unzip -l`
+# listed its .ttf files, and the check failed anyway. grep reads a file here,
+# with no pipe to break.
+has_match() { # has_match <pattern> <file>
+    grep -qi "$1" "$2" 2>/dev/null
 }
 
 # ─── The shim rule ──────────────────────────────────────────────────────────
@@ -261,7 +273,7 @@ elif [ "$DO_PYTHON" = no ]; then
 else
     note "no usable python found; installing python $PY_VERSION from python.org"
     note "(NOT Homebrew — brew itself requires the Xcode command-line tools)"
-    PKG="$(tmpdir)/python.pkg"
+    PKG="$TMPDIR_AZT/python.pkg"
     note "downloading $PYTHON_URL"
     if [ "$DRY_RUN" = no ]; then
         curl -fL --progress-bar -o "$PKG" "$PYTHON_URL" || {
@@ -271,7 +283,9 @@ else
             note "run it, then run this script again."
             die "could not download python"
         }
-        file "$PKG" | grep -qi 'xar\|package' \
+        # Same pipefail/grep -q trap as the font check — see has_match().
+        file "$PKG" > "$TMPDIR_AZT/pkg.type" 2>/dev/null
+        has_match 'xar\|package' "$TMPDIR_AZT/pkg.type" \
             || die "what downloaded is not an installer package: $PKG"
     fi
     note "installing it — macOS will ask for your administrator password"
@@ -312,7 +326,7 @@ else
     note "points at. It is an OLD git (that project is abandoned), but it is"
     note "the one way to get git here without the Xcode tools, and it does"
     note "everything A-Z+T asks of git."
-    DMG="$(tmpdir)/git.dmg"
+    DMG="$TMPDIR_AZT/git.dmg"
     note "downloading $GIT_URL"
     if [ "$DRY_RUN" = no ]; then
         curl -fL --progress-bar -o "$DMG" "$GIT_URL" || {
@@ -322,7 +336,7 @@ else
             note "run it, then run this script again."
             die "could not download git"
         }
-        MOUNT="$(tmpdir)/gitmount"
+        MOUNT="$TMPDIR_AZT/gitmount"
         mkdir -p "$MOUNT"
         hdiutil attach "$DMG" -nobrowse -quiet -mountpoint "$MOUNT" \
             || die "could not open the git disk image"
@@ -489,20 +503,26 @@ for a in assets:
     if [ -z "$FONT_ZIP" ] && [ "$DO_FONTS" = yes ]; then
         for url in ${FONT_URL:-${LATEST_URL:-} $FONT_URLS}; do
             [ "$DRY_RUN" = yes ] && { note "would try $url"; continue; }
-            cand="$(tmpdir)/charis.zip"
+            cand="$TMPDIR_AZT/charis.zip"
             note "trying $url"
-            if curl -fL --silent --show-error -o "$cand" "$url" &&
-               unzip -l "$cand" 2>/dev/null | grep -qi '\.ttf'; then
+            if ! curl -fL --silent --show-error -o "$cand" "$url"; then
+                note "that download didn't work; trying the next"
+                rm -f "$cand"
+                continue
+            fi
+            # Listing to a FILE, then searching the file: see has_match().
+            unzip -l "$cand" > "$TMPDIR_AZT/charis.list" 2>/dev/null
+            if has_match '\.ttf' "$TMPDIR_AZT/charis.list"; then
                 note "downloaded the fonts"
                 FONT_ZIP="$cand"
                 break
             fi
-            note "that one didn't work; trying the next"
+            note "what arrived has no .ttf files in it; trying the next"
             rm -f "$cand"
         done
     fi
     if [ -n "$FONT_ZIP" ] && [ -f "$FONT_ZIP" ]; then
-        UNZ="$(tmpdir)/fonts"
+        UNZ="$TMPDIR_AZT/fonts"
         if [ "$DRY_RUN" = yes ]; then
             note "would unpack $FONT_ZIP and copy its .ttf files to ~/Library/Fonts"
             FONTS="would install"
@@ -703,7 +723,7 @@ else
         note "no developer tools, so installing from wheels only: anything that"
         note "would need compiling is reported instead of prompting for Xcode"
     fi
-    FILTERED="$(tmpdir)/requirements-macos.txt"
+    FILTERED="$TMPDIR_AZT/requirements-macos.txt"
     sed -e '/^PyAudio/d' "$REQ" > "$FILTERED"
     note "PyAudio held back for a separate attempt (sound is optional)"
     if "$VPY" -m pip install ${WHEELS_ONLY:+"$WHEELS_ONLY"} -r "$FILTERED"; then
@@ -825,7 +845,7 @@ EOF
         # is already better than a script icon.
         ICON_SRC="$DEST/images/AZT green stacks_transparent_sm.png"
         if [ -f "$ICON_SRC" ]; then
-            SQ="$(tmpdir)/azticon.png"
+            SQ="$TMPDIR_AZT/azticon.png"
             if sips --padToHeightWidth 512 512 --padColor FFFFFF \
                     "$ICON_SRC" --out "$SQ" >/dev/null 2>&1 &&
                sips -s format icns "$SQ" \
@@ -867,17 +887,17 @@ if [ "$CHECK_WHEELS" = yes ]; then
     else
         REQ="$DEST/requirements.txt"
         [ -f "$REQ" ] || die "no requirements.txt in $DEST"
-        WORK="$(tmpdir)/wheelcheck"
+        WORK="$TMPDIR_AZT/wheelcheck"
         "$PY" -m venv "$WORK" || die "could not make a scratch venv"
         WPY="$WORK/bin/python"
         "$WPY" -m pip install --quiet --upgrade pip >/dev/null 2>&1
-        FILTERED="$(tmpdir)/requirements-wheelcheck.txt"
+        FILTERED="$TMPDIR_AZT/requirements-wheelcheck.txt"
         sed -e '/^PyAudio/d' "$REQ" > "$FILTERED"
         note "PyAudio checked separately below"
         # --only-binary stays unconditional HERE, unlike the install above:
         # the question this switch answers is "does a wheel exist", and that
         # does not change because the machine happens to own a compiler.
-        if "$WPY" -m pip install --dry-run --only-binary :all: -r "$FILTERED" >"$(tmpdir)/wheels.log" 2>&1; then
+        if "$WPY" -m pip install --dry-run --only-binary :all: -r "$FILTERED" >"$TMPDIR_AZT/wheels.log" 2>&1; then
             note "RESULT: every other requirement has a macOS wheel."
         else
             warn "RESULT: at least one requirement has no macOS wheel."
@@ -885,7 +905,7 @@ if [ "$CHECK_WHEELS" = yes ]; then
             note "at the source — a wheel, or a platform marker like the one"
             note "allosaurus already has — NOT a reason to install Xcode on a"
             note "user's machine."
-            tail -n 25 "$(tmpdir)/wheels.log"
+            tail -n 25 "$TMPDIR_AZT/wheels.log"
         fi
         if "$WPY" -m pip install --dry-run --only-binary :all: PyAudio >/dev/null 2>&1; then
             note "PyAudio: has a macOS wheel, so recording should work."
