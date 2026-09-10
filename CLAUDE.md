@@ -51,6 +51,27 @@ pytest                                 # headless; no Tk display needed
 pytest -m "not integration"            # skip stubs awaiting fixtures
 ```
 
+**Use A-Z+T's own python, and install the dev requirements first.** Both are
+easy to miss and fail in confusing ways: the app's packages live in its venv,
+so a bare `python` reports numpy/sounddevice missing on a machine where the
+app runs fine (seen on Windows and macOS, 2026-09-10), and `pytest` is in
+`requirements-dev.txt` — which the app's auto-install does NOT sync, since it
+reads `requirements.txt` only. So on a fresh install:
+
+```bash
+# Linux / macOS
+../env/bin/python -m pip install -r requirements-dev.txt
+../env/bin/python -m pytest -q
+
+# Windows (Git Bash / MINGW64)
+../env/Scripts/python.exe -m pip install -r requirements-dev.txt
+../env/Scripts/python.exe -m pytest -q
+```
+
+The suite is headless by design — no display, no audio device, no files — so
+it runs on any of the three platforms. Tests that need something absent skip
+rather than fail.
+
 Coverage so far is guardrails + units: an **import smoke test** (every module
 must import; missing optional deps skip, real errors fail), a **`waiting()`
 context-manager contract** test (guards the stuck-dialog fix), and units for

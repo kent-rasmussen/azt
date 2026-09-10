@@ -22,6 +22,22 @@ use it there.
 numbers mean, and what it cannot tell you. Worth reading before believing a
 result, but it is not a step: nothing needs a switch to run.
 
+## Start here if anything won't run
+
+```bash
+python tests/manual/sound_check/where_am_i.py
+```
+
+**Standard library only** — no venv, no packages, no `-um`, and it imports
+nothing from the app, so it works when nothing else does. Every other script
+here needs numpy and sounddevice, which is exactly what is missing when
+things won't start, so the diagnostics were unavailable precisely when they
+were needed (Kent, on Windows and macOS, 2026-09-10: *"I can't even get it to
+run."*).
+
+It reports which interpreter you used, where A-Z+T's own one is, what each
+can import, and the exact commands for that machine. It changes nothing.
+
 ## Run this one on other machines
 
 **`collect_audio_facts.py`** — unattended, ~20 s, no setup. Reports numbers,
@@ -70,6 +86,8 @@ Headless, in `azt/tests/` — run with `pytest` from `azt/`:
 | `test_sound_units.py` | `zero_runs`, `rate_is_fake`, format ranking, config migration — including the int16 blind spot and the cheap-resampler gap, asserted so neither can be quietly closed by tuning |
 | `test_sound_settings_contracts.py` | the settings object: choosing a card moves index AND name, `resolve_cards`' three outcomes, findings recorded but never acted on |
 | `test_sound_ui_handlers.py` | the window's handlers, called on a stand-in `self` with no Tk: every setter re-derives the test filename, and `relabel_settings` does not |
+| `test_take_diagnostics.py` | what a finished take TELLS THE USER — muted input, silence, dropouts, gating, one notice per take, and above all that a healthy take says nothing |
+| `test_sound_plumbing.py` | `quiet_probing` gives stderr back (and leaks no descriptors), and the "wrong python" hint finds a venv on POSIX and Windows layouts |
 
 Those last two exist because **every bug that reached Kent on 2026-09-10 was
 in the seam between a UI handler and the state it changes** — not in the
