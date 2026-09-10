@@ -25,6 +25,23 @@ class RecordButtonFrame(ui.Frame):
             self.makeplaybutton()
             self.makedeletebutton()
             self.addlink()
+        # THE TAKE CAN CHANGE THE SETTINGS, so re-read them onto the labels.
+        # `_report_take` proves a rate upsampled and `note_fake_rate` re-picks
+        # immediately — correct, and invisible: the window still said 192khz
+        # after switching to 96000, so the only evidence was the log (Kent
+        # 2026-09-10, "unclear that setting changed, since there was no UI
+        # change"). Nothing polls: `soundcheckrefresh` runs once from
+        # __init__ and on clicks, and its `refreshdelay`/`dictnow` are dead.
+        # `self.task` is whoever built this frame — the SoundSettingsWindow on
+        # the mic-check screen, a real Task everywhere else. Only the former
+        # has labels to re-read, so this is a no-op during real recording.
+        refresh = getattr(getattr(self, 'task', None), 'relabel_settings',
+                          None)
+        if callable(refresh):
+            try:
+                refresh()
+            except Exception as e:
+                log.info("couldn't refresh the settings labels ({})".format(e))
     def _redo(self, event=None):
         log.log(3,"I'm deleting the recording now")
         self.p.destroy()
@@ -333,6 +350,7 @@ class SoundSettingsWindow(ui.Window):
     def setsoundformat(self,choice,window):
         self.soundsettings.sample_format=choice
         self.updatesoundformat()
+        self._refresh_test_filename()   # see setsoundhz
         window.destroy()
     def updatesoundformat(self):
         self.labeltext['sample_format'].set(self.soundformatlabel())
@@ -343,17 +361,22 @@ class SoundSettingsWindow(ui.Window):
         return _(f"{cur}")
     def setsoundcard_byname(self,name):
         if name in self.soundsettings.cards['dict'].values():
-            self.soundsettings.audio_card_in=[n for n,v
+            # choose_card, not a direct assignment: it also records WHICH
+            # device the index means, without which resolve_cards() follows
+            # the previously stored name and undoes this (see choose_card).
+            self.soundsettings.choose_card('in',[n for n,v
                                     in self.soundsettings.cards['dict'].items()
-                                    if v == name][0]
+                                    if v == name][0])
         else:
             log.error(f"card {name} not available "
                         f" ({self.soundsettings.cards['dict'].keys()})")
         self.updatesoundcard()
+        self._refresh_test_filename()   # see setsoundhz
     def setsoundcardindex(self,choice,window):
         # log.info("setsoundcardindex: {}".format(choice))
-        self.soundsettings.audio_card_in=choice
+        self.soundsettings.choose_card('in',choice)
         self.updatesoundcard()
+        self._refresh_test_filename()   # the name carries the input card too
         window.destroy()
     def updatesoundcard(self):
         self.labeltext['audio_card_in'].set(self.soundcardlabel())
@@ -366,7 +389,7 @@ class SoundSettingsWindow(ui.Window):
         return _(f"Microphone: '{cur}'")
     def setsoundcardoutindex(self,choice,window):
         # log.info("setsoundcardoutindex: {}".format(choice))
-        self.soundsettings.audio_card_out=choice
+        self.soundsettings.choose_card('out',choice)
         self.updatesoundcardoutindex()
         window.destroy()
     def updatesoundcardoutindex(self):
@@ -378,6 +401,15 @@ class SoundSettingsWindow(ui.Window):
     def setsoundhz(self,choice,window):
         self.soundsettings.fs=choice
         self.updatesoundhz()
+        # THE TEST FILENAME ENCODES fs, sample_format AND the input card, so
+        # every setter has to re-derive it. `_refresh_test_filename` existed
+        # and was called only from the full `soundcheckrefresh()`, which the
+        # per-setting choosers do not run — so a take made after changing the
+        # rate here went into the name built for the PREVIOUS rate:
+        # "Initializing Recording to test_44100_int32_6.wav" for a 192000 Hz
+        # take (Kent 2026-09-10, the second sighting of this). The name lies
+        # about the file, and every combination overwrites the last.
+        self._refresh_test_filename()
         window.destroy()
     def updatesoundhz(self):
         self.labeltext['fs'].set(self.soundhzlabel())
@@ -552,6 +584,31 @@ class SoundSettingsWindow(ui.Window):
                     row=self.content.nrows(),
                     sticky='')
         self.scroll.reflow()  # grow canvas to cover the sound-settings rows
+    def relabel_settings(self):
+        """Re-read the settings onto the labels, without rebuilding the frame.
+
+        Needed because a TAKE can change the settings: `_report_take` proves a
+        rate upsampled, `note_fake_rate` drops it and re-picks, and the window
+        went on displaying the old rate — so the switch was real, correct, and
+        invisible (Kent 2026-09-10). `soundcheckrefresh` would show it too but
+        it tears down and rebuilds the whole frame, which would destroy the
+        record/play buttons the user is mid-way through using; these four
+        updates just re-read the variables the labels are bound to.
+        """
+        # LABELS ONLY — deliberately NOT the test filename. Re-deriving it
+        # here renamed the target AFTER the take, so a file recorded at
+        # 192000 was then referred to as `test_44100_int32_6.wav` and played
+        # back under that name (2026-09-10). The filename must be re-derived
+        # BEFORE recording, which the click handlers already do; doing it
+        # afterwards mislabels the take that just happened.
+        for update in (self.updatesoundcard, self.updatesoundhz,
+                       self.updatesoundformat, self.updatesoundcardoutindex):
+            try:
+                update()
+            except Exception as e:
+                log.info("couldn't update a sound setting label ({})"
+                         .format(e))
+
     def soundcheckrefreshdone(self):
         self.task.storesoundsettings()
         self.on_quit()

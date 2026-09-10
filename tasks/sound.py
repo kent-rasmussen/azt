@@ -21,8 +21,12 @@ class Sound(object):
         # has gone wrong, and it previously opened the window without checking
         # anything. mikecheck() is the automatic route, entered only when the
         # stored settings fail to validate.
-        self._verify_rate()
+        message = self._verify_rate()
         sound_ui.SoundSettingsWindow(self)
+        # AFTER the window exists, so the notice lands beside the thing it
+        # talks about rather than alone on a bare desktop.
+        if message:
+            notify_user(message)
 
     def setcontext(self):
         super().setcontext()
@@ -35,6 +39,19 @@ class Sound(object):
         self.audio = ss.audio
         if ss.soundcheck(include_input=getattr(self, 'is_record_task', False)):
             self.mikecheck()
+        # NOTHING ELSE HERE. A `_verify_rate()` call was added in this branch
+        # to measure the rate before any real recording, and it was in the
+        # wrong place twice over: it ran DURING TASK CONSTRUCTION, so a
+        # blocking ~1s audio probe and a status window landed partway through
+        # building the task window — and a startup crash followed it ("bad
+        # window path name .!taskwindow.!taskwindow.!frame.!frame", the task
+        # frame gone before getwords() could build in it).
+        #   It was also redundant, as Kent pointed out: users are already
+        # asked to test a recording in the settings window before collecting
+        # data, and that take goes through the per-take check with several
+        # seconds of real audio — better evidence than any probe here, and it
+        # feeds back through SoundSettings.note_fake_rate(). The measurement
+        # belongs to a user action, not to opening a task.
 
     def _verify_rate(self):
         """Measure what the chosen microphone really records, and say so.
@@ -80,8 +97,10 @@ class Sound(object):
     def mikecheck(self):
         self.ui.withdraw()
         self.program.soundsettings.confirm_audio()
-        self._verify_rate()
+        message = self._verify_rate()
         self.soundsettingswindow = sound_ui.SoundSettingsWindow(self)
+        if message:
+            notify_user(message)
         if not self.soundsettingswindow.exitFlag.istrue():
             self.soundsettingswindow.wait_window(self.soundsettingswindow)
         self.program.soundsettings.done_audio()

@@ -22,6 +22,17 @@ class Converter:
         ],
         'audio': [
             'sample_format', 'fs', 'audio_card_in', 'audio_card_out',
+            # The NAMES those two indices were chosen as. THIS list is what
+            # `storesettingsfile` filters against (settings/__init__.py:523),
+            # so an attribute absent here is silently dropped on write — which
+            # is why the name fields never reached the settings file even
+            # after being added to the `soundsettings` attribute list, and
+            # Kent's file still held only `audio_card_in: 6` /
+            # `audio_card_out: 7` (2026-09-10). Without them the whole
+            # identify-by-name fix works only WITHIN a session: PortAudio
+            # renumbers devices between runs, so an index alone can validate
+            # cleanly and point at a different microphone.
+            'audio_card_in_name', 'audio_card_out_name',
             'asr_kwargs', 'asr_repos', 'soundsettingsok', 'asr_in_process'
         ],
         'alphabet': [
@@ -128,8 +139,9 @@ class Converter:
         'soundsettings': {
             'file': 'soundsettingsfile',
             'attributes': [
-                'sample_format', 'fs', 'audio_card_in', 
-                'audio_card_out', 'asr_kwargs', 'asr_repos'
+                'sample_format', 'fs', 'audio_card_in',
+                'audio_card_out', 'audio_card_in_name',
+                'audio_card_out_name', 'asr_kwargs', 'asr_repos'
             ]
         },
         'alphabet': {

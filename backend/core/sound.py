@@ -5,7 +5,9 @@ This module holds *runtime* audio state (device enumeration, format
 validation, ASR kwargs). Persistent user config lives in ``settings/audio.py``
 (``AudioConfig``) — the two are intentionally separate.
 """
+import contextlib
 import copy
+import os
 import sys
 from utilities import file, rx, logsetup
 from utilities import utilities as utils
@@ -173,66 +175,157 @@ def spectral_ceiling(block, rate):
     return float(freqs[above[-1]])
 
 
-def resampler_images(block, rate, threshold=0.6):
-    """Does the top of the band MIRROR the bottom? (real_rate, score) or None.
+def _mirror_test_abandoned_2026_09_10():
+    """Why there is no mirror/imaging detector here, so it is not rebuilt.
 
-    The single-capture test for a resampler that is not merely quiet. The
-    absolute margin in `rate_is_real` catches a GOOD resampler, whose residue
-    sits 100+ dB down, but not a cheap one: ALSA's `plug` layer interpolates
-    with a leaky stopband and leaves images about 25 dB down — which is
-    exactly where a real converter's broadband noise lives. Measured
-    2026-09-10 on `sysdefault`, where the app's per-take check duly reported
-    "consistent with a real 192000 Hz" for a path the two-capture directional
-    test had shown to be upsampled.
+    A cheap resampler's images sit ~25 dB down, where a real converter's noise
+    also sits, so LEVEL cannot separate them. Images are a reflection of the
+    baseband, so SHAPE should — and four attempts failed, each differently:
 
-    What separates them is SHAPE, not level. Interpolation images are a
-    reflection of the baseband about the real Nyquist: whatever the microphone
-    picked up at 20 kHz reappears just above 24 kHz when 48 kHz content is
-    stretched to 192 kHz. A converter's own noise has no such relationship to
-    the signal — it is noise, and correlates with nothing.
+      1. correlate levels, sampled by interpolation between bins: r=0.03 on a
+         synthetic 4x upsample. Interpolating between bins compares different
+         bins, and adjacent noise bins are independent.
+      2. correlate levels, bin-aligned: r=-0.94 — right place, and unusable.
+         ANY monotone spectrum anti-correlates about ANY axis, so an honest
+         capture with a rolloff scores the same. |r| would call every
+         microphone a resampler.
+      3. correlate detrended residuals (fine structure only): killed the
+         structured case (no detection) while a FLAT-noise upsample scored
+         0.63 — a false positive on the one input the method cannot judge.
+      4. and the interpretation was wrong throughout: a 48 kHz source repeats
+         every 48 kHz, so it has mirror axes at 24k, 48k AND 72k. An axis does
+         not identify the source rate; only the LOWEST one does.
 
-    So: for each plausible real rate, correlate the spectrum above its Nyquist
-    against the spectrum below it, reflected. A high correlation is a
-    resampler naming its own real rate.
+    Each fix was a threshold tuned until one machine came out right, which is
+    how a test that only works on one machine gets built. Kent named it:
+    "are we making these tests more correct/general, or are we just
+    diagnosing my machine?"
+
+    What to do instead, if this is picked up again: get captures from several
+    machines and resamplers FIRST, and only then fit a statistic — or find a
+    prediction that needs no threshold, as the exact-zero-run detector does.
+    Until then `rate_is_real` says "don't know" over the range where a cheap
+    resampler would live, which is honest and costs only an unverified rate.
+    """
+
+
+@contextlib.contextmanager
+def quiet_probing():
+    """Silence PortAudio's C-level stderr while probing devices.
+
+    PortAudio's ALSA host API writes straight to FILE DESCRIPTOR 2 from C, so
+    no Python-level redirection reaches it: `contextlib.redirect_stderr`
+    swaps `sys.stderr` and the C library never looks at that. The only way is
+    to replace the descriptor.
+
+    Worth doing because the noise is not incidental — it buries the answer.
+    Each rejected combination prints a four-line trace, so probing produced 24
+    lines around one verdict, and one run emitted 21 identical
+    "unable to open slave" lines (2026-09-10). A diagnostic nobody can read
+    is not much better than one that never ran.
+
+    DELIBERATELY NARROW: wrap only the probing calls, where a failure to open
+    is an expected outcome we are measuring rather than an error. Anything
+    outside keeps its stderr, so a real crash is still visible.
+    """
+    if not hasattr(os, 'dup2'):
+        yield
+        return
+    try:
+        saved = os.dup(2)
+        devnull = os.open(os.devnull, os.O_WRONLY)
+    except Exception:
+        yield               # if we cannot swap it, noise beats breakage
+        return
+    try:
+        sys.stderr.flush()
+        os.dup2(devnull, 2)
+        yield
+    finally:
+        try:
+            os.dup2(saved, 2)
+        finally:
+            for fd in (devnull, saved):
+                try:
+                    os.close(fd)
+                except Exception:
+                    pass
+
+
+def zero_runs(block, carry=0):
+    """Exactly-zero samples in `block`. (count, longest_run, trailing_run)
+
+    THE ONE DETECTOR HERE THAT NEEDS NO THRESHOLD FITTED TO ANY MACHINE, and
+    the reason is worth stating: analogue audio does not land on exactly zero,
+    and certainly not repeatedly. A long run of exact zeros is therefore not
+    quiet audio — it is a gate, a mute, or a dropout, on any hardware, in any
+    format. Nothing about it is calibrated to a particular card.
+
+    `carry` is the run still open at the end of the previous block, and
+    `trailing_run` is the one still open at the end of this one, so a caller
+    processing a stream in callback-sized pieces measures runs that cross
+    block boundaries. A gate's silence is far longer than one callback, so
+    counting within blocks would understate it badly.
+
+    Pure, so it can be tested against known input rather than inferred from a
+    log — which is the only way anything here becomes general.
     """
     if numpy is None or block is None or not len(block):
-        return None
-    mono = block if getattr(block, 'ndim', 1) == 1 else block[:, 0]
-    if mono.dtype.kind == 'i':
-        mono = mono.astype('float64') / float(numpy.iinfo(mono.dtype).max)
-    else:
-        mono = mono.astype('float64')
-    if mono.size < 8192:
-        return None
-    n = 1 << int(numpy.floor(numpy.log2(min(mono.size, 65536))))
-    mag = numpy.abs(numpy.fft.rfft(mono[:n] * numpy.hanning(n)))
-    if mag.max() <= 0:
-        return None
-    freqs = numpy.fft.rfftfreq(n, 1.0 / float(rate))
-    spec = 20.0 * numpy.log10(numpy.maximum(mag / mag.max(), 1e-12))
-    best = None
-    for divisor in (2, 4, 8):
-        real = float(rate) / divisor
-        if real < 8000:
-            break
-        edge = real / 2.0               # the candidate real Nyquist
-        if edge * 2 > rate / 2 * 2:     # its mirror must fit in the band
-            continue
-        offsets = numpy.linspace(0.15 * edge, 0.85 * edge, 128)
-        above = numpy.interp(edge + offsets, freqs, spec)
-        below = numpy.interp(edge - offsets, freqs, spec)
-        if above.std() < 1e-6 or below.std() < 1e-6:
-            continue
-        score = float(numpy.corrcoef(above, below)[0, 1])
-        log.info("mirror test at %d Hz: content above %.0f Hz matches the "
-                 "reflection below it at r=%.2f", rate, edge, score)
-        if score > threshold and (best is None or score > best[1]):
-            best = (int(real), score)
-    return best
+        return 0, carry, carry
+    flat = block.reshape(-1) if getattr(block, 'ndim', 1) > 1 else block
+    zero = (flat == 0)
+    count = int(zero.sum())
+    if zero.all():
+        run = carry + len(flat)
+        return count, run, run
+    live = numpy.flatnonzero(~zero)
+    longest = carry + int(live[0])
+    if len(live) > 1:
+        gaps = numpy.diff(live) - 1
+        if gaps.size:
+            longest = max(longest, int(gaps.max()))
+    trailing = len(flat) - 1 - int(live[-1])
+    return count, max(longest, trailing), trailing
 
 
-def rate_is_real(block, rate, margin_db=60.0):
-    """Is `block` GENUINELY sampled at `rate`? True / False / None (unknown).
+def rate_is_fake(block, rate, margin_db=100.0):
+    """Is `block` PROVABLY not sampled at `rate`? True / None (can't tell).
+
+    NEVER RETURNS FALSE, and that is the finding rather than an omission.
+    This was `rate_is_real` and returned True for a capture nothing caught.
+    Then the synthetic tests measured the two cases side by side:
+
+        genuine 192 kHz capture (Kent's hardware)   top of band  -25 dB
+        48 kHz linearly interpolated to 192 kHz     top of band  -35 dB
+
+    Ten dB apart, from two different sources, with no reason to think the gap
+    holds on other hardware. That is an OVERLAP, not a separation, so no
+    "this rate is real" verdict is available from level at all — and four
+    attempts at a shape-based test that might have separated them failed
+    (`_mirror_test_abandoned_2026_09_10`).
+
+    What survives is one-directional and needs no fitted number: a capture
+    with essentially NOTHING above some frequency was band-limited, because
+    an ADC's noise is broadband and cannot have a hole in it. That is the
+    PipeWire case — the one that actually put 4x-size 48 kHz files on this
+    machine — and it measures -105 to -142 dB, nowhere near the ambiguous
+    range.
+
+    HOW PROVED IS A `True` HERE (Kent asked, 2026-09-10):
+      * the physics is sound — a 100 dB hole is not an ADC's noise;
+      * it is tested against TWO synthetic band-limited upsamples (2x, 4x)
+        and observed on ONE real resampler (PipeWire's). Another resampler
+        leaving residue at -90 dB would be missed;
+      * the -100 dB threshold sits in a gap seen on ONE machine, between
+        -25/-35 (ambiguous) and -105/-142 (fake). Nothing establishes that
+        gap elsewhere;
+      * **and it is blind in int16** — quantisation noise there is ~48 dB
+        higher and broadband, so it fills the hole and the verdict comes back
+        None. Asserted in test_int16_hides_upsampling_from_this_detector,
+        alongside a pair showing the same content caught in int32 and missed
+        in int16. Treat this as an int32 detector.
+    So: strong enough to TELL a user their file carries less than it claims;
+    thin ground for silently changing a setting they chose.
 
     Replaces the threshold-over-a-noise-floor logic in `spectral_ceiling` for
     this question, because that logic produces FALSE POSITIVES and did so on
@@ -286,22 +379,16 @@ def rate_is_real(block, rate, margin_db=60.0):
     if 20.0 * numpy.log10(mid_level / mag.max()) < -100.0:
         return None
     margin = 20.0 * numpy.log10(max(top_level, 1e-20) / mid_level)
-    log.info("rate check at %d Hz: top of band %.0f dB below the mid band "
-             "(real needs better than -%.0f)", rate, margin, margin_db)
     if margin <= -margin_db:
-        return False            # a good resampler: residue 100+ dB down
-    # The level test alone is not enough. A CHEAP resampler leaves images
-    # about 25 dB down — indistinguishable by level from a real converter's
-    # noise, and `sysdefault` passed the level test on this machine while
-    # being upsampled. The mirror test is what separates them.
-    images = resampler_images(block, rate)
-    if images:
-        log.warning("rate check: %d Hz is NOT real — the band above %d Hz "
-                    "mirrors the band below it (r=%.2f), which is a resampler "
-                    "reflecting the audio upward. Real rate is about %d Hz.",
-                    rate, images[0] // 2, images[1], images[0])
-        return False
-    return True
+        log.warning("rate check: %d Hz is FAKE — the top of the band is %.0f "
+                    "dB down, which is a hole, not noise. Something upsampled "
+                    "this.", rate, margin)
+        return True
+    log.info("rate check at %d Hz: top of band %.0f dB down. Not band-limited,"
+             " so not provably upsampled — but this does NOT prove the rate is"
+             " real (a cheap resampler measures about -35 dB here, real "
+             "hardware about -25).", rate, margin)
+    return None
 
 
 def migrate_sample_format(stored):
@@ -355,7 +442,8 @@ class AudioInterface(object):
         if not AUDIO_OK:
             return False
         try:
-            sounddevice.query_devices()
+            with quiet_probing():
+                sounddevice.query_devices()
             return True
         except Exception as e:
             log.info("audio interface is not usable ({})".format(e))
@@ -365,7 +453,15 @@ class AudioInterface(object):
         """[{'index','name','in','out','rate'}] for every device, or []."""
         out = []
         try:
-            for i, d in enumerate(sounddevice.query_devices()):
+            # ENUMERATION is where most of the ALSA noise comes from, not the
+            # per-combination checks: PortAudio's ALSA backend OPENS each PCM
+            # to discover its capabilities, and every `dmix` slave that will
+            # not open prints "unable to open slave". Wrapping only
+            # `supported()` left that untouched, so the flood continued
+            # (2026-09-10).
+            with quiet_probing():
+                listing = list(enumerate(sounddevice.query_devices()))
+            for i, d in listing:
                 out.append({'index': i,
                             'name': d.get('name'),
                             'in': d.get('max_input_channels', 0),
@@ -382,12 +478,18 @@ class AudioInterface(object):
         test=False, so every device was credited with every candidate)."""
         check = (sounddevice.check_output_settings if output
                  else sounddevice.check_input_settings)
-        try:
-            check(device=device, samplerate=float(rate), dtype=fmt,
-                  channels=channels)
-            return True
-        except Exception:
-            return False
+        # A rejection here is an ANSWER, not an error — but PortAudio's ALSA
+        # layer prints a four-line C-level trace to fd 2 for each one, so
+        # probing buries its own result: 24 lines around one verdict, and 21
+        # identical "unable to open slave" lines in another run (2026-09-10).
+        # Silenced only around the probe itself; see quiet_probing().
+        with quiet_probing():
+            try:
+                check(device=device, samplerate=float(rate), dtype=fmt,
+                      channels=channels)
+                return True
+            except Exception:
+                return False
 
     def stop(self):
         """Stop anything playing. NOT `terminate()`: there is no handle to
@@ -476,10 +578,15 @@ class SoundSettings(object):
     # vanished from the list when a headset was plugged in. So a miss is a
     # normal outcome, never an error, and we simply measure again.
     _verified_fs = {}
+    # Rates DISPROVED by a real recording, per device name. Populated by
+    # note_fake_rate() from the per-take check, which sees several seconds of
+    # actual audio rather than a fraction of a second of probing.
+    _fake_rates = {}
 
     def _device_name(self, index):
         try:
-            return str(sounddevice.query_devices(index).get('name'))
+            with quiet_probing():
+                return str(sounddevice.query_devices(index).get('name'))
         except Exception:
             return None
 
@@ -519,58 +626,172 @@ class SoundSettings(object):
         if not measure:
             return None         # cache miss, and we were not asked to record
         best = None
+        disproved = self.fake_rates_here()
         for rate in sorted(self.cards['in'][self.audio_card_in], reverse=True):
+            if rate in disproved:
+                log.info("rate check: %d Hz already failed on a real take "
+                         "here; not re-probing it", rate)
+                continue
             fmt = widest(self.cards['in'][self.audio_card_in].get(rate) or [])
             if not fmt:
                 continue
             try:
-                block = sounddevice.rec(int(rate * seconds), samplerate=rate,
-                                        channels=1, dtype=fmt,
-                                        device=self.audio_card_in,
-                                        blocking=True)
+                with quiet_probing():
+                    block = sounddevice.rec(int(rate * seconds),
+                                            samplerate=rate, channels=1,
+                                            dtype=fmt,
+                                            device=self.audio_card_in,
+                                            blocking=True)
             except Exception as e:
                 log.info("rate check: %d Hz wouldn't record (%s)", rate, e)
                 continue
-            verdict = rate_is_real(block, rate)
-            if verdict:
-                best = rate
-                break
-            if verdict is None:
-                log.info("rate check: %d Hz — too quiet to judge; not using "
-                         "it as verified", rate)
-            else:
-                log.warning("rate check: %d Hz is UPSAMPLED on this input; "
-                            "not offering it as the default", rate)
+            # "Not provably fake" is the strongest available claim — see
+            # rate_is_fake, which cannot certify a rate as real. So this
+            # picks the highest rate we could not DISPROVE, which still
+            # excludes the case that matters: a band-limited upsample.
+            if rate_is_fake(block, rate):
+                log.warning("rate check: %d Hz is upsampled on this input; "
+                            "not offering it", rate)
+                continue
+            best = rate
+            break
         if name:
             self._verified_fs[name] = best
         return best
 
     def default_fs(self):
-        """The rate to use: the highest VERIFIED one, else a safe fallback.
+        """The highest rate not KNOWN to be a resampled fake.
 
-        The fallback is deliberately NOT `max()` of the accepted rates any
-        more. When measurement cannot decide (a silent room, no numpy, no
-        backend), 48000 is the honest guess: it is what typical laptop codecs
-        and a stock PipeWire graph actually run at, so it is the rate least
-        likely to be silently resampled. `max()` picked the most likely to be.
+        NOT a fallback to 48000. That was here briefly and Kent rejected it,
+        correctly: "I want to know what we can, and pick the best that works,
+        and give the user (and thereby us) good information. 'I'm not sure, so
+        we're using 48khz' is bad, lazy policy." A guessed default is a guess
+        whichever number it picks, and picking a low one hides the question
+        instead of answering it.
+
+        So: the highest rate this input offers, minus any that measurement has
+        PROVED to be upsampled. Where nothing has been measured yet that is
+        `max()` — the best the card claims — and the check runs at the first
+        recording task, which is early enough to correct it before real data
+        is collected, and reports what it found rather than deciding quietly.
         """
-        measured = self.measured_fs()       # cache only; never records here
-        if measured:
-            log.info("audio settings: using %d Hz, verified by recording",
-                     measured)
-            self.fs = measured
-            return
         available = (self.cards['in'][self.audio_card_in]
                      if self.audio_card_in in self.cards['in']
                      else self.cards['out'][self.audio_card_out])
-        if 48000 in available:
-            log.info("audio settings: no rate verified; using 48000 Hz, the "
-                     "rate least likely to be resampled")
-            self.fs = 48000
+        measured = self.measured_fs()       # cache only; never records here
+        if measured:
+            log.info("audio settings: using %d Hz — the highest this input "
+                     "offers that was not shown to be resampled", measured)
+            self.fs = measured
+            return
+        # Highest offered, minus anything a real take already disproved. That
+        # subtraction is what makes this "the best that works" rather than
+        # "the best that is claimed".
+        disproved = self.fake_rates_here()
+        usable = [r for r in available if r not in disproved]
+        self.fs = max(usable) if usable else max(available)
+        if disproved:
+            log.info("audio settings: using %d Hz — the highest offered after "
+                     "dropping %s, which real takes showed to be upsampled",
+                     self.fs, sorted(disproved))
         else:
-            self.fs = max(available)
-            log.info("audio settings: no rate verified and no 48000 Hz "
-                     "offered; falling back to %d Hz", self.fs)
+            log.info("audio settings: using %d Hz, the highest offered. Not "
+                     "checked yet — the first test recording will measure it "
+                     "and say so.", self.fs)
+
+    def note_fake_rate(self, rate):
+        """Record that a REAL TAKE at `rate` came back band-limited.
+
+        The best evidence available, and it arrives for free. Kent already
+        asks users to test a recording in the settings window before
+        collecting data ("make sure 'record' and 'Play' work well here,
+        before recording real data!") — so the first take on any machine is a
+        deliberate test take of several seconds, which is far better material
+        than the 0.3 s probe `measured_fs` can afford. Feeding its verdict
+        back here means the user's own test does the work, and the rate they
+        were offered stops being offered the moment it is disproved.
+        """
+        name = self._device_name(getattr(self, 'audio_card_in', None))
+        if not name:
+            return
+        known = self._fake_rates.setdefault(name, set())
+        if rate in known:
+            return
+        known.add(rate)
+        log.warning("audio settings: %d Hz on %r produced a band-limited "
+                    "take, so it is upsampled; it will not be chosen again "
+                    "for this device", rate, name)
+        # Any cached "highest not-provably-fake" answer was computed without
+        # this, so it has to go.
+        self._verified_fs.pop(name, None)
+        # And RE-PICK NOW. Marking the rate without acting on it would leave
+        # the very next take in this session recording at the rate just
+        # disproved — the finding has to change what happens, not only what
+        # is logged. fileclose() is between takes, so this is a safe moment.
+        # NOTIFY, DO NOT SWITCH. This used to re-pick the rate immediately,
+        # which was never agreed — Kent: "I thought we weren't dropping the
+        # rate for upsampling, just notifying the user?" — and the evening's
+        # evidence is all on his side. Automatic switching produced, in
+        # order: a nonsense real-rate figure, a self-contradicting notice, a
+        # mislabelled file, and a step-down that walked 192000 -> 96000 ->
+        # 44100 heading for 8000 Hz, straight past the 48000 the graph
+        # actually runs (it steps the RATE and never the FORMAT, and that
+        # path will not take int32 at 48000). Four bugs, all in the acting-on
+        # -it half, none in the measuring half.
+        #   And the finding does not justify the action anyway: "upsampled"
+        # is not "bad". A 44100 take resampled from a 48000 graph loses
+        # nothing a linguist needs; what it costs is disk space, which is the
+        # user's call to make, not ours to make for them mid-session.
+        #   The record is still kept: `default_fs` subtracts disproved rates
+        # when it RE-DERIVES a default, so a known-fake rate is not offered as
+        # a default again. What it will not do is override a rate the user is
+        # currently using.
+        return None
+
+    def note_real_rate(self, rate):
+        """A real take at `rate` came back NOT band-limited — clear the mark.
+
+        LATEST EVIDENCE WINS, and it has to, because what is being measured
+        CHANGES. Kent, on two checks disagreeing about 192 kHz on the same
+        device (2026-09-10): "if the rate is differ at these two times, one
+        would expect a difference. this is why an 'on boot' test isn't the
+        same as 'on run', especially in a window whos point is to change
+        settings."
+          Exactly right, and it makes `note_fake_rate`'s "will not be chosen
+        again for this device" too strong: PipeWire renegotiates its graph
+        rate, so a rate that was upsampled at one moment can be genuine at
+        the next. Recording that moment as a permanent property of the device
+        would lock a user out of a rate their hardware had started
+        supporting, with no way back short of a restart.
+        """
+        name = self._device_name(getattr(self, 'audio_card_in', None))
+        if not name:
+            return
+        if rate in self._fake_rates.get(name, set()):
+            self._fake_rates[name].discard(rate)
+            log.info("audio settings: %d Hz on %r recorded cleanly this time, "
+                     "so the earlier 'upsampled' mark is withdrawn", rate,
+                     name)
+        self._verified_fs.pop(name, None)
+
+    def forget_rate_checks(self, why=''):
+        """Drop cached rate verdicts. Call when the audio path may have moved.
+
+        A probe result describes the graph AT THE MOMENT IT RAN. Changing the
+        card — the whole purpose of the settings window — is exactly when that
+        stops being true, so keeping the cache across a card change would
+        answer a new question with an old measurement.
+        """
+        if self._verified_fs or self._fake_rates:
+            log.info("audio settings: forgetting cached rate checks%s — they "
+                     "described the audio path as it was", why)
+        self._verified_fs.clear()
+        self._fake_rates.clear()
+
+    def fake_rates_here(self):
+        """Rates already disproved on the current input, by real recordings."""
+        name = self._device_name(getattr(self, 'audio_card_in', None))
+        return self._fake_rates.get(name, set()) if name else set()
 
     def verify_fs(self):
         """Measure what this input really delivers and adopt it. (rate, msg)
@@ -582,23 +803,26 @@ class SoundSettings(object):
         before = self.fs
         best = self.measured_fs(measure=True)
         if not best:
-            return None, _("A-Z+T could not tell which sample rates are real "
-                           "on this microphone, because the room was too "
-                           "quiet while it checked. Try again with some "
-                           "ordinary background sound, or just speak while "
-                           "it runs.")
+            return None, _("A-Z+T could not check the sample rates on this "
+                           "microphone — the room was too quiet while it "
+                           "tried. Try again with some ordinary background "
+                           "sound, or speak while it runs.")
         self.fs = best
         offered = max(self.cards['in'][self.audio_card_in]) \
                   if self.audio_card_in in self.cards['in'] else best
         if best < offered:
-            return best, _("This microphone really records at {best} Hz. It "
-                           "offers {offered} Hz, but that is stretched from a "
-                           "lower rate — the file would be larger with no "
-                           "more detail in it. A-Z+T will use {best} Hz."
-                           ).format(best=best, offered=offered)
-        return best, _("This microphone really records at {best} Hz, the "
-                       "highest it offers. A-Z+T will use it.").format(
-                            best=best)
+            # Says what was actually established: the higher rates were shown
+            # to be stretched. It does NOT claim the chosen one is verified —
+            # nothing available can certify that (see rate_is_fake).
+            return best, _("A-Z+T will record at {best} Hz. This microphone "
+                           "offers up to {offered} Hz, but the higher rates "
+                           "were checked and found to be stretched from a "
+                           "lower one: the files would be larger with no more "
+                           "sound in them.").format(best=best,
+                                                    offered=offered)
+        return best, _("A-Z+T will record at {best} Hz, the highest this "
+                       "microphone offers. Nothing suggested it is being "
+                       "stretched from a lower rate.").format(best=best)
 
     # ── Sample-format choice, by WIDTH and said out loud ─────────────────────
     # PORTED 2026-09-09. What was here ranked PyAudio's constants, whose values
@@ -688,12 +912,34 @@ class SoundSettings(object):
         if label is not None:
             setattr(self, self._CARD_NAMES[attr], str(label))
 
+    def choose_card(self, direction, index):
+        """Set the input/output card AND record which device that is.
+
+        THE ONLY SAFE WAY to set a card from outside, and the reason is a bug
+        this fix caused: the settings window assigned `audio_card_in` directly
+        (three sites in frontend/sound_ui.py), so the stored NAME still held
+        the previous device. `resolve_cards()` then did exactly what it is for
+        and followed that name back — and since `soundcardlabel()` calls
+        `check()`, which calls `resolve_cards()`, merely REDRAWING THE LABEL
+        reverted the user's choice. Kent, 2026-09-10: "Couldn't get it to
+        stick at pipewire mic", with the log showing "'default' moved from
+        index 5 to 6; following the device" immediately after each pick.
+          `_remember_card`'s own docstring predicted this ("a stale name would
+        out-vote a fresh index") and I wired it into `next_card_*` and
+        `default_*` only, missing the path the user actually clicks.
+        """
+        attr = 'audio_card_in' if direction == 'in' else 'audio_card_out'
+        setattr(self, attr, index)
+        self._remember_card(attr)
+        self.forget_rate_checks(' after choosing a different card')
+
     def next_card_in(self):
         nxt = self._next_card('in', getattr(self, 'audio_card_in', None))
         if nxt is None:
             return 1
         self.audio_card_in = nxt
         self._remember_card('audio_card_in')
+        self.forget_rate_checks(' after changing the microphone')
         self.default_fs()
         self.default_sf()
 
@@ -703,6 +949,7 @@ class SoundSettings(object):
             return 1
         self.audio_card_out = nxt
         self._remember_card('audio_card_out')
+        self.forget_rate_checks(' after changing the speakers')
 
     # Same `.index()` fragility as the cards had, and for `sample_format` it
     # is not hypothetical: the persisted value used to be a PyAudio CONSTANT
@@ -786,6 +1033,9 @@ class SoundSettings(object):
         import time as _time
         started = _time.perf_counter()
         self.cards = {'in': {}, 'out': {}, 'dict': {}}
+        # Noise suppression lives in `devices()` and `supported()`, which are
+        # the only calls here that touch PortAudio — wrapping this method as
+        # well would just nest the same thing.
         for dev in self.audio.devices():
             i = dev['index']
             if dev['in'] > 0:
@@ -1111,16 +1361,28 @@ class SoundSettings(object):
             name = getattr(self, name_attr, None)
             index = getattr(self, attr, None)
             if not name:
-                # Pre-existing settings have no remembered name. An index
-                # alone is not identity, so record what it points at NOW and
-                # treat that as the choice from here on.
-                if index is not None and index in (self.cards.get('dict')
-                                                   or {}):
-                    setattr(self, name_attr,
-                            str(self.cards['dict'][index]))
-                    log.info("audio settings: remembering %s as %r so it can "
-                             "be found again after renumbering",
-                             attr, getattr(self, name_attr))
+                # MIGRATION: settings written before names were stored.
+                #
+                # Do NOT adopt whatever the old index points at today. The
+                # first version did, and Kent's machine then reported
+                # "'hdmi' moved from index 6 to 7; following the device" for
+                # an output he had never chosen: the stored index was already
+                # stale, and canonicalising it into a name made a transient
+                # error PERMANENT — and worse than before, since a bad index
+                # used to be re-derived once it failed validation, where a bad
+                # NAME is now followed faithfully wherever it goes.
+                #   The premise of this whole change is that an index is not
+                # identity. That applies to the migration too: an index we
+                # cannot vouch for is not evidence of a choice, so drop it and
+                # let the defaults be re-derived and remembered properly.
+                if index is not None:
+                    log.info("audio settings: %s was stored as index %s with "
+                             "no record of which device that was; choosing a "
+                             "default rather than trusting it", attr, index)
+                    try:
+                        delattr(self, attr)
+                    except AttributeError:
+                        pass
                 continue
             found = self._index_for_name(name, direction)
             if found is None:

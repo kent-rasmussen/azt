@@ -102,7 +102,9 @@ try:
     import numpy
     import sounddevice
 except Exception as e:
-    print("needs numpy and sounddevice: {}".format(e))
+    from tests.manual.sound_check._which_python import how_to_run
+    print(how_to_run('tests.manual.sound_check.mic_check',
+                     missing='numpy and sounddevice ({})'.format(e)))
     sys.exit(1)
 
 if switch('list'):

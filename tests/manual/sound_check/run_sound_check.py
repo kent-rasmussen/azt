@@ -77,16 +77,33 @@ class Skip(Exception):
 
 
 def ask(question):
-    """Ask the human. --yes answers everything affirmatively, for a
-    no-questions run that still exercises the code paths."""
+    """Ask the human. Returns True / False / None — None meaning NO ANSWER.
+
+    The three-way return is the fix for a real misreport: this returned False
+    when `input()` was unavailable, and the beeps step then printed
+    "FAIL 6. tone beeps — you did not", when in fact Kent HAD heard the beeps
+    and the terminal simply could not take input (2026-09-10). "No answer
+    arrived" and "the answer was no" are different facts, and only the second
+    is a failure — the same not-found/not-there confusion the window guard
+    was fixed for.
+    """
     if switch('yes'):
         print('  (--yes) {}  y'.format(question))
         return True
+    if not sys.stdin or not sys.stdin.isatty():
+        print('  {} — no way to answer here (not a terminal), so this is'
+              ' UNKNOWN, not a failure.'.format(question))
+        return None
     try:
-        return input('  {} [y/N] '.format(question)).strip().lower() == 'y'
+        answer = input('  {} [y/N] '.format(question)).strip().lower()
     except (EOFError, KeyboardInterrupt):
         print()
+        return None
+    if answer in ('y', 'yes'):
+        return True
+    if answer in ('n', 'no'):
         return False
+    return None         # a shrug is not a no
 
 
 if switch('help') or switch('h'):
@@ -129,12 +146,31 @@ def step_import():
     BASELINE['backend_ok'] = bool(_sound.AUDIO_OK)
     BASELINE['sound_problems'] = [c for c, _e in _sound.SOUND_PROBLEMS]
     if not _sound.AUDIO_OK:
-        # Not a harness failure: this is the machine telling us it has no
-        # audio backend, which the program is designed to survive.
+        # "NO BACKEND" has TWO causes and they need opposite responses:
+        # a machine that genuinely has no audio library, or — far more
+        # likely — this script being run with the wrong python. A-Z+T's
+        # packages live in its venv, so a bare `python` reports every audio
+        # dependency missing on a machine where the app runs perfectly.
+        #   This reported PASS ... NO BACKEND and then SKIPped five steps on
+        # both a Windows and a macOS box (Kent 2026-09-10), which read as
+        # "these machines have no sound" when it meant "wrong interpreter".
+        # Degrading gracefully is right for the APP; for a diagnostic it hid
+        # the diagnosis.
+        from tests.manual.sound_check._which_python import (venv_python,
+                                                            in_the_venv,
+                                                            how_to_run)
+        problems = ', '.join('{}: {}'.format(c, e)
+                             for c, e in _sound.SOUND_PROBLEMS) or 'unknown'
+        if not in_the_venv() and venv_python() is not None:
+            print(how_to_run('tests.manual.sound_check.run_sound_check'))
+            record('1. import the audio stack', 'FAIL',
+                   'WRONG PYTHON: this interpreter has none of A-Z+T\'s audio '
+                   'packages ({}). See the command above — the rest of this '
+                   'run would only report that fact five more times.'
+                   .format(problems))
+            raise SystemExit(1)
         record('1. import the audio stack', 'PASS',
-               'imported, but NO BACKEND: {}'.format(
-                   ', '.join('{}: {}'.format(c, e)
-                             for c, e in _sound.SOUND_PROBLEMS) or 'unknown'))
+               'imported, but NO BACKEND: {}'.format(problems))
         return
     from io_put import sound as _io
     io_sound = _io
@@ -150,22 +186,19 @@ step_import()
 def step_devices():
     if sound_mod is None or not sound_mod.AUDIO_OK:
         raise Skip('no audio backend')
+    # PORTED. This called `get_host_api_info_by_index` and
+    # `get_device_info_by_host_api_device_index` — PyAudio methods that
+    # `AudioInterface` has not had since the sounddevice port, so step 2 died
+    # with AttributeError on the first real run (2026-09-10). The harness was
+    # written before the port and never re-run against it, which is the whole
+    # argument for running it.
     iface = sound_mod.AudioInterface()
     names = {}
-    try:
-        host = iface.get_host_api_info_by_index(0)
-        count = host.get('deviceCount')
-        for i in range(count):
-            info = iface.get_device_info_by_host_api_device_index(0, i)
-            names[i] = {'name': info.get('name'),
-                        'in': info.get('maxInputChannels'),
-                        'out': info.get('maxOutputChannels'),
-                        'rate': info.get('defaultSampleRate')}
-    finally:
-        try:
-            iface.terminate()
-        except Exception:
-            pass
+    for i, info in enumerate(iface.devices()):
+        names[i] = {'name': info.get('name'),
+                    'in': info.get('max_input_channels'),
+                    'out': info.get('max_output_channels'),
+                    'rate': info.get('default_samplerate')}
     for i, d in sorted(names.items()):
         print('        [{}] {}  in={} out={} default_rate={}'.format(
             i, d['name'], d['in'], d['out'], d['rate']))
@@ -219,10 +252,17 @@ def _settings():
     if _SETTINGS:
         return _SETTINGS[0]
     try:
+        # Exactly what io_put/sound.py's own __main__ does, because that
+        # block is known to work and this was a guess at it: `Languages()`
+        # and `SoundSettings(analang_obj=...)` both need `program`, which
+        # neither call passed, so step 3 and everything after it skipped with
+        # "could not build SoundSettings" on the first real run (2026-09-10).
+        from dummy import App
         from backend import langtags
-        languages = langtags.Languages()
-        language = languages.get_obj('tbt')   # as io_put/sound.py's own __main__
-        settings = sound_mod.SoundSettings(analang_obj=language)
+        program = App()
+        languages = langtags.Languages(program)
+        language = languages.get_obj('tbt')
+        settings = sound_mod.SoundSettings(program, analang_obj=language)
         _SETTINGS.append(settings)
         return settings
     except Exception as e:
@@ -289,9 +329,14 @@ def step_play():
     player.play()
     time.sleep(float(switch('seconds', 3)) + 1)
     heard = ask('Did you hear the recording, clean (no crackle or gaps)?')
-    BASELINE['playback_heard'] = bool(heard)
-    record('5. play back the recording', 'PASS' if heard else 'FAIL',
-           'you heard it' if heard else 'you did not hear it cleanly')
+    BASELINE['playback_heard'] = heard
+    if heard is None:
+        record('5. play back the recording', 'PLAYED',
+               'playback ran without error; whether it sounded clean is '
+               'unconfirmed')
+    else:
+        record('5. play back the recording', 'PASS' if heard else 'FAIL',
+               'you heard it' if heard else 'you did not hear it cleanly')
 
 
 step_play()
@@ -313,9 +358,16 @@ def step_beeps():
     beeps.play()
     time.sleep(2)
     heard = ask('Did you hear the beeps?')
-    BASELINE['beeps_heard'] = bool(heard)
-    record('6. tone beeps', 'PASS' if heard else 'FAIL',
-           'you heard them' if heard else 'you did not')
+    BASELINE['beeps_heard'] = heard
+    if heard is None:
+        # The code ran; only the confirmation is missing. Reporting FAIL here
+        # said "you did not" to someone who had just heard them.
+        record('6. tone beeps', 'PLAYED',
+               'the generator ran without error; whether you heard them is '
+               'unconfirmed')
+    else:
+        record('6. tone beeps', 'PASS' if heard else 'FAIL',
+               'you heard them' if heard else 'you did not')
 
 
 step_beeps()
@@ -324,6 +376,36 @@ step_beeps()
 # ─── Report ─────────────────────────────────────────────────────────────────
 print('\n' + '=' * 72)
 print('Results')
+# MACHINE IDENTITY WITH THE RESULTS. Third script in this directory to need
+# this fix: probing floods the log with ALSA noise, so the header has long
+# scrolled away, and Kent — "with all the junk in that log, no way I'm
+# getting all that on one screen" — cannot paste a result that carries the
+# facts needed to read it. A pass/fail list without the platform, the audio
+# library and the device it used is not a report.
+try:
+    import platform
+    print('  {} {} | python {}'.format(platform.system(), platform.release(),
+                                       platform.python_version()))
+except Exception:
+    pass
+try:
+    print('  portaudio: {}'.format(
+            sound_mod.sounddevice.get_portaudio_version()[1].split('\n')[0]))
+except Exception as e:
+    print('  portaudio: unknown ({})'.format(type(e).__name__))
+try:
+    _s = _SETTINGS[0] if _SETTINGS else None
+    if _s is not None:
+        print("  recorded on: {!r} at {} Hz, {}".format(
+                (_s.cards.get('dict') or {}).get(_s.audio_card_in,
+                                                 _s.audio_card_in),
+                _s.fs, _s.sample_format))
+        print("  playing on:  {!r}".format(
+                (_s.cards.get('dict') or {}).get(_s.audio_card_out,
+                                                 _s.audio_card_out)))
+except Exception as e:
+    print('  settings in use: unavailable ({})'.format(type(e).__name__))
+print()
 for name, outcome, detail in RESULTS:
     print('  {:<5} {}{}'.format(outcome, name, ' — ' + detail if detail else ''))
 counts = {}

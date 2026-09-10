@@ -2983,7 +2983,26 @@ class TaskDressing(HasMenus,ui.Window):
         if not getattr(self,'is_chooser',False):
             self._taskchooserbutton()
         self._removemenus() #self.correlatemenus()
-        self.takekioskscreen()
+        # KIOSK IS FOR WORK PAGES, NOT FOR THE CHOOSER. Kiosk exists so a task
+        # page fills the screen and nothing distracts from the work; the task
+        # chooser IS the place to look around and pick something, and a
+        # fullscreen menu with no window dressing reads as the app having
+        # taken over the machine (Kent 2026-09-10). `is_chooser` was already
+        # consulted two lines above; this call ignored it.
+        if not getattr(self,'is_chooser',False):
+            self.takekioskscreen()
+        else:
+            # NEITHER kiosk NOR zoomed. `takefullscreen()` was tried here and
+            # the chooser still came up fullscreen (Kent 2026-09-10) — it asks
+            # for `-zoomed` and FALLS BACK TO takekioskscreen() on TclError,
+            # which XWayland/mutter appears to raise, so "maximise" quietly
+            # became "fullscreen" again.
+            #   So: leave the geometry alone and let the content size the
+            # window. The chooser is where a user looks around and picks
+            # something; it does not need the screen, and a menu with no
+            # window dressing reads as the app having taken over the machine.
+            log.info("task chooser: leaving the window at its natural size "
+                     "(kiosk is for work pages)")
         self.thread_names=list()
         #This withdrawn flag is only for the TaskChooser on startup
         if not self.exitFlag.istrue() and not kwargs.get('withdrawn'):

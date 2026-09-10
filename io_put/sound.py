@@ -36,7 +36,7 @@ from utilities import logsetup, file
 from utilities.i18n import _   # user-facing text lives here too (the wedge notice)
 from utilities.error_handler import notify_user
 from backend.core.sound import (AudioInterface, SoundSettings, AUDIO_OK,
-                                spectral_ceiling, resampler_images)
+                                spectral_ceiling, zero_runs, rate_is_fake)
 # (The transitional `PYAUDIO_OK = AUDIO_OK` alias that stood here is gone: the
 # streaming layer below is sounddevice now, so nothing is left to be
 # transitional about.)
@@ -377,30 +377,16 @@ class SoundFileRecorder(object):
                     p=float(numpy.abs(indata).max())/scale
                     if p>self._peak:
                         self._peak=p
-                    # Zero runs, carried ACROSS blocks: a gate's silence is
-                    # far longer than one callback, so counting within a
-                    # block would understate it badly.
-                    flat=indata.reshape(-1) if indata.ndim>1 else indata
-                    zero=(flat==0)
-                    self._zeros+=int(zero.sum())
-                    if zero.all():
-                        self._zrun_cur+=len(flat)
-                    else:
-                        live=numpy.flatnonzero(~zero)
-                        # the run carried in, plus this block's leading zeros
-                        self._zrun_cur+=int(live[0])
-                        if self._zrun_cur>self._zrun_max:
-                            self._zrun_max=self._zrun_cur
-                        if len(live)>1:
-                            gaps=numpy.diff(live)-1
-                            if gaps.size:
-                                inner=int(gaps.max())
-                                if inner>self._zrun_max:
-                                    self._zrun_max=inner
-                        # trailing zeros may continue into the next block
-                        self._zrun_cur=len(flat)-1-int(live[-1])
-                    if self._zrun_cur>self._zrun_max:
-                        self._zrun_max=self._zrun_cur
+                    # Zero runs, carried ACROSS blocks by zero_runs()'s
+                    # carry/trailing pair — a gate's silence is far longer
+                    # than one callback. The counting lives in
+                    # backend.core.sound so it can be TESTED against known
+                    # input instead of inferred from a log.
+                    found,longest,self._zrun_cur=zero_runs(indata,
+                                                           self._zrun_cur)
+                    self._zeros+=found
+                    if longest>self._zrun_max:
+                        self._zrun_max=longest
             except Exception as e:
                 log.error("couldn't write a recorded block ({})".format(e))
 
@@ -476,6 +462,21 @@ class SoundFileRecorder(object):
         # NOTHING AUDIBLE. A file of digital silence is the purest form of
         # "claiming a recording we aren't doing": `file_ok` only checks SIZE,
         # so zeros pass it and the take is filed as good.
+        # NO FRAMES AT ALL is its own case, and it had no notice: every test
+        # below is guarded by `if frames`, so a take that delivered nothing
+        # fell through all of them silently. That is precisely what a MUTED
+        # microphone produces — Kent 2026-09-10: "mic muted doesn't register
+        # a recording at all, as I think we asked it to" — and it is the
+        # single most likely reason a user gets no recording, so it must be
+        # the one case that always speaks.
+        if not frames:
+            log.error("that take received NO AUDIO AT ALL: the stream opened "
+                      "and delivered zero frames. A muted input does this.")
+            bad(_("No sound reached A-Z+T at all — not even silence."),
+                _("The microphone is almost certainly muted. Check the mute "
+                  "button on the microphone or headset itself, and the "
+                  "microphone's level in your system's sound settings. This "
+                  "is different from a quiet recording: nothing arrived."))
         if frames and self._peak < 0.0005:
             log.error("that take is SILENT (peak %.4f%% of full scale). A "
                       "file will be written and it contains nothing audible "
@@ -579,67 +580,106 @@ class SoundFileRecorder(object):
                 # Concatenated ONCE: a long take is a large array and both
                 # checks want the same one.
                 whole=numpy.concatenate(self._frames)
+                # THE VERDICT comes from rate_is_fake, the CEILING only names
+                # the frequency for the message. They were the other way
+                # round, with `ceiling < asked*0.28` deciding — and that test
+                # is the weaker one on general grounds, not just here:
+                #   * it estimates its noise floor from the TOP 5% OF THE
+                #     BAND, which in an upsampled capture is exactly where the
+                #     resampler's residue lives, so the reference is
+                #     contaminated by the thing being detected and the verdict
+                #     swings on numerical noise;
+                #   * it asserts "real" where rate_is_fake declines to;
+                #   * rate_is_fake compares two FIXED bands against a
+                #     threshold no acoustic signal can reach (a hole 100+ dB
+                #     down is not an ADC's broadband noise), and it is the one
+                #     with synthetic tests behind it.
+                # Kent's call, 2026-09-10: "if you think rate_is_fake is a
+                # better metric generally (not just on my machine), that's
+                # fine."
+                # Known limit kept in view: rate_is_fake cannot see a SMALL
+                # ratio (44.1 kHz content in a 48 kHz file leaves a hole too
+                # narrow to move the top-band median). That case is harmless.
                 ceiling=spectral_ceiling(whole,self._asked_rate)
-                if ceiling is None:
-                    log.info("take: too quiet to tell whether %d Hz is real",
-                             self._asked_rate)
-                elif ceiling < self._asked_rate*0.28:
-                    log.warning("this take SAYS %d Hz but carries no energy "
-                                "above %.0f Hz, so its real rate is about "
-                                "%d Hz — something between A-Z+T and the "
+                if rate_is_fake(whole,self._asked_rate):
+                    # NO ESTIMATED "real rate" HERE. It used `ceiling*2`, and
+                    # that number is meaningless in exactly the case this
+                    # branch handles: `spectral_ceiling` estimates its floor
+                    # from the top of the band, which IS the hole, so
+                    # numerical noise clears floor+12 dB and it reported
+                    # "energy to 89851 Hz" for a band measured 136 dB empty —
+                    # yielding the notice "192000 Hz really holds only 180000
+                    # Hz of sound" (2026-09-10). Using the weaker test's
+                    # number to describe the stronger test's verdict.
+                    #   What IS known: the top of the band is empty, and which
+                    # rate we switched to. Both are facts; the true source
+                    # rate is not one we can measure, so it goes unstated.
+                    log.warning("this take SAYS %d Hz and the top of its band "
+                                "is EMPTY — something between A-Z+T and the "
                                 "microphone upsampled it. The file is honest "
-                                "about its rate and empty of the detail that "
-                                "rate implies. On PipeWire, "
+                                "about its rate and holds less detail than "
+                                "that rate implies. On PipeWire, "
                                 "clock.allowed-rates must include %d "
                                 "(`pw-metadata -n settings | grep rate`).",
-                                self._asked_rate,ceiling,
-                                int(round(ceiling*2/1000.0)*1000),
-                                self._asked_rate)
-                    real=int(round(ceiling*2/1000.0)*1000)
-                    bad(_("This file says {asked} Hz but really holds only "
-                          "{real} Hz of sound.").format(
-                                asked=self._asked_rate,real=real),
+                                self._asked_rate,self._asked_rate)
+                    # Tell the settings, so the rate just disproved stops
+                    # being offered. The user's own test recording is the
+                    # best evidence available and it arrives for free —
+                    # better than the fraction-of-a-second probe the settings
+                    # can afford on their own.
+                    try:
+                        self.settings.note_fake_rate(self._asked_rate)
+                    except Exception as e:
+                        log.info("couldn't record that %d Hz is upsampled "
+                                 "(%s)",self._asked_rate,e)
+                    # No "really holds only N Hz" and no "Nx larger": both
+                    # came from the bogus ceiling estimate, and produced
+                    # "This file says 96000 Hz but really holds only 96000 Hz
+                    # of sound" — a sentence that contradicts itself, from
+                    # arithmetic on a number that meant nothing (2026-09-10).
+                    #   Say only what was measured: the upper part of the band
+                    # is empty, so the rate buys nothing here. And warn that
+                    # settling may take another take, because each take can
+                    # only disprove the rate it was made at — the step down is
+                    # one rate at a time by nature.
+                    # A RECOMMENDATION, not a change. Nothing has been
+                    # altered; the rate stays as chosen until the user says
+                    # otherwise.
+                    bad(_("This recording is stored as {asked} Hz, but the "
+                          "top of its frequency range is empty.").format(
+                                asked=self._asked_rate),
                         _("Something between A-Z+T and the microphone "
                           "stretched it to fit. Nothing is wrong with the "
-                          "sound you hear, but the file is about {times}x "
-                          "larger than the detail in it warrants. Choosing "
-                          "{real} Hz in Sound Settings gives the same "
-                          "recording in a smaller file.").format(
-                                times=max(2,int(self._asked_rate/max(real,1))),
-                                real=real))
+                          "sound you hear and nothing has been changed — the "
+                          "file is simply bigger than its content needs. If "
+                          "that matters to you, choose a lower sample rate in "
+                          "Sound Settings; the recording will sound the "
+                          "same."))
+                elif ceiling is None:
+                    log.info("take: nothing suggests %d Hz is upsampled, but "
+                             "it was too quiet to place the band edge either",
+                             self._asked_rate)
                 else:
-                    # Energy reaching Nyquist is NOT proof the rate is real,
-                    # and saying so was a false reassurance: this line read
-                    # "consistent with a real 192000 Hz" for a `sysdefault`
-                    # take whose 192 kHz is ALSA plug imaging (2026-09-10).
-                    # A cheap resampler's images sit where a real converter's
-                    # noise sits, so level cannot separate them — but images
-                    # MIRROR the baseband, and noise correlates with nothing.
-                    images=resampler_images(whole,self._asked_rate)
-                    if images:
-                        real,score=images
-                        log.warning("this take SAYS %d Hz, and it does carry "
-                                    "energy up to %.0f Hz — but that energy "
-                                    "is a MIRROR of the audio below %d Hz "
-                                    "(r=%.2f), which is what a resampler "
-                                    "leaves behind, not what a microphone "
-                                    "produces. Its real rate is about %d Hz.",
-                                    self._asked_rate,ceiling,real//2,score,
-                                    real)
-                        bad(_("This file says {asked} Hz, but the extra "
-                              "detail in it is manufactured, not "
-                              "recorded.").format(asked=self._asked_rate),
-                            _("The microphone is really recording at about "
-                              "{real} Hz and something is stretching it. The "
-                              "sound is fine, but the file is larger than "
-                              "its content warrants. Try choosing this "
-                              "microphone's own entry in Sound Settings "
-                              "rather than a 'default' or 'sysdefault' one, "
-                              "or set {real} Hz.").format(real=real))
-                    else:
-                        log.info("take: energy up to %.0f Hz, and it does not "
-                                 "mirror the lower band — consistent with a "
-                                 "real %d Hz",ceiling,self._asked_rate)
+                    # NOT "consistent with a real N Hz". Energy reaching
+                    # Nyquist does not prove the rate is real: a cheap
+                    # resampler's images land exactly where a converter's
+                    # noise does. A shape-based test to separate them was
+                    # attempted four ways and abandoned — see
+                    # _mirror_test_abandoned_2026_09_10 in backend/core/sound.
+                    # So report the measurement and claim nothing more.
+                    log.info("take: energy up to %.0f Hz. That is consistent "
+                             "with a real %d Hz, but does not prove it — a "
+                             "resampler can put energy there too.",
+                             ceiling,self._asked_rate)
+                    # Report the GOOD outcome too, so an earlier "upsampled"
+                    # mark can be withdrawn. The graph rate changes under us,
+                    # so a mark made at one moment must not outlive evidence
+                    # that it no longer holds.
+                    try:
+                        self.settings.note_real_rate(self._asked_rate)
+                    except Exception as e:
+                        log.info("couldn't clear the rate mark for %d Hz (%s)",
+                                 self._asked_rate,e)
         except (NameError,AttributeError,TypeError) as e:
             # These mean the CHECK is broken, not the audio — and the check
             # silently not running is the same failure it exists to prevent.
