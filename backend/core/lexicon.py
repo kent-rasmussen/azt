@@ -774,11 +774,27 @@ class WordCollection(Segments):
                  type(self).__name__, self.ftype,
                  getattr(self,'dodone',None), getattr(self,'dodoneonly',None),
                  len(all))
-        if self.dodone and not self.dodoneonly: #i.e., all data
+        # ABSENT MEANS FALSE, and absence is DELIBERATE. The Add-and-Parse
+        # collection variants do not set these at all — see the comment in
+        # `Parse.__init__` (:2074-2080): they must present the same full
+        # wordlist as the plain collection tasks, and setting dodoneonly there
+        # once made a fresh project's list empty and falsely congratulate the
+        # user. So the flags' absence is part of the design.
+        #   The DIAG line just above already reads them with
+        # `getattr(self,'dodone',None)`; these two tests used bare attribute
+        # access, so the same function both tolerated and required them. It
+        # survived only because something else happened to set defaults first:
+        # reached before that (from `setsensetodo` → `getword` → here, Kent
+        # 2026-09-10) it raised `'WordCollectnParsewRecordings' object has no
+        # attribute 'dodone'` after a full trip through the task↔window
+        # bridge.
+        dodone=getattr(self,'dodone',False)
+        dodoneonly=getattr(self,'dodoneonly',False)
+        if dodone and not dodoneonly: #i.e., all data
             return all
         done=[i for i in all
                     if i.sense.textvaluebyftypelang(self.ftype,self.analang)]
-        if self.dodone: #i.e., dodoneonly
+        if dodone: #i.e., dodoneonly
             log.info("DIAG-todo %s: done-only=%d",type(self).__name__,len(done))
             return done
         # At this point, done isn't wanted
@@ -1344,6 +1360,32 @@ class WordCollection(Segments):
     def set_up_transcription(self):
         pass
     def getword(self):
+        """Show one word on the word page.
+
+        BUILD THE PAGE FIRST IF IT IS NOT THERE. `getwords()` is what creates
+        `entries`, `wordsframe`, `instructions` and `dirfn`, and it ends by
+        calling this — so this method has always assumed those exist. But it
+        is also called from OUTSIDE that sequence: `ui_shell.setsensetodo`
+        invokes `task.getword()` when the user picks a sense from the status
+        line, which can happen before (or without) any page build. Then
+        `self.instructions['text']=…` below raised
+        `'WordCollectnParsewRecordings' object has no attribute
+        'instructions'` — after travelling the whole task↔window bridge
+        looking for it (Kent, 2026-09-10).
+          Delegating is safe and terminates: `getwords()` assigns
+        `instructions` (:810) before it calls back here (:814), so the second
+        pass finds it. It also rebuilds `entries`, which is what a caller
+        arriving from a sense choice wants anyway.
+          This is the third instance of the same shape in two days — an outer
+        method's preconditions being assumed by an inner one that other code
+        calls directly (see also `sensetodo` and the withdraw-without-reveal
+        in `setsensetodo`). Worth reading with
+        agenda/bridge_shadowed_attributes.md.
+        """
+        if not hasattr(self,'instructions'):
+            log.info("getword: the word page isn't built yet (no "
+                     "instructions label), so building it first")
+            return self.getwords()
         p = self.lex_ui
         self.program.taskchooser.withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))

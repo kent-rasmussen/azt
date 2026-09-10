@@ -207,11 +207,20 @@ if __name__ == "__main__":
     # this alone could never have caught a beeps regression (2026-09-09). It
     # stays optional: without settings you still get layout and typing, and
     # the log says which you got.
+    # ONE dummy program, shared. Root makes its own when passed none, and then
+    # SoundSettings' handle would hang off a different object than the widgets'
+    # — harmless for a poke-at-it run, but confusing in the log.
+    from dummy import App
+    program=App()
     soundsettings=None
     try:
-        from backend import langtags   # the route io_put/sound.py __main__ takes
-        soundsettings=sound.SoundSettings(
-                    analang_obj=langtags.Languages().get_obj('tbt'))
+        # `Languages(program)` and `SoundSettings(program, ...)` both need it:
+        # Languages assigns `program.languages=self`, and SoundSettings reaches
+        # for `program.audio`. My first version of this block passed neither
+        # and failed twice over (2026-09-09).
+        from backend import langtags
+        soundsettings=sound.SoundSettings(program,
+                    analang_obj=langtags.Languages(program).get_obj('tbt'))
         log.info("standalone Transcriber: real sound settings, so the beeps "
                  "should play (audio handle: {})".format(
                                         getattr(soundsettings,'audio',None)))
@@ -219,8 +228,19 @@ if __name__ == "__main__":
         log.info("standalone Transcriber: no sound settings ({}: {}), so no "
                  "beeps; layout and typing still work.".format(
                                                     type(e).__name__,e))
-    r=ui.Root()
-    r.title(_('Transcriber'))
-    Transcriber(r,initval='˥˥ ˩˩ ˧˧',soundsettings=soundsettings,column=1,row=1)
-    r.deiconify()
+    r=ui.Root(program)
+    # THE TRANSCRIBER GOES IN A WINDOW, NOT ON THE ROOT. Every backend
+    # withdraws its root for the whole session — tkinter always has, and
+    # ui_webview creates it `hidden=True` on purpose ("the root is never
+    # seen"), which on WebKitGTK is unmappable for good: show() never maps a
+    # window created hidden. So `--engine=gtk` gave NO WINDOW AT ALL, while
+    # `--engine=qt` worked, Qt being the engine that can show one (Kent
+    # 2026-09-09; the difference is measured in
+    # tests/manual/webview_multiwindow/platform_probe.py).
+    #   Root.deiconify() even warns about this — "root window was created
+    # hidden, so show() will probably not map it" appeared in both webview
+    # logs. It was right, and this is the caller it was talking about.
+    w=ui.Window(r,title=_('Transcriber'))
+    Transcriber(w.frame,initval='˥˥ ˩˩ ˧˧',soundsettings=soundsettings,column=1,row=1)
+    w.deiconify()   # the window, not the root
     r.mainloop()

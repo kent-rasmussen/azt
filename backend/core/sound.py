@@ -1,4 +1,4 @@
-"""Headless backend for audio device settings, PyAudio handle, ASR state,
+"""Headless backend for audio device settings, the audio handle, ASR state,
 and recording-task filename helpers.
 
 This module holds *runtime* audio state (device enumeration, format
@@ -10,27 +10,44 @@ import sys
 from utilities import file, rx, logsetup
 from utilities import utilities as utils
 log = logsetup.getlog(__name__)
-# pyaudio/numpy are OPTIONAL app-wide (program['nosound']): this module must
-# stay importable without them — its importers are everywhere, and a hard
-# import here killed boot on machines where pyaudio didn't build
-# (2026-07-16). Audio CLASSES fail at USE instead.
+# The audio backend and numpy are OPTIONAL app-wide (program['nosound']):
+# this module must stay importable without them — its importers are
+# everywhere, and a hard import here killed boot on machines where the audio
+# library didn't build (2026-07-16). Audio CLASSES fail at USE instead.
 SOUND_PROBLEMS = []  # (component, error) — main.py surfaces these LOUDLY
 #                      (blocking startup notice): degraded sound must never
 #                      be silent in a sound-centric app (Kent 2026-07-16).
+#
+# ── WHY sounddevice AND NOT PyAudio (ported 2026-09-09) ────────────────────
+# PyAudio publishes WINDOWS-ONLY WHEELS, and always has: checked against PyPI
+# 2026-09-09, every release from 0.2.8 to 0.2.14 ships win32/win_amd64 and
+# nothing else. Linux and macOS therefore always built it from source — which
+# is why the Linux installer installs portaudio19-dev — and on a Mac with no
+# Xcode tools it cannot be installed AT ANY VERSION. That is not a gap
+# awaiting an upload; there was nothing to wait for.
+#   sounddevice ships PortAudio INSIDE its wheel for macOS (universal2, so
+# Intel and Apple Silicon) and Windows (including arm64), and its wheels are
+# `py3-none-*` rather than cp-specific, so a new python needs no new build.
+# Linux uses the `py3-none-any` wheel plus the system `libportaudio2` — a
+# runtime library, no compiler.
+#   The second reason is the one Kent hit: PyAudio's blocking write() can
+# WEDGE at high rates, and a wedged stream cannot be closed (PortAudio forbids
+# closing mid-write; doing it corrupted the heap, 2026-07-16). The only
+# recovery was to abandon the stream and leak its device handle — and eight
+# leaks in one session took the sound card away from every other program on
+# the machine, Praat included. Probing was measured and does NOT explain it
+# (192 kHz/int32 is reported supported), so the model had to go, not the
+# settings. See agenda/pyaudio_to_sounddevice.md.
 try:
-    import pyaudio
-    _PYAUDIO_BASE = pyaudio.PyAudio
-    PYAUDIO_OK = True
+    import sounddevice
+    AUDIO_OK = True
 except Exception as _e:
-    pyaudio = None
-    PYAUDIO_OK = False
-    SOUND_PROBLEMS.append(('pyaudio (recording/playback)', str(_e)))
-    log.error(f"pyaudio unavailable ({_e}); sound features are off.")
-    class _PYAUDIO_BASE(object):
-        """Import-time stand-in so AudioInterface can be DEFINED; any
-        attempt to actually construct it says what's missing."""
-        def __init__(self, *args, **kwargs):
-            raise RuntimeError("pyaudio is not installed (sound is off)")
+    sounddevice = None
+    AUDIO_OK = False
+    SOUND_PROBLEMS.append(('sounddevice (recording/playback)', str(_e)))
+    log.error("sounddevice unavailable ({}); sound features are off. On Linux "
+              "this usually means the system PortAudio runtime is missing: "
+              "install libportaudio2.".format(_e))
 try:
     import numpy
 except Exception as _e:
@@ -58,21 +75,202 @@ except NameError:
         return x
 
 
-class AudioInterface(_PYAUDIO_BASE):
-    def stop(self):
-        self.terminate()
-        log.info("PyAudio Terminated")
-    done = close = finished = stop
+# ── Sample formats: named by WIDTH, not by a vendor enum ──────────────────
+# PyAudio's constants ran INVERSE to width (paFloat32=1 … paUInt8=32), so
+# `min()` selected the widest and `max()` the narrowest — which is how
+# `default_sf` came to have two branches that disagreed with each other, and
+# `max_sf` came to pick the narrowest thing available. sounddevice takes dtype
+# STRINGS, so the enum is gone; this table replaces it and says width out
+# loud, so nothing has to know an ordering to be read correctly.
+#
+# int24 is absent deliberately (Kent 2026-09-09: "no problem. let's use what
+# there is"). PortAudio has paInt24 and sounddevice maps 'int24', but numpy
+# has no 24-bit dtype, so numpy-based streams cannot carry it; a raw stream
+# could, if it ever matters to the acoustics. It IS supported by this
+# hardware, so this drops a real capability, not a theoretical one.
+#
+# float32 is absent deliberately too, and this is the one to be careful with:
+# it is sounddevice's DEFAULT dtype for numpy streams, so the path of least
+# resistance leads straight into it — and Kent, 2026-09-09: "I think there
+# was a bug somewhere that made 32float cause problems, so I stopped short of
+# that. But that was some time ago, so may no longer apply." Enabling it is
+# its own change with its own test, never a side effect of choosing a default.
+SAMPLE_FORMATS = {
+    'int32': {'bits': 32, 'label': _('32 bit integer')},
+    'int16': {'bits': 16, 'label': _('16 bit integer')},
+}
+# Reading a config written by the PyAudio era: it stored the constant's
+# integer. Without this, an existing install comes back with a sample_format
+# that means nothing and no way to tell that is what happened.
+_PYAUDIO_FORMAT_INTS = {1: 'float32', 2: 'int32', 4: 'int24', 8: 'int16'}
+
+
+def format_bits(fmt):
+    """Bits per sample of a dtype name, or 0 if we don't offer it. Ranking
+    goes through here so 'widest' is a statement about width."""
+    return SAMPLE_FORMATS.get(fmt, {}).get('bits', 0)
+
+
+def widest(formats):
+    """The widest of a collection of dtype names. Replaces `min()` over
+    PyAudio constants, which did this by accident of their numbering."""
+    return max(formats, key=format_bits) if formats else None
+
+
+def narrowest(formats):
+    return min(formats, key=format_bits) if formats else None
+
+
+def spectral_ceiling(block, rate):
+    """The highest frequency in `block` still carrying real energy, in Hz —
+    or None when it is too quiet to tell.
+
+    THE ONLY RELIABLE TEST FOR SILENT RESAMPLING, and the reason is worth
+    stating because two easier signals both failed first:
+
+      * `check_input_settings()` reports what a device ACCEPTS. A sound server
+        accepts everything and converts (measured 2026-09-10: `default` took
+        192 kHz while PipeWire ran at 48 kHz).
+      * frames-per-second CANNOT see it either. Upsampling delivers exactly
+        the rate requested — that is what upsampling is — so a take that
+        "implies 192985 Hz" may still be 48 kHz content in a 192 kHz wrapper.
+      * a device's own `default_samplerate` is not evidence: the `pipewire`
+        node reports 44100 and delivers a genuine 192 kHz (Kent 2026-09-10,
+        which is what retired the warning built on it).
+
+    What upsampled audio cannot hide is a spectral cliff: 48 kHz content
+    stretched to 192 kHz has NOTHING above 24 kHz, not even noise. So the
+    highest frequency above the noise floor gives the real rate away.
+
+    Needs sound to have been recorded — room noise is enough, since the cliff
+    shows in the noise floor too. Returns None in silence rather than
+    guessing, because "the room was quiet" and "the rate was faked" must never
+    be confused.
+    """
+    if numpy is None or block is None or not len(block):
+        return None
+    mono = block if getattr(block, 'ndim', 1) == 1 else block[:, 0]
+    if mono.dtype.kind == 'i':
+        mono = mono.astype('float64') / float(numpy.iinfo(mono.dtype).max)
+    else:
+        mono = mono.astype('float64')
+    if mono.size < 2048 or float(numpy.abs(mono).max()) < 0.0005:
+        return None
+    n = 1 << int(numpy.floor(numpy.log2(min(mono.size, 65536))))
+    mag = numpy.abs(numpy.fft.rfft(mono[:n] * numpy.hanning(n)))
+    if mag.max() <= 0:
+        return None
+    freqs = numpy.fft.rfftfreq(n, 1.0 / float(rate))
+    db = 20.0 * numpy.log10(numpy.maximum(mag / mag.max(), 1e-12))
+    # Noise floor from the top 5% of the band: in a resampled capture that
+    # region holds only the FFT's numerical noise, so anything real stands
+    # well clear of it.
+    floor = float(numpy.median(db[int(len(db) * 0.95):]))
+    above = numpy.nonzero(db > floor + 12.0)[0]
+    if not len(above):
+        return None
+    return float(freqs[above[-1]])
+
+
+def migrate_sample_format(stored):
+    """A persisted sample_format → a dtype name we can use, or None.
+
+    Accepts what this version writes (a dtype name) and what every earlier
+    version wrote (a PyAudio constant). Returns None when it cannot be
+    honoured — including int24 and float32, which we no longer offer — so the
+    caller falls back to a default rather than opening a stream with a value
+    from a vocabulary that no longer exists."""
+    if stored in SAMPLE_FORMATS:
+        return stored
+    name = _PYAUDIO_FORMAT_INTS.get(stored)
+    if name in SAMPLE_FORMATS:
+        log.info("audio settings: sample format {!r} was stored as a PyAudio "
+                 "constant; reading it as {!r}".format(stored, name))
+        return name
+    if stored is not None:
+        log.info("audio settings: stored sample format {!r} is not one A-Z+T "
+                 "offers now ({}); falling back to the default".format(
+                        stored, ', '.join(sorted(SAMPLE_FORMATS))))
+    return None
+
+
+class AudioInterface(object):
+    """The audio backend, as an object A-Z+T can hold and pass around.
+
+    It no longer SUBCLASSES the library: PyAudio's entry point was a class
+    (`pyaudio.PyAudio`) and this inherited it, so `program.audio` was itself a
+    PortAudio handle. sounddevice is module-level functions with no such
+    object, so this becomes a plain holder that names the operations A-Z+T
+    needs — which is the better shape anyway: the codebase asked this object
+    for `get_format_from_width` purely to find out whether it still worked
+    (frontend/sound_ui.py), a trick that only existed because there was no
+    honest question to ask. There is now: `usable()`.
+    """
+
     def __init__(self):
-        log.debug("PA Version: {}".format(pyaudio.get_portaudio_version()))
-        log.debug("PA Version: {}".format(pyaudio.get_portaudio_version_text()))
-        super().__init__()
+        if not AUDIO_OK:
+            raise RuntimeError("sounddevice is not installed (sound is off)")
+        log.debug("PortAudio: {}".format(
+                    getattr(sounddevice, 'get_portaudio_version',
+                            lambda: ('?', '?'))()))
+
+    def usable(self):
+        """Can this interface still talk to the audio system?
+
+        Replaces `task.audio.get_format_from_width(1)` inside a try, which was
+        the old way of asking — an API call chosen for its side effect. A
+        device list is the real question, and it is cheap."""
+        if not AUDIO_OK:
+            return False
+        try:
+            sounddevice.query_devices()
+            return True
+        except Exception as e:
+            log.info("audio interface is not usable ({})".format(e))
+            return False
+
+    def devices(self):
+        """[{'index','name','in','out','rate'}] for every device, or []."""
+        out = []
+        try:
+            for i, d in enumerate(sounddevice.query_devices()):
+                out.append({'index': i,
+                            'name': d.get('name'),
+                            'in': d.get('max_input_channels', 0),
+                            'out': d.get('max_output_channels', 0),
+                            'rate': d.get('default_samplerate')})
+        except Exception as e:
+            log.error("could not list audio devices ({})".format(e))
+        return out
+
+    def supported(self, device, rate, fmt, output, channels=1):
+        """Does this device really do this rate and format, in this
+        direction? The question `is_format_supported` used to answer — and
+        which the old enumeration never actually asked (its caller passed
+        test=False, so every device was credited with every candidate)."""
+        check = (sounddevice.check_output_settings if output
+                 else sounddevice.check_input_settings)
+        try:
+            check(device=device, samplerate=float(rate), dtype=fmt,
+                  channels=channels)
+            return True
+        except Exception:
+            return False
+
+    def stop(self):
+        """Stop anything playing. NOT `terminate()`: there is no handle to
+        tear down, and stopping is the operation callers actually wanted."""
+        try:
+            sounddevice.stop()
+        except Exception as e:
+            log.info("nothing to stop, or couldn't ({})".format(e))
+    done = close = finished = stop
 
 
 class SoundSettings(object):
     """Runtime audio device and ASR configuration.
 
-    Owns the PyAudio handle, enumerates available cards, validates
+    Owns the audio handle, enumerates available cards, validates
     rate/format combinations, and manages ASR kwargs/state. Load/save to
     the settings file is routed through here so device state has a single
     home.
@@ -142,17 +340,38 @@ class SoundSettings(object):
         else:
             self.fs = max(self.cards['out'][self.audio_card_out])
 
-    def default_sf(self):
+    # ── Sample-format choice, by WIDTH and said out loud ─────────────────────
+    # PORTED 2026-09-09. What was here ranked PyAudio's constants, whose values
+    # run INVERSE to width (paFloat32=1 … paUInt8=32), so `min()` meant widest
+    # and `max()` meant narrowest. The consequences were both invisible in the
+    # code and visible in the field:
+    #   * `default_sf`'s two branches DISAGREED — `min()` (32-bit) when an
+    #     input card was set, `max()` (16-bit) when only an output card was. A
+    #     split by accident, not by policy.
+    #   * `max_sf` used `max()` in both branches: a method named "max" that
+    #     selected the NARROWEST format available.
+    # A-Z+T wants the widest, for the same reason it wants 192 kHz. Now that
+    # ranking goes through `format_bits`, both methods say which end they mean.
+    def _formats_here(self):
+        """The formats the CHOSEN direction actually offers at self.fs.
+        Input wins when there is one, as before: a recording task's format has
+        to be one the microphone can produce."""
         if self.audio_card_in in self.cards['in']:
-            self.sample_format = min(self.cards['in'][self.audio_card_in][self.fs])
-        else:
-            self.sample_format = max(self.cards['out'][self.audio_card_out][self.fs])
+            return self.cards['in'][self.audio_card_in].get(self.fs) or []
+        return self.cards['out'][self.audio_card_out].get(self.fs) or []
+
+    def default_sf(self):
+        self.sample_format = widest(self._formats_here())
 
     def max_sf(self):
-        if self.audio_card_in in self.cards['in']:
-            self.sample_format = max(self.cards['in'][self.audio_card_in][self.fs])
-        else:
-            self.sample_format = max(self.cards['out'][self.audio_card_out][self.fs])
+        """Kept under its old name because callers use it; it now does what
+        the name says. It was the narrowest before."""
+        self.sample_format = widest(self._formats_here())
+
+    def min_sf(self):
+        """The narrowest available — the deliberate fallback, named as one,
+        for a caller that wants to trade fidelity for a stream that opens."""
+        self.sample_format = narrowest(self._formats_here())
 
     def defaults(self):
         self.default_out()
@@ -160,99 +379,169 @@ class SoundSettings(object):
         self.default_fs()
         self.default_sf()
 
+    # ── "next card" has to cope with a card that ISN'T IN THE LIST ─────────
+    # These did `list.index(current)`, which raises when the current card is
+    # absent — and absent is a NORMAL state, not a corrupt one:
+    # `audio_card_out` is PERSISTED AS AN INDEX, and PortAudio renumbers
+    # devices as the sound server changes. A config written when the machine
+    # had 11 devices can be read on a day it enumerates 9.
+    #   That never fired before the sounddevice port because `getactual`
+    # never actually probed (its only caller passed test=False), so
+    # everything claimed to support everything and `check()` had no reason to
+    # look for another card. With real probing, a stale index takes `check()`
+    # straight here, and `ValueError: 10 is not in list` came out of
+    # SoundSettings' constructor — killing task creation at startup rather
+    # than degrading (Kent, 2026-09-10).
+    #   A card we cannot find is exactly the case for starting at the first
+    # one, which is what these are for. The proper fix is to persist the
+    # device NAME and resolve it at use time; see
+    # agenda/pyaudio_to_sounddevice.md.
+    def _next_card(self, io, current):
+        """The next card after `current` in direction `io`, or None when
+        there are no more to try. Starts at the first when `current` is not
+        in the list."""
+        cards = sorted(self.cards[io].keys())
+        if not cards:
+            log.error("no %s cards at all; sound is off in that direction", io)
+            return None
+        try:
+            i = cards.index(current)
+        except ValueError:
+            log.info("%s card %r is not among this machine's %s cards (%s) — "
+                     "a saved device index that no longer resolves; starting "
+                     "at %r", io, current, io, cards, cards[0])
+            return cards[0]
+        if i >= len(cards) - 1:
+            return None
+        return cards[i + 1]
+
     def next_card_in(self):
-        ins = sorted(self.cards['in'].keys())
-        insi = ins.index(self.audio_card_in)
-        if insi == len(ins) - 1:
+        nxt = self._next_card('in', getattr(self, 'audio_card_in', None))
+        if nxt is None:
             return 1
-        else:
-            self.audio_card_in = ins[insi + 1]
-            self.default_fs()
-            self.default_sf()
+        self.audio_card_in = nxt
+        self.default_fs()
+        self.default_sf()
 
     def next_card_out(self):
-        outs = sorted(self.cards['out'].keys())
-        outsi = outs.index(self.audio_card_out)
-        if outsi == len(outs) - 1:
+        nxt = self._next_card('out', getattr(self, 'audio_card_out', None))
+        if nxt is None:
             return 1
-        else:
-            self.audio_card_out = outs[outsi + 1]
+        self.audio_card_out = nxt
+
+    # Same `.index()` fragility as the cards had, and for `sample_format` it
+    # is not hypothetical: the persisted value used to be a PyAudio CONSTANT
+    # (an int) and is now a dtype NAME, so every config written before
+    # 2026-09-09 holds something that cannot be in these lists. `fs` has the
+    # milder version — a rate the previous card offered and this one does not.
+    # Absent means "start from the top", not "crash".
+    def _step_down(self, values, current):
+        """The next value after `current` in `values` (already ordered widest
+        or highest first), or None at the end. Starts at the first when
+        `current` is not among them."""
+        if not values:
+            return None
+        try:
+            i = values.index(current)
+        except ValueError:
+            log.info("%r is not one of %s — a saved setting this machine or "
+                     "this version can't offer; starting at %r",
+                     current, values, values[0])
+            return values[0]
+        if i >= len(values) - 1:
+            return None
+        return values[i + 1]
 
     def next_fs(self):
-        exit = False
-        fss = sorted(self.cards['in'][self.audio_card_in].keys(), reverse=True)
-        fssi = fss.index(self.fs)
-        if fssi == len(fss) - 1:
+        rates = sorted((self.cards['in'].get(self.audio_card_in) or {}).keys(),
+                       reverse=True)
+        nxt = self._step_down(rates, getattr(self, 'fs', None))
+        if nxt is None:
             exit = self.next_card_in()
             if exit == False:
                 self.default_fs()
-        else:
-            self.fs = fss[fssi + 1]
-        return exit
+            return exit
+        self.fs = nxt
+        return False
 
     def next_sf(self):
-        exit = False
-        sfs = sorted(self.cards['in'][self.audio_card_in][self.fs], reverse=True)
-        sfsi = sfs.index(self.sample_format)
-        if sfsi == len(sfs) - 1:
+        formats = sorted((self.cards['in'].get(self.audio_card_in) or {}
+                          ).get(self.fs) or [], key=format_bits, reverse=True)
+        nxt = self._step_down(formats, getattr(self, 'sample_format', None))
+        if nxt is None:
             exit = self.next_fs()
             if exit == False:
                 self.default_sf()
-        else:
-            self.sample_format = sfs[sfsi + 1]
-        return exit
+            return exit
+        self.sample_format = nxt
+        return False
 
     def next(self):
         return self.next_sf()
 
-    def getactual(self, test=False):
+    def getactual(self, test=True):
+        """Build `self.cards` — what each device REALLY does, per direction.
+
+        `test` now defaults to TRUE, and that is the substance of this change
+        rather than a tidy-up. It defaulted to False and its only caller
+        passed nothing, so `is_format_supported` was NEVER called on the live
+        path: every `except` was dead code and every device was credited with
+        every candidate rate and format. `self.cards` was a copy of
+        `hypothetical` wearing the name of a measurement, and the defaults —
+        `max()` of the rates, widest of the formats — were chosen from it.
+        That is how playback came to open 192 kHz/32-bit streams on whatever
+        device happened to be default.
+
+        MEASURED before deciding (Kent: "set a test to time the difference in
+        probing sound cards"; tests/manual/sound_check/time_card_probe.py):
+        real probing costs **~1.26s** on his box and rejects **33%** of what
+        the old table claimed — two whole card/direction entries, plus 28 kHz
+        and 8 kHz on the sof-hda-dsp outputs and hdmi. Decision, his: probe
+        for real at startup. 1.3s is affordable; it just must not be invisible,
+        so the caller runs it behind the splash's progress bar.
+
+        `test=False` is kept ONLY so the timing harness can still measure the
+        difference. Nothing in the app should pass it.
+
+        Note what this does NOT fix: 192 kHz with int32 is *accepted* by every
+        output here, so probing never would have prevented the playback wedge.
+        That was the PyAudio blocking-write model, and it is why this module
+        now uses sounddevice.
+        """
+        import time as _time
+        started = _time.perf_counter()
         self.cards = {'in': {}, 'out': {}, 'dict': {}}
-        hostinfo = self.audio.get_host_api_info_by_index(0)
-        numdevices = hostinfo.get('deviceCount')
-        for i in range(numdevices):
-            devinfo = self.audio.get_device_info_by_host_api_device_index(0, i)
-            d = {'code': i, 'name': devinfo['name']}
-            if (devinfo.get('maxInputChannels')) > 0:
+        for dev in self.audio.devices():
+            i = dev['index']
+            if dev['in'] > 0:
                 self.cards['in'][i] = {}
-            if (devinfo.get('maxOutputChannels')) > 0:
+            if dev['out'] > 0:
                 self.cards['out'][i] = {}
-            self.cards['dict'][i] = devinfo['name']
-        for card in self.cards['in'].copy():
-            self.cards['in'][card] = {}
-            for fs in self.hypothetical['fss']:
-                self.cards['in'][card][fs] = list()
-                for sf in self.hypothetical['sample_formats']:
-                    try:
+            self.cards['dict'][i] = dev['name']
+        probes = 0
+        for io, is_output in (('in', False), ('out', True)):
+            for card in list(self.cards[io]):
+                self.cards[io][card] = {}
+                for fs in self.hypothetical['fss']:
+                    keep = []
+                    for fmt in self.hypothetical['sample_formats']:
                         if test:
-                            self.audio.is_format_supported(rate=fs,
-                                                             input_device=card,
-                                                             input_channels=1,
-                                                             input_format=sf)
-                        self.cards['in'][card][fs].append(sf)
-                    except ValueError:
-                        pass
-                if self.cards['in'][card][fs] == []:
-                    del self.cards['in'][card][fs]
-            if self.cards['in'][card] == {}:
-                del self.cards['in'][card]
-        for card in self.cards['out'].copy():
-            self.cards['out'][card] = {}
-            for fs in self.hypothetical['fss']:
-                self.cards['out'][card][fs] = list()
-                for sf in self.hypothetical['sample_formats']:
-                    try:
-                        if test:
-                            self.audio.is_format_supported(rate=fs,
-                                                             output_device=card,
-                                                             output_channels=1,
-                                                             output_format=sf)
-                        self.cards['out'][card][fs].append(sf)
-                    except ValueError:
-                        pass
-                if self.cards['out'][card][fs] == []:
-                    del self.cards['out'][card][fs]
-            if self.cards['out'][card] == {}:
-                del self.cards['out'][card]
+                            probes += 1
+                            # A device that refuses — or that hangs its own
+                            # probe and raises — costs us THAT COMBINATION,
+                            # never the enumeration and never startup.
+                            if not self.audio.supported(card, fs, fmt,
+                                                        output=is_output):
+                                continue
+                        keep.append(fmt)
+                    if keep:
+                        self.cards[io][card][fs] = keep
+                if not self.cards[io][card]:
+                    del self.cards[io][card]
+        log.info("audio devices probed in {:.2f}s ({} checks): {} input, {} "
+                 "output configurations usable".format(
+                        _time.perf_counter() - started, probes,
+                        len(self.cards['in']), len(self.cards['out'])))
 
     def printactuals(self):
         for io in ['in', 'out']:
@@ -264,13 +553,12 @@ class SoundSettings(object):
                         log.debug('\t{}_{}'.format(self.hypothetical['fss'][fs],
                                   self.hypothetical['sample_formats'][sf]))
 
-    def sample_format_numpy(self):
-        d = {
-            pyaudio.paInt32: numpy.int32,
-            pyaudio.paInt24: numpy.int24,
-            pyaudio.paInt16: numpy.int16,
-        }
-        return d[self.sample_format]
+    # DELETED with the port: `sample_format_numpy()`. It mapped PyAudio
+    # constants to numpy dtypes and was called from NOWHERE in the codebase —
+    # and could not have worked if it had been, because it built its dict at
+    # call time and `numpy.int24` does not exist, so it raised AttributeError
+    # for EVERY format, not just 24-bit. sounddevice takes the dtype name
+    # directly, so nothing needs the mapping.
 
     def sethypothetical(self):
         self.hypothetical = {}
@@ -279,13 +567,45 @@ class SoundSettings(object):
                                     44100: '44.1khz',
                                     28000: '28khz',
                                     8000: '8khz'}
+        # Keyed by dtype NAME now, from the one table that also carries the
+        # width (SAMPLE_FORMATS, module level). 192 kHz stays at the top of
+        # the rate list on purpose — "192khz should be used, where available"
+        # (Kent 2026-09-09) — and `default_fs`'s max() is what implements
+        # that, now that the probe below makes "available" mean something.
         self.hypothetical['sample_formats'] = {
-            pyaudio.paInt32: '32 bit integer',
-            pyaudio.paInt24: '24 bit integer',
-            pyaudio.paInt16: '16 bit integer',
-        }
+            name: spec['label'] for name, spec in SAMPLE_FORMATS.items()}
+
+    def _migrate_stored_format(self):
+        """Turn a PyAudio-era `sample_format` into a dtype name, in place.
+
+        Every audio.json written before 2026-09-09 stored the PyAudio
+        CONSTANT (paInt32 is the integer 2); it is a dtype NAME now.
+
+        CALLED FROM BOTH `makedefaultifnot` AND `check`, and it has to be:
+        settings are also restored from file straight onto this object
+        (settings/__init__.py), which reaches `check()` without passing
+        through the constructor's validation. Doing it only in
+        `makedefaultifnot` meant `check()` ran first with the raw integer,
+        found that no device supports "192000 Hz / 2" — because 2 is not a
+        dtype — and walked every card rejecting all of them before the value
+        was ever translated (Kent 2026-09-10).
+
+        Idempotent: a value already in SAMPLE_FORMATS is left alone.
+        """
+        stored = getattr(self, 'sample_format', None)
+        if stored is None or stored in SAMPLE_FORMATS:
+            return
+        migrated = migrate_sample_format(stored)
+        if migrated is None:
+            try:
+                del self.sample_format   # let default_sf() choose
+            except AttributeError:
+                pass
+        else:
+            self.sample_format = migrated
 
     def makedefaultifnot(self):
+        self._migrate_stored_format()
         if (not hasattr(self, 'audio_card_out')
                 or self.audio_card_out not in self.cards['out']
                 or self.audio_card_out not in self.cards['dict']):
@@ -307,26 +627,39 @@ class SoundSettings(object):
             self.default_sf()
 
     def check(self):
-        try:
-            self.audio.is_format_supported(rate=self.fs,
-                                             output_device=self.audio_card_out,
-                                             output_channels=1,
-                                             output_format=self.sample_format)
-        except ValueError as e:
-            if 'Device unavailable' in e.args[0]:
-                self.next_card_out()
+        # PORTED 2026-09-09. This used `is_format_supported` and then decided
+        # what to do by MATCHING THE TEXT of PyAudio's ValueError ('Device
+        # unavailable', 'Invalid sample rate') — a translated-string
+        # dependency of the kind this suite bans elsewhere on principle, and
+        # one that silently stopped recovering if a message was ever reworded.
+        # sounddevice raises PortAudioError, whose text is no more stable, so
+        # the reason is inferred from OUR OWN retries instead: try the next
+        # card, then the next format, then give up. Each step is a fact we
+        # established, not a string we recognised.
+        #
+        # FIRST make sure what we are about to ask about is askable: a
+        # restored-from-file sample_format can still be a PyAudio integer, and
+        # asking a device to support "2" fails for every device, which reads
+        # in the log as hardware trouble rather than a stale setting.
+        self._migrate_stored_format()
+        if getattr(self, 'sample_format', None) is None:
+            self.default_sf()
+        if not self.audio.supported(self.audio_card_out, self.fs,
+                                    self.sample_format, output=True):
+            log.info("output card {} can't do {} Hz / {}; trying the next one"
+                     "".format(self.audio_card_out, self.fs,
+                               self.sample_format))
+            if not self.next_card_out():
                 self.check()
-        try:
-            self.audio.is_format_supported(rate=self.fs,
-                                             input_device=self.audio_card_in,
-                                             input_channels=1,
-                                             input_format=self.sample_format)
-        except ValueError as e:
-            if 'Device unavailable' in e.args[0]:
-                self.next_card_in()
+            return
+        if not self.audio.supported(self.audio_card_in, self.fs,
+                                    self.sample_format, output=False):
+            log.info("input card {} can't do {} Hz / {}; trying the next card, "
+                     "then the next format".format(self.audio_card_in, self.fs,
+                                                   self.sample_format))
+            if not self.next_card_in():
                 self.check()
-            if 'Invalid sample rate' in e.args[0]:
-                self.next_sf()
+            elif not self.next_sf():
                 self.check()
 
     def initial_ASR_kwargs(self, language_object):
@@ -441,9 +774,12 @@ class SoundSettings(object):
     # === Absorbed from former ``Sound`` mixin ===
 
     def done_audio(self):
-        """Terminate the audio handle if running."""
+        """Stop whatever is playing. Was `terminate()`, PyAudio's teardown of
+        the handle this object used to BE; sounddevice has no handle, and
+        stopping is what every caller wanted (they call this when leaving a
+        record page, not when shutting the app down)."""
         try:
-            self.audio.terminate()
+            self.audio.stop()
         except Exception:
             log.info("Apparently self.audio doesn't exist, or isn't initialized.")
 
@@ -501,7 +837,13 @@ class SoundSettings(object):
             program.soundsettings = ss
         return ss
 
-    def __init__(self, program, pyaudio=None, analang_obj=None):
+    def __init__(self, program, audio=None, analang_obj=None):
+        # `audio` is ACCEPTED AND IGNORED, as `pyaudio` was before it: the
+        # handle comes from confirm_audio() below, which reuses program.audio
+        # so there is exactly one. Kept in the signature because callers pass
+        # it positionally — including one that passes an audio handle where
+        # `program` belongs (frontend/transcriber.py:87-99 documents that
+        # trap), which this parameter's existence is what made survivable.
         self.program = program
         self.confirm_audio()
         self.sethypothetical()

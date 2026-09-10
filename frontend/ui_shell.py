@@ -2364,13 +2364,47 @@ class TaskDressing(HasMenus,ui.Window):
                        optionlist=levels,
                        command=self.program.settings.setparserautolevel)
     def setsensetodo(self,choice,window):
-        self.sense=self.sensetodo=choice
+        # SET THESE ON THE TASK, NOT ON THE WINDOW. Both readers look at the
+        # task — `getword` tests `getattr(self,'sensetodo',None)`
+        # (lexicon.py:1352) and `sensetodolabel` tests
+        # `self.program.task.sensetodo` (:1083) — and the task OWNS the
+        # attribute rather than borrowing it: `initsensetodo`
+        # (lexicon.py:1921-1932) treats it as a one-shot token and does
+        # `self.sensetodo=None` on the task while the to-do list is being
+        # built, i.e. before the user picks anything.
+        #   From that moment the task has its own `None`, so ordinary
+        # attribute lookup finds it and the TaskWindow.__getattr__ bridge to
+        # this window is never consulted. Writing `self.sensetodo` here was
+        # therefore invisible to everything that reads it: `getword` fell
+        # through to its silent `elif not self.entries:` branch, killed the
+        # word frame and returned — the task page came back with no word on it
+        # (Kent, 2026-09-09: "the sense was selected as expected, but result
+        # is same Task window, without the sense visible") — and the status
+        # label kept saying "Parsing all words".
+        #   The bridge only covers attributes the task does NOT define. An
+        # attribute either side assigns is not shared state, and this one is
+        # assigned on both.
+        task = getattr(self, 'task', self)
+        task.sense=task.sensetodo=choice
         self.program.mainwindow.status.updatesensetodo()
         window.destroy()
-        task = getattr(self, 'task', self)
         if isinstance(task, WordCollection):
-            self.withdraw()
-            task.getword()
+            # WITHDRAW AND REBUILD INSIDE A WAIT, never by hand. A bare
+            # `self.withdraw()` here hid this window and nothing revealed it
+            # again: getword() → dowordframe() builds the word frame INTO this
+            # window, so the page ended up fully built and permanently
+            # invisible — `content=True state=withdrawn`, reported 25s later as
+            # NO WINDOW (Kent, Add and Parse Words with Audio → pick a word →
+            # pick a sense letter → nothing; traced 2026-09-09 by the withdraw
+            # logging in Toplevel.withdraw, which named this line).
+            #   `waiting(thenshow=True)` is the codebase's existing answer and
+            # is used correctly at several sites: entering withdraws and covers
+            # the screen with the wait dialog, leaving deiconifies. So the
+            # window is never mapped-and-empty AND never left hidden — the two
+            # failures this area keeps alternating between. See
+            # agenda/fullscreen_with_only_quit.md, whose rule this follows.
+            with self.waiting(_("Getting that word ready..."),thenshow=True):
+                task.getword()
     def getsensetodobyletter(self,choice,window,event=None):
         window.on_quit()
         msg=_("Preparing to ask for a sense...")

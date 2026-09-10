@@ -310,6 +310,25 @@ function notebookSelect(wid, childWid, notify) {
     }
 }
 
+// ── focus_set ────────────────────────────────────────────────────────
+// Put the keyboard in a widget. tkinter's widgets all answer focus_set(),
+// and EntryField.focus_set() calls this — Transcriber.addchar uses it after
+// clearing the field so the user can carry on typing. Missing until
+// 2026-09-09, when EntryField.delete/insert were added for the same caller.
+// `select` as well as `focus`: an entry that has just been cleared and
+// refilled reads better with its contents selected, which is what tkinter's
+// focus into a re-set entry effectively gives you.
+function focusWidget(wid) {
+    const el = _widgets.get(wid);
+    if (!el) return;
+    try {
+        el.focus();
+        if (typeof el.select === 'function' && el.value) el.select();
+    } catch (e) {
+        console.warn('focusWidget failed for ' + wid, e);
+    }
+}
+
 // ── ToolTip ──────────────────────────────────────────────────────────
 // The CSS class existed and nothing ever created one. ~38 call sites.
 function setTooltip(wid, text) {
@@ -497,12 +516,27 @@ function bindEvent(wid, eventName) {
         '<FocusOut>': 'focusout',
         '<Configure>': 'resize',
         '<Motion>': 'mousemove',
+        // RIGHT AND MIDDLE CLICK, missing until 2026-09-09. Unmapped names
+        // fell through to `addEventListener(eventName)` — i.e. a listener for
+        // an event literally called "<Button-3>", which nothing ever fires.
+        // So every right-click binding was silently dead, including the
+        // Transcriber's "Right click to configure" tone-beep window, whose
+        // own tooltip advertises it (transcriber.py:188-190).
+        '<Button-3>': 'contextmenu',
+        '<ButtonRelease-3>': 'contextmenu',
+        '<Button-2>': 'auxclick',
+        '<ButtonRelease-2>': 'auxclick',
     };
 
     const wantedKey = _keyNames[eventName];
     const domEvent = wantedKey ? 'keydown' : (eventMap[eventName] || eventName);
     el.addEventListener(domEvent, (e) => {
         if (wantedKey && e.key !== wantedKey) return;
+        // A right-click that opens OUR menu must not also open the engine's.
+        if (domEvent === 'contextmenu') e.preventDefault();
+        // auxclick covers every non-primary button; only the middle one is
+        // tkinter's Button-2.
+        if (domEvent === 'auxclick' && e.button !== 1) return;
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, eventName, {
                 x: e.clientX, y: e.clientY,

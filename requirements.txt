@@ -55,7 +55,18 @@ praat-parselmouth       # praatfns.py
 Pillow
 polib                   # not imported by azt itself; translation tooling
 psutil
-PyAudio                 # WINDOWS-ONLY WHEELS. Checked against PyPI
+sounddevice             # recording/playback. REPLACED PyAudio 2026-09-09
+                        # (agenda/pyaudio_to_sounddevice.md). Ships PortAudio
+                        # INSIDE its wheel for macOS (universal2: Intel and
+                        # Apple Silicon) and Windows (incl. arm64), and its
+                        # wheels are py3-none-* rather than cp-specific, so a
+                        # new python never waits for a new build.
+                        # LINUX NEEDS ONE SYSTEM PACKAGE: the py3-none-any
+                        # wheel bundles nothing, so libportaudio2 (the RUNTIME
+                        # library — not portaudio19-dev, and no compiler) must
+                        # be installed. The Linux installer does that.
+# REMOVED 2026-09-09: `PyAudio`. Kept here as a warning against re-adding it.
+#                     WINDOWS-ONLY WHEELS. Checked against PyPI
                         # 2026-09-09: every release from 0.2.8 to 0.2.14
                         # publishes win32/win_amd64 wheels and NOTHING else,
                         # so Linux and macOS always build it from the sdist —

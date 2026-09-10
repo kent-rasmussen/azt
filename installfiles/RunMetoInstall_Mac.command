@@ -834,6 +834,16 @@ EOF
     <key>CFBundlePackageType</key>     <string>APPL</string>
     <key>CFBundleIconFile</key>        <string>azt.icns</string>
     <key>NSHighResolutionCapable</key> <true/>
+    <!-- REQUIRED FOR RECORDING. macOS 10.14+ gates the microphone behind
+         TCC, and an app that asks for it WITHOUT this key is denied
+         outright rather than prompting — so recording would fail with no
+         dialog and no obvious reason. The string is what the system shows
+         the user when it asks. (A-Z+T launched from Terminal borrows
+         Terminal's permission instead, which is why the .command launcher
+         can record when the .app cannot — an inconsistency worth knowing
+         when a field report says "it works one way and not the other".) -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>A-Z+T records words spoken by language speakers, so it needs the microphone.</string>
 </dict>
 </plist>
 EOF

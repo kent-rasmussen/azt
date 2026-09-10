@@ -867,6 +867,52 @@ class _WebviewWidget:
         self._bindings.pop(event, None)
         _api.unregister(self._wid, event)
 
+    # ── bind_all belongs on EVERY widget, not just windows ────────────────
+    # In tkinter `bind_all` is on Misc, so any widget can make an
+    # APPLICATION-WIDE binding, and code does: `dowordframe` binds the
+    # navigation keys off the Next button — `next.bind_all('<Up>', …)`
+    # (lexicon.py:1345) — which is idiomatic and was raising
+    # `'Button' object has no attribute 'bind_all'` here (Kent 2026-09-10).
+    #   The cost was not a missing key binding. It raised in the MIDDLE of
+    # dowordframe, after the widgets were built and before `getword`
+    # populated them, so the page appeared with Back/Next and an empty field
+    # and no word, glosses or picture at all — a plausible-looking page with
+    # nothing on it.
+    #   NINTH gap of this shape (takekioskscreen, after_idle, cget,
+    # wait_window, lift, EntryField.delete/insert/focus_set, textvariable,
+    # Button-3). It arrived through `on_event` again, which is why it showed
+    # as a broken page rather than a crash.
+    #
+    # Routed to the ROOT, which is what "all" means: bindEvent falls back to
+    # `document` for a window, so events from any widget reach it — matching
+    # tkinter, where bind_all is answered by the application, not the widget
+    # it was called on.
+    def bind_all(self, event, handler, add=None):
+        root = self._root_for_binding()
+        if root is not None and root is not self:
+            return root.bind(event, handler, add=add)
+        return self.bind(event, handler, add=add)
+
+    def unbind_all(self, event=None):
+        root = self._root_for_binding()
+        if root is not None and root is not self:
+            return root.unbind(event)
+        return self.unbind(event)
+
+    def _root_for_binding(self):
+        """The nearest enclosing window. Walks `parent` rather than using
+        `default_root()`: a binding made from a widget in a task window
+        belongs to THAT window's page, not to whichever root happens to be
+        default."""
+        node = self
+        seen = 0
+        while node is not None and seen < 50:   # cycle guard
+            if getattr(node, 'is_window', False):
+                return node
+            node = getattr(node, 'parent', None)
+            seen += 1
+        return None
+
     def update_idletasks(self):
         pass  # Browser handles layout automatically
 
@@ -1749,12 +1795,107 @@ class EntryField(_WebviewWidget):
         self.textvariable = kwargs.pop('textvariable', StringVar())
         kwargs.pop('text', None)
         super().__init__(parent, widget_type='entry', **kwargs)
-        # Sync entry → variable
-        _api.register(self._wid, 'input',
-                      lambda data: self.textvariable.set(data.get('value', '')))
+        # ── BOTH DIRECTIONS, which is new (2026-09-09) ────────────────────
+        # Only entry → variable was wired, so a field built with a
+        # `textvariable` that already had a value came up EMPTY, and any later
+        # `var.set(...)` never reached the screen. The Transcriber's field is
+        # created with `initval='˥˥ ˩˩ ˧˧'` and showed nothing (Kent, on both
+        # engines). That is the general "textvariable doesn't track changes"
+        # gap in this backend, closed here for entries.
+        #   `_pushed` breaks the loop: the DOM tells us a value, we store it
+        # as already-pushed, then the variable's trace sees no difference and
+        # does not write it back. Writing it back would be harmless in
+        # principle and awful in practice — assigning `el.value` while
+        # someone is typing can move the caret to the end.
+        self._pushed = self.textvariable.get() or ''
+
+        def _from_dom(data):
+            self._pushed = data.get('value', '')
+            self.textvariable.set(self._pushed)
+        _api.register(self._wid, 'input', _from_dom)
+
+        def _to_dom(*_args):
+            text = self.textvariable.get() or ''
+            if text == self._pushed:
+                return
+            self._pushed = text
+            wv = _wv_window_for(self)
+            if wv is not None:
+                _js(wv, f'updateProp({self._wid}, "value", {json.dumps(text)})')
+        self.textvariable.trace_add('write', _to_dom)
+
+        # And show what it already holds. `_js` queues per window, so this is
+        # safe before the page has loaded.
+        if self._pushed:
+            wv = _wv_window_for(self)
+            if wv is not None:
+                _js(wv, 'updateProp({}, "value", {})'.format(
+                        self._wid, json.dumps(self._pushed)))
 
     def get(self):
         return self.textvariable.get()
+
+    # ── The tkinter Entry API this backend was missing ────────────────────
+    # `delete` and `insert` are how text gets into an entry from CODE rather
+    # than from typing, and neither existed: `Transcriber.addchar` does
+    # `self.formfield.delete(0, ui.END)` then `insert(ui.INSERT, x)`, so
+    # clicking a tone letter raised `'EntryField' object has no attribute
+    # 'delete'` — inside a pywebview event callback, where `on_event` logs the
+    # traceback and carries on, so it presented as a button that did nothing
+    # (Kent, 2026-09-09, --engine=qt).
+    #   That is the SIXTH tkinter call this backend didn't answer (after
+    # takekioskscreen, after_idle, cget, wait_window, lift) and the second to
+    # arrive silently through a callback. The conformance check against
+    # ui_interface.py — noted in agenda/webview_when_to_finish.md — is what
+    # stops the seventh being found this way.
+    #
+    # Both keep the variable and the DOM in step, in that order: the variable
+    # is what `get()` reads, and `updateProp(…,'value',…)` is what the page
+    # shows (widgets.js:438-440). Writing only the variable would look right
+    # to the program and stay stale on screen.
+    def _put(self, text):
+        """Set the text. Goes through the variable, whose trace pushes it to
+        the page — so there is one path to the DOM, not two that can disagree.
+        """
+        self.textvariable.set(text)
+
+    def _index(self, where, current):
+        """tkinter accepts 0, 'end'/END, 'insert'/INSERT and integers. There
+        is no separate cursor here, so INSERT means the end — which is what
+        the one caller wants (append the character just clicked)."""
+        if where in (END, 'end', INSERT, 'insert'):
+            return len(current)
+        try:
+            return max(0, min(int(where), len(current)))
+        except (TypeError, ValueError):
+            return len(current)
+
+    def delete(self, first, last=None):
+        """Remove text. `delete(0, END)` — the common case — clears it."""
+        current = self.textvariable.get() or ''
+        start = self._index(first, current)
+        stop = len(current) if last is None else self._index(last, current)
+        if stop < start:
+            start, stop = stop, start
+        self._put(current[:start] + current[stop:])
+
+    def insert(self, index, text):
+        current = self.textvariable.get() or ''
+        at = self._index(index, current)
+        self._put(current[:at] + str(text) + current[at:])
+
+    def focus_set(self):
+        """Put the keyboard in this field. tkinter's widgets all answer it,
+        and `addchar` calls it after clearing so the user can type on."""
+        wv = _wv_window_for(self)
+        if wv is not None:
+            _js(wv, f'focusWidget({self._wid})')
+
+    def icursor(self, index):
+        """Accepted and ignored: there is no separate insertion cursor to
+        move, and callers use it to park the caret after inserting — which is
+        already where it is."""
+        pass
 
 
 class Progressbar(_WebviewWidget):
@@ -2606,7 +2747,23 @@ class Toplevel(_WebviewWidget):
     # side too — a withdrawn run window never revealed — so "who asked for
     # show" is worth being able to read off a log permanently, not just once.
     def withdraw(self):
-        log.info("window {}: WITHDRAW (hide) requested".format(self._wid))
+        """Hide — and NAME WHO ASKED, as ui_tkinter.Toplevel.withdraw does.
+
+        This logging predates the Tk side's and inspired it (see the note
+        below), but it reported only the window id. On the 2026-09-09 NWAA it
+        showed two windows going away at the end with nothing to say why, and
+        the answer had to come from the Tk run instead. Caller attribution
+        added here 2026-09-09 so either backend can name its own producer.
+        """
+        try:
+            import traceback as _tb
+            frame = _tb.extract_stack(limit=2)[0]
+            log.info("window {}: WITHDRAW (hide) requested by {}:{} in {}()"
+                     "".format(self._wid, frame.filename.rsplit('/', 1)[-1],
+                               frame.lineno, frame.name))
+        except Exception as e:
+            log.info("window {}: WITHDRAW (hide) requested, caller unknown "
+                     "({})".format(self._wid, e))
         self._wv_call('hide')
 
     def deiconify(self):
@@ -2639,13 +2796,6 @@ class Toplevel(_WebviewWidget):
         """
         log.info("window {}: LIFT (show, no stacking API) requested"
                  "".format(self._wid))
-        self._wv_call('show')
-
-    def lift(self, aboveThis=None):
-        """As Toplevel.lift: pywebview has no stacking API, so show() is the
-        honest equivalent. Here for the same reason — tkinter's root answers
-        `lift()`, so anything that calls it must not hit AttributeError."""
-        log.info("root window: LIFT (show, no stacking API) requested")
         self._wv_call('show')
 
     def title(self, text=None):
@@ -3252,8 +3402,30 @@ class Root(_WebviewWidget):
                 webview.start(**kwargs)
 
     def withdraw(self):
-        log.info("root window: WITHDRAW (hide) requested")
+        """As Toplevel.withdraw: say who hid it."""
+        try:
+            import traceback as _tb
+            frame = _tb.extract_stack(limit=2)[0]
+            log.info("root window: WITHDRAW (hide) requested by {}:{} in {}()"
+                     "".format(frame.filename.rsplit('/', 1)[-1],
+                               frame.lineno, frame.name))
+        except Exception as e:
+            log.info("root window: WITHDRAW (hide) requested, caller unknown "
+                     "({})".format(e))
         self._wv_call('hide')
+
+    def lift(self, aboveThis=None):
+        """As Toplevel.lift: pywebview has no stacking API, so show() is the
+        honest equivalent. Here for the same reason — tkinter's root answers
+        `lift()`, so anything that calls it must not hit AttributeError.
+
+        (Placed here on the second attempt: the first landed a duplicate in
+        Toplevel instead, where the later definition silently overrode the
+        earlier one and made every window log itself as "root window". A
+        method added twice to one class is not an error Python reports.)
+        """
+        log.info("root window: LIFT (show, no stacking API) requested")
+        self._wv_call('show')
 
     def deiconify(self):
         log.info("root window: DEICONIFY (show) requested")

@@ -126,9 +126,9 @@ def step_import():
     global sound_mod, io_sound
     from backend.core import sound as _sound
     sound_mod = _sound
-    BASELINE['backend_ok'] = bool(_sound.PYAUDIO_OK)
+    BASELINE['backend_ok'] = bool(_sound.AUDIO_OK)
     BASELINE['sound_problems'] = [c for c, _e in _sound.SOUND_PROBLEMS]
-    if not _sound.PYAUDIO_OK:
+    if not _sound.AUDIO_OK:
         # Not a harness failure: this is the machine telling us it has no
         # audio backend, which the program is designed to survive.
         record('1. import the audio stack', 'PASS',
@@ -148,7 +148,7 @@ step_import()
 # ─── 2. What devices does this machine have? ────────────────────────────────
 @step('2. enumerate devices')
 def step_devices():
-    if sound_mod is None or not sound_mod.PYAUDIO_OK:
+    if sound_mod is None or not sound_mod.AUDIO_OK:
         raise Skip('no audio backend')
     iface = sound_mod.AudioInterface()
     names = {}
@@ -182,7 +182,7 @@ step_devices()
 # settings UI shows users — so it is the heart of the before/after diff.
 @step('3. probe rates and formats')
 def step_probe():
-    if sound_mod is None or not sound_mod.PYAUDIO_OK:
+    if sound_mod is None or not sound_mod.AUDIO_OK:
         raise Skip('no audio backend')
     settings = _settings()
     if settings is None:
@@ -254,8 +254,11 @@ def step_record():
     if device is not None:
         settings.audio_card_in = int(device)
     print('        recording {}s to {} — SAY SOMETHING'.format(seconds, out.name))
-    rec = io_sound.SoundFileRecorder(str(out), settings)
-    rec.record()
+    # Three arguments, and the method is start(): I wrote this harness with
+    # two and called a `record()` that does not exist (2026-09-09), which
+    # would have failed step 4 for a reason having nothing to do with audio.
+    rec = io_sound.SoundFileRecorder(str(out), settings.audio, settings)
+    rec.start()
     time.sleep(seconds)
     rec.stop()
     size = out.stat().st_size if out.exists() else 0

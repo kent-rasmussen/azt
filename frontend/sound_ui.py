@@ -142,9 +142,12 @@ class RecordButtonFrame(ui.Frame):
             self._filenameURL=node.audiofileURL
             self.node=node
         elif self.test:
-            self.filename=self._filenameURL='test_{}_{}.wav'.format(
+            # Kept in step with settings changes by _refresh_test_filename(),
+            # which soundcheckrefresh() calls — see the note there.
+            self.filename=self._filenameURL='test_{}_{}_{}.wav'.format(
                                 self.soundsettings.fs,
-                                self.soundsettings.sample_format)
+                                self.soundsettings.sample_format,
+                                self.soundsettings.audio_card_in)
         else:
             t=_("No framed value, nor testing; can’t continue...")
             log.error(t)
@@ -452,8 +455,39 @@ class SoundSettingsWindow(ui.Window):
                                     window=window,
                                     column=0, row=1
                                     )
+    def _refresh_test_filename(self):
+        """Re-derive the mic-check filename from the CURRENT settings.
+
+        The name is built from fs and sample_format (:145), and the recorder
+        and player were handed it once, under the comment "Just do these each
+        once, since their dependencies don't change". On this screen those
+        dependencies are the very things the user changes, so the comment was
+        false: a take at 44100/int16 was still being written to — and played
+        from — `test_192000_int32.wav` (Kent 2026-09-10: "Is there a reason
+        the filename doesn't respect settings?"). Two costs, and the second is
+        the worse: the name lied, AND every combination overwrote the last, so
+        the takes could not be compared — which is the whole purpose of this
+        screen.
+          The card index is in the name too, so switching microphones gives a
+        separate file rather than clobbering the previous one.
+        """
+        if not getattr(self,'test',False):
+            return
+        ss=self.soundsettings
+        name='test_{}_{}_{}.wav'.format(ss.fs,ss.sample_format,
+                                        ss.audio_card_in)
+        if name==getattr(self,'_filenameURL',None):
+            return
+        log.info("mic check: settings changed, recording to %s now",name)
+        self.filename=self._filenameURL=name
+        # The recorder derives file_tmp from this, so assigning is enough.
+        for obj in (getattr(self,'recorder',None),getattr(self,'player',None)):
+            if obj is not None:
+                obj.filenameURL=name
+
     def soundcheckrefresh(self,dict=None):
         self.soundsettings.makedefaultifnot()
+        self._refresh_test_filename()
         dictnow={
                 'audio_card_in':self.soundsettings.audio_card_in,
                 'fs':self.soundsettings.fs,

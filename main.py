@@ -60,12 +60,12 @@ import migration
 try:
     from io_put import sound
     from frontend import transcriber, sound_ui
-    # These imports now SUCCEED without pyaudio (the sound modules guard
-    # their own roots and degrade), so read the flag rather than relying
+    # These imports now SUCCEED without an audio library (the sound modules
+    # guard their own roots and degrade), so read the flag rather than relying
     # on an ImportError to reach us.
-    program['nosound']=not sound.PYAUDIO_OK
+    program['nosound']=not sound.AUDIO_OK
     if program['nosound']:
-        log.error("pyaudio unavailable; sound features are off "
+        log.error("sounddevice unavailable; sound features are off "
                     "(recording/playback disabled, sorting etc. fine).")
 except Exception as e:
     program['nosound']=True
@@ -617,13 +617,16 @@ class App:
                  "couldn’t repair it automatically:"),'']
         lines+=[f"• {component}: {error}"
                 for component,error in SOUND_PROBLEMS]
+        # Matches the label backend/core/sound.py appends. It was 'pyaudio'
+        # until the sounddevice port (2026-09-09) — a string coupling that
+        # would have silently stopped matching, taking this advice with it,
+        # which is why the label and this test are named together here.
         if (platform.system() == 'Linux'
-                and any(c.startswith('pyaudio') for c,e in SOUND_PROBLEMS)):
-            lines+=['',_("If you have errors containing ˋportaudioˊ above, "
-                     "you should install pyaudio with your package manager "
-                     "(e.g. ˋsudo apt install portaudio19-devˊ, then restart "
-                     "{name} so it can rebuild pyaudio).").format(
-                                                            name=self.name)]
+                and any(c.startswith('sounddevice') for c,e in SOUND_PROBLEMS)):
+            lines+=['',_("On Linux, {name} needs the system PortAudio runtime "
+                     "for sound. Install it with your package manager (e.g. "
+                     "ˋsudo apt install libportaudio2ˊ) and restart {name}. "
+                     "Nothing needs to be compiled.").format(name=self.name)]
         lines+=['',_("You can sort and run reports, but recording, playback "
                  "and/or transcription will NOT work until this is fixed. "
                  "Fix the problem (see the log for details), or ask for "
@@ -1043,7 +1046,33 @@ class App:
         scroll.reflow()  # grow canvas/scrollregion to the wrapped log label
         scroll.tobottom()
         f=ui.Frame(errorw.outsideframe,row=1,column=2)
+        # WIDE ENOUGH NOT TO BREAK A WORD — least of all the app's own name.
+        # This was a flat 75px, and Tk wraps at HYPHENS as well as spaces, so
+        # "A-Z+T" came out stacked as "A-Z+" / "T" and "updates" as "update" /
+        # "s" (Kent 2026-09-10: "give them enough width to at least not wrap
+        # 'A-Z+T'"). A fixed pixel count could not have held anyway: the fonts
+        # scale with the display, so 75px got tighter on every higher-DPI
+        # screen while everything around it grew.
+        #   So measure. The longest single word across every label these
+        # buttons can carry — in the CURRENT font and the CURRENT translation,
+        # neither of which this code can predict — plus room for the button's
+        # own border and padding.
+        _labels=[_("Check for {azt} updates").format(azt=self.name),
+                 _("Revert to main branch of {azt}").format(azt=self.name),
+                 _("Try testing branch of {azt}").format(azt=self.name),
+                 _("Restart {azt}").format(azt=self.name)]
         buttonwraplength=75
+        try:
+            _font=self.theme.fonts['normal']
+            # split() keeps "A-Z+T" whole, which is the point: Tk would break
+            # it, so its full width is the floor.
+            buttonwraplength=max(_font.measure(w)
+                                 for l in _labels for w in l.split())+24
+            log.info("error page: button wraplength %dpx (measured)",
+                     buttonwraplength)
+        except Exception as e:
+            log.info("error page: couldn't measure the button labels (%s); "
+                     "using %dpx",e,buttonwraplength)
         if (hasattr(self,'source_repo')
                 and hasattr(self.source_repo,'files')): #repo init succeeded
             ui.Button(f,
@@ -1645,7 +1674,8 @@ class App:
             self.me=True
             self.testlift='Demo_en' #portion of filename
             # self.testtask='NoChooser' #stop at splash, before Chooser
-            self.testtask=None #Just open Chooser
+            # self.testtask=None #Just open Chooser
+            self.testtask='WordCollectnParsewRecordings'
             # self.testtask='SortT' #Will convert from string to class later
             # self.testtask='SortV' #Will convert from string to class later
             # self.testtask='SortSyllables' #Will convert from string to class later

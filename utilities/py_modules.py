@@ -41,7 +41,10 @@ def pip_install(installs=[],secondtry=False):
             ['numpy>=2.1,<2.5'], #KEEP IN STEP with requirements.txt — a bare
             # 'numpy' here installed 2.5.1 over the pin and re-broke numba
             # (2026-07-16); the backstop must never fight the requirements
-            ['pyaudio'],
+            ['sounddevice'], #recording/playback; replaced pyaudio 2026-09-09
+            # (pyaudio had Windows-only wheels, so Linux/macOS built it from
+            # source — which is why this backstop could never repair sound on
+            # a Mac with no compiler)
             ['Pillow'], #for PIL
             ['lxml'],
             ['psutil'],
@@ -601,8 +604,8 @@ ensure_sister_repos()
 
 try:
     o=[]
-    import urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, scipy
-    o.append("urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, scipy imported fine")
+    import urllib3, numpy, sounddevice, PIL, lxml, psutil, soundfile, scipy
+    o.append("urllib3, numpy, sounddevice, PIL, lxml, psutil, soundfile, scipy imported fine")
     import transformers, huggingface_hub, langcodes #, pyautogui
     o.append("transformers, huggingface_hub, langcodes imported fine")
     import whisper, patiencediff, reportlab, language_data

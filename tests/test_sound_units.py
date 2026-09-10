@@ -43,11 +43,15 @@ def test_sound_problems_is_a_list_of_pairs():
         assert isinstance(error, str)
 
 
-@pytest.mark.skipif(sound.PYAUDIO_OK,
-                    reason="a real backend is installed, so the stub is unused")
-def test_stub_backend_refuses_clearly():
-    """With no backend, AudioInterface's base is a stub whose job is to raise
-    something a human can read rather than AttributeError deep in a stream."""
+@pytest.mark.skipif(sound.AUDIO_OK,
+                    reason="a real backend is installed, so this path is unused")
+def test_missing_backend_refuses_clearly():
+    """With no backend, constructing the interface must say what is missing,
+    rather than failing later as an AttributeError deep inside a stream.
+
+    Before the sounddevice port this was enforced by an import-time stub base
+    class; now `AudioInterface.__init__` checks `AUDIO_OK` itself, which is
+    the same promise with one fewer moving part."""
     with pytest.raises(Exception) as caught:
         sound.AudioInterface()
     assert 'not installed' in str(caught.value).lower()
@@ -92,7 +96,7 @@ def test_confirm_audio_ignores_a_wrong_type():
     program.audio = "not an interface"
     settings = _settings_with(program)
 
-    if not sound.PYAUDIO_OK:
+    if not sound.AUDIO_OK:
         with pytest.raises(Exception):
             settings.confirm_audio()   # stub refuses; that is correct
         return
@@ -134,8 +138,11 @@ def test_candidate_formats_and_labels_agree():
     fake = types.SimpleNamespace()
     fake.sethypothetical = types.MethodType(
         sound.SoundSettings.sethypothetical, fake)
-    if not sound.PYAUDIO_OK:
-        pytest.skip("candidate formats are backend constants")
+    # No skip any more: since the port these are dtype NAMES from a table in
+    # this module, not constants read off an installed library, so the
+    # candidate list exists on a machine with no audio backend at all. That
+    # is a small win worth keeping — the settings vocabulary no longer
+    # depends on the sound stack importing.
     fake.sethypothetical()
     labels = fake.hypothetical['sample_formats']
     assert labels, "no sample formats offered at all"
@@ -143,3 +150,64 @@ def test_candidate_formats_and_labels_agree():
         assert isinstance(label, str) and label.strip(), fmt
     rates = fake.hypothetical['fss']
     assert rates and all(isinstance(r, int) for r in rates)
+
+
+# ─── Format ranking, and the bug it replaced ────────────────────────────────
+# These are pure functions with no device and no library behind them, so they
+# are the cheapest possible guard on the mistake that produced a field
+# failure: PyAudio's format constants ran INVERSE to width (paFloat32=1 …
+# paUInt8=32), so the old code's `min()` meant WIDEST and `max()` meant
+# NARROWEST — which is how `default_sf`'s two branches came to disagree and
+# `max_sf` came to select the narrowest thing available. Ranking now goes
+# through bits per sample, and these say so in a way that cannot silently
+# invert again.
+
+def test_widest_is_actually_the_widest():
+    assert sound.widest(['int16', 'int32']) == 'int32'
+    assert sound.widest(['int32', 'int16']) == 'int32'
+    assert sound.narrowest(['int16', 'int32']) == 'int16'
+
+
+def test_ranking_handles_the_empty_and_single_cases():
+    """A card/rate combination with no usable format is normal — the probe
+    deletes those entries — so the selectors must not raise on the way past."""
+    assert sound.widest([]) is None
+    assert sound.narrowest([]) is None
+    assert sound.widest(['int16']) == 'int16'
+
+
+def test_format_bits_disowns_what_we_do_not_offer():
+    """int24 and float32 are deliberately not offered (numpy has no 24-bit
+    dtype; float32 is held back pending its own test). They must rank as
+    unknown rather than as plausible, so they can never be chosen by being
+    numerically convenient."""
+    assert sound.format_bits('int16') == 16
+    assert sound.format_bits('int32') == 32
+    assert sound.format_bits('int24') == 0
+    assert sound.format_bits('float32') == 0
+
+
+# ─── Reading a config written by the PyAudio era ────────────────────────────
+
+def test_migrate_accepts_todays_names():
+    assert sound.migrate_sample_format('int32') == 'int32'
+    assert sound.migrate_sample_format('int16') == 'int16'
+
+
+def test_migrate_translates_old_pyaudio_constants():
+    """Every install predating 2026-09-09 persisted the CONSTANT's integer.
+    Without this, those configs come back with a sample_format that means
+    nothing — and the field symptom would be a recording setting that silently
+    reverts."""
+    assert sound.migrate_sample_format(2) == 'int32'   # paInt32
+    assert sound.migrate_sample_format(8) == 'int16'   # paInt16
+
+
+def test_migrate_refuses_what_we_can_no_longer_honour():
+    """paInt24 (4) and paFloat32 (1) were valid then and are not offered now,
+    so they must come back as None — the caller's cue to fall back to a
+    default rather than open a stream with a dead vocabulary."""
+    assert sound.migrate_sample_format(4) is None      # paInt24
+    assert sound.migrate_sample_format(1) is None      # paFloat32
+    assert sound.migrate_sample_format('nonsense') is None
+    assert sound.migrate_sample_format(None) is None
