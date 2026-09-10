@@ -14,6 +14,87 @@ except NameError:
     def _(x):
         return str(x)
 
+def requirements_one_at_a_time(root):
+    """requirements.txt, split into one pip invocation per requirement.
+
+    THE ANSWER TO "do we still need py_modules? or at least all of its
+    detail?" (Kent, 2026-09-10) — the MECHANISM is worth keeping and the LIST
+    was not.
+
+    Why the mechanism earns its place: `pip install -r requirements.txt` is
+    all-or-nothing at resolution, so ONE unavailable package means the user
+    gets none of them — no numpy, no sounddevice, no sound at all, because
+    something unrelated could not be found. Installing one requirement per
+    invocation means the failures are contained to the packages that actually
+    failed.
+
+    Why the list did not: it was a second hand-maintained copy of the same
+    facts, and a python list cannot hold a PEP 508 marker. That is exactly
+    how a Mac came to be asked for `torch==2.7.1+cpu`, which has never
+    existed for macOS, while requirements.txt held the correct
+    `torch==2.7.1; sys_platform == "darwin"` all along. Its own comments said
+    "keep in step with requirements.txt" in two places; it could not.
+      pip evaluates a marker given on the command line, so each line of
+    requirements.txt can be handed over verbatim — markers, pins, extras and
+    all — and the file stays the single source of truth.
+
+    Lines beginning with `-` are pip's own options (`--extra-index-url` for
+    the pytorch CPU wheels) and apply to every invocation.
+    """
+    path = os.path.join(root, 'requirements.txt')
+    options, wanted = [], []
+    try:
+        with open(path, encoding='utf-8') as f:
+            for raw in f:
+                line = raw.split('#', 1)[0].strip()  # markers contain no '#'
+                if not line:
+                    continue
+                if line.startswith('-'):
+                    options.extend(line.split())
+                else:
+                    wanted.append(line)
+    except OSError as e:
+        log.error("couldn't read {} ({}); the per-package fallback has "
+                  "nothing to install".format(path, e))
+        return []
+    log.info("per-package fallback: {} requirements from requirements.txt"
+             "".format(len(wanted)))
+    return [[w] + options for w in wanted]
+
+
+#: Packages that ship NO WHEEL — pip can only build them from source. On a
+#: Mac with no developer tools the install runs `--only-binary :all:`
+#: deliberately (see _mac_without_compiler), so these cannot arrive there and
+#: asking produces only a confusing "from versions: none".
+SOURCE_ONLY = ('openai_whisper', 'openai-whisper')
+
+
+def drop_what_cannot_build(installs):
+    """Remove requirements this machine has no way to build, saying why.
+
+    The ONE thing a PEP 508 marker cannot express, so it stays in code: a
+    marker can test the platform, not whether developer tools are present. On
+    macOS without them the source-only packages fail no matter what
+    requirements.txt says, and a stated skip is worth more than a failure
+    nobody can act on.
+    """
+    if not _mac_without_compiler():
+        return installs
+    kept, dropped = [], []
+    for entry in installs:
+        name = entry[0].split(';')[0].split('[')[0].split('=')[0].strip()
+        if name in SOURCE_ONLY:
+            dropped.append(name)
+        else:
+            kept.append(entry)
+    if dropped:
+        log.info("skipping {}: no wheel exists and this Mac has no developer "
+                 "tools, so it cannot be built. Transcription stays off; "
+                 "recording and playback are unaffected."
+                 "".format(', '.join(dropped)))
+    return kept
+
+
 def pip_install(installs=[],secondtry=False):
     """With a list provided in installs, this installs only those modules.
     Otherwise, it tries to install everything needed by A−Z+T.
@@ -33,47 +114,19 @@ def pip_install(installs=[],secondtry=False):
                                                         platform.processor()))
     installfolder='modulestoinstall/'
     installedsomething=False
-    """Migrate this to `bin/pip install -r requirements.txt`"""
     if not installs:
-        installs=[
-            ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
-            ['urllib3'],
-            ['numpy>=2.1,<2.5'], #KEEP IN STEP with requirements.txt — a bare
-            # 'numpy' here installed 2.5.1 over the pin and re-broke numba
-            # (2026-07-16); the backstop must never fight the requirements
-            ['sounddevice'], #recording/playback; replaced pyaudio 2026-09-09
-            # (pyaudio had Windows-only wheels, so Linux/macOS built it from
-            # source — which is why this backstop could never repair sound on
-            # a Mac with no compiler)
-            ['Pillow'], #for PIL
-            ['lxml'],
-            ['psutil'],
-            ['soundfile'],
-            ['scipy'], #resampling (file_sound); also a transformers dep
-            ['transformers'],
-            ['huggingface_hub[hf_xet]'], #allow large file download
-            ['langcodes[data]'],
-            ['pyautogui'],
-            ['svglib'],
-            # ['mysql-connector-python', 'wave'], #needed for wave
-            # 'pymysql', #or maybe this one
-            ['torch==2.7.1+cpu',
-             '--extra-index-url','https://download.pytorch.org/whl/cpu'],
-            #pinned CPU wheel — bare 'torch' from PyPI pulls the CUDA build
-            #(GBs) on Linux; keep in step with requirements.txt
-            ['openai-whisper'], #for import whisper
-            ['packaging'],
-            ['patiencediff'],
-            ['reportlab'], #for PDF
-            #azt-collab collaboration (daemon runs in this env on desktop):
-            ['dulwich'], #daemon git ops
-            ['cryptography'], #LAN identity (peer keypair + cert)
-            ['zeroconf'], #LAN discovery (mDNS)
-            ['segno'], #pairing-QR rendering
-            ['kivy'], #NOT imported in-process: the daemon's project picker +
-            #          settings UI are Kivy SUBPROCESSES, and a standalone
-            #          install has no other python to run them in
-            ]
+        # DERIVED FROM requirements.txt, not a second copy of it. The old
+        # hand-kept list is gone: see requirements_one_at_a_time() for why
+        # (in short, a python list cannot carry a PEP 508 marker, so macOS was
+        # asked for a torch build that does not exist while requirements.txt
+        # had the right line). The "Migrate this to `pip install -r
+        # requirements.txt`" note that sat here since long before is now done,
+        # keeping the one-package-per-invocation behaviour that makes this a
+        # useful fallback at all.
+        installs=[['--upgrade','pip','setuptools','wheel']] + \
+                 drop_what_cannot_build(requirements_one_at_a_time(
+                        os.path.dirname(os.path.dirname(
+                                        os.path.abspath(__file__)))))
     else:
         installs=[installs] #do the whole list at once, if given a list
     log.info("Installs: {}".format(', '.join([i for j in installs for i in j])))

@@ -456,16 +456,21 @@ print("  {:<28} {:>7} {:>8} {:>7} {:>9} {:>8}".format(
 for r in results:
     print("  {:<28} {:>6.1f}dB {:>7.1f}dB {:>5.0f}dB {:>8} {:>7}".format(
             r['name'][:28], db(r['rms']), db(r['floor']), r['heard'],
-            # No bandwidth for a row that did not hear the signal. Build
-            # 362e7357 printed "16.0k" for an input listed as having heard
-            # nothing (0 dB S/N): one band of eleven scraped past the 10 dB
-            # threshold, on data the script had already ruled unusable. A
-            # figure must not survive the rejection of what it was computed
-            # from — the recurring bug of this whole exercise.
-            ("n/a" if r['heard'] < 10 else
+            # No spectral figure for a row whose data is already disowned:
+            # not heard (build 362e7357 printed "16.0k" for an input at 0 dB
+            # S/N) and not CLIPPED. Clipping is the worse case because the
+            # numbers look plausible until they don't: Kent's Mac reported
+            # +92.1 dB at 16-20 kHz and +159.2 dB at 20-24 kHz alongside its
+            # own "CLIPPING (6098 samples)" note (2026-09-10). Clipping
+            # generates harmonics across the whole spectrum while the silent
+            # capture has almost nothing up there, so the ratio explodes —
+            # everything downstream of a clipped sample is manufactured.
+            ("CLIPPED" if r['clipped'] else
+             "n/a" if r['heard'] < 10 else
              "{}{:.1f}k".format('>' if r['at_stim_limit'] else '',
                                 r['bandwidth'] / 1000.0)
              if r['bandwidth'] else "none"),
+            "CLIPPED" if r['clipped'] else
             "n/a" if r['heard'] < 10 else
             "{:.0f}dB".format(r['flatness']) if r['flatness'] is not None
             else "-"))
@@ -485,7 +490,12 @@ for lo, hi in BANDS:
     row = "  {:<28}".format("{}-{} Hz".format(lo, hi))
     for r in results:
         v = r['snr'].get((lo, hi))
-        row += " {:>11}".format("{:+.1f}".format(v) if v is not None else "-")
+        # A clipped capture's spectrum is harmonics, not response.
+        if r['clipped']:
+            row += " {:>11}".format("clipped")
+        else:
+            row += " {:>11}".format("{:+.1f}".format(v) if v is not None
+                                    else "-")
     print(row)
 
 # ── Which rows are the same microphone? ───────────────────────────────────
@@ -595,7 +605,10 @@ if len(usable) > 1:
     # disclaiming it in a note underneath, which is what build 89a85217 did
     # ("best signal-to-noise: pipewire (35 dB)" directly above a note saying
     # that 35 dB was inflated by a gate).
-    trusted = [r for r in usable if not r['gated']]
+    # Clipped rows are out of the ranking too: their level is pinned at full
+    # scale and their spectrum is harmonic distortion, so neither figure
+    # describes the microphone.
+    trusted = [r for r in usable if not r['gated'] and not r['clipped']]
     if len(trusted) == 1:
         # "best signal-to-noise: X", "lowest noise floor: X", "flattest: X"
         # for the only candidate reads as three findings. It is none: there is

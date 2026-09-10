@@ -384,7 +384,10 @@ except Exception:
     pass
 
 def stage_silence(n):
-    print("\nStage {} of 2 — SILENCE. Measures the microphone's own noise."
+    # "of 2" was left in the format string after the third capture was added,
+    # so the callers' "1 of 3" printed as "Stage 1 of 3 of 2" (Kent's Windows
+    # run, 2026-09-10). The caller says how many there are; this must not.
+    print("\nStage {} — SILENCE. Measures the microphone's own noise."
           .format(n))
     countdown("BE QUIET — no typing, no shifting in your chair — for {:.0f}s."
               .format(QUIET_S))

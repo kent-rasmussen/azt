@@ -34,9 +34,21 @@ def test_set_round_trips_through_json():
 
 
 def test_path_encodes_to_string():
+    """A Path must survive JSON as ITS OWN string form — not as a POSIX one.
+
+    This asserted `{"p": "/tmp/x"}` and so failed on Windows, where
+    `Path("/tmp/x")` is a WindowsPath and stringifies to `\\tmp\\x` (Kent's
+    run, 2026-09-10: 348 passed, this one failed). The encoder was right; the
+    test was asserting the platform's separator instead of the contract.
+    Comparing against `str(path)` keeps the real requirement — a Path encodes
+    as text a later `Path(...)` can read back — on all three platforms.
+    """
     from pathlib import Path
-    encoded = json.dumps({"p": Path("/tmp/x")}, cls=CustomEncoder)
-    assert json.loads(encoded) == {"p": "/tmp/x"}
+    path = Path("/tmp/x")
+    encoded = json.dumps({"p": path}, cls=CustomEncoder)
+    assert json.loads(encoded) == {"p": str(path)}
+    # And the point of storing it as text: it round-trips back to a Path.
+    assert Path(json.loads(encoded)["p"]) == path
 
 
 def test_configmanager_save_load_round_trip(tmp_path):

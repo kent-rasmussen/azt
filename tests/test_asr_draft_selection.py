@@ -30,11 +30,34 @@ _REPO_MAP = {
 }
 
 
+try:
+    from backend import asr as _asr        # noqa: F401  (availability probe)
+    ASR_IMPORTABLE = True
+except Exception:
+    # torch is a heavy optional dependency, absent on machines where
+    # transcription is off — and on macOS Intel by design (requirements.txt
+    # excludes openai_whisper there). The APP degrades: the display filter
+    # logs "draft display filter unavailable (no backend.asr)" and fails
+    # open, which is correct behaviour and exactly what these tests then
+    # measured as a wrong answer. Kent's Mac, 2026-09-10: seven failures,
+    # all of them this.
+    ASR_IMPORTABLE = False
+
+
 def _ss(top_models_only=True, tally=None, models=None, sister=None):
     """Fake-self SoundSettings; `models` (kwarg->bool) also fakes the loaded
     ASR object whose repo_modelnames/_sister_members/_mms_lang the
     kwarg-selection display filter reads. Without `models` there is no .asr
-    at all — the filter must fail open."""
+    at all — the filter must fail open.
+
+    Asking for `models` means asking for a LOADED ASR, so it needs
+    `backend.asr` to import. Skipping here rather than at module level keeps
+    the fail-open tests running on a machine without torch — which is
+    precisely where fail-open matters.
+    """
+    if models is not None and not ASR_IMPORTABLE:
+        pytest.skip('needs backend.asr (torch) to fake a loaded ASR; the '
+                    'filter correctly fails open without it')
     ss = object.__new__(sound.SoundSettings)
     ss.asr_kwargs = {'top_models_only': top_models_only, **(models or {})}
     if sister is not None:
