@@ -35,7 +35,8 @@ except Exception as _e:
 from utilities import logsetup, file
 from utilities.i18n import _   # user-facing text lives here too (the wedge notice)
 from utilities.error_handler import notify_user
-from backend.core.sound import AudioInterface, SoundSettings, AUDIO_OK
+from backend.core.sound import (AudioInterface, SoundSettings, AUDIO_OK,
+                                spectral_ceiling, resampler_images)
 # (The transitional `PYAUDIO_OK = AUDIO_OK` alias that stood here is gone: the
 # streaming layer below is sounddevice now, so nothing is left to be
 # transitional about.)
@@ -575,8 +576,10 @@ class SoundFileRecorder(object):
         # upsampled. Only the spectrum tells — see spectral_ceiling().
         try:
             if numpy is not None and self._frames:
-                ceiling=spectral_ceiling(numpy.concatenate(self._frames),
-                                         self._asked_rate)
+                # Concatenated ONCE: a long take is a large array and both
+                # checks want the same one.
+                whole=numpy.concatenate(self._frames)
+                ceiling=spectral_ceiling(whole,self._asked_rate)
                 if ceiling is None:
                     log.info("take: too quiet to tell whether %d Hz is real",
                              self._asked_rate)
@@ -605,8 +608,49 @@ class SoundFileRecorder(object):
                                 times=max(2,int(self._asked_rate/max(real,1))),
                                 real=real))
                 else:
-                    log.info("take: energy up to %.0f Hz, consistent with a "
-                             "real %d Hz",ceiling,self._asked_rate)
+                    # Energy reaching Nyquist is NOT proof the rate is real,
+                    # and saying so was a false reassurance: this line read
+                    # "consistent with a real 192000 Hz" for a `sysdefault`
+                    # take whose 192 kHz is ALSA plug imaging (2026-09-10).
+                    # A cheap resampler's images sit where a real converter's
+                    # noise sits, so level cannot separate them — but images
+                    # MIRROR the baseband, and noise correlates with nothing.
+                    images=resampler_images(whole,self._asked_rate)
+                    if images:
+                        real,score=images
+                        log.warning("this take SAYS %d Hz, and it does carry "
+                                    "energy up to %.0f Hz — but that energy "
+                                    "is a MIRROR of the audio below %d Hz "
+                                    "(r=%.2f), which is what a resampler "
+                                    "leaves behind, not what a microphone "
+                                    "produces. Its real rate is about %d Hz.",
+                                    self._asked_rate,ceiling,real//2,score,
+                                    real)
+                        bad(_("This file says {asked} Hz, but the extra "
+                              "detail in it is manufactured, not "
+                              "recorded.").format(asked=self._asked_rate),
+                            _("The microphone is really recording at about "
+                              "{real} Hz and something is stretching it. The "
+                              "sound is fine, but the file is larger than "
+                              "its content warrants. Try choosing this "
+                              "microphone's own entry in Sound Settings "
+                              "rather than a 'default' or 'sysdefault' one, "
+                              "or set {real} Hz.").format(real=real))
+                    else:
+                        log.info("take: energy up to %.0f Hz, and it does not "
+                                 "mirror the lower band — consistent with a "
+                                 "real %d Hz",ceiling,self._asked_rate)
+        except (NameError,AttributeError,TypeError) as e:
+            # These mean the CHECK is broken, not the audio — and the check
+            # silently not running is the same failure it exists to prevent.
+            # It hid for a day as an `info` line reading like a normal
+            # environmental hiccup: `spectral_ceiling` was never imported
+            # here, so the upsampling test had never run once. Logged loudly
+            # now, and still caught, because a broken diagnostic must not lose
+            # the user's recording.
+            log.error("the take's upsampling check is BROKEN and did not run "
+                      "(%s: %s) — recordings are being saved without it",
+                      type(e).__name__,e)
         except Exception as e:
             log.info("couldn't check the take's spectrum (%s)",e)
         # notify_user, not notify_error: the take is saved and the user is in

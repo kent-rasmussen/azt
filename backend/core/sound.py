@@ -173,6 +173,64 @@ def spectral_ceiling(block, rate):
     return float(freqs[above[-1]])
 
 
+def resampler_images(block, rate, threshold=0.6):
+    """Does the top of the band MIRROR the bottom? (real_rate, score) or None.
+
+    The single-capture test for a resampler that is not merely quiet. The
+    absolute margin in `rate_is_real` catches a GOOD resampler, whose residue
+    sits 100+ dB down, but not a cheap one: ALSA's `plug` layer interpolates
+    with a leaky stopband and leaves images about 25 dB down — which is
+    exactly where a real converter's broadband noise lives. Measured
+    2026-09-10 on `sysdefault`, where the app's per-take check duly reported
+    "consistent with a real 192000 Hz" for a path the two-capture directional
+    test had shown to be upsampled.
+
+    What separates them is SHAPE, not level. Interpolation images are a
+    reflection of the baseband about the real Nyquist: whatever the microphone
+    picked up at 20 kHz reappears just above 24 kHz when 48 kHz content is
+    stretched to 192 kHz. A converter's own noise has no such relationship to
+    the signal — it is noise, and correlates with nothing.
+
+    So: for each plausible real rate, correlate the spectrum above its Nyquist
+    against the spectrum below it, reflected. A high correlation is a
+    resampler naming its own real rate.
+    """
+    if numpy is None or block is None or not len(block):
+        return None
+    mono = block if getattr(block, 'ndim', 1) == 1 else block[:, 0]
+    if mono.dtype.kind == 'i':
+        mono = mono.astype('float64') / float(numpy.iinfo(mono.dtype).max)
+    else:
+        mono = mono.astype('float64')
+    if mono.size < 8192:
+        return None
+    n = 1 << int(numpy.floor(numpy.log2(min(mono.size, 65536))))
+    mag = numpy.abs(numpy.fft.rfft(mono[:n] * numpy.hanning(n)))
+    if mag.max() <= 0:
+        return None
+    freqs = numpy.fft.rfftfreq(n, 1.0 / float(rate))
+    spec = 20.0 * numpy.log10(numpy.maximum(mag / mag.max(), 1e-12))
+    best = None
+    for divisor in (2, 4, 8):
+        real = float(rate) / divisor
+        if real < 8000:
+            break
+        edge = real / 2.0               # the candidate real Nyquist
+        if edge * 2 > rate / 2 * 2:     # its mirror must fit in the band
+            continue
+        offsets = numpy.linspace(0.15 * edge, 0.85 * edge, 128)
+        above = numpy.interp(edge + offsets, freqs, spec)
+        below = numpy.interp(edge - offsets, freqs, spec)
+        if above.std() < 1e-6 or below.std() < 1e-6:
+            continue
+        score = float(numpy.corrcoef(above, below)[0, 1])
+        log.info("mirror test at %d Hz: content above %.0f Hz matches the "
+                 "reflection below it at r=%.2f", rate, edge, score)
+        if score > threshold and (best is None or score > best[1]):
+            best = (int(real), score)
+    return best
+
+
 def rate_is_real(block, rate, margin_db=60.0):
     """Is `block` GENUINELY sampled at `rate`? True / False / None (unknown).
 
@@ -230,7 +288,20 @@ def rate_is_real(block, rate, margin_db=60.0):
     margin = 20.0 * numpy.log10(max(top_level, 1e-20) / mid_level)
     log.info("rate check at %d Hz: top of band %.0f dB below the mid band "
              "(real needs better than -%.0f)", rate, margin, margin_db)
-    return margin > -margin_db
+    if margin <= -margin_db:
+        return False            # a good resampler: residue 100+ dB down
+    # The level test alone is not enough. A CHEAP resampler leaves images
+    # about 25 dB down — indistinguishable by level from a real converter's
+    # noise, and `sysdefault` passed the level test on this machine while
+    # being upsampled. The mirror test is what separates them.
+    images = resampler_images(block, rate)
+    if images:
+        log.warning("rate check: %d Hz is NOT real — the band above %d Hz "
+                    "mirrors the band below it (r=%.2f), which is a resampler "
+                    "reflecting the audio upward. Real rate is about %d Hz.",
+                    rate, images[0] // 2, images[1], images[0])
+        return False
+    return True
 
 
 def migrate_sample_format(stored):
@@ -385,6 +456,7 @@ class SoundSettings(object):
         else:
             log.error("I can't find any input card!")
             raise AttributeError("audio_card_in")
+        self._remember_card('audio_card_in')
 
     def default_out(self):
         self.audio_card_out = [k for k, v in self.cards['dict'].items()
@@ -394,6 +466,7 @@ class SoundSettings(object):
             self.audio_card_out = self.audio_card_out[0]
         else:
             self.audio_card_out = min(self.cards['out'])
+        self._remember_card('audio_card_out')
 
     # Verified rates, cached for the session, keyed by device NAME.
     #
@@ -602,11 +675,25 @@ class SoundSettings(object):
             return None
         return cards[i + 1]
 
+    def _remember_card(self, attr):
+        """Record WHICH DEVICE an index currently means.
+
+        Must run at every site that sets a card index, not only at load: a
+        stale name would out-vote a fresh index and `resolve_cards()` would
+        faithfully drag the setting back to the device the user just moved
+        away from.
+        """
+        index = getattr(self, attr, None)
+        label = (self.cards.get('dict') or {}).get(index)
+        if label is not None:
+            setattr(self, self._CARD_NAMES[attr], str(label))
+
     def next_card_in(self):
         nxt = self._next_card('in', getattr(self, 'audio_card_in', None))
         if nxt is None:
             return 1
         self.audio_card_in = nxt
+        self._remember_card('audio_card_in')
         self.default_fs()
         self.default_sf()
 
@@ -615,6 +702,7 @@ class SoundSettings(object):
         if nxt is None:
             return 1
         self.audio_card_out = nxt
+        self._remember_card('audio_card_out')
 
     # Same `.index()` fragility as the cards had, and for `sample_format` it
     # is not hypothetical: the persisted value used to be a PyAudio CONSTANT
@@ -828,6 +916,13 @@ class SoundSettings(object):
         # restored-from-file sample_format can still be a PyAudio integer, and
         # asking a device to support "2" fails for every device, which reads
         # in the log as hardware trouble rather than a stale setting.
+        # And BEFORE that, make sure the card indices point where they were
+        # chosen to point. `check()` steps the rate and format down against
+        # `self.cards[...][index]`, so a renumbered index would have it
+        # negotiating against the WRONG DEVICE's capabilities and "fixing"
+        # settings that were never broken. Idempotent, so calling it here and
+        # in check_missing_attrs costs nothing.
+        self.resolve_cards()
         self._migrate_stored_format()
         if getattr(self, 'sample_format', None) is None:
             self.default_sf()
@@ -970,8 +1065,82 @@ class SoundSettings(object):
         except Exception:
             log.info("Apparently self.audio doesn't exist, or isn't initialized.")
 
+    # ── Card IDENTITY, because an index is not one ───────────────────────────
+    # `check_missing_attrs` validated a stored card by asking whether that
+    # INDEX exists in today's device list. That check cannot do its job, and
+    # Kent named the reason (2026-09-10): "I think this is unreliable, given
+    # the potential shift in card numbers?" It is worse than unreliable — it
+    # PASSES while pointing somewhere else. PortAudio renumbers devices as the
+    # sound server changes, so index 6 was a USB microphone in one run and
+    # 'sysdefault' minutes later. Settings then validate cleanly and describe
+    # a different microphone: the rate and format are checked against
+    # capabilities that are not the ones being used.
+    #   So store the NAME with the index and resolve the name at load. Name
+    # matching is not perfect either — the same USB mic disappeared from the
+    # list entirely when a headset was plugged in — but a MISS is detectable,
+    # where a wrong index is not, and a detected miss can re-derive defaults.
+    #
+    # Not "re-derive everything every boot" (Kent's fallback suggestion),
+    # because that silently discards a deliberate choice: a user who picked a
+    # specific microphone would have to pick it again every session, and would
+    # not be told it had changed. Resolving by name keeps the choice exactly
+    # as long as the choice still exists.
+    _CARD_NAMES = {'audio_card_in': 'audio_card_in_name',
+                   'audio_card_out': 'audio_card_out_name'}
+
+    def _index_for_name(self, name, direction):
+        """Today's index for a remembered device name, or None."""
+        if not name:
+            return None
+        for index, label in (self.cards.get('dict') or {}).items():
+            if str(label) == str(name) and index in self.cards.get(direction,
+                                                                   {}):
+                return index
+        return None
+
+    def resolve_cards(self):
+        """Re-point stored card indices at the devices they were chosen AS.
+
+        Three outcomes per card, all of them normal:
+          * the name still resolves, to the same index -> nothing to do
+          * it resolves to a DIFFERENT index -> follow the device, and say so
+          * it does not resolve -> drop the setting, so defaults re-derive
+        """
+        for attr, name_attr in self._CARD_NAMES.items():
+            direction = 'in' if attr.endswith('_in') else 'out'
+            name = getattr(self, name_attr, None)
+            index = getattr(self, attr, None)
+            if not name:
+                # Pre-existing settings have no remembered name. An index
+                # alone is not identity, so record what it points at NOW and
+                # treat that as the choice from here on.
+                if index is not None and index in (self.cards.get('dict')
+                                                   or {}):
+                    setattr(self, name_attr,
+                            str(self.cards['dict'][index]))
+                    log.info("audio settings: remembering %s as %r so it can "
+                             "be found again after renumbering",
+                             attr, getattr(self, name_attr))
+                continue
+            found = self._index_for_name(name, direction)
+            if found is None:
+                log.warning("audio settings: %s was %r, which is not present "
+                            "now — choosing a default instead of trusting "
+                            "index %s, which today means something else",
+                            attr, name, index)
+                for gone in (attr, name_attr):
+                    try:
+                        delattr(self, gone)
+                    except AttributeError:
+                        pass
+            elif found != index:
+                log.info("audio settings: %r moved from index %s to %s; "
+                         "following the device", name, index, found)
+                setattr(self, attr, found)
+
     def check_missing_attrs(self, include_input=False):
         """Return True if any required setting is missing or invalid."""
+        self.resolve_cards()
         attrs = list(self.required_attrs)
         if include_input:
             attrs = ['audio_card_in'] + attrs

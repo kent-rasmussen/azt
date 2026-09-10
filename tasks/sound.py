@@ -1,6 +1,7 @@
 from backend.core.sound import SoundSettings, Record as BackendRecord
 from frontend import sound_ui, ui
 from utilities import logsetup
+from utilities.error_handler import notify_user
 from io_put import lift
 
 log = logsetup.getlog(__name__)
@@ -15,6 +16,12 @@ class Sound(object):
     is_sound_task = True
 
     def _configure_sound(self, event=None):
+        # The DELIBERATE route: context menu -> "Sound settings". Verify here
+        # too, not only in mikecheck() — this is what a user does when sound
+        # has gone wrong, and it previously opened the window without checking
+        # anything. mikecheck() is the automatic route, entered only when the
+        # stored settings fail to validate.
+        self._verify_rate()
         sound_ui.SoundSettingsWindow(self)
 
     def setcontext(self):
@@ -29,9 +36,51 @@ class Sound(object):
         if ss.soundcheck(include_input=getattr(self, 'is_record_task', False)):
             self.mikecheck()
 
+    def _verify_rate(self):
+        """Measure what the chosen microphone really records, and say so.
+
+        Called from mikecheck() — the point at which the user has already
+        stopped to deal with sound, so a second of recording is affordable
+        here and nowhere else. `default_fs()` deliberately never measures:
+        it is on the startup path and in the step-down fallbacks.
+
+        Cached per device name inside SoundSettings, so re-opening the mic
+        check costs nothing. Failure is not worth interrupting anyone over —
+        the rate simply stays whatever it was.
+        """
+        # EVERYTHING here is inside the try, and the method returns a message
+        # instead of showing one. Both because of a NWAA this caused
+        # (2026-09-10): `notify_user` sat outside the try, so an exception in
+        # it propagated out of here — and since mikecheck() calls this AFTER
+        # self.ui.withdraw(), the settings window was never created and the
+        # only mapped window left in the whole app was the status window the
+        # notice had just opened. A check on the settings is not worth one
+        # window of the user's work, let alone all of them.
+        #
+        # No waiting dialog either: a wait parented on a withdrawn window is
+        # the recurring reveal bug. The probe stops at the first rate that
+        # verifies, so it is about a second at worst.
+        try:
+            ss = self.program.soundsettings
+            if not hasattr(ss, 'verify_fs'):
+                return None
+            rate, message = ss.verify_fs()
+            if rate:
+                try:
+                    self.program.settings.storesettingsfile(
+                                                    setting='soundsettings')
+                except Exception as e:
+                    log.info("couldn't persist the verified rate "
+                             "({})".format(e))
+            return message
+        except Exception as e:
+            log.info("couldn't verify the sample rate ({})".format(e))
+            return None
+
     def mikecheck(self):
         self.ui.withdraw()
         self.program.soundsettings.confirm_audio()
+        self._verify_rate()
         self.soundsettingswindow = sound_ui.SoundSettingsWindow(self)
         if not self.soundsettingswindow.exitFlag.istrue():
             self.soundsettingswindow.wait_window(self.soundsettingswindow)

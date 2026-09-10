@@ -233,6 +233,18 @@ class Settings(SettingsUI):
                                             'fs',
                                             'audio_card_in',
                                             'audio_card_out',
+                                            # The NAMES the indices above were
+                                            # chosen as. PortAudio renumbers
+                                            # devices between runs, so an
+                                            # index alone can validate cleanly
+                                            # and point at a different
+                                            # microphone; SoundSettings
+                                            # .resolve_cards() re-points the
+                                            # index by name at load, or drops
+                                            # the setting when the device is
+                                            # gone. (2026-09-10)
+                                            'audio_card_in_name',
+                                            'audio_card_out_name',
                                             'asr_kwargs',
                                             'asr_repos',
                                             'asr_in_process'

@@ -86,9 +86,42 @@ def _collect_toplevels(parent,out,depth=0):
         _collect_toplevels(child,out,depth+1)
 
 
+def mapped_toplevels(root):
+    """Every MAPPED toplevel Tk itself knows about, via `wm stackorder`.
+
+    A SECOND, INDEPENDENT enumeration, because the parent walk provably
+    misses windows. 2026-09-10: the guard reported NO WINDOW while Kent was
+    looking at the Sound Card Settings window, and the dump — which lists
+    everything the walk reached — did not contain it at all. `SoundSettingsWindow`
+    is a `ui.Window` (a Toplevel subclass), so it should have been reachable
+    from the root by `winfo_children()`; it was not, and the walk cannot
+    explain its own gap.
+      `wm stackorder` asks the window manager's own list instead of
+    reconstructing it from parentage, so it cannot be defeated by whatever
+    parenting quirk hid that window. It returns only MAPPED toplevels, which
+    is exactly the question the guard asks. Kept ALONGSIDE the walk rather
+    than replacing it: the walk finds withdrawn windows too, and those are the
+    reveal candidates.
+    """
+    out=[]
+    try:
+        paths=root.tk.call('wm','stackorder',root._w)
+    except Exception:
+        return out
+    if isinstance(paths,str):
+        paths=paths.split()
+    for path in paths:
+        try:
+            out.append(root.nametowidget(str(path)))
+        except Exception:
+            continue #a window Tk knows and python does not is still not evidence
+    return out
+
+
 def candidate_windows(*extra):
     """Every window that could be showing the user something: the app root, the
-    whole tree of toplevels beneath it, plus whatever the caller knows about.
+    whole tree of toplevels beneath it, everything the window manager reports
+    as mapped, plus whatever the caller knows about.
     Dead and half-built widgets are simply not evidence."""
     widgets=[w for w in extra if w is not None]
     try:
@@ -98,6 +131,9 @@ def candidate_windows(*extra):
     if root is not None:
         widgets.append(root)
         _collect_toplevels(root,widgets)
+        for w in mapped_toplevels(root):
+            if not any(w is seen for seen in widgets):
+                widgets.append(w)
     return widgets
 
 
@@ -687,6 +723,22 @@ class VisibilityWatchdog:
                 log.warning("NO WINDOW (global): saw %s",window_state(w))
         except Exception:
             log.exception("NO WINDOW (global): could not enumerate windows")
+        # The window manager's OWN list of mapped toplevels, logged separately
+        # and by PATH. The 2026-09-10 occurrence fired with the Sound Card
+        # Settings window on screen and absent from the walk above, so the
+        # dump could not distinguish "the walk missed it" from "it was judged
+        # unviewable" — the very distinction this dump exists to make. A
+        # window listed here but not above is one the parent walk cannot
+        # reach, which is a bug in the walk, not in the app's windows.
+        try:
+            root=ui.default_root()
+            if root is not None:
+                stack=root.tk.call('wm','stackorder',root._w)
+                log.warning("NO WINDOW (global): window manager reports these "
+                        "MAPPED toplevels: %s",stack)
+        except Exception as e:
+            log.warning("NO WINDOW (global): couldn't ask the window manager "
+                    "for its stacking order (%s)",e)
         if not self.REVEAL:
             return #log-only; see REVEAL's docstring for why
         target=next((c for c in cands if has_content(c)),None)
