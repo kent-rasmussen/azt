@@ -9,6 +9,7 @@ import copy
 import sys
 from utilities import file, rx, logsetup
 from utilities import utilities as utils
+from utilities.i18n import _   # verify_fs() returns text for the user
 log = logsetup.getlog(__name__)
 # The audio backend and numpy are OPTIONAL app-wide (program['nosound']):
 # this module must stay importable without them — its importers are
@@ -170,6 +171,66 @@ def spectral_ceiling(block, rate):
     if not len(above):
         return None
     return float(freqs[above[-1]])
+
+
+def rate_is_real(block, rate, margin_db=60.0):
+    """Is `block` GENUINELY sampled at `rate`? True / False / None (unknown).
+
+    Replaces the threshold-over-a-noise-floor logic in `spectral_ceiling` for
+    this question, because that logic produces FALSE POSITIVES and did so on
+    this project's own hardware: `probe_real_capability.py` called 192 kHz
+    REAL on two upsampling devices (2026-09-10). Its floor estimate is taken
+    from the top 5% of the band — which in an upsampled capture is exactly
+    where the resampler's residue lives, so residue was compared against
+    itself and cleared the bar.
+
+    The reliable signal is ABSOLUTE, not relative to a floor. Measured on one
+    machine, same microphone, same room:
+
+        genuine 192 kHz capture      top of band  -25 dB vs the mid band
+        48 kHz upsampled to 192 kHz  top of band  -105 to -142 dB
+
+    A real converter's noise is broadband, so it fills the top of the band
+    within a few tens of dB. What sits 100+ dB down is an interpolator's
+    arithmetic. Nothing plausible lies between, which is why one threshold
+    separates them with room to spare — and why a MICROPHONE's own rolloff
+    (tens of dB) does not trip it.
+
+    Returns None when the capture is too quiet for the comparison to mean
+    anything: "the room was silent" must never be reported as "the rate was
+    faked".
+    """
+    if numpy is None or block is None or not len(block):
+        return None
+    mono = block if getattr(block, 'ndim', 1) == 1 else block[:, 0]
+    if mono.dtype.kind == 'i':
+        mono = mono.astype('float64') / float(numpy.iinfo(mono.dtype).max)
+    else:
+        mono = mono.astype('float64')
+    if mono.size < 4096:
+        return None
+    n = 1 << int(numpy.floor(numpy.log2(min(mono.size, 65536))))
+    mag = numpy.abs(numpy.fft.rfft(mono[:n] * numpy.hanning(n)))
+    freqs = numpy.fft.rfftfreq(n, 1.0 / float(rate))
+    nyq = float(rate) / 2.0
+    # Top 30% of the band: far enough above any real microphone's rolloff
+    # that only converter noise or interpolator residue lives there.
+    top = (freqs >= 0.70 * nyq) & (freqs <= nyq)
+    mid = (freqs >= 1000.0) & (freqs < 0.20 * nyq)
+    if not top.any() or not mid.any():
+        return None
+    mid_level = float(numpy.median(mag[mid]))
+    top_level = float(numpy.median(mag[top]))
+    if mid_level <= 0 or mag.max() <= 0:
+        return None
+    # Too quiet to judge: the mid band must itself be clear of the FFT's own
+    # numerical floor, or both medians are noise and their ratio is arbitrary.
+    if 20.0 * numpy.log10(mid_level / mag.max()) < -100.0:
+        return None
+    margin = 20.0 * numpy.log10(max(top_level, 1e-20) / mid_level)
+    log.info("rate check at %d Hz: top of band %.0f dB below the mid band "
+             "(real needs better than -%.0f)", rate, margin, margin_db)
+    return margin > -margin_db
 
 
 def migrate_sample_format(stored):
@@ -334,11 +395,137 @@ class SoundSettings(object):
         else:
             self.audio_card_out = min(self.cards['out'])
 
+    # Verified rates, cached for the session, keyed by device NAME.
+    #
+    # By name and not index because indices are renumbered by the sound server
+    # between runs — and even the name is only as stable as the hardware: on
+    # 2026-09-10 'sof-hda-dsp: - (hw:0,6)' denoted a USB microphone that
+    # vanished from the list when a headset was plugged in. So a miss is a
+    # normal outcome, never an error, and we simply measure again.
+    _verified_fs = {}
+
+    def _device_name(self, index):
+        try:
+            return str(sounddevice.query_devices(index).get('name'))
+        except Exception:
+            return None
+
+    def measured_fs(self, seconds=0.3, measure=False):
+        """The highest rate this input REALLY delivers. None if not known.
+
+        WITHOUT `measure=True` this only READS the session cache and never
+        records. That split is deliberate: `default_fs()` is on the startup
+        path and in the step-down fallbacks, so probing from there would add
+        about a second to every boot and re-probe during a failure recovery.
+        Recording belongs to a user action ("check this microphone"), which
+        passes measure=True once and populates the cache everything else
+        reads.
+
+        WHY MEASURE INSTEAD OF ASK. `default_fs` took `max()` of the rates the
+        card ACCEPTS, and on a stock PipeWire desktop that is 192 kHz while
+        the graph runs at 48 kHz — so the default A-Z+T chose was the one most
+        likely to be a lie, producing files 4x the size with nothing above
+        24 kHz in them (measured 2026-09-10, confirmed independently by
+        `pw-metadata`: clock.allowed-rates = [ 48000 ]).
+
+        Walks the accepted rates HIGH TO LOW and returns the first one that
+        records genuine content at its own Nyquist. Costs one short capture
+        per rate tried — a second or two at worst, and only until a rate
+        passes, so an honest 192 kHz device costs exactly one capture.
+
+        Needs some sound in the room: room noise is enough, and silence
+        returns None rather than a guess.
+        """
+        if not (AUDIO_OK and numpy is not None):
+            return None
+        if self.audio_card_in not in self.cards['in']:
+            return None
+        name = self._device_name(self.audio_card_in)
+        if name and name in self._verified_fs:
+            return self._verified_fs[name]
+        if not measure:
+            return None         # cache miss, and we were not asked to record
+        best = None
+        for rate in sorted(self.cards['in'][self.audio_card_in], reverse=True):
+            fmt = widest(self.cards['in'][self.audio_card_in].get(rate) or [])
+            if not fmt:
+                continue
+            try:
+                block = sounddevice.rec(int(rate * seconds), samplerate=rate,
+                                        channels=1, dtype=fmt,
+                                        device=self.audio_card_in,
+                                        blocking=True)
+            except Exception as e:
+                log.info("rate check: %d Hz wouldn't record (%s)", rate, e)
+                continue
+            verdict = rate_is_real(block, rate)
+            if verdict:
+                best = rate
+                break
+            if verdict is None:
+                log.info("rate check: %d Hz — too quiet to judge; not using "
+                         "it as verified", rate)
+            else:
+                log.warning("rate check: %d Hz is UPSAMPLED on this input; "
+                            "not offering it as the default", rate)
+        if name:
+            self._verified_fs[name] = best
+        return best
+
     def default_fs(self):
-        if self.audio_card_in in self.cards['in']:
-            self.fs = max(self.cards['in'][self.audio_card_in])
+        """The rate to use: the highest VERIFIED one, else a safe fallback.
+
+        The fallback is deliberately NOT `max()` of the accepted rates any
+        more. When measurement cannot decide (a silent room, no numpy, no
+        backend), 48000 is the honest guess: it is what typical laptop codecs
+        and a stock PipeWire graph actually run at, so it is the rate least
+        likely to be silently resampled. `max()` picked the most likely to be.
+        """
+        measured = self.measured_fs()       # cache only; never records here
+        if measured:
+            log.info("audio settings: using %d Hz, verified by recording",
+                     measured)
+            self.fs = measured
+            return
+        available = (self.cards['in'][self.audio_card_in]
+                     if self.audio_card_in in self.cards['in']
+                     else self.cards['out'][self.audio_card_out])
+        if 48000 in available:
+            log.info("audio settings: no rate verified; using 48000 Hz, the "
+                     "rate least likely to be resampled")
+            self.fs = 48000
         else:
-            self.fs = max(self.cards['out'][self.audio_card_out])
+            self.fs = max(available)
+            log.info("audio settings: no rate verified and no 48000 Hz "
+                     "offered; falling back to %d Hz", self.fs)
+
+    def verify_fs(self):
+        """Measure what this input really delivers and adopt it. (rate, msg)
+
+        The user action behind "check this microphone" — the one place that
+        pays the recording cost. Returns the verified rate and a sentence to
+        show, or (None, reason) when the room was too quiet to judge.
+        """
+        before = self.fs
+        best = self.measured_fs(measure=True)
+        if not best:
+            return None, _("A-Z+T could not tell which sample rates are real "
+                           "on this microphone, because the room was too "
+                           "quiet while it checked. Try again with some "
+                           "ordinary background sound, or just speak while "
+                           "it runs.")
+        self.fs = best
+        offered = max(self.cards['in'][self.audio_card_in]) \
+                  if self.audio_card_in in self.cards['in'] else best
+        if best < offered:
+            return best, _("This microphone really records at {best} Hz. It "
+                           "offers {offered} Hz, but that is stretched from a "
+                           "lower rate — the file would be larger with no "
+                           "more detail in it. A-Z+T will use {best} Hz."
+                           ).format(best=best, offered=offered)
+        return best, _("This microphone really records at {best} Hz, the "
+                       "highest it offers. A-Z+T will use it.").format(
+                            best=best)
 
     # ── Sample-format choice, by WIDTH and said out loud ─────────────────────
     # PORTED 2026-09-09. What was here ranked PyAudio's constants, whose values

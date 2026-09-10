@@ -34,6 +34,7 @@ except Exception as _e:
 
 from utilities import logsetup, file
 from utilities.i18n import _   # user-facing text lives here too (the wedge notice)
+from utilities.error_handler import notify_user
 from backend.core.sound import AudioInterface, SoundSettings, AUDIO_OK
 # (The transitional `PYAUDIO_OK = AUDIO_OK` alias that stood here is gone: the
 # streaming layer below is sounddevice now, so nothing is left to be
@@ -545,6 +546,24 @@ class SoundFileRecorder(object):
                             "play fine. Recording from the microphone's own "
                             "hardware device instead of the system default "
                             "usually avoids it.",run_ms,share,cause)
+                if self._overflows:
+                    bad(_("This recording has {ms:.0f} ms of complete "
+                          "silence in it where sound is missing.").format(
+                                ms=run_ms),
+                        _("The computer could not keep up. Choose a lower "
+                          "sample rate in Sound Settings, or close other "
+                          "programs, and record this word again."))
+                else:
+                    bad(_("Something is removing the quiet parts of this "
+                          "recording: {ms:.0f} ms of it is completely "
+                          "silent.").format(ms=run_ms),
+                        _("Your computer is applying noise removal to this "
+                          "microphone. That deletes exactly what you need — "
+                          "breathy releases, quiet consonants, the ends of "
+                          "words — and the recording still sounds normal. In "
+                          "Sound Settings, choose the microphone's own entry "
+                          "rather than 'default', or turn off noise "
+                          "suppression in your system's sound settings."))
             elif share>5.0:
                 log.info("%.1f%% of this take's samples are exactly zero "
                          "(longest run %.0f ms) — worth watching if it "
@@ -573,11 +592,36 @@ class SoundFileRecorder(object):
                                 self._asked_rate,ceiling,
                                 int(round(ceiling*2/1000.0)*1000),
                                 self._asked_rate)
+                    real=int(round(ceiling*2/1000.0)*1000)
+                    bad(_("This file says {asked} Hz but really holds only "
+                          "{real} Hz of sound.").format(
+                                asked=self._asked_rate,real=real),
+                        _("Something between A-Z+T and the microphone "
+                          "stretched it to fit. Nothing is wrong with the "
+                          "sound you hear, but the file is about {times}x "
+                          "larger than the detail in it warrants. Choosing "
+                          "{real} Hz in Sound Settings gives the same "
+                          "recording in a smaller file.").format(
+                                times=max(2,int(self._asked_rate/max(real,1))),
+                                real=real))
                 else:
                     log.info("take: energy up to %.0f Hz, consistent with a "
                              "real %d Hz",ceiling,self._asked_rate)
         except Exception as e:
             log.info("couldn't check the take's spectrum (%s)",e)
+        # notify_user, not notify_error: the take is saved and the user is in
+        # the middle of a word list. This appends to the one status window
+        # instead of interrupting with a dialog per recording — and it is
+        # wired to App.notify_user_threadsafe (main.py:818), so it is safe
+        # from wherever fileclose() is called.
+        if problems:
+            try:
+                notify_user("{}\n\n{}".format(
+                        _("About the recording just made:"),
+                        "\n\n".join("  * "+p for p in problems)))
+            except Exception as e:
+                log.error("couldn't show the take's problems to the user "
+                          "(%s); they are in the log above",e)
 
     def fileclose(self):
         """Close the file and, only if it holds real audio, put it in place.
