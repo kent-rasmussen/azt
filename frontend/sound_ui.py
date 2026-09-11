@@ -127,9 +127,19 @@ class RecordButtonFrame(ui.Frame):
         sound-python/"""
         self.id=id
         self.task=task
-        try:
-            task.audio.get_format_from_width(1) #get_device_count()
-        except AttributeError:
+        # ASK THE HONEST QUESTION. This used to call
+        # `task.audio.get_format_from_width(1)` inside a try purely for the
+        # side effect of finding out whether the handle still worked — a trick
+        # that existed because PyAudio offered no way to ask. It survived the
+        # port, and after it `AudioInterface` has no such method, so the call
+        # raised AttributeError EVERY time and the except branch replaced
+        # `task.audio` with a brand-new interface on every record button. That
+        # is the "new AudioInterface conflicts with a Sound task that already
+        # opened a stream" hazard in AUDIT_FINDINGS (L77-87), fired on every
+        # build rather than occasionally. `usable()` was written for this
+        # (backend/core/sound.py:436) and says so in its docstring.
+        audio=getattr(task,'audio',None)
+        if audio is None or not audio.usable():
             task.audio=sound.AudioInterface()
         self.pa=task.audio
         if not hasattr(task,'soundsettings') or not hasattr(task,'program'):

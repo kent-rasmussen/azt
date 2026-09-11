@@ -431,7 +431,15 @@ function updateProp(wid, prop, value) {
             //   passed through so a caller can still say '40em' deliberately.
             el.style.maxWidth = (typeof value === 'number')
                                     ? value + 'px' : value;
-            el.style.whiteSpace = 'normal';
+            // `pre-wrap`, NOT `normal`: the app's messages carry real newlines
+            // and HTML collapses them. The transcription notice is written as
+            // a lead line, a bulleted problem list and a closing paragraph,
+            // and it arrived as one run of prose (macOS, 2026-09-11, Kent:
+            // "the newlines (at least) that are present elsewhere are not
+            // there"). `pre-wrap` keeps the author's line breaks AND still
+            // wraps long lines, which is exactly tkinter's Label contract —
+            // `normal` only did the second half.
+            el.style.whiteSpace = 'pre-wrap';
             el.style.overflowWrap = 'break-word';
             break;
         case 'font':

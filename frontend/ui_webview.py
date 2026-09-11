@@ -1914,7 +1914,7 @@ class EntryField(_WebviewWidget):
             if text == self._pushed:
                 return
             self._pushed = text
-            wv = _wv_window_for(self)
+            wv = getattr(self, '_wv_window', None)
             if wv is not None:
                 _js(wv, f'updateProp({self._wid}, "value", {json.dumps(text)})')
         self.textvariable.trace_add('write', _to_dom)
@@ -1922,7 +1922,7 @@ class EntryField(_WebviewWidget):
         # And show what it already holds. `_js` queues per window, so this is
         # safe before the page has loaded.
         if self._pushed:
-            wv = _wv_window_for(self)
+            wv = getattr(self, '_wv_window', None)
             if wv is not None:
                 _js(wv, 'updateProp({}, "value", {})'.format(
                         self._wid, json.dumps(self._pushed)))
@@ -1982,7 +1982,7 @@ class EntryField(_WebviewWidget):
     def focus_set(self):
         """Put the keyboard in this field. tkinter's widgets all answer it,
         and `addchar` calls it after clearing so the user can type on."""
-        wv = _wv_window_for(self)
+        wv = getattr(self, '_wv_window', None)
         if wv is not None:
             _js(wv, f'focusWidget({self._wid})')
 

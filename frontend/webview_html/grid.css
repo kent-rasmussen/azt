@@ -209,6 +209,25 @@
     overflow-wrap: break-word;
 }
 
+/* NEWLINES IN A MESSAGE ARE THE AUTHOR'S, AND HTML THROWS THEM AWAY.
+   A tkinter Label breaks a line wherever the string says `\n` and wraps the
+   rest at `wraplength`; the default CSS `white-space: normal` does only the
+   wrapping, so every `\n` in the app's prose became a space. The
+   transcription notice — a lead line, a bulleted list of what is missing,
+   then a closing paragraph — arrived as one undifferentiated run (macOS,
+   2026-09-11).
+
+   `pre-wrap` is the pair of tkinter's behaviour: honour explicit breaks, wrap
+   what is too long. It applies to EVERY label, not just ones with a
+   wraplength, because tkinter honours `\n` unconditionally too.
+
+   The cost is that runs of spaces and leading indentation now show. That is
+   also what tkinter does with them, so a string that looks wrong here looked
+   wrong there — fix the string, not this rule. */
+.wv-label {
+    white-space: pre-wrap;
+}
+
 /* AN IMAGE MUST NEVER DEMAND MORE WIDTH THAN THE WINDOW HAS.
    `max-content` columns size to their widest child, so a large picture makes
    its column as wide as the picture — and if the window is not resized to
