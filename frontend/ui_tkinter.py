@@ -18,6 +18,7 @@ import tkinter.ttk
 import tkinter.dnd
 from utilities import file #for image pathnames
 from utilities import fonts as fontlib #family aliases + font-file search
+from frontend import theme_data #themes + imagelist, shared with ui_webview
 from random import randint #for theme selection
 import datetime
 try: #PIL
@@ -61,7 +62,11 @@ BooleanVar=tkinter.BooleanVar
 """These classes have no dependencies"""
 class Theme(object):
     """docstring for Theme."""
-    imagelist=[ ('transparent','AZT stacks6.png'),
+    # ONE definition, in frontend/theme_data.py — see setthemes() below for
+    # what hand-copying this into ui_webview cost (35 of 81 images missing
+    # there, all failing silently).
+    imagelist=theme_data.IMAGELIST
+    _imagelist_was_here=[ ('transparent','AZT stacks6.png'),
                         ('tall','AZT clear stacks tall.png'),
                         ('small','AZT stacks6_sm.png'),
                         ('icon','AZT stacks6_icon.png'),
@@ -302,7 +307,16 @@ class Theme(object):
                                 background=self.background,
                                 )
     def setthemes(self):
-        self.themes={'lightgreen':{
+        """ONE definition, in frontend/theme_data.py. The dict used to be
+        written out here and hand-copied into ui_webview.Theme, where the copy
+        was four entries long — so Kent's own theme (`Kim`) did not exist under
+        webview and was silently replaced by greygreen (2026-09-11)."""
+        self.themes=dict(theme_data.THEMES)
+
+    def _setthemes_was_here(self):
+        """The former literal, kept for one release so a reviewer can diff it
+        against theme_data.THEMES rather than trust a move. Delete after."""
+        return {'lightgreen':{
                             'background':'#c6ffb3',
                             'activebackground':'#c6ffb3',
                             'offwhite':None,

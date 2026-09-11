@@ -121,6 +121,73 @@ def test_soundsettings_keeps_its_public_names(name):
     assert hasattr(sound.SoundSettings, name)
 
 
+# ─── Noise floor, without asking anyone to be quiet ─────────────────────────
+
+def test_quietest_window_finds_the_quiet_part():
+    """The floor is the quietest stretch, so a take that is loud for most of
+    its length must still report the quiet part — that is the whole reason no
+    silence has to be requested."""
+    numpy = pytest.importorskip('numpy')
+    rate = 8000
+    loud = numpy.full(rate, 0.5)          # 1s at -6 dBFS
+    quiet = numpy.full(rate, 0.001)       # 1s at -60 dBFS
+    block = numpy.concatenate([loud, quiet])
+    floor = sound.quietest_window_db(block, rate)
+    assert floor is not None
+    assert -65 < floor < -55, floor
+
+
+def test_quietest_window_is_an_UPPER_bound():
+    """A speaker who never pauses makes it pessimistic, which understates the
+    signal-to-noise rather than flattering the microphone. Assert the
+    direction, since that is the property being relied on."""
+    numpy = pytest.importorskip('numpy')
+    rate = 8000
+    true_floor = numpy.random.default_rng(0).normal(0, 0.001, rate)
+    never_quiet = true_floor + 0.3        # the same noise, always loud
+    floor = sound.quietest_window_db(never_quiet, rate)
+    honest = sound.quietest_window_db(true_floor, rate)
+    assert floor > honest, \
+        "a take with no pause must not report a LOWER floor than the truth"
+
+
+def test_digital_silence_is_not_reported_as_a_floor():
+    """All zeros is a gate or a dropout — `zero_runs` is the detector that
+    says so. Reporting -inf dB as a noise floor would be arithmetic, not a
+    measurement."""
+    numpy = pytest.importorskip('numpy')
+    assert sound.quietest_window_db(numpy.zeros(8000), 8000) is None
+
+
+def test_quietest_window_handles_a_take_shorter_than_its_window():
+    numpy = pytest.importorskip('numpy')
+    assert sound.quietest_window_db(numpy.full(100, 0.01), 44100) is not None
+
+
+def test_rate_check_possible_knows_its_own_arithmetic():
+    """The band test compares 0.70x Nyquist against 1000 Hz..0.20x Nyquist,
+    and that mid band does not exist below 10 kHz — which is why 8000 Hz came
+    back NO SIGNAL on four inputs at healthy levels (2026-09-11)."""
+    assert sound.rate_check_possible(44100)
+    assert sound.rate_check_possible(48000)
+    assert not sound.rate_check_possible(8000)
+    assert not sound.rate_check_possible(10000)
+    assert not sound.rate_check_possible(None)
+
+
+def test_format_bits_is_reachable_from_io_put():
+    """`sound_ui.getsoundformat` ranks the format menu with
+    `sound.format_bits` through `io_put.sound`, so the re-export has to exist
+    — otherwise the menu silently falls back to unranked order (it is wrapped
+    in a try) and the menu disagrees with `default_sf`, which uses the same
+    function."""
+    io_sound = pytest.importorskip('io_put.sound',
+                                   reason='needs the audio module importable')
+    assert callable(getattr(io_sound, 'format_bits', None))
+    assert io_sound.format_bits('int32') > io_sound.format_bits('int16')
+    assert io_sound.format_bits('nonsense-dtype') == 0
+
+
 def test_no_pyaudio_named_attributes_remain():
     """The handle is `.audio` now. If a `.pyaudio`-named method comes back,
     the two names will drift and the three-place lookup in

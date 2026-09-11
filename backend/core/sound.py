@@ -391,6 +391,139 @@ def rate_is_fake(block, rate, margin_db=100.0):
     return None
 
 
+def quietest_window_db(block, rate, window_ms=200.0):
+    """The quietest stretch of `block`, in dBFS — or None if unmeasurable.
+
+    A NOISE FLOOR WITHOUT ASKING FOR SILENCE. The floor is by definition the
+    quietest part of a capture, so the quietest window of an ordinary take
+    gives one — no prompt, no "be quiet for five seconds", no button. That
+    matters because the checks worth having are the ones needing no test
+    signal and no instructions to follow or fail (the triage in
+    agenda/honest_sound_settings.md), and because the card-switch measurement
+    had just finished removing the human from this loop.
+
+    IT IS AN UPPER BOUND, and that is the safe direction: a speaker who never
+    paused makes the figure pessimistic, which UNDERSTATES the signal-to-noise
+    rather than flattering the microphone.
+
+    Free at both moments A-Z+T already records: the per-take diagnostics have
+    the whole take in hand, and the rate check's own short captures are often
+    silence anyway (peaks of 0.1-0.7% of full scale in a quiet room, measured
+    2026-09-11).
+
+    ON GAIN, since it is the obvious objection: a microphone at high gain
+    reads noisier, so this compares takes on one setting rather than ranking
+    microphones against each other. Kent, 2026-09-11: "if someone is playing
+    with gain, they should certainly know the consequences of that." Quite —
+    and the figure is honest about the take in front of it either way.
+
+    dBFS, so -60 is quiet and -20 is not; None when there is nothing to
+    measure.
+    """
+    if numpy is None or block is None or not len(block):
+        return None
+    mono = block if getattr(block, 'ndim', 1) == 1 else block[:, 0]
+    if mono.dtype.kind == 'i':
+        mono = mono.astype('float64') / float(numpy.iinfo(mono.dtype).max)
+    else:
+        mono = mono.astype('float64')
+    n = int(float(rate) * float(window_ms) / 1000.0)
+    if n < 64 or mono.size < n:
+        n = mono.size            # too short to window: use the lot
+    if n < 64:
+        return None
+    windows = mono.size // n
+    if windows < 1:
+        return None
+    trimmed = mono[:windows * n].reshape(windows, n)
+    rms = numpy.sqrt(numpy.mean(numpy.square(trimmed), axis=1))
+    quietest = float(rms.min())
+    if quietest <= 0:
+        # Digital silence. Real for a gated path, and `zero_runs` is the
+        # detector that says so — do not report -inf dB as a noise floor.
+        return None
+    return 20.0 * numpy.log10(quietest)
+
+
+def rate_check_possible(rate):
+    """Can the band test address `rate` AT ALL? Structural, not about audio.
+
+    `rate_is_fake` and `top_of_band_db` compare a TOP band (>= 0.70 x Nyquist)
+    against a MID band (1000 Hz .. 0.20 x Nyquist). The mid band only EXISTS
+    when 1000 < rate/10, i.e. above 10000 Hz. At 8000 Hz the range is
+    "at least 1000 Hz and under 800 Hz" — empty — so the function returns None
+    for every capture, however loud.
+
+    FOUND BY KENT'S RUN, 2026-09-11: 8000 Hz came back NO SIGNAL on all four
+    inputs with peaks of 0.6-0.7% of full scale. Plenty of signal, so "the
+    room was quiet" was not it — and NO SIGNAL is documented as "a fact about
+    the ROOM, not about the setting", which sent the reader looking in the
+    wrong place and suggested making noise, which cannot help.
+
+    Kept as its own question rather than widened: the 1000 Hz floor is there
+    to stay clear of rumble and mains hum, and lowering it for 8 kHz would
+    change what the detector measures at every rate to fix the one rate
+    nobody documents speech at. Saying "this test does not reach 8 kHz" is
+    both true and cheap.
+    """
+    try:
+        return float(rate) > 10000.0
+    except (TypeError, ValueError):
+        return False
+
+
+def top_of_band_db(block, rate):
+    """How far down the top of the band is, in dB — or None if unmeasurable.
+
+    THE NUMBER THE VERDICT IS ACTUALLY BASED ON. `rate_is_fake` computes this
+    and only logged it, so every caller that wanted to SHOW evidence reached
+    for `spectral_ceiling` instead — the relative metric that produces false
+    positives, and whose figures then sat next to verdicts they contradicted:
+
+        RESAMPLED  the top of the band is EMPTY … spectrum reaches 47965 Hz
+                   of 48000 possible
+
+    Kent, 2026-09-11: *"'spectrum reaches 47965 Hz of 48000 possible' still in
+    LIE"*. The verdict says empty, the figure beside it says full, and both
+    came from the same capture — because they came from different detectors.
+    THIRD time in one afternoon that the untrustworthy metric leaked into
+    output through a path I had not swept.
+
+    So: one number, from the detector that decides. Near 0 dB means the band
+    is full to Nyquist; -100 dB or worse is the hole `rate_is_fake` calls
+    fake; in between is the ambiguous range where nothing can be claimed
+    (about -25 dB for real hardware, about -35 for a cheap resampler, on the
+    one machine where both were measured).
+
+    Same blindness as `rate_is_fake`: int16's quantisation noise fills the
+    hole, so treat this as an int32 figure.
+    """
+    if numpy is None or block is None or not len(block):
+        return None
+    mono = block if getattr(block, 'ndim', 1) == 1 else block[:, 0]
+    if mono.dtype.kind == 'i':
+        mono = mono.astype('float64') / float(numpy.iinfo(mono.dtype).max)
+    else:
+        mono = mono.astype('float64')
+    if mono.size < 4096:
+        return None
+    n = 1 << int(numpy.floor(numpy.log2(min(mono.size, 65536))))
+    mag = numpy.abs(numpy.fft.rfft(mono[:n] * numpy.hanning(n)))
+    freqs = numpy.fft.rfftfreq(n, 1.0 / float(rate))
+    nyq = float(rate) / 2.0
+    top = (freqs >= 0.70 * nyq) & (freqs <= nyq)
+    mid = (freqs >= 1000.0) & (freqs < 0.20 * nyq)
+    if not top.any() or not mid.any():
+        return None
+    mid_level = float(numpy.median(mag[mid]))
+    top_level = float(numpy.median(mag[top]))
+    if mid_level <= 0 or mag.max() <= 0:
+        return None
+    if 20.0 * numpy.log10(mid_level / mag.max()) < -100.0:
+        return None            # mid band is itself at the FFT's floor
+    return 20.0 * numpy.log10(max(top_level, 1e-20) / mid_level)
+
+
 def migrate_sample_format(stored):
     """A persisted sample_format → a dtype name we can use, or None.
 
@@ -582,6 +715,12 @@ class SoundSettings(object):
     # note_fake_rate() from the per-take check, which sees several seconds of
     # actual audio rather than a fraction of a second of probing.
     _fake_rates = {}
+    # And rates a real take came back UN-band-limited at, per device name.
+    # The positive counterpart, kept separately rather than inferred from
+    # `_verified_fs` — that holds one DERIVED value per device and any news
+    # about any rate clears it, so a good measurement of one rate used to be
+    # erased by a bad one about another (2026-09-11).
+    _real_rates = {}
 
     def _device_name(self, index):
         try:
@@ -635,29 +774,115 @@ class SoundSettings(object):
             fmt = widest(self.cards['in'][self.audio_card_in].get(rate) or [])
             if not fmt:
                 continue
-            try:
-                with quiet_probing():
-                    block = sounddevice.rec(int(rate * seconds),
-                                            samplerate=rate, channels=1,
-                                            dtype=fmt,
-                                            device=self.audio_card_in,
-                                            blocking=True)
-            except Exception as e:
-                log.info("rate check: %d Hz wouldn't record (%s)", rate, e)
+            block = self._capture_for_check(rate, fmt, seconds)
+            if block is None:
                 continue
+            # THE FLOOR, FREE. These captures exist anyway, and in an ordinary
+            # room they ARE silence — peaks of 0.1-0.7% of full scale when
+            # this was measured (2026-09-11). So the card switch can report a
+            # noise floor without asking the user for anything, which is the
+            # second of the two places it comes for nothing (the other is
+            # every real take). Kent, 2026-09-11: "If we can report the floor
+            # for almost free on switch and take, why not? at least until we
+            # see if it buys us much."
+            # NEVER FATAL. The floor is a nice-to-have; the rate verdict is
+            # load-bearing and decides what the user records at. An extra
+            # figure must not be able to take the check down with it.
+            try:
+                floor = quietest_window_db(block, rate)
+            except Exception as e:
+                log.debug("couldn't measure the noise floor at %d Hz: %s",
+                          rate, e)
+                floor = None
+            if floor is not None:
+                log.info("noise floor on %r at %d Hz: %.0f dBFS (quietest "
+                         "part of the rate-check capture; an upper bound, and "
+                         "it moves with input gain)",
+                         name or '?', rate, floor)
             # "Not provably fake" is the strongest available claim — see
             # rate_is_fake, which cannot certify a rate as real. So this
             # picks the highest rate we could not DISPROVE, which still
             # excludes the case that matters: a band-limited upsample.
             if rate_is_fake(block, rate):
-                log.warning("rate check: %d Hz is upsampled on this input; "
-                            "not offering it", rate)
+                # NEVER ON ONE READING. This sweep walks the rates back to
+                # back, which is exactly the condition that produced a FALSE
+                # 'resampled' accusation in the manual prober: PipeWire's
+                # graph rate is sticky, so the rate tested immediately before
+                # can leak into the next measurement and a path that would
+                # rather resample than renegotiate gets blamed for it
+                # (agenda/honest_sound_settings.md, finding 2b — 48489 Hz
+                # being almost exactly 96k/2 was the giveaway). The prober
+                # was fixed with a settle pause and a mandatory retry; this
+                # had neither until 2026-09-11.
+                #   RESAMPLED is an accusation — it tells a user their device
+                # is lying — so it has to repeat before it counts.
+                self._settle()
+                again = self._capture_for_check(rate, fmt, seconds)
+                if again is not None and not rate_is_fake(again, rate):
+                    log.info("rate check: %d Hz looked upsampled once and "
+                             "clean on a second look after an idle pause; "
+                             "not accusing it", rate)
+                    self._record_check(name, rate, fake=False)
+                    best = rate
+                    break
+                log.warning("rate check: %d Hz is upsampled on this input "
+                            "(twice, with an idle pause between); not "
+                            "offering it", rate)
+                self._record_check(name, rate, fake=True)
+                self._settle()
                 continue
+            self._record_check(name, rate, fake=False)
             best = rate
             break
         if name:
             self._verified_fs[name] = best
         return best
+
+    # Long enough for a sticky graph rate to be released, short enough that
+    # three rates stay inside the wait dialog a user is already watching.
+    _SETTLE_SECONDS = 0.4
+
+    def _settle(self):
+        """Idle, so the rate just tested cannot leak into the next one."""
+        import time
+        time.sleep(self._SETTLE_SECONDS)
+
+    def _capture_for_check(self, rate, fmt, seconds):
+        """A short recording for the rate check, or None if it wouldn't."""
+        try:
+            with quiet_probing():
+                return sounddevice.rec(int(rate * seconds),
+                                       samplerate=rate, channels=1,
+                                       dtype=fmt, device=self.audio_card_in,
+                                       blocking=True)
+        except Exception as e:
+            log.info("rate check: %d Hz wouldn't record (%s)", rate, e)
+            return None
+
+    def _record_check(self, name, rate, fake):
+        """SHARE WHAT THE PROBE FOUND, so the settings screen can show it.
+
+        Kent, 2026-09-11: *"we're checking on load; why not share that with
+        the user?"* — and he is right that withholding it was incoherent,
+        because `verify_fs`'s own notice already ASSERTS the result in prose
+        ("the higher rates were checked and found to be stretched from a
+        lower one") while the rate menu, reading the same evidence, said
+        nothing. One standard of proof, or none.
+
+        The reason it was withheld was real but is now addressed: this sweep
+        had no settle pause and no retry, so its verdicts were not sound
+        enough to accuse a device with. Both are in place above, which is the
+        same bar the manual prober was held to — so the evidence can be
+        shared on the same footing as a real take's.
+        """
+        if not name:
+            return
+        if fake:
+            self._fake_rates.setdefault(name, set()).add(rate)
+            self._real_rates.get(name, set()).discard(rate)
+        else:
+            self._real_rates.setdefault(name, set()).add(rate)
+            self._fake_rates.get(name, set()).discard(rate)
 
     def default_fs(self):
         """The highest rate not KNOWN to be a resampled fake.
@@ -718,6 +943,10 @@ class SoundSettings(object):
         if rate in known:
             return
         known.add(rate)
+        # Latest evidence wins for THIS rate, as in note_real_rate — a rate
+        # that recorded cleanly earlier and is band-limited now is no longer
+        # something to tell the user is sound.
+        self._real_rates.get(name, set()).discard(rate)
         log.warning("audio settings: %d Hz on %r produced a band-limited "
                     "take, so it is upsampled; it will not be chosen again "
                     "for this device", rate, name)
@@ -772,6 +1001,24 @@ class SoundSettings(object):
             log.info("audio settings: %d Hz on %r recorded cleanly this time, "
                      "so the earlier 'upsampled' mark is withdrawn", rate,
                      name)
+        # KEEP THE POSITIVE EVIDENCE, PER RATE. Until 2026-09-11 a clean take
+        # left no record at all — it only withdrew a fake mark — so the
+        # settings screen could annotate what was DISPROVED and nothing that
+        # had been checked and found sound.
+        #   The transient stand-in was `_verified_fs`, which `note_fake_rate`
+        # pops (and so does the line below, for the same reason): it holds ONE
+        # value per device, "the highest rate not provably fake", so news about
+        # ANY rate invalidated it. Kent watched that happen: "I thought I
+        # recalled a comment on 44.1, which wasn't there after 192 got one."
+        # Exactly so — `verify_fs` had cached 44100, then a 192000 take was
+        # marked fake, which cleared the cache and took 44.1's note with it.
+        #   192 kHz being upsampled says NOTHING about whether 44.1 kHz
+        # records cleanly. They are independent facts about independent rates
+        # and are now stored that way, with the same provenance rule as the
+        # fake marks: real takes only.
+        self._real_rates.setdefault(name, set()).add(rate)
+        # `_verified_fs` still goes: it is a DERIVED answer ("the highest that
+        # delivers") and this take is new information about the ranking.
         self._verified_fs.pop(name, None)
 
     def forget_rate_checks(self, why=''):
@@ -782,16 +1029,29 @@ class SoundSettings(object):
         stops being true, so keeping the cache across a card change would
         answer a new question with an old measurement.
         """
-        if self._verified_fs or self._fake_rates:
+        if self._verified_fs or self._fake_rates or self._real_rates:
             log.info("audio settings: forgetting cached rate checks%s — they "
                      "described the audio path as it was", why)
         self._verified_fs.clear()
         self._fake_rates.clear()
+        self._real_rates.clear()
 
     def fake_rates_here(self):
         """Rates already disproved on the current input, by real recordings."""
         name = self._device_name(getattr(self, 'audio_card_in', None))
         return self._fake_rates.get(name, set()) if name else set()
+
+    def real_rates_here(self):
+        """Rates a REAL TAKE on the current input recorded un-band-limited.
+
+        NOT "rates proved real" — no such claim is available. `rate_is_fake`
+        never returns False (see its docstring): the most that can be said is
+        that nothing in the take disproved the rate. The settings screen must
+        word it that way too, which is why the label says "not stretched"
+        rather than "records cleanly".
+        """
+        name = self._device_name(getattr(self, 'audio_card_in', None))
+        return self._real_rates.get(name, set()) if name else set()
 
     def verify_fs(self):
         """Measure what this input really delivers and adopt it. (rate, msg)
@@ -812,17 +1072,21 @@ class SoundSettings(object):
                   if self.audio_card_in in self.cards['in'] else best
         if best < offered:
             # Says what was actually established: the higher rates were shown
-            # to be stretched. It does NOT claim the chosen one is verified —
+            # to be upsampled. It does NOT claim the chosen one is verified —
             # nothing available can certify that (see rate_is_fake).
+            #   "upsampled", not "stretched" — Kent, 2026-09-11: "stretched
+            # isn't normally used; let's do 'upsampled'; technical, but
+            # precise." One word for one thing, here and in the rate list and
+            # in the per-take notice; two names for it would be worse than
+            # either.
             return best, _("A-Z+T will record at {best} Hz. This microphone "
                            "offers up to {offered} Hz, but the higher rates "
-                           "were checked and found to be stretched from a "
-                           "lower one: the files would be larger with no more "
-                           "sound in them.").format(best=best,
-                                                    offered=offered)
+                           "were checked and found to be upsampled: the files "
+                           "would be larger with no more sound in "
+                           "them.").format(best=best, offered=offered)
         return best, _("A-Z+T will record at {best} Hz, the highest this "
                        "microphone offers. Nothing suggested it is being "
-                       "stretched from a lower rate.").format(best=best)
+                       "upsampled.").format(best=best)
 
     # ── Sample-format choice, by WIDTH and said out loud ─────────────────────
     # PORTED 2026-09-09. What was here ranked PyAudio's constants, whose values

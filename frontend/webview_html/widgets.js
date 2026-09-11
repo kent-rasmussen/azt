@@ -429,8 +429,19 @@ function updateProp(wid, prop, value) {
             //   value arriving here is the caller's own measurement of the
             //   box this label sits in — or `availablexy`'s. A string is
             //   passed through so a caller can still say '40em' deliberately.
+            // CLAMPED TO THE VIEWPORT, because an inline style BEATS the
+            // stylesheet. grid.css caps .wv-label at 92vw so nothing can
+            // demand more width than the window has — and setting maxWidth
+            // inline here silently defeated that cap for every caller of
+            // wrap(). The Sound Card Settings caveat ran off the right edge
+            // of its window under GTK on exactly this path (2026-09-11):
+            // wrap() measured a box wider than the window, and the 92vw
+            // safety valve was overridden by the number it measured.
+            //   CSS min() keeps BOTH constraints in one value: the caller's
+            // measurement of its own box, and the invariant that nothing
+            // exceeds the display.
             el.style.maxWidth = (typeof value === 'number')
-                                    ? value + 'px' : value;
+                                    ? 'min(' + value + 'px, 92vw)' : value;
             // `pre-wrap`, NOT `normal`: the app's messages carry real newlines
             // and HTML collapses them. The transcription notice is written as
             // a lead line, a bulleted problem list and a closing paragraph,
@@ -532,7 +543,25 @@ function bindEvent(wid, eventName) {
 
     // Map tkinter event names to DOM events
     const eventMap = {
-        '<Button-1>': 'click',
+        // PRESS IS PRESS. `<ButtonPress-1>` was absent from this map, so it
+        // fell through to addEventListener('<ButtonPress-1>') — a listener
+        // for an event nothing fires, the same dead end <Button-3> had. The
+        // RECORD BUTTON binds press to _start and release to _stop
+        // (sound_ui.py:70-71), so under webview recording never STARTED and
+        // the release handler then raised on state that start() creates:
+        //     no recording to finalise (…wav.tmp was never written)
+        //     AttributeError: 'SoundFileRecorder' object has no attribute
+        //                     'file_write_OK'
+        // (Kent, 2026-09-11.) A press-and-hold control cannot work without
+        // this, and recording is the one thing the sound settings window is
+        // for.
+        //   `<Button-1>` and `<ButtonPress-1>` are SYNONYMS in tkinter, both
+        // meaning press, so both map to mousedown. `<Button-1>` was 'click',
+        // which fires AFTER mouseup — i.e. after `<ButtonRelease-1>` — so the
+        // two ran in the wrong order relative to each other. Anything that
+        // wants "activated" uses `command=`, not a press binding.
+        '<Button-1>': 'mousedown',
+        '<ButtonPress-1>': 'mousedown',
         '<ButtonRelease-1>': 'mouseup',
         '<Double-Button-1>': 'dblclick',
         '<Enter>': 'mouseenter',
@@ -560,6 +589,8 @@ function bindEvent(wid, eventName) {
         '<<ContextMenu>>': 'contextmenu',
         '<Button-2>': 'auxclick',
         '<ButtonRelease-2>': 'auxclick',
+        '<ButtonPress-2>': 'auxclick',
+        '<ButtonPress-3>': 'contextmenu',
     };
 
     const wantedKey = _keyNames[eventName];

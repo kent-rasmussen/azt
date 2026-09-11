@@ -44,6 +44,7 @@ except ImportError:
 
 # Re-export standalone variables (no tkinter dependency)
 from frontend.ui_variables import Variable, StringVar, IntVar, BooleanVar
+from frontend import theme_data  # themes + imagelist, shared with ui_tkinter
 
 # ── Constants (same names as ui_tkinter) ───────────────────────────────
 END = 'end'
@@ -163,8 +164,38 @@ def _supports_created_hidden():
     everywhere costs every other platform a startup flash for nothing. Every
     task window is built withdrawn (tasks/chooser.py), so on GTK a hidden
     window would never appear at all — which is why this is a capability
-    question and not a preference."""
-    return _engine() != 'gtk'
+    question and not a preference.
+
+    NOW OFF EVERYWHERE (2026-09-11), because the probe measured the wrong
+    capability. It asked "can show() MAP a window created hidden" and Qt
+    answered yes. The question the app needs answered is "does a window
+    created hidden LOAD ITS PAGE", and on Qt it does not. Kent's Sound Card
+    Settings window is the proof, and the A/B is in one log:
+
+        window 52: created HIDDEN (asked withdrawn), url=…/base.html
+        window 52: DEICONIFY (show) requested
+        window 52: pywebview show() now
+        …and nothing else. Ever.
+
+    No `GET /base.html`, no `GET /widgets.js`, no
+    "Toplevel 52 JS ready — flushing N queued calls". Every window in the
+    same run that says "created visible" gets all three. So the page never
+    loaded, `_poll_until_loaded` never succeeded, the JS queue never flushed,
+    and the window came up EMPTY — while the Python side happily built
+    labels, buttons and tooltips into a queue nobody would ever read.
+
+    That is a worse failure than the GTK one it was written to avoid: a
+    window that never appears is at least obviously broken, whereas this one
+    appears and is blank, so it reads as a bug in whatever was supposed to be
+    inside it. It cost most of an afternoon's diagnosis pointed at labels,
+    variables and images that were all working.
+
+    The cost of turning it off is the startup flash it was added to remove.
+    That is a cosmetic problem, and this is not.
+
+    `--webview-hidden` still forces it on, for re-testing — now with a
+    second thing to check besides "does it appear": does it LOAD."""
+    return False
 
 
 def _default_engine():
@@ -444,9 +475,41 @@ def _start_kwargs(program=None):
     `debug=True` was unconditional, which opens the remote-debugging server
     and devtools on a FIELD machine — visible in the run log as
     "Remote debugging server started successfully". Gated on the app's own
-    testing flag now."""
-    kwargs = {'debug': bool(getattr(program, 'testing', False))}
+    testing flag now.
+
+    AND OFF ON QT ENTIRELY, because `debug=True` is what kills it. The
+    faulthandler dump caught the main thread mid-slot (2026-09-11):
+
+        Garbage-collecting
+        qt.py:639 in resizeEvent
+        qt.py:208 in show_inspector          <-- only reached when debug=True
+        qt.py:737 in on_load_finished
+
+    `show_inspector` opens the Web Inspector as each page finishes loading,
+    its resize runs a Python GC inside a Qt `resizeEvent`, and the collection
+    frees something Qt is still using. That is the SAME fault
+    `_close_native_window` documents from 2026-09-07 — "a pywebview window
+    wrapper being GARBAGE COLLECTED inside a loadFinished slot, which is a
+    reference-keeping problem" — now located precisely: it is in the
+    inspector path, so it only happens with devtools on.
+
+    Which also explains the shape of the evidence. Qt "worked earlier the
+    same day" because `--user` (no dev settings, no devtools) was in play, and
+    every crash came from a dev-settings run. Kent had four `base.html` pages
+    listed in the inspector: one live inspector per window, each one another
+    chance to hit this on load.
+
+    `--webview-devtools` forces them back on for re-testing, the same way
+    `--webview-hidden` does for created-hidden."""
+    testing = bool(getattr(program, 'testing', False))
     engine = _engine()
+    debug = testing
+    if debug and engine == 'qt' and not _switch('--webview-devtools'):
+        debug = False
+        log.info("devtools OFF for Qt: show_inspector garbage-collects inside "
+                 "resizeEvent and segfaults (see _start_kwargs). Use "
+                 "--webview-devtools to force them on, or --engine=gtk.")
+    kwargs = {'debug': debug}
     if engine:
         kwargs['gui'] = engine
         log.info("Using webview engine {}".format(engine))
@@ -1098,9 +1161,19 @@ class _FontInfo:
         self._data.update(kw)
 
 class Theme:
-    # Same imagelist as ui_tkinter.Theme — import at runtime to avoid
-    # pulling in tkinter at module level.
-    imagelist = [
+    # THE APP'S list and themes, from frontend/theme_data.py — which imports
+    # nothing, so this does not drag tkinter in. The comment that used to sit
+    # here said "Same imagelist as ui_tkinter.Theme"; it was not. 35 of 81
+    # entries were missing, including `record` (the record button's icon),
+    # every sort-board verb image and both alphabet-task icons — and a name
+    # absent from the list resolves to None, which draws nothing and logs
+    # nothing. `Kim`, Kent's own theme, was likewise absent from the four
+    # themes copied here, and an unknown name fell back to greygreen in
+    # silence. See agenda/webview_imagelist_stale_copy.md.
+    imagelist = theme_data.IMAGELIST
+    themes = theme_data.THEMES
+
+    _imagelist_was_here = [
         ('transparent','AZT stacks6.png'), ('tall','AZT clear stacks tall.png'),
         ('small','AZT stacks6_sm.png'), ('icon','AZT stacks6_icon.png'),
         ('icontall','AZT clear stacks tall_icon.png'),
@@ -1137,7 +1210,10 @@ class Theme:
         ('NoImage','toselect/Image-Not-Found.png'),
     ]
 
-    themes = {
+    # RENAMED, not deleted, so a reviewer can see it was a four-entry subset
+    # of a fifteen-entry dict. It sat AFTER the real assignment above and so
+    # would have silently won. Delete after one release.
+    _themes_was_here = {
         'greygreen': {
             'background': '#8cd9bf', 'activebackground': '#66ccaa',
             'offwhite': '#ecf9f4', 'highlight': 'red',
@@ -1171,7 +1247,16 @@ class Theme:
         else:
             self.name = 'greygreen'
         if self.name not in self.themes:
-            self.name = 'greygreen'
+            # SAY SO. This fell back in silence, so a theme the webview
+            # backend did not define looked like a theme that did not work:
+            # the log said "Using theme Kim" and the screen was greygreen
+            # (Kent, 2026-09-11). Now that both backends read one dict this
+            # should be unreachable, which is exactly why it must be loud if
+            # it ever fires again.
+            log.warning("theme %r is not defined (%d themes known); using %r "
+                        "instead", self.name, len(self.themes),
+                        theme_data.DEFAULT_THEME)
+            self.name = theme_data.DEFAULT_THEME
         for k, v in self.themes[self.name].items():
             setattr(self, k, v)
 
@@ -1743,12 +1828,44 @@ class Label(_WebviewWidget):
         self._asked_wraplength = kwargs.pop('wraplength', None)
         kwargs['font'] = font
         # A Variable in either slot resolves to its VALUE, not its repr.
+        # KEEP the Variable itself too: it has to be subscribed to below, and
+        # `text=<a StringVar>` is how this app's live labels are built.
+        self._passed_text_var = None
         if 'text' in kwargs:
+            if isinstance(kwargs['text'], Variable):
+                self._passed_text_var = kwargs['text']
             kwargs['text'] = _text_of(kwargs['text'])
         elif textvariable is not None:
             kwargs['text'] = _text_of(textvariable)
         super().__init__(parent, widget_type='label', **kwargs)
-        self._textvariable = None
+        # TRACK THE VARIABLE, don't just read it once. `_text_of` resolves a
+        # Variable to its value at BUILD time and says so in its docstring
+        # ("It does not subscribe to changes … which is a real gap"). The
+        # Sound Card Settings window is that gap in its purest form: its four
+        # rows are Labels built with `text=StringVar()` — EMPTY at creation —
+        # and filled afterwards by updatesoundcard/Hz/format/cardout. So the
+        # window came up with the microphone, rate, format and speaker rows
+        # simply ABSENT (Kent, GTK webview, 2026-09-11), which reads as a
+        # broken settings screen rather than a missing update.
+        #   Same shape as the EntryField fix of 2026-09-09, and the same
+        # mechanism: trace the variable and push the new value to the DOM.
+        # `text=` carrying a Variable is the common case in this app; a real
+        # `textvariable=` is the tkinter-idiomatic one. Either is tracked.
+        tracked = textvariable if textvariable is not None \
+                  else self._passed_text_var
+        self._textvariable = tracked
+        if tracked is not None:
+
+            def _to_dom(*_args, _var=tracked):
+                try:
+                    self.configure(text=_text_of(_var))
+                except Exception as e:
+                    log.info("couldn't update label {} from its variable ({})"
+                             "".format(getattr(self, '_wid', '?'), e))
+            try:
+                tracked.trace_add('write', _to_dom)
+            except Exception as e:
+                log.info("couldn't trace a label's textvariable ({})".format(e))
 
     def wrap(self):
         """Constrain this label's width so its text wraps — SAME CONTRACT as
@@ -2527,7 +2644,25 @@ class ContextMenu:
         self.parent = parent
         self.parent.context = self
         self.popup = False
-        self.updatebindings()
+        # NOT BOUND DURING WINDOW CONSTRUCTION. Binding here issued one extra
+        # `evaluate_js` per window while its page was still loading, and
+        # QtWebEngine 6.11.2 segfaulted on every startup as a result — three
+        # runs, three crashes, all in pywebview's own `generate_js_object`
+        # injection. Commenting out this one line let Qt through, which is
+        # what identified it (Kent, 2026-09-11: "But this was working just
+        # fine until this last hour. you sure this is not on our end?" — it
+        # was on our end). Full analysis: agenda/webview_when_to_finish.md,
+        # CORRECTION (6).
+        #   So wait for the page. `_on_loaded` runs these hooks alongside the
+        # theme and page-name pushes, which is where per-window JS belongs.
+        loaded = getattr(parent, '_wv_loaded', None)
+        if loaded is not None and not loaded.is_set():
+            # __dict__ directly: the task/window bridge's __getattr__ would
+            # chase a missing attribute across to the task and back.
+            parent.__dict__.setdefault('_on_loaded_hooks',
+                                       []).append(self.updatebindings)
+        else:
+            self.updatebindings()
 
     def menuinit(self):
         """Fresh menu, so a context change does not append to the old one."""
@@ -2745,6 +2880,18 @@ class Toplevel(_WebviewWidget):
         """Called when this window's HTML/JS is ready."""
         log.info(f"Toplevel {self._wid} JS ready — flushing {len(self._wv_js_queue)} queued calls")
         self._wv_loaded.set()
+        # DEFERRED WIRING — things that must wait for a live page.
+        # Added 2026-09-11 because binding the context menu from
+        # `TaskDressing.__init__` (i.e. during window construction) made
+        # QtWebEngine segfault on every startup; see
+        # agenda/webview_when_to_finish.md, CORRECTION (6). Anything that
+        # needs the page to exist belongs here, with the theme and page-name
+        # pushes below, rather than racing the engine's own page setup.
+        for hook in list(getattr(self, '_on_loaded_hooks', ())):
+            try:
+                hook()
+            except Exception as e:
+                log.info("deferred post-load hook failed ({})".format(e))
         # Push theme
         if hasattr(self, 'theme') and self.theme:
             css_vars = self.theme.css_vars()
@@ -2848,8 +2995,17 @@ class Toplevel(_WebviewWidget):
         # sparse page cannot collapse to a sliver, and above by the display.
         want_w = min(max(cw + self._FIT_PAD, self._FIT_MIN[0]), availw)
         want_h = min(max(ch + self._FIT_PAD, self._FIT_MIN[1]), availh)
-        # Ignore differences too small to be worth a resize flicker.
+        # Ignore differences too small to be worth a resize flicker — but
+        # STILL PLACE THE WINDOW. Centring used to sit after this guard, so a
+        # window that was already the right size was never positioned: in
+        # Kent's run only the status window (764x260, resized from 800x600)
+        # got a `centred at …` line, and every window that happened to fit
+        # already stayed wherever the WM had dropped it.
+        #   Placement and sizing are separate questions and this method was
+        # answering only one of them. A window that needs no resize still
+        # needs to be somewhere.
         if abs(want_w - innerw) < 8 and abs(want_h - innerh) < 8:
+            self._centre_on_screen(innerw, innerh, availw, availh)
             return
         try:
             wv.resize(want_w, want_h)
@@ -2858,6 +3014,60 @@ class Toplevel(_WebviewWidget):
                                             innerw, innerh, availw, availh))
         except Exception as e:
             log.debug("window {}: resize failed: {}".format(self._wid, e))
+        self._centre_on_screen(want_w, want_h, availw, availh)
+
+    def _centre_on_screen(self, w, h, availw, availh):
+        """Put the window somewhere deliberate, not wherever the WM drops it.
+
+        Kent, 2026-09-11, on four overlapping windows — task page, Sound Card
+        Settings, the rate chooser and the status window, none of them related
+        to any other: "the windows are a bit of a hot mess."
+
+        Nothing ever positioned a pywebview window. `create_window` is given
+        a size and no coordinates, so placement is whatever the window manager
+        chooses — which for a stack of dialogs opened in sequence is a
+        cascade, or a pile, depending on the WM. Under tkinter these are
+        Toplevels of one root and the WM places them as a family; here every
+        one is a separate OS window with no stated relationship, so the
+        family resemblance has to be supplied.
+
+        CENTRED, not cascaded, and centred on the SCREEN rather than on the
+        parent. Two reasons: a dialog centred on a parent that is itself
+        off-centre compounds the error, and `screen.avail*` is a number this
+        method already has in hand, whereas the parent's position is one more
+        thing to ask the WM for and get wrong. Centring also matches what the
+        fit is for — a window the size of its content, where its content is.
+
+        This does NOT fix the sizing item's real complaint (a window that
+        never asks to be fitted at all); it makes the windows that DO fit land
+        somewhere a person would put them. See
+        agenda/webview_window_sizing.md.
+        """
+        wv = getattr(self, '_wv_window', None)
+        if not wv:
+            return
+        if not hasattr(wv, 'move'):
+            log.info("window {}: this pywebview has no move(); leaving "
+                     "placement to the window manager".format(self._wid))
+            return
+        x = max(0, int((availw - w) / 2))
+        y = max(0, int((availh - h) / 2))
+        try:
+            wv.move(x, y)
+            # LOGGED AT INFO, not debug, and on SUCCESS as well as failure.
+            # Kent, 2026-09-11: "they're still both uncentered" — and with
+            # only a debug line on the failure path there was no way to tell
+            # from a run whether the move was attempted, attempted with the
+            # wrong numbers, or accepted and then undone. Three candidates
+            # and the log distinguished none of them, which is the same
+            # mistake as measuring a rate without recording the level.
+            log.info("window {}: centred at {},{} for {}x{} on {}x{}"
+                     "".format(self._wid, x, y, w, h, availw, availh))
+        except Exception as e:
+            # pywebview's move() is not on every backend/version, and a
+            # window in the wrong place is not worth an exception.
+            log.info("window {}: move to {},{} failed: {}"
+                     "".format(self._wid, x, y, e))
 
     def _wv_call(self, method, *args):
         """Call a method on the pywebview window, deferring until the window

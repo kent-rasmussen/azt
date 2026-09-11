@@ -24,13 +24,34 @@ WHY THIS EXISTS
     second, and judge each one on what arrived.
 
 WHAT EACH VERDICT MEANS
-    REAL       The stream opened, frames arrived at the rate we asked for, and
-               the audio carries energy up near that rate's Nyquist limit.
-               This setting is what it claims to be.
-    RESAMPLED  Frames arrived at the right rate, but the audio has NO energy
-               above some lower limit — so something upsampled it. The file
-               would be honest about its rate and dishonest about its content.
-               The reported ceiling is roughly twice the real sample rate.
+    REAL       The stream opened, frames arrived at the rate we asked for,
+               the band is full up to near its own Nyquist, and nothing in the
+               audio DISPROVED that rate. Not a guarantee: the detector (the
+               app's own `rate_is_fake`) can prove a rate fake and cannot
+               prove one genuine. "Nothing is wrong here" rather than "this is
+               what it claims to be".
+    NOT PROVED Nothing disproved the rate, but the top of the band was too
+               quiet to judge on — so this is a statement about the EVIDENCE,
+               not about the setting. Distinct from REAL on purpose: the
+               detector never returns "genuine", so a quiet or empty capture
+               used to inherit REAL's confidence without earning it
+               (`8000 Hz REAL, spectrum reaches 51 Hz of 4000`, 2026-09-11).
+    NOT TESTED The stream opened and delivered frames, and the band test
+               cannot address this rate at all: it needs a mid band of
+               1 kHz .. 0.20 x Nyquist, which does not exist below 10 kHz. A
+               statement about the TEST. These used to read NO SIGNAL, which
+               blamed the room — 8 kHz did so on four inputs at peaks of
+               0.6-0.7% of full scale, where the room was plainly not the
+               problem (2026-09-11).
+    RESAMPLED  Frames arrived at the right rate, but the TOP OF THE BAND IS
+               EMPTY — so something upsampled it. The file would be honest
+               about its rate and hold less detail than that rate implies.
+               NO REAL-RATE FIGURE IS QUOTED. One used to be (ceiling x 2) and
+               it was worthless, because the ceiling comes from a metric that
+               counts 120 dB-down residue as content: it produced
+               "96000 Hz ... really ~96000 Hz" under this very heading
+               (2026-09-11). Where the content stops is still reported, as a
+               measurement rather than as a conclusion.
     RATE OFF   Frames arrived at a materially different rate than requested:
                duration and pitch would be wrong.
     NO SIGNAL  Opened and delivered frames, but silence — so the spectral test
@@ -42,12 +63,23 @@ WHAT EACH VERDICT MEANS
     NO SIGNAL is a conclusion about the test. Do not read it as "unsupported".
 
 HOW THE RESAMPLING TEST WORKS, and its limits
-    Upsampled audio has a hard spectral cliff: 48 kHz content stretched to
-    192 kHz has nothing above 24 kHz, not even noise. So the highest frequency
-    still carrying energy above the noise floor tells us the REAL rate. This
-    needs some sound in the room — even room noise is enough, since the cliff
-    shows in the noise floor too. In an anechoic silence it reports NO SIGNAL
-    rather than guessing.
+    Upsampled audio has a hard spectral cliff: 48 kHz content upsampled to
+    192 kHz has nothing above 24 kHz, not even noise. So an EMPTY top of the
+    band is the signature, and the detector (`backend.core.sound.rate_is_fake`,
+    shared with the app) judges it on ABSOLUTE level.
+
+    A QUIET ROOM IS FINE — and this is a correction, 2026-09-11. The script
+    used to open by telling you to make noise, because the ORIGINAL detector
+    estimated its noise floor from the top octave and so needed something to
+    measure. It does not any more. Kent's quiet-room run produced peaks of
+    0.1-0.7% of full scale and every verdict still formed, with no NO SIGNAL
+    rows at all.
+
+    Noise would not help even if it were needed: what proves a high rate is
+    the CONVERTER'S OWN broadband noise reaching Nyquist, and nothing acoustic
+    happens at 95 kHz. Playing a signal would only raise the audible band —
+    which, against a fixed converter noise floor, makes the gap look DEEPER
+    and an honest device look more upsampled, not less.
 
     THE LIMIT, learnt the hard way: the test needs DYNAMIC RANGE, so it can
     only be trusted in a wide format. int16's noise floor sits ~48 dB above
@@ -75,6 +107,22 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+# THE APP'S OWN DETECTOR, so this script cannot disagree with the program it
+# is diagnosing. Optional on purpose: this script must stay runnable on a
+# machine where A-Z+T will not start (that is most of its value), and it says
+# in each row when it had to fall back to its own threshold.
+try:
+    from backend.core.sound import rate_is_fake as app_rate_is_fake
+    from backend.core.sound import top_of_band_db as app_top_of_band_db
+    from backend.core.sound import rate_check_possible as app_rate_checkable
+except Exception as _e:                                     # noqa: F841
+    app_rate_is_fake = None
+    app_top_of_band_db = None
+    app_rate_checkable = None
+    print("NOTE: could not import the app's rate detector ({}); falling back "
+          "to this script's own threshold, which is known to call upsampled "
+          "residue REAL above the graph rate.".format(_e))
 
 
 def switch(name, default=None):
@@ -119,7 +167,28 @@ def say(*a):
 
 
 def spectral_ceiling(block, rate):
-    """The highest frequency still carrying real energy, in Hz — or None when
+    """UNUSED SINCE 2026-09-11 — kept only so the record of WHY is next to it.
+
+    Nothing calls this any more, and nothing should. It reads a noise floor
+    from the top of the band and then asks which bins clear it, so in an
+    upsampled capture it compares the resampler's residue against itself. It
+    was wrong three different ways in one afternoon, each time by lending a
+    plausible-looking number to a verdict:
+
+      * it CALLED UPSAMPLED PATHS REAL (pipewire/default at 192 kHz, while the
+        app and `pw-metadata` both said otherwise);
+      * it produced "96000 Hz … really ~96000 Hz" under a heading saying the
+        setting lies, because the claimed real rate was `ceiling * 2`;
+      * it reported "reaches 9911 Hz of 24000" on a capture the real detector
+        measured at -1 dB down, i.e. full — and that figure then drove a
+        NOT PROVED verdict.
+
+    Every number this script prints now comes from `top_of_band_db`, which is
+    what `rate_is_fake` itself uses. Delete this function once nobody needs
+    the history.
+
+    (Original docstring:)
+    The highest frequency still carrying real energy, in Hz — or None when
     the capture is too quiet to tell.
 
     Averages the magnitude spectrum, establishes a noise floor from the top
@@ -218,27 +287,123 @@ def probe_input(device, rate, fmt):
                            ', '.join(notes)
 
     data = numpy.concatenate(blocks)
-    ceiling = spectral_ceiling(data, rate)
     peak = float(numpy.abs(data).max())
     scale = float(numpy.iinfo(data.dtype).max) if data.dtype.kind == 'i' else 1.0
     notes.append('peak {:.1f}%'.format(100.0 * peak / scale))
-    if ceiling is None:
+    # ONE NUMBER, FROM THE DETECTOR THAT DECIDES. `spectral_ceiling` is gone
+    # from every row: it is relative to a floor taken from inside the hole it
+    # looks for, so it read 47965 Hz of 48000 ("full") on captures the
+    # detector had just called EMPTY, and 9911 Hz of 24000 ("mostly empty")
+    # on one measured at -1 dB ("full"). Printing it beside a verdict lent it
+    # an authority it had not earned, three separate ways in one afternoon.
+    # "THIS TEST DOES NOT REACH THAT RATE" is not "the room was quiet".
+    # 8000 Hz came back NO SIGNAL on all four inputs at peaks of 0.6-0.7%
+    # (Kent, 2026-09-11) — loud enough by any measure. The band test needs a
+    # mid band of 1000 Hz .. 0.20 x Nyquist, which does not exist below
+    # 10 kHz, so the rate is structurally unjudgeable. Saying NO SIGNAL sent
+    # the reader after the room and suggested noise, which cannot help.
+    if app_rate_checkable is not None and not app_rate_checkable(rate):
+        return 'NOT TESTED', ('the band test does not reach this rate (it '
+                              'needs a mid band above 1 kHz, which only '
+                              'exists above 10 kHz); the stream opened and '
+                              'delivered frames; ' + ', '.join(notes))
+    margin = app_top_of_band_db(data, rate) if app_top_of_band_db else None
+    if margin is None:
         return 'NO SIGNAL', ', '.join(notes)
-    # "spectrum reaches", not "energy to": at 192 kHz this number lands near
-    # 95 kHz, and Kent reasonably asked how that can be real (2026-09-10).
-    # It is not SOUND — nothing acoustic happens at 95 kHz, and no microphone
-    # delivers it. It is the ADC's own broadband noise, which in a genuine
-    # capture extends to Nyquist. That is precisely the signature: an
-    # upsampled file is conspicuously EMPTY above the old Nyquist, while a
-    # real one is noisy all the way up. The wording said "energy", which
-    # invites reading it as captured signal.
-    notes.append('spectrum reaches {:.0f} Hz of {:.0f} possible'.format(
-                    ceiling, rate / 2.0))
-    # A real capture carries energy to somewhere near its own Nyquist. Allow
-    # a wide margin: microphones roll off, and content is not white noise.
-    if ceiling < rate * 0.28:
-        real = int(round(ceiling * 2 / 1000.0) * 1000)
-        return 'RESAMPLED', 'really ~{} Hz; '.format(real) + ', '.join(notes)
+    notes.append('top of band {:.0f} dB down'.format(margin))
+    # THE APP'S DETECTOR DECIDES, not this script's own threshold.
+    #
+    # WHY THIS CHANGED (2026-09-11). This used `ceiling < rate * 0.28`, where
+    # `ceiling` came from the local `spectral_ceiling` — which estimates its
+    # noise floor from the top octave, i.e. from inside the very hole it is
+    # looking for. So an upsampled capture's residue, 120 dB below the signal
+    # but above that self-referential floor, read as energy reaching Nyquist,
+    # and the verdict came back REAL. Kent's run of this script said:
+    #
+    #     in [7] pipewire  192000 Hz int32  REAL  reaches 86388 of 96000
+    #     in [8] default   192000 Hz int32  REAL  reaches 57674 of 96000
+    #
+    # while the app, on the same machine minutes earlier, measured both as
+    # band-limited with a -123 dB hole — and `pw-metadata` agreed with the
+    # app. A DIAGNOSTIC THAT CONTRADICTS THE PROGRAM IS WORSE THAN NO
+    # DIAGNOSTIC, because this is the script we hand to other machines to
+    # settle exactly this question.
+    #
+    # `backend.core.sound.rate_is_fake` is the detector that was written to
+    # fix this: it tests the ABSOLUTE level of the top of the band, it is
+    # one-directional (it can prove a rate fake and never prove one real),
+    # and it is the one the app itself uses. Sharing it makes the two agree
+    # by construction rather than by coincidence.
+    #
+    if app_rate_is_fake is None:
+        # Standalone fallback. It does NOT guess: the local `spectral_ceiling`
+        # is the metric this whole change removed, so using it here would
+        # reintroduce the fault on exactly the machines least able to notice.
+        return 'NOT PROVED', ("the app's detector was not importable, so "
+                              "nothing here can judge the rate; "
+                              + ', '.join(notes))
+    if app_rate_is_fake(data, rate):
+        # NO "really ~N Hz" FIGURE. It was `ceiling * 2`, and `ceiling` comes
+        # from the local `spectral_ceiling` — the metric just removed from the
+        # verdict for being untrustworthy, because it estimates its noise
+        # floor from the top octave and so counts 120 dB-down residue as
+        # content. Keeping it for the estimate produced this (Kent,
+        # 2026-09-11):
+        #
+        #     96000 Hz int32  RESAMPLED  really ~96000 Hz
+        #
+        # "96000 is really 96000" — under a heading saying the setting lies.
+        # Kent: "96000 Hz int32 really ~96000 Hz is a LIE?" No, and the row
+        # was refuting itself in print.
+        #
+        # THIS IS A DOCUMENTED BUG CLASS AND I REINTRODUCED IT. The four-bug
+        # list in agenda/honest_sound_settings.md opens with exactly this:
+        # "a real-rate figure computed from `spectral_ceiling`, which
+        # estimates its floor inside the very hole being detected", and
+        # "the same arithmetic producing a self-contradiction — 'says 96000 Hz
+        # but really holds only 96000 Hz'". Removed there in the app; left
+        # here, in the script, where it said the same thing again.
+        #
+        # What WAS established is stated instead: the top of the band is
+        # empty, with the margin that says so (now in `notes`).
+        return 'RESAMPLED', ('the top of the band is EMPTY, so this was '
+                             'upsampled; ' + ', '.join(notes))
+    # THE THIRD VERDICT: "can't tell" must not read as "fine".
+    #
+    # `rate_is_fake` returns True or None and NEVER False, so every non-fake
+    # answer means only "not disproved" — which covers both a full band and a
+    # capture too quiet or too empty to judge. Mapping both to REAL produced
+    # this, in Kent's quiet-room run (2026-09-11):
+    #
+    #     8000 Hz int32  REAL  peak 0.1%, spectrum reaches 51 Hz of 4000
+    #
+    # 51 Hz of a possible 4000 is as band-limited as a capture gets, and the
+    # row called it REAL with the contradicting figure printed beside it. That
+    # is the mirror of the false-REAL just fixed: a confident word on no
+    # measurement rather than on a weak one.
+    #
+    # THE CUT IS ON THE MARGIN, NOT ON THE CEILING — second correction in an
+    # hour. My first version of NOT PROVED used `ceiling < rate * 0.28`, i.e.
+    # the metric this change exists to remove, and it duly misfired: six rows
+    # said "band mostly empty" about captures the detector measured at -1 dB,
+    # which is as full as a band gets.
+    #
+    # THE FIGURES ARE FROM THE RECORD, not picked here. The item measured, on
+    # this machine, same microphone, same room:
+    #       genuine 192 kHz hardware       about -25 dB
+    #       cheap linear interpolation     about -35 dB
+    #       band-limited upsample (hole)   -105 to -142 dB
+    # So -40 dB sits just below BOTH measured live cases and far above the
+    # hole. A top of band quieter than that is neither a full band nor a
+    # proven hole, which is exactly the state NOT PROVED exists to name.
+    #
+    # It cannot produce an accusation either way — it only moves a row between
+    # REAL and NOT PROVED — which is why a figure with this little behind it
+    # is tolerable here and would not be in the verdict.
+    if margin <= -40.0:
+        return 'NOT PROVED', ('nothing disproved this rate, but the top of '
+                              'the band is too quiet to judge on; '
+                              + ', '.join(notes))
     return 'REAL', ', '.join(notes)
 
 
@@ -270,8 +435,9 @@ except Exception as e:
 print('=' * 78)
 print("What this machine's audio can ACTUALLY do (by recording, not asking)")
 print("  capture per combination: {}s".format(SECONDS))
-print("  MAKE SOME NOISE while this runs — speak, tap the desk. The")
-print("  resampling test needs sound; in silence it reports NO SIGNAL.")
+print("  A quiet room is fine. Noise is not needed and does not help: the")
+print("  evidence for a high rate is the converter's OWN noise reaching")
+print("  Nyquist, which no sound in the room can supply.")
 print('=' * 78)
 
 rows = []
@@ -327,7 +493,8 @@ for d in inputs:
             if verdict != 'FAILED':
                 if judged is None:
                     judged = (verdict, detail, fmt)
-                elif verdict in ('REAL', 'RESAMPLED', 'NO SIGNAL'):
+                elif verdict in ('REAL', 'RESAMPLED', 'NO SIGNAL',
+                                 'NOT PROVED', 'NOT TESTED'):
                     # Opened fine; the rate question was already settled in a
                     # format with the headroom to answer it.
                     verdict = judged[0]
@@ -351,25 +518,35 @@ if switch('outputs'):
                                                          detail))
 
 print('\n' + '=' * 78)
-print("Summary — settings that are REAL")
+print("Summary — settings nothing argued against")
 real = [r for r in rows if r[5] == 'REAL']
 if real:
     for io, idx, name, rate, fmt, _v, _d in real:
         print("  {:<3} [{}] {:<28} {:>7} Hz {}".format(io, idx, name[:28],
                                                        rate, fmt))
 else:
-    print("  NONE verified. If most rows say NO SIGNAL, the room was quiet —")
-    print("  re-run while making noise. Otherwise this machine cannot deliver")
-    print("  any of the rates tried.")
+    print("  NONE. Every combination either failed to open, was shown to be")
+    print("  upsampled, or gave too little to judge on (NOT PROVED).")
+
+# LISTED SEPARATELY, not folded into either side. These are not endorsements
+# and not accusations, and putting them in the REAL list was how a capture
+# reaching 51 Hz of a possible 4000 came to be summarised as real.
+unproved = [r for r in rows if r[5] == 'NOT PROVED']
+if unproved:
+    print("\nSettings with too little evidence to judge — not a fault of the")
+    print("setting; the capture had too little in the band to read:")
+    for io, idx, name, rate, fmt, _v, detail in unproved:
+        print("  {:<3} [{}] {:<28} {:>7} Hz {:<7} {}".format(io, idx,
+                                            name[:28], rate, fmt, detail))
 
 resampled = [r for r in rows if r[5] == 'RESAMPLED']
 if resampled:
-    print("\nSettings that LIE — accepted, recorded, and secretly resampled:")
+    print("\nSettings that LIE — accepted, recorded, and secretly upsampled:")
     for io, idx, name, rate, fmt, _v, detail in resampled:
         print("  {:<3} [{}] {:<28} {:>7} Hz {:<7} {}".format(io, idx,
                                             name[:28], rate, fmt, detail))
     print("  A file recorded at these settings states its rate honestly and")
-    print("  contains no detail above half the real one. On PipeWire, add the")
+    print("  holds less detail than that rate implies. On PipeWire, add the")
     print("  rate to clock.allowed-rates to make it genuine.")
 
 counts = {}
@@ -381,11 +558,11 @@ print("\n  " + ', '.join('{} {}'.format(v, k) for k, v in sorted(counts.items())
 # past before anyone has read it (Kent 2026-09-10: "it's running before I read
 # it. maybe add (restart if you weren't making noise when this ran)?").
 print("\n  WHAT 'REAL' DOES AND DOES NOT PROVE:")
-print("   * It proves the file was really SAMPLED at its stated rate: its")
-print("     spectrum reaches its own Nyquist, which an upsampled file cannot.")
-print("     The figure quoted per row is mostly the ADC's noise floor, NOT")
-print("     captured sound — nothing acoustic happens at 95 kHz. Its presence")
-print("     is the evidence; its content is not music.")
+print("   * It means nothing DISPROVED the rate, and the top of the band is")
+print("     full — the figure quoted per row. That content is mostly the")
+print("     ADC's own noise, NOT captured sound: nothing acoustic happens at")
+print("     95 kHz. Its PRESENCE is the evidence; it is not music. An")
+print("     upsampled file has a hole there instead.")
 print("   * It does NOT prove the MICROPHONE gives you anything useful up")
 print("     there. Most roll off well below 20 kHz, so a high rate can be")
 print("     genuine and still carry only noise in its top half. That is a")
@@ -401,14 +578,15 @@ print("     A lone RESAMPLED row next to a REAL one at the same rate on another"
 print("     device is the signature. Re-run with --rates=<just that one> to")
 print("     judge it on its own.")
 
-quiet = counts.get('NO SIGNAL', 0)
-print("\n  WERE YOU MAKING NOISE while that ran? The rate test needs sound —")
-print("  speak, tap the desk, anything. RE-RUN THIS if the room was quiet.")
+quiet = counts.get('NO SIGNAL', 0) + counts.get('NOT PROVED', 0)
 if quiet:
-    print("  {} combination(s) came back NO SIGNAL, which usually means "
-          "exactly that.".format(quiet))
-print("  (NO SIGNAL is a fact about the room, not about the setting: it means")
-print("  the test could not judge, NOT that the setting is unsupported.)")
+    print("\n  {} row(s) came back NO SIGNAL or NOT PROVED. BOTH ARE FACTS "
+          "ABOUT".format(quiet))
+    print("  THE EVIDENCE, not about the setting — the test could not judge,")
+    print("  which is not the same as the setting being unsupported. Making")
+    print("  noise does NOT help: what proves a high rate is the converter's")
+    print("  own broadband noise reaching Nyquist, and nothing in the room")
+    print("  can put energy up there. (This block used to say the opposite.)")
 
 csv_path = switch('csv')
 if csv_path:

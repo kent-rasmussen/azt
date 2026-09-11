@@ -36,7 +36,8 @@ from utilities import logsetup, file
 from utilities.i18n import _   # user-facing text lives here too (the wedge notice)
 from utilities.error_handler import notify_user
 from backend.core.sound import (AudioInterface, SoundSettings, AUDIO_OK,
-                                spectral_ceiling, zero_runs, rate_is_fake)
+                                spectral_ceiling, zero_runs, rate_is_fake,
+                                format_bits, quietest_window_db)
 # (The transitional `PYAUDIO_OK = AUDIO_OK` alias that stood here is gone: the
 # streaming layer below is sounddevice now, so nothing is left to be
 # transitional about.)
@@ -416,6 +417,38 @@ class SoundFileRecorder(object):
     # `fileopen()` is gone: the file is opened in start(), by soundfile, which
     # needs no sample WIDTH — the old version got one from
     # `pa.get_sample_size(sample_format)`, and a subtype name says it better.
+    def _noise_floor_db(self):
+        """This take's noise floor, from the frames already kept for ASR.
+
+        NO SILENCE IS ASKED FOR. The floor is the quietest part of a capture,
+        so an ordinary take supplies one — no prompt, no "be quiet for five
+        seconds", no button. It is an UPPER bound: a speaker who never paused
+        makes it pessimistic, which understates the signal-to-noise rather
+        than flattering the microphone.
+
+        BOUNDED ON PURPOSE. A take can run minutes at 192 kHz and the floor
+        does not need all of it, so this reads about five seconds. Copying a
+        whole take here would duplicate it (`self._frames` already holds it)
+        on the path that runs after every single recording.
+        """
+        blocks=getattr(self,'_frames',None)
+        if not blocks or numpy is None:
+            return None
+        want=int(self._asked_rate*5)
+        got=[]
+        have=0
+        for b in blocks:
+            got.append(b)
+            have+=len(b)
+            if have>=want:
+                break
+        try:
+            return quietest_window_db(numpy.concatenate(got),
+                                      self._asked_rate)
+        except Exception as e:
+            log.debug("couldn't measure the noise floor: %s",e)
+            return None
+
     def _report_take(self):
         """Say what was actually recorded, and complain when it isn't right.
 
@@ -450,15 +483,18 @@ class SoundFileRecorder(object):
         elapsed=(_t.perf_counter()-self._t0) if self._t0 else 0.0
         frames=self._frames_in
         implied=(frames/elapsed) if elapsed>0.05 else None
+        floor=self._noise_floor_db()
         log.info("take: %d frames in %.2fs at %d Hz asked (%s), peak %.1f%% "
                  "of full scale, %d overflow(s), %.1f%% exact zeros "
-                 "(longest run %d samples)",
+                 "(longest run %d samples)%s",
                  frames,elapsed,self._asked_rate,
                  "implies {:.0f} Hz".format(implied) if implied else "too "
                  "short to imply a rate",
                  100.0*self._peak,self._overflows,
                  100.0*self._zeros/float(frames) if frames else 0.0,
-                 self._zrun_max)
+                 self._zrun_max,
+                 "" if floor is None
+                 else ", noise floor {:.0f} dBFS".format(floor))
         # NOTHING AUDIBLE. A file of digital silence is the purest form of
         # "claiming a recording we aren't doing": `file_ok` only checks SIZE,
         # so zeros pass it and the take is filed as good.
@@ -648,8 +684,11 @@ class SoundFileRecorder(object):
                     bad(_("This recording is stored as {asked} Hz, but the "
                           "top of its frequency range is empty.").format(
                                 asked=self._asked_rate),
+                        # "upsampled it", not "stretched it to fit" — one word
+                        # for one thing across the rate list, the card-check
+                        # notice and here (Kent, 2026-09-11).
                         _("Something between A-Z+T and the microphone "
-                          "stretched it to fit. Nothing is wrong with the "
+                          "upsampled it. Nothing is wrong with the "
                           "sound you hear and nothing has been changed — the "
                           "file is simply bigger than its content needs. If "
                           "that matters to you, choose a lower sample rate in "
@@ -799,6 +838,16 @@ class SoundFileRecorder(object):
         self.pa=audio
         self.settings=settings
         self.filenameURL=filenameURL
+        # SET HERE, not only in start(). The UI reads it after a take to
+        # decide whether to offer play/delete (sound_ui.py:24, :222), and it
+        # only existed once start() had run — so a STOP WITHOUT A START
+        # raised `'SoundFileRecorder' object has no attribute
+        # 'file_write_OK'` instead of reporting that nothing was recorded.
+        # That is exactly what happened when the webview record button's
+        # press binding turned out to be dead (Kent, 2026-09-11): the real
+        # fault was upstream, and this attribute error hid it behind a
+        # traceback about the wrong object.
+        self.file_write_OK=False
 
     @property
     def file_tmp(self):

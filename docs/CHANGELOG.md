@@ -83,6 +83,111 @@ three places (`ss.audio or task.audio or program.audio`) under a comment recordi
 attribute being missed three times in one evening. Both sites now ask
 `SoundSettings.confirm_audio()`, which owns `program.audio` and is covered by tests.
 
+## Fixed — the Sound Card Settings window, eight faults
+
+The window Kent opened to check a microphone was unusable under webview. Each fault
+hid the next, so they are listed with what each one actually did:
+
+| fault | cause |
+|---|---|
+| nothing rendered at all (Qt) | a window created hidden never loads its page, so its JS queue never flushed and every widget sat in it unread |
+| the four setting rows were blank | `Label` read a Variable once at build time; these are built empty and filled afterwards |
+| the caveat ran off the window edge | `wrap()` sets an inline `maxWidth`, and an inline style beat the `92vw` stylesheet cap |
+| the record button did nothing | `<ButtonPress-1>` was not in the event map, so `_start` was never bound |
+| `'SoundFileRecorder' has no attribute 'file_write_OK'` | set in `start()`, so a stop-without-a-start raised instead of reporting nothing recorded |
+| no icons | the webview image list was a short hand copy — 35 of 81 names missing, `record` among them |
+| the wrong theme | the webview theme dict was a four-entry copy of a fifteen-entry one; `Kim` was absent and fell back to greygreen **in silence** |
+| the wait dialog returned the user to the task | `wait()` withdraws and `waitdone()` reveals the window it is called on, and it was called on the task |
+
+**Created-hidden is now off everywhere.** The capability probe measured whether `show()`
+could MAP such a window and Qt said yes; the question that matters is whether it LOADS
+ITS PAGE, and it does not. A window that appears blank is worse than one that never
+appears — it reads as a bug in whatever was supposed to be inside it, which is how it
+misled a whole afternoon's diagnosis through labels, Variables and images that were all
+working. `--webview-hidden` still forces it for re-testing.
+
+**`<Button-1>` now maps to `mousedown`, not `click`.** It and `<ButtonPress-1>` are
+synonyms in tkinter, both meaning press; `click` fires after `mouseup`, so the two ran in
+the wrong order relative to each other.
+
+## Fixed — themes and images had two copies, and both were short
+
+`ui_webview.Theme` carried hand-copied subsets of `ui_tkinter.Theme`'s image list and
+theme dict. Both now live in a new `frontend/theme_data.py` that **imports nothing** —
+which is what lets `ui_webview` read it without dragging tkinter in, the constraint that
+made copying look like the only option.
+
+Missing from the image copy, all failing silently (`photo.get(name)` returns None, and
+`image=None` draws nothing and logs nothing): `record`, every sort-board verb image
+(`sort`, `join`, `join_same`, `verify`, `joinglyphs`…), the numbered C/V images, the
+full-size comprehensive reports, and both alphabet-task icons. Missing from the theme
+copy: eleven themes including the one in use.
+
+An unknown theme name now logs a warning instead of falling back in silence. 11 tests,
+including the one that would have caught it: every `taskicon` the app asks for must
+exist, read from `tasks/` by AST.
+
+## Fixed — Qt crashed at startup, and it was the devtools
+
+`--webview --engine=qt` segfaulted during boot, reproducibly. `-X faulthandler` caught
+the main thread mid-slot:
+
+```
+Garbage-collecting
+qt.py:639 in resizeEvent
+qt.py:208 in show_inspector          <-- only reached when debug=True
+qt.py:737 in on_load_finished
+```
+
+`show_inspector` opens the Web Inspector as each page loads, its resize runs a Python GC
+inside a Qt `resizeEvent`, and the collection frees something Qt still holds. That is the
+same fault `_close_native_window` documented on 2026-09-07 ("garbage collected inside a
+loadFinished slot"), now located exactly: it lives in the inspector path, so it only
+happens with devtools on — which is why `--user` runs were fine.
+
+Devtools are now off for Qt, with a log line saying so; `--webview-devtools` forces them
+back for re-testing.
+
+## New — a noise floor, without asking anyone to be quiet
+
+Reported in both places it comes free: on every take (from the frames already kept for
+ASR, bounded to ~5 s) and on every card switch (the rate check's own captures are silence
+in an ordinary room). No prompt, no button — the floor is by definition the quietest part
+of a capture, so an ordinary take supplies one.
+
+It is an upper bound, which is the safe direction: a speaker who never pauses makes it
+pessimistic, understating signal-to-noise rather than flattering the microphone. Digital
+silence reports nothing rather than −inf dB, since all-zeros is a gate or a dropout and
+`zero_runs` is the detector for that.
+
+## Fixed — the diagnostic script contradicted the program it diagnoses
+
+`probe_real_capability.py` called upsampled paths REAL where the app, `pw-metadata` and
+the hardware all said otherwise. Its own `spectral_ceiling` estimates a noise floor from
+the top octave — inside the very hole it looks for — so residue 120 dB below the signal
+read as energy reaching Nyquist.
+
+**This is the script we hand to other machines**, where no app measurement exists to
+notice the disagreement, so anyone running it on a stock PipeWire desktop would have
+concluded their 192 kHz was genuine. It now imports the app's own `rate_is_fake`, so the
+two agree by construction.
+
+Three further corrections followed from Kent reading the output:
+
+- **No real-rate figure.** It was `ceiling × 2`, and produced "96000 Hz … really
+  ~96000 Hz" under a heading saying the setting lies.
+- **Every figure now comes from the detector that decided** — new `top_of_band_db()`
+  returns the margin `rate_is_fake` had only logged, so no number sits beside a verdict it
+  contradicts.
+- **Two new verdicts.** `NOT PROVED` (nothing disproved it, too little to judge on) and
+  `NOT TESTED` (the band test cannot address rates below 10 kHz — its mid band does not
+  exist there). NO SIGNAL is about the room, NOT PROVED about the evidence, NOT TESTED
+  about the test.
+
+And the script no longer asks for noise: a quiet-room run produced peaks of 0.1–0.7% and
+every verdict still formed. What proves a high rate is the converter's own noise reaching
+Nyquist, which nothing in the room can supply.
+
 ## New — the rate list says what has been measured, and withholds nothing
 
 The sound settings screen listed the rates a card *accepts* and said nothing about

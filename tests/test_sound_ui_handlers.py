@@ -49,11 +49,12 @@ class Recorder:
 class Waiting:
     """A stand-in for `task.waiting(...)`: callable, and a context manager."""
 
-    def __init__(self, called):
+    def __init__(self, called, label='waiting'):
         self.called = called
+        self.label = label
 
-    def __call__(self, text=None):
-        self.called.append('waiting')
+    def __call__(self, text=None, **kwargs):
+        self.called.append(self.label)
         return self
 
     def __enter__(self):
@@ -79,7 +80,14 @@ def window_stand_in(**attrs):
     # measurement tests below pass while testing nothing.
     stand_in._new_input_card = types.MethodType(
         sound_ui.SoundSettingsWindow._new_input_card, stand_in)
-    stand_in.task = types.SimpleNamespace(waiting=Waiting(stand_in.called))
+    # `waiting` ON THE WINDOW, because that is where the handler takes it —
+    # `wait()` withdraws and `waitdone()` reveals the window it was called
+    # on, so taking it on the task returned the user to the task page.
+    stand_in.waiting = Waiting(stand_in.called)
+    # The task's is present too, recording under a DIFFERENT name, so a
+    # regression to `self.task.waiting(...)` is visible rather than silent.
+    stand_in.task = types.SimpleNamespace(
+        waiting=Waiting(stand_in.called, label='task.waiting'))
     for k, v in attrs.items():
         setattr(stand_in, k, v)
     return stand_in
@@ -162,12 +170,29 @@ def test_switching_the_input_card_re_derives_and_measures():
             < stand_in.called.index('verify_fs')
 
 
+@pytest.mark.skip(reason="wait dialog commented out at Kent's request "
+                         "2026-09-11 ('I want to see it without'); "
+                         "un-skip with the `with self.waiting(...)` in "
+                         "_new_input_card")
 def test_switching_the_input_card_shows_the_wait_dialog():
     """It RECORDS, on this thread, inside the click handler. Without the
-    dialog the settings window just freezes for the capture."""
+    dialog the settings window just freezes for the capture — now for ~2s,
+    since the settle pause and confirm-on-repeat were added."""
     stand_in = measuring_stand_in()
     sound_ui.SoundSettingsWindow.setsoundcardindex(stand_in, 8, Recorder())
     assert 'waiting' in stand_in.called
+
+
+def test_the_wait_is_NEVER_taken_on_the_task():
+    """Stands whether or not the dialog is enabled. `wait()` withdraws the
+    window it is called on and `waitdone()` reveals that same window, so
+    waiting on the TASK left the user back at the task page with Sound
+    Settings buried behind it (Kent, 2026-09-11). If the dialog is restored,
+    it must be restored on the settings window."""
+    stand_in = measuring_stand_in()
+    sound_ui.SoundSettingsWindow.setsoundcardindex(stand_in, 8, Recorder())
+    assert 'task.waiting' not in stand_in.called, \
+        "the wait must be taken on the settings window, not on the task"
 
 
 def test_switching_the_OUTPUT_card_does_not_measure():
@@ -226,14 +251,76 @@ def test_card_switch_survives_a_settings_object_that_cannot_measure():
 # actually limiting options?" Every rate the card opens stays selectable; the
 # notes say what was measured.
 
-def rate_stand_in(disproved=(), verified=None):
+def rate_stand_in(disproved=(), verified=None, confirmed=None):
     stand_in = window_stand_in()
+    # THE REAL `_describe`, not Recorder's catch-all. The label names the
+    # original rate through it, and a no-op stand-in returns None — which is
+    # what "192khz — upsampled from None" was.
+    stand_in._describe = types.MethodType(
+        sound_ui.SoundSettingsWindow._describe, stand_in)
     ss = stand_in.soundsettings
     ss.hypothetical = {'fss': {48000: '48khz', 96000: '96khz',
                                192000: '192khz'}}
     ss.fake_rates_here = lambda: set(disproved)
+    # `confirmed` defaults to `verified` so the older cases below still read
+    # naturally; the point of the split is that evidence is now PER RATE.
+    ss.real_rates_here = lambda: set(confirmed if confirmed is not None
+                                     else ([verified] if verified else []))
     ss.measured_fs = lambda: verified
     return stand_in
+
+
+def test_evidence_about_one_rate_does_not_erase_evidence_about_another():
+    """Kent, 2026-09-11: "I thought I recalled a comment on 44.1, which wasn't
+    there after 192 got one."
+
+    It had been there. `verify_fs` cached 44100 in `_verified_fs`, the label
+    read that, then a 192000 take was marked fake — and `note_fake_rate` pops
+    `_verified_fs`, because it holds ONE derived value per device ("the
+    highest not provably fake"). So news about 192 kHz deleted the finding
+    about 44.1 kHz, which is not news about 44.1 kHz at all. Evidence is now
+    kept per rate."""
+    stand_in = rate_stand_in(disproved=[192000], confirmed=[48000])
+    assert 'not upsampled' in \
+        sound_ui.SoundSettingsWindow._rate_option_label(stand_in, 48000)
+    assert 'upsampled from' in \
+        sound_ui.SoundSettingsWindow._rate_option_label(stand_in, 192000)
+
+
+def test_a_confirmed_rate_is_not_called_real():
+    """`rate_is_fake` never returns False, so no take can certify a rate. The
+    label must claim only what was established."""
+    stand_in = rate_stand_in(confirmed=[48000])
+    label = sound_ui.SoundSettingsWindow._rate_option_label(stand_in, 48000)
+    assert 'not upsampled' in label
+    for overclaim in ('real', 'genuine', 'cleanly', 'verified'):
+        assert overclaim not in label.lower(), \
+            "label overclaims with {!r}: {}".format(overclaim, label)
+
+
+def test_no_note_says_checked():
+    """"checked:" prefixed all three notes, so it distinguished none of them —
+    the presence of any note already says the rate was checked (Kent,
+    2026-09-11: "agreed on checked; that was my first thought")."""
+    for kwargs in ({'confirmed': [48000]},
+                   {'disproved': [48000]},
+                   {'disproved': [192000], 'confirmed': [48000]}):
+        stand_in = rate_stand_in(**kwargs)
+        for fs in (48000, 192000):
+            label = sound_ui.SoundSettingsWindow._rate_option_label(stand_in,
+                                                                    fs)
+            assert 'checked' not in label, label
+
+
+def test_the_original_rate_is_named_in_THE_SAME_UNITS():
+    """"192khz — upsampled from 44100 Hz" mixed two units in one line, because
+    the measurement works in Hz and the name does not. The label the user
+    already reads for that rate is the one to reuse."""
+    stand_in = rate_stand_in(disproved=[192000], confirmed=[48000])
+    label = sound_ui.SoundSettingsWindow._rate_option_label(stand_in, 192000)
+    assert '48khz' in label, label
+    assert 'Hz' not in label.replace('khz', ''), \
+        "no raw-Hz figure beside a khz name: {}".format(label)
 
 
 def test_an_unchecked_rate_gets_no_note():
@@ -248,22 +335,22 @@ def test_a_disproved_rate_says_what_was_measured():
     stand_in = rate_stand_in(disproved=[192000], verified=48000)
     label = sound_ui.SoundSettingsWindow._rate_option_label(stand_in, 192000)
     assert '192khz' in label
-    assert 'stretched' in label and '48000' in label
+    assert 'upsampled from' in label and '48khz' in label
 
 
-def test_a_disproved_rate_without_a_known_real_one_stays_vague():
-    """Honest about what is not known: `note_fake_rate` records THAT a rate
-    was band-limited, not what it was band-limited to."""
+def test_a_disproved_rate_with_no_known_original_just_says_upsampled():
+    """Honest about what is not known — the record says THAT a rate was
+    band-limited, not what it was band-limited to — and no "from a lower rate"
+    tail, which adds nothing the word does not carry (Kent, 2026-09-11)."""
     stand_in = rate_stand_in(disproved=[192000])
     label = sound_ui.SoundSettingsWindow._rate_option_label(stand_in, 192000)
-    assert 'stretched' in label
-    assert '192000' not in label.replace('192khz', '')
+    assert label.endswith('upsampled'), label
 
 
-def test_a_verified_rate_says_so():
+def test_a_checked_rate_says_so():
     stand_in = rate_stand_in(verified=48000)
     label = sound_ui.SoundSettingsWindow._rate_option_label(stand_in, 48000)
-    assert 'cleanly' in label
+    assert 'not upsampled' in label
 
 
 def test_a_rate_that_is_neither_is_left_alone():

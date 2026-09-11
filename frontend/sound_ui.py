@@ -460,8 +460,27 @@ class SoundSettingsWindow(ui.Window):
             # click handler — without it the settings window freezes for the
             # capture with no explanation. (Kent was unconvinced it was needed;
             # doing it his stated way — "do it, and we'll see".)
-            with self.task.waiting(_("Checking what this microphone can do...")):
-                rate,message=ss.verify_fs()
+            #   `self.waiting`, NOT `self.task.waiting`. `wait()` withdraws
+            # the window it is called on and `waitdone()` reveals THAT window
+            # again, so waiting on the TASK dropped the user back at the task
+            # page with Sound Settings buried behind it — Kent, 2026-09-11:
+            # "'checking what the microphone can do...' returns me to the
+            # task. I can navigate back to the sound settings, but that's
+            # counter intuitive." The window the user is working in is the one
+            # to come back to, and this IS a window, so it can say so. (I
+            # copied `self.task.waiting` from `RecordButtonFrame`, where it is
+            # correct: a Frame has no wait of its own.)
+            # WAIT DIALOG OFF, at Kent's request 2026-09-11 ("comment out
+            # that wait now; I want to see it without") — he was unconvinced
+            # it was needed and wants the bare behaviour to look at. Note the
+            # measurement got SLOWER since he first said so: the settle pause
+            # and the confirm-on-repeat added for the probe's verdicts take it
+            # from about 1s to about 2s, and it runs on this thread, so the
+            # settings window will sit unresponsive for that long with no
+            # explanation. That is the thing to judge.
+            # with self.waiting(_("Checking what this microphone can do..."),
+            #                   thenshow=True):
+            rate,message=ss.verify_fs()
         except Exception as e:
             log.info("couldn't check the new microphone's rates ({})".format(e))
         if rate:
@@ -569,9 +588,30 @@ class SoundSettingsWindow(ui.Window):
                 ).grid(column=0, row=0)
         l=list()
         ss=self.soundsettings
-        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
-            name=ss.hypothetical['sample_formats'][sf]
-            l+=[(sf, name)]
+        # WIDEST FIRST, for the same reason the rates run highest first: it is
+        # what the audio layer already prefers. `default_sf`/`max_sf` both
+        # take `widest()`, and ranking there goes through `sound.format_bits`
+        # precisely so that "widest" is a statement about width rather than an
+        # accident of how the values happen to sort — which is what it was
+        # under PyAudio, whose constants ran INVERSE to width (paFloat32=1 …
+        # paUInt8=32), so `max()` selected the NARROWEST format.
+        #   Sorting by the same function keeps the menu and the default
+        # agreeing. Sorting by the dtype NAME would not: 'float32' < 'int16'
+        # < 'int32' alphabetically, which is neither width order nor stable
+        # against adding a format.
+        try:
+            formats=sorted(ss.cards['in'][ss.audio_card_in][ss.fs],
+                           key=sound.format_bits, reverse=True)
+        except Exception as e:
+            log.info("couldn't rank the sample formats by width ({})".format(e))
+            formats=list(ss.cards['in'][ss.audio_card_in][ss.fs])
+        for sf in formats:
+            # _describe, not a bare index: this is the same unguarded lookup
+            # that kept the settings window from opening at all (see
+            # _describe), in the widget that lists the values rather than the
+            # one that shows the current one.
+            l+=[(sf, self._describe(ss.hypothetical['sample_formats'], sf,
+                                    'format'))]
         buttonFrame1=ui.ButtonFrame(window.frame,
                                     optionlist=l,
                                     command=self.setsoundformat,
@@ -587,7 +627,17 @@ class SoundSettingsWindow(ui.Window):
                 ).grid(column=0, row=0)
         l=list()
         ss=self.soundsettings
-        for fs in sorted(ss.cards['in'][ss.audio_card_in]):
+        # HIGHEST FIRST. Kent, 2026-09-11: "rates are unintuitively ordered
+        # lowest first?" — and lowest-first was my doing (it was dict order
+        # before). Descending is what the rest of the audio layer already
+        # believes: `default_fs` picks the highest offered, `widest()` picks
+        # the widest format, and `measured_fs` walks the rates high to low.
+        # Leading with 8 kHz puts the least useful option where the eye lands
+        # first and buries the one the app would have chosen.
+        #   Still a STABLE order, which was the reason for sorting at all: an
+        # entry must not move between visits as evidence arrives (see
+        # _rate_option_label).
+        for fs in sorted(ss.cards['in'][ss.audio_card_in], reverse=True):
             l+=[(fs, self._rate_option_label(fs))]
         buttonFrame1=ui.ButtonFrame(window.frame,
                                     optionlist=l,
@@ -610,33 +660,63 @@ class SoundSettingsWindow(ui.Window):
         the default, and an unannotated entry means "not checked" without
         needing a legend to say so (Kent: "leave this off"). Notes state the
         EVIDENCE, never a verdict: this detector has been wrong about enough
-        rates in one day that "stretched, as measured" is honest and "bad" is
+        rates in one day that "upsampled, as measured" is honest and "bad" is
         not. No colour carries any of it.
 
-        NOT ANNOTATED FROM THE PROBE, deliberately — see `measured_fs`: it
-        sweeps rates back to back with no settle pause, which is exactly the
-        condition that produced a false 'resampled' accusation in the manual
-        prober (agenda/honest_sound_settings.md, finding 2b). Its verdict is
-        good enough to CHOOSE conservatively with and not good enough to tell
-        a user their device is lying. So "stretched" comes only from
-        `note_fake_rate`, i.e. from a real take of several seconds.
+        WORDING, settled with Kent 2026-09-11:
+
+        * **"upsampled", not "stretched"** — "technical, but precise", and
+          "stretched isn't normally used". It is the word the logs and this
+          item have used throughout; the user-facing text was the odd one out.
+        * **no "checked:" prefix.** All three notes carried it, so it
+          distinguished none of them from each other — the presence of ANY
+          note already says the rate was checked.
+        * **no "from a lower rate" tail** where the rate is unknown. It adds
+          nothing the word does not carry, and dropping it leaves the two
+          forms differing only where there is content.
+        * **the original rate in the SAME UNITS** as the name beside it:
+          "192khz — upsampled from 44.1khz", not "from 44100 Hz".
+
+        ANNOTATED FROM THE PROBE TOO, since 2026-09-11. It was withheld
+        because `measured_fs` swept rates back to back with no settle pause —
+        the condition that produced a false accusation in the manual prober
+        (agenda/honest_sound_settings.md, finding 2b). But withholding it was
+        incoherent: `verify_fs`'s notice already asserted the same result in
+        prose. Kent: "we're checking on load; why not share that with the
+        user?" So the sweep got the settle pause and the confirm-on-repeat the
+        prober has, and its verdicts now count on the same footing.
         """
         ss=self.soundsettings
         name=ss.hypothetical['fss'][fs]
         try:
             disproved=ss.fake_rates_here()
-            verified=ss.measured_fs()   # cache only; never records here
+            confirmed=ss.real_rates_here()
         except Exception as e:
             log.info("couldn't read the rate checks ({})".format(e))
             return name
         if fs in disproved:
-            if verified and verified < fs:
-                return _("{name} — checked: stretched from {real} Hz").format(
-                            name=name, real=verified)
-            return _("{name} — checked: stretched from a lower rate").format(
-                        name=name)
-        if verified is not None and fs == verified:
-            return _("{name} — checked: records cleanly").format(name=name)
+            lower=[r for r in confirmed if r < fs]
+            if lower:
+                # THE ORIGINAL RATE IN THE SAME UNITS as the name beside it.
+                # This said "stretched from 44100 Hz" next to "192khz" — two
+                # units in one line, because `{real}` was the raw integer the
+                # measurement works in. The label the user already reads for
+                # that rate is the one to reuse.
+                return _("{name} — upsampled from {real}").format(
+                            name=name,
+                            real=self._describe(ss.hypothetical['fss'],
+                                                max(lower), 'rate'))
+            # No "from a lower rate" tail: it says nothing the word does not
+            # already carry, and the two forms then differ only by the part
+            # that has content (Kent, 2026-09-11).
+            return _("{name} — upsampled").format(name=name)
+        if fs in confirmed:
+            # "NOT STRETCHED", never "real". `rate_is_fake` cannot certify a
+            # rate (it never returns False), so the strongest honest claim is
+            # that nothing in the take disproved this one. An earlier draft
+            # said "records cleanly", which a user would read as a guarantee
+            # the measurement cannot give.
+            return _("{name} — not upsampled").format(name=name)
         return name
     def _refresh_test_filename(self):
         """Re-derive the mic-check filename from the CURRENT settings.
@@ -763,6 +843,30 @@ class SoundSettingsWindow(ui.Window):
     def soundcheckrefreshdone(self):
         self.task.storesoundsettings()
         self.on_quit()
+
+    def on_quit(self, **kwargs):
+        """GIVE THE TASK WINDOW BACK on the way out.
+
+        `__init__` withdraws it (`:829`) so this window is not competing with
+        the page behind it — and nothing ever undid that, so closing Sound
+        Settings left the user with NO visible window at all (Kent,
+        2026-09-11: "closing settings left no window?"; the log ends with two
+        windows hidden and none shown).
+
+        Here rather than in `soundcheckrefreshdone` so BOTH exits are covered
+        — the Done button and the window's own close box, which is wired
+        straight to this method (`:831`).
+
+        Same shape as the wait-dialog fault fixed an hour earlier, and worth
+        stating as a rule for this backend, where every window is a separate
+        OS window rather than a Toplevel the WM keeps together: **whoever
+        withdraws a window owns revealing it.**
+        """
+        try:
+            self.task.deiconify()
+        except Exception as e:
+            log.info("couldn't bring the task window back ({})".format(e))
+        return super().on_quit(**kwargs)
     tasktitle = "Sound Card Settings"
     def __init__(self,task,**kwargs):
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow

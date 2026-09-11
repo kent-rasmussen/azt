@@ -56,6 +56,7 @@ def settings(**attrs):
     ss = sound.SoundSettings.__new__(sound.SoundSettings)
     ss._verified_fs.clear()
     ss._fake_rates.clear()
+    ss._real_rates.clear()
     ss.cards = {k: (v.copy() if hasattr(v, 'copy') else v)
                 for k, v in CARDS.items()}
     ss.audio_card_in = 5
@@ -96,6 +97,86 @@ def test_choosing_a_card_survives_resolve_cards():
     assert ss.audio_card_in_name == 'default'
 
 
+# ─── The probe SHARES what it finds, and only after confirming it ───────────
+# Kent, 2026-09-11: "we're checking on load; why not share that with the
+# user?" Withholding it was incoherent — `verify_fs`'s notice already asserts
+# the result in prose while the rate menu, on the same evidence, said nothing.
+
+def _no_waiting(ss):
+    """Don't actually idle in tests; the pause is for the audio graph."""
+    ss._settle = lambda: None
+    return ss
+
+
+def _fake_capture():
+    """A stand-in capture that is ACTUALLY AUDIO-SHAPED.
+
+    It used to be the string 'block', which was enough while only
+    `rate_is_fake` consumed it — and then the noise floor started reading the
+    same capture and the stand-in fell over. A test double that cannot be
+    used the way the real thing is stops testing the code some time before it
+    stops passing, so this is a real array.
+    """
+    numpy = pytest.importorskip('numpy')
+    rng = numpy.random.default_rng(0)
+    return rng.normal(0, 0.01, 8192)
+
+
+def test_a_probe_verdict_reaches_the_settings_screen():
+    """`_fake_rates`/`_real_rates` are what the rate menu annotates from, so
+    the probe has to write there or its findings stay in the log."""
+    ss = _no_waiting(settings())
+    captures = []
+    audio = _fake_capture()
+    ss._capture_for_check = lambda rate, fmt, seconds: captures.append(rate) \
+                                                        or audio
+    # 192000 band-limited, everything lower fine.
+    fake_at = {192000}
+    import backend.core.sound as mod
+    real_is_fake = mod.rate_is_fake
+    mod.rate_is_fake = lambda block, rate, **k: rate in fake_at
+    try:
+        best = ss.measured_fs(measure=True)
+    finally:
+        mod.rate_is_fake = real_is_fake
+    # 48000, not 44100: CARDS offers 192000/48000/44100 on card 5, and the
+    # sweep stops at the first rate it cannot disprove.
+    assert best == 48000, 'the highest not-disproved rate wins'
+    assert 192000 in ss.fake_rates_here()
+    assert 48000 in ss.real_rates_here()
+    assert 44100 not in ss.real_rates_here(), \
+        "a rate the sweep never reached must not be recorded either way"
+
+
+def test_a_FAKE_verdict_needs_two_readings():
+    """RESAMPLED is an accusation — it tells a user their device is lying. The
+    sweep walks rates back to back, which is what produced a false accusation
+    in the manual prober (sticky graph rate, finding 2b), so a single reading
+    must not stand."""
+    ss = _no_waiting(settings())
+    import backend.core.sound as mod
+    real_is_fake = mod.rate_is_fake
+    seen = []
+    audio = _fake_capture()
+    ss._capture_for_check = lambda rate, fmt, seconds: audio
+
+    def once(block, rate, **k):
+        """Fake on the FIRST look at 192000, clean on the second."""
+        seen.append(rate)
+        return rate == 192000 and seen.count(192000) == 1
+
+    mod.rate_is_fake = once
+    try:
+        best = ss.measured_fs(measure=True)
+    finally:
+        mod.rate_is_fake = real_is_fake
+    assert seen.count(192000) == 2, 'it must look twice before accusing'
+    assert best == 192000, 'the second, clean look should win'
+    assert 192000 not in ss.fake_rates_here(), \
+        "a verdict that did not repeat must not be recorded"
+    assert 192000 in ss.real_rates_here()
+
+
 def test_choose_card_forgets_cached_rate_checks():
     """A rate verdict describes the path it was measured on. Changing the
     card is exactly when it stops applying (Kent: an 'on boot' test is not an
@@ -103,9 +184,12 @@ def test_choose_card_forgets_cached_rate_checks():
     ss = settings()
     ss._verified_fs['pipewire'] = 192000
     ss._fake_rates['pipewire'] = {192000}
+    ss._real_rates['pipewire'] = {44100}
     ss.choose_card('in', 8)
     assert not ss._verified_fs
     assert not ss._fake_rates
+    assert not ss._real_rates, \
+        "positive evidence describes the old path too"
 
 
 def test_choose_card_handles_the_output_side_too():

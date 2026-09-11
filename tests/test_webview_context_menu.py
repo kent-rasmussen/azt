@@ -71,6 +71,43 @@ def test_construction_binds_the_context_menu_event():
     assert '<<ContextMenu>>' in parent.bound
 
 
+def test_it_does_NOT_bind_while_the_page_is_still_LOADING():
+    """THE QT CRASH GUARD. Binding during window construction issued one
+    extra `evaluate_js` per window while its page was loading, and QtWebEngine
+    6.11.2 segfaulted on every startup — three runs, three crashes. The bind
+    has to wait for the page, so it is registered as a post-load hook."""
+    import threading
+    parent = Parent()
+    parent._wv_loaded = threading.Event()        # created, not yet loaded
+    cm = ContextMenu(parent)
+    assert '<<ContextMenu>>' not in parent.bound, \
+        "binding before the page loads is what crashed QtWebEngine"
+    assert cm.updatebindings in parent.__dict__.get('_on_loaded_hooks', []), \
+        "the bind must be deferred, not dropped"
+
+
+def test_the_deferred_hook_really_binds_when_run():
+    """Deferring must not mean losing it — the menu still has to work."""
+    import threading
+    parent = Parent()
+    parent._wv_loaded = threading.Event()
+    ContextMenu(parent)
+    for hook in parent.__dict__['_on_loaded_hooks']:
+        hook()
+    assert '<<ContextMenu>>' in parent.bound
+
+
+def test_it_binds_immediately_on_an_ALREADY_loaded_page():
+    """A window whose page is up needs no deferral, and waiting for a load
+    that already happened would never bind at all."""
+    import threading
+    parent = Parent()
+    parent._wv_loaded = threading.Event()
+    parent._wv_loaded.set()
+    ContextMenu(parent)
+    assert '<<ContextMenu>>' in parent.bound
+
+
 def test_menuitem_creates_the_menu_and_keeps_the_entry():
     parent = Parent()
     cm = ContextMenu(parent)
@@ -148,6 +185,60 @@ def test_undo_popup_is_quiet_when_nothing_is_shown():
     cm = ContextMenu(parent)
     cm.undo_popup()                 # must not raise
     assert cm.popup is False
+
+
+def test_windows_are_NOT_created_hidden():
+    """A window created hidden never loads its page on Qt, so its JS queue
+    never flushes and it comes up BLANK — with every widget the Python side
+    built sitting in a queue nobody reads. Kent's Sound Card Settings window,
+    2026-09-11: three log lines (created HIDDEN / show requested / show now)
+    and then nothing, where every "created visible" window in the same run
+    fetched base.html, widgets.js and flushed its queue.
+
+    The earlier probe measured whether `show()` could MAP such a window, which
+    is not the capability that matters."""
+    assert ui_webview._supports_created_hidden() is False, \
+        "created-hidden windows do not load their page; this must stay off"
+
+
+def test_press_and_release_map_to_press_and_release():
+    """A press-and-hold control cannot work otherwise, and the record button
+    is one: press starts, release stops (`sound_ui.py:70-71`).
+
+    `<ButtonPress-1>` was absent from the map, so it registered a listener for
+    an event nothing fires and recording never STARTED — then release raised
+    on state that `start()` creates. And `<Button-1>` mapped to 'click', which
+    fires AFTER mouseup, so the two synonyms ran in the wrong order relative
+    to each other. In tkinter both names mean press."""
+    js = (Path(__file__).resolve().parents[1]
+          / 'frontend' / 'webview_html' / 'widgets.js').read_text()
+    for name in ("'<Button-1>': 'mousedown'",
+                 "'<ButtonPress-1>': 'mousedown'",
+                 "'<ButtonRelease-1>': 'mouseup'"):
+        assert name in js, "press/release mapping wrong or missing: " + name
+
+
+def test_the_recorder_reports_nothing_recorded_rather_than_raising():
+    """`file_write_OK` must exist before `start()` runs: the UI reads it after
+    a take, and a stop-without-a-start used to raise an AttributeError that
+    pointed at the recorder instead of at the dead binding upstream."""
+    sound = pytest.importorskip('io_put.sound',
+                                reason='needs the audio module importable')
+    rec = sound.SoundFileRecorder.__new__(sound.SoundFileRecorder)
+    sound.SoundFileRecorder.__init__(rec, 'x.wav', None, None)
+    assert rec.file_write_OK is False
+
+
+def test_wraplength_is_clamped_to_the_viewport_in_the_page_script():
+    """An inline style beats the stylesheet, so setting maxWidth from
+    `wraplength` silently defeated grid.css's `max-width: 92vw` — the cap that
+    stops a label demanding more width than the window has. The Sound Card
+    Settings caveat ran off the right edge of its window on exactly that path
+    (GTK, 2026-09-11). CSS min() keeps both constraints."""
+    js = (Path(__file__).resolve().parents[1]
+          / 'frontend' / 'webview_html' / 'widgets.js').read_text()
+    assert "'min(' + value + 'px, 92vw)'" in js, \
+        "an inline wraplength must not be allowed to exceed the viewport cap"
 
 
 def test_the_virtual_event_is_mapped_in_the_page_script():

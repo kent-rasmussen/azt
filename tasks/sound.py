@@ -22,11 +22,54 @@ class Sound(object):
         # anything. mikecheck() is the automatic route, entered only when the
         # stored settings fail to validate.
         message = self._verify_rate()
-        sound_ui.SoundSettingsWindow(self)
+        self._sound_settings_window()
         # AFTER the window exists, so the notice lands beside the thing it
         # talks about rather than alone on a bare desktop.
         if message:
             notify_user(message)
+
+    def _sound_settings_window(self):
+        """The ONE Sound Card Settings window — revealed, not rebuilt.
+
+        Kent, 2026-09-11: "apparently I can have multiple sound settings
+        windows open at the same time?" Yes: both routes here constructed one
+        unconditionally, with nothing to notice an existing one, so every
+        visit to the context menu made another.
+
+        That is worse than duplicate clutter, because this window WITHDRAWS
+        the task window on open and reveals it again on close: with two open,
+        the first one closed hands the task window back while the second is
+        still up, and the second's close then reveals a task window that is
+        already showing. The settings each window holds are the same object
+        (`SoundSettings.ensure`), so two views can also disagree on screen
+        after a change made in one — the "two UIs, one daemon" shape that
+        azt-collab has its own agenda item for.
+
+        Reusing rather than rebuilding is this app's idiom anyway: the `Wait`
+        dialog is "built ONCE on the root and then withdrawn/deiconified
+        rather than destroyed/rebuilt per wait", and under webview a window
+        costs a page load, four HTTP round trips and a JS bridge handshake.
+        """
+        window = getattr(self, 'soundsettingswindow', None)
+        if window is not None:
+            try:
+                alive = (getattr(window, '_exists', True)
+                         and window.winfo_exists()
+                         and not window.exitFlag.istrue())
+            except Exception:
+                alive = False
+            if alive:
+                log.info("Sound settings is already open; showing it rather "
+                         "than opening a second one")
+                try:
+                    window.deiconify()
+                    window.lift()
+                except Exception as e:
+                    log.info("couldn't raise the open sound settings ({})"
+                             "".format(e))
+                return window
+        self.soundsettingswindow = sound_ui.SoundSettingsWindow(self)
+        return self.soundsettingswindow
 
     def setcontext(self):
         super().setcontext()
@@ -98,7 +141,11 @@ class Sound(object):
         self.ui.withdraw()
         self.program.soundsettings.confirm_audio()
         message = self._verify_rate()
-        self.soundsettingswindow = sound_ui.SoundSettingsWindow(self)
+        # Through the accessor, so the automatic route cannot open a SECOND
+        # window over one the user already has up. It destroys the window at
+        # the end of this method, and the accessor checks `winfo_exists()`,
+        # so a later visit builds a fresh one.
+        self._sound_settings_window()
         if message:
             notify_user(message)
         if not self.soundsettingswindow.exitFlag.istrue():
