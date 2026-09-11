@@ -90,8 +90,22 @@ tgt                     # praatfns.py (TextGridTools)
 # torch==2.7.1+cpu (from versions: none)`, measured on a Mac 2026-09-08 — and
 # its plain wheels are CPU-only anyway, so the marker split costs macOS
 # nothing and leaves Linux/Windows exactly as they were.
+# AND macOS on INTEL has no torch 2.7.1 AT ALL. Measured on an Intel Mac
+# 2026-09-11: "looking for this platform: Darwin_i386" then "No matching
+# distribution found for torch==2.7.1 (from versions: none)" — `from
+# versions: none` means PyPI holds no build of that version for the platform,
+# not that the pin was unlucky. PyTorch stopped shipping macOS x86_64 wheels
+# after the 2.2.x series; from 2.3 on, macOS is arm64 only.
+#   So Intel Macs get NO torch, and therefore no transcription — which
+# already matches `openai_whisper` being excluded for the same platform
+# above. Recording, playback and everything else are unaffected, and the app
+# reports the missing engine rather than failing to start.
+#   The alternative, if transcription on an Intel Mac ever matters: pin
+# `torch==2.2.2` for that platform. Not done, because 2.2.x predates the
+# numpy>=2.1 pin this file carries and would need its own compatibility
+# check — a real piece of work, not a one-line marker.
 torch==2.7.1+cpu; sys_platform != "darwin"
-torch==2.7.1; sys_platform == "darwin"
+torch==2.7.1; sys_platform == "darwin" and platform_machine == "arm64"
 tqdm
 transformers
 urllib3

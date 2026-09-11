@@ -4,7 +4,7 @@ from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 import platform
-import sys
+import os,sys
 import subprocess
 from utilities.utilities import stouttostr
 
@@ -105,8 +105,15 @@ def pip_install(installs=[],secondtry=False):
     else:
         log.info(_("Installing python dependencies"))
     if platform.system() == 'Linux':
-        log.info(_("If you have errors containing ˋportaudioˊ above, you should "
-            "install pyaudio with your package manager."))
+        # Was "install pyaudio with your package manager" — wrong twice over
+        # since 2026-09-09: pyaudio is gone (sounddevice replaced it), and
+        # what a package manager supplies is the PortAudio RUNTIME, not a
+        # python module. Naming the wrong thing sends a user to install
+        # something the app no longer uses.
+        log.info(_("If you see errors mentioning ˋportaudioˊ above, install "
+            "the system PortAudio runtime with your package manager "
+            "(libportaudio2 on Debian/Ubuntu). A-Z+T uses sounddevice, which "
+            "needs that library present but does not build it."))
     # The following is here to see what version python will be looking for, and
     # why it didn't find what's there. It doesn't input to anything afterwards.
     log.info("FYI, looking for this platform: {}_{}".format(
@@ -653,7 +660,55 @@ def ensure_sister_repos():
                             "continuing without it.").format(name=name))
     except Exception as e:
         log.error("Sister-repo setup failed ({}); continuing.".format(e))
-ensure_sister_repos()
+
+
+def _under_test():
+    """Are we inside a test run? Then CHANGE NOTHING on this machine.
+
+    This module does its work AT IMPORT TIME — `ensure_sister_repos()` here
+    and `pip_install()` at the end — which is the app's bootstrap design: the
+    first import repairs the environment. It also means that ANY `import
+    py_modules` anywhere runs a git/symlink setup and a pip install.
+      A test that imported it to check the dependency specs therefore kicked
+    off a real package sync during collection, printed pip's entire output
+    into the test log, and on Windows left app-startup and collab-daemon
+    lines trailing after pytest's summary — including "Teammates' changes
+    were merged with your last save (1 conflict(s) annotated)" (Kent,
+    2026-09-10/11). A test must not mutate the machine it runs on, and
+    certainly must not merge into a real project.
+    """
+    return 'pytest' in sys.modules or 'PYTEST_CURRENT_TEST' in os.environ
+
+
+if not _under_test():
+    ensure_sister_repos()
+
+# ── MANDATORY vs OPTIONAL, and why the distinction has to be here ──────────
+# This block decides whether to run the installer, and it treated `torch` and
+# `whisper` as mandatory. On a platform where they are DELIBERATELY excluded
+# it therefore failed on every boot however complete the install was — so the
+# per-package backstop ran every single open, trying to install packages that
+# cannot exist there. Measured on an Intel Mac 2026-09-11: PyTorch has
+# shipped no macOS x86_64 wheel since 2.2.x, `openai_whisper` is excluded for
+# the same platform in requirements.txt, and the install "failed" forever.
+#   An optional engine missing is a DEGRADED install that A-Z+T already
+# reports and works around. Only a mandatory package can justify reaching for
+# pip.
+OPTIONAL_ENGINES = []
+try:
+    import torch                                    # noqa: F401
+except Exception as _e:
+    OPTIONAL_ENGINES.append(('torch (transcription)', str(_e)))
+try:
+    import whisper                                  # noqa: F401
+except Exception as _e:
+    OPTIONAL_ENGINES.append(('whisper (transcription)', str(_e)))
+if OPTIONAL_ENGINES:
+    log.info("optional engines not installed: {}. Transcription is off; "
+             "recording, playback and everything else are unaffected, and "
+             "this is NOT a reason to reinstall anything."
+             "".format('; '.join('{} ({})'.format(n, e)
+                                 for n, e in OPTIONAL_ENGINES)))
 
 try:
     o=[]
@@ -665,8 +720,11 @@ try:
     # It was being downloaded on every fresh install for nothing.
     import transformers, huggingface_hub, langcodes
     o.append("transformers, huggingface_hub, langcodes imported fine")
-    import whisper, patiencediff, reportlab, language_data
-    o.append("whisper, patiencediff, reportlab, language_data imported fine")
+    # `whisper` moved OUT of this list (see OPTIONAL_ENGINES above): it is a
+    # transcription engine, absent by design on some platforms, and having it
+    # here made every boot on those platforms run the installer.
+    import patiencediff, reportlab, language_data
+    o.append("patiencediff, reportlab, language_data imported fine")
     # kivy: presence check ONLY — never import it in this (tkinter) process;
     # its import-time argv parser can eat azt's own flags (see collab.py).
     # It's needed as a SUBPROCESS runtime for the collab picker/settings UI.
@@ -675,8 +733,14 @@ try:
         raise ImportError('kivy not installed (needed for the collab '
                           'project picker / settings UI subprocesses)')
     o.append("kivy present (not imported)")
-    import os, svglib
-    o.append("os, svglib imported fine")
+    # `os` is imported at the top of this module; having it here too meant
+    # that when an EARLIER line in this try failed, `os` was never bound —
+    # and `pip_install()`, called from the handler below, then died with
+    # "NameError: name 'os' is not defined" (Kent's Mac, 2026-09-11). A
+    # re-import inside a try that can fail earlier is not a safe place for a
+    # name the error path needs.
+    import svglib
+    o.append("svglib imported fine")
     # import platform
     if platform.system() == "Windows":
         import ctypes
@@ -689,13 +753,19 @@ try:
         except Exception as e:
             log.info(f"Exception loading torch dll: {e}")
 
-    # Testing
-    # from PyQt6.QtWidgets import QApplication
-    import torch
+    # `import torch` was HERE, and it is the reason a correctly-installed
+    # Intel Mac reinstalled on every open: torch has no macOS x86_64 wheel
+    # since 2.2.x, so this line raised forever. It is checked above, as an
+    # optional engine, without triggering the installer.
 except Exception as e:
     log.info('\n'.join(o))
     log.error(f"Exception: {e}")
     if '--help' in sys.argv or '-h' in sys.argv:
         log.error("Not all modules installed, but not installing them because you asked for help.")
         sys.exit(0)
-    pip_install()
+    if _under_test():
+        log.info("under pytest: NOT installing anything. A missing package "
+                 "makes tests skip, which is the right answer; installing "
+                 "would change the machine the tests are measuring.")
+    else:
+        pip_install()

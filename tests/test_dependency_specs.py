@@ -134,6 +134,76 @@ def test_requirements_txt_still_carries_both_torch_lines():
     assert 'torch==2.7.1;' in req
 
 
+def test_the_macos_torch_line_is_restricted_to_apple_silicon():
+    """PyTorch ABANDONED macOS x86_64 after the 2.2.x series, so 2.7.1 does
+    not exist for an Intel Mac — measured 2026-09-11, "No matching
+    distribution found for torch==2.7.1 (from versions: none)" on
+    Darwin_i386. Without the chip in the marker, every Intel Mac fails that
+    requirement on every install."""
+    req = (APP / 'requirements.txt').read_text()
+    darwin_torch = [l for l in req.splitlines()
+                    if l.startswith('torch') and 'darwin"' in l
+                    and '+cpu' not in l]
+    assert darwin_torch, 'the macOS torch line went missing'
+    assert all('arm64' in l for l in darwin_torch), \
+        'the macOS torch pin must require arm64; Intel Macs have no such wheel'
+
+
+def test_transcription_engines_are_not_treated_as_mandatory():
+    """The bug that made a COMPLETE install reinstall on every open.
+
+    `py_modules` decides whether to run the installer from a block of
+    imports, and `torch`/`whisper` sat in it. Those are absent by design on
+    platforms where no wheel exists (Intel macOS since torch 2.2.x), so the
+    block raised on every boot however complete the install was, and the
+    per-package backstop ran every time — trying to install packages that
+    cannot exist there.
+
+    Checked with `ast`, not by slicing the text: the first attempt split on
+    "except Exception as e:" and cut the file at an EARLIER handler, so the
+    test failed on its own string surgery rather than on the code. The
+    property is structural, so ask the structure.
+    """
+    import ast
+    tree = ast.parse((APP / 'utilities' / 'py_modules.py').read_text())
+
+    def imported(node):
+        names = set()
+        for child in ast.walk(node):
+            if isinstance(child, ast.Import):
+                names.update(a.name.split('.')[0] for a in child.names)
+        return names
+
+    def calls_the_installer(handlers):
+        for handler in handlers:
+            for child in ast.walk(handler):
+                if (isinstance(child, ast.Call)
+                        and getattr(child.func, 'id', '') == 'pip_install'):
+                    return True
+        return False
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Try):
+            continue
+        if not calls_the_installer(node.handlers):
+            continue
+        got = imported(node) & {'torch', 'whisper'}
+        assert not got, (
+            'the block that decides to run the installer imports {} — absent '
+            'by design on some platforms, so it would reinstall on every '
+            'open there'.format(', '.join(sorted(got))))
+
+
+def test_the_installer_does_not_run_under_pytest():
+    """This module installs packages AT IMPORT TIME, which is the app's
+    bootstrap design — and meant a test importing it ran a real pip sync,
+    spawned the collab daemon, and merged into a live project."""
+    source = (APP / 'utilities' / 'py_modules.py').read_text()
+    assert '_under_test()' in source
+    assert 'if not _under_test():' in source, \
+        'ensure_sister_repos() must be gated too, not just pip_install()'
+
+
 def test_requirements_txt_declares_everything_the_app_must_import():
     """The fallback can only repair what the file names, so an unconditional
     import that is not declared is unrepairable. `soundfile` and
