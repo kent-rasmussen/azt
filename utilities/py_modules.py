@@ -659,7 +659,11 @@ try:
     o=[]
     import urllib3, numpy, sounddevice, PIL, lxml, psutil, soundfile, scipy
     o.append("urllib3, numpy, sounddevice, PIL, lxml, psutil, soundfile, scipy imported fine")
-    import transformers, huggingface_hub, langcodes #, pyautogui
+    # pyautogui was listed here and in the old backstop and is imported
+    # NOWHERE (checked 2026-09-10: only commented-out lines in
+    # frontend/alphabet_chart.py, for a screenshot feature never finished).
+    # It was being downloaded on every fresh install for nothing.
+    import transformers, huggingface_hub, langcodes
     o.append("transformers, huggingface_hub, langcodes imported fine")
     import whisper, patiencediff, reportlab, language_data
     o.append("whisper, patiencediff, reportlab, language_data imported fine")

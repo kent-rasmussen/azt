@@ -19,6 +19,115 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.19
+
+**A recording that is wrong now says so, to the user and not only to the log — and the
+macOS install stops asking for a torch build that has never existed.** Sound diagnostics
+were measured all day on three machines; the measuring code held up, and nearly every
+fault was in what was done with its answers.
+
+## Verified by running it
+
+- **Per-take diagnostics reach the user.** `_report_take` collected its findings into the
+  log and nothing else, so the app "detected" bad recordings while the linguist found out
+  weeks later with the speaker gone. Problems now arrive as ONE `notify_user` message per
+  take, each naming the problem and what to do: silent take, very quiet, wrong rate
+  delivered, dropped samples, gated audio, and a file larger than its content.
+- **A muted microphone finally reports itself.** Every test was guarded by `if frames`,
+  and a muted input delivers none — so the single most likely reason a user gets nothing
+  was the one case that said nothing. Distinguished from a quiet room, which needs a
+  different action.
+- **Exactly-zero runs are counted per take** (`sound.zero_runs`, carried across callback
+  blocks). Analogue audio does not land on exactly zero repeatedly, so a long run is a
+  gate, a mute or a dropout on any hardware — the one detector here with no threshold
+  fitted to any machine. Measured on this hardware: a USB mic through `default` delivered
+  13–100% of a quiet capture as exact zeros. That is PipeWire noise suppression, and it
+  removes quiet speech first — breathy release, final devoicing, weak fricatives — while
+  the waveform still looks clean.
+- **The upsampling check had never run once**: `spectral_ceiling` was not imported into
+  `io_put/sound.py`, and a broad `except` logged the `NameError` at `info` level, so its
+  absence was indistinguishable from success. Now imported, and that class of error logs
+  loudly.
+- **Choosing a microphone sticks.** Identify-by-name was added so a renumbered index
+  cannot silently point at a different device — then the settings window assigned the
+  index directly, leaving the stored name stale, so `resolve_cards()` followed the old
+  name and REDRAWING THE LABEL reverted the choice. All three sites now go through
+  `SoundSettings.choose_card()`.
+- **Rate findings inform, never act.** Detection stays; the automatic switch is gone. It
+  produced a real-rate figure from a contaminated estimate, a self-contradicting notice,
+  a mislabelled file, and a step-down walking 192000 → 96000 → 44100 toward 8000 Hz —
+  past the 48000 the graph actually runs, because it stepped the rate and never the
+  format. And "upsampled" is not "bad": a 44100 take resampled from a 48000 graph loses
+  nothing a linguist needs.
+- **PortAudio's ALSA spew is suppressed** where it comes from — `query_devices()`, which
+  opens each PCM to discover its capabilities — not just at the per-combination checks.
+  It writes to file descriptor 2 from C, so `redirect_stderr` cannot reach it.
+- **`--extra-index-url` is additive, and was never the macOS problem** (an extra index
+  finding nothing is a non-event). The failure was the explicit `+cpu` pin, which names a
+  local version with no macOS build.
+
+## Fixed, awaiting verification
+
+- **macOS install.** `py_modules.py` held a hand-written package list beside
+  `requirements.txt`, and a python list cannot carry a PEP 508 marker — so macOS was asked
+  for `torch==2.7.1+cpu` (twice per pass, offline then online) while requirements.txt held
+  the correct `torch==2.7.1; sys_platform == "darwin"` all along. **The list is deleted.**
+  `requirements_one_at_a_time()` reads the file and hands each line to pip verbatim,
+  keeping the one-package-per-invocation behaviour that makes the fallback useful —
+  `pip install -r` is all-or-nothing, so one unavailable package otherwise costs the user
+  numpy and sound as well. `drop_what_cannot_build()` keeps the one decision a marker
+  cannot express: a source-only package on a Mac with no developer tools.
+- **`pyautogui` dropped.** Installed on every fresh machine and imported nowhere — the
+  only references are commented-out lines for an unfinished screenshot feature.
+- **Device names persist.** They were added to the `soundsettings` attribute list but not
+  to `DOMAIN_MAPPING`, which is what `storesettingsfile` filters against — so they were
+  silently dropped on every save and identify-by-name worked only within a session.
+- **The task chooser no longer takes the whole screen.** Kiosk is for work pages;
+  `takefullscreen()` was tried first and falls back to kiosk on `TclError`, which
+  XWayland raises.
+- **`default_fs` no longer guesses.** Highest rate the input offers, minus any a real take
+  proved upsampled. A 48000 fallback was added and rejected: a guessed default is a guess
+  whichever number it picks.
+- Windows: `test_path_encodes_to_string` asserted POSIX separators, so it failed where
+  `Path("/tmp/x")` stringifies to `\tmp\x`. The encoder was right.
+- macOS: seven `test_asr_draft_selection` tests failed for want of torch, where the app
+  correctly degrades — they now skip.
+
+## Sound diagnostics, measured on three machines
+
+`tests/manual/sound_check/` — see its README for which to trust and what generalises.
+
+- **`where_am_i.py`** (new) — standard library only, no venv, no packages, no `-um`. Every
+  other script needed numpy and sounddevice, which is exactly what is missing when things
+  will not start, so the diagnostics were unavailable precisely when they were needed.
+- **`collect_audio_facts.py`** (new) — unattended, ~20 s, reports numbers and **judges
+  nothing**, for running on other people's machines. A verdict would propagate the guess
+  it exists to test.
+- **`mic_check.py`**, **`mic_compare.py`** (new) — measure a microphone, and compare
+  several by playing one generated signal so they are actually comparable.
+- **`rate_is_fake()`** replaces `rate_is_real()` and **never returns False**. Genuine
+  192 kHz hardware measured −25 dB at the top of the band; cheap linear interpolation
+  −35 dB. Ten dB apart from two different sources is an overlap, not a separation, so no
+  "this rate is real" verdict is available from level at all. What survives is
+  one-directional: a hole 100+ dB down cannot be an ADC's broadband noise. **It is blind
+  in int16** (quantisation noise fills the hole) — asserted in the tests so it cannot be
+  forgotten.
+- A mirror/imaging detector was attempted four ways and **abandoned**; the failure record
+  is kept in `_mirror_test_abandoned_2026_09_10()` so it is not rebuilt from scratch.
+
+## Tests
+
+381 passing, 8 skipped, headless — no display, no audio device, no files, so they run on
+all three platforms. New: `test_sound_settings_contracts.py`, `test_sound_ui_handlers.py`,
+`test_take_diagnostics.py`, `test_sound_plumbing.py`, `test_dependency_specs.py`, plus
+`zero_runs`/`rate_is_fake` units.
+
+Every fault that reached the user today was in the **seam** between a UI handler and the
+state it changes, or in **two lists holding one fact** — `DOMAIN_MAPPING` versus the
+settings attributes, `requirements.txt` versus the backstop, and four filename setters
+kept in sync by hand. None of it needed a display to catch, which is what the new tests
+do.
+
 # Version 1.15.18
 
 **The webview backend puts pixels on the screen for the first time: the splash and the
