@@ -551,6 +551,13 @@ function bindEvent(wid, eventName) {
         // own tooltip advertises it (transcriber.py:188-190).
         '<Button-3>': 'contextmenu',
         '<ButtonRelease-3>': 'contextmenu',
+        // tkinter's VIRTUAL context-menu event, which ui_tkinter's
+        // ContextMenu binds on the window (and re-points at
+        // <Control-Button-1> on Aqua, where there is no Button-3). Unmapped,
+        // it registered a listener for an event named "<<ContextMenu>>" —
+        // dead the same way Button-3 was before 2026-09-09, which is why the
+        // right-click route to Sound Settings did nothing under webview.
+        '<<ContextMenu>>': 'contextmenu',
         '<Button-2>': 'auxclick',
         '<ButtonRelease-2>': 'auxclick',
     };

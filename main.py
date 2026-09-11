@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.19' #This is a string...
+__version__='1.15.20' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -69,8 +69,8 @@ try:
                     "(recording/playback disabled, sorting etc. fine).")
 except Exception as e:
     program['nosound']=True
-    log.error("Problem importing Sound/pyaudio. Is it installed? {}"
-            "".format(e))
+    log.error("Problem importing the Sound module. Is sounddevice installed? "
+            "{}".format(e))
     program['exceptiononload']=True
 from utilities import times
 program['start_time'] = times.now()

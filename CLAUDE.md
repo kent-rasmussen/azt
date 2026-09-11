@@ -202,7 +202,7 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
   - `analysis_inputs.py` — Analysis input data structures.
   - `alphabet.py` — `Alphabet`, `AlphabetChartData`, `AlphabetComparisonData`.
   - `vcs.py` — `Repository`, `Mercurial`, `Git`, `GitReadOnly`.
-  - `sound.py` — `Sound` headless mixin: PyAudio streams, audio card config.
+  - `sound.py` — `Sound` headless mixin: sounddevice streams, audio card config.
   - `profiles.py` — `ProfileAnalyzer`: syllable CV profile analysis (extracted from settings).
   - `templates.py` — `WordListTemplate`: CAWL wordlist template handling.
   - `report_mixins.py` — `Multislice` and report-related backend mixins.
@@ -215,7 +215,7 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
 ### Key Patterns
 
 - **`program` dict**: Created at `main.py:9`, threaded through most classes as `self.program`. Contains runtime config, flags, and references to major objects.
-- **Sound is optional**: `pyaudio`/sound imports are wrapped in try/except; `program['nosound']` gates audio features.
+- **Sound is optional**: `sounddevice`/sound imports are wrapped in try/except; `program['nosound']` gates audio features. (`sounddevice` replaced PyAudio 2026-09-09 — `agenda/pyaudio_to_sounddevice.md`.)
 
 ## Shallow clones: widen the refspec before checking out a branch
 
@@ -263,4 +263,8 @@ this reason (its docstring says so) — don't "fix" that by widening refspecs.
     `webview/platforms/gtk.py`): `gir1.2-gtk-3.0`, `gir1.2-webkit2-4.1`, `gir1.2-soup-3.0`.
     `gir1.2-gtk-4.0` does nothing for it.
 - PyTorch is CPU-only (`torch==2.7.1+cpu` via `--extra-index-url`).
-- PyAudio requires system `portaudio` headers (`sudo apt install portaudio19-dev`).
+- Sound needs the PortAudio **runtime** library only: `sudo apt install libportaudio2`.
+  No compiler and no headers — `sounddevice` binds it at runtime via cffi. This said
+  `PyAudio requires system portaudio headers (portaudio19-dev)` until 2026-09-11; that
+  was true of PyAudio, which is gone (`agenda/pyaudio_to_sounddevice.md`). `-dev` still
+  works, since it depends on `libportaudio2`, so machines set up the old way are fine.

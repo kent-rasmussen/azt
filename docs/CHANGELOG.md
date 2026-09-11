@@ -19,6 +19,207 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.20
+
+**The PyAudio→sounddevice port is finished: recording and playback are CONFIRMED on
+Linux, Windows and macOS.** That was the port's own gate, and it is the thing that
+matters — sound now installs from a wheel on all three platforms, with no compiler
+anywhere. The rest of this release is the packaging and cleanup that the gate was
+blocking, plus four faults found in the macOS screenshots taken while confirming it.
+
+## Verified by running it (Kent, three machines)
+
+- **Sound records and plays on all three platforms.** macOS was the whole point of the
+  port: PyAudio could not be installed there at all without a compiler.
+- **The Sound Card Settings window opens on macOS**, where it used to die on
+  `'SoundSettings' object has no attribute 'asr_kwargs'`.
+- Test suite green: **393 passed, 8 skipped**.
+
+## Fixed — the macOS installer was sabotaging itself with dead PyAudio code
+
+Three faults in one block, and the third is the one users felt:
+
+1. It filtered `PyAudio` out of `requirements.txt` before installing — a no-op, since
+   PyAudio left that file on 2026-09-09.
+2. It then ran `pip install PyAudio` on its own, trying to BUILD from source on a Mac —
+   exactly the failure the port was done to remove — and told the user
+   **"A-Z+T will run WITHOUT sound"** on a machine where sound works.
+3. **The requirements stamp was gated on that install succeeding.** So the guaranteed
+   PyAudio failure withheld the stamp, and A-Z+T re-ran pip on EVERY startup. Kent
+   asked why the install didn't stick ("should finish the install and no rerun pip on
+   each open?"); this was the answer. The stamp now depends only on the requirements
+   actually installing.
+
+The separate PyAudio wheel-check in the `--check-wheels` section went with it, and the
+summary line now names sounddevice.
+
+## Fixed — installer and docs still described PyAudio as current
+
+- `RunMetoInstall_Linux.sh` installed **`portaudio19-dev`**; it now installs
+  **`libportaudio2`**. `-dev` supplies headers, which only PyAudio needed to compile
+  against; sounddevice binds the runtime library through cffi. Machines set up the old
+  way are unaffected — `-dev` depends on `libportaudio2`. The commented-out
+  build-PortAudio-from-source lines are gone, and `pyaudio` is out of the script's
+  system-python bootstrap, where a build failure would have stopped it before the clone.
+- `CLAUDE.md` said sound needed `portaudio19-dev` and described the sound mixin as
+  "PyAudio streams"; `main.py` logged "Problem importing Sound/pyaudio".
+
+## Fixed — a new AudioInterface was being built on every record button
+
+`sound_ui.py` tested the audio handle by calling `task.audio.get_format_from_width(1)`
+inside a `try` — a PyAudio call chosen for its side effect, because PyAudio offered no
+way to ask. `AudioInterface.usable()` was written to replace it and says so in its
+docstring, but the call site was never changed, and the new class has no
+`get_format_from_width`. So it raised **every time**, and the `except` branch replaced
+`task.audio` with a brand-new interface on **every record button built** — the "new
+AudioInterface conflicts with a Sound task that already opened a stream" hazard from
+AUDIT_FINDINGS, firing always rather than occasionally.
+
+It survived the port because of how it was written: nothing reads as broken when the
+whole point of a line is that it might throw.
+
+**One owner for the handle**, while there: `sort_buttons._playback` looked for it in
+three places (`ss.audio or task.audio or program.audio`) under a comment recording the
+attribute being missed three times in one evening. Both sites now ask
+`SoundSettings.confirm_audio()`, which owns `program.audio` and is covered by tests.
+
+## New — the rate list says what has been measured, and withholds nothing
+
+The sound settings screen listed the rates a card *accepts* and said nothing about
+what recording at them produced, so a rate disproved by the user's own last take was
+offered again, unmarked, beside one that recorded cleanly. It now annotates:
+
+- `48000 Hz — checked: records cleanly`
+- `192000 Hz — checked: stretched from 48000 Hz`
+- `96000 Hz` — unchanged, because nothing has been measured
+
+**Every rate the card will open stays selectable.** That is the DETECT AND TELL, NEVER
+SWITCH policy, which this screen had never inherited — the plan said to hide unverified
+rates, and Kent caught it: *"we had problems with this proof, IIRC, so we were going to
+let people continue without changing. Can we show users what we believe is true without
+actually limiting options?"* A detector that was wrong four times in one day has earned
+the right to say what it saw, not to remove an option.
+
+One list, not two: there are three states and the common one is *never measured*, so a
+verified/unverified split would put nearly everything in a column that reads as a wall
+of rejects. Grouping also reorders, moving the option under the pointer between visits
+to the same screen. And no explanatory line above the list (Kent: "leave this off") — if
+a note needs a legend, the note is written wrong. Nothing is carried by colour.
+
+Notes state the evidence, never a verdict, and they come **only from real takes** — not
+from `measured_fs`'s probe, which sweeps rates back to back with no settle pause. That
+is exactly the condition that produced a false "resampled" accusation in the manual
+prober (finding 2b in the agenda item). Good enough to choose conservatively with; not
+good enough to tell a user their device is lying.
+
+## New — switching the microphone re-derives and measures it
+
+Previously `choose_card` forgot the old card's rate checks — correctly, since they
+described the old path — and then nothing re-measured, so switching cards could only
+ever *lose* information. The rate and format were also left as the previous card's,
+re-derived only if the new card couldn't do them at all.
+
+Now, on an input-card change: take the new card's best rate and format, measure what it
+really delivers, adopt that, and relabel everything. Kent's call on both halves — *"any
+card switch legitimately implies other settings change; let's offer the best the newly
+selected card has"* and *"running that on switching input cards would be preferable to
+another button users have to hit"*, which replaces the planned "Check this microphone"
+button.
+
+Four details that make it safe:
+
+- **Quieter than a button would be.** `verify_fs()` returns "couldn't tell — the room was
+  too quiet" when it can't judge. On a button that answers a question the user asked; on
+  every card switch it's a nag about something they didn't ask and can't act on. So it
+  speaks only when there's news and logs the rest.
+- **Not inside `choose_card`** — a low-level setter documented as the only safe way to
+  set a card, where a second of audio recording would be silently acquired by any future
+  caller on a startup path.
+- **Input only.** Nothing about the speakers affects what gets recorded.
+- **Wrapped in the wait dialog,** since it records on the click handler's own thread.
+
+13 new tests in `tests/test_sound_ui_handlers.py`, including that an output-card switch
+does *not* measure, that a can't-tell result doesn't interrupt, and that a partial
+settings object turns a card click into a log line rather than a traceback.
+
+## Fixed — the webview right-click context menu never existed (VERIFIED on GTK)
+
+Kent, 2026-09-11: *"context works in gtk"* — so the route to Sound Settings is back
+under GTK. WebKit and Qt are still unverified.
+
+
+`ui_webview.ContextMenu` was a four-method stub whose methods all returned None.
+Because nothing raised, every `setcontext()` in the app ran to completion against a
+menu that was not there — and the cost was a route the user could not take: **Sound
+Settings is reached by right-clicking a task window and has no other way in**
+(`tasks/sound.py:33`).
+
+`Menu` was never the problem — `add_command` and `tk_popup` (a positioned `.wv-menu`
+div, dismissed on an outside click) have worked all along. Three things were missing
+around it:
+
+- **`parent.context = self` was never set.** `ui_tkinter.ContextMenu` does it
+  (`:3714`), and both call sites depend on it: `ui_shell.py:2979` and `:3733` construct
+  `ui.ContextMenu(self)` and discard the result, so everything afterwards reaches the
+  object as `window.context`.
+- **No `menuitem`** — the method every `setcontext()` calls to add its entries.
+- **Nothing bound to right-click, and no `do_popup`** for a binding to reach.
+
+Also mapped `<<ContextMenu>>` in `widgets.js`. That is the tkinter *virtual* event the
+Tk version binds on the window, and unmapped names fall through to
+`addEventListener('<<ContextMenu>>')` — a listener for an event nothing fires, the same
+silent death `<Button-3>` had until 2026-09-09. (macOS needs nothing extra: browsers
+fire `contextmenu` for Control-click, which is what Tk re-points the virtual event at
+on Aqua.)
+
+**Why nothing caught it:** `ui_interface.ContextMenuInterface` declares exactly
+`menuinit`, `updatebindings` and `undo_popup` — the three the stub implemented. The two
+methods that do the work, `menuitem` and `do_popup`, are absent from the contract, so
+the stub was complete by the only standard it was checked against. The ABC does not
+match the tkinter implementation either, which has no `updatebindings` at all.
+13 tests in `tests/test_webview_context_menu.py`.
+
+## Fixed — webview UI faults from the macOS run
+
+- **`NameError: '_wv_window_for' is not defined`** — called at three places in
+  `ui_webview.py` and defined nowhere; every other widget reads
+  `getattr(self,'_wv_window',None)`. It killed `focus_set`, so the interface-language
+  dialog could not put the caret in its field.
+- **Newlines in messages were being thrown away.** The webview label set
+  `white-space: normal`, which does only half of tkinter's Label contract: it wraps long
+  lines but collapses the author's own line breaks. The transcription notice — a lead
+  line, a bulleted list of what is missing, then a closing paragraph — arrived as one run
+  of prose. Now `pre-wrap`, on every label rather than only ones with a `wraplength`,
+  because tkinter honours `\n` unconditionally too.
+
+## Filed, not fixed
+
+- **macOS clicks land off the control** (`agenda/macos_clicks_land_below_the_pointer.md`)
+  — seen on pages with a SINGLE button, which rules out every row/index explanation and
+  makes it a displacement. The same session logged two screen heights, `1680x968` and
+  `1680x1025`; that 57px is a menu bar, and it would read as "one row off" in a settings
+  list and "aim off the button" on a one-button page. Deliberately NOT changed yet: Kent
+  is testing whether the touchpad is at fault, and a code change now would muddy that.
+- **The webview splash renders four of its seven parts** — the bottom three, including
+  the progress bar, which is the only thing that moves during boot
+  (`agenda/webview_splash_missing_parts.md`).
+- **The webview image list is a short hand copy of tkinter's** — 35 names missing,
+  including every sort-board verb image and the numbered C/V images, all failing silently
+  (`agenda/webview_imagelist_stale_copy.md`).
+- Card images on a lighter rectangle (`agenda/webview_card_image_backing.md`); the Sound
+  Card Settings caveat label wider than its window, added to
+  `agenda/scrollframe_sizes_from_layout.md`.
+- The language chooser's dicts are now **proved** to come from the call site, not the
+  widget: the app logs `asking with these options: [{'code': 'ar', 'name': 'Arabic'}, …]`
+  before any widget is involved (`agenda/language_options_show_objects.md`).
+
+## Awaiting verification
+
+Everything above marked Fixed is code-changed and unverified on Kent's machines, with one
+exception worth stating plainly: **the macOS installer changes have not been run on a
+clean Mac.** The stamp fix in particular can only be confirmed by installing fresh and
+watching the second startup skip pip.
+
 # Version 1.15.19
 
 **A recording that is wrong now says so, to the user and not only to the log — and the

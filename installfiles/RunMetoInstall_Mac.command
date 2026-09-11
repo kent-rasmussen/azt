@@ -723,31 +723,36 @@ else
         note "no developer tools, so installing from wheels only: anything that"
         note "would need compiling is reported instead of prompting for Xcode"
     fi
-    FILTERED="$TMPDIR_AZT/requirements-macos.txt"
-    sed -e '/^PyAudio/d' "$REQ" > "$FILTERED"
-    note "PyAudio held back for a separate attempt (sound is optional)"
-    if "$VPY" -m pip install ${WHEELS_ONLY:+"$WHEELS_ONLY"} -r "$FILTERED"; then
+    # NO FILTERING, AND NO SEPARATE SOUND ATTEMPT (2026-09-11). Both existed
+    # for PyAudio, which needed a compiler this machine may not have, so it
+    # was held out of `-r` and tried on its own where its failure could be
+    # survived. `sounddevice` replaced it (agenda/pyaudio_to_sounddevice.md)
+    # and ships PortAudio in a universal2 wheel, so sound now installs like
+    # everything else and the special case is not just unnecessary, it was
+    # actively harmful:
+    #   1. `sed '/^PyAudio/d'` deleted nothing — PyAudio left requirements.txt
+    #      2026-09-09 — so the filtered file was a pointless copy;
+    #   2. `pip install PyAudio` then tried to BUILD PyAudio from source on a
+    #      Mac, the exact failure the port removed, and told the user
+    #      "A-Z+T will run WITHOUT sound" on a machine where sound works;
+    #   3. worst, the stamp below was gated on `SOUND = yes`, so that
+    #      guaranteed failure withheld the requirements stamp and A-Z+T ran
+    #      pip again on EVERY startup. Kent asked why ("should finish the
+    #      install and no rerun pip on each open?"); this was why.
+    if "$VPY" -m pip install ${WHEELS_ONLY:+"$WHEELS_ONLY"} -r "$REQ"; then
         DEPS=yes
+        SOUND=yes   # sounddevice is in requirements.txt; no separate step
         note "packages installed"
     else
         DEPS="incomplete"
+        SOUND=unknown
         warn "at least one package would not install."
         note "On a Mac with no compiler the only cure is a wheel, and that has"
         note "to be fixed in requirements.txt — not on this machine. Send the"
         note "lines above to the developer. A-Z+T may still start."
     fi
-    # PyAudio on its own: sound is optional, so its failure is not the
-    # install's failure.
-    if "$VPY" -m pip install ${WHEELS_ONLY:+"$WHEELS_ONLY"} PyAudio >/dev/null 2>&1; then
-        SOUND=yes
-        note "PyAudio installed — recording and playback should work"
-    else
-        SOUND=no
-        note "PyAudio would not install: A-Z+T will run WITHOUT sound."
-        note "Recording and playback will be unavailable; nothing else changes."
-    fi
     # The stamp, only if the WHOLE file went in as written.
-    if [ "$DEPS" = yes ] && [ "$SOUND" = yes ]; then
+    if [ "$DEPS" = yes ]; then
         STAMP="$("$VPY" -c "import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())" "$REQ" 2>/dev/null)"
         if [ -n "$STAMP" ]; then
             printf '%s' "$STAMP" > "$VENV/azt_requirements.stamp" \
@@ -884,12 +889,14 @@ fi
 #   torch==2.7.1+cpu  — that '+cpu' local version is built only for Linux and
 #                       Windows. macOS wheels are plain 2.7.1 (and CPU-only
 #                       anyway), so the pin as written cannot resolve.
-#   PyAudio           — historically needed portaudio and a compiler; the
-#                       Linux script installs portaudio19-dev for exactly
-#                       that. Checked on its own because sound is optional in
-#                       the program (program['nosound']).
 # allosaurus already carries a `sys_platform == "linux"` marker, so it is not
 # a macOS problem.
+#
+# PyAudio used to be checked separately here, because it needed a compiler and
+# sound is optional in the program (program['nosound']). It is gone from
+# requirements.txt (replaced by sounddevice, 2026-09-09), so there is nothing
+# to check separately: sounddevice ships PortAudio in a universal2 wheel and
+# is answered by the ordinary `-r` resolve below like anything else.
 if [ "$CHECK_WHEELS" = yes ]; then
     say "Checking which requirements have macOS wheels (installing nothing)"
     if [ "$DRY_RUN" = yes ]; then
@@ -901,14 +908,11 @@ if [ "$CHECK_WHEELS" = yes ]; then
         "$PY" -m venv "$WORK" || die "could not make a scratch venv"
         WPY="$WORK/bin/python"
         "$WPY" -m pip install --quiet --upgrade pip >/dev/null 2>&1
-        FILTERED="$TMPDIR_AZT/requirements-wheelcheck.txt"
-        sed -e '/^PyAudio/d' "$REQ" > "$FILTERED"
-        note "PyAudio checked separately below"
         # --only-binary stays unconditional HERE, unlike the install above:
         # the question this switch answers is "does a wheel exist", and that
         # does not change because the machine happens to own a compiler.
-        if "$WPY" -m pip install --dry-run --only-binary :all: -r "$FILTERED" >"$TMPDIR_AZT/wheels.log" 2>&1; then
-            note "RESULT: every other requirement has a macOS wheel."
+        if "$WPY" -m pip install --dry-run --only-binary :all: -r "$REQ" >"$TMPDIR_AZT/wheels.log" 2>&1; then
+            note "RESULT: every requirement has a macOS wheel."
         else
             warn "RESULT: at least one requirement has no macOS wheel."
             note "The lines below name it. That is a packaging problem to fix"
@@ -916,12 +920,6 @@ if [ "$CHECK_WHEELS" = yes ]; then
             note "allosaurus already has — NOT a reason to install Xcode on a"
             note "user's machine."
             tail -n 25 "$TMPDIR_AZT/wheels.log"
-        fi
-        if "$WPY" -m pip install --dry-run --only-binary :all: PyAudio >/dev/null 2>&1; then
-            note "PyAudio: has a macOS wheel, so recording should work."
-        else
-            note "PyAudio: no macOS wheel. A-Z+T will run without sound;"
-            note "  recording and playback will be unavailable."
         fi
     fi
 fi
@@ -933,7 +931,7 @@ note "python:   $PY"
 note "git:      $GIT${GIT_VERSION:+ (version $GIT_VERSION)}"
 note "fonts:    $FONTS"
 note "packages: $DEPS"
-note "sound:    $SOUND"
+note "sound:    $SOUND (sounddevice, installed with the rest)"
 if [ "$DO_SHORTCUT" = no ]; then
     note "start it with: cd $DEST && ./env/bin/python main.py"
 else

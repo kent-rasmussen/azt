@@ -6,6 +6,7 @@ logsetup.setlevel('INFO',log) #for this file
 from utilities.i18n import _
 from frontend import ui
 from utilities.error_handler import notify_error as ErrorNotice
+from utilities.error_handler import notify_user
 from io_put import sound
 from utilities import file, executables, utilities as utils
 class RecordButtonFrame(ui.Frame):
@@ -140,7 +141,15 @@ class RecordButtonFrame(ui.Frame):
         # (backend/core/sound.py:436) and says so in its docstring.
         audio=getattr(task,'audio',None)
         if audio is None or not audio.usable():
-            task.audio=sound.AudioInterface()
+            # Through the owner where there is one: confirm_audio() stores the
+            # handle on `program` so every surface shares it, which a bare
+            # AudioInterface() here would not (see sort_buttons._playback).
+            ss=getattr(task,'soundsettings',None)
+            if ss is not None and hasattr(ss,'confirm_audio'):
+                ss.confirm_audio()
+                task.audio=ss.audio
+            else:
+                task.audio=sound.AudioInterface()
         self.pa=task.audio
         if not hasattr(task,'soundsettings') or not hasattr(task,'program'):
             log.error("task missing a settings attr? "
@@ -364,10 +373,36 @@ class SoundSettingsWindow(ui.Window):
         window.destroy()
     def updatesoundformat(self):
         self.labeltext['sample_format'].set(self.soundformatlabel())
+    def _describe(self, mapping, key, what):
+        """The friendly name for `key`, or the raw value if there isn't one.
+
+        NEVER RAISES, and that is the whole point. Three of the four label
+        builders indexed their lookup tables directly, so ONE setting the
+        table did not recognise raised inside `soundcheckrefresh` — between
+        "Done setting up labels" and the labels being filled — and the Sound
+        Settings window was built, left withdrawn, and never shown. Kent,
+        2026-09-11: "sound settings window didn't show."
+
+        **This is the worst possible place for that failure.** Sound Settings
+        is the screen a user opens IN ORDER TO fix a bad sound setting, so a
+        bad setting must not be what stops it opening. An unrecognised value
+        shows as itself — which also tells the user (and the log) exactly
+        which value is the odd one, instead of hiding it behind a dead menu.
+        """
+        try:
+            if key in mapping:
+                return mapping[key]
+        except TypeError:      # mapping isn't a mapping
+            pass
+        log.warning("sound settings: %s %r is not in the list of known "
+                    "values; showing it as-is", what, key)
+        return key
+
     def soundformatlabel(self):
         self.soundsettings.check()
-        cur=self.soundsettings.hypothetical['sample_formats'][
-                                            self.soundsettings.sample_format]
+        cur=self._describe(self.soundsettings.hypothetical['sample_formats'],
+                           getattr(self.soundsettings,'sample_format',None),
+                           'format')
         return _(f"{cur}")
     def setsoundcard_byname(self,name):
         if name in self.soundsettings.cards['dict'].values():
@@ -380,22 +415,83 @@ class SoundSettingsWindow(ui.Window):
         else:
             log.error(f"card {name} not available "
                         f" ({self.soundsettings.cards['dict'].keys()})")
-        self.updatesoundcard()
-        self._refresh_test_filename()   # see setsoundhz
+        self._new_input_card()
     def setsoundcardindex(self,choice,window):
         # log.info("setsoundcardindex: {}".format(choice))
         self.soundsettings.choose_card('in',choice)
-        self.updatesoundcard()
-        self._refresh_test_filename()   # the name carries the input card too
+        self._new_input_card()
         window.destroy()
+    def _new_input_card(self):
+        """A different microphone: re-derive the other settings and MEASURE it.
+
+        Kent, 2026-09-11: "any card switch legitimately implies other settings
+        change; let's offer the best the newly selected card has" — and, on the
+        question of a button: "I think running that on switching input cards
+        would be preferable to another button users have to hit."
+
+        Both are improvements on what was here. `choose_card` already calls
+        `forget_rate_checks()`, correctly, because a measurement of the old
+        path says nothing about the new one — but nothing then re-measured, so
+        switching cards could only ever LOSE information: the rate list went
+        back to unannotated and stayed that way until the user happened to make
+        a test recording. And the rate/format were left as the previous card's,
+        re-derived only if the new card could not do them at all
+        (`makedefaultifnot`), so a card offering 48000 kept a 192000 that
+        merely happened to be in its list.
+
+        Measuring HERE and not inside `choose_card`: that is a low-level setter
+        documented as the only safe way to set a card, and a second of audio
+        recording does not belong in one — a future caller on a startup path
+        would silently acquire a recording. Output cards do not come here at
+        all; nothing about the speakers affects what gets recorded.
+        """
+        ss=self.soundsettings
+        # The new card's best, before measuring: this is also the answer if the
+        # room turns out to be too quiet to judge.
+        try:
+            ss.default_fs()
+            ss.default_sf()
+        except Exception as e:
+            log.info("couldn't re-derive settings for the new card ({})"
+                    .format(e))
+        rate=message=None
+        try:
+            # The wait dialog because this RECORDS, on this thread, inside the
+            # click handler — without it the settings window freezes for the
+            # capture with no explanation. (Kent was unconvinced it was needed;
+            # doing it his stated way — "do it, and we'll see".)
+            with self.task.waiting(_("Checking what this microphone can do...")):
+                rate,message=ss.verify_fs()
+        except Exception as e:
+            log.info("couldn't check the new microphone's rates ({})".format(e))
+        if rate:
+            # The verified rate may not offer the format the old one did.
+            try:
+                ss.default_sf()
+            except Exception as e:
+                log.info("couldn't re-derive the format for {} Hz ({})"
+                        .format(rate,e))
+        self.relabel_settings()         # fs and format moved, not just the card
+        self._refresh_test_filename()   # the name carries all three
+        # QUIETER THAN A BUTTON WOULD BE. `verify_fs` returns (None, reason)
+        # when the room was too quiet to judge; on a button that is a fair
+        # answer to a question the user asked, but fired on every card switch
+        # it is a nag for something they did not ask about and cannot act on.
+        # So speak only when there is news; the rate list carries the rest.
+        if rate and message:
+            notify_user(message)
+        elif message:
+            log.info("rate check on the new microphone: %s", message)
     def updatesoundcard(self):
         self.labeltext['audio_card_in'].set(self.soundcardlabel())
     def soundcardlabel(self):
         self.soundsettings.check()
-        if self.soundsettings.audio_card_in in self.soundsettings.cards['dict']:
-            cur=self.soundsettings.cards['dict'][self.soundsettings.audio_card_in]
-        else:
-            cur=None
+        # Was the only guarded one of the four, which is why it is not the
+        # one that broke. It showed `None` for an unknown card, though —
+        # less useful than the index itself, which is what _describe gives.
+        cur=self._describe(self.soundsettings.cards['dict'],
+                           getattr(self.soundsettings,'audio_card_in',None),
+                           'input card')
         return _(f"Microphone: '{cur}'")
     def setsoundcardoutindex(self,choice,window):
         # log.info("setsoundcardoutindex: {}".format(choice))
@@ -406,7 +502,9 @@ class SoundSettingsWindow(ui.Window):
         self.labeltext['audio_card_out'].set(self.soundcardoutindexlabel())
     def soundcardoutindexlabel(self):
         self.soundsettings.check()
-        cur=self.soundsettings.cards['dict'][self.soundsettings.audio_card_out]
+        cur=self._describe(self.soundsettings.cards['dict'],
+                           getattr(self.soundsettings,'audio_card_out',None),
+                           'output card')
         return _(f"Speakers: '{cur}'")
     def setsoundhz(self,choice,window):
         self.soundsettings.fs=choice
@@ -425,8 +523,9 @@ class SoundSettingsWindow(ui.Window):
         self.labeltext['fs'].set(self.soundhzlabel())
     def soundhzlabel(self):
         self.soundsettings.check()
-        cur=self.soundsettings.hypothetical['fss'][self.soundsettings.fs]
-        return _(cur)
+        cur=self._describe(self.soundsettings.hypothetical['fss'],
+                           getattr(self.soundsettings,'fs',None), 'rate')
+        return _(str(cur))
     def getsoundcardindex(self,event=None):
         log.info("Asking for input sound card...")
         window=ui.Window(self,
@@ -488,15 +587,57 @@ class SoundSettingsWindow(ui.Window):
                 ).grid(column=0, row=0)
         l=list()
         ss=self.soundsettings
-        for fs in ss.cards['in'][ss.audio_card_in]:
-            name=ss.hypothetical['fss'][fs]
-            l+=[(fs, name)]
+        for fs in sorted(ss.cards['in'][ss.audio_card_in]):
+            l+=[(fs, self._rate_option_label(fs))]
         buttonFrame1=ui.ButtonFrame(window.frame,
                                     optionlist=l,
                                     command=self.setsoundhz,
                                     window=window,
                                     column=0, row=1
                                     )
+    def _rate_option_label(self, fs):
+        """The rate, plus what has been MEASURED about it. ANNOTATE, DON'T
+        WITHHOLD (Kent, 2026-09-11: "Can we show users what we believe is true
+        without actually limiting options?").
+
+        Every rate the card will open stays selectable — the same principle as
+        DETECT AND TELL, NEVER SWITCH, which this screen had not inherited: it
+        listed what the device ACCEPTS and said nothing about what recording at
+        that rate actually produced, so a rate disproved by the user's own last
+        take was offered again, unmarked, beside one that recorded cleanly.
+
+        Three states, and the third is the common one — so no note at all is
+        the default, and an unannotated entry means "not checked" without
+        needing a legend to say so (Kent: "leave this off"). Notes state the
+        EVIDENCE, never a verdict: this detector has been wrong about enough
+        rates in one day that "stretched, as measured" is honest and "bad" is
+        not. No colour carries any of it.
+
+        NOT ANNOTATED FROM THE PROBE, deliberately — see `measured_fs`: it
+        sweeps rates back to back with no settle pause, which is exactly the
+        condition that produced a false 'resampled' accusation in the manual
+        prober (agenda/honest_sound_settings.md, finding 2b). Its verdict is
+        good enough to CHOOSE conservatively with and not good enough to tell
+        a user their device is lying. So "stretched" comes only from
+        `note_fake_rate`, i.e. from a real take of several seconds.
+        """
+        ss=self.soundsettings
+        name=ss.hypothetical['fss'][fs]
+        try:
+            disproved=ss.fake_rates_here()
+            verified=ss.measured_fs()   # cache only; never records here
+        except Exception as e:
+            log.info("couldn't read the rate checks ({})".format(e))
+            return name
+        if fs in disproved:
+            if verified and verified < fs:
+                return _("{name} — checked: stretched from {real} Hz").format(
+                            name=name, real=verified)
+            return _("{name} — checked: stretched from a lower rate").format(
+                        name=name)
+        if verified is not None and fs == verified:
+            return _("{name} — checked: records cleanly").format(name=name)
+        return name
     def _refresh_test_filename(self):
         """Re-derive the mic-check filename from the CURRENT settings.
 

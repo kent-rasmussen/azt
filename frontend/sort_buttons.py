@@ -824,9 +824,26 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                            'soundsettings',None))
         if ss is None:
             return None,None
-        audio=(getattr(ss,'audio',None)
-                 or getattr(self.task,'audio',None)
-                 or getattr(self.program,'audio',None))
+        # ONE OWNER FOR THE HANDLE (2026-09-11). This used to read
+        # `ss.audio or task.audio or program.audio` — three places to look for
+        # one object, under the comment above recording the attribute being
+        # missed three times in one evening. A fourth fallback was never the
+        # answer: `SoundSettings.confirm_audio()` is the accessor that OWNS
+        # `program.audio` (backend/core/sound.py:1299) and is guarded by tests
+        # (test_sound_units.py:83-105). Ask it. `ensure` already ran it in
+        # __init__, so the call matters only on the fallback path above, where
+        # `ss` came from a hunt and may predate a handle.
+        audio=getattr(ss,'audio',None)
+        if audio is None:
+            try:
+                ss.confirm_audio()
+                audio=ss.audio
+            except Exception as e:
+                # No handle to be had (sounddevice absent, or the device went
+                # away). A label, not a traceback — as the docstring promises.
+                log.info("no audio handle for %s (%s); the button becomes a "
+                        "label.",type(self.task).__name__,e)
+                return None,None
         return audio,ss
     def playbutton(self):
         """A play button, or a plain LABEL when this machine can't play at all.

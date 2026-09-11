@@ -345,8 +345,14 @@ def _close_native_window(owner, label='window'):
         return
     try:
         wv.hide()
-        log.info("{} hidden rather than destroyed (see _close_native_window: "
-                 "destroying crashes QtWebEngine)".format(label))
+        # The message used to say "destroying crashes QtWebEngine", which the
+        # docstring above RETRACTED on 2026-09-08 — destroying is fine; being
+        # garbage-collected at the wrong moment is what crashes. Left as it
+        # was, the log went on asserting the retracted cause to every future
+        # reader, in the one place a person looks first.
+        log.info("{} hidden rather than destroyed: reused, not rebuilt, and "
+                 "freeing a pywebview window at the wrong moment is what "
+                 "crashes Qt (see _close_native_window)".format(label))
     except Exception as e:
         log.debug("could not hide {}: {}".format(label, e))
 
@@ -2486,15 +2492,108 @@ class RadioButtonFrame(Frame):
 
 
 class ContextMenu:
+    """Right-click menu on a window. WAS A FOUR-METHOD STUB, and the stub is
+    how you lost the route to Sound Settings under webview (Kent, 2026-09-11:
+    "I'm talking about the context menu I used to get to the sound settings").
+
+    `Menu` below has worked all along — `add_command`, `tk_popup` positioning a
+    `.wv-menu` div, dismiss-on-outside-click, and the CSS for it. Nothing was
+    missing from the MENU. What was missing was every part of making one
+    appear:
+
+    1. **`parent.context = self` was never set.** `ui_tkinter.ContextMenu`
+       does it (:3714) and both call sites rely on it: `ui_shell.py:2979` and
+       `:3733` just construct `ui.ContextMenu(self)` and then everything else
+       reaches the object through `window.context`. So `self.context.menuinit()`
+       (`ui_shell.py:189`, `:2221`) and `self.context.menuitem(...)`
+       (`tasks/sound.py:33`) had nothing to find.
+    2. **No `menuitem`.** The method every `setcontext()` in the app calls to
+       add its entries.
+    3. **No `do_popup`, and nothing bound to right-click.** So no gesture could
+       have produced a menu even if one had been built.
+
+    TENTH gap of the shape recorded at `bind_all` above, and the worst of them
+    for reachability: a stub whose methods all return None cannot raise, so
+    every `setcontext()` in the app ran to completion and the menu silently did
+    not exist. Sound Settings has no other route from a task window.
+
+    `<<ContextMenu>>` is the tkinter virtual event the Tk version binds, now
+    mapped in widgets.js — so app code that binds that name works here too,
+    instead of registering a DOM listener for an event called
+    "<<ContextMenu>>" that nothing fires.
+    """
+
     def __init__(self, parent, *args, **kwargs):
         self.parent = parent
+        self.parent.context = self
+        self.popup = False
+        self.updatebindings()
 
     def menuinit(self):
-        pass
+        """Fresh menu, so a context change does not append to the old one."""
+        try:
+            old = getattr(self, 'menu', None)
+            if old is not None:
+                old.destroy()
+        except Exception as e:
+            log.info("couldn't destroy the previous context menu ({})".format(e))
+        self.menu = Menu(self.parent)
+
+    def menuitem(self, msg, cmd):
+        """Add an entry, creating the menu if this is the first one — the same
+        contract as the tkinter version, which recovers from a destroyed menu
+        the same way."""
+        if getattr(self, 'menu', None) is None:
+            self.menuinit()
+        try:
+            self.menu.add_command(label=msg, command=cmd)
+        except AttributeError:
+            self.menuinit()
+            self.menu.add_command(label=msg, command=cmd)
+
     def updatebindings(self):
-        pass
+        # On a window, bindEvent falls back to `document`, so this catches a
+        # right-click anywhere in the page — which is what the Tk version gets
+        # from binding the virtual event on the window.
+        try:
+            self.parent.bind('<<ContextMenu>>', self.do_popup)
+        except Exception as e:
+            log.info("couldn't bind the context menu ({})".format(e))
+
+    def do_popup(self, event=None):
+        if getattr(self, 'menu', None) is None:
+            # No setcontext() has run yet, or it ran before this menu existed.
+            # Same recovery as tkinter's, and the reason it is here: the
+            # window's own setcontext walks the task mixins and is what knows
+            # which entries belong on this page.
+            try:
+                self.parent.setcontext()
+            except Exception as e:
+                log.info("setcontext failed for the context menu ({})"
+                        .format(e))
+        if getattr(self, 'menu', None) is None or not self.menu._items:
+            log.info("right-click with no context-menu entries on %s",
+                    type(self.parent).__name__)
+            return
+        # PAGE coordinates, not `x_root`. The event this backend delivers
+        # carries clientX/clientY as `x`/`y` (see _WebviewWidget.bind), and
+        # `tk_popup` positions an absolutely-placed div, so page coordinates
+        # are what it wants. `x_root` is accepted first for the tkinter
+        # callers that pass a synthetic event.
+        x = getattr(event, 'x_root', None) or getattr(event, 'x', 0) or 0
+        y = getattr(event, 'y_root', None) or getattr(event, 'y', 0) or 0
+        self.menu.tk_popup(x, y)
+        self.popup = True
+
     def undo_popup(self, event=None):
-        pass
+        if not self.popup:
+            return
+        try:
+            if getattr(self, 'menu', None) is not None:
+                self.menu.destroy()
+        except Exception as e:
+            log.info("couldn't dismiss the context menu ({})".format(e))
+        self.popup = False
 
 
 class ToolTip:
