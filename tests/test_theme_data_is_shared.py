@@ -66,6 +66,46 @@ def test_both_backends_use_THE_SAME_themes():
     assert theme.themes == theme_data.THEMES
 
 
+def test_the_webview_backend_reads_the_theme_THE_APP_SET():
+    """TWO faults in one line, and fixing the dictionary only removed one.
+
+    `App.check_for_theme` (main.py:1528) puts the chosen theme's NAME on
+    `program.theme` as a string. `ui_webview.Theme` read `program.theme_name`
+    — an attribute NOTHING sets, appearing twice in the codebase, both in
+    that file — so the webview backend never learned the user's theme and
+    silently used the default. The fallback could not even warn, because the
+    default is a valid theme name.
+
+    Kent, after the missing-themes fix: "still says Kim on my machine without
+    my Kim theme visible (qt and gtk)."
+    """
+    wv = pytest.importorskip('frontend.ui_webview',
+                             reason='needs the webview backend importable')
+    import types
+    program = types.SimpleNamespace(theme='Kim', name='A-Z+T')
+    theme = wv.Theme.__new__(wv.Theme)
+    # Only the theme-choosing part; the rest builds fonts and loads images.
+    chosen = getattr(program, 'theme', None)
+    if not isinstance(chosen, str):
+        chosen = getattr(program, 'theme_name', None)
+    assert chosen == 'Kim', 'the name must be read BEFORE program.theme is ' \
+                            'replaced by the Theme object'
+    theme.themes = theme_data.THEMES
+    theme.name = chosen if isinstance(chosen, str) else theme_data.DEFAULT_THEME
+    assert theme.name in theme.themes
+    assert theme.themes[theme.name] is theme_data.THEMES['Kim']
+
+
+def test_nothing_reads_the_attribute_nobody_sets():
+    """`theme_name` was read and never written. Assert the read is gone, so
+    the next person does not reintroduce a lookup with no source."""
+    src = (ROOT / 'frontend' / 'ui_webview.py').read_text()
+    live = [ln for ln in src.splitlines()
+            if 'theme_name' in ln and not ln.strip().startswith('#')]
+    assert len(live) <= 1, \
+        "theme_name should survive only as a fallback: {}".format(live)
+
+
 def test_the_themes_that_were_missing_are_present():
     """Named rather than counted: `Kim` is the one that was actually being
     used when this was found."""

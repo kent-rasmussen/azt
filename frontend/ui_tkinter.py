@@ -1560,6 +1560,16 @@ class Waitable(Exitable):
             ww=Wait(root)
             root.ww=ww
         return ww
+    # How long an operation must run before it is worth a dialog. Below this
+    # the work finishes and nobody sees anything; above it the dialog appears
+    # as it always did. Short enough that a slow operation still feels
+    # answered, long enough that ordinary work passes in silence.
+    # Same value and same name as ui_webview's module-level constant. They
+    # were `WAIT_DELAY_MS` here and `_WAIT_DELAY_MS` there for an hour, which
+    # the backend-parity audit duly reported as a gap — correctly, since a
+    # difference with no meaning is exactly what it exists to catch.
+    WAIT_DELAY_MS = 400
+
     def wait(self,msg=None,cancellable=False,thenshow=False):
         ww=self._waitwindow()
         if ww is None:
@@ -1579,12 +1589,39 @@ class Waitable(Exitable):
         log.info(f"updating wait: {self.winfo_viewable()|thenshow=} "
                 f"{self.winfo_viewable()=} {thenshow=} ")
         self.showafterwait=self.winfo_viewable()|thenshow
-        if self.showafterwait:
-            _w=time.perf_counter()
-            self.withdraw() # DIAG (1.3.16): kiosk withdraw — a state transition that
-            log.info("wait: kiosk withdraw %.2fs", time.perf_counter()-_w) # may wedge
-        ww.activate(parent=self,msg=msg,cancellable=cancellable,
-                    reveal=self.showafterwait)
+        # AFTER A DELAY, NOT NOW. An operation that finishes in 200ms does not
+        # need a dialog; showing one and taking it away again is flicker, and
+        # under webview it also withdrew and restored the page — Kent,
+        # 2026-09-11, opening Add and Parse Words with Audio: "the page opens
+        # (almost?) complete, then goes away to build the wait dialog, which
+        # returns almost immediately."
+        #   A delay answers both cases with one rule. Fast work shows nothing
+        # at all; slow work behaves exactly as before. It is also why the
+        # withdraw moved in here: a page must not be hidden for a wait that
+        # never appears.
+        self._wait_args=dict(parent=self,msg=msg,cancellable=cancellable,
+                            reveal=self.showafterwait)
+        if getattr(self,'_waittimer',None) is not None:
+            return              # already scheduled; the new args stand
+        def _show_wait():
+            self._waittimer=None
+            args=getattr(self,'_wait_args',None)
+            if not args or ww.active:
+                return
+            if self.showafterwait:
+                _w=time.perf_counter()
+                self.withdraw() # DIAG (1.3.16): kiosk withdraw — a state
+                log.info("wait: kiosk withdraw %.2fs", # transition that may
+                        time.perf_counter()-_w)        # wedge
+            ww.activate(**args)
+        try:
+            self._waittimer=self.after(self.WAIT_DELAY_MS,_show_wait)
+        except Exception as e:
+            # `after` needs the main thread. Fall back to the old behaviour
+            # rather than skipping the dialog: a missing wait on a slow
+            # operation looks like a hang.
+            log.info("couldn't schedule the wait dialog (%s); showing it now",e)
+            _show_wait()
     def iswaiting(self):
         # "Is the one reused wait window currently shown" (not "does a ww exist") —
         # the window now persists across waits, so activeness is what callers mean.
@@ -1674,6 +1711,18 @@ class Waitable(Exitable):
         # render is covered by "Loading…" instead of a blank screen. (1.3.38; the gap
         # is update(), not the deiconify, which is ~0s — 1.3.37 timing.) The dialog
         # is WITHDRAWN, not destroyed: it's the one reused window.
+        # A WAIT THAT NEVER APPEARED just goes away. This is the common case
+        # now: the work finished inside WAIT_DELAY_MS, so there is no dialog
+        # to dismiss and, because the withdraw moved into the timer, no page
+        # to restore either.
+        self._wait_args=None
+        _t=getattr(self,'_waittimer',None)
+        if _t is not None:
+            self._waittimer=None
+            try:
+                self.after_cancel(_t)
+            except Exception as e:
+                log.info("couldn't cancel the pending wait dialog (%s)",e)
         ww=self._waitwindow(create=False)
         if ww is None or not ww.active:
             return

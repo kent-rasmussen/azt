@@ -69,11 +69,21 @@ class StatusWindow(ui.Window):
         # first time — and it came up black, because nothing had ever needed to
         # paint it (Kent 2026-08-25). Before _fill_parent the canvas was exactly
         # content-height, so none of it ever showed.
-        try:
-            self.scroll.canvas['background'] = self.theme.background
-            self.scroll.canvas['highlightthickness'] = 0
-        except Exception as e:
-            log.info("status window canvas theming failed: %s", e)
+        # ONLY WHERE THERE IS A CANVAS. tkinter's ScrollingFrame scrolls by
+        # putting its content on a Canvas, which is why the empty area has to
+        # be painted. A browser scrolls a div and paints it from CSS, so
+        # there is nothing here to theme — and asking anyway logged
+        # "status window canvas theming failed" on every run under webview,
+        # which reads as a fault rather than as a difference.
+        canvas = getattr(self.scroll, 'canvas', None)
+        if canvas is None:
+            log.debug("no canvas to theme (this backend scrolls without one)")
+        else:
+            try:
+                canvas['background'] = self.theme.background
+                canvas['highlightthickness'] = 0
+            except Exception as e:
+                log.info("status window canvas theming failed: %s", e)
         self.frame.grid_rowconfigure(0, weight=1)
         self.frame.grid_columnconfigure(0, weight=1)
         # Let the content FILL the window. `Window.post_tk_init` centers the

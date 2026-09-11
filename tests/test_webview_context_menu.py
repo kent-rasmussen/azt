@@ -187,6 +187,34 @@ def test_undo_popup_is_quiet_when_nothing_is_shown():
     assert cm.popup is False
 
 
+def test_wait_does_not_hide_the_page_it_is_waiting_on():
+    """Kent, 2026-09-11: "the page opens (almost?) complete, then goes away to
+    build the wait dialog, which returns almost immediately."
+
+    Withdrawing the caller is right under tkinter — it puts a slow render
+    behind "Loading…" instead of a blank screen — and wrong here, where the
+    page is already rendered and hiding it removes a finished window for a
+    moment. Read from source, since exercising it needs a live wait window."""
+    import inspect
+    src = inspect.getsource(ui_webview)
+    body = src.split('def wait(self, msg=None, cancellable=False')
+    # TWO copies, deliberately (Toplevel and Root mirror each other rather
+    # than sharing an MRO — see the note above `_waitwindow`). The first fix
+    # reached only one of them, because they had drifted to `bool(x) or
+    # bool(y)` and `x | y` for the same intent and a search-and-replace
+    # matched one. Assert the COUNT so a third copy, or a renamed one, fails
+    # here rather than being silently unfixed.
+    assert len(body) == 3, \
+        'expected exactly two wait() definitions, found {}'.format(
+            len(body) - 1)
+    for chunk in body[1:]:
+        chunk = chunk.split('def waitdone')[0]
+        assert 'self.withdraw()' not in chunk, \
+            'wait() must not hide the window it is waiting on'
+        assert '_waittimer' in chunk, \
+            'wait() must schedule the dialog, not show it immediately'
+
+
 def test_windows_are_NOT_created_hidden():
     """A window created hidden never loads its page on Qt, so its JS queue
     never flushes and it comes up BLANK — with every widget the Python side

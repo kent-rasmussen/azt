@@ -301,6 +301,12 @@ def _engine():
 # being dropped is inside pywebview's Qt backend, not ours.
 _all_wv_windows = []
 
+# How long an operation must run before it is worth a dialog. Below this the
+# work finishes and nobody sees anything; above it the dialog appears as it
+# always did. Same name as ui_tkinter's so the two cannot drift unnoticed.
+WAIT_DELAY_MS = 400
+_WAIT_DELAY_MS = WAIT_DELAY_MS          # the name used inside wait()
+
 
 def _badge(window, label, program=None):
     """Stamp a corner badge naming the window, so a page on screen can be
@@ -794,6 +800,63 @@ class _WebviewWidget:
     def grid_columnconfigure(self, index, **kwargs):
         pass
 
+    # THE SHORT SPELLINGS ARE THE SAME CALL. tkinter accepts both
+    # `columnconfigure` and `grid_columnconfigure`, the app uses both, and
+    # only the long ones existed here — so every call site using the short
+    # form raised AttributeError, inside a callback where `on_event` logs and
+    # carries on. Found by the backend-parity audit (2026-09-11) rather than
+    # by a user, which is the point of the audit.
+    def rowconfigure(self, index, **kwargs):
+        return self.grid_rowconfigure(index, **kwargs)
+
+    def columnconfigure(self, index, **kwargs):
+        return self.grid_columnconfigure(index, **kwargs)
+
+    def grid_forget(self):
+        """Hide without destroying — tkinter's other name for grid_remove."""
+        return self.grid_remove()
+
+    def winfo_ismapped(self):
+        """Is this on screen? Logged three times a run as a failure before
+        this existed ("status window width probe failed"), each time making
+        the caller give up on measuring a width it could have had."""
+        return bool(self.winfo_viewable())
+
+    def workarea(self):
+        """The USABLE screen — (width, height).
+
+        tkinter asks the window manager via `wm_maxsize()` because the raw
+        screen includes the taskbar, and a window that overflows the bottom
+        on Windows cannot be dragged back into reach. A page cannot ask the
+        WM anything, but the browser already distinguishes the two:
+        `screen.availWidth/availHeight` exclude system chrome, and
+        `fit_to_content` has been using them all along.
+
+        Callers treat a wrong answer as a layout mistake, not a crash, so an
+        unreachable page falls back to the full screen rather than raising.
+        """
+        wv = getattr(self, '_wv_window', None)
+        try:
+            got = _js(wv, '[screen.availWidth, screen.availHeight]')
+            if got and len(got) == 2 and all(int(n) > 0 for n in got):
+                return (int(got[0]), int(got[1]))
+        except Exception as e:
+            log.debug("workarea: falling back to the full screen ({})".format(e))
+        return (self.winfo_screenwidth(), self.winfo_screenheight())
+
+    def winfo_pointerxy(self):
+        """Where the pointer is. There is no way to ask a page this without
+        a round trip, and every caller uses it to place something — so the
+        honest answer is (0, 0) and the caller's own fallback, not a lie
+        about the cursor."""
+        return (0, 0)
+
+    def grab_release(self):
+        """Accepted and ignored. Tk grabs the pointer for a posted menu and
+        releases it here; a browser has no grab to release, and
+        `Menu.tk_popup` already dismisses on an outside click."""
+        pass
+
     # ── Configure ─────────────────────────────────────────────────────
     def configure(self, **kwargs):
         self._config.update(kwargs)
@@ -1234,6 +1297,24 @@ class Theme:
 
     def __init__(self, program, **kwargs):
         self.program = program
+        # READ THE NAME BEFORE OVERWRITING IT. `App.check_for_theme`
+        # (main.py:1528) puts the chosen theme's NAME on `program.theme` as a
+        # STRING, and the next line replaces that string with this object —
+        # so the name has to be taken first. ui_tkinter.Theme does exactly
+        # this (:689-699) and is where the contract actually lives.
+        #   What was here read `program.theme_name`, an attribute NOTHING in
+        # the codebase sets: it appears twice, both in this file. So the
+        # webview backend never learned the user's theme and silently used
+        # greygreen — and the fallback could not warn, because 'greygreen' is
+        # a perfectly valid theme name.
+        #   Kent, 2026-09-11, after the missing-themes fix: "still says Kim on
+        # my machine without my Kim theme visible (qt and gtk)". Two faults in
+        # one line, and fixing the dictionary only removed the first: the
+        # theme was ALSO absent from the copy, so this would have failed even
+        # with the name arriving.
+        chosen = getattr(program, 'theme', None)
+        if not isinstance(chosen, str):
+            chosen = getattr(program, 'theme_name', None)
         self.program.theme = self
         noimagescaling = kwargs.get('noimagescaling', False)
 
@@ -1242,10 +1323,8 @@ class Theme:
         scale = self.scale
 
         # Pick theme
-        if isinstance(getattr(program, 'theme_name', None), str):
-            self.name = program.theme_name
-        else:
-            self.name = 'greygreen'
+        self.name = chosen if isinstance(chosen, str) \
+                    else theme_data.DEFAULT_THEME
         if self.name not in self.themes:
             # SAY SO. This fell back in silence, so a theme the webview
             # backend did not define looked like a theme that did not work:
@@ -1259,6 +1338,13 @@ class Theme:
             self.name = theme_data.DEFAULT_THEME
         for k, v in self.themes[self.name].items():
             setattr(self, k, v)
+        # NAMED, NOT DESCRIBED. "is it peach or green" is not a question this
+        # project's user can answer — Kent is colourblind, and asking him to
+        # judge a hue was a useless check to hand him (2026-09-11: "except for
+        # peach, whatever you think that means"). The theme APPLIED is a fact
+        # the program knows, so it says it, and mismatch with the theme CHOSEN
+        # becomes readable rather than visual.
+        log.info("theme in use: %r (asked for %r)", self.name, chosen)
 
         # Pads
         self.padx = kwargs.get('padx', 5)
@@ -1300,6 +1386,20 @@ class Theme:
         _js(window, 'document.documentElement.style.setProperty("--scale", {})'
                     ''.format(json.dumps(str(scale))))
         return scale
+
+    def setfonts(self, fonttheme='default'):
+        """Rebuild the font table. `ui_shell.py:2198,2204` call this to switch
+        between the normal set and `fonttheme='smaller'`, and it did not exist
+        here — so the "show more on screen" path did nothing under webview.
+
+        The size arithmetic lives in `_build_fonts`; this is the name the app
+        uses, plus the one option it passes. `smaller` is three-quarters
+        throughout rather than a second hand-tuned table, so the ratios that
+        `webview_html/theme.css` mirrors stay the ratios here.
+        """
+        scale = self.scale * (0.75 if fonttheme == 'smaller' else 1.0)
+        self._build_fonts(scale)
+        log.info("fonts rebuilt for %r theme at scale %.2f", fonttheme, scale)
 
     def _build_fonts(self, scale):
         """Font sizes, kept in ONE place because webview_html/theme.css
@@ -1585,6 +1685,27 @@ class Image:
 
     def scale_width(self, scale, pixels=100, resolution=5):
         return self.scale(scale, pixels=pixels, resolution=resolution, scaleto='width')
+
+    def prepare(self, scale, pixels=100, resolution=5, scaleto='both'):
+        """The PIL half of `scale()`, with no display call — so the slow
+        open/decode/resize can run OFF the main thread.
+
+        `sort_ui.py:115` calls this on every card image, and it did not exist
+        here: the call raised inside a builder, which is the shape that
+        presents as a page missing its pictures rather than as an error.
+        Found by the backend-parity audit (2026-09-11).
+
+        Under tkinter the split is load-bearing — `compile()` must touch Tk
+        from the main thread, `prepare()` must not — and here it is a
+        convenience, since producing a data URI is thread-safe either way.
+        Implemented as the same split anyway, so a caller can rely on one
+        contract: after `prepare`, `scaled_img` is ready and `compile` is
+        cheap.
+        """
+        if not self.base_img:
+            return
+        self.scale(scale, pixels=pixels, resolution=resolution,
+                   scaleto=scaleto)
 
     def compile(self):
         """Convert current image to a base64 data URI string."""
@@ -2498,6 +2619,23 @@ class ScrollingFrame(Frame):
     def totop(self):
         pass
 
+    # ACCEPTED AND IGNORED, deliberately — not "not written yet".
+    # tkinter suspends its <Configure> handler around a bulk update because
+    # each reflow costs a synchronous X round trip (see the scrollframe work
+    # in agenda/scrollframe_sizes_from_layout.md). A browser reflows its own
+    # layout and there is nothing here to suspend, so these are no-ops with a
+    # reason rather than gaps. The app calls both, and before this the calls
+    # raised inside callbacks that swallow it.
+    def suspend_configure(self):
+        pass
+    def resume_configure(self, reflow=True):
+        pass
+    def hwinfo(self):
+        """tkinter reports the scroller's own measurements here; nothing in
+        this backend measures them, and no caller uses the result for more
+        than logging."""
+        return {}
+
 
 class ButtonFrame(Frame):
     _button_kwargs = {'command', 'cmd', 'choice', 'window', 'font', 'text',
@@ -3202,6 +3340,45 @@ class Toplevel(_WebviewWidget):
                  "".format(self._wid))
         self._wv_call('show')
 
+    def lower(self, belowThis=None):
+        """The pair of `lift`, and missing for the same reason it was.
+
+        pywebview has no stacking API either way, so this cannot put a window
+        BEHIND another — but a caller reaching for it wants this one out of
+        the way, and hiding it is the closest honest thing. Logged, because
+        "the window vanished" is a confusing symptom and this is one of the
+        two places that can cause it.
+        """
+        log.info("window {}: LOWER (hide, no stacking API) requested"
+                 "".format(self._wid))
+        _close_native_window(self, 'window {}'.format(self._wid))
+
+    def geometry(self, spec=None):
+        """`WxH+X+Y`, as tkinter's — getter with no argument, setter with one.
+
+        MISSING UNTIL 2026-09-11, and it failed visibly: every status-window
+        open logged "status window geometry failed: 'StatusWindow' object has
+        no attribute 'geometry'", so the window was never sized or placed by
+        the code that meant to.
+        """
+        if spec is None:
+            return '{}x{}+{}+{}'.format(self.winfo_width(),
+                                        self.winfo_height(),
+                                        self.winfo_x(), self.winfo_y())
+        try:
+            size, _sep, pos = str(spec).partition('+')
+            if 'x' in size:
+                w, _x, h = size.partition('x')
+                if w and h:
+                    self._wv_call('resize', int(w), int(h))
+            if pos:
+                x, _p, y = pos.partition('+')
+                if x and y:
+                    self._wv_call('move', int(x), int(y))
+        except Exception as e:
+            log.info("window {}: couldn't apply geometry {!r} ({})"
+                     "".format(self._wid, spec, e))
+
     def title(self, text=None):
         """tkinter's title() is a GETTER with no argument, and the ambient
         collab status depends on that: `base = w.title().split(SEP)[0]`
@@ -3411,13 +3588,53 @@ class Toplevel(_WebviewWidget):
                 ww.reveal_parent = self
                 ww.do_reveal = True
             return
+        # DO NOT HIDE THE PAGE. Kent, 2026-09-11, opening Add and Parse Words
+        # with Audio: "the page opens (almost?) complete, then goes away to
+        # build the wait dialog, which returns almost immediately."
+        #
+        # Withdrawing the caller is right under tkinter and wrong here. There
+        # it exists so a slow render happens under cover of "Loading…" rather
+        # than on a blank screen (the 1.3.38 XWayland finding in
+        # ui_tkinter.waitdone). Under webview the page is ALREADY rendered
+        # when the wait starts, so hiding it removes a finished window from
+        # the screen and puts it back a moment later — the flash he saw, and
+        # the opposite of what the hiding was for.
+        #
+        # `showafterwait` stays True so `waitdone` still reveals the window:
+        # some callers reach wait() while genuinely withdrawn (a task window
+        # mid-construction), and revealing one that was never hidden costs a
+        # no-op show.
         self.showafterwait = bool(self.winfo_viewable()) or bool(thenshow)
-        if self.showafterwait:
-            self.withdraw()
-        ww.activate(parent=self, msg=msg, cancellable=cancellable,
-                    reveal=self.showafterwait)
+        # AND AFTER A DELAY. Work that finishes in 200ms does not need a
+        # dialog at all; showing one and removing it is flicker. Fast
+        # operations now show nothing, slow ones behave as before.
+        self._wait_args = dict(parent=self, msg=msg, cancellable=cancellable,
+                               reveal=self.showafterwait)
+        if getattr(self, '_waittimer', None) is not None:
+            return              # already scheduled; the new args stand
+
+        def _show_wait():
+            self._waittimer = None
+            args = getattr(self, '_wait_args', None)
+            if args and not ww.active:
+                ww.activate(**args)
+        try:
+            self._waittimer = self.after(_WAIT_DELAY_MS, _show_wait)
+        except Exception as e:
+            log.info("couldn't schedule the wait dialog (%s); showing it "
+                     "now", e)
+            _show_wait()
 
     def waitdone(self):
+        # A wait that never appeared just goes away — the common case now.
+        self._wait_args = None
+        _t = getattr(self, '_waittimer', None)
+        if _t is not None:
+            self._waittimer = None
+            try:
+                self.after_cancel(_t)
+            except Exception as e:
+                log.info("couldn't cancel the pending wait dialog (%s)", e)
         ww = self._waitwindow(create=False)
         if ww is None or not ww.active:
             return
@@ -3913,13 +4130,40 @@ class Root(_WebviewWidget):
                 ww.reveal_parent = self
                 ww.do_reveal = True
             return
-        self.showafterwait = self.winfo_viewable() | thenshow
-        if self.showafterwait:
-            self.withdraw()
-        ww.activate(parent=self, msg=msg, cancellable=cancellable,
-                    reveal=self.showafterwait)
+        # NO WITHDRAW, AND AFTER A DELAY — see the other copy of this method
+        # for why. This one was missed by the first pass because the two had
+        # DRIFTED: `bool(x) or bool(y)` there, `x | y` here, for the same
+        # intent. They are supposed to mirror each other (the comment above
+        # `_waitwindow` says so), and a difference with no meaning is what let
+        # a search-and-replace fix one and not the other.
+        self.showafterwait = bool(self.winfo_viewable()) or bool(thenshow)
+        self._wait_args = dict(parent=self, msg=msg, cancellable=cancellable,
+                               reveal=self.showafterwait)
+        if getattr(self, '_waittimer', None) is not None:
+            return
+
+        def _show_wait():
+            self._waittimer = None
+            args = getattr(self, '_wait_args', None)
+            if args and not ww.active:
+                ww.activate(**args)
+        try:
+            self._waittimer = self.after(_WAIT_DELAY_MS, _show_wait)
+        except Exception as e:
+            log.info("couldn't schedule the wait dialog (%s); showing it "
+                     "now", e)
+            _show_wait()
 
     def waitdone(self):
+        # A wait that never appeared just goes away — the common case now.
+        self._wait_args = None
+        _t = getattr(self, '_waittimer', None)
+        if _t is not None:
+            self._waittimer = None
+            try:
+                self.after_cancel(_t)
+            except Exception as e:
+                log.info("couldn't cancel the pending wait dialog (%s)", e)
         ww = self._waitwindow(create=False)
         if ww is None or not ww.active:
             return
@@ -3945,12 +4189,38 @@ class Root(_WebviewWidget):
     def drive_work(self, generator, on_done=None):
         """Consume a work generator one yield at a time, letting the event
         loop breathe. Webview stub — runs synchronously for now."""
-        for progress in generator or ():
-            if self.iswaiting():
-                self.waitprogress(progress)
+        self._driving = True
+        try:
+            for progress in generator or ():
+                if not getattr(self, '_driving', True):
+                    log.info("drive_work cancelled part way")
+                    break
+                if self.iswaiting():
+                    self.waitprogress(progress)
+        finally:
+            self._driving = False
         self.waitdone()
         if on_done:
             on_done()
+
+    def cancel_drive_work(self):
+        """Stop a running drive_work. tkinter cancels the pending `after`
+        chain; this runs synchronously, so it sets a flag the loop checks.
+
+        The reason it exists is the same in both: a long build keeps draining
+        the event loop after the user has QUIT the window, starving whatever
+        modal comes next. Missing here until the backend-parity audit found
+        it (2026-09-11) — and because `drive_work` is synchronous, a caller
+        that cancelled got an AttributeError instead of a stop.
+        """
+        self._driving = False
+
+    def wait_and_drive_work(self, generator, msg=None, on_done=None,
+                            **kwargs):
+        """Show the wait dialog, drive the work, close it. tkinter's pairing
+        of the two, and the name several call sites use."""
+        self.wait(msg=msg, **kwargs)
+        self.drive_work(generator, on_done=on_done)
 
     def waitcancel(self):
         self.waitcancelled = True

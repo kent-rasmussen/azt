@@ -15,6 +15,37 @@ except Exception as e:
     log.info(f"sound stack unavailable ({e}); play buttons will fall back "
              "to plain labels")
 
+
+# A frame that lays out buttons takes BOTH its own grid options and the ones
+# meant for its children, told apart by a leading `b`: `bpadx` is the button's
+# padx, `padx` is the frame's. This strips the prefix so the child gets plain
+# grid options.
+#
+# HERE, NOT IN A BACKEND. It used to be `ui.GridinGridded.promotegridbkwargs(
+# True, **kwargs)` — reaching into ui_tkinter for a helper and passing `True`
+# as `self`, because it is really a static function. That made a pure dict
+# transform into a backend dependency, and the webview backend has no such
+# class, so this line raised there. The backend-parity audit found it
+# (2026-09-11) and my first fix was to add the class to webview too — which
+# propagates the dependency instead of removing it, the same mistake as
+# copying the image list. Kent: "I think that's a tkinter-internal function...
+# What would we do with it in webview?" Nothing: the naming convention is the
+# APP's, so it belongs with the app code that uses it.
+#
+# ui_tkinter keeps its own copy for its own widgets. That is not duplication
+# to worry about — the convention is `'b' + name` and has not changed.
+_GRID_KWARGS = {'sticky', 'row', 'rowspan', 'column', 'columnspan', 'colspan',
+                'r', 'c', 'col', 'padx', 'pady', 'ipadx', 'ipady',
+                'gridwait', 'draggable', 'droppable', 'dragthreshold'}
+_CHILD_BUTTON_GRID_KWARGS = {'b' + k for k in _GRID_KWARGS}
+
+
+def promote_button_gridkwargs(**kwargs):
+    """`bpadx` -> `padx`, leaving every other key alone."""
+    return {(k[1:] if k in _CHILD_BUTTON_GRID_KWARGS else k): v
+            for k, v in kwargs.items()}
+
+
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
     def _profile_class_name(self):
@@ -1146,7 +1177,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         # self.showtonegroup=kwargs.pop('showtonegroup',False)
         # self.alwaysrefreshable=kwargs.pop('alwaysrefreshable',False)
         # self.remove_on_click=kwargs.pop('remove_on_click',False) #compatability
-        kwargs=ui.GridinGridded.promotegridbkwargs(True,**kwargs)
+        kwargs=promote_button_gridkwargs(**kwargs)
         # kwargs=ui.GridinGridded.remove_gridbkwargs(True,**kwargs)
         # for k in ['padx', 'pady']:
         #     frameargs[k]=kwargs.get(k,1)

@@ -433,6 +433,19 @@ def test_a_known_value_still_gets_its_friendly_name():
 
 
 @pytest.mark.parametrize('name', LABELS)
+def test_every_row_says_what_it_is(name):
+    """Two rows named themselves and two showed a bare value — "44.1khz" and
+    "32 bit integer", with nothing saying what they were, on exactly the two
+    settings this item exists to make honest. Step 6 of
+    agenda/honest_sound_settings.md."""
+    stand_in = label_stand_in()
+    label = getattr(sound_ui.SoundSettingsWindow, name)(stand_in)
+    assert ':' in label, \
+        "{} shows a value with no name: {!r}".format(name, label)
+    assert label.split(':')[0].strip(), 'the name must not be empty'
+
+
+@pytest.mark.parametrize('name', LABELS)
 def test_every_label_survives_a_MISSING_setting(name):
     """`makedefaultifnot` should have filled these in, but the window must not
     depend on that having worked."""

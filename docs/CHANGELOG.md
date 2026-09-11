@@ -110,7 +110,11 @@ working. `--webview-hidden` still forces it for re-testing.
 synonyms in tkinter, both meaning press; `click` fires after `mouseup`, so the two ran in
 the wrong order relative to each other.
 
-## Fixed — themes and images had two copies, and both were short
+## Fixed — themes and images had two copies, and both were short (theme VERIFIED)
+
+Kent, 2026-09-11: the theme now applies under both GTK and Qt. It took **two** fixes,
+and the first alone changed nothing — see the `program.theme` note below.
+
 
 `ui_webview.Theme` carried hand-copied subsets of `ui_tkinter.Theme`'s image list and
 theme dict. Both now live in a new `frontend/theme_data.py` that **imports nothing** —
@@ -123,9 +127,21 @@ Missing from the image copy, all failing silently (`photo.get(name)` returns Non
 full-size comprehensive reports, and both alphabet-task icons. Missing from the theme
 copy: eleven themes including the one in use.
 
-An unknown theme name now logs a warning instead of falling back in silence. 11 tests,
-including the one that would have caught it: every `taskicon` the app asks for must
-exist, read from `tasks/` by AST.
+An unknown theme name now logs a warning instead of falling back in silence.
+
+**And the dictionary was only half of it.** `App.check_for_theme` stores the chosen
+theme's NAME as a string at `program.theme`; `ui_webview.Theme` read
+`program.theme_name` — an attribute nothing in the codebase sets, appearing twice, both
+in that file. So the webview backend never learned the theme at all, and the fallback
+could not warn, because the default is a valid theme name. `ui_tkinter.Theme` gets this
+right (`:689-699`): read the string, *then* overwrite it with the Theme object.
+
+Two faults in one line, which is why fixing the missing themes changed nothing on its
+own. The theme now also LOGS itself — `theme in use: 'Kim' (asked for 'Kim')` — so a
+mismatch is readable rather than something a user has to see.
+
+13 tests, including the one that would have caught the first fault (every `taskicon` the
+app asks for must exist, read from `tasks/` by AST) and two for the second.
 
 ## Fixed — Qt crashed at startup, and it was the devtools
 
@@ -187,6 +203,79 @@ Three further corrections followed from Kent reading the output:
 And the script no longer asks for noise: a quiet-room run produced peaks of 0.1–0.7% and
 every verdict still formed. What proves a high rate is the converter's own noise reaching
 Nyquist, which nothing in the room can supply.
+
+## New — an audit that finds port gaps by reading source, not by waiting for a user
+
+Ten gaps in the webview backend have been found by someone hitting them. `ContextMenu`
+was the tenth, and it showed that the check this was going to use — each backend against
+`ui_interface.py` — **would have passed it**: the stub implemented exactly the three
+members its ABC declares and none of the three that make a menu work. The ABC does not
+describe tkinter either.
+
+So the reference is the backend that runs the app. `tests/test_backend_surface_parity.py`
+compares the two modules' sources and asks two questions: what does `ui_tkinter` declare
+that `ui_webview` does not, and which of tkinter's own API does the app call that
+`ui_webview` has nowhere to land. Both filtered by whether the app actually names them,
+because the unfiltered lists are 53 and 17 and mostly kwarg tables. Runs in 1.5 s,
+imports nothing, and works without a display or pytest
+(`../env/bin/python -um tests.test_backend_surface_parity`).
+
+It found, and this release fixes:
+
+- `winfo_ismapped` and `geometry` — both logging failures on every run
+- `columnconfigure` / `rowconfigure` — the short spellings tkinter also accepts, used by
+  the app, present only in the long form here, so those calls raised inside callbacks
+  that swallow it
+- `grid_forget`, `lower` (the pair of `lift`), `winfo_pointerxy`, `workarea`
+- `cancel_drive_work`, `wait_and_drive_work` — webview had `drive_work` alone, so a
+  caller cancelling a long build got an AttributeError instead of a stop
+- `Image.prepare` — called on every card image in `sort_ui`
+- `Theme.setfonts` — so `fonttheme='smaller'` did nothing under webview
+- `grab_release`, `ScrollingFrame.suspend_configure` / `resume_configure` / `hwinfo` —
+  implemented as **accepted-and-ignored with the reason stated**, not as stubs
+- `WAIT_DELAY_MS` spelled two ways across the backends, which is exactly the kind of
+  meaningless difference the audit exists to catch
+
+Two fixes were NOT adding a method:
+
+- `promotegridbkwargs` — `sort_buttons` reached into `ui_tkinter` for a pure dict
+  transform and passed `True` as `self`. Adding it to webview too would propagate the
+  dependency; it moved to the app code that uses the convention.
+- the status window asked its scroller for a `canvas` to theme. tkinter scrolls on a
+  Canvas, a browser scrolls a div — a third kind of gap, where the CALLER is written to
+  one backend's mechanism, which no audit can see.
+
+## Fixed — the wait dialog appeared for work that had already finished (VERIFIED)
+
+Opening a task page hid the page, showed "Loading Affixes", and put the page back —
+four window state changes for an operation the user could not perceive. Two faults:
+`wait()` withdraws the window it is called on (right under tkinter, where it covers a
+slow render; wrong under webview, where the page is already drawn), and the operation
+was too short to deserve a dialog at all.
+
+`wait()` now schedules the dialog 400 ms out and `waitdone()` cancels it if it has not
+fired, so fast work shows nothing — no dialog, no hide, no restore. The withdraw moved
+inside the timer, and webview does not withdraw at all.
+
+Kent: *"even though it showed, it gave me a second to see the page, rather than just a
+bunch of flashing."* Worth noting the dialog still appeared — the delay deferred it
+rather than suppressing it, and the gain was seeing the page before being told to wait
+for it.
+
+Found in passing: `ui_webview` has two `wait()` definitions that mirror each other, and
+they had drifted to `bool(x) or bool(y)` and `x | y` for the same intent — enough for a
+search-and-replace to fix one and leave the other. A test now asserts there are exactly
+two and that both schedule.
+
+## Changed — the Sound Card Settings screen says what each row is
+
+Speakers and Microphone first, then a "Recording settings" heading over Rate and Detail.
+The rate and format rows used to show a bare value (`44.1khz`, `32 bit integer`) with
+nothing naming them — the two settings this item exists to make honest.
+
+That completes plan step 6 of `agenda/honest_sound_settings.md`, and with it the item's
+plan. Layout and wording are Kent's; a first draft carried an explanatory line under each
+row and he cut them.
 
 ## New — the rate list says what has been measured, and withholds nothing
 

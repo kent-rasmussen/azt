@@ -403,7 +403,7 @@ class SoundSettingsWindow(ui.Window):
         cur=self._describe(self.soundsettings.hypothetical['sample_formats'],
                            getattr(self.soundsettings,'sample_format',None),
                            'format')
-        return _(f"{cur}")
+        return _("Detail: {format}").format(format=cur)
     def setsoundcard_byname(self,name):
         if name in self.soundsettings.cards['dict'].values():
             # choose_card, not a direct assignment: it also records WHICH
@@ -542,9 +542,10 @@ class SoundSettingsWindow(ui.Window):
         self.labeltext['fs'].set(self.soundhzlabel())
     def soundhzlabel(self):
         self.soundsettings.check()
+        # Named, like the card rows; it returned a bare "44.1khz".
         cur=self._describe(self.soundsettings.hypothetical['fss'],
                            getattr(self.soundsettings,'fs',None), 'rate')
-        return _(str(cur))
+        return _("Rate: {rate}").format(rate=cur)
     def getsoundcardindex(self,event=None):
         log.info("Asking for input sound card...")
         window=ui.Window(self,
@@ -774,13 +775,18 @@ class SoundSettingsWindow(ui.Window):
                 text=_("(click any to change)"),
                 row=self.content.nrows())
         self.labeltext={}
-        for varname, cmd in [
-            ('audio_card_in', self.getsoundcardindex),
-            ('fs', self.getsoundhz),
-            ('sample_format', self.getsoundformat),
-            ('audio_card_out', self.getsoundcardoutindex),
+        # Devices first, then the recording numbers under a heading. Every
+        # row names itself — the rate and format used to show a bare value.
+        # Step 6, agenda/honest_sound_settings.md; layout is Kent's.
+        for varname, cmd, heading in [
+            ('audio_card_out', self.getsoundcardoutindex, None),
+            ('audio_card_in', self.getsoundcardindex, None),
+            ('fs', self.getsoundhz, _("Recording settings")),
+            ('sample_format', self.getsoundformat, None),
                                                     ]:
-            text=_("Change")
+            if heading:
+                ui.Label(self.content,text=heading,font='instructions',
+                            row=self.content.nrows())
             self.labeltext[varname]=ui.StringVar()
             l=ui.Label(self.content,text=self.labeltext[varname],
                         row=self.content.nrows())
