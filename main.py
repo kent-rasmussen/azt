@@ -613,6 +613,42 @@ class App:
         from backend.core.sound import SOUND_PROBLEMS
         if not SOUND_PROBLEMS:
             return
+        # RECORDING BROKEN and TRANSCRIPTION OFF are different situations and
+        # need different words. This said "This computer's sound support is
+        # BROKEN, and A-Z+T couldn't repair it automatically" over a list
+        # whose only entry was "ASR (transcription): No module named 'torch'"
+        # — on a Mac where recording and playback worked fine, and where
+        # torch CANNOT be installed (no macOS x86_64 wheel since 2.2.x). So
+        # every clause was wrong at once: sound was not broken, nothing was
+        # left unrepaired, and "Restarting retries the automatic repair" was
+        # an invitation to wait for something that will never happen (Kent,
+        # 2026-09-11: "at least more scary than it should probably be, for an
+        # expected situation"). The log had it right two lines later.
+        #   A missing optional ENGINE is a degraded install A-Z+T is designed
+        # to run in. A missing audio BACKEND stops recording, which is worth
+        # blocking a fieldworker over.
+        recording = [(c,e) for c,e in SOUND_PROBLEMS
+                     if 'transcription' not in c.lower()]
+        transcription = [(c,e) for c,e in SOUND_PROBLEMS
+                         if 'transcription' in c.lower()]
+        if not recording:
+            # Informational, and NOT blocking: nothing here stops the work
+            # this machine can do.
+            lines=[_("Transcription is switched off on this computer:"),'']
+            lines+=[f"• {component}: {error}"
+                    for component,error in transcription]
+            lines+=['',_("Recording, playback, sorting and reports all work "
+                     "normally. Only the automatic transcription drafts are "
+                     "unavailable — you can still type transcriptions "
+                     "yourself."),'',
+                    _("On some computers this cannot be fixed: the "
+                      "transcription engine is not published for every "
+                      "processor. The log says which component is missing.")]
+            log.info("transcription unavailable, recording is fine: %s",
+                     '; '.join('{}: {}'.format(c,e) for c,e in transcription))
+            ErrorNotice('\n'.join(lines),
+                        title=_("Transcription is not available"))
+            return
         lines=[_("This computer’s sound support is BROKEN, and A-Z+T "
                  "couldn’t repair it automatically:"),'']
         lines+=[f"• {component}: {error}"

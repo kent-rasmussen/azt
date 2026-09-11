@@ -62,8 +62,19 @@ def test_lift_parse_roundtrip():
 @pytest.mark.integration
 def test_sort_groups_words_by_profile():
     pytest.skip(
-        "TODO: construct a minimal `program` (or a fake) so a Sort task can be "
-        "exercised headless; assert grouping/verification logic on known input."
+        "TODO: assert grouping/verification logic on known input. NOT by "
+        "building a whole `program`: dummy.App is only a container (it sets a "
+        "few identity fields and setattrs a dict), while sorting_engine.py "
+        "reads SIXTEEN collaborators off program — slices, params, settings, "
+        "status, status_dirty, db, profiles, alphabet, examples, toneframes, "
+        "taskchooser, sort_ui, data_repo, maybewrite, ui_settings, "
+        "syllable_preferred_slice — most of them rich objects. That is why "
+        "this stub has not moved. Instead pick ONE method and fake only what "
+        "IT touches, on an instance built with __new__ (no __init__): the "
+        "technique that worked for SoundSettings and the sound_ui handlers "
+        "(see test_sound_settings_contracts.py, test_sound_ui_handlers.py). "
+        "Kent asked 2026-09-11 whether dummy.App was enough; it is the right "
+        "shell and none of the contents."
     )
 
 

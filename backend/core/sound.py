@@ -1473,6 +1473,21 @@ class SoundSettings(object):
         # the current/last bulk run still has to do and has done. Persisted
         # as a top-level audio.json key; updated live by tasks/bulk_asr.py.
         self.asr_in_process = {'todo': [], 'done': []}
+        # SET BEFORE THE TRY, so the attributes exist on every path.
+        # `initial_ASR_kwargs` is what created `asr_kwargs`, and it only runs
+        # when `backend.asr` imported — so on a machine with no torch the
+        # attribute never existed at all, and the first reader crashed:
+        #
+        #   tasks/sound.py:153 in setcontext
+        #     label = ("Transcribe with all ASR models" if ss.top_models_only()
+        #   AttributeError: 'SoundSettings' object has no attribute 'asr_kwargs'
+        #
+        # on an Intel Mac where torch CANNOT be installed, taking out the
+        # Sound Settings menu — a recording feature — because a TRANSCRIPTION
+        # engine was missing (Kent, 2026-09-11). Degrading means the optional
+        # part goes quiet, not that the object comes out half-built.
+        self.asr_kwargs = {}
+        self.asr_repos = {}
         try:
             assert 'backend.asr' in sys.modules, "ASR module not loaded"
             self.initial_ASR_kwargs(analang_obj)

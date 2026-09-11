@@ -415,6 +415,25 @@ function updateProp(wid, prop, value) {
         case 'width':
             el.style.width = value + 'ch';
             break;
+        case 'wraplength':
+            // TEXT THAT MUST WRAP. Named after tkinter's own option, which
+            // is what the app calls `Label.wrap()` to get — and which the
+            // webview backend answered with `pass` ("handled by CSS"). The
+            // CSS rule is scoped to labels one or two levels under #root, on
+            // purpose, so anything deeper got no constraint: ErrorNotice's
+            // text rendered as one unbroken line and the window fitted
+            // itself to it, 1680px wide with a single line across the top
+            // (macOS, 2026-09-11).
+            //   PIXELS for a number, because every layout figure in this app
+            //   is raw pixels (see the PT_TO_PX note in ui_tkinter) and the
+            //   value arriving here is the caller's own measurement of the
+            //   box this label sits in — or `availablexy`'s. A string is
+            //   passed through so a caller can still say '40em' deliberately.
+            el.style.maxWidth = (typeof value === 'number')
+                                    ? value + 'px' : value;
+            el.style.whiteSpace = 'normal';
+            el.style.overflowWrap = 'break-word';
+            break;
         case 'font':
             // Remove old font class, add new
             el.className = el.className.replace(/font-\S+/g, '');

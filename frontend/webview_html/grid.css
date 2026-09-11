@@ -180,9 +180,33 @@
 #root {
     grid-auto-columns: max-content;
 }
-#root > .wv-label,
-#root > .wv-frame > .wv-label {
-    max-width: 60em;
+
+/* NO TEXT MAY DEMAND MORE WIDTH THAN THE WINDOW HAS — the same principle as
+   the image rule below, and for the same reason.
+
+   `max-content` columns let a paragraph ask for its FULL UNWRAPPED width,
+   and then the window fits itself to that: the sound-problems notice came
+   out 1680px wide (the whole screen) with one line of text across the top
+   and the rest empty (macOS, 2026-09-11). Kent put the fault in the right
+   place — "the biggest problem here is that the window sizes to the
+   paragraph in this case, which is wider than the screen. the window should
+   be bound by the screen (at least on initial draw), and the text should
+   wrap within that."
+
+   So the bound is VIEWPORT-RELATIVE and applies at ANY DEPTH. It replaces a
+   `60em` version of the same safety valve that was scoped to labels one or
+   two levels under #root, and therefore missed every notice, dialog and
+   nested page — the places where prose actually lives.
+
+   `em` was the wrong unit for this job as well as the wrong scope: it caps
+   LINE LENGTH, which is a typographic choice that belongs to the caller (and
+   which `availablexy` already measures per box). `vw` caps what the widget
+   can DEMAND OF THE WINDOW, which is a layout invariant nobody should be
+   able to opt out of. A caller wanting narrower text still sets
+   `wraplength`; this only stops anything exceeding the display. */
+.wv-label {
+    max-width: 92vw;
+    overflow-wrap: break-word;
 }
 
 /* AN IMAGE MUST NEVER DEMAND MORE WIDTH THAN THE WINDOW HAS.

@@ -1727,7 +1727,14 @@ class Label(_WebviewWidget):
             kwargs['image'] = image
             kwargs['compound'] = compound or 'top'
         textvariable = kwargs.pop('textvariable', None)
-        kwargs.pop('wraplength', None)
+        # KEEP the caller's measured wrap width instead of discarding it.
+        # `wraplength` is a PIXEL figure the caller worked out for the box
+        # this label sits in, and it is already inherited down the widget
+        # tree here (see `inherit`, :614) — popping it threw away the one
+        # number that knows how much room there is. `wrap()` then had nothing
+        # to act on, which is why it was a no-op with a comment claiming CSS
+        # handled it.
+        self._asked_wraplength = kwargs.pop('wraplength', None)
         kwargs['font'] = font
         # A Variable in either slot resolves to its VALUE, not its repr.
         if 'text' in kwargs:
@@ -1738,7 +1745,56 @@ class Label(_WebviewWidget):
         self._textvariable = None
 
     def wrap(self):
-        pass  # Handled by CSS
+        """Constrain this label's width so its text wraps — SAME CONTRACT as
+        ui_tkinter.Label.wrap(): an explicit `wraplength` wins, `availablexy`
+        is the fallback for callers with no better number. Pixels, like every
+        other layout figure in this app.
+
+        WAS `pass`, with "Handled by CSS" — and the CSS rule that would have
+        handled it (`#root > .wv-label`, `#root > .wv-frame > .wv-label`) is
+        scoped one or two levels deep on purpose, so a label nested deeper got
+        no constraint. `ErrorNotice` is exactly such a label
+        (error_notice.py:54 calls this), and its text rendered as ONE UNBROKEN
+        LINE: the window fitted itself to the content and came out 1680px
+        wide, a single line across the top and the rest empty (macOS, webview,
+        2026-09-11).
+
+        MY FIRST FIX HARDCODED 46em (~70-80 characters) and Kent named the
+        problem: "wrapping at 70-80 chars seems like exactly the thing we were
+        NOT doing. we wrap in places with much less space; this is why we have
+        used availablexy... I assume this hardcoded number will bite us sooner
+        or later." Correct on both counts — a fixed character count is wrong
+        wherever the box is narrower than that, which is most places, and it
+        reinvents (badly) a measurement the app already makes. The value was
+        being THROWN AWAY one method up: `__init__` popped `wraplength` and
+        dropped it.
+
+        DIVISION OF LABOUR with the CSS, settled 2026-09-11: `.wv-label` now
+        carries `max-width: 92vw`, so NOTHING can demand more width than the
+        window has and the window can no longer size itself to an unwrapped
+        paragraph. That is a layout invariant and belongs in the stylesheet.
+        What this method does is the other half — the caller's own
+        measurement of the BOX this label sits in, which is narrower than the
+        screen and which only the caller (or `availablexy`) knows. The two are
+        not alternatives: without the CSS a notice could still be screen-wide,
+        and without this a label in a narrow cell would wrap only at 92vw.
+        """
+        asked = getattr(self, '_asked_wraplength', None) \
+                or getattr(self, 'wraplength', None)
+        if not asked:
+            try:
+                self.availablexy()
+                asked = getattr(self, 'maxwidth', None)
+            except Exception as e:
+                log.info("couldn't measure available width for {} ({})"
+                         "".format(getattr(self, '_wid', '?'), e))
+        if not asked:
+            return      # nothing measured: leave it to the CSS, as before
+        try:
+            self.configure(wraplength=int(asked))
+        except Exception as e:
+            log.info("couldn't set a wrap width on {} ({})".format(
+                        getattr(self, '_wid', '?'), e))
 
 
 class Button(_WebviewWidget):
@@ -1775,16 +1831,55 @@ class Button(_WebviewWidget):
         self.window = window
         self._build_command()
 
+    def _takes(self, cmd, positional=0, keyword=None):
+        """Can `cmd` be called with this many extra positional args / this kw?
+
+        ASK THE CALLABLE instead of assuming from what the CALLER passed.
+        The previous version mirrored ui_tkinter's rule — "a choice was given,
+        so pass it" — and a caller that supplies a `choice` alongside a
+        command taking no arguments then produced, on every click:
+
+            TypeError: Sort.runcheck() takes 1 positional argument
+                       but 2 were given
+
+        (Kent's Mac, webview backend, 2026-09-11; it fired three times, once
+        per click, and the button silently did nothing because `on_event`
+        logs and carries on.) The presence of a `choice` kwarg says what the
+        BUTTON knows, not what the command wants; only the command's
+        signature says the latter.
+
+        Unknown signatures (C functions, some callables) return True: this is
+        a compatibility shim, so where it cannot tell it should behave as it
+        did before rather than silently drop an argument.
+        """
+        try:
+            import inspect
+            sig = inspect.signature(cmd)
+        except (TypeError, ValueError):
+            return True
+        params = list(sig.parameters.values())
+        if keyword is not None:
+            if any(p.name == keyword for p in params):
+                return True
+            return any(p.kind is p.VAR_KEYWORD for p in params)
+        slots = [p for p in params
+                 if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)]
+        if any(p.kind is p.VAR_POSITIONAL for p in params):
+            return True
+        return len(slots) >= positional
+
     def _build_command(self):
         cmd = self.command
-        if cmd and self.choice is not None and self.window is not None:
-            self._final_cmd = lambda data, x=self.choice, w=self.window: cmd(x, window=w)
-        elif cmd and self.choice is not None:
-            self._final_cmd = lambda data, x=self.choice: cmd(x)
-        elif cmd:
-            self._final_cmd = lambda data: cmd()
-        else:
+        if not cmd:
             self._final_cmd = _donothing
+        elif (self.choice is not None and self.window is not None
+                and self._takes(cmd, 1) and self._takes(cmd, keyword='window')):
+            self._final_cmd = lambda data, x=self.choice, w=self.window: cmd(x, window=w)
+        elif self.choice is not None and self._takes(cmd, 1):
+            self._final_cmd = lambda data, x=self.choice: cmd(x)
+        else:
+            # Either no choice to pass, or a command that will not accept one.
+            self._final_cmd = lambda data: cmd()
         _api.register(self._wid, 'command', self._final_cmd)
 
 

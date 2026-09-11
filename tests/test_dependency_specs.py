@@ -194,14 +194,41 @@ def test_transcription_engines_are_not_treated_as_mandatory():
             'open there'.format(', '.join(sorted(got))))
 
 
-def test_the_installer_does_not_run_under_pytest():
-    """This module installs packages AT IMPORT TIME, which is the app's
-    bootstrap design — and meant a test importing it ran a real pip sync,
-    spawned the collab daemon, and merged into a live project."""
-    source = (APP / 'utilities' / 'py_modules.py').read_text()
-    assert '_under_test()' in source
-    assert 'if not _under_test():' in source, \
-        'ensure_sister_repos() must be gated too, not just pip_install()'
+def test_NOTHING_that_mutates_the_machine_runs_on_import():
+    """EVERY import-time call must be behind the test guard, not the two I
+    happened to think of.
+
+    A first pass gated `ensure_sister_repos()` and `pip_install()` and missed
+    `sync_requirements()` — which is the bulk `pip install -r` — so a test run
+    still ran pip wherever the requirements stamp did not match. That read as
+    a Windows-versus-macOS difference (the Mac's stamp matched, so its call
+    returned early) and was nothing of the kind. Enumerating the calls
+    instead of naming them is what makes this test worth having; `ensure_venv`
+    was the third, and it can relaunch the process with the current argv.
+    """
+    import ast
+    tree = ast.parse((APP / 'utilities' / 'py_modules.py').read_text())
+    dangerous = {'ensure_venv', 'sync_requirements', 'pip_install',
+                 'ensure_sister_repos'}
+    unguarded = []
+    for node in tree.body:      # MODULE LEVEL only
+        if (isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
+                and getattr(node.value.func, 'id', '') in dangerous):
+            unguarded.append(node.value.func.id)
+    assert not unguarded, (
+        '{} run(s) at import time with no test guard — importing this module '
+        'would change the machine'.format(', '.join(unguarded)))
+    # And the guard has to be the thing wrapping them.
+    guarded = set()
+    for node in tree.body:
+        if not isinstance(node, ast.If):
+            continue
+        for child in ast.walk(node):
+            if (isinstance(child, ast.Call)
+                    and getattr(child.func, 'id', '') in dangerous):
+                guarded.add(child.func.id)
+    assert {'ensure_venv', 'sync_requirements'} <= guarded, \
+        'ensure_venv and sync_requirements must both be behind the guard'
 
 
 def test_requirements_txt_declares_everything_the_app_must_import():

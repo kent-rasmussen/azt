@@ -177,12 +177,24 @@ def test_detected_language_and_mismatch_decorations():
     assert _filter(tx, ss) == tx
 
 
+@pytest.mark.skipif(not ASR_IMPORTABLE,
+                    reason='needs backend.asr IMPORTABLE for its module-level '
+                           'repo tables; without torch the filter fails open, '
+                           'which is the correct app behaviour')
 def test_sister_filter_works_before_asr_loads():
     # Stored drafts display without ASR ever running (stage-3 contract), so
     # the selection filter must too: no .asr object here — the module-level
     # REPO_MODELNAMES/sister_members/mms_lang carry it (live 2026-07-07:
     # flr/kam/lam/myx drafts showed with only bem selected, because the
     # filter failed open before the first load_ASR).
+    #
+    # "BEFORE ASR LOADS" IS NOT "WITHOUT ASR INSTALLED", and the two came
+    # apart on a torch-less Mac (2026-09-11). This case deliberately passes
+    # no `models`, so the fake-loaded-ASR guard in `_ss` did not catch it —
+    # but it still needs `backend.asr` to IMPORT, because the module-level
+    # tables it relies on live there. With no torch the module cannot import
+    # at all, the filter fails open by design, and the test measured that
+    # correct degradation as a wrong answer.
     tx = {'facebook/mms-1b-all (bem!)': 'bumi',
           'facebook/mms-1b-all (flr!)': 'mbumi'}
     ss = _ss(top_models_only=False, sister=('bem',))

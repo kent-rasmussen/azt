@@ -14,6 +14,39 @@ except NameError:
     def _(x):
         return str(x)
 
+
+def _under_test():
+    """Are we inside a test run? Then CHANGE NOTHING on this machine.
+
+    DEFINED FIRST because three things in this module run AT IMPORT TIME and
+    all of them mutate the machine: `ensure_venv()` (can create a venv,
+    relaunch the process with the current argv and exit), `sync_requirements()`
+    (pip install -r) and `pip_install()` (the per-package fallback). That is
+    the app's bootstrap design — the first import repairs the environment —
+    and it means ANY `import py_modules`, including from a test, does all of
+    it.
+      Found the hard way: a test importing this ran a real package sync during
+    collection, and on Windows left app-startup and collab-daemon lines after
+    pytest's summary, including "Teammates' changes were merged with your last
+    save". A first fix gated two of the three and missed
+    `sync_requirements()`, which is why it looked like a platform difference:
+    on macOS the requirements stamp matched so that call returned early, and
+    on Windows it did not, so pip ran. Not a platform difference at all —
+    Kent: "can you not just look around for that now? start with code that
+    doesn't run on mac", which found it in one grep.
+
+    Three signals, because one can be absent where the others are not:
+    `sys.modules` misses pytest in a SUBPROCESS a test spawned, the env var is
+    only set while a test is executing (not during collection), and argv only
+    helps a bare `pytest` invocation rather than `python -m pytest`.
+    """
+    if 'pytest' in sys.modules or 'PYTEST_CURRENT_TEST' in os.environ:
+        return True
+    if os.environ.get('AZT_NO_AUTOINSTALL'):
+        return True     # an explicit way out, for anyone diagnosing this
+    argv0 = os.path.basename(sys.argv[0] if sys.argv else '')
+    return argv0.startswith('pytest') or argv0 == 'py.test'
+
 def requirements_one_at_a_time(root):
     """requirements.txt, split into one pip invocation per requirement.
 
@@ -539,7 +572,8 @@ def ensure_venv():
                     "".format(e,sys.executable))
         return
     sys.exit(0) #the venv process takes over from here
-ensure_venv()
+if not _under_test():
+    ensure_venv()
 
 _MAC_NO_COMPILER=None #cached: asked once per process, not once per package
 
@@ -644,7 +678,8 @@ def sync_requirements():
         except Exception as e:
             log.error("package sync failed ({}); continuing with "
                         "what’s installed".format(e))
-sync_requirements()
+if not _under_test():
+    sync_requirements()
 
 def ensure_sister_repos():
     """azt expects some repos cloned beside its own clone: the collab
@@ -662,25 +697,15 @@ def ensure_sister_repos():
         log.error("Sister-repo setup failed ({}); continuing.".format(e))
 
 
-def _under_test():
-    """Are we inside a test run? Then CHANGE NOTHING on this machine.
-
-    This module does its work AT IMPORT TIME — `ensure_sister_repos()` here
-    and `pip_install()` at the end — which is the app's bootstrap design: the
-    first import repairs the environment. It also means that ANY `import
-    py_modules` anywhere runs a git/symlink setup and a pip install.
-      A test that imported it to check the dependency specs therefore kicked
-    off a real package sync during collection, printed pip's entire output
-    into the test log, and on Windows left app-startup and collab-daemon
-    lines trailing after pytest's summary — including "Teammates' changes
-    were merged with your last save (1 conflict(s) annotated)" (Kent,
-    2026-09-10/11). A test must not mutate the machine it runs on, and
-    certainly must not merge into a real project.
-    """
-    return 'pytest' in sys.modules or 'PYTEST_CURRENT_TEST' in os.environ
-
-
-if not _under_test():
+if _under_test():
+    # SAID OUT LOUD, so the guard's absence is evidence rather than a
+    # mystery: Windows appeared to run pip during a test run while macOS did
+    # not (Kent, 2026-09-11), which cannot follow from the check itself —
+    # it is the same on every platform. If a run shows pip output and NOT
+    # this line, that machine is on a build without the guard.
+    log.info("under pytest: A-Z+T will NOT set up sister repos or install "
+             "packages. Nothing on this machine is being changed.")
+else:
     ensure_sister_repos()
 
 # ── MANDATORY vs OPTIONAL, and why the distinction has to be here ──────────
