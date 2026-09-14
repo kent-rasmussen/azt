@@ -68,6 +68,50 @@
     user-select: none;
 }
 
+/* A checkbox whose SIZE was asked for. tkinter draws this control from a
+   theme image pair, so a page sizes it with image_pixels/large_images (e.g.
+   tasks.py:1171-1175 asks for 12px) — and a native <input> ignores
+   width/height in WebKit unless its default appearance is off. Turning that
+   off removes the engine's check mark, so the mark is drawn here.
+
+   FILL PLUS A TICK, not colour: a filled box with a mark reads as checked
+   without depending on hue, so it still says "checked" to a colourblind
+   user. The tick is a rotated border rather than a glyph, so it needs no
+   font and scales with the box.
+
+   The width/height themselves are set inline by _setBoxSize, because they
+   are a per-widget number rather than a rule. */
+.wv-sized-box {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    flex: none;
+    box-sizing: border-box;
+    border: 2px solid currentColor;
+    border-radius: 2px;
+    background: var(--background);
+    position: relative;
+    cursor: pointer;
+}
+.wv-sized-box:checked {
+    background: currentColor;
+}
+.wv-sized-box:checked::after {
+    content: '';
+    position: absolute;
+    left: 18%;
+    top: 8%;
+    width: 55%;
+    height: 78%;
+    border: solid var(--background);
+    border-width: 0 2px 2px 0;
+    transform: rotate(40deg);
+}
+.wv-sized-box:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
 /* RadioButton */
 .wv-radiobutton {
     display: flex;

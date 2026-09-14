@@ -98,6 +98,9 @@ function createWidget(spec) {
             if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound,
                                             spec.props.image_pixels,
                                             spec.props.image_scaleto);
+            // AFTER the image: _setImage adds the .wv-compound classes that
+            // decide flex-direction, and _setAnchor reads that direction.
+            if (spec.props.anchor) _setAnchor(el, spec.props.anchor);
             break;
         case 'button':
             el = document.createElement('button');
@@ -107,6 +110,7 @@ function createWidget(spec) {
             if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound,
                                             spec.props.image_pixels,
                                             spec.props.image_scaleto);
+            if (spec.props.anchor) _setAnchor(el, spec.props.anchor);
             if (spec.props.disabled) el.disabled = true;
             if (spec.props.state) _setState(el, spec.props.state);
             el.addEventListener('click', () => {
@@ -139,6 +143,13 @@ function createWidget(spec) {
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.checked = !!spec.props.checked;
+            // SIZE. tkinter draws this control from a theme image pair, so a
+            // page asking for a bigger or smaller checkbox says so with
+            // `image_pixels`/`large_images` — see ui_webview.CheckButton.
+            // The browser draws the box, but not at a size anyone chose, so
+            // every webview checkbox came out at the engine default.
+            _setBoxSize(cb, spec.props.box_pixels, spec.props.box_scaleto,
+                        spec.props.box_large);
             el.appendChild(cb);
             const cblbl = document.createElement('span');
             cblbl.textContent = spec.props.text || '';
@@ -234,6 +245,80 @@ function createWidget(spec) {
     }
 
     return spec.wid;
+}
+
+// ── checkbox / radio size ────────────────────────────────────────────
+// A native <input> ignores width/height in some engines unless the default
+// appearance is turned off, so set both dimensions AND clear the appearance
+// when a size is asked for. `accent-color` keeps it looking like a control
+// rather than a bare square once appearance is gone.
+//
+// `large_images` is not a pixel figure in tkinter — it selects the full-size
+// theme image over the `_sm` one — so it maps to a step up from the default
+// rather than to a number.
+const _BOX_LARGE_PX = 24;
+
+function _setBoxSize(input, px, scaleto, large) {
+    const n = px ? parseInt(px, 10) : (large ? _BOX_LARGE_PX : 0);
+    if (!(n > 0)) return;
+    // scaleto 'height' is what the app passes (tasks.py:1173) and a checkbox
+    // is square, so one figure drives both unless a width is named.
+    if (scaleto === 'width') {
+        input.style.width = n + 'px';
+    } else if (scaleto === 'height') {
+        input.style.height = n + 'px';
+        input.style.width = n + 'px';
+    } else {
+        input.style.width = n + 'px';
+        input.style.height = n + 'px';
+    }
+    // THE CLASS CARRIES THE APPEARANCE, not inline styles. Sizing a native
+    // checkbox needs `appearance:none` (WebKit ignores width/height
+    // otherwise), and that removes the engine's check mark — so a checked
+    // box would show NOTHING, which is worse than the wrong size. Drawing
+    // the mark needs `:checked`, which cannot be written inline. See
+    // `.wv-sized-box` in grid.css.
+    input.classList.add('wv-sized-box');
+}
+
+// ── anchor ───────────────────────────────────────────────────────────
+// tkinter's `anchor` says where the CONTENT sits when the widget is bigger
+// than it: n/ne/e/se/s/sw/w/nw, or c/center. 91 call sites pass it and
+// ui_webview dropped every one, so nothing honoured it.
+//
+// THE AXIS SWAP IS THE WHOLE DIFFICULTY. `.wv-label` is already
+// `display:flex`, so horizontal is `justify-content` and vertical is
+// `align-items` — but `.wv-compound-top` / `-bottom` set
+// `flex-direction: column` for an image above or below its text, and that
+// EXCHANGES the two. Setting them by name without checking direction would
+// rotate the anchor on exactly the widgets that carry pictures.
+//
+// A non-flex element (a plain `.wv-button`) has neither property, so it gets
+// `text-align` for the horizontal part; there is nothing sensible to do
+// about the vertical one and nothing that asked for it.
+const _ANCHOR = {
+    n:  ['center', 'start'],  ne: ['end',    'start'],  e: ['end',    'center'],
+    se: ['end',    'end'],    s:  ['center', 'end'],    sw:['start',  'end'],
+    w:  ['start',  'center'], nw: ['start',  'start'],
+    c:  ['center', 'center'], center: ['center', 'center'],
+};
+const _FLEX = {start: 'flex-start', center: 'center', end: 'flex-end'};
+
+function _setAnchor(el, anchor) {
+    const key = String(anchor || '').toLowerCase();
+    const pair = _ANCHOR[key];
+    if (!pair) return;                  // unknown: leave the default alone
+    const [h, v] = pair;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'flex' || cs.display === 'inline-flex') {
+        const column = cs.flexDirection.startsWith('column');
+        // main axis follows flex-direction; cross axis is the other one
+        el.style.justifyContent = _FLEX[column ? v : h];
+        el.style.alignItems     = _FLEX[column ? h : v];
+    } else {
+        el.style.textAlign = h === 'start' ? 'left'
+                           : h === 'end'   ? 'right' : 'center';
+    }
 }
 
 // ── state: 'disabled' / 'normal' ─────────────────────────────────────
@@ -455,6 +540,9 @@ function updateProp(wid, prop, value) {
             break;
         case 'state':
             _setState(el, value);
+            break;
+        case 'anchor':
+            _setAnchor(el, value);
             break;
         case 'image':
             // value is a base64 data URI

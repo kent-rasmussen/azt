@@ -2051,7 +2051,15 @@ class Label(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
         # Handle font as a key name
         font = kwargs.pop('font', 'default')
-        kwargs.pop('anchor', None)
+        # KEPT. 91 sites pass `anchor=` and every one of them was dropped
+        # here, so no label or button honoured the alignment it asked for.
+        # Only forwarded when actually given: `.wv-label` already defaults to
+        # vertically centred and horizontally flush-left, which is tkinter's
+        # own default ("w", ui_tkinter.py:2942), so an unspecified label must
+        # keep looking exactly as it does now.
+        anchor = kwargs.pop('anchor', None)
+        if anchor:
+            kwargs['anchor'] = anchor
         kwargs.pop('norender', None)
         # HONOURED, NOT DISCARDED. These were popped and dropped, so the
         # caller's pixel budget went nowhere: the alphabet chart rendered
@@ -2180,7 +2188,9 @@ class Button(_WebviewWidget):
         command = kwargs.pop('command', kwargs.pop('cmd', None))
         choice = kwargs.pop('choice', None)
         window = kwargs.pop('window', None)
-        kwargs.pop('anchor', None)
+        anchor = kwargs.pop('anchor', None)     # kept; see Label
+        if anchor:
+            kwargs['anchor'] = anchor
         # Captured BEFORE the image block, and kept — see Label for why
         # dropping these was a real gap rather than tidiness.
         image_px = kwargs.pop('image_pixels', None)
@@ -2467,13 +2477,36 @@ class CheckButton(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
         font = kwargs.pop('font', 'default')
         self._variable = kwargs.pop('variable', BooleanVar())
+        # `image` AND `selectimage` ARE CORRECTLY DROPPED, and this is the
+        # one place on the discarded-options list where that is true.
+        # `ui_tkinter.CheckButton` supplies them ITSELF from the theme
+        # ('uncheckedbox'/'checkedbox', `_sm` unless large_images) because Tk
+        # with indicatoron=False has no checkbox of its own to draw — so the
+        # image pair IS the control there. A browser's <input type=checkbox>
+        # draws it natively, so reproducing a themed image pair would be
+        # emulating what the engine already does. No caller passes them.
         kwargs.pop('image', None)
         kwargs.pop('selectimage', None)
-        kwargs.pop('large_images', None)
-        kwargs.pop('indicatoron', None)
-        self._command = kwargs.pop('command', None)
+        kwargs.pop('indicatoron', None)     # Tk-only: no indicator to hide
         kwargs.pop('norender', None)
         kwargs.pop('compound', None)
+        # THE SIZE IS NOT DROPPED, though, and it was. Callers do not pass
+        # images; they pass the SIZE of them — `tasks.py:1171-1175` asks for
+        # a 12px-high word-break box ("image_pixels sizes both states now, so
+        # this is the actual knob"), and `large_images` is how a page asks
+        # for a bigger control, which matters on a field touch screen. Both
+        # went nowhere, so every webview checkbox came out at the browser
+        # default.
+        large = kwargs.pop('large_images', False)
+        px = kwargs.pop('image_pixels', None)
+        scaleto = kwargs.pop('image_scaleto', None)
+        if px:
+            kwargs['box_pixels'] = px
+            if scaleto:
+                kwargs['box_scaleto'] = scaleto
+        elif large:
+            kwargs['box_large'] = True
+        self._command = kwargs.pop('command', None)
         kwargs['font'] = font
         super().__init__(parent, widget_type='checkbutton', **kwargs)
         _api.register(self._wid, 'toggle',
