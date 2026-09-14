@@ -19,6 +19,63 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.24
+
+**Nine webview faults, found by building one page that both backends draw.**
+`frontend/gallery.py` (`python -m frontend.gallery [--webview]`) builds every
+widget the five `ui_tkinter` testapps build, through `from frontend import
+ui`, so running it twice makes any difference a backend difference rather
+than a test difference. Roughly a third of what it surfaced was wrong in the
+*gallery*, each time caught by the tkinter control disagreeing.
+
+**Fixed and confirmed** (Kent, GTK, 2026-09-14):
+
+| what | was |
+|---|---|
+| anchor, all nine positions | every cell was exactly as big as its text, so nothing could move in it — twice, first from `ipady` (which is padding, outside the content box) and then from a `"\n\n\n"` spacer (four lines in tkinter, nothing in a page: HTML collapses whitespace) |
+| `sticky`, all four | same flaw, plus the border was on the cell and not on the label, so a stretched label and an unstretched one were both invisible boxes |
+| drop events reaching the program | the gallery wired no drop handler at all and reported "(no drop yet)" from a label nothing could change |
+| drag feedback under Qt | the ghost was the *engine's*: WebKitGTK drags a translucent snapshot, QtWebEngine draws nothing, so the same page looked alive on one engine and dead on the other. Feedback is now the stylesheet's — dashed outline on what is being dragged, solid on what it is over |
+
+**Fixed, awaiting verification:**
+
+* **A list box's selection never reached Python.** `ListBox.insert` filled the
+  display list and never `choices`, and `_on_select` guards on
+  `0 <= idx < len(self.choices)` — so every pick was rejected, for the life of
+  every list. The page highlighted the rows locally, which is exactly what a
+  working list looks like.
+* **`selectmode='extended'` behaved as `multiple`.** The page was told only
+  "is this multiple?", so a plain click toggled instead of replacing and a
+  selection could never be narrowed back down. All four tkinter modes now
+  reach the page: plain click replaces, shift extends a run, ctrl/cmd toggles.
+* **Option descriptions dropped from list rows** — tkinter folds them into the
+  text (`"Name (12)"`, usually an item count); the webview copy of
+  `regularize_choice` stopped one step short, so the same options read
+  differently in a list than in a button frame on the same page.
+* **The list callback got the last-clicked row** where tkinter passes the
+  first selected (`choices[sel[0]]`).
+* **`RadioButtonFrame` built nothing at all** — `optionlist` and `variable`
+  popped and discarded, leaving an empty Frame. `ui_shell.py:4252` builds one.
+* **`SearchableComboBox` was `pass`**, i.e. a plain combobox wearing the name
+  of a searchable one. It raises now, as tkinter's does.
+* **`Combobox(state=…)` was ignored.** ttk's `normal` (its default) is
+  typeable — a value that is not in the list — and `readonly` is not. Asking
+  for `state='normal'` now builds an `<input>` with a `<datalist>`, which also
+  filters as you type; `readonly`/`disabled`/absent keep the `<select>`.
+  Keeping `<select>` as the default diverges from ttk deliberately: it is the
+  better control for the app's one call site (`tasks.py:1119`), and
+  `<datalist>` support in WebKitGTK cannot be relied on.
+* **The drag source's `dnd_end` was never called** under webview — the page's
+  `dragend` was answered inline, so any override was dead code there. The
+  target it landed on is now passed, as tkinter passes it.
+
+Gallery itself: drop reporting, radio rows for `selectmode` and combobox
+`state` that rebuild the widget, click reporting on the scrolling button
+frame and list box, and a progress sweep that announces its reset and prints
+the *commanded* value (the old one commanded 0 while the bars rested at 33
+and 66, under a CSS transition four times longer than its step — so it drew a
+slow fall that reversed, and never showed the sweep it claimed to).
+
 # Version 1.15.23
 
 **Boot to the task chooser: 53 seconds → 10.1.** Forty-two of those seconds

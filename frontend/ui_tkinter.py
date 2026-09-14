@@ -2923,7 +2923,43 @@ class TextBase():
         kwargs=TextBase.my_tk_kwargs(self,**kwargs) #then limit
         kwargs=super().pre_tk_init(**kwargs)
         return kwargs
+    # Tk's anchor names, plus the spellings this app actually uses. 'c' is
+    # the app's habit (ui_tkinter.py:4779, sound_ui, the alphabet chart) and
+    # Tk does NOT accept it — it wants "center" — so a pass-through without
+    # this map would trade a silent no-op for a TclError.
+    _anchor_names={'c':'center','centre':'center','center':'center',
+                   'n':'n','ne':'ne','e':'e','se':'se',
+                   's':'s','sw':'sw','w':'w','nw':'nw'}
     def post_tk_init(self,**kwargs):
+        # ANCHOR REACHES TK HERE, and until 2026-09-14 it reached it nowhere.
+        # `__init__` popped it into `self.anchor` and nothing ever read that
+        # attribute back — its assignment was the only occurrence of the name
+        # in this file — so `anchor=` was silently discarded for every Label,
+        # Button, CheckButton, Message and the rest, and what you saw was
+        # always Tk's own default (center). Found by frontend/gallery.py,
+        # which draws all nine anchors side by side: webview honoured them
+        # and tkinter, the reference backend, did not (Kent: "sticky is
+        # working now, but anchor still isn't").
+        #
+        # TWO GUARDS, both deliberate:
+        #   * ONLY AN EXPLICIT ANCHOR is applied. `self.anchor` defaults to
+        #     'w', and restoring that default would have left-aligned every
+        #     text widget in the app that never asked for anything — a change
+        #     to every page, from a line meant to fix one row.
+        #   * AFTER the Tk widget exists, and guarded. TextBase is inherited
+        #     by EntryField, Combobox and ListBox as well, and tk's entry,
+        #     ttk::combobox and listbox have no -anchor option at all; those
+        #     raise TclError rather than accept it. Setting it here means the
+        #     widgets that support it get it and the ones that don't are
+        #     unchanged, instead of a constructor that dies on three classes.
+        asked=getattr(self,'_anchor_asked',None)
+        if asked is not None:
+            name=TextBase._anchor_names.get(str(asked).lower(),asked)
+            try:
+                self['anchor']=name
+            except Exception as e:
+                log.info("{} takes no anchor ({}): {}".format(
+                            type(self).__name__,name,e))
         super().post_tk_init(**kwargs)
     def __init__(self,*args,**kwargs):
         kwargs=TextBase.restore_kwargs(self,**kwargs)
@@ -2939,6 +2975,10 @@ class TextBase():
         self.text=nfc(self.text) #ok empty
         # log.info(f"TextBase found {self.textvariable} ({self.textvariable.__class__}) "
         #             f"{self.text} ({self.text.__class__})")
+        # `_anchor_asked` is None unless the CALLER asked; `self.anchor`
+        # keeps its old default so nothing that reads it changes meaning.
+        # post_tk_init applies the asked-for one — see the note there.
+        self._anchor_asked=kwargs.get('anchor')
         self.anchor=kwargs.pop('anchor',"w")
         if 'font' in kwargs:
             if isinstance(kwargs['font'],tkinter.font.Font):

@@ -87,23 +87,27 @@
     margin: 0;
     flex: none;
     box-sizing: border-box;
-    border: 2px solid currentColor;
-    border-radius: 2px;
-    background: var(--background);
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    background: var(--white);
     position: relative;
     cursor: pointer;
 }
-.wv-sized-box:checked {
-    background: currentColor;
-}
+/* A TICK IN AN EMPTY BOX, not a filled block. The first version filled the
+   whole box with `currentColor` and drew the tick in the background colour;
+   it was unambiguous and, as Kent put it, "not very attractive" — a row of
+   solid dark squares. An outlined box with a tick is the conventional look
+   and still says "checked" by SHAPE rather than by hue, which is what
+   matters (~/.claude-sil/CLAUDE.md: never make colour the carrier of
+   meaning). */
 .wv-sized-box:checked::after {
     content: '';
     position: absolute;
-    left: 18%;
-    top: 8%;
-    width: 55%;
-    height: 78%;
-    border: solid var(--background);
+    left: 22%;
+    top: 10%;
+    width: 44%;
+    height: 66%;
+    border: solid currentColor;
     border-width: 0 2px 2px 0;
     transform: rotate(40deg);
 }
@@ -129,13 +133,49 @@
     list-style: none;
     padding: 0;
 }
+/* A SELECTED ROW IS MARKED BY A SHAPE AS WELL AS A COLOUR. The highlight
+   alone carried the whole meaning, and colour may accompany meaning but
+   never be the thing that bears it (~/.claude-sil/CLAUDE.md). It matters
+   more here than on most controls: a MULTIPLE list is read by scanning for
+   which rows are picked, so if the highlight is hard to tell from the
+   background the list cannot be read at all.
+   The gutter is reserved on every row, selected or not, so the text does
+   not shift sideways when a row is picked. */
 .wv-listbox .wv-listbox-item {
-    padding: 2px 4px;
+    padding: 2px 4px 2px 1.4em;
     cursor: pointer;
+    position: relative;
 }
 .wv-listbox .wv-listbox-item.selected {
     background: var(--highlight);
-    color: white;
+    color: var(--white);
+    font-weight: bold;
+}
+.wv-listbox .wv-listbox-item.selected::before {
+    content: '\2713';           /* a tick, not a bullet: this is a choice */
+    position: absolute;
+    left: 0.3em;
+}
+
+/* Drag and drop feedback — DRAWN BY THE STYLESHEET, not by the engine.
+   WebKitGTK drags a translucent snapshot of the element; QtWebEngine drags
+   nothing at all, so a working drag looked dead under Qt (Kent,
+   2026-09-14). These two classes are set by makeDraggable/makeDroppable, so
+   both engines show the same thing.
+   Told apart by OUTLINE STYLE — dashed = "this is what you are dragging",
+   solid and thicker = "this is where it would land" — because colour may
+   accompany meaning but must never be the thing carrying it. `outline`
+   rather than `border`: it is drawn outside the box and reflows nothing. */
+.wv-dragging {
+    opacity: 0.5;
+    outline: 3px dashed #555;
+    outline-offset: -3px;
+    cursor: grabbing;
+}
+.wv-drop-target {
+    outline: 4px solid #555;
+    outline-offset: -4px;
+    background: var(--activebackground);
 }
 
 /* Combobox */
@@ -144,6 +184,15 @@
     border: 1px solid #999;
     padding: 2px 4px;
 }
+/* The editable form (state='normal'): an <input> plus the <datalist> that
+   holds its options. The wrapper carries the widget's grid placement, so it
+   must not add a box of its own. */
+.wv-combobox-wrap {
+    display: inline-block;
+    background: none;
+    border: 0;
+    padding: 0;
+}
 
 /* Progressbar — mirrors the tkinter TProgressbar style set in
    ui_tkinter.py:300: bar = theme background, trough = activebackground.
@@ -151,10 +200,20 @@
    nothing else in the program, so using it here painted the bar red (fixed
    2026-09-08). The fill's leading edge carries a border so how far along the
    bar is stays readable by SHAPE, not by telling two greens apart. */
+/* A BAR NEEDS A LENGTH OF ITS OWN. This had a height and no width, so a
+   horizontal bar collapsed to nothing wherever its container did not happen
+   to stretch it — and it looked correct for as long as every container did
+   (Kent, 2026-09-14: "progress bars are worse", after a container changed
+   from stretching to hugging). ttk's Progressbar carries a default length
+   for the same reason; a bar whose extent depends on who holds it cannot
+   show a proportion.
+   min-width, not width, so it still stretches where there IS room — the
+   splash bar is `min(80%, 40em)` and must stay that. */
 .wv-progressbar {
     background: var(--activebackground);
     border: 1px solid #999;
     height: 20px;
+    min-width: 10em;
     position: relative;
     overflow: hidden;
 }
@@ -164,7 +223,12 @@
     box-sizing: border-box;
     height: 100%;
     width: 0%;
-    transition: width 0.2s;
+    /* SHORTER THAN THE INTERVAL BETWEEN COMMANDS, or the bar never arrives
+       where it was told: at 0.2s against a value every 30ms the drawn fill
+       lagged six steps behind and the whole sweep read as a slow drift that
+       reversed direction (Kent's gallery, 2026-09-14). Linear rather than
+       the default ease, so a steady climb looks steady. */
+    transition: width 0.1s linear;
 }
 /* At 0% and 100% the edge line would sit on the trough border; hide it so it
    doesn't read as a stray tick. */
@@ -173,9 +237,55 @@
     border-right: 0;
 }
 
-/* ScrollingFrame */
+/* A vertical bar: tall, narrow, and filling from the BOTTOM — the shape
+   tkinter draws for orient='vertical', and the one a reader expects of a
+   column. `orient` was being dropped in ui_webview, so both orientations
+   came out as the same horizontal bar (Kent's gallery, 2026-09-14).
+   justify-content:flex-end is what anchors the fill low; without it a
+   partial bar would hang from the top and read as draining rather than
+   filling. */
+.wv-progressbar-vertical {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: 20px;
+    min-width: 20px;        /* undo the horizontal bar's length */
+    height: 6em;
+}
+.wv-progressbar-vertical .wv-progressbar-fill {
+    width: 100%;
+    height: 0%;
+    border-right: 0;
+    border-top: 2px solid #555;
+    transition: height 0.1s linear;   /* see the horizontal fill above */
+}
+.wv-progressbar-vertical .wv-progressbar-fill[style*="height: 0%"],
+.wv-progressbar-vertical .wv-progressbar-fill[style*="height: 100%"] {
+    border-top: 0;
+}
+
+/* ScrollingFrame
+   `overflow: auto` ALONE NEVER SCROLLS. It says "scroll if the content
+   overflows", and with no height constraint the box simply grows to fit, so
+   it never overflows and never scrolls: twenty rows rendered as twenty rows
+   and the WINDOW scrolled instead (Kent's gallery, 2026-09-14 — "This is one
+   long scrolling frame, not three independent ones").
+
+   This falsifies a documented assumption. `windowsize`/`reflow` are no-ops in
+   ui_webview, filed under "correct as no-ops — the browser sizes and lays out
+   its own boxes" (agenda/webview_when_to_finish.md, PILE 1). For WIDTH that
+   holds. For HEIGHT it does not: a browser will not cap a box's height by
+   itself, and capping the viewport is most of what a scroller IS. tkinter's
+   ScrollingFrame computes that cap in `_caps`/`windowsize`.
+
+   max-height rather than height, so a short list still hugs its content
+   instead of leaving an empty well below it — which is the behaviour the
+   tkinter one has. An explicit `height=` from the caller is set inline by
+   the widget and wins over this. */
 .wv-scrolling-frame {
     overflow: auto;
+    max-height: 60vh;
+    min-height: 0;
 }
 
 /* Menu */

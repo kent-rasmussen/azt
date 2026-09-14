@@ -21,13 +21,20 @@ function _stickyToStyle(sticky) {
     const hasE = s.includes('e');
     const hasW = s.includes('w');
 
+    // NO STICKY MEANS CENTRE, NOT STRETCH. Saying nothing here left the grid
+    // to its own default, which IS stretch — so `sticky=''` behaved exactly
+    // like `sticky='nsew'`, the opposite of what tkinter means by it
+    // ("do not stretch; centre in the cell"). Every axis is now stated
+    // rather than defaulted (Kent, 2026-09-14: "nor sticky impact").
     if (hasN && hasS) style.alignSelf = 'stretch';
     else if (hasN)    style.alignSelf = 'start';
     else if (hasS)    style.alignSelf = 'end';
+    else              style.alignSelf = 'center';
 
     if (hasE && hasW) style.justifySelf = 'stretch';
     else if (hasE)    style.justifySelf = 'end';
     else if (hasW)    style.justifySelf = 'start';
+    else              style.justifySelf = 'center';
 
     return style;
 }
@@ -89,6 +96,8 @@ function createWidget(spec) {
         case 'frame':
             el = document.createElement('div');
             el.className = 'wv-widget wv-frame';
+            if (spec.props.borderwidth || spec.props.relief)
+                _setBorder(el, spec.props.borderwidth, spec.props.relief);
             break;
         case 'label':
             el = document.createElement('div');
@@ -101,6 +110,8 @@ function createWidget(spec) {
             // AFTER the image: _setImage adds the .wv-compound classes that
             // decide flex-direction, and _setAnchor reads that direction.
             if (spec.props.anchor) _setAnchor(el, spec.props.anchor);
+            if (spec.props.borderwidth || spec.props.relief)
+                _setBorder(el, spec.props.borderwidth, spec.props.relief);
             break;
         case 'button':
             el = document.createElement('button');
@@ -123,6 +134,12 @@ function createWidget(spec) {
             el = document.createElement('input');
             el.className = 'wv-widget wv-entry';
             el.type = 'text';
+            // An <input> does NOT inherit font from its ancestors — browsers
+            // give form controls their own default — so a font class on a
+            // parent never reached it, and `font='readbig'` was being dropped
+            // in ui_webview besides. Both halves, or an entry field stays at
+            // the browser default while every label around it is right.
+            if (spec.props.font) el.classList.add('font-' + spec.props.font);
             if (spec.props.width) el.style.width = spec.props.width + 'ch';
             el.addEventListener('input', () => {
                 if (window.pywebview && window.pywebview.api) {
@@ -136,6 +153,11 @@ function createWidget(spec) {
             const fill = document.createElement('div');
             fill.className = 'wv-progressbar-fill';
             el.appendChild(fill);
+            // A VERTICAL BAR IS A DIFFERENT SHAPE, not a rotated one: it is
+            // tall and narrow and fills from the BOTTOM, which is what
+            // tkinter draws and what a reader expects of a column.
+            if (String(spec.props.orient || '') === 'vertical')
+                el.classList.add('wv-progressbar-vertical');
             break;
         case 'checkbutton': {
             el = document.createElement('label');
@@ -188,10 +210,56 @@ function createWidget(spec) {
             if (spec.props.height) el.style.maxHeight = (spec.props.height * 1.5) + 'em';
             if (spec.props.width) el.style.width = spec.props.width + 'ch';
             if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            // Read by the click handler in updateProp('items'), which is
+            // where rows are built — so it has to be on the element rather
+            // than in a closure over this spec. The MODE ITSELF, not just
+            // the boolean: extended and multiple are both "more than one"
+            // and behave differently under the pointer.
+            if (spec.props.multiple) el.dataset.multiple = 'true';
+            if (spec.props.selectmode)
+                el.dataset.selectmode = String(spec.props.selectmode);
             // Items added via updateProp('items', [...])
             break;
         }
         case 'combobox': {
+            // TYPEABLE ONLY IF ASKED. ttk.Combobox has a `state`: 'readonly'
+            // restricts the user to the list, and 'normal' (ttk's default)
+            // leaves the entry half EDITABLE, so a value that is not in the
+            // list can be typed in (Kent, 2026-09-14: "I recall an option
+            // that allows you to search/filter, and/or input something not
+            // on the list?"). A <select> cannot do that at all.
+            //   The <select> stays the default even though ttk's default is
+            // 'normal', because it is the better control for the app's one
+            // call site (the field-type picker, tasks.py:1119, where a typed
+            // value has nothing to map to) and because <datalist> support in
+            // WebKitGTK cannot be relied on for the dropdown half. Asking for
+            // state='normal' explicitly gets the editable form; the
+            // divergence from ttk's default is deliberate and recorded here.
+            if (String(spec.props.state || '') === 'normal') {
+                el = document.createElement('span');
+                el.className = 'wv-widget wv-combobox-wrap';
+                const inp = document.createElement('input');
+                inp.type = 'text';
+                inp.className = 'wv-combobox';
+                inp.setAttribute('list', 'wv-dl-' + spec.wid);
+                const dl = document.createElement('datalist');
+                dl.id = 'wv-dl-' + spec.wid;
+                if (spec.props.width) inp.style.width = spec.props.width + 'ch';
+                if (spec.props.font) inp.classList.add('font-' + spec.props.font);
+                el.appendChild(inp);
+                el.appendChild(dl);
+                // `change` (not `input`) so the report fires on a finished
+                // entry rather than on every keystroke — ttk fires
+                // <<ComboboxSelected>> on a pick, and a typed value lands
+                // when the field is left or Enter is pressed.
+                inp.addEventListener('change', () => {
+                    if (window.pywebview && window.pywebview.api) {
+                        window.pywebview.api.on_event(spec.wid, 'select',
+                                                      {value: inp.value});
+                    }
+                });
+                break;
+            }
             el = document.createElement('select');
             el.className = 'wv-widget wv-combobox';
             if (spec.props.width) el.style.width = spec.props.width + 'ch';
@@ -229,8 +297,29 @@ function createWidget(spec) {
             el.className = 'wv-widget';
     }
 
+    // EXTRA CLASSES FROM PYTHON. A subclass that wants its own styling has
+    // no way to say so otherwise: every Frame subclass is created with
+    // widget_type='frame' and gets `wv-frame`, so `.wv-scrolling-frame` in
+    // grid.css had never matched anything at all — ScrollingFrame was a
+    // plain frame wearing no class of its own, which is why capping its
+    // height in the stylesheet did nothing (Kent, 2026-09-14).
+    if (spec.props && spec.props.cssclass) {
+        String(spec.props.cssclass).split(/\s+/).forEach(c => {
+            if (c) el.classList.add(c);
+        });
+    }
+
     el.dataset.wid = spec.wid;
     _widgets.set(spec.wid, el);
+
+    // AFTER REGISTRATION, because these route through updateProp and it
+    // looks the widget up in `_widgets`. A `wraplength` given at
+    // construction was going nowhere: updateProp has handled the option for
+    // a while, but only `wrap()` ever called it, so the constructor kwarg
+    // was inert and a label asked to wrap at 200px ran to full width and
+    // blew its grid column out (Kent's gallery, 2026-09-14).
+    if (spec.props && spec.props.wraplength)
+        updateProp(spec.wid, 'wraplength', spec.props.wraplength);
 
     if (spec.grid) {
         _applyGrid(el, spec.grid);
@@ -281,6 +370,32 @@ function _setBoxSize(input, px, scaleto, large) {
     input.classList.add('wv-sized-box');
 }
 
+// ── borderwidth / relief ─────────────────────────────────────────────
+// tkinter's reliefs have EXACT CSS counterparts, which is rare among the
+// options in this file: raised→outset, sunken→inset, and groove/ridge are
+// CSS values by those very names. So this is a translation, not a
+// lookalike. 'flat' means no border however wide it was asked to be, which
+// is tkinter's behaviour too.
+//
+// Border COLOUR is `currentColor` — the text colour — deliberately: it
+// follows the theme without a second variable to keep in step, and it
+// cannot become a colour-only signal, since a border is a shape.
+const _RELIEF = {
+    flat: 'none', solid: 'solid', raised: 'outset', sunken: 'inset',
+    groove: 'groove', ridge: 'ridge',
+};
+
+function _setBorder(el, width, relief) {
+    const style = _RELIEF[String(relief || '').toLowerCase()]
+                  || (width ? 'solid' : null);
+    if (!style) return;
+    const n = parseInt(width, 10);
+    el.style.borderStyle = style;
+    el.style.borderWidth = ((n > 0 ? n : 1)) + 'px';
+    el.style.borderColor = 'currentColor';
+    el.style.boxSizing = 'border-box';
+}
+
 // ── anchor ───────────────────────────────────────────────────────────
 // tkinter's `anchor` says where the CONTENT sits when the widget is bigger
 // than it: n/ne/e/se/s/sw/w/nw, or c/center. 91 call sites pass it and
@@ -309,16 +424,59 @@ function _setAnchor(el, anchor) {
     const pair = _ANCHOR[key];
     if (!pair) return;                  // unknown: leave the default alone
     const [h, v] = pair;
-    const cs = getComputedStyle(el);
-    if (cs.display === 'flex' || cs.display === 'inline-flex') {
-        const column = cs.flexDirection.startsWith('column');
-        // main axis follows flex-direction; cross axis is the other one
-        el.style.justifyContent = _FLEX[column ? v : h];
-        el.style.alignItems     = _FLEX[column ? h : v];
-    } else {
-        el.style.textAlign = h === 'start' ? 'left'
-                           : h === 'end'   ? 'right' : 'center';
-    }
+    // NOT getComputedStyle. The first version branched on the computed
+    // `display`, and this runs from createWidget BEFORE the element is in
+    // the document — so the computed value is the UA default (`block`),
+    // never the stylesheet's `flex`, and every single anchor took the
+    // text-align branch. All nine specimens in frontend/gallery.py came out
+    // identical (2026-09-14).
+    //
+    // classList is knowable without the document, and BOTH mechanisms are
+    // set unconditionally: flex properties are inert on a non-flex element
+    // (a plain .wv-button) and text-align is inert on a flex container, so
+    // whichever applies, applies.
+    const column = el.classList.contains('wv-compound-top')
+                || el.classList.contains('wv-compound-bottom');
+    el.style.justifyContent = _FLEX[column ? v : h];
+    el.style.alignItems     = _FLEX[column ? h : v];
+    el.style.textAlign = h === 'start' ? 'left'
+                       : h === 'end'   ? 'right' : 'center';
+    el.dataset.anchor = key;    // so _reportAnchor can find one to measure
+}
+
+// ONE MEASUREMENT, ONCE, AFTER LAYOUT. Whether an anchored label can honour
+// its anchor depends on whether `sticky` actually stretched it, and that
+// cannot be read before the element is in the document — which is the same
+// mistake as above, so it is not repeated by guessing. Called from a
+// deferred hook; reports to the Python log through the console bridge.
+function reportAnchor() {
+    // ALL OF THEM, AND WHERE THE TEXT ACTUALLY SITS. Measuring one label's
+    // box answered "was it stretched?" and nothing else, so it took a second
+    // run to learn that the box had room and the letters still would not
+    // move. What settles it is the TEXT's offset inside its own box: if
+    // `at(dx,dy)` is the same in all nine, the anchor is not being applied;
+    // if it varies with the anchor, it is, and the doubt was the eye's. The
+    // `slack` pair says whether there was any room to move in — a slack of 0
+    // makes every anchor look identical however correct the code is, which
+    // is the trap the first two versions of this row fell into.
+    const els = [...document.querySelectorAll('[data-anchor]')];
+    if (!els.length) return 'no anchored widget on this page';
+    return els.map(el => {
+        const cs = getComputedStyle(el);
+        const r = el.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const tr = range.getBoundingClientRect();
+        return (el.dataset.anchor
+                + ' box=' + Math.round(r.width) + 'x' + Math.round(r.height)
+                + ' text=' + Math.round(tr.width) + 'x' + Math.round(tr.height)
+                + ' at(' + Math.round(tr.left - r.left) + ','
+                         + Math.round(tr.top - r.top) + ')'
+                + ' slack(' + Math.round(r.width - tr.width) + ','
+                            + Math.round(r.height - tr.height) + ')'
+                + ' ' + cs.display + '/' + cs.justifyContent
+                + '/' + cs.alignItems);
+    }).join('\n    ');
 }
 
 // ── state: 'disabled' / 'normal' ─────────────────────────────────────
@@ -434,8 +592,20 @@ function notebookAdd(wid, childWid, text) {
     tab.addEventListener('click', () => notebookSelect(wid, childWid, true));
     p.strip.appendChild(tab);
 
-    // First tab added is the selected one, as ttk does.
-    if (p.strip.children.length === 1) notebookSelect(wid, childWid, false);
+    // FIRST TAB SELECTED, EVERY LATER ONE HIDDEN. Only the first add used to
+    // call notebookSelect, so panels 2..n were appended VISIBLE and nothing
+    // ever hid them: a notebook's pages all stacked on top of each other
+    // (Kent's gallery, 2026-09-14, seven tabs' content on one page).
+    //
+    // The chooser escaped it by accident — it adds its three tabs and then
+    // calls `_select_chooser_tab(...)`, and that select hides the rest. So
+    // the bug was invisible for as long as the only caller happened to
+    // select afterwards, which is not something a Notebook may require.
+    if (p.strip.children.length === 1) {
+        notebookSelect(wid, childWid, false);
+    } else {
+        child.classList.add('wv-hidden');
+    }
 }
 
 function notebookSelect(wid, childWid, notify) {
@@ -559,10 +729,26 @@ function updateProp(wid, prop, value) {
             break;
         case 'progress':
             const fill = el.querySelector('.wv-progressbar-fill');
-            if (fill) fill.style.width = value + '%';
+            if (fill) {
+                // The percentage drives the dimension the bar GROWS in, so
+                // a vertical bar sets height and stays full width. Setting
+                // width on a vertical bar is what drew it horizontally.
+                if (el.classList.contains('wv-progressbar-vertical')) {
+                    fill.style.height = value + '%';
+                    fill.style.width = '100%';
+                } else {
+                    fill.style.width = value + '%';
+                }
+            }
             break;
         case 'width':
             el.style.width = value + 'ch';
+            break;
+        case 'max_height_em':
+            // A scroller's own height, in text rows, beating the stylesheet's
+            // generic cap. Inline so it wins; `em` so it tracks the font the
+            // way tkinter's row count does.
+            el.style.maxHeight = value + 'em';
             break;
         case 'wraplength':
             // TEXT THAT MUST WRAP. Named after tkinter's own option, which
@@ -620,30 +806,79 @@ function updateProp(wid, prop, value) {
                     div.className = 'wv-listbox-item';
                     div.textContent = item;
                     div.dataset.index = i;
-                    div.addEventListener('click', () => {
-                        el.querySelectorAll('.wv-listbox-item').forEach(d => d.classList.remove('selected'));
-                        div.classList.add('selected');
+                    div.addEventListener('click', (ev) => {
+                        // FOUR MODES, NOT TWO. The first version asked only
+                        // "is this multiple?", which is right for tkinter's
+                        // MULTIPLE and wrong for EXTENDED: extended is the
+                        // file-manager gesture — a plain click REPLACES the
+                        // selection, shift-click extends a run from the
+                        // anchor, ctrl/cmd-click toggles one row. Treating
+                        // it as multiple made every click toggle, so a user
+                        // could never narrow a selection back down without
+                        // clicking each row off again (Kent, 2026-09-14:
+                        // "is this correct for extended?" — it was not).
+                        //   single/browse differ only in drag behaviour,
+                        // which a click handler cannot express; both replace.
+                        const mode = el.dataset.selectmode
+                                  || (el.dataset.multiple === 'true'
+                                      ? 'multiple' : 'browse');
+                        const rows = [...el.querySelectorAll(
+                                            '.wv-listbox-item')];
+                        const clear = () => rows.forEach(
+                                d => d.classList.remove('selected'));
+                        if (mode === 'multiple') {
+                            div.classList.toggle('selected');
+                            el.dataset.anchor = i;
+                        } else if (mode === 'extended' && ev.shiftKey) {
+                            const a = parseInt(el.dataset.anchor);
+                            const from = isNaN(a) ? i : a;
+                            clear();
+                            rows.slice(Math.min(from, i), Math.max(from, i) + 1)
+                                .forEach(d => d.classList.add('selected'));
+                        } else if (mode === 'extended'
+                                   && (ev.ctrlKey || ev.metaKey)) {
+                            div.classList.toggle('selected');
+                            el.dataset.anchor = i;
+                        } else {
+                            clear();
+                            div.classList.add('selected');
+                            el.dataset.anchor = i;
+                        }
+                        const chosen = [...el.querySelectorAll(
+                                            '.wv-listbox-item.selected')]
+                                       .map(d => parseInt(d.dataset.index));
                         if (window.pywebview && window.pywebview.api) {
-                            window.pywebview.api.on_event(parseInt(el.dataset.wid), 'select', {index: i, value: item});
+                            window.pywebview.api.on_event(
+                                parseInt(el.dataset.wid), 'select',
+                                {index: i, value: item, indices: chosen});
                         }
                     });
                     el.appendChild(div);
                 });
             }
-            // For combobox: value is an array of strings
-            if (el.tagName === 'SELECT') {
-                el.innerHTML = '';
-                (value || []).forEach(item => {
-                    const opt = document.createElement('option');
-                    opt.value = item;
-                    opt.textContent = item;
-                    el.appendChild(opt);
-                });
-            }
+            // For combobox: value is an array of strings. Two shapes — the
+            // <select>, and the editable state='normal' form, whose options
+            // live in a <datalist> beside its <input>.
+            { const dl = el.classList.contains('wv-combobox-wrap')
+                       ? el.querySelector('datalist') : null;
+              const holder = dl || (el.tagName === 'SELECT' ? el : null);
+              if (holder) {
+                  holder.innerHTML = '';
+                  (value || []).forEach(item => {
+                      const opt = document.createElement('option');
+                      opt.value = item;
+                      opt.textContent = item;
+                      holder.appendChild(opt);
+                  });
+              } }
             break;
         case 'value':
             if (el.tagName === 'SELECT') el.value = value;
             if (el.tagName === 'INPUT') el.value = value;
+            if (el.classList.contains('wv-combobox-wrap')) {
+                const inp = el.querySelector('input');
+                if (inp) inp.value = value;
+            }
             break;
     }
 }
@@ -792,11 +1027,21 @@ function makeDraggable(wid) {
     el.draggable = true;
     el.style.cursor = 'grab';
 
+    // THE FEEDBACK IS OURS, NOT THE ENGINE'S. WebKitGTK draws a translucent
+    // snapshot of the dragged element under the cursor; QtWebEngine draws
+    // nothing, so the same page and the same JS looked alive on one engine
+    // and dead on the other (Kent, 2026-09-14: "drag drop registers now, but
+    // animation is gone from qt (there is gtk)"). A class we set ourselves
+    // is drawn by the stylesheet, which both engines do the same way.
+    //   Marked by OUTLINE STYLE, not colour — dashed on the thing being
+    // dragged, solid on the target it is over (~/.claude-sil/CLAUDE.md:
+    // colour may accompany meaning, never carry it). `outline` rather than
+    // `border` so nothing reflows when it appears.
     el.addEventListener('dragstart', (e) => {
         _dragSourceWid = wid;
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', String(wid));
-        el.style.opacity = '0.5';
+        el.classList.add('wv-dragging');
         // Notify Python of drag start
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_start', {x: e.clientX, y: e.clientY});
@@ -804,7 +1049,9 @@ function makeDraggable(wid) {
     });
 
     el.addEventListener('dragend', (e) => {
-        el.style.opacity = '1';
+        el.classList.remove('wv-dragging');
+        document.querySelectorAll('.wv-drop-target').forEach(
+            d => d.classList.remove('wv-drop-target'));
         _dragSourceWid = null;
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_end', {});
@@ -823,14 +1070,14 @@ function makeDroppable(wid) {
 
     el.addEventListener('dragenter', (e) => {
         e.preventDefault();
-        el.style.background = 'var(--activebackground)';
+        el.classList.add('wv-drop-target');
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_enter', {source_wid: _dragSourceWid});
         }
     });
 
     el.addEventListener('dragleave', (e) => {
-        el.style.background = '';
+        el.classList.remove('wv-drop-target');
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_leave', {source_wid: _dragSourceWid});
         }
@@ -838,7 +1085,7 @@ function makeDroppable(wid) {
 
     el.addEventListener('drop', (e) => {
         e.preventDefault();
-        el.style.background = '';
+        el.classList.remove('wv-drop-target');
         const sourceWid = parseInt(e.dataTransfer.getData('text/plain'));
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_commit', {

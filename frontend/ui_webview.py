@@ -183,6 +183,11 @@ class _JsonApi:
 # Singleton API instance — shared across all widgets in a window
 _api = _JsonApi()
 
+# The droppable a drag most recently landed on, so the SOURCE's dnd_end can
+# be told what it hit. The page's `dragend` does not carry a target, and
+# `drop` fires first — see _WebviewWidget._on_dnd_end. One drag at a time.
+_dnd_last_target = None
+
 # ── Engine selection ─────────────────────────────────────────────────
 # Which native host renders the page. Kent, 2026-09-04: Qt gives this machine
 # engine parity with the Windows field (QtWebEngine IS Chromium), but "for
@@ -236,6 +241,59 @@ _TRANSPORT_SWITCHES = {
     '--gdk-backend': ('GDK_BACKEND', 'gtk', ('wayland', 'x11')),
     '--qt-platform': ('QT_QPA_PLATFORM', 'qt', ('wayland', 'xcb')),
 }
+
+
+def _apply_dmabuf_default():
+    """Turn WebKitGTK's accelerated buffer handoff OFF, unless `--dmabuf`.
+
+    WHY OFF BY DEFAULT. Kent, 2026-09-14, on a window drawn in diagonal
+    black bands with every scanline offset a little further than the last:
+    "I've seen something similar multiple times. it typically resolves, just
+    wondering". That shear is the signature of a STRIDE MISMATCH — the page
+    renders correctly and the compositor reads the buffer with the wrong
+    pitch. `agenda/webview_when_to_finish.md` Step 0 already knew the
+    mitigation ("if GTK is blank retry with
+    WEBKIT_DISABLE_DMABUF_RENDERER=1") and ADR 0004 D8 keeps Qt available as
+    the escape hatch for the blank-window variant of the same bug.
+
+    A SWITCH WOULD NOT HAVE HELPED, which is why this is the default and not
+    an option. Kent: "it is so intermittent and infrequent, that 'restart' is
+    as useful as 'restart with x parameters'. unless we find parameters that
+    remove it entirely." Disabling the path removes the class rather than
+    making it rarer, so it belongs where it cannot be forgotten.
+
+    THE COST IS PER-FRAME, and nothing here draws frames continuously: the
+    chooser is a grid of buttons, the splash is text and an occasional
+    progress tick, the alphabet chart is a grid of images that renders in
+    ~0s. The two things that WOULD feel it do not exist yet — drag with
+    animation (agenda/drag_and_drop_animation.md, Step 4) and scrolling a
+    long image-bearing verify list. `--dmabuf` is how those get measured
+    both ways when they arrive; the note is in that item too.
+
+    Only for WebKitGTK. Qt/QtWebEngine does not read this variable, and a
+    value exported for it would be noise.
+    """
+    if _engine() not in (None, 'gtk'):
+        return
+    if _switch('--dmabuf'):
+        log.info("WEBKIT_DISABLE_DMABUF_RENDERER left alone (--dmabuf): the "
+                 "accelerated buffer handoff is ON, which is faster per "
+                 "frame and is what produced the diagonal shearing this "
+                 "flag exists to test.")
+        return
+    if 'WEBKIT_DISABLE_DMABUF_RENDERER' in os.environ:
+        # An explicit environment setting is the user's, not ours to
+        # overwrite — and saying so beats a silent disagreement with
+        # whatever they set it for.
+        log.info("WEBKIT_DISABLE_DMABUF_RENDERER already set to %r in the "
+                 "environment; leaving it",
+                 os.environ['WEBKIT_DISABLE_DMABUF_RENDERER'])
+        return
+    os.environ['WEBKIT_DISABLE_DMABUF_RENDERER'] = '1'
+    log.info("WEBKIT_DISABLE_DMABUF_RENDERER=1 (default): WebKitGTK's "
+             "accelerated buffer handoff is off, because a stride mismatch "
+             "in it draws the window in diagonal bands. --dmabuf turns it "
+             "back on for testing.")
 
 
 def _apply_transport_switches():
@@ -1236,15 +1294,33 @@ class _WebviewWidget:
         self.dnd_focus_on()
 
     def _on_dnd_end(self, data):
+        """The SOURCE's end-of-drag call, which tkinter makes and this did not.
+
+        `Gridded.dnd_end(target, event)` is the documented source-side hook —
+        `ui_tkinter` calls it from tkinter.dnd with the target it landed on,
+        and `testapp` shows a DragLabel overriding it to read the target's
+        text. Here the page's `dragend` was answered by doing the cleanup
+        inline, so any override was dead code: a caller could implement
+        dnd_end, see it work under tkinter, and get silence under webview.
+
+        The page cannot say what it landed on — `dragend` carries no target —
+        but the `drop` event fires on the target FIRST, so the last commit is
+        the answer, and it is cleared on the way out so a drag that lands on
+        nothing reports None (which is what tkinter passes then too).
+        """
+        global _dnd_last_target
+        target, _dnd_last_target = _dnd_last_target, None
         self.initial_widget = False
-        self.dnd_focus_off()
+        self.dnd_end(target, data)
 
     def _on_dnd_commit(self, data):
         """Called on the DROP TARGET when a draggable is dropped on it."""
+        global _dnd_last_target
         source_wid = data.get('source_wid')
         # Find the source widget by wid
         source = self._find_widget_by_wid(source_wid)
         if source:
+            _dnd_last_target = self
             self.dnd_commit(source, data)
 
     def _find_widget_by_wid(self, wid):
@@ -1955,7 +2031,26 @@ class Renderer:
 
 class Frame(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
-        kwargs.pop('border', None)
+        # BORDERS ARE KEPT NOW. They were dropped as cosmetic, and they are
+        # not: borders are how several pages separate one region from
+        # another, and with none of them drawn a webview page reads as one
+        # undivided sheet. It also made `frontend/gallery.py` unable to show
+        # a cell's extent, so the anchor row had to imply its boxes with
+        # ruler CHARACTERS — Kent, 2026-09-14: "can we not make actual cells
+        # with borders, so the 'ruler's have real values and effects?"
+        #
+        # `relief` maps ONE-TO-ONE onto CSS border styles, which is unusual
+        # among these options: raised/sunken/groove/ridge are all real CSS
+        # values, so this is a translation rather than an approximation.
+        # `border` is tkinter's alias for `borderwidth`.
+        border = kwargs.pop('borderwidth', kwargs.pop('border', None))
+        relief = kwargs.pop('relief', None)
+        if border is not None:
+            kwargs['borderwidth'] = border
+        if relief:
+            kwargs['relief'] = relief
+        # The focus ring is a different thing from a border and nothing in
+        # the app styles it; :focus-visible already draws one.
         kwargs.pop('highlightbackground', None)
         kwargs.pop('highlightthickness', None)
         super().__init__(parent, widget_type='frame', **kwargs)
@@ -2088,6 +2183,28 @@ class Label(_WebviewWidget):
         # to act on, which is why it was a no-op with a comment claiming CSS
         # handled it.
         self._asked_wraplength = kwargs.pop('wraplength', None)
+        # AND APPLY IT NOW, not only when someone calls `wrap()`. Stored and
+        # waited for, it made the CONSTRUCTOR KWARG INERT: tkinter applies
+        # `wraplength` as a widget option the moment it is given, so
+        # `Label(..., wraplength=200)` wraps there and did nothing here. In
+        # `frontend/gallery.py` the specimen asking for 200 ran to ~850px,
+        # which blew its grid column wide enough to push the next column off
+        # the window (Kent, 2026-09-14: "column problem?").
+        #   `wrap()` is still the right call for a caller that wants the
+        # measured fallback; this is for a caller that already knows the
+        # number.
+        if self._asked_wraplength:
+            kwargs['wraplength'] = self._asked_wraplength
+        # BORDERS, as on Frame. Passed to labels all over the app
+        # (`ui_tkinter.testapp` borders every Message/Label specimen) and
+        # dropped here, so a bordered label had no border and nothing said
+        # so. `relief` maps 1:1 onto CSS border styles — see _setBorder.
+        border = kwargs.pop('borderwidth', kwargs.pop('border', None))
+        relief = kwargs.pop('relief', None)
+        if border is not None:
+            kwargs['borderwidth'] = border
+        if relief:
+            kwargs['relief'] = relief
         kwargs['font'] = font
         # A Variable in either slot resolves to its VALUE, not its repr.
         # KEEP the Variable itself too: it has to be subscribed to below, and
@@ -2216,7 +2333,15 @@ class Button(_WebviewWidget):
         if state:
             kwargs['state'] = state
         kwargs.pop('norender', None)
-        kwargs.pop('textvariable', None)
+        # A BUTTON'S LABEL CAN COME FROM A VARIABLE, and dropping it left the
+        # button BLANK. `tasks/transcribe_glyph.py:395` builds its OK button
+        # with `textvariable=self.oktext` and an empty StringVar, then sets
+        # the variable as the page changes — so under webview that button had
+        # no text at all, ever, and no later `set()` could give it any.
+        # Same treatment as Label (:2233): resolve it now AND trace it.
+        textvariable = kwargs.pop('textvariable', None)
+        if textvariable is not None and not kwargs.get('text'):
+            kwargs['text'] = _text_of(textvariable)
         kwargs.pop('wraplength', None)
         # Remove button-grid kwargs (brow, bcolumn, etc.)
         for k in list(kwargs):
@@ -2226,6 +2351,20 @@ class Button(_WebviewWidget):
         if 'text' in kwargs:
             kwargs['text'] = nfc(kwargs['text'])
         super().__init__(parent, widget_type='button', **kwargs)
+        self._textvariable = textvariable
+        if textvariable is not None:
+
+            def _to_dom(*_args, _var=textvariable):
+                try:
+                    self.configure(text=_text_of(_var))
+                except Exception as e:
+                    log.info("couldn't update button {} from its variable "
+                             "({})".format(getattr(self, '_wid', '?'), e))
+            try:
+                textvariable.trace_add('write', _to_dom)
+            except Exception as e:
+                log.info("couldn't trace a button's textvariable ({})"
+                         "".format(e))
 
         # Build command (same logic as ui_tkinter.Button.build_command)
         self.command = command
@@ -2288,9 +2427,27 @@ class Button(_WebviewWidget):
 class EntryField(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
         kwargs.pop('render', None)
-        kwargs.pop('font', None)
-        self.textvariable = kwargs.pop('textvariable', StringVar())
+        # KEPT. An entry field asked for `font='readbig'` and got the browser
+        # default, which matters more here than on a label: these are the
+        # fields people type IPA and tone into, and the reading font is how
+        # the text is legible at all. Visible side by side in
+        # `frontend/gallery.py` — tkinter large, webview small (2026-09-14).
+        kwargs['font'] = kwargs.pop('font', 'default')
+        # `text=` IS THE APP'S SPELLING for the variable. `lexicon.py:944`
+        # passes a string_var as `text=`, and tkinter's EntryField accepts it
+        # (TextBase.reserve_kwargs pulls it aside); only `textvariable=` was
+        # honoured here, so a caller using the app's own convention got a
+        # field bound to a throwaway variable.
+        var = kwargs.pop('textvariable', None) or kwargs.pop('text', None)
+        if isinstance(var, str):
+            # A plain string is an initial VALUE, not a variable.
+            initial, var = var, None
+        else:
+            initial = None
         kwargs.pop('text', None)
+        self.textvariable = var if var is not None else StringVar()
+        if initial:
+            self.textvariable.set(initial)
         super().__init__(parent, widget_type='entry', **kwargs)
         # ── BOTH DIRECTIONS, which is new (2026-09-09) ────────────────────
         # Only entry → variable was wired, so a field built with a
@@ -2397,7 +2554,19 @@ class EntryField(_WebviewWidget):
 
 class Progressbar(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
-        kwargs.pop('orient', None)
+        # ORIENT IS KEPT. It was dropped, so a bar asked for vertically was
+        # drawn horizontally — `ui_tkinter.testapp` builds both orientations
+        # and `frontend/gallery.py` shows them side by side, which is how
+        # this surfaced (Kent, 2026-09-14: "a vertical bar drawn
+        # horizontally means 'orient' is being dropped" — it was).
+        orient = kwargs.pop('orient', None)
+        if orient:
+            kwargs['orient'] = orient
+        # `mode` STAYS DROPPED, and deliberately: 'indeterminate' needs an
+        # animation this backend does not have, and silently drawing a
+        # determinate bar at whatever value it happens to hold would be worse
+        # than the honest omission. Nothing in the app asks for it yet — when
+        # something does, it needs a CSS animation, not a prop.
         kwargs.pop('mode', None)
         super().__init__(parent, widget_type='progressbar', **kwargs)
 
@@ -2468,8 +2637,29 @@ class Notebook(_WebviewWidget):
         return super().bind(sequence, func, add=add)
 
 class Message(_WebviewWidget):
+    """tkinter's Message: a label that wraps itself.
+
+    TWO TK QUIRKS, reproduced rather than tidied away, because a harness that
+    disagrees with tkinter about the API teaches the wrong thing:
+
+      * **`width` is in PIXELS here**, not characters — tkinter.Message
+        measures its line length in screen units, unlike Entry and Label.
+      * **There is no `wraplength`.** tkinter.Message simply refuses it:
+        "gallery Message #3 failed: TclError('unknown option -wraplength')"
+        (Kent, tkinter, 2026-09-14). It is accepted here as a synonym for
+        `width` so a caller who reaches for the Label spelling gets what
+        they meant, but the gallery uses `width` because that is what works
+        on both.
+
+    `font` was also being dropped — it is a plain label underneath and the
+    font class works on it, so there was no reason.
+    """
+
     def __init__(self, parent, *args, **kwargs):
-        kwargs.pop('font', None)
+        kwargs['font'] = kwargs.pop('font', 'default')
+        wrap = kwargs.pop('wraplength', None) or kwargs.pop('width', None)
+        if wrap:
+            kwargs['wraplength'] = wrap
         super().__init__(parent, widget_type='label', **kwargs)
 
 
@@ -2525,6 +2715,13 @@ class RadioButton(_WebviewWidget):
         font = kwargs.pop('font', 'default')
         self._variable = kwargs.pop('variable', StringVar())
         self._value = kwargs.pop('value', '')
+        # DROPPED ON PURPOSE, and the effect is visible: tkinter's
+        # indicatoron=0 hides the dot and draws the whole control as a button
+        # that stays pressed in when chosen, so `indicatoron=0` and the
+        # default look different there and identical here. Nothing in the app
+        # asks for it — only `ui_tkinter.testapp` and the gallery, which says
+        # so beside the specimens. If a page ever wants it, the shape is a
+        # hidden <input> with the <label> styled as a button, not a prop.
         kwargs.pop('indicatoron', None)
         self._command = kwargs.pop('command', None)
         kwargs['font'] = font
@@ -2563,8 +2760,34 @@ class ListBox(_WebviewWidget):
         self._raw_command = kwargs.pop('raw_command', False)
         kwargs['height'] = kwargs.pop('height', 10)
         kwargs['width'] = kwargs.pop('width', 40)
-        kwargs.pop('selectmode', None)
-        kwargs.pop('listvariable', None)
+        # SELECTMODE IS A CONTRACT, not decoration: dropping it made every
+        # list single-select, so a caller that offered several picks could
+        # only ever receive one and had no way to know. `testapp` builds a
+        # MULTIPLE list and reads `curselection()` expecting several indices.
+        # tkinter's values are 'single'/'browse'/'multiple'/'extended'; the
+        # last two both mean more than one may be chosen.
+        mode = str(kwargs.pop('selectmode', 'browse') or 'browse').lower()
+        self._multiple = mode in ('multiple', 'extended')
+        kwargs['multiple'] = self._multiple
+        # THE MODE, not only the boolean: MULTIPLE toggles on a plain click
+        # and EXTENDED replaces (shift for a run, ctrl for one row), so the
+        # page needs to know which of the four it is. tkinter's constants are
+        # 'single'/'browse'/'multiple'/'extended'.
+        kwargs['selectmode'] = mode
+        # `listvariable` holds the CONTENTS in tkinter, not the selection —
+        # worth saying because the name reads like the other thing. Kept so
+        # a caller's list can be read from it when no optionlist was given,
+        # which is how tkinter behaves; it is NOT written back, because
+        # nothing in this app reads it back and a two-way binding on a list
+        # is a different feature.
+        self._listvariable = kwargs.pop('listvariable', None)
+        if not optionlist and self._listvariable is not None:
+            try:
+                held = self._listvariable.get()
+            except Exception:
+                held = None
+            if held:
+                optionlist = list(held) if not isinstance(held, str) else [held]
         kwargs['font'] = font
         super().__init__(parent, widget_type='listbox', **kwargs)
         self.choices = []        # the values, in display order
@@ -2576,7 +2799,19 @@ class ListBox(_WebviewWidget):
             self.insert(END, item)
 
     def _normalize(self, option):
-        """(value, display text) for one option, or None to skip it."""
+        """(value, display text) for one option, or None to skip it.
+
+        THE DESCRIPTION BELONGS IN THE TEXT. tkinter's ListBox normalises
+        through `ButtonFrame.regularize_choice`, which returns button kwargs
+        with the description already folded in — `text += f" ({description})"`
+        (ui_tkinter.py:3852) — and this backend's copy of that function stops
+        one step earlier, at the `{'code','name','description'}` dict. So a
+        3- or 4-tuple option rendered here without its description, and the
+        description is usually the ITEM COUNT the chooser lists show. The
+        webview ButtonFrame folds it in at its own call site (:3124); this
+        did not, so the same option list read differently in a list than in
+        a button frame of the same page.
+        """
         if self._raw_command:
             # Legacy mode: plain strings, fed through untouched, and the
             # command wants the raw event rather than a choice.
@@ -2586,11 +2821,30 @@ class ListBox(_WebviewWidget):
             return None
         if ck.get('image'):
             log.info("ListBox dropping image for {!r}".format(ck.get('code')))
-        return ck.get('code'), _text_of(ck.get('name', ck.get('code', '')))
+        text = _text_of(ck.get('name', ck.get('code', '')))
+        if ck.get('description') not in (None, ''):
+            text += " ({})".format(ck['description'])
+        return ck.get('code'), text
 
     def _on_select(self, data):
+        # SEVERAL INDICES WHERE THE PAGE SENDS THEM. This stored `(idx,)`
+        # unconditionally, so `curselection()` could never report more than
+        # one row however the list was configured — which is the other half
+        # of dropping `selectmode`. `indices` is what a multiple list sends;
+        # `index` is the single-selection message, kept so nothing older
+        # breaks.
         idx = data.get('index', 0)
-        self._selection = (idx,)
+        if 'indices' in data:
+            # ASCENDING, and the callback gets the FIRST — `curselection()`
+            # in Tk answers in row order, and ui_tkinter.ListBox._on_select
+            # passes `self.choices[sel[0]]` (:3417). This passed the
+            # last-clicked row instead, so the same two picks produced
+            # different codes on the two backends.
+            got = tuple(sorted(int(i) for i in (data.get('indices') or [])))
+            self._selection = got
+            idx = got[0] if got else idx
+        else:
+            self._selection = (idx,)
         if not self._command:
             return
         if self._raw_command:
@@ -2631,11 +2885,28 @@ class ListBox(_WebviewWidget):
         return self._items[first:last + 1]
 
     def insert(self, index, *elements):
+        """Add rows, keeping VALUES and DISPLAY TEXT in step.
+
+        THE COMMAND COULD NEVER FIRE until this normalised. `_normalize`
+        existed, the class docstring described the two parallel lists, and
+        `_on_select` guards on `0 <= idx < len(self.choices)` — but insert
+        appended to `self._items` only, so `self.choices` stayed empty for
+        the life of every list and that guard rejected every selection. The
+        page showed the picks (the rows highlight in JS, locally) while
+        Python heard nothing at all: Kent's gallery, 2026-09-14, two rows
+        ticked beside "list selection: (none)".
+        """
         for elem in elements:
+            norm = self._normalize(elem)
+            if norm is None:
+                continue
+            code, text = norm
             if index == END or index == 'end':
-                self._items.append(elem)
+                self.choices.append(code)
+                self._items.append(text)
             else:
-                self._items.insert(index, elem)
+                self.choices.insert(index, code)
+                self._items.insert(index, text)
                 index += 1
         self._push_items()
 
@@ -2644,8 +2915,12 @@ class ListBox(_WebviewWidget):
             last = first
         if first == 0 and (last == END or last == 'end'):
             self._items.clear()
+            self.choices.clear()
         else:
             del self._items[first:last + 1]
+            del self.choices[first:last + 1]
+        # A stale selection would index rows that are gone.
+        self._selection = ()
         self._push_items()
 
     def _push_items(self):
@@ -2672,6 +2947,15 @@ class Combobox(_WebviewWidget):
         font = kwargs.pop('font', 'default')
         optionlist = kwargs.pop('optionlist', [])
         self._command = kwargs.pop('command', None)
+        # THE VARIABLE WAS NEVER TAKEN OUT OF kwargs AT ALL — so it went
+        # through as an unknown prop, and `_on_select` set only the private
+        # `_value`. The box displayed the user's pick while the variable it
+        # was built with stayed empty, which is worse than not working:
+        # `frontend/gallery.py` showed "choice 3" in the control and
+        # `combo: ''` beside it (Kent, 2026-09-14). Every caller that reads
+        # the variable rather than calling `get()` saw nothing — and that is
+        # how `testapp` uses it, and `ui_shell.py:3347`'s language picker.
+        self._variable = kwargs.pop('textvariable', None)
         kwargs['width'] = kwargs.pop('width', 20)
         kwargs['font'] = font
         super().__init__(parent, widget_type='combobox', **kwargs)
@@ -2682,9 +2966,25 @@ class Combobox(_WebviewWidget):
         if self._options:
             wv = getattr(self, '_wv_window', None)
             _js(wv, f'updateProp({self._wid}, "items", {json.dumps(self._options)})')
+        # A variable that already holds one of the options selects it, as
+        # tkinter's does — otherwise the control and the variable disagree
+        # from the first paint.
+        if self._variable is not None:
+            try:
+                held = self._variable.get()
+            except Exception:
+                held = None
+            if held:
+                self.set(held)
 
     def _on_select(self, value):
         self._value = value
+        if self._variable is not None:
+            try:
+                self._variable.set(value)
+            except Exception as e:
+                log.info("Combobox {}: could not set its variable ({!r})"
+                         "".format(self._wid, e))
         if self._command:
             self._command(None)
 
@@ -2693,12 +2993,37 @@ class Combobox(_WebviewWidget):
 
     def set(self, value):
         self._value = value
+        if self._variable is not None:
+            try:
+                self._variable.set(value)
+            except Exception as e:
+                log.info("Combobox {}: could not set its variable ({!r})"
+                         "".format(self._wid, e))
         wv = getattr(self, '_wv_window', None)
         _js(wv, f'updateProp({self._wid}, "value", {json.dumps(value)})')
 
 
 class SearchableComboBox(Combobox):
-    pass
+    """NOT IMPLEMENTED, and it now says so — as tkinter's does.
+
+    `ui_tkinter.SearchableComboBox` raises NotImplementedError from its
+    __init__ ("pasted from coderslegacy.com, never adapted"). This was
+    `pass`, i.e. a plain Combobox with no search box and no filtering: a
+    caller would get a control that looked like the thing it asked for and
+    silently was not. A stub that renders something plausible is worse than
+    one that raises, because the failure moves from the call site to the
+    user's hands.
+
+    The filter-as-you-type behaviour it is meant to have does exist in the
+    browser: an <input> with a <datalist> narrows its dropdown as you type,
+    which is what `Combobox(state='normal')` builds here. Whoever adapts
+    this class should start there rather than from the tkinter paste.
+    """
+
+    def __init__(self, parent, *args, **kwargs):
+        raise NotImplementedError(
+            "SearchableComboBox is not yet adapted for this project. "
+            "Use Combobox instead (state='normal' is editable here).")
 
 
 class Menu:
@@ -2788,13 +3113,41 @@ class Scrollbar(_WebviewWidget):
 
 class ScrollingFrame(Frame):
     def __init__(self, parent, *args, **kwargs):
+        # A CALLER'S OWN HEIGHT WINS over the stylesheet's cap. In tkinter
+        # this is rows of text; here it becomes a max-height in `em`, so a
+        # caller asking for 4 rows gets roughly four rows rather than the
+        # generic 60vh.
+        height = kwargs.pop('height', None)
+        # THE CLASS THE STYLESHEET IS WRITTEN FOR. Every Frame subclass is
+        # created with widget_type='frame', so this arrived as a plain
+        # `wv-frame` and `.wv-scrolling-frame` matched nothing — the rule had
+        # been dead since it was written. Without it the box has no height
+        # cap, so `overflow:auto` never engages and twenty rows render as
+        # twenty rows.
+        kwargs['cssclass'] = ' '.join(
+            filter(None, [kwargs.pop('cssclass', ''), 'wv-scrolling-frame']))
         super().__init__(parent, *args, **kwargs)
+        if height:
+            try:
+                self.configure(max_height_em=float(height) * 1.6)
+            except Exception as e:
+                log.info("ScrollingFrame {}: could not use height={!r} ({!r})"
+                         "".format(self._wid, height, e))
         self.content = Frame(self)  # Inner frame for children
 
     def windowsize(self, event=None):
-        pass                # the browser sizes its own box
+        # STILL A NO-OP, but not for the reason first given. The comment here
+        # said "the browser sizes its own box", and for WIDTH that is true.
+        # For HEIGHT it is not: `overflow:auto` with no cap never scrolls,
+        # because the box grows to fit and so never overflows — twenty rows
+        # rendered as twenty rows and the window scrolled instead (Kent,
+        # 2026-09-14). The cap is now a stylesheet rule (`.wv-scrolling-frame`
+        # max-height) plus the `height=` above, which is the right place for
+        # a layout invariant — but it is a cap that had to be SET, not one
+        # the browser supplied.
+        pass
     def reflow(self):
-        pass                # and lays it out
+        pass                # the browser lays the box out
 
     # SCROLLING IS REAL WORK, not a no-op. `main.py:1083` and
     # `tasks/tasks.py:914` scroll to the bottom so the newest line is the one
@@ -2864,10 +3217,22 @@ class ButtonFrame(Frame):
         btn_command = kwargs.pop('command', kwargs.pop('cmd', None))
         btn_window = kwargs.pop('window', None)
         btn_font = kwargs.pop('font', None)
-        # Pop remaining button-only kwargs that shouldn't go to Frame
-        for k in ('choice', 'text', 'image', 'compound', 'norender',
-                  'wraplength', 'image_pixels', 'image_scaleto',
-                  'anchor', 'relief', 'state', 'textvariable'):
+        # BUTTON KWARGS ARE HELD FOR THE BUTTONS, not thrown away. They were
+        # popped here so they would not reach Frame — correct — and then
+        # dropped, which is not: tkinter's ButtonFrame reserves exactly these
+        # onto itself and hands them back to every Button it builds
+        # (`Button.restore_kwargs`, :3885). So a frame built with
+        # `compound='left'` or `image_pixels=24` produced plain text buttons
+        # under webview. `alphabet_chart.py:706` is such a call.
+        btn_shared = {}
+        for k in ('image', 'compound', 'norender', 'wraplength',
+                  'image_pixels', 'image_scaleto', 'anchor', 'relief',
+                  'state', 'textvariable'):
+            if k in kwargs:
+                btn_shared[k] = kwargs.pop(k)
+        # 'choice' and 'text' are per-option and come from the option itself;
+        # a frame-level one would name every button the same.
+        for k in ('choice', 'text'):
             kwargs.pop(k, None)
         # Extract brow/bcolumn → row/column for buttons
         btn_grid = {}
@@ -2889,6 +3254,13 @@ class ButtonFrame(Frame):
                 btn_text += f' ({ck["description"]})'
             btn_kw = {'text': btn_text, 'choice': ck['code'],
                       'command': btn_command, 'row': i, 'column': 0}
+            btn_kw.update(btn_shared)
+            # THE OPTION'S OWN PICTURE, which tkinter passes straight through
+            # (`**choice_kwargs` at :3893) and this dropped: a 4-tuple option
+            # carries an image, and the alphabet chart's glyph list is built
+            # that way. A per-option image beats a frame-level one.
+            if ck.get('image'):
+                btn_kw['image'] = ck['image']
             if btn_window is not None:
                 btn_kw['window'] = btn_window
             if btn_font:
@@ -2924,18 +3296,88 @@ class ScrollingButtonFrame(ScrollingFrame):
         self.buttons = self.bf.buttons
 
 
-class ScrollingListBox(ScrollingButtonFrame):
-    """Stub for the webview backend. Mirrors the tkinter ScrollingListBox API
-    by delegating to ScrollingButtonFrame for now."""
-    pass
+class ScrollingListBox(Frame):
+    """A ListBox that scrolls — `ui_tkinter.ScrollingListBox` is "Frame
+    containing a ListBox + vertical Scrollbar", and this is the same shape.
+
+    WAS A STUB SUBCLASSING ScrollingButtonFrame, which is not a smaller
+    version of this widget but a different one: it rendered a column of
+    BUTTONS where the caller asked for a list, so selection, multi-select and
+    `curselection()` were all absent and what appeared instead looked
+    deliberate (Kent's gallery, 2026-09-14 — twenty items as twenty buttons).
+    A stub that renders something plausible is worse than one that raises.
+
+    No separate scrollbar widget: `.wv-listbox` already has `overflow-y:auto`
+    and takes its height from `height`, so the browser draws the scrollbar.
+    That is the one place in this class where "the engine does it" is true.
+    """
+
+    def __init__(self, parent, *args, **kwargs):
+        # Grid kwargs place THIS frame; everything else belongs to the list —
+        # the same split ui_tkinter.ScrollingListBox makes, and for the same
+        # reason: forwarding row/column to both made every call with a
+        # row/column a TypeError.
+        lb_kw = {k: kwargs.pop(k) for k in list(kwargs)
+                 if k not in self._gridkwargs}
+        super().__init__(parent, *args, **kwargs)
+        self.listbox = ListBox(self, row=0, column=0, sticky='nsew', **lb_kw)
+        # The tkinter one is used interchangeably with its ListBox by
+        # callers, so the list's own surface has to be reachable here.
+        for name in ('choices', 'curselection', 'get', 'insert', 'delete',
+                     'choice', 'selection_set', 'select_clear', 'size',
+                     'see', 'index'):
+            attr = getattr(self.listbox, name, None)
+            if attr is not None:
+                setattr(self, name, attr)
 
 
 class RadioButtonFrame(Frame):
+    """A frame of radio buttons, one per option.
+
+    IT BUILT NOTHING. `optionlist`, `variable` and `horizontal` were popped
+    and thrown away and the result was an empty Frame — so a page asking for
+    a set of radio buttons got a blank space, with no error anywhere: the
+    eleventh instance of a stub that renders something plausible instead of
+    raising. `ui_shell.py:4252` builds one.
+
+    Parity with ui_tkinter.RadioButtonFrame (:4606), including its one
+    surprise: `sticky` belongs to the BUTTONS, not to the frame — it is
+    popped before the frame is gridded and handed to each child.
+    """
+
     def __init__(self, parent, *args, **kwargs):
-        kwargs.pop('optionlist', None)
-        kwargs.pop('horizontal', None)
-        kwargs.pop('variable', None)
+        optionlist = kwargs.pop('optionlist', []) or []
+        horizontal = kwargs.pop('horizontal', False)
+        variable = kwargs.pop('variable', None)
+        # Reserved for the buttons, as tkinter's reserve/restore pair does.
+        btn_kw = {}
+        for k in ('indicatoron', 'command', 'font'):
+            if k in kwargs:
+                btn_kw[k] = kwargs.pop(k)
+        sticky = kwargs.pop('sticky', 'w')
         super().__init__(parent, *args, **kwargs)
+        self.optionlist = optionlist
+        self.buttons = []
+        row = column = 0
+        for opt in optionlist:
+            if isinstance(opt, tuple) and len(opt) == 2:
+                value, name = opt
+            else:
+                name = value = opt
+            kw = dict(btn_kw)
+            # Only if there IS one: RadioButton.__init__ pops with a default,
+            # and an explicit None replaces that default with None rather
+            # than falling back to it — so the button would keep a variable
+            # of None and raise on the first click.
+            if variable is not None:
+                kw['variable'] = variable
+            self.buttons.append(RadioButton(
+                self, value=value, text=nfc(_text_of(name)),
+                row=row, column=column, sticky=sticky, **kw))
+            if horizontal:
+                column += 1
+            else:
+                row += 1
 
 
 class ContextMenu:
@@ -4263,6 +4705,7 @@ class Root(_WebviewWidget):
             # toolkit picks a transport.
             _app_identity(self.program)
             _apply_transport_switches()
+            _apply_dmabuf_default()
             kwargs = _start_kwargs(self.program)
             icon = _icon_path(self.program)
             if icon:

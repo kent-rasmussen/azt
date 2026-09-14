@@ -51,6 +51,15 @@ python main.py --webview --console
 python main.py --webview --engine=gtk --gdk-backend=x11   # or =wayland
 python main.py --webview --engine=qt --qt-platform=xcb    # or =wayland
 
+# WebKitGTK's accelerated buffer handoff is OFF by default: a stride mismatch
+# in it draws the window in diagonal black bands (page fine, compositor
+# reading the buffer with the wrong pitch). It is intermittent, so a switch to
+# turn it off would be useless — by the time you saw it you would already be
+# restarting. --dmabuf turns it back ON, which is the only way to test it, and
+# the thing to re-measure once drag animation exists (the cost is per-frame,
+# and nothing yet draws frames continuously).
+python main.py --webview --dmabuf
+
 # Install dependencies (CPU-only torch)
 pip install -r requirements.txt
 ```
