@@ -321,6 +321,14 @@ function createWidget(spec) {
     if (spec.props && spec.props.wraplength)
         updateProp(spec.wid, 'wraplength', spec.props.wraplength);
 
+    // The highlight ring, for EVERY widget type rather than per case: the
+    // drag layer puts one on whatever is being dragged over, which can be a
+    // label as easily as a frame.
+    if (spec.props && (spec.props.highlightthickness !== undefined
+                       || spec.props.highlightbackground))
+        _setHighlight(el, spec.props.highlightthickness,
+                      spec.props.highlightbackground);
+
     if (spec.grid) {
         _applyGrid(el, spec.grid);
     }
@@ -384,6 +392,37 @@ const _RELIEF = {
     flat: 'none', solid: 'solid', raised: 'outset', sunken: 'inset',
     groove: 'groove', ridge: 'ridge',
 };
+
+// ── the highlight ring ───────────────────────────────────────────────
+// Tk's `highlightthickness`/`highlightbackground` are nominally the FOCUS
+// ring, and ui_webview dropped them with a comment saying nothing in the app
+// styles it. Two pages do, and not for focus: `tasks.py:2064` and
+// `transcribe_glyph.py:422` both ask for a 10px ring in the theme's white to
+// set the comparison frame apart from the page, and `sort_ui.py:1193` turns
+// one off deliberately. So a real separator was being dropped on two of the
+// busiest pages (Kent, 2026-09-14: "we do actually use those").
+//
+// Drawn as an OUTLINE, for two reasons: the widget's own border is already
+// spoken for by `borderwidth`/`relief`, and Tk's ring sits outside that
+// border too. The difference to know is that Tk RESERVES the ring's space
+// and an outline does not — a thick ring overlaps its neighbours here rather
+// than pushing them apart.
+//
+// Both halves are kept on the element, because they arrive separately: the
+// drag layer sets the colour and the thickness in two calls
+// (`ui_tkinter.dnd_focus_on`), and a colour with no thickness, or a
+// thickness with no colour, has to keep whatever the other one last said.
+function _setHighlight(el, width, color) {
+    if (width !== undefined && width !== null) el.dataset.hlWidth = width;
+    if (color) el.dataset.hlColor = color;
+    const n = parseInt(el.dataset.hlWidth, 10);
+    if (!(n > 0)) {
+        el.style.outline = '';
+        return;
+    }
+    el.style.outline = n + 'px solid ' + (el.dataset.hlColor || 'currentColor');
+    el.style.outlineOffset = '0px';
+}
 
 function _setBorder(el, width, relief) {
     const style = _RELIEF[String(relief || '').toLowerCase()]
@@ -710,6 +749,13 @@ function updateProp(wid, prop, value) {
             break;
         case 'state':
             _setState(el, value);
+            break;
+        case 'highlightthickness':
+            _setHighlight(el, value, null);
+            break;
+        case 'highlightbackground':
+        case 'highlightcolor':
+            _setHighlight(el, undefined, value);
             break;
         case 'anchor':
             _setAnchor(el, value);

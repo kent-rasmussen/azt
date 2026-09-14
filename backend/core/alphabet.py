@@ -662,8 +662,16 @@ class Alphabet():
         self.refresh_items()
         self.prune_empty_glyph_members()  # drop groups emptied by profile-unsort
         self.kick_conflicting_glyph_members()  # un-glyph same-slice conflicts (→ re-sort)
+        # ONE SET, BUILT ONCE. This flattened every glyph's members into a
+        # fresh LIST inside the loop — so `glyph_members()` was called and
+        # the whole structure rebuilt for every item present, and then
+        # scanned linearly to answer one membership question. Same shape as
+        # `getcawlmissing` and the two comprehensions fixed with it
+        # (agenda/rescan_instead_of_grouping.md); nothing in the loop body
+        # changes glyph_members, so hoisting it is behaviour-preserving.
+        glyphed={i for j in self.glyph_members().values() for i in j}
         for item in self.items_present_in_cvt(cvt):
-            if item in [i for j in self.glyph_members().values() for i in j]:
+            if item in glyphed:
                 self._itemsmacrosorted.add(item)
             else:
                 self._itemstomacrosort.add(item)

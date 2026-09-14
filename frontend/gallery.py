@@ -227,6 +227,30 @@ def tab_align(nb):
         ui.Label(cell, text="sticky={!r}".format(s), sticky=s,
                  row=0, column=0, borderwidth=2, relief='raised')
         _note(sbar, RULER_WIDE, row=1, column=n)
+
+    # THE HIGHLIGHT RING, which the app uses as a separator and not as a
+    # focus ring (Kent, 2026-09-14: "let's add highlight options to the
+    # gallery. we do actually use those"). `tasks.py:2064` and
+    # `transcribe_glyph.py:422` both put a 10px one in the theme's white
+    # around the comparison frame; `sort_ui.py:1193` turns one off.
+    _note(t, "HIGHLIGHT RING: four labels, each captioned with the ring it "
+             "was given — none, 1, 4 and 10 pixels. They must be visibly "
+             "different thicknesses, and the ring sits OUTSIDE the black "
+             "border each one also carries, so you should see two edges on "
+             "the last three. Under tkinter the ring takes up space (the "
+             "labels sit further apart); under webview it is an outline and "
+             "overlaps instead, which is the one known difference.",
+          row=12, columnspan=3)
+    hbar = ui.Frame(t, row=13, column=0, columnspan=3, sticky='w')
+    ring = getattr(getattr(t, 'theme', None), 'white', None) or 'black'
+    for n, thick in enumerate((0, 1, 4, 10)):
+        cell = ui.Frame(hbar, row=0, column=n, padx=10, pady=10)
+        _try("highlightthickness={}".format(thick),
+             lambda cell=cell, thick=thick: ui.Label(
+                 cell, text="ring {}".format(thick or 'none'),
+                 row=0, column=0, borderwidth=1, relief='solid',
+                 highlightthickness=thick, highlightbackground=ring),
+             cell, 0)
     return t
 
 

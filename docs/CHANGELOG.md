@@ -21,6 +21,37 @@
 
 # Version 1.15.24
 
+**The LIFT load, 4.2 s → ~2.3 s, and the biggest piece of it was not a
+comprehension.** Measured on Kent's Demo_en (1700 entries), same machine
+throughout, by the boot profile plus new per-step timing in
+`init_post_analang`:
+
+| where | was | what it was doing |
+|---|---|---|
+| `Sense.getglosses` → `file.getfilesofdirectory` | **~2.2 s** | looked for a matching picture for EVERY sense, and `Path(dir).glob()` re-reads the directory each call — so `images/toselect/` was read once per sense and all ~1705 names fnmatched each time (2.9 M fnmatch calls) |
+| `slicebylx`, `slicebylc`, `slicebypl` | ~1 s | keyed on one text per ENTRY rather than per distinct text, so every entry was rescanned once per entry: n² calls of `textvaluebylang` |
+| `slicebyerror` | — | built the key set, then rescanned all senses once per key, re-evaluating two working properties each time |
+| `fill_db_images`, `Exporter.report` | — | `.index()` to report progress — a full scan to find the item the loop had just handed over, and wrong on duplicates besides (`.index` returns the first match, so equal senses reported the same percentage and the bar stalled) |
+
+The picture lookup took two rounds, and the first felt like the whole
+answer: caching the directory listing removed the syscalls and left the
+SCAN, which was the cost. Both patterns are anchored (`"{n}_{glosses}*"` is
+a prefix, `"*_{glosses}"` a suffix), so a sorted index and a bisect replace
+the scan. `getfilesofdirectory_cached` is deliberately separate from the
+shared helper: other callers glob directories the app is writing to while it
+runs, and a cache would hand them a stale answer.
+
+New: **`tests/manual/rescan_sweep.py`**, which finds this shape by AST
+rather than by reading — five rules, and its own first version printed 207
+candidates (a broken tool, not a broken codebase) before the rules were
+tightened to 77. And **`--profile-load`**, which profiles the LIFT load and
+named the picture lookup in one run after per-step timing had narrowed it to
+one function.
+
+`io_put/lift.py::init_post_analang` carries temporary per-step timing
+(`DIAG-liftload`), as `langtags.Languages.__init__` does; both come out when
+`agenda/rescan_instead_of_grouping.md` closes.
+
 **Nine webview faults, found by building one page that both backends draw.**
 `frontend/gallery.py` (`python -m frontend.gallery [--webview]`) builds every
 widget the five `ui_tkinter` testapps build, through `from frontend import

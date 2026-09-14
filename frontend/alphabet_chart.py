@@ -42,7 +42,33 @@ class OrderAlphabetUI(ui.Window):
     #     filename=f"AlpabetChart[{self.db.analang}]x{self.ncolumns}.pdf"
     #     self.screenshot.save(file.getdiredurl(self.db.reportdir,filename))
     def select_example(self,glyph):
+        """Pick a word to illustrate `glyph`, with the chart hidden meanwhile.
+
+        THE REVEAL IS IN A `finally`, and was not. `self.deiconify()` was the
+        LAST STATEMENT of this method, so anything that raised between the
+        withdraw and it left the user looking at nothing: the picker had
+        raised out of its own constructor (`Image.compile` on a PosixPath)
+        and the chart stayed hidden behind it. Kent, webview, 2026-09-14:
+        "NWAA: close image selection window, to nothing". The 420x260 window
+        in that log is the picker, fitted to the content it never got.
+
+        A window hidden for a child, revealed on the happy path only, is the
+        most-repeated bug shape in this app (`agenda/work_outliving_its_
+        window.md`, and the run-window reveals before it). The body moved
+        into `_select_example` so the guarantee is structural rather than a
+        rule someone has to remember while editing.
+        """
         self.withdraw()
+        try:
+            self._select_example(glyph)
+        finally:
+            try:
+                self.chart.reflow()  # sync: grow canvas/scrollregion to new content
+            except Exception as e:
+                log.info("chart reflow after the picker failed: %r",e)
+            self.deiconify()
+            self.update_idletasks()
+    def _select_example(self,glyph):
         w=SelectFromPicturableWords(self,self.db,glyph)
         w.wait_window(w)
         if hasattr(w,'selected'):
@@ -80,9 +106,8 @@ class OrderAlphabetUI(ui.Window):
                          getattr(ph,'tk',None), getattr(b,'tk',None))
             except Exception as e:
                 log.info("DIAG-chartimg failed for %s: %s",glyph,e)
-        self.chart.reflow()  # sync: grow canvas/scrollregion to new content
-        self.deiconify()
-        self.update_idletasks()
+        # No reveal here: `select_example`'s `finally` reflows and deiconifies
+        # however this returns.
     def get_kwargs(self,g):
         if self.exobjs[g] is not None:
             # `.scaled` is a LAZY CACHE, not something an Image always has:

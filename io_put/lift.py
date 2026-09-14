@@ -39,6 +39,30 @@ class Object(object):
 #         self=Tree(lift).parsed
 #         log.info(self.glosslang)
 #         Tree.__init__(self, db, guid=guid)
+def _profile_if_asked(name,fn,*a):
+    """Run `fn`, and under `--profile-load` say where its time went.
+
+    A SWITCH, not a guess. The per-step timing put 2.23s of the LIFT load
+    inside `getentries` and stopped there, and this item's own history says
+    what happens next if I keep adding timers by intuition: two of the three
+    original finds were guessed wrong from reading before a measurement
+    named them. cProfile names the function in one run.
+
+    Temporary, with the rest of the DIAG-liftload instrumentation — see
+    agenda/rescan_instead_of_grouping.md.
+    """
+    if '--profile-load' not in sys.argv:
+        return fn(*a)
+    import cProfile, pstats, io as _sio
+    pr=cProfile.Profile()
+    pr.enable()
+    try:
+        return fn(*a)
+    finally:
+        pr.disable()
+        s=_sio.StringIO()
+        pstats.Stats(pr,stream=s).sort_stats('tottime').print_stats(20)
+        log.info("DIAG-liftload profile of %s:\n%s",name,s.getvalue())
 def _safe_attrib_value(value,where=''):
     """One attribute value, guaranteed to be a string ElementTree will escape.
 
@@ -137,25 +161,39 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         with the CAWL template
         self.get_langs should work for Demo databases, or 
         for new langauges from template."""
-        self.get_langs(analang) #sets: self.analangs, self.audiolangs
-        self.getentries() #need self.analang by here
-        self.getsenses()
-        self.getpss() #all ps values, in a prioritized list
-        self.slicebyerror()
-        self.load_ps_profiles()
-        self.slicebyid()
-        self.slicebylx()
-        self.slicebylc() #1.14s
+        # TEMPORARY per-step timing — REMOVE WITH agenda/rescan_instead_of_
+        # grouping.md, as the matching lines in langtags.Languages.__init__
+        # are. This whole sequence sits inside ONE gap in the boot profile
+        # (3.1s on 2026-09-14, down from 4.2s), so the log can say the load
+        # is slow and not which of fifteen steps is slow — and reading to
+        # guess which has already been wrong twice on this item. Anything
+        # under 50ms stays quiet, so the log names only what matters.
+        def _step(name,fn,*a):
+            t0=time.perf_counter()
+            r=fn(*a)
+            dt=time.perf_counter()-t0
+            if dt > 0.05:
+                log.info("DIAG-liftload %-26s %6.2fs",name,dt)
+            return r
+        _step('get_langs',self.get_langs,analang) #sets: self.analangs, self.audiolangs
+        _step('getentries',_profile_if_asked,'getentries',self.getentries) #need self.analang by here
+        _step('getsenses',self.getsenses)
+        _step('getpss',self.getpss) #all ps values, in a prioritized list
+        _step('slicebyerror',self.slicebyerror)
+        _step('load_ps_profiles',self.load_ps_profiles)
+        _step('slicebyid',self.slicebyid)
+        _step('slicebylx',self.slicebylx)
+        _step('slicebylc',self.slicebylc) #was 1.14s; one pass since 2026-09-14
         #the following should probably replaced by getsenseidsbyps everywhere
         """These three get all possible langs by type"""
-        self.legacylangconvert() #update from any old language forms to xyz-x-py
-        self.getentrieswanalangdata() #sets: self.(n)entriesw(lexeme|citation)data
-        self.getsenseswglosslangdata() #sets: self.nsensesw(gloss|defn)data
+        _step('legacylangconvert',self.legacylangconvert) #update from any old language forms to xyz-x-py
+        _step('getentrieswanalangdata',self.getentrieswanalangdata) #sets: self.(n)entriesw(lexeme|citation)data
+        _step('getsenseswglosslangdata',self.getsenseswglosslangdata) #sets: self.nsensesw(gloss|defn)data
         #HERE
-        self.getfieldnames() #sets self.fieldnames (of entry)
-        self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
-        self.legacyverificationconvert() #data to form nodes (no name changes)
-        self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
+        _step('getfieldnames',self.getfieldnames) #sets self.fieldnames (of entry)
+        _step('getsensefieldnames',self.getsensefieldnames) #sets self.sensefieldnames (fields of sense)
+        _step('legacyverificationconvert',self.legacyverificationconvert) #data to form nodes (no name changes)
+        _step('getfieldswsoundfiles',self.getfieldswsoundfiles) #sets self.nfields & self.nfieldswsoundfiles
         log.info(_("Working on {file} with {nguids} entries, with lexeme data counts: {lex_counts}, "
                    "citation data counts: {citation_counts} and {nsenseids} senses")
                 .format(file=self.filename, nguids=self.nguids, lex_counts=self.nentrieswlexemedata,
@@ -163,20 +201,20 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info(_("Found gloss data counts: {gloss_counts}, definition counts: {def_counts}")
                 .format(gloss_counts=self.nsenseswglossdata, def_counts=self.nsenseswdefndata))
         #This may be superfluous:
-        self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
-        self.get_senses_by_word_list_n()
+        _step('getsenseidsbyps',self.getsenseidsbyps) #sets: self.senseidsbyps and self.nsenseidsbyps
+        _step('get_senses_by_word_list_n',self.get_senses_by_word_list_n)
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
-        self.lcs=self.citations()
-        self.lxs=self.lexemes()
-        self.getlocations()
+        self.lcs=_step('citations',self.citations)
+        self.lxs=_step('lexemes',self.lexemes)
+        _step('getlocations',self.getlocations)
         self.defaults=[ #these are lift related defaults
                     'analang',
                     'glosslangs',
                     'audiolang'
                 ]
-        self.slists() #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
-        self.extrasegments() #tell me if there's anything not in a V or C regex.
+        _step('slists',self.slists) #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
+        _step('extrasegments',self.extrasegments) #tell me if there's anything not in a V or C regex.
         # self.findduplicateforms()
         self.findduplicateexamples()
         """Think through where this belongs; what classes/functions need it?"""
@@ -732,17 +770,22 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 for ps in self.ps_profiles
                 }
     def slicebyerror(self):
-        keys=set([(i.cawln,', '.join(i.collectionglosses)) for i in self.senses
-                    if not i.imgselectiondir
-                ])
-        errors={k:
-                    [i.id for i in self.senses
-                            if not i.imgselectiondir
-                            if i.cawln == k[0]
-                            if ', '.join(i.collectionglosses) == k[1]
-                    ]
-                for k in keys
-                }
+        # ONE PASS. This built the key set, then rescanned every sense once
+        # PER KEY to collect the ids for it — so `imgselectiondir` and
+        # `collectionglosses` were evaluated len(keys)×len(senses) times, and
+        # both are properties that do work. It is the `dict_by` shape again
+        # (agenda/rescan_instead_of_grouping.md), and it costs nothing when
+        # every sense has an image directory and everything when none does,
+        # which is exactly the situation it exists to report on.
+        #   Same keys, same ids, same order: the group lists come out in
+        # sense order either way.
+        errors={}
+        for i in self.senses:
+            if i.imgselectiondir:
+                continue
+            errors.setdefault((i.cawln,', '.join(i.collectionglosses)),
+                              []).append(i.id)
+        keys=set(errors)
         # log.info("Errors ({}): {}".format(len(errors),errors))
         if keys:
             log.info("keys ({}): {}".format(len(keys),list(keys)[:min(len(keys)-1,5)]))
@@ -755,39 +798,57 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 "{}-{} ({}): {}"
                 "".format(cawl,glosses,len(errors[(cawl,glosses)]),
                 errors[(cawl,glosses)][:min(len(errors[(cawl,glosses)]),5)]))
+    def _group_entries_by(self, textof, keepnone=False):
+        """{lang: {text: [entries with that text]}} in ONE PASS per language.
+
+        These three were the `dict_by` shape, and the most expensive instance
+        of it left after the 1.15.23 sweep (agenda/rescan_instead_of_
+        grouping.md). Written out, the old form was:
+
+            {l:{t:[j for j in self.entries if t == j.lx.textvaluebylang(l)]
+                for t in [i.lx.textvaluebylang(l) for i in self.entries]
+                if t}
+             for l in self.analangs}
+
+        The key list is one entry per ENTRY, not per distinct text — so for a
+        lexicon of n entries it rescans all n entries n times, calling
+        `textvaluebylang` on each: n² calls, ~2.9 million on Kent's 1700-entry
+        Demo. `slicebylc` carried a hand-written "#1.14s" at its call site
+        (:148) and sat inside the 4.2-second gap that the boot profile puts
+        before `legacylangconvert` (2026-09-14).
+
+        THE RESULT IS IDENTICAL, not merely equivalent: a dict comprehension
+        keyed on repeated values keeps the FIRST occurrence's position, which
+        is entry order, and `setdefault` inserts on first occurrence too; the
+        grouped lists are in entry order either way, duplicates included.
+
+        `keepnone` because `slicebypl` did NOT filter empty keys and the
+        other two did — preserved rather than tidied, since a caller may be
+        reading `entriesbypl[l][None]`.
+        """
+        out={}
+        for l in self.analangs:
+            bylang={}
+            for i in self.entries:
+                t=textof(i,l)
+                if t or keepnone:
+                    bylang.setdefault(t,[]).append(i)
+            out[l]=bylang
+        return out
     def slicebylx(self):
         #This can be converted to by profile in main.py
-        self.entriesbylx={l:{t:[j for j in self.entries
-                                    if t == j.lx.textvaluebylang(l)
-                                ]
-                            for t in [i.lx.textvaluebylang(l)
-                                        for i in self.entries]
-                            if t #don't give None keys
-                            }
-                            for l in self.analangs
-                        }
+        self.entriesbylx=self._group_entries_by(
+                            lambda i,l: i.lx.textvaluebylang(l))
     def slicebylc(self):
         #This can be converted to by profile in main.py
-        self.entriesbylc={l:{t:[j for j in self.entries
-                                    if t == j.lc.textvaluebylang(l)
-                                ]
-                            for t in [i.lc.textvaluebylang(l)
-                                        for i in self.entries]
-                            if t #don't give None keys
-                            }
-                            for l in self.analangs
-                        }
+        self.entriesbylc=self._group_entries_by(
+                            lambda i,l: i.lc.textvaluebylang(l))
     def slicebypl(self):
         """Is this used? if so, 'Plural' here should be generalized."""
         #This can be converted to by profile in main.py
-        self.entriesbypl={l:{t:[j for j in self.entries
-                                    if t == j.fieldvalue('Plural',l)
-                                ]
-                            for t in [i.fieldvalue('Plural',l)
-                                        for i in self.entries]
-                            }
-                            for l in self.analangs
-                        }
+        self.entriesbypl=self._group_entries_by(
+                            lambda i,l: i.fieldvalue('Plural',l),
+                            keepnone=True)
     def slicebyimp(self):
         """Is this used? if so, .imp should be updated."""
         raise
@@ -2733,7 +2794,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info("Filling in empty image fields where possible")
         # self.get_imgdir() #in case this isn't up to date
         log.info("Writing to {}".format(self.imgdir))
-        for sense in self.senses:
+        # enumerate, NOT .index() — see the yield at the end of this loop.
+        total=len(self.senses)
+        for n,sense in enumerate(self.senses):
             # log.info("Working on line number {}".format(sense.word_list_n))
             # log.info("Working on sense {}".format(sense.id))
             # log.info("Working with image field {}".format(sense.illustrationvalue()))
@@ -2744,7 +2807,14 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             # If lift thinks there's a file there, but there isn't,
             # fill in that, too (gating inside the method):
             sense.backfill_illustration()
-            yield self.senses.index(sense)*100/len(self.senses)
+            # `self.senses.index(sense)` scanned the whole sense list to find
+            # the item the loop had just handed us — n²/2 comparisons over
+            # the app's largest collection, spent entirely on saying how far
+            # along we were. It was also wrong on duplicates: .index returns
+            # the FIRST match, so equal senses reported the same percentage
+            # and the bar stalled. (agenda/rescan_instead_of_grouping.md;
+            # found by tests/manual/rescan_sweep.py.)
+            yield n*100/total
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
@@ -3565,16 +3635,24 @@ class Sense(Node,FieldParent):
         if not os.path.isdir(rootimgdir):
             from images.to_select_update import ensure_available
             ensure_available()
+            # Whatever was just downloaded is not in any cached listing.
+            file.forget_directory(rootimgdir)
         #These first two depend on real directories being there
         # if self.db.word_list_field_name is set, 
         # self.word_list_n should be a True int()
+        # CACHED: this runs for EVERY SENSE, and the uncached form re-read
+        # `images/toselect/` each time — 2.82s of the LIFT load on Kent's
+        # 1700-entry Demo, which was the whole of what remained after the
+        # comprehension fixes (agenda/rescan_instead_of_grouping.md). The
+        # directory is static for a session; `ensure_available` above is the
+        # one thing that can change it, and it drops the cache.
         if self.word_list_n:
-            self.imgselectiondir=[i for i in file.getfilesofdirectory(
+            self.imgselectiondir=[i for i in file.getfilesofdirectory_cached(
                             rootimgdir,
                             regex='_'.join([self.word_list_n,
                                             self.collectionglossesunderlined])+'*'                                )]
         elif self.collectionglossesunderlined:
-            self.imgselectiondir=[i for i in file.getfilesofdirectory(
+            self.imgselectiondir=[i for i in file.getfilesofdirectory_cached(
                                     rootimgdir,
                                     regex='*_'+self.collectionglossesunderlined)]
         if self.imgselectiondir: #unlist if there

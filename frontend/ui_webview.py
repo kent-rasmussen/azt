@@ -559,14 +559,29 @@ def _close_native_window(owner, label='window'):
         return
     try:
         wv.hide()
+        # NAME WHO ASKED, as `Toplevel.withdraw` does. Three of these lines in
+        # a row and nothing after them is what "didn't return to task chooser
+        # on alphabet close" looked like in the log (Kent, 2026-09-14), and
+        # the message could not say which windows went or who sent them — so
+        # the log recorded that three windows were hidden and left the only
+        # useful question unanswered. `withdraw` learned this on 2026-09-09
+        # for exactly the same reason; this path never did.
+        try:
+            import traceback as _tb
+            frame = _tb.extract_stack(limit=3)[0]
+            who = "{}:{} in {}()".format(frame.filename.rsplit('/', 1)[-1],
+                                         frame.lineno, frame.name)
+        except Exception:
+            who = 'caller unknown'
         # The message used to say "destroying crashes QtWebEngine", which the
         # docstring above RETRACTED on 2026-09-08 — destroying is fine; being
         # garbage-collected at the wrong moment is what crashes. Left as it
         # was, the log went on asserting the retracted cause to every future
         # reader, in the one place a person looks first.
-        log.info("{} hidden rather than destroyed: reused, not rebuilt, and "
-                 "freeing a pywebview window at the wrong moment is what "
-                 "crashes Qt (see _close_native_window)".format(label))
+        log.info("{} hidden rather than destroyed, by {}: reused, not "
+                 "rebuilt, and freeing a pywebview window at the wrong "
+                 "moment is what crashes Qt (see _close_native_window)"
+                 "".format(label, who))
     except Exception as e:
         log.debug("could not hide {}: {}".format(label, e))
 
@@ -1913,8 +1928,19 @@ class Image:
             return
         buf = io.BytesIO()
         fmt = 'PNG'
-        if self.filename and self.filename.lower().endswith('.jpg'):
+        # str() FIRST: `filename` is a Path as often as a string — the CAWL
+        # image set arrives as `PosixPath`s — and `Path.lower` does not
+        # exist, so choosing the format crashed the whole picture-picking
+        # page: "'PosixPath' object has no attribute 'lower'", reached from
+        # `alphabet_chart.py:602` through `Image.scale` (Kent, webview,
+        # 2026-09-14). `.jpeg` counts too; only `.jpg` was tested.
+        name = str(self.filename).lower() if self.filename else ''
+        if name.endswith('.jpg') or name.endswith('.jpeg'):
             fmt = 'JPEG'
+        # A JPEG cannot hold transparency, and PIL raises rather than
+        # flatten. Anything with an alpha channel goes out as PNG.
+        if fmt == 'JPEG' and img.mode in ('RGBA', 'LA', 'P'):
+            fmt = 'PNG'
         img.save(buf, format=fmt)
         b64 = base64.b64encode(buf.getvalue()).decode('ascii')
         mime = 'image/png' if fmt == 'PNG' else 'image/jpeg'
@@ -2049,10 +2075,19 @@ class Frame(_WebviewWidget):
             kwargs['borderwidth'] = border
         if relief:
             kwargs['relief'] = relief
-        # The focus ring is a different thing from a border and nothing in
-        # the app styles it; :focus-visible already draws one.
-        kwargs.pop('highlightbackground', None)
-        kwargs.pop('highlightthickness', None)
+        # THE HIGHLIGHT RING IS USED HERE, and this dropped it with a comment
+        # saying nothing styles it. Two pages style it, and not for focus:
+        # `tasks.py:2064` and `transcribe_glyph.py:422` each ask for
+        # `highlightthickness=10` in the theme's white to set the comparison
+        # frame apart, and `sort_ui.py:1193` turns one off on purpose. Kent,
+        # 2026-09-14: "we do actually use those". See `_setHighlight` in
+        # widgets.js for what it draws and how it differs from Tk's.
+        #   Kept as props rather than popped; only an explicit None is
+        # dropped, since that means "not asked for".
+        for k in ('highlightthickness', 'highlightbackground',
+                  'highlightcolor'):
+            if k in kwargs and kwargs[k] is None:
+                kwargs.pop(k)
         super().__init__(parent, widget_type='frame', **kwargs)
 
     def iswaiting(self):

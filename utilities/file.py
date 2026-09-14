@@ -307,6 +307,97 @@ def getdirectory(title=None,home=None):
 def getfilesofdirectory(dir,regex='*'):
     # return pathlib.Path(dir).iterdir()
     return [i for i in pathlib.Path(dir).glob(regex)]
+_dircache={}
+def getfilesofdirectory_cached(dir,regex='*'):
+    """As getfilesofdirectory, but READ THE DIRECTORY ONCE per run.
+
+    `Path.glob()` re-reads the directory on every call, and one caller does
+    it PER SENSE: `Sense.getglosses` looks for a matching picture in
+    `images/toselect/` for every sense in the lexicon, so a lexicon of n
+    senses read that directory n times and fnmatched every file in it each
+    time. That was 2.82 seconds of `getentries` — the whole of the LIFT
+    load's remaining cost — found by the per-step timing added for
+    agenda/rescan_instead_of_grouping.md (2026-09-14). It is the same
+    disease as the comprehensions in that item: rescanning a whole
+    collection per item where an index was wanted, with the collection here
+    being a directory.
+
+    SEPARATE FUNCTION, NOT A CHANGE TO THE SHARED ONE. Other callers glob
+    directories that the app is WRITING to while it runs (`fill_db_images`,
+    the recording directories), and a cache would hand them a stale answer.
+    This is for directories that do not change during a session; if one
+    might, call `forget_directory` after changing it.
+
+    Matching is fnmatch on the NAME, which is what a non-recursive glob
+    pattern does — including glob's rule that a leading `*` does not match a
+    dotfile.
+
+    ONE DELIBERATE DIFFERENCE: the listing is SORTED. `glob()` hands back
+    whatever order the filesystem enumerates, so a caller that takes `[0]`
+    of several matches — `Sense.imgselectiondir` does — was picking an
+    arbitrary one, and could pick a different one on another machine or
+    after a copy. Sorted makes that choice reproducible and therefore
+    reportable.
+    """
+    import fnmatch
+    fwd,rev=_dirindex(dir)
+    hidden_ok=regex.startswith('.') if regex else False
+    def _visible(pairs):
+        return [p for n,p in pairs if hidden_ok or not n.startswith('.')]
+    if not regex or regex == '*':
+        return _visible(fwd)
+    # ANCHORED PATTERNS ANSWER FROM AN INDEX. Caching the listing removed
+    # the directory reads and left the SCAN: 1700 senses × ~1705 files =
+    # 2.9 million fnmatch calls, which cProfile put at the top of the LIFT
+    # load (2026-09-14). Both patterns this is called with are anchored —
+    # `"{n}_{glosses}*"` is a prefix and `"*_{glosses}"` a suffix — so a
+    # sorted list and a bisect answer them in log time instead.
+    #   Only when the literal half holds no other wildcard, or the fast path
+    # would not mean what fnmatch means.
+    wild=set('*?[]')
+    if regex.endswith('*') and not (wild & set(regex[:-1])):
+        return _visible(_span(fwd,regex[:-1]))
+    if regex.startswith('*') and not (wild & set(regex[1:])):
+        # Same trick on the reversed names, then back into name order.
+        return _visible(sorted(_span(rev,regex[1:][::-1]),
+                               key=lambda np: np[1].name))
+    return [p for n,p in fwd
+                if (hidden_ok or not n.startswith('.'))
+                if fnmatch.fnmatchcase(n,regex)]
+def _dirindex(dir):
+    """(by name, by REVERSED name) for one directory, built once."""
+    key=str(dir)
+    idx=_dircache.get(key)
+    if idx is None:
+        try:
+            paths=[p for p in pathlib.Path(dir).iterdir()]
+        except OSError:
+            paths=[]
+        idx=_dircache[key]=(sorted((p.name,p) for p in paths),
+                            sorted((p.name[::-1],p) for p in paths))
+    return idx
+def _span(pairs,prefix):
+    """The slice of (name,path) pairs whose name starts with `prefix`."""
+    import bisect
+    if not prefix:
+        return pairs
+    lo=bisect.bisect_left(pairs,(prefix,))
+    # The next string that cannot share the prefix. Bumping the last
+    # character is exact for any code point, where a sentinel like '￿'
+    # would be wrong for names holding astral characters — and these names
+    # are built from glosses in the language being documented.
+    try:
+        stop=prefix[:-1]+chr(ord(prefix[-1])+1)
+    except ValueError:              # already the highest code point
+        stop=prefix+'\U0010FFFF'
+    hi=bisect.bisect_left(pairs,(stop,))
+    return pairs[lo:hi]
+def forget_directory(dir=None):
+    """Drop the cached listing for `dir`, or for everything if none given."""
+    if dir is None:
+        _dircache.clear()
+    else:
+        _dircache.pop(str(dir),None)
 def makewritablebyeveryone(path):
     os.chmod(path,
             stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR|
