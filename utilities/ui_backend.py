@@ -164,8 +164,16 @@ def webview_problem():
             "".format(where))
 
 
-def requested():
-    """What backend was asked for, and how.
+def explicit():
+    """The backend the user ACTUALLY asked for, or **None** if they did not.
+
+    Separate from `requested()` because that one DEFAULTS to 'tkinter', so it
+    cannot answer "did anyone ask?" — and that is the question mixed mode
+    turns on. Mixed (a Tk host serving webview pages) is the default from
+    2026-09-14; `--tkinter` and `--webview` are the pure opt-ins. Asking
+    `requested()` made an empty command line look like `--tkinter` and
+    refused to serve anything, with a log line blaming a switch Kent had not
+    typed.
 
     Three ways in, most explicit first. The env var was the only one, which
     makes trying the webview awkward from a desktop launcher or an IDE run
@@ -176,15 +184,26 @@ def requested():
     A persisted setting is the obvious fourth and is deliberately NOT here:
     this is consulted before the settings system is up, so reaching into it
     would invert that dependency. When it is wanted, the place for it is a
-    startup re-check in main.py."""
+    startup re-check in main.py.
+    """
     for flag, name in (('--webview', 'webview'), ('--tkinter', 'tkinter')):
         if flag in sys.argv:
             return name
     name = os.environ.get('AZT_UI_BACKEND', '').lower()
     if name in ('tkinter', 'webview'):
         return name
+    return None
+
+
+def requested():
+    """What backend to use, defaulting to tkinter. See `explicit()` for the
+    "was one asked for at all" question, which this cannot answer."""
+    name = explicit()
     if name:
-        log.warning("Unknown AZT_UI_BACKEND {!r}; using tkinter".format(name))
+        return name
+    raw = os.environ.get('AZT_UI_BACKEND', '').lower()
+    if raw:
+        log.warning("Unknown AZT_UI_BACKEND {!r}; using tkinter".format(raw))
     return 'tkinter'
 
 

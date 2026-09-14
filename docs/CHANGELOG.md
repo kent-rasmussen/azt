@@ -19,6 +19,80 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.22
+
+**Mixed mode is now the default: a tkinter host serving webview pages, one
+page at a time.** The splash is the first, and it works — Kent, after the
+first render: *"ugly, but there"*, then with sizing and the progress bar:
+verified.
+
+    python main.py              # Tk host + webview children for SERVED_PAGES
+    python main.py --tkinter    # tkinter only. Serves nothing.
+    python main.py --webview    # webview only, in-process. Serves nothing.
+
+This is ADR 0004 **D7**, which has been written down since 2026-09-04 and
+unbuilt: `webview.start()` and Tk's `mainloop()` both need the main thread, so
+a mixed page runs as a child — **view model in, result out** — and the parent
+keeps the mainloop, therefore keeps `VisibilityWatchdog`/`QuitOnlyGuard`, and
+can time out, kill, and re-render the page in Tk.
+
+**Nothing existing changes.** `SERVED_PAGES` holds one name; a page not in it
+renders in Tk in every mode. `ServedSplash` wears `Splash`'s surface — the
+`_NoSplash` null-object trick with a process behind it — so **no call site was
+touched**, and `main.py` is three-way in fallback order: `--no-splash`,
+served child, Tk `Splash`. Every refusal returns None and says why.
+
+## The splash's view model is why it went first
+
+Six strings, an image name and an integer, with no live objects at all, and
+`progress()` the only update — so this exercises parent→child streaming and
+the whole supervise/timeout/fall-back path with **no action protocol**. Kent:
+*"How about we learn from the last experience, and just serve the splash
+first"* — the last experience being that starting the in-process port at the
+splash rather than the chooser separated visibility from layout.
+
+`frontend/served_splash.py` is **runnable by hand** off one `echo | python -m`
+line (in its docstring), which is what separates "the webview splash does not
+render" from "the machinery does not work".
+
+## Answers to three risks the ADR listed rather than hand-waved
+
+- **Child startup latency: ~1.4 s.** Measured (`served splash: ready in
+  1.4s`). That is added to every boot in the default mode, where the Tk
+  splash was instant. Not yet judged worth it or not.
+- **Where the child's log lines land: the parent's log**, relayed over
+  stderr. The child explicitly DETACHES itself from the log file, because
+  `logsetup`'s runid comes from an inherited environment variable — so a file
+  handler in the child would open the parent's own part files and roll
+  against them, corrupting the log the watchdogs are read from.
+- **Transport, per process, in the log.** The host reports XWayland and the
+  child reports `GdkWaylandDisplay` in the same run, so a mixed-transport app
+  is now legible rather than inferred.
+
+## Three faults found by running it
+
+- **Readiness must be waited for SYNCHRONOUSLY.** `main.py` calls
+  `splash.draw()` then runs all of boot without returning to the mainloop, so
+  an `after()`-based readiness check would resolve after the thing it gates —
+  the 400 ms wait-dialog delay's exact mistake.
+- **`ui_backend.requested()` cannot answer "did anyone ask?"** It defaults to
+  `'tkinter'`, so a bare `python -m main` read as `--tkinter` and refused to
+  serve, blaming a switch that had not been typed. New `explicit()` returns
+  None when nothing was asked for; `requested()` keeps its default for
+  `chosen()`.
+- **The child would not exit.** Webview's `Toplevel.destroy()` deliberately
+  only hides ("freeing a pywebview window at the wrong moment is what crashes
+  Qt"), so nothing ended the event loop and the parent killed the child two
+  seconds later on every boot. It now hides, tears down pywebview's windows,
+  and `os._exit(0)`s — the right brutality for a process that renders one
+  page and holds no state.
+
+`tests/test_served_pages.py` is weighted at the property that protects
+everything else: a child that cannot start, never reports ready, dies, or
+breaks its pipe must yield None — never an exception, never a hang. Those
+tests are also what caught a four-specifier/three-argument log call in the
+timeout path, which no ordinary run would ever have executed.
+
 # Version 1.15.21
 
 **Leaving a task page while it is still loading now works.** Clicking Tasks

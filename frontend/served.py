@@ -56,7 +56,11 @@ from utilities import logsetup
 log = logsetup.getlog(__name__)
 logsetup.setlevel('INFO', log)
 
-SERVE_SWITCH = '--serve'
+#: Pages that have a verified webview child. THE ONLY GATE ON THE DEFAULT
+#: MODE: a page named here is served; a page not named here renders in Tk,
+#: in every mode. Add a page only once it has been seen working, so the
+#: default stays shippable while the port is unfinished.
+SERVED_PAGES = frozenset({'splash'})
 
 #: How long a child gets to report itself ready before we give up on it and
 #: let the caller render in Tk. Generous, because it pays a Python start plus
@@ -80,33 +84,29 @@ MSG_RESULT = 'result'     # child→parent: what the user did
 MSG_LOG = 'log'           # child→parent: a line for the parent's log
 
 
-def wanted(page):
-    """Is `page` named in `--serve=`? Never raises.
+def available(page, backend, requested=None):
+    """Should `page` be served as a webview child?
 
-    `--serve=splash` or `--serve=splash,sort`. A switch, not an environment
-    variable (standing rule 2026-09-08), and comma-separated so the eventual
-    per-page setting has an obvious shape to mirror.
+    `backend` is the host's active backend (`frontend.backend`) and
+    `requested` is what the user explicitly asked for
+    (`utilities.ui_backend.requested()`, None when they asked for nothing).
+    Both are passed in rather than read here: this is the decision the two
+    pure modes turn off, so it has to be testable without argv, and each
+    refusal is LOGGED rather than left to be inferred.
     """
-    prefix = SERVE_SWITCH + '='
-    for arg in sys.argv:
-        if arg.startswith(prefix):
-            names = [n.strip() for n in arg[len(prefix):].split(',')]
-            return page in [n for n in names if n]
-    return False
-
-
-def available(page, backend):
-    """Should `page` be served as a child, given the active backend?
-
-    Separate from `wanted()` so the refusals are testable without argv, and
-    so each is LOGGED rather than silently dropping a switch the user passed.
-    """
-    if not wanted(page):
-        return False
+    if page not in SERVED_PAGES:
+        return False        # not ported yet; Tk renders it, quietly
     if backend == 'webview':
-        log.info("%s=%s ignored: the whole app is already webview, so there "
-                 "is no Tk host to serve a page from and nothing to fall "
-                 "back to", SERVE_SWITCH, page)
+        log.info("not serving %s as a child: the whole app is already "
+                 "webview, so there is no Tk host and nothing to fall back "
+                 "to", page)
+        return False
+    if requested == 'tkinter':
+        # "asked for" and not "--tkinter": AZT_UI_BACKEND=tkinter says the
+        # same thing, and naming a switch the user may not have typed is how
+        # the first version of this line misled Kent (2026-09-14).
+        log.info("not serving %s as a child: tkinter only was asked for",
+                 page)
         return False
     return True
 
@@ -157,8 +157,8 @@ class ServedPage:
         if not got:
             log.warning("served %s: no 'ready' in %.1fs (pid %s, exit %s); "
                         "killing it and rendering in tkinter instead",
-                        self.page, getattr(self.proc, 'pid', None),
-                        self.proc.poll())
+                        self.page, timeout,
+                        getattr(self.proc, 'pid', None), self.proc.poll())
             self.close()
             return False
         log.info("served %s: ready in %.1fs (pid %s)",
@@ -251,3 +251,201 @@ class ServedPage:
                     log.info("[%s child] %s", self.page, line)
         except Exception as e:
             log.log(3, "served %s: stderr reader ended (%r)", self.page, e)
+
+
+# ── the splash, the first page served ────────────────────────────────────
+
+def splash_view(program):
+    """The splash's view model: six strings, an image name and an integer.
+
+    Kept HERE rather than in the child so parent and child share one
+    vocabulary in one file, and so it can be unit-tested against a fake
+    program with no display. Every value is plain data — this page has no
+    live objects to hand over, which is why it was chosen first.
+
+    Never raises: `source_repo` reads git, and a boot must not die because a
+    date could not be formatted.
+    """
+    from utilities.i18n import _
+
+    def safe(fn, default=''):
+        try:
+            return fn()
+        except Exception as e:
+            log.info("splash view model: %s", e)
+            return default
+
+    name = getattr(program, 'name', 'A-Z+T')
+    repo = getattr(program, 'source_repo', None)
+    return {
+        'title': _("{azt} Dictionary and Orthography Checker").format(azt=name),
+        'version': _("Version: {version}").format(
+                        version=getattr(program, 'version', '?')),
+        'updated': _("updated to {date} ({date_rel})").format(
+                        date=safe(lambda: repo.lastcommitdate(), '?'),
+                        date_rel=safe(lambda: repo.lastcommitdaterelative(),
+                                      '?')),
+        'loading': _("Your dictionary database is loading..."),
+        'description': _("{azt} is a computer program that accelerates "
+                "community-based language development by facilitating the "
+                "sorting of a beginning dictionary by vowels, consonants and "
+                "tone. (more in help:about)").format(azt=name),
+        'image': 'transparent',
+        'progress': 0,
+    }
+
+
+# ── the alphabet chart, the second page ──────────────────────────────────
+
+def _plain(value, default=None):
+    """A `ui.Variable`'s value, or the value itself. Never raises.
+
+    The chart holds several settings as `ui.Variable`s — `save_settings`
+    checks `isinstance(value, ui.Variable)` for exactly this reason — and a
+    Variable cannot cross a pipe.
+    """
+    get = getattr(value, 'get', None)
+    if callable(get):
+        try:
+            return get()
+        except Exception as e:
+            log.info("chart view model: could not read a variable (%s)", e)
+            return default
+    return value if value is not None else default
+
+
+def chart_view(chart):
+    """The alphabet chart as plain data: a title, a column count and cells.
+
+    READ-ONLY, deliberately (step 3a). The real page is a CONFIGURATION page
+    — draggable glyph order, per-group hide toggles, and `save_settings()`
+    writing five settings back — and none of that can work until there is a
+    child→parent result channel. So this proves the data shape and the
+    images, which is the half that can be proved without one. The Tk page is
+    untouched and `alphabet_chart` is deliberately NOT in `SERVED_PAGES`;
+    serving a read-only chart would be a regression, not a port.
+
+    WHY THIS PAGE. It is the one that takes 37-42 seconds to build under Tk
+    while both webview engines draw the same content in ~0s
+    (`agenda/wayland_freeze_audit.md`), so "does it appear fast" is a
+    falsifiable win by eye rather than a matter of taste.
+
+    Images cross as ABSOLUTE PATHS, not bitmaps. The Tk path attaches a
+    scaled bitmap to the sense (`getimagelocationURI`, then `Image.compile`);
+    a browser wants a source, and `_image_src` already accepts a string
+    starting with '/' or 'file:' straight into an <img src>. So no HTTP route
+    and no base64 is needed — which is the one thing Step 3 assumed would be
+    necessary.
+
+    Never raises: one unreadable sense must cost its own cell, not the page.
+    """
+    cells = []
+    order = _plain(getattr(chart, 'order', None), []) or []
+    exobjs = getattr(chart, 'exobjs', None) or {}
+    for glyph in [str(g) for g in order]:
+        sense = exobjs.get(glyph)
+        word, image = '', None
+        if sense is not None:
+            try:
+                word = sense.entry.lcvalue()
+            except Exception as e:
+                log.info("chart view model: no word for %r (%s)", glyph, e)
+            try:
+                image = sense.illustrationURI_or_default()
+            except Exception as e:
+                log.info("chart view model: no image for %r (%s)", glyph, e)
+        cells.append({'glyph': glyph, 'word': word or '', 'image': image})
+    return {
+        'title': _plain(getattr(chart, 'chart_title', None), '') or '',
+        'ncolumns': _sane_columns(_plain(getattr(chart, 'ncolumns', None), 5)),
+        'copyright': _plain(getattr(chart, 'copyright', None), '') or '',
+        'cells': cells,
+    }
+
+
+def _sane_columns(value, default=5):
+    """A column count must be a positive int — the chart grids on
+    `n // ncolumns`, and `AlphabetChartData._sane_columns` exists because a
+    string ("using_helvetica") once got stored and killed every redraw. Same
+    hazard on this side of the pipe."""
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return default
+    return n if n > 0 else default
+
+
+class ServedSplash:
+    """A splash living in a child process, wearing `Splash`'s surface.
+
+    `splash` is touched in ~15 places across `main.py`, `tasks/chooser.py`
+    and `frontend/ui_shell.py` — draw, progress, withdraw, destroy,
+    maketexts, exitFlag, winfo_exists. `_NoSplash` already proved a null
+    object is the right seam for that; this is the same trick with a process
+    behind it, so **no call site changes** and `--tkinter` keeps the code
+    path it has today.
+
+    ONE BEHAVIOUR IS LOST, and it should be recorded rather than discovered:
+    `exitFlag.istrue()` is how the user cancels during boot
+    (`tasks/chooser.py:493,549`). A served splash has no child→parent channel
+    yet, so cancelling from it is unavailable and the flag always reads
+    False — never True, because "the user asked to quit" must not be invented
+    from a page that cannot ask. `_NoSplash` accepts the same loss under
+    `--no-splash`.
+    """
+
+    class _Flag:
+        def istrue(self):
+            return False
+
+        def true(self):
+            pass
+
+        def false(self):
+            pass
+
+    def __init__(self, page):
+        self.exitFlag = self._Flag()
+        self._page = page
+
+    def draw(self):
+        pass        # already visible: `ready` means the page is on screen
+
+    def progress(self, value):
+        self._page.send(MSG_UPDATE, fields={'progress': value})
+
+    def maketexts(self):
+        pass        # the texts went over in the view model
+
+    def winfo_exists(self):
+        return self._page.alive
+
+    def withdraw(self):
+        self._page.close()
+
+    def destroy(self):
+        self._page.close()
+
+    def deiconify(self):
+        pass
+
+    def __getattr__(self, name):
+        """Swallow the rest of the splash API, as `_NoSplash` does — and SAY
+        SO, because a call nobody noticed is how a page silently loses a
+        feature (the `ContextMenu` lesson, 2026-09-11)."""
+        log.info("served splash: ignoring %s()", name)
+        return lambda *a, **k: None
+
+
+def splash(program, backend, requested=None):
+    """A `ServedSplash`, or None if the caller should build the Tk `Splash`.
+
+    None is the ordinary path until this is verified, and it is not an error:
+    every refusal is logged by `available()` or by `start()`.
+    """
+    if not available('splash', backend, requested):
+        return None
+    page = ServedPage('splash', 'frontend.served_splash')
+    if not page.start(splash_view(program)):
+        return None
+    return ServedSplash(page)

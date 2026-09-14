@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.21' #This is a string...
+__version__='1.15.22' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -782,8 +782,28 @@ class App:
         # tasks/chooser.py and frontend/ui_shell.py (draw, progress,
         # withdraw, destroy, maketexts, exitFlag, winfo_exists), and every
         # one would need the same condition.
-        self.splash = (_NoSplash() if '--no-splash' in sys.argv
-                       else Splash(self))
+        # MIXED MODE IS THE DEFAULT (Kent, 2026-09-14): a Tk host serving the
+        # pages that have a verified webview child, with `--tkinter` and
+        # `--webview` as the two pure opt-ins. The splash is the first such
+        # page — see frontend/served.py and ADR 0004 D7.
+        #   Three-way, in this order, because each later term is the earlier
+        # one's fallback: no splash at all; a served child; the Tk Splash.
+        # `served.splash()` returns None for every refusal — pure mode asked
+        # for, page not ported, child failed to come up — so the Tk path
+        # below is reached exactly as it is today and nothing regresses.
+        self.splash = None
+        if '--no-splash' in sys.argv:
+            self.splash = _NoSplash()
+        else:
+            from frontend import served, backend as _host_backend
+            from utilities import ui_backend as _select
+            # explicit(), NOT requested(): the latter defaults to 'tkinter',
+            # so an empty command line read as `--tkinter` and refused to
+            # serve, blaming a switch nobody typed (Kent, 2026-09-14).
+            self.splash = served.splash(self, _host_backend,
+                                        _select.explicit())
+        if self.splash is None:
+            self.splash = Splash(self)
         self.splash.draw()
         FileParser(self) #needs self.filename, pick up self.analang from settings or file
         # Collab seam: no-op unless this project opted in (per-project
