@@ -37,6 +37,20 @@ python main.py --webview --no-kiosk        # DON'T make task windows fullscreen.
 python main.py --webview --webview-hidden  # re-test creating windows hidden (known broken
                                            # on GTK: show() never maps them)
 
+# The devtools console: OFF unless asked for. Nothing else turns it on — not
+# dev settings, not the engine. Known to segfault on Qt (show_inspector GCs
+# inside resizeEvent); honoured there anyway, with a warning, since you asked.
+python main.py --webview --console
+
+# Force a toolkit's TRANSPORT, to separate "which toolkit" from "which display
+# server". Both webview engines default to native Wayland on a Wayland
+# session; these put them on XWayland, where tkinter always is. That is how
+# XWayland was ruled out as the cause of tkinter's slow pages (2026-09-14) —
+# both engines stayed ~0s on it. Every run logs which stack it actually got
+# ("display stack (...)"), so a switch that was ignored is visible.
+python main.py --webview --engine=gtk --gdk-backend=x11   # or =wayland
+python main.py --webview --engine=qt --qt-platform=xcb    # or =wayland
+
 # Install dependencies (CPU-only torch)
 pip install -r requirements.txt
 ```

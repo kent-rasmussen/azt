@@ -560,8 +560,8 @@ class WordCollectnParse(Parse,WordCollection,Task):
         self.ftype=program.params.ftype('lc') #always correct?
         # self.nodetag='citation'
         super().__init__(program=program, **kwargs)
-        self.program.taskchooser.withdraw()
-        fn=self.getwords()#?
+        if self.hide_chooser():
+            fn=self.getwords()#?
 class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
     """This task collects words, from the SIL CAWL, or one by one.
     First in citation form, then pl or imperativewith Parse"""
@@ -599,8 +599,8 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
     def __init__(self, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
         super().__init__(**kwargs)
-        self.program.taskchooser.withdraw()
-        fn=self.getwords()
+        if self.hide_chooser():
+            fn=self.getwords()
 class WordsParse(Parse,WordCollection,Task):
     taskicon = 'iconWord'
     def tooltip(self):
@@ -623,12 +623,12 @@ class WordsParse(Parse,WordCollection,Task):
         self.checkeach=True #confirm each word (not default)
         self.dodoneonly=True #don't give me other words
         self.userresponse=Object()
-        self.program.taskchooser.withdraw()
         #This should either be adapted to use parse or not by keyword, or have
         # another method for addnParse
         # if me:
         #     self.downloadallCAWLimages()
-        fn=self.getwords()#?
+        if self.hide_chooser():
+            fn=self.getwords()#?
 class ParseSlice(Parse):
     """This task is likely obsolete"""
     tasktitle = "Parse One Slice"

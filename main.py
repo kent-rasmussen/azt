@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.20' #This is a string...
+__version__='1.15.21' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -225,6 +225,14 @@ class App:
         log.info(_("Computer identifies as {platform}").format(platform=platform.uname()))
         log.info(_("Loglevel is {level}; started at {time}")
                 .format(level=self.loglevel, time=times.now().isoformat()[:-7]+'Z'))
+        # WHICH DISPLAY STACK, in the log, every run. Kent, 2026-09-14: "I
+        # thought the whole point of these changes was to NOT use XWayland. So
+        # if you're not sure if we're using it or not, let's establish that
+        # now. and document it in the logs, so we're clear going forward."
+        # This call is pre-GUI, so it reports INTENT; each backend reports the
+        # fact again once it has a display open.
+        from utilities import display
+        display.report('startup, before any toolkit')
     def show_scaling_from_windows(self):
         try:
             import ctypes

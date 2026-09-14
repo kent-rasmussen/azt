@@ -109,6 +109,28 @@ class TaskBase:
         self.program.task=self
         self.program.status.task(self)
 
+    def hide_chooser(self):
+        """Withdraw the task chooser — UNLESS the user has gone back to it.
+
+        Tasks hide the chooser behind the page they have just built. But the
+        chooser's Tasks button can fire DURING that build (a slow affix load
+        drains the event loop), and `gettask()` then quits this task and
+        re-reveals the chooser. Withdrawing unconditionally on the way out
+        hid it again, leaving the user with NO WINDOW AT ALL — Kent,
+        2026-09-14, clicking Tasks during a page load.
+
+        `gettask` clears `program.task` (chooser.py:163), so that is the
+        test. Returns False when it declined, which is also the caller's
+        signal to stop building a page nobody is waiting for.
+        """
+        if getattr(self.program,'task',None) is not self:
+            log.info("not hiding the task chooser: %s is no longer the live "
+                     "task, so the user has asked to be back there",
+                     type(self).__name__)
+            return False
+        self.program.taskchooser.withdraw()
+        return True
+
     def makeeverythingok(self):
         """The value of this method is unclear. This may be better
         done elsewhere."""

@@ -94,6 +94,40 @@ class ExitFlag:
         self.value = False
 
 # ── pywebview API class (receives JS events) ─────────────────────────
+def _looks_like_port_gap(err):
+    """Is this AttributeError the app asking US for something we lack?
+
+    `AttributeError` carries `obj` and `name` since 3.10, so this asks the
+    object rather than parsing the message: if the thing that lacked the
+    attribute is one of this module's widgets, the app asked the BACKEND for
+    something it does not implement. A missing attribute on a task, a
+    settings object or a LIFT entry is an ordinary bug and is reported as
+    one.
+
+    Falls back to the message text where the attributes are absent, and to
+    "not a port gap" when it cannot tell — an over-eager PORT GAP label on
+    ordinary errors would make the marker worthless, which is the one thing
+    it cannot afford.
+    """
+    # THE WHOLE MRO, not `type(obj)`. Almost every widget the app touches is
+    # an APP subclass — `SortButtonFrame(ui.ScrollingFrame)`,
+    # `Splash(ui.Window)`, `SoundSettingsWindow(ui.Window)` — so its type
+    # belongs to `frontend.sort_buttons` or `tasks.tasks`, not here. Asking
+    # only about `type(obj)` classified nearly every real port gap as an
+    # ordinary error, which is the exact opposite of this function's job.
+    # Caught by its own test on the first run (2026-09-11).
+    obj = getattr(err, 'obj', None)
+    if obj is not None:
+        return any(base.__module__ == __name__
+                   for base in type(obj).__mro__)
+    text = str(err)
+    return ("'" in text
+            and any(k in text for k in ('Window', 'Toplevel', 'Frame',
+                                        'Label', 'Button', 'Entry', 'Menu',
+                                        'ScrollingFrame', 'ListBox', 'Image',
+                                        'Theme', 'Notebook', 'ToolTip')))
+
+
 class _JsonApi:
     """Exposed to JS as window.pywebview.api."""
     def __init__(self):
@@ -109,12 +143,41 @@ class _JsonApi:
             self._handlers.pop(wid, None)
 
     def on_event(self, wid, event_name, event_data):
-        """Called from JS when user interacts with a widget."""
+        """Called from JS when the user interacts with a widget.
+
+        SWALLOWING IS DELIBERATE — a handler that raises must not take the
+        event loop down with it — and it is also how ten port gaps hid. A
+        call this backend does not answer raises AttributeError HERE, gets
+        printed among the event noise, and the user sees only that nothing
+        happened: no window, a dead button, a page with no picture.
+
+        So the two are told apart. An AttributeError naming a member of one
+        of OUR widgets is a PORT GAP: the app asked this backend for
+        something tkinter provides, and the answer is to implement it, not to
+        debug the handler. Anything else is an ordinary error inside working
+        code. Logged at ERROR with a marker, because it is the one class of
+        failure that should be impossible to miss in a log — and because
+        every one of the ten so far was found by a user rather than by
+        reading this output.
+        """
         for cb in self._handlers.get(wid, {}).get(event_name, []):
             try:
                 cb(event_data)
-            except Exception:
+            except AttributeError as e:
                 import traceback
+                if _looks_like_port_gap(e):
+                    log.error("PORT GAP: %s — the app called something this "
+                              "backend does not implement, from a %r event on "
+                              "widget %s. Implement it in ui_webview; the "
+                              "handler is not at fault.", e, event_name, wid)
+                else:
+                    log.error("error in a %r handler on widget %s: %s",
+                              event_name, wid, e)
+                traceback.print_exc()
+            except Exception as e:
+                import traceback
+                log.error("error in a %r handler on widget %s: %s",
+                          event_name, wid, e)
                 traceback.print_exc()
 
 # Singleton API instance — shared across all widgets in a window
@@ -147,6 +210,62 @@ def _switch(name):
     console's switches box, and does not persist invisibly into the next run
     the way an exported variable does."""
     return name in sys.argv
+
+
+def _switch_value(name):
+    """The value of a `--name=value` switch, or None. Matches how
+    `--engine=` is read in utilities.ui_backend.requested_engine."""
+    prefix = name + '='
+    for arg in sys.argv:
+        if arg.startswith(prefix):
+            return arg[len(prefix):].strip() or None
+    return None
+
+
+# Which environment variable each toolkit reads to choose its transport, and
+# what the useful values are.
+#
+# SWITCHES, NOT ENVIRONMENT VARIABLES — including here. I argued for an
+# exception on the grounds that GDK_BACKEND is GTK's own variable rather than
+# an AZT toggle; Kent, 2026-09-14: "rather than GDK_BACKEND, how about
+# --gdk-backend?" The rule is about how WE are told to behave differently, and
+# that is what this is, whoever consumes it downstream. The variable still has
+# to be exported, because it is how GTK and Qt are told — but the user tells
+# us on the command line and we do the exporting, in one place, logged.
+_TRANSPORT_SWITCHES = {
+    '--gdk-backend': ('GDK_BACKEND', 'gtk', ('wayland', 'x11')),
+    '--qt-platform': ('QT_QPA_PLATFORM', 'qt', ('wayland', 'xcb')),
+}
+
+
+def _apply_transport_switches():
+    """Export the toolkit transport the user asked for. MUST run before the
+    toolkit initialises, i.e. before webview.start().
+
+    This exists for one experiment (agenda/wayland_freeze_audit.md): the
+    alphabet chart takes 37-42s on tkinter and ~0s on both webview engines,
+    but tkinter is the only backend on XWayland — both webview engines came
+    up NATIVE WAYLAND — so toolkit and transport vary together and the
+    comparison cannot say which is to blame. Forcing one engine onto X11
+    changes only the transport:
+
+        python main.py --webview --engine=gtk --gdk-backend=x11
+
+    `utilities/display.py` reports what actually happened, so a run that
+    silently ignored the switch is visible: the line must say
+    `GdkX11Display` / `platformName=xcb`, not `GdkWaylandDisplay`.
+    """
+    for switch, (var, engine, known) in _TRANSPORT_SWITCHES.items():
+        value = _switch_value(switch)
+        if not value:
+            continue
+        if value not in known:
+            log.warning("%s=%s is not one of %s; passing it to %s anyway",
+                        switch, value, '/'.join(known), var)
+        os.environ[var] = value
+        log.info("%s=%s set from %s (affects the %s engine; see "
+                 "display.py's line for what the toolkit actually did)",
+                 var, value, switch, engine)
 
 
 def _supports_created_hidden():
@@ -476,15 +595,24 @@ def _icon_path(program):
 
 
 def _start_kwargs(program=None):
-    """Arguments for webview.start().
+    """Arguments for webview.start(). `program` is unused since the console
+    stopped following its dev-settings flag; kept because the one caller
+    passes it and the engine choice may yet want it.
 
-    `debug=True` was unconditional, which opens the remote-debugging server
-    and devtools on a FIELD machine — visible in the run log as
-    "Remote debugging server started successfully". Gated on the app's own
-    testing flag now.
+    THE CONSOLE IS OFF UNLESS `--console` IS PASSED. Kent, 2026-09-14: "let's
+    turn off the console by default. and rather than calling it
+    --no-i-really-do-want-the-console-this-time, let's just use --console."
+    One switch, asked for when wanted.
 
-    AND OFF ON QT ENTIRELY, because `debug=True` is what kills it. The
-    faulthandler dump caught the main thread mid-slot (2026-09-11):
+    It used to follow the app's dev-settings flag — so it was on in this
+    working tree always, and `--user` was the only way off, which also drops
+    the test lift, the auto-opened task, the debug badge and the dev theme.
+    Before THAT it was unconditional, which opened the remote-debugging
+    server on field machines ("Remote debugging server started successfully"
+    in their logs).
+
+    KNOWN TO SEGFAULT ON QT, and honoured anyway now that it must be asked
+    for. The faulthandler dump caught the main thread mid-slot (2026-09-11):
 
         Garbage-collecting
         qt.py:639 in resizeEvent
@@ -493,28 +621,22 @@ def _start_kwargs(program=None):
 
     `show_inspector` opens the Web Inspector as each page finishes loading,
     its resize runs a Python GC inside a Qt `resizeEvent`, and the collection
-    frees something Qt is still using. That is the SAME fault
-    `_close_native_window` documents from 2026-09-07 — "a pywebview window
-    wrapper being GARBAGE COLLECTED inside a loadFinished slot, which is a
-    reference-keeping problem" — now located precisely: it is in the
-    inspector path, so it only happens with devtools on.
-
-    Which also explains the shape of the evidence. Qt "worked earlier the
-    same day" because `--user` (no dev settings, no devtools) was in play, and
-    every crash came from a dev-settings run. Kent had four `base.html` pages
-    listed in the inspector: one live inspector per window, each one another
-    chance to hit this on load.
-
-    `--webview-devtools` forces them back on for re-testing, the same way
-    `--webview-hidden` does for created-hidden."""
-    testing = bool(getattr(program, 'testing', False))
+    frees something Qt is still using — the same fault
+    `_close_native_window` documents from 2026-09-07 ("a pywebview window
+    wrapper being GARBAGE COLLECTED inside a loadFinished slot"), located
+    precisely: it is in the inspector path, so it only happens with the
+    console on. That is also why Qt "worked earlier the same day" — `--user`
+    runs had no console — and why four `base.html` pages were listed in the
+    inspector: one per window, each another chance to hit it on load."""
     engine = _engine()
-    debug = testing
-    if debug and engine == 'qt' and not _switch('--webview-devtools'):
-        debug = False
-        log.info("devtools OFF for Qt: show_inspector garbage-collects inside "
-                 "resizeEvent and segfaults (see _start_kwargs). Use "
-                 "--webview-devtools to force them on, or --engine=gtk.")
+    debug = _switch('--console')
+    if debug:
+        log.info("console ON (--console): remote debugging server and "
+                 "devtools.")
+        if engine == 'qt':
+            log.warning("console on Qt is known to segfault: show_inspector "
+                        "garbage-collects inside resizeEvent (see "
+                        "_start_kwargs). --engine=gtk if it crashes.")
     kwargs = {'debug': debug}
     if engine:
         kwargs['gui'] = engine
@@ -2611,13 +2733,24 @@ class ScrollingFrame(Frame):
         self.content = Frame(self)  # Inner frame for children
 
     def windowsize(self, event=None):
-        pass
+        pass                # the browser sizes its own box
     def reflow(self):
-        pass
+        pass                # and lays it out
+
+    # SCROLLING IS REAL WORK, not a no-op. `main.py:1083` and
+    # `tasks/tasks.py:914` scroll to the bottom so the newest line is the one
+    # you see — a message window that does not is a message window showing
+    # old news — and `alphabet_comparison.py:392-393` resets to the top.
+    # These were `pass`, so none of it happened.
     def tobottom(self):
-        pass
+        wv = getattr(self, '_wv_window', None)
+        _js(wv, 'var e=_widgets.get({}); if(e) e.scrollTop=e.scrollHeight;'
+                ''.format(self._wid))
+
     def totop(self):
-        pass
+        wv = getattr(self, '_wv_window', None)
+        _js(wv, 'var e=_widgets.get({}); if(e) e.scrollTop=0;'
+                ''.format(self._wid))
 
     # ACCEPTED AND IGNORED, deliberately — not "not written yet".
     # tkinter suspends its <Configure> handler around a bulk update because
@@ -3496,7 +3629,63 @@ class Toplevel(_WebviewWidget):
         return None
 
     def protocol(self, name, func):
-        pass
+        """`WM_DELETE_WINDOW` — what to run when the user closes the window.
+
+        WAS A NO-OP, so the close box did nothing but close. Three call sites
+        depend on it and each loses something different:
+
+          * `sound_ui.py:893` — `on_quit`, which RESTORES THE TASK WINDOW.
+            Without this, closing Sound Settings with the X left the user
+            with no visible window at all; the Done button worked because it
+            calls `on_quit` directly. (That restore was itself added today,
+            so the fix was half-dead on arrival under webview.)
+          * `tasks/alphabet_chart.py:59` and
+            `tasks/alphabet_comparison.py:54` — `taskchooser.gettask`, so
+            closing either page returns to the chooser. Without it the page
+            closes and nothing comes back.
+
+        IT INTERCEPTS THE CLOSE. In tkinter `WM_DELETE_WINDOW` replaces the
+        close: the window does NOT go away unless the handler makes it. My
+        first version let pywebview close the window anyway and called the
+        handler alongside, which is a different contract — and Kent spotted
+        the consequence (2026-09-11): the alphabet pages hand the close to
+        `taskchooser.gettask`, so if the window is closed out from under that
+        call, whatever `gettask` decides to reuse or rebuild is being torn
+        down behind it.
+
+        So the `closing` handler returns False, cancelling the native close,
+        and the app owns what happens next — exactly as under tkinter, where
+        a handler that forgets to destroy leaves an unclosable window. All
+        three call sites do dispose of the window: `on_quit` hides it,
+        `gettask` finishes the task through `finish_task_ui`.
+        """
+        if name != 'WM_DELETE_WINDOW' or not func:
+            return
+        wv = getattr(self, '_wv_window', None)
+        events = getattr(wv, 'events', None)
+        closing = getattr(events, 'closing', None) if events else None
+        if closing is None:
+            log.info("window {}: this pywebview has no closing event; the "
+                     "close box will not run {}".format(
+                        self._wid, getattr(func, '__name__', func)))
+            return
+
+        def _on_closing():
+            try:
+                func()
+            except Exception as e:
+                log.error("window %s: the close handler raised (%s)",
+                          self._wid, e)
+            # False CANCELS the native close — see the docstring. The handler
+            # disposes of the window itself, or deliberately keeps it.
+            return False
+        try:
+            closing += _on_closing
+            log.info("window {}: close box wired to {}".format(
+                        self._wid, getattr(func, '__name__', func)))
+        except Exception as e:
+            log.info("window {}: couldn't wire the close box ({})"
+                     "".format(self._wid, e))
 
     # wait_window lives on _WebviewWidget — tkinter puts it on Misc, so every
     # widget has it, and call sites use it from both windows and frames.
@@ -3605,36 +3794,16 @@ class Toplevel(_WebviewWidget):
         # mid-construction), and revealing one that was never hidden costs a
         # no-op show.
         self.showafterwait = bool(self.winfo_viewable()) or bool(thenshow)
-        # AND AFTER A DELAY. Work that finishes in 200ms does not need a
-        # dialog at all; showing one and removing it is flicker. Fast
-        # operations now show nothing, slow ones behave as before.
-        self._wait_args = dict(parent=self, msg=msg, cancellable=cancellable,
-                               reveal=self.showafterwait)
-        if getattr(self, '_waittimer', None) is not None:
-            return              # already scheduled; the new args stand
-
-        def _show_wait():
-            self._waittimer = None
-            args = getattr(self, '_wait_args', None)
-            if args and not ww.active:
-                ww.activate(**args)
-        try:
-            self._waittimer = self.after(_WAIT_DELAY_MS, _show_wait)
-        except Exception as e:
-            log.info("couldn't schedule the wait dialog (%s); showing it "
-                     "now", e)
-            _show_wait()
+        # IMMEDIATELY — the 400ms delay tried on 2026-09-11 was reverted the
+        # same day. `after()` runs on the event loop and this app's slow work
+        # is synchronous, so the scheduled dialog appeared only once the work
+        # was done: the indicator was guaranteed absent during exactly the
+        # operations it exists for (a 35s build with a blank screen). Not
+        # hiding the page, above, is what actually fixed the flicker.
+        ww.activate(parent=self, msg=msg, cancellable=cancellable,
+                    reveal=self.showafterwait)
 
     def waitdone(self):
-        # A wait that never appeared just goes away — the common case now.
-        self._wait_args = None
-        _t = getattr(self, '_waittimer', None)
-        if _t is not None:
-            self._waittimer = None
-            try:
-                self.after_cancel(_t)
-            except Exception as e:
-                log.info("couldn't cancel the pending wait dialog (%s)", e)
         ww = self._waitwindow(create=False)
         if ww is None or not ww.active:
             return
@@ -3983,6 +4152,15 @@ class Root(_WebviewWidget):
                 _started.set()
                 self._wv_loaded.set()
                 _log_engine_in_use(self._wv_window)
+                # X11 or Wayland, from the toolkit and the open socket rather
+                # than from what GTK/Qt defaults are believed to be. Here
+                # beside the engine line because both answer "what are we
+                # actually running on"; a separate `events.loaded` handler
+                # registered nearby did not report at all, and this one
+                # demonstrably fires. See agenda/wayland_freeze_audit.md.
+                from utilities import display
+                display.report('pywebview {} running'.format(
+                                                _engine() or 'default'))
                 self._push_theme()
                 _badge(self._wv_window, 'ROOT (no task widgets live here)')
                 self._flush_wv_calls()
@@ -4003,8 +4181,11 @@ class Root(_WebviewWidget):
             if self._wv_window:
                 self._wv_window.events.loaded += on_loaded
             # Before the GUI toolkit exists: prgname/WM_CLASS is what the
-            # desktop matches against azt's .desktop file for the dock icon.
+            # desktop matches against azt's .desktop file for the dock icon,
+            # and --gdk-backend/--qt-platform must be exported before the
+            # toolkit picks a transport.
             _app_identity(self.program)
+            _apply_transport_switches()
             kwargs = _start_kwargs(self.program)
             icon = _icon_path(self.program)
             if icon:
@@ -4071,7 +4252,63 @@ class Root(_WebviewWidget):
         return text
 
     def protocol(self, name, func):
-        pass
+        """`WM_DELETE_WINDOW` — what to run when the user closes the window.
+
+        WAS A NO-OP, so the close box did nothing but close. Three call sites
+        depend on it and each loses something different:
+
+          * `sound_ui.py:893` — `on_quit`, which RESTORES THE TASK WINDOW.
+            Without this, closing Sound Settings with the X left the user
+            with no visible window at all; the Done button worked because it
+            calls `on_quit` directly. (That restore was itself added today,
+            so the fix was half-dead on arrival under webview.)
+          * `tasks/alphabet_chart.py:59` and
+            `tasks/alphabet_comparison.py:54` — `taskchooser.gettask`, so
+            closing either page returns to the chooser. Without it the page
+            closes and nothing comes back.
+
+        IT INTERCEPTS THE CLOSE. In tkinter `WM_DELETE_WINDOW` replaces the
+        close: the window does NOT go away unless the handler makes it. My
+        first version let pywebview close the window anyway and called the
+        handler alongside, which is a different contract — and Kent spotted
+        the consequence (2026-09-11): the alphabet pages hand the close to
+        `taskchooser.gettask`, so if the window is closed out from under that
+        call, whatever `gettask` decides to reuse or rebuild is being torn
+        down behind it.
+
+        So the `closing` handler returns False, cancelling the native close,
+        and the app owns what happens next — exactly as under tkinter, where
+        a handler that forgets to destroy leaves an unclosable window. All
+        three call sites do dispose of the window: `on_quit` hides it,
+        `gettask` finishes the task through `finish_task_ui`.
+        """
+        if name != 'WM_DELETE_WINDOW' or not func:
+            return
+        wv = getattr(self, '_wv_window', None)
+        events = getattr(wv, 'events', None)
+        closing = getattr(events, 'closing', None) if events else None
+        if closing is None:
+            log.info("window {}: this pywebview has no closing event; the "
+                     "close box will not run {}".format(
+                        self._wid, getattr(func, '__name__', func)))
+            return
+
+        def _on_closing():
+            try:
+                func()
+            except Exception as e:
+                log.error("window %s: the close handler raised (%s)",
+                          self._wid, e)
+            # False CANCELS the native close — see the docstring. The handler
+            # disposes of the window itself, or deliberately keeps it.
+            return False
+        try:
+            closing += _on_closing
+            log.info("window {}: close box wired to {}".format(
+                        self._wid, getattr(func, '__name__', func)))
+        except Exception as e:
+            log.info("window {}: couldn't wire the close box ({})"
+                     "".format(self._wid, e))
 
     def iconphoto(self, default, *args):
         pass
@@ -4130,40 +4367,23 @@ class Root(_WebviewWidget):
                 ww.reveal_parent = self
                 ww.do_reveal = True
             return
-        # NO WITHDRAW, AND AFTER A DELAY — see the other copy of this method
-        # for why. This one was missed by the first pass because the two had
-        # DRIFTED: `bool(x) or bool(y)` there, `x | y` here, for the same
-        # intent. They are supposed to mirror each other (the comment above
-        # `_waitwindow` says so), and a difference with no meaning is what let
-        # a search-and-replace fix one and not the other.
+        # NO WITHDRAW — see the other copy of this method for why. Kept
+        # CHARACTER-FOR-CHARACTER identical to it from here down: these two
+        # are meant to mirror each other, and every time they have differed
+        # by something meaningless — `bool(x) or bool(y)` against `x | y`,
+        # then a hand-written comment against a generated one — an edit has
+        # reached one and not the other. Twice in one afternoon.
         self.showafterwait = bool(self.winfo_viewable()) or bool(thenshow)
-        self._wait_args = dict(parent=self, msg=msg, cancellable=cancellable,
-                               reveal=self.showafterwait)
-        if getattr(self, '_waittimer', None) is not None:
-            return
-
-        def _show_wait():
-            self._waittimer = None
-            args = getattr(self, '_wait_args', None)
-            if args and not ww.active:
-                ww.activate(**args)
-        try:
-            self._waittimer = self.after(_WAIT_DELAY_MS, _show_wait)
-        except Exception as e:
-            log.info("couldn't schedule the wait dialog (%s); showing it "
-                     "now", e)
-            _show_wait()
+        # IMMEDIATELY — the 400ms delay tried on 2026-09-11 was reverted the
+        # same day. `after()` runs on the event loop and this app's slow work
+        # is synchronous, so the scheduled dialog appeared only once the work
+        # was done: the indicator was guaranteed absent during exactly the
+        # operations it exists for (a 35s build with a blank screen). Not
+        # hiding the page, above, is what actually fixed the flicker.
+        ww.activate(parent=self, msg=msg, cancellable=cancellable,
+                    reveal=self.showafterwait)
 
     def waitdone(self):
-        # A wait that never appeared just goes away — the common case now.
-        self._wait_args = None
-        _t = getattr(self, '_waittimer', None)
-        if _t is not None:
-            self._waittimer = None
-            try:
-                self.after_cancel(_t)
-            except Exception as e:
-                log.info("couldn't cancel the pending wait dialog (%s)", e)
         ww = self._waitwindow(create=False)
         if ww is None or not ww.active:
             return

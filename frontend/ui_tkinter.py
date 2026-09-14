@@ -11,6 +11,22 @@ logsetup.setlevel('INFO',log) #for this file
 # logsetup.setlevel('DEBUG',log) #for this file
 log.info("Importing ui_tkinter.py")
 import unicodedata
+# DIAG scroller timing — agenda/wayland_freeze_audit.md. Kent, 2026-09-14:
+# 37s and 42s inside single scroller passes building the alphabet chart, while
+# **GTK builds the same page in ~0s** — so the cost is Tk's synchronous
+# geometry round-trips on this display, not the content or the layout maths.
+#
+# MODULE level, not instance, and that is the point: a pass needs to count the
+# passes that ran INSIDE its own `update_idletasks()`, which is the one number
+# separating "one slow call" from "an unbounded cascade". The `_sizing` guard
+# on `windowsize` stops a scroller re-entering ITSELF; it cannot see a cascade
+# that hops between scroller instances, and neither could the log.
+SLOW_SCROLLER_PASS_S=2.0    # below this, say nothing; a settled page is quiet
+_scroller_passes=0          # every _windowsize entry, program-wide
+_scroller_depth=0           # how many are on the stack right now
+_scroller_ids=set()         # distinct scrollers in the current outermost pass
+_sibling_probes=0           # grid_info() round-trips in _measure_siblings
+_said_display_stack=False   # X11 vs Wayland, reported once per run
 import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
@@ -1143,6 +1159,7 @@ class Gridded():
     @staticmethod
     def _measure_siblings(w):
         """Walk up grid tree, return total (width, height) of non-overlapping siblings."""
+        global _sibling_probes  # counted, not used: see SLOW_SCROLLER_PASS_S
         parentclasses=['Toplevel','Tk','Wait','Window','Root',
                         'Canvas','ScrollingFrame']
         otherwidth=0
@@ -1170,6 +1187,7 @@ class Gridded():
                     # crash (no grid_info). Seen on the syllable Task-1 → Task-2
                     # board transition, where the "all checked!" notice is a child.
                     continue
+                _sibling_probes+=1  # one X round-trip; see SLOW_SCROLLER_PASS_S
                 sib_grid_info=sib.grid_info()
                 if 'row' not in sib_grid_info:
                     continue
@@ -1589,39 +1607,31 @@ class Waitable(Exitable):
         log.info(f"updating wait: {self.winfo_viewable()|thenshow=} "
                 f"{self.winfo_viewable()=} {thenshow=} ")
         self.showafterwait=self.winfo_viewable()|thenshow
-        # AFTER A DELAY, NOT NOW. An operation that finishes in 200ms does not
-        # need a dialog; showing one and taking it away again is flicker, and
-        # under webview it also withdrew and restored the page — Kent,
-        # 2026-09-11, opening Add and Parse Words with Audio: "the page opens
-        # (almost?) complete, then goes away to build the wait dialog, which
-        # returns almost immediately."
-        #   A delay answers both cases with one rule. Fast work shows nothing
-        # at all; slow work behaves exactly as before. It is also why the
-        # withdraw moved in here: a page must not be hidden for a wait that
-        # never appears.
-        self._wait_args=dict(parent=self,msg=msg,cancellable=cancellable,
-                            reveal=self.showafterwait)
-        if getattr(self,'_waittimer',None) is not None:
-            return              # already scheduled; the new args stand
-        def _show_wait():
-            self._waittimer=None
-            args=getattr(self,'_wait_args',None)
-            if not args or ww.active:
-                return
-            if self.showafterwait:
-                _w=time.perf_counter()
-                self.withdraw() # DIAG (1.3.16): kiosk withdraw — a state
-                log.info("wait: kiosk withdraw %.2fs", # transition that may
-                        time.perf_counter()-_w)        # wedge
-            ww.activate(**args)
-        try:
-            self._waittimer=self.after(self.WAIT_DELAY_MS,_show_wait)
-        except Exception as e:
-            # `after` needs the main thread. Fall back to the old behaviour
-            # rather than skipping the dialog: a missing wait on a slow
-            # operation looks like a hang.
-            log.info("couldn't schedule the wait dialog (%s); showing it now",e)
-            _show_wait()
+        # IMMEDIATELY. A 400ms delay was tried on 2026-09-11 and REVERTED the
+        # same day: it cannot work for this app's slow operations, and it
+        # failed in the worst possible direction.
+        #
+        # `after()` runs on the event loop. The work that follows a wait()
+        # here is SYNCHRONOUS — a task window build, a LIFT parse, a verify
+        # list — so the loop does not run until that work is finished, so the
+        # scheduled dialog appears only after it is no longer needed. The
+        # indicator was therefore guaranteed ABSENT during exactly the
+        # operations it exists for. Kent, on a scroller pass that took 35s:
+        # "35s with no window. almost reported NWAA, but it eventually
+        # showed."
+        #
+        # That is not a tuning problem. A delay needs the work to yield, and
+        # this app's does not. The flicker the delay was meant to fix —
+        # "the page opens (almost?) complete, then goes away to build the wait
+        # dialog, which returns almost immediately" — is fixed in the webview
+        # backend by not withdrawing the page at all, which was the other half
+        # of that change and stands on its own.
+        if self.showafterwait:
+            _w=time.perf_counter()
+            self.withdraw() # DIAG (1.3.16): kiosk withdraw — a state transition that
+            log.info("wait: kiosk withdraw %.2fs", time.perf_counter()-_w) # may wedge
+        ww.activate(parent=self,msg=msg,cancellable=cancellable,
+                    reveal=self.showafterwait)
     def iswaiting(self):
         # "Is the one reused wait window currently shown" (not "does a ww exist") —
         # the window now persists across waits, so activeness is what callers mean.
@@ -1711,18 +1721,6 @@ class Waitable(Exitable):
         # render is covered by "Loading…" instead of a blank screen. (1.3.38; the gap
         # is update(), not the deiconify, which is ~0s — 1.3.37 timing.) The dialog
         # is WITHDRAWN, not destroyed: it's the one reused window.
-        # A WAIT THAT NEVER APPEARED just goes away. This is the common case
-        # now: the work finished inside WAIT_DELAY_MS, so there is no dialog
-        # to dismiss and, because the withdraw moved into the timer, no page
-        # to restore either.
-        self._wait_args=None
-        _t=getattr(self,'_waittimer',None)
-        if _t is not None:
-            self._waittimer=None
-            try:
-                self.after_cancel(_t)
-            except Exception as e:
-                log.info("couldn't cancel the pending wait dialog (%s)",e)
         ww=self._waitwindow(create=False)
         if ww is None or not ww.active:
             return
@@ -2737,6 +2735,16 @@ class Root(Waitable,UI,tkinter.Tk):
         super().__init__(*args, **kwargs)
         self.post_tk_init(**kwargs) #Theme needs Tk to exist by now
         self.renderer=Renderer()
+        # WHICH DISPLAY STACK, now that Tk has actually connected. Only for
+        # THE root — contextmenus and the dummy-program cases make Roots too,
+        # and one line per run is the point. Tk 8.6 has no Wayland backend, so
+        # on a Wayland session this is XWayland with no way to be otherwise;
+        # the socket check in display.py confirms rather than assumes it.
+        # See agenda/wayland_freeze_audit.md.
+        if not globals().get('_said_display_stack'):
+            globals()['_said_display_stack']=True
+            from utilities import display
+            display.report('tkinter root created','tk',self)
         # log.info("Root initialized")
 """These have parent (Childof), but no grid"""
 class Toplevel(Childof,Waitable,UI,tkinter.Toplevel): #
@@ -4110,11 +4118,111 @@ class ScrollingFrame(Frame):
         log.info("self.canvas.height={}, width={}\n".format(
                 self.canvas.winfo_height(), self.canvas.winfo_width()))
     def windowsize(self, event=None):
+        """Re-entrancy guard around the real sizing pass below.
+
+        WHY: this method calls `self.content.update_idletasks()`, which runs
+        pending idle callbacks — and one of those is
+        `_do_configure_interior`, which calls `reflow()` → `windowsize()` →
+        `update_idletasks()` again. `_do_configure_interior` clears
+        `_configure_pending` before running, so every nested level is free to
+        schedule another, and the nesting is unbounded.
+        Kent's stack dump (2026-09-14) shows the cycle three deep and still
+        descending:
+
+            windowsize -> update_idletasks -> callit
+              -> _do_configure_interior -> windowsize -> update_idletasks
+                -> _do_configure_interior -> ...
+
+        Each level is an X round trip, which on this display costs about a
+        second (see agenda/wayland_freeze_audit.md), so the pass he timed took
+        **35 seconds** and the alphabet chart sat half-built the whole time —
+        which is what he read as a nothing-but-Quit page. It was not a layout
+        decision; it was a build that had not finished.
+
+        The nested call has nothing to add: the outer pass is measuring the
+        same content and will finish the job. So it returns, and nothing is
+        lost. `_suspend_configure` would also break the cycle but it drops the
+        pending recompute (`_configure_pending` is already False by then),
+        which is a different and worse trade.
+        """
+        if getattr(self, '_sizing', False):
+            log.log(3, "windowsize re-entered from an idle callback; the "
+                       "outer pass is already doing this")
+            return
+        # DIAG, and the numbers it takes to settle this (2026-09-14). The
+        # docstring above blames a nesting cascade; the guard it describes
+        # stops a scroller re-entering ITSELF, yet passes still take 37-42s.
+        # So either the cascade hops between scroller INSTANCES — which this
+        # guard cannot see and the deduped log lines could not count — or the
+        # time is in one call. `inside` and `scrollers` decide that.
+        global _scroller_passes,_scroller_depth
+        _scroller_passes+=1
+        _started_at=_scroller_passes
+        if _scroller_depth == 0:
+            _scroller_ids.clear()
+        _scroller_ids.add(id(self))
+        _scroller_depth+=1
+        self._pass_n=getattr(self,'_pass_n',0)+1
+        self._t_avail=self._t_flush=0.0
+        self._n_probes=0
+        _t0=time.perf_counter()
+        self._sizing = True
+        try:
+            return self._windowsize(event)
+        finally:
+            self._sizing = False
+            _scroller_depth-=1
+            _elapsed=time.perf_counter()-_t0
+            if _elapsed >= SLOW_SCROLLER_PASS_S:
+                # WARNING: 37s with a half-built page on screen is a fault, and
+                # the user reads it as a hung app (Kent called it NBQ).
+                _n=getattr(self,'_n_widgets',0) or 0
+                log.warning("scroller SLOW pass: %.1fs = availablexy %.1fs "
+                        "(%s sibling probes) + content.update_idletasks %.1fs "
+                        "for %s widgets (%.0fms each) + %.1fs elsewhere | %s "
+                        "passes ran INSIDE it across %s scrollers | pass #%s "
+                        "for this scroller, nesting depth %s",
+                        _elapsed,self._t_avail,self._n_probes,self._t_flush,
+                        _n,(self._t_flush*1000.0/_n) if _n else 0.0,
+                        max(0.0,_elapsed-self._t_avail-self._t_flush),
+                        _scroller_passes-_started_at,len(_scroller_ids),
+                        self._pass_n,_scroller_depth+1)
+
+    def _windowsize(self, event=None):
+        # TIMED SEPARATELY — these are the only two candidates for the 37s
+        # passes; see SLOW_SCROLLER_PASS_S and the `windowsize` wrapper, which
+        # prints these. availablexy walks up the grid tree doing a grid_info()
+        # per sibling per level; update_idletasks runs every pending idle
+        # callback, including other scrollers' <Configure> handlers.
+        _t=time.perf_counter()
+        _probes0=_sibling_probes
         self.availablexy() #>self.maxheight, self.maxwidth
+        self._t_avail=time.perf_counter()-_t
+        self._n_probes=_sibling_probes-_probes0
         """This section deals with the content on the canvas (self.content)!!
         This is how much space the contents of the scrolling canvas is asking
         for. We don't need the scrolling frame to be any bigger than this."""
+        # HOW BIG IS THE TREE BEING FLUSHED. The flush turned out to be the
+        # whole cost (2026-09-14: 44.1s of a 44.1s pass, sibling measurement
+        # at 0.0s, no nested passes at all), so the question became whether
+        # that is per-widget work or a fixed stall.
+        #
+        # `.children`, NOT `winfo_children()`: the latter asks Tk, so walking
+        # the tree that way would add a round-trip per widget to a pass that
+        # is already the problem. `.children` is the dict Tk's Python side
+        # keeps anyway — same information, no traffic.
+        def _count(w):
+            n=1
+            for c in getattr(w,'children',{}).values():
+                n+=_count(c)
+            return n
+        try:
+            self._n_widgets=_count(self.content)
+        except Exception:
+            self._n_widgets=0
+        _t=time.perf_counter()
         self.content.update_idletasks()
+        self._t_flush=time.perf_counter()-_t
         contentrw=self.content.winfo_reqwidth()+self.yscrollbarwidth
         contentrh=self.content.winfo_reqheight()
         # for child in self.content.winfo_children():

@@ -187,6 +187,49 @@ def test_undo_popup_is_quiet_when_nothing_is_shown():
     assert cm.popup is False
 
 
+def test_a_missing_backend_member_is_named_a_PORT_GAP():
+    """`on_event` swallows handler exceptions so one bad callback cannot take
+    the event loop down — and that is how ten port gaps hid, each presenting
+    as "nothing happened" with a traceback lost in the event noise.
+
+    An AttributeError on one of OUR widgets means the app asked this backend
+    for something tkinter provides. That is a different thing from a bug in
+    the handler, and it should be impossible to miss."""
+    # An APP SUBCLASS, which is what the app actually hands to handlers —
+    # `SortButtonFrame(ui.ScrollingFrame)`, `Splash(ui.Window)`. Its type
+    # lives in the app's module, not in ui_webview, so a check on
+    # `type(obj).__module__` misses it; the MRO is what settles it. That was
+    # the production bug this test found on its first run.
+    class Fake(ui_webview.Label):
+        def __init__(self):
+            pass                    # no widget, no page, no JS
+
+    err = None
+    try:
+        Fake().no_such_method()
+    except AttributeError as e:
+        err = e
+    assert err is not None
+    assert ui_webview._looks_like_port_gap(err), \
+        'a missing member of a ui_webview widget subclass is a port gap'
+
+
+def test_an_ordinary_AttributeError_is_NOT_called_a_port_gap():
+    """The marker is worth nothing if it fires on everything. A missing
+    attribute on a task, a settings object or a LIFT entry is an ordinary
+    bug."""
+    class NotAWidget:
+        pass
+
+    err = None
+    try:
+        NotAWidget().missing
+    except AttributeError as e:
+        err = e
+    assert err is not None
+    assert not ui_webview._looks_like_port_gap(err)
+
+
 def test_wait_does_not_hide_the_page_it_is_waiting_on():
     """Kent, 2026-09-11: "the page opens (almost?) complete, then goes away to
     build the wait dialog, which returns almost immediately."
@@ -211,8 +254,14 @@ def test_wait_does_not_hide_the_page_it_is_waiting_on():
         chunk = chunk.split('def waitdone')[0]
         assert 'self.withdraw()' not in chunk, \
             'wait() must not hide the window it is waiting on'
-        assert '_waittimer' in chunk, \
-            'wait() must schedule the dialog, not show it immediately'
+        # AND IT MUST SHOW IMMEDIATELY. A 400ms `after()` delay was tried and
+        # reverted: this app's slow work is synchronous, so the event loop
+        # does not run and a scheduled dialog appears only once the work is
+        # over — absent during exactly the operations it exists for (35s of
+        # blank screen, Kent 2026-09-14).
+        assert '_waittimer' not in chunk, \
+            'wait() must not defer the dialog: a timer cannot fire during ' \
+            'synchronous work'
 
 
 def test_windows_are_NOT_created_hidden():

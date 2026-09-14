@@ -19,6 +19,147 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.21
+
+**Leaving a task page while it is still loading now works.** Clicking Tasks
+during a slow page build used to crash, and then — once the crash was fixed —
+left the screen with nothing on it at all. Both are fixed and **verified on
+tkinter** (Kent: *"early exit to task manager is now working on tk"*).
+Webview is unverified.
+
+Two separate faults, which is why the first fix looked like it had made things
+worse.
+
+## Fault 1: work carried on into a window that was gone
+
+The affix catalog kept loading after the user had left, then tried to build a
+page into a destroyed window, and tkinter refused the parent:
+
+    _tkinter.TclError: bad window path name
+        ".!taskwindow.!taskwindow.!frame.!frame"
+
+Kent's diagnosis and his rule for this class of bug: *"if there is backend
+logic that relies on the frontend, it should test that it is there before
+continuing. I used to have lots of code that would diesel on long after
+tkinter had shut down, until I started asking about that… the answer here may
+be more of a check the catalog to not return to a window that just isn't
+there."*
+
+`Senses._window_is_there()` (`backend/core/lexicon.py`) is that test, asked at
+three points: **per iteration of the affix-loading loop** (the one that
+diesels — `waitprogress` was tolerating a dead wait window *silently*, so
+nothing stopped and the catalog ran to completion before anything noticed),
+`getwords()`, and `Parse.showwhenready()`.
+
+It asks about the **window**, not `ui.frame` and not `exitFlag`. The frame is
+absent during construction as well as after teardown — the same observation,
+and only one of them is a reason to stop. The window is created by
+`Task.__init__` before any slow work and destroyed by `on_quit`'s final
+`destroy()`, so `winfo_exists()` is false exactly when the work has nowhere to
+go, and never merely early. It only stops on positive evidence: a missing or
+unaskable window counts as present, because a page that never appears is a
+worse failure than one that raises.
+
+## Fault 2: the click was never honoured
+
+With the crash gone, the app was left showing nothing. Clicking Tasks runs
+`gettask()` *nested inside* the task's still-running `__init__` — the affix
+load drains the event loop, so the click is serviced there. `gettask` quits
+the task, rebuilds the chooser and reveals it. Then the stack unwound back
+into `__init__`, whose next statement was `self.program.taskchooser.withdraw()`
+— hiding the chooser the user had just asked for, with the task window already
+destroyed.
+
+`TaskBase.hide_chooser()` replaces that unconditional withdraw. `gettask`
+clears `program.task` (`chooser.py:163`), so that is the test: if this is no
+longer the live task, the chooser is where the user asked to be. It returns
+False, which is also the caller's signal to stop building a page nobody is
+waiting for. Four sites converted — `tasks.py` ×3 and `lexicon.py::getword`,
+whose copy carried the comment `# not sure why necessary`.
+
+## Also fixed in `Parse.showwhenready()`
+
+Found while reading the same log. One `try` wrapped both the readiness test
+AND the `deiconify`, so a *failed show* was misreported as "self.status not
+found" and retried; the reason was never logged, so the line named the wrong
+thing. Its 100 × 100 ms retry is correct and unchanged — that loop exists
+because the status window is not ready yet — but only the first wait now logs
+at info, instead of up to a hundred identical lines.
+
+## `--console`: the webview devtools console is now OFF unless asked for
+
+It followed the app's dev-settings flag, so it was on in a dev checkout
+always, and `--user` was the only way off — which also drops the test lift,
+the auto-opened task, the debug badge and the dev theme. Kent: *"rather than
+calling it --no-i-really-do-want-the-console-this-time, let's just use
+--console."*
+
+One switch, one name. The two names that briefly existed on the way here
+(`--webview-devtools`, `--no-webview-devtools`) are gone, and
+`tests/test_webview_console_switch.py` asserts they do nothing — a default
+that has moved twice is worth pinning, and half-working aliases are the
+`mainwindow`/`ismainwindow` trap.
+
+The console is no longer suppressed on Qt either. It is known to segfault
+there (`show_inspector` garbage-collects inside a `resizeEvent`), but now
+that it has to be asked for, asking is answered — with a warning in the log
+rather than a silent refusal.
+
+## Timing for the 37-second scroller passes
+
+Kent, building the alphabet chart on tkinter: two passes of **37s and 42s**,
+the second of which reads on screen as a nothing-but-Quit page. Both webview
+engines build the same page in ~0s.
+
+**And the cause is settled: it is not XWayland.** `utilities/display.py` now
+logs which display stack each backend actually got, read from the toolkit —
+tkinter is on XWayland, and both webview engines came up *native Wayland*, so
+the fast/slow comparison was confounded. The new `--gdk-backend=x11` switch
+broke the tie by putting GTK on XWayland with everything else unchanged: it
+still built in ~0s. So Tk's 37-42s is Tk's own volume of synchronous geometry
+calls, not the transport.
+
+That kills the *slowness* half of the case for the blanket no-`update()` rule
+in layout code. It does **not** touch the *deadlock* half, which rests on
+faulthandler dumps of `update()` wedged mid-transition — a fast client says
+nothing about whether a round-trip issued during a window-state change can
+deadlock with mutter. `USING_WAYLAND` is a deadlock guard, not a performance
+guard.
+
+`ScrollingFrame.windowsize` now reports any pass over 2 seconds at `warning`,
+splitting the time between `availablexy()` (which does a `grid_info()` per
+sibling per grid level) and `content.update_idletasks()` (which runs every
+pending idle callback, including other scrollers' `<Configure>` handlers), and
+counting **how many sizing passes ran inside the slow one, across how many
+distinct scrollers**. That last pair is the point: the `_sizing` guard stops a
+scroller re-entering itself, so if the cascade hops between instances the
+guard is the wrong shape, and the existing log lines are deduped on content
+size so they could never show the count. See
+`agenda/wayland_freeze_audit.md`, which also records that the webview
+comparison does NOT by itself exonerate XWayland — GTK3 probably runs as a
+native Wayland client, so the discriminating question is whether Qt is on
+`xcb`.
+
+## Notes for the record
+
+- **`exitFlag` is per-window, and it takes three classes to see that.**
+  `Childof.__init__` copies the parent's via `inherit()`
+  (`ui_tkinter.py:916`), then `Exitable.__init__` replaces it with a fresh
+  one (`:1529`). Child widgets — `Childof` but not `Waitable` — keep the
+  copied reference and so share their toplevel's flag, which is what
+  `inherit()` is for. The comment at `:3694` saying it "overwrites inherited
+  exitFlag" means *class*-inherited; read as widget-inherited it produces a
+  wrong diagnosis, as it did here. What has no name is the program-level
+  flag, currently spelled `program.tk_root.exitFlag` —
+  `agenda/exit_flag_names_its_scope.md`.
+- The 400 ms wait-dialog delay from 1.15.20 was **reverted**: `after()` is not
+  serviced while the main thread is held, so the dialog arrived last or never
+  while the page stayed hidden — a 35-second blank screen.
+  `agenda/wait_dialog_flicker.md` records it as attempted, not fixed.
+- `tests/test_work_outliving_its_window.py` (28 tests) covers both faults,
+  including which signals must NOT be used, and asserts that the three
+  short-lived predicates written on the way to this one stay retired.
+
 # Version 1.15.20
 
 **The PyAudio→sounddevice port is finished: recording and playback are CONFIRMED on

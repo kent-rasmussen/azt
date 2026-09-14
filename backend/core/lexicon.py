@@ -37,6 +37,49 @@ class Senses(object):
     (with their various forms), whereas others handle examples.
     This refactoring was interrupted, though, so should likely
     be reconsidered. (see Tone class below)"""
+    def _window_is_there(self):
+        """Is the window this work builds into still there? Never raises.
+
+        THE BACKEND-FRONTEND BOUNDARY TEST. Kent's rule, 2026-09-14: "if
+        there is backend logic that relies on the frontend, it should test
+        that it is there before continuing. I used to have lots of code that
+        would diesel on long after tkinter had shut down, until I started
+        asking about that."
+
+        Asks about the WINDOW, and that choice is the whole content of this
+        method. Three candidates were tried; the other two are wrong:
+
+          * **`ui.frame`** is absent during construction as well as after
+            teardown — the same observation, and only one of the two is a
+            reason to stop.
+          * **`exitFlag`** would work — it IS per-window, though it takes
+            three classes to see that: `Childof.__init__` copies the
+            parent's via `inherit()` (`:916`), then `Exitable.__init__`
+            replaces it with a fresh one (`:1529`). Not used here because it
+            only reports a quit that went through `on_quit`, where
+            `winfo_exists` also covers a window destroyed any other way.
+            See agenda/exit_flag_names_its_scope.md.
+          * **the window** is created by `Task.__init__` before any of the
+            slow work, and `on_quit` ends in `self.destroy()`
+            (`ui_tkinter.py:1527`). So `winfo_exists()` is false exactly
+            when the work has nowhere to go, and never merely early.
+            Webview answers it from `_exists`.
+
+        Absent or unaskable counts as THERE. A page that never appears is a
+        worse failure than one that raises, so this may only stop work on
+        positive evidence of a dead window.
+        """
+        try:
+            ui = getattr(self, 'ui', None)
+        except Exception:
+            return True
+        exists = getattr(ui, 'winfo_exists', None)
+        if not callable(exists):
+            return True
+        try:
+            return bool(exists())
+        except Exception:
+            return False    # Tk refusing to answer IS the dead-window answer
     def groups(self,**kwargs): #toverify=True
         return self.program.status.groups(**kwargs)
     def groups_visible(self,g=None,**kwargs):
@@ -807,6 +850,23 @@ class WordCollection(Segments):
                 "\nJust type consonants and vowels; don’t worry about tone "
                 "for now.")
     def getwords(self):
+        """Build the word-collection page.
+
+        BAILS IF THE WINDOW IS GONE. Clicking Tasks mid-load retires this
+        window while the catalog is still building into it, and tkinter then
+        refuses the parent — `bad window path name
+        ".!taskwindow.!taskwindow.!frame.!frame"`. Webview survives the same
+        race silently (virtual widgets), which is the worse outcome.
+
+        Stopping the build is not the whole job: the click that stopped it
+        still has to be honoured. That is `hide_chooser`'s half — see
+        agenda/work_outliving_its_window.md.
+        """
+        if not self._window_is_there():
+            log.info("word collection: the window closed while this page was "
+                     "still building; stopping rather than building into a "
+                     "window that is no longer there")
+            return
         p = self.lex_ui
         self.entries=self.getlisttodo()
         self.nentries=len(self.entries)
@@ -1387,7 +1447,12 @@ class WordCollection(Segments):
                      "instructions label), so building it first")
             return self.getwords()
         p = self.lex_ui
-        self.program.taskchooser.withdraw()# not sure why necessary
+        # Was an unconditional `taskchooser.withdraw()# not sure why
+        # necessary`. It is not necessary when the user has just gone BACK to
+        # the chooser, and hiding it then is how they ended up with no window
+        # at all (2026-09-14) — hide_chooser declines in that case.
+        if not self.hide_chooser():
+            return
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         # log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
         # log.info("index: {}".format(self.index))
@@ -2021,21 +2086,69 @@ class Parse(Segments):
                 # for i in collector.do():
                 for i in collector.getfromlift():
                     # log.info("Progress: {}".format(i))
+                    # THE DIESELING LOOP, and where the check belongs. Kent,
+                    # 2026-09-14: "the answer here may be more of a check the
+                    # catalog to not return to a window that just isn't
+                    # there." This loop is slow enough that the user can
+                    # click Tasks part way through, and `waiting()` +
+                    # `waitprogress` drain the event loop, so the click is
+                    # serviced HERE — gettask() quits this task and the loop
+                    # carries on reporting progress to a window that has been
+                    # destroyed. waitprogress tolerates that silently (it
+                    # returns on a missing wait window), so nothing stopped:
+                    # the catalog ran to completion and only then tried to
+                    # build a page, which is where the crash surfaced.
+                    if not self._window_is_there():
+                        log.info("affix catalog: the window closed part way "
+                                 "through loading (at %s%%); stopping rather "
+                                 "than finishing into a window that is no "
+                                 "longer there",i)
+                        return
                     self.waitprogress(i)
                 self.program.parsecatalog.report()
     def showwhenready(self):
+        """Deiconify the parser UI once the status window exists.
+
+        Split in two on 2026-09-14. One `try` around both the readiness test
+        and the show meant a FAILED deiconify was read as "not ready yet" and
+        retried: 100 tries at 100ms of "self.status not found", none of it
+        about self.status. It also kept retrying after the user had closed
+        the task — the work-outliving-its-window class — so it checks that
+        too, and says which of the three things happened.
+        """
+        if not self._window_is_there():
+            log.info("parser UI: the window closed before self.status "
+                     "appeared; not showing it")
+            return
         try:
-            assert self.status.winfo_exists()
+            ready = bool(self.status.winfo_exists())
+            why = None
+        except Exception as e:
+            ready = False
+            why = e
+        if ready:
             log.info("self.status found; showing parser UI")
-            self.ui.deiconify()
-        except Exception:
-            self.ready_waits=getattr(self,'ready_waits',0)+1
-            if self.ready_waits < self.try_times:
-                log.info("self.status not found; waiting 100ms before showing parser UI")
-                self.after(self.try_each_ms,self.showwhenready)
-            else:
-                log.error("self.status not found after {} tries @ {}ms; giving up"
-                        "".format(self.try_times,self.try_each_ms))
+            try:
+                self.ui.deiconify()
+            except Exception as e:
+                log.error("self.status is there but the parser UI would not "
+                          "show: %r",e)
+            return
+        self.ready_waits=getattr(self,'ready_waits',0)+1
+        if self.ready_waits >= self.try_times:
+            log.error("self.status not found after {} tries @ {}ms; giving up"
+                    "".format(self.try_times,self.try_each_ms))
+            return
+        # Only the first wait is worth a line at info; the rest would be the
+        # same line up to 99 more times.
+        log.log(20 if self.ready_waits == 1 else 3,
+                "self.status not found (%r); waiting %sms before showing "
+                "parser UI",why,self.try_each_ms)
+        try:
+            self.after(self.try_each_ms,self.showwhenready)
+        except Exception as e:
+            log.error("cannot schedule the next parser-UI check; giving up "
+                      "after %s tries: %r",self.ready_waits,e)
     def storethisword(self):
         from utilities.encodings import strip_diacritics
         v=strip_diacritics(self.var.get())
