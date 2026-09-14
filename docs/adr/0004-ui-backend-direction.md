@@ -1,7 +1,9 @@
 # ADR 0004 — UI backend direction: tkinter keeps shipping, and the second backend is served view-model pages in a subprocess, not a widget-parity port
 
-- Status: **proposed**
-- Date: 2026-09-04
+- Status: **accepted 2026-09-14**, with the amendment below. D2's hybrid
+  view-model seam and D7's subprocess are **superseded**; D1 is narrowed to
+  an invariant.
+- Date: 2026-09-04, amended 2026-09-14
 - Scope: `azt/` (desktop) — `frontend/` and both UI backends (`ui_tkinter.py`,
   `ui_webview.py` + `frontend/webview_html/`), the `frontend/ui_interface.py` contract, and
   the task↔window seam in `tasks/ui_protocol.py`. Touches every page.
@@ -38,6 +40,83 @@ Two further facts shaped the direction rather than the go/no-go:
   cannot express at all**.
 - **`docs/NEXT_GENERATION.md`** independently wants these pages served to phones over a LAN.
   That is a bonus, explicitly **not** an input to priority.
+
+## AMENDMENT 2026-09-14 — two complete backends, and tkinter is the way back
+
+Kent, after the mixed-mode slice was built and measured:
+
+> "So, ADR ATM is we aggressively pursue webview WITHOUT BREAKING ANYTHING in
+> tkinter, leaving users free to switch back as they need to."
+
+**A1. Two complete backends, chosen at launch.** `--webview` and `--tkinter`
+each do the whole job. There is no per-page mixing, no page that exists in
+only one, and no state where the user is half in each.
+
+**A2. Webview is pursued aggressively.** Bug hunts first, page by page, to
+turn "the webview is unfinished" into a list of named faults. Two such hunts
+exist already: `agenda/webview_discards_widget_options.md` (ten options
+accepted and silently thrown away) and Step 6(a) below, the AST audit of
+calls against the contract.
+
+**A3. TKINTER MUST NOT REGRESS, and that is what makes A2 safe.** The way
+back is the whole safety net: a user who meets a webview fault switches to
+`--tkinter` and keeps working. So a webview change that breaks tkinter costs
+more than the webview gain — this is an invariant, not a preference, and it
+is the operative meaning of D1. It is also why `frontend/served.py`'s
+supervision was worth building even though the architecture it served is
+dropped: the fallback instinct was right, and the switch now carries it.
+
+**A4. The eventual goal is to drop tkinter** — but only once webview is
+better on every page, judged by Kent, not by a checklist.
+
+### What this supersedes, and why
+
+**D7 (a mixed page runs in a SUBPROCESS) — DROPPED.** It was built and it
+worked: a Tk host, a webview child, view model over a pipe, supervision with
+timeout-and-fall-back, the splash rendering and exiting cleanly (v1.15.22).
+It fails on cost, not on mechanism. A child that runs the app's real builder
+needs the project loaded, which was 53 s of boot when the question was asked
+(10.1 s after `rescan_instead_of_grouping.md`) — Kent: *"I dont' think I want
+to reparse lift each time I want to show a page."* The only variant avoiding
+that is one persistent child, which doubles the database in memory and needs
+a continuous write-ownership rule between two processes.
+
+**D2 (hybrid target, view-model seam for data-dense pages) — DROPPED for the
+same reason.** Its point was that data-dense pages would be served rather
+than ported. With A1, every page must exist under `--webview` in-process, so
+the widget layer IS the path — which is what the chooser, splash, sound
+settings and task windows already are. A per-page view model would be a
+second implementation of a page that has to work anyway.
+
+The thing D2 was right about survives: **no layout arithmetic crosses the
+seam** (D3), and the browser's own layout is the reason a ported page is
+simpler than its Tk counterpart, not merely different.
+
+### Stale in the original, corrected here
+
+- **D8** names `AZT_WEBVIEW_GUI`. It is `--engine=gtk|qt` now, under the
+  standing switches-not-environment-variables rule (2026-09-08). The devtools
+  console is `--console`, off unless asked for; transports can be forced with
+  `--gdk-backend=` / `--qt-platform=`.
+- **D1**'s "detect availability and fall back to tkinter with a log line" is
+  only half met — `ui_backend.chosen()` refuses and substitutes, but
+  `agenda/webview_requested_but_absent.md` is still open, and under A3 that
+  matters more than it did.
+- **D5**'s `requirements-webview.txt` has not been verified to exist.
+- **D6** stands and gains weight: a ported page must state what replaced its
+  XWayland flush rule, because under A1 the Tk page keeps its rule while the
+  webview page needs none.
+
+### What has to happen to the mixed-mode code
+
+`frontend/served.py`, `frontend/served_splash.py`,
+`frontend/served_alphabet_chart.py`, the `--serve=` switch, `SERVED_PAGES`,
+and the three-way splash choice in `main.py` all implement D7. Under A1 they
+have no role. Deleting them is mechanical; what should be kept is written
+down here and in `agenda/webview_when_to_finish.md`, because two of the
+findings that came out of building them — `Toplevel._on_loaded` never firing
+for pre-start windows, and `image_pixels` silently dropped — were real
+webview bugs that the exercise surfaced.
 
 ## Decision
 

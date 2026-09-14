@@ -19,6 +19,82 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.23
+
+**Boot to the task chooser: 53 seconds → 10.1.** Forty-two of those seconds
+were three functions rescanning a list where a set or a grouping was wanted;
+all three are now one pass. The LIFT XML parse they surround takes 0.1 s.
+
+Measured on Kent's logs, same machine and project throughout: **53.0 s →
+20.6 s → 10.1 s** as the three landed.
+
+| where | was | shape |
+|---|---|---|
+| `LiftXML.getsensefieldnames` | **32.6 s** → 6 ms | grouping by rescanning |
+| `langtags.dict_by` | **5.05 s**, called twice ≈ 8.9 s | grouping by rescanning |
+| `TaskChooser.getcawlmissing` | **4.6 s** | `not in` against a list |
+
+None of them raised, none logged, and all three were *correct* — so every
+test passed and the slowness got attributed to the LIFT parse, to Tk, or to
+the machine. They were found by timing, and two attempts to find the third
+by reading guessed wrong before per-step timing named it in one run. Pattern
+and the remaining sweep: `agenda/rescan_instead_of_grouping.md`.
+
+`langtags.dict_by` grouped `iso.list` by running its outer loop over each of
+~9582 distinct codes and rescanning all ~9582 entries for each — about 92
+million iterations. `getcawlmissing` did 1700 lookups against a list of
+~1700 (guarded on `str`, because if that value is ever a single string then
+`in` means substring and a set would silently change which CAWL slots count
+as missing).
+
+## The first and largest: `getsensefieldnames`
+
+`LiftXML.getsensefieldnames` builds the inventory of which field names carry
+data in which language. Its dict comprehension had the loops inside out: the
+**outer** loops ran over every `(sense, field, language)` triple — thousands
+of them — and for each one the inner set rescanned every sense and every
+field. Each triple sharing a language recomputed the identical set and
+overwrote it, and the whole thing produced five keys. `getfieldnames`
+immediately above has the right shape by accident: its outer loop is the ~11
+languages, not the data.
+
+Measured on Kent's log (2026-09-14), 1700 senses: **32.6 s**, ~19 ms per
+sense — against **0.1 s** for the LIFT XML parse that precedes it. Now one
+pass, 6 ms.
+
+This is the cost that made every architectural option look bad: a webview
+child that loads the project was unthinkable at 53 s a page. It is also,
+almost certainly, a good part of why the app has felt slow generally — it is
+on the load path for every project, in every mode, on every platform.
+
+One behaviour preserved deliberately: the old outer loop did not test `if k`,
+so a language reached only through a field with a falsy name still got a key,
+with an empty set. `setdefault` keeps that rather than quietly changing what
+callers see.
+
+`tests/test_lift_field_inventory.py` pins the output, but the test that
+matters measures **scaling** — 20 senses against 40, requiring the work to
+roughly double. Every output test passes against the old code, because it was
+correct, merely quadratic; only a pass count catches that. A first version of
+that test asserted exactly one read per sense and failed at three, because
+`sense.fields` is a property the loop re-read per field; the loop now binds
+it once, and the test measures the shape rather than the detail.
+
+### What is left of the 10.1 s
+
+| | |
+|---|---|
+| LIFT load → field inventory (the `pylangs` conversion is ~4 s of it) | 4.3 s |
+| settings | 2.0 s |
+| served splash child, start to ready | 1.4 s |
+| chooser build | 1.0 s |
+| start → Tk root | 0.6 s |
+| settings tail + CAWL (was 4.6 s) | 0.8 s |
+
+The next candidate is inside the LIFT block, between `Using analang=en from
+settings` and `looking to convert pylangs` — about 4 seconds with nothing
+logged in between.
+
 # Version 1.15.22
 
 **Mixed mode is now the default: a tkinter host serving webview pages, one

@@ -61,8 +61,27 @@ except (ModuleNotFoundError,NameError):
     from data import whisper_codes_names
 macrolanguage_members=ethnologue_macrolanguages_members.dict
 def dict_by(key):
-    return {p:[j for j in iso.list if key in j if p == j[key]]
-                for p in set([i[key] for i in iso.list if key in i])}
+    """Group `iso.list` by `key`. ONE PASS.
+
+    **5.05 seconds of a 20.6-second boot** (Kent's log, 2026-09-14), and
+    called twice, so ~8.9s in total. The comprehension had its loops inside
+    out: the outer ran over each of the ~9582 distinct key values and the
+    inner RESCANNED all ~9582 entries for each — about 92 million
+    iterations to produce a grouping that one pass gives.
+
+    Third instance of this exact shape found in one session, after
+    `LiftXML.getsensefieldnames` (32.6s) and
+    `TaskChooser.getcawlmissing` (4.6s). See
+    agenda/rescan_instead_of_grouping.md.
+
+    Identical output: same keys (every value of `key` among entries that
+    have it) and same values (the entries carrying it, in `iso.list` order).
+    """
+    grouped={}
+    for i in iso.list:
+        if key in i:
+            grouped.setdefault(i[key],[]).append(i)
+    return grouped
 def whisper_codes_alpha3():
     return [langcodes.Language.get(i).to_alpha3() for i in whisper_languages().values()]
 
@@ -318,12 +337,29 @@ class Languages(dict):
         self.json_location=file.getparent(__file__).joinpath(
                             '..','data', self.url.split('/')[-1])
         super(Languages, self).__init__(**kwargs)
+        # TIMED, because 4.25 SECONDS of a 19.5-second boot happens in here
+        # after `load_json`'s last log line and nothing said where (Kent's
+        # log, 2026-09-14). Three candidates and no way to choose between
+        # them by reading: `dict_by` over 9582 codes, `macrolanguage_members`,
+        # or `whisper_language_codes()`. Guessing has already been wrong twice
+        # today, so measure. Remove these once the answer is known.
+        import time as _t
+        _marks=[('sisters',_t.perf_counter())]
         self.sisters=SisterLanguages()
         # self.reload_json() #Forces online usage
+        _marks.append(('load_json',_t.perf_counter()))
         self.load_json()
+        _marks.append(('load_by_iso',_t.perf_counter()))
         self.load_by_iso()
+        _marks.append(('iso code set',_t.perf_counter()))
         self.all_iso_codes=set(self.by_iso) | set(macrolanguage_members)
+        _marks.append(('valid code set',_t.perf_counter()))
         self.all_valid_codes=self.all_iso_codes|set(whisper_language_codes())
+        _marks.append(('done',_t.perf_counter()))
+        log.info("language setup: %s",' + '.join(
+                    '{} {:.2f}s'.format(_marks[i][0],
+                                        _marks[i+1][1]-_marks[i][1])
+                    for i in range(len(_marks)-1)))
 class Language(langcodes.Language):
     """maybe pull ldml from https://ldml.api.sil.org/langtags.json
     probably store in my repo (if permitted)

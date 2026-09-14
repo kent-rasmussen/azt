@@ -314,11 +314,24 @@ class TaskChooser(Task):
             l.wrap()
         return w
     def getcawlmissing(self):
+        """Which of the 1700 CAWL slots have no entry yet.
+
+        **4.6 seconds of a 19.5-second boot** (Kent's log, 2026-09-14), for
+        the same reason `LiftXML.getsensefieldnames` cost 32.6: `cawls` is a
+        LIST, so `not in` scanned it linearly — 1700 lookups × ~1700 entries
+        ≈ 2.9 million string comparisons. A set makes each lookup O(1).
+
+        GUARDED ON `str`, deliberately: if `.get('text')` ever returns a
+        single string rather than a collection, `in` means SUBSTRING there,
+        and converting to a set would silently change which slots count as
+        missing. Same membership semantics either way.
+        """
         cawls=self.program.db.get('cawlfield/form/text').get('text')
         # log.info("CAWL ({}): {}".format(len(cawls),cawls))
+        haystack=cawls if isinstance(cawls,str) else set(cawls)
         self.cawlmissing=[]
         for i in range(1700):
-            if '{:04}'.format(i+1) not in cawls:
+            if '{:04}'.format(i+1) not in haystack:
                 self.cawlmissing.append(i+1)
         if len(self.cawlmissing) < 10:
             log.info(_("CAWL missing ({count}): {missing}").format(count=len(self.cawlmissing),

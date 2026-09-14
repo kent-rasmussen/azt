@@ -1855,16 +1855,36 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                                 }
         log.info('Fields found in Entries: {}'.format(self.fieldnames))
     def getsensefieldnames(self,guid=None,lang=None): # all field types in a given entry
-        self.sensefieldnames={l:set([k
-                                    for i in self.senses
-                                    for k in i.fields
-                                    if l in i.fields[k].forms
-                                    if k
-                                    ])
-                                for i in self.senses
-                                for k in i.fields
-                                for l in i.fields[k].forms
-                                }
+        """Which field names carry data in which language, across all senses.
+
+        ONE PASS. It used to be a dict comprehension whose OUTER loops ran
+        over every (sense, field, language) TRIPLE — thousands of them — and
+        rebuilt the inner set by scanning all senses and all their fields for
+        each one. Every triple sharing a language recomputed the identical
+        set and overwrote it, and the whole thing produced five keys.
+
+        Measured on Kent's log, 2026-09-14: **32.6 seconds** of a 53-second
+        boot, between this method's line and `getfieldnames`' — for 1700
+        senses, ~19ms each. The LIFT XML parse that precedes it takes 0.1s.
+        `getfieldnames` just above has the right shape by accident: its outer
+        loop is the ~11 languages, not the data.
+
+        FAITHFUL, including one oddity worth keeping: the old outer loop did
+        not test `if k`, so a language appearing only under an unnamed field
+        still got a key, with an empty set. `setdefault` below preserves
+        that rather than quietly changing what callers see.
+        """
+        names={}
+        for sense in self.senses:
+            fields=sense.fields     # bound once: `fields` is a property on
+                                    # Sense, so `sense.fields[k]` in the
+                                    # inner loop re-ran it per field
+            for k,field in fields.items():
+                for l in field.forms:
+                    names.setdefault(l,set())
+                    if k:
+                        names[l].add(k)
+        self.sensefieldnames=names
         log.info('Fields found in Senses: {}'.format(self.sensefieldnames))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
         self.locations=list(dict.fromkeys(self.get('example/locationfield/form/text',

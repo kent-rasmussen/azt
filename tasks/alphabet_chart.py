@@ -44,6 +44,13 @@ class AlphabetChart(AlphabetChartData, OrderAlphabetUI):
         self.program.task = self
         self.ui = self
         self.init_chart_data()
+        # A read-only webview PREVIEW of this page ran here briefly
+        # (2026-09-14, --serve=alphabet_chart) and proved the point it was
+        # built for: the same chart, real data, ~0s against this page's 37-42s
+        # under Tk (agenda/wayland_freeze_audit.md). Removed with the rest of
+        # the mixed-mode code — ADR 0004 amendment — because the decision is
+        # now two complete backends, so this page gets ported in-process
+        # rather than served.
         # hide_vars requires ui.BooleanVar — set up here, not in backend data class
         from frontend import ui
         self.hide_vars = {g: ui.BooleanVar(value=False) for g in self.order}

@@ -2053,13 +2053,24 @@ class Label(_WebviewWidget):
         font = kwargs.pop('font', 'default')
         kwargs.pop('anchor', None)
         kwargs.pop('norender', None)
-        kwargs.pop('image_pixels', None)
-        kwargs.pop('image_scaleto', None)
+        # HONOURED, NOT DISCARDED. These were popped and dropped, so the
+        # caller's pixel budget went nowhere: the alphabet chart rendered
+        # every illustration at full resolution and burst its grid (Kent,
+        # 2026-09-14), and `sort_ui.py:455,1238-1255` has been passing
+        # image_pixels for the sort page's icons and join images all along
+        # with no effect. A silently-dropped kwarg with no error is the
+        # exact class agenda/webview_when_to_finish.md Step 6 is about.
+        image_px = kwargs.pop('image_pixels', None)
+        image_scaleto = kwargs.pop('image_scaleto', None)
         image = _image_src(kwargs.pop('image', None), parent)
         compound = kwargs.pop('compound', None)
         if image:
             kwargs['image'] = image
             kwargs['compound'] = compound or 'top'
+            if image_px:
+                kwargs['image_pixels'] = image_px
+            if image_scaleto:
+                kwargs['image_scaleto'] = image_scaleto
         textvariable = kwargs.pop('textvariable', None)
         # KEEP the caller's measured wrap width instead of discarding it.
         # `wraplength` is a PIXEL figure the caller worked out for the box
@@ -2170,18 +2181,33 @@ class Button(_WebviewWidget):
         choice = kwargs.pop('choice', None)
         window = kwargs.pop('window', None)
         kwargs.pop('anchor', None)
+        # Captured BEFORE the image block, and kept — see Label for why
+        # dropping these was a real gap rather than tidiness.
+        image_px = kwargs.pop('image_pixels', None)
+        image_scaleto = kwargs.pop('image_scaleto', None)
         image = _image_src(kwargs.pop('image', None), parent)
         compound = kwargs.pop('compound', None)
         if image:
             kwargs['image'] = image
             kwargs['compound'] = compound or 'top'
+            if image_px:
+                kwargs['image_pixels'] = image_px
+            if image_scaleto:
+                kwargs['image_scaleto'] = image_scaleto
         kwargs.pop('relief', None)
-        kwargs.pop('state', None)
+        # KEPT, not dropped. `updateProp` has handled 'state' for buttons all
+        # along (widgets.js), so `button['state']='disabled'` and
+        # `.config(state=…)` already worked — but a button asked for disabled
+        # AT CONSTRUCTION started enabled, because this popped it here.
+        # `ui_shell.py:3227` does exactly that. Passed through as a prop (not
+        # translated to `disabled`) so `cget('state')` reads back what the
+        # caller set, as it does under tkinter.
+        state = kwargs.pop('state', None)
+        if state:
+            kwargs['state'] = state
         kwargs.pop('norender', None)
         kwargs.pop('textvariable', None)
         kwargs.pop('wraplength', None)
-        kwargs.pop('image_pixels', None)
-        kwargs.pop('image_scaleto', None)
         # Remove button-grid kwargs (brow, bcolumn, etc.)
         for k in list(kwargs):
             if k.startswith('b') and k[1:] in self._gridkwargs:
@@ -3124,14 +3150,32 @@ class Toplevel(_WebviewWidget):
                     'load the server root and fail)'))
                 _all_wv_windows.append(self._wv_window)
                 _register_window_owner(self._wv_window, self)
-                if _started.is_set():
-                    # Window created after webview.start() — poll for readiness
-                    # (events.loaded has a race condition: may fire before we attach)
-                    t = threading.Thread(target=self._poll_until_loaded, daemon=True)
-                    t.start()
-                else:
-                    # Window created before start — Root's on_loaded handles it
-                    self._wv_loaded.set()
+                # POLL EITHER WAY. The else-branch used to just set
+                # `_wv_loaded` with the comment "Root's on_loaded handles
+                # it" — and Root's on_loaded does NOT: it pushes the theme
+                # to its OWN window and flushes children's deferred calls,
+                # but never runs a child's `_on_loaded`. So every Toplevel
+                # created before `webview.start()` silently skipped the
+                # three things that live there — the theme push, the
+                # page-name push, and `_on_loaded_hooks` (where the context
+                # menu's bindings are deferred to).
+                #
+                # Visible as: the splash showing its icon and default
+                # palette but never the user's theme (Kent, 2026-09-14:
+                # "icon but no theme color (either) on Splash"), which is
+                # also the likeliest half of
+                # agenda/webview_splash_missing_parts.md. Each pywebview
+                # window is a separate document, so theme variables set on
+                # one page cannot reach another.
+                #
+                # Polling rather than `events.loaded` for the reason the
+                # other branch already gives: the event can fire before we
+                # attach. It tolerates a not-yet-started webview, because
+                # `evaluate_js` simply raises until then and the loop
+                # retries.
+                t = threading.Thread(target=self._poll_until_loaded,
+                                     daemon=True)
+                t.start()
 
     def _poll_until_loaded(self):
         """Poll the window until widgets.js is loaded, then flush JS queue."""

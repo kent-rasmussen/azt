@@ -95,15 +95,20 @@ function createWidget(spec) {
             el.className = 'wv-widget wv-label';
             if (spec.props.text) el.textContent = spec.props.text;
             if (spec.props.font) el.classList.add('font-' + spec.props.font);
-            if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound);
+            if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound,
+                                            spec.props.image_pixels,
+                                            spec.props.image_scaleto);
             break;
         case 'button':
             el = document.createElement('button');
             el.className = 'wv-widget wv-button';
             if (spec.props.text) el.textContent = spec.props.text;
             if (spec.props.font) el.classList.add('font-' + spec.props.font);
-            if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound);
+            if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound,
+                                            spec.props.image_pixels,
+                                            spec.props.image_scaleto);
             if (spec.props.disabled) el.disabled = true;
+            if (spec.props.state) _setState(el, spec.props.state);
             el.addEventListener('click', () => {
                 if (window.pywebview && window.pywebview.api) {
                     window.pywebview.api.on_event(spec.wid, 'command', {});
@@ -231,15 +236,71 @@ function createWidget(spec) {
     return spec.wid;
 }
 
+// ── state: 'disabled' / 'normal' ─────────────────────────────────────
+// tkinter's `state` reaches here three ways — a constructor kwarg, item
+// assignment (`b['state']='disabled'`), and `.config(state=…)` — and the
+// last two already worked, because `configure()` forwards any scalar as an
+// updateProp. Two gaps remained (Kent, 2026-09-14):
+//
+//   * the CONSTRUCTOR path, which ui_webview popped and dropped, so a
+//     button asked for disabled at creation started enabled
+//     (`ui_shell.py:3227`);
+//   * every widget that is not a <button>. `list_of_possibles.config(
+//     state='disabled')` (ui_shell.py:3356) and `check_label['state']`
+//     (sort_buttons.py:1154) did nothing at all.
+//
+// A native control gets `.disabled`, which stops events AND greys it. A div
+// has neither, so it gets `pointer-events:none` (a Label's state is about
+// look, but a clickable one must also stop responding) plus the class, so
+// the stylesheet can say what disabled looks like.
+function _setState(el, value) {
+    const off = (value === 'disabled');
+    if ('disabled' in el) {
+        el.disabled = off;
+    } else {
+        el.style.pointerEvents = off ? 'none' : '';
+    }
+    el.classList.toggle('wv-disabled', off);
+    // A fallback appearance, so a disabled control is visibly disabled even
+    // with no stylesheet rule for the class. Cleared rather than set to a
+    // value, so it does not fight a rule that does exist.
+    el.style.opacity = off ? '0.5' : '';
+}
+
 // ── Images on labels and buttons ─────────────────────────────────────
 // Both used to DISCARD `image` (ui_webview popped it and never sent it), so
 // the chooser rendered as text-only buttons where the app shows icons.
 // `compound` mirrors tkinter's: where the image sits relative to the text.
-function _setImage(el, src, compound) {
+// `px`/`scaleto` are tkinter's image_pixels/image_scaleto. Without them the
+// <img> had no size constraint at all, so an illustration rendered at its
+// own resolution: the alphabet chart's cells burst the grid (Kent,
+// 2026-09-14). Python was popping both kwargs and never sending them, so
+// this is the other half of that fix.
+//   'width'/'height' pin that dimension and let the other follow the aspect
+// ratio, as scaling to one edge does in tkinter. With no scaleto, the image
+// is FITTED INSIDE a px-by-px box (max-width and max-height), which
+// preserves the aspect ratio and never enlarges a small picture — the
+// behaviour a chart cell wants.
+function _setImage(el, src, compound, px, scaleto) {
     const img = document.createElement('img');
     img.className = 'wv-img';
     img.src = src;
     img.alt = '';
+    if (px) {
+        const n = parseInt(px, 10);
+        if (n > 0) {
+            if (scaleto === 'width') {
+                img.style.width = n + 'px';
+                img.style.height = 'auto';
+            } else if (scaleto === 'height') {
+                img.style.height = n + 'px';
+                img.style.width = 'auto';
+            } else {
+                img.style.maxWidth = n + 'px';
+                img.style.maxHeight = n + 'px';
+            }
+        }
+    }
     const text = el.textContent;
     el.textContent = '';
     el.classList.add('wv-compound', 'wv-compound-' + (compound || 'top'));
@@ -393,7 +454,7 @@ function updateProp(wid, prop, value) {
             el.style.background = value;
             break;
         case 'state':
-            if (el.tagName === 'BUTTON') el.disabled = (value === 'disabled');
+            _setState(el, value);
             break;
         case 'image':
             // value is a base64 data URI
