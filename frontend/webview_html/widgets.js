@@ -236,28 +236,63 @@ function createWidget(spec) {
             // state='normal' explicitly gets the editable form; the
             // divergence from ttk's default is deliberate and recorded here.
             if (String(spec.props.state || '') === 'normal') {
+                // OUR OWN DROPDOWN, NOT <datalist>. The first version used
+                // one, and a datalist FILTERS ITS SUGGESTIONS BY WHAT IS
+                // ALREADY IN THE FIELD — so a combobox holding "choice 1"
+                // offered exactly one suggestion, where ttk's editable
+                // combobox always shows the whole list (Kent, 2026-09-14:
+                // "that reduced combo to just one choice"). No prop fixes
+                // that; it is what the native control does.
+                //   Built rather than worked around because more combobox
+                // call sites are coming ("but more are coming, is the
+                // point"), and a picker that can only suggest what you have
+                // already typed is not the control those pages will want.
                 el = document.createElement('span');
                 el.className = 'wv-widget wv-combobox-wrap';
                 const inp = document.createElement('input');
                 inp.type = 'text';
                 inp.className = 'wv-combobox';
-                inp.setAttribute('list', 'wv-dl-' + spec.wid);
-                const dl = document.createElement('datalist');
-                dl.id = 'wv-dl-' + spec.wid;
+                inp.autocomplete = 'off';
+                const list = document.createElement('div');
+                list.className = 'wv-combobox-list wv-hidden';
                 if (spec.props.width) inp.style.width = spec.props.width + 'ch';
                 if (spec.props.font) inp.classList.add('font-' + spec.props.font);
                 el.appendChild(inp);
-                el.appendChild(dl);
-                // `change` (not `input`) so the report fires on a finished
-                // entry rather than on every keystroke — ttk fires
-                // <<ComboboxSelected>> on a pick, and a typed value lands
-                // when the field is left or Enter is pressed.
-                inp.addEventListener('change', () => {
+                el.appendChild(list);
+                const post = () => {
                     if (window.pywebview && window.pywebview.api) {
                         window.pywebview.api.on_event(spec.wid, 'select',
                                                       {value: inp.value});
                     }
+                };
+                // `q` empty means SHOW EVERYTHING — opening the list is not
+                // a search, it is "what are my choices?".
+                const show = (q) => {
+                    const want = String(q || '').toLowerCase();
+                    let any = false;
+                    [...list.children].forEach(o => {
+                        const hit = !want ||
+                            o.textContent.toLowerCase().includes(want);
+                        o.style.display = hit ? '' : 'none';
+                        any = any || hit;
+                    });
+                    list.classList.toggle('wv-hidden', !any);
+                };
+                el._wvShow = show;
+                inp.addEventListener('focus', () => show(''));
+                inp.addEventListener('click', () => show(''));
+                // Typing reports as it goes, so a bound variable tracks the
+                // text the way tkinter's textvariable does, and narrows the
+                // list — which IS a search.
+                inp.addEventListener('input', () => { show(inp.value); post(); });
+                inp.addEventListener('change', post);
+                inp.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' || e.key === 'Enter')
+                        list.classList.add('wv-hidden');
                 });
+                // Delayed, or the click that chose a row never lands.
+                inp.addEventListener('blur', () => setTimeout(
+                    () => list.classList.add('wv-hidden'), 150));
                 break;
             }
             el = document.createElement('select');
@@ -585,8 +620,16 @@ function _setImage(el, src, compound, px, scaleto) {
     }
     const text = el.textContent;
     el.textContent = '';
-    el.classList.add('wv-compound', 'wv-compound-' + (compound || 'top'));
     if (text) {
+        // COMPOUND MEANS "image AND text"; with no text there is nothing to
+        // arrange, and the arrangement was costing the picture. The sort
+        // page's cycle control is `image=…, text='', compound='top'`
+        // (sort_buttons.py:1125) and drew as two thin lines — the button's
+        // 5px border with nothing between them — while the button beside it,
+        // same image but with a count for text, drew fine (Kent,
+        // 2026-09-15: "right refresh is still missing image"). An
+        // image-only widget is just an image.
+        el.classList.add('wv-compound', 'wv-compound-' + (compound || 'top'));
         const span = document.createElement('span');
         span.className = 'wv-img-text';
         span.textContent = text;
@@ -599,6 +642,7 @@ function _setImage(el, src, compound, px, scaleto) {
             el.appendChild(span);
         }
     } else {
+        el.classList.add('wv-image-only');
         el.appendChild(img);
     }
 }
@@ -677,8 +721,23 @@ function focusWidget(wid) {
     const el = _widgets.get(wid);
     if (!el) return;
     try {
-        el.focus();
-        if (typeof el.select === 'function' && el.value) el.select();
+        // A WRAPPER IS NOT FOCUSABLE, and one widget here is a wrapper: the
+        // editable combobox is a <span> holding an <input> and our own
+        // dropdown. `el.focus()` on the span did nothing whatever — no
+        // focus, so no `focus` event, so the list never opened — and since
+        // the caller had just emptied the field, the result looked like the
+        // CHOICES had been cleared rather than the search text (Kent,
+        // 2026-09-14: "clearing on open clears the options, too").
+        const target = (el.matches('input,select,textarea,button')
+                        ? el
+                        : el.querySelector('input,select,textarea')) || el;
+        target.focus();
+        if (typeof target.select === 'function' && target.value)
+            target.select();
+        // And OPENING an editor should show what there is to pick: an empty
+        // field above a shut dropdown offers nothing, which is the state
+        // this whole row is about.
+        if (typeof el._wvShow === 'function') el._wvShow('');
     } catch (e) {
         console.warn('focusWidget failed for ' + wid, e);
     }
@@ -905,18 +964,39 @@ function updateProp(wid, prop, value) {
             // For combobox: value is an array of strings. Two shapes — the
             // <select>, and the editable state='normal' form, whose options
             // live in a <datalist> beside its <input>.
-            { const dl = el.classList.contains('wv-combobox-wrap')
-                       ? el.querySelector('datalist') : null;
-              const holder = dl || (el.tagName === 'SELECT' ? el : null);
-              if (holder) {
-                  holder.innerHTML = '';
-                  (value || []).forEach(item => {
-                      const opt = document.createElement('option');
-                      opt.value = item;
-                      opt.textContent = item;
-                      holder.appendChild(opt);
-                  });
-              } }
+            if (el.classList.contains('wv-combobox-wrap')) {
+                // The editable form: our own rows, each a div that fills the
+                // field when clicked. `mousedown`, not `click` — the input's
+                // blur fires first and would hide the list out from under a
+                // click.
+                const inp = el.querySelector('input');
+                const list = el.querySelector('.wv-combobox-list');
+                list.innerHTML = '';
+                (value || []).forEach(item => {
+                    const opt = document.createElement('div');
+                    opt.className = 'wv-combobox-option';
+                    opt.textContent = item;
+                    opt.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        inp.value = item;
+                        list.classList.add('wv-hidden');
+                        if (window.pywebview && window.pywebview.api) {
+                            window.pywebview.api.on_event(
+                                parseInt(el.dataset.wid), 'select',
+                                {value: item});
+                        }
+                    });
+                    list.appendChild(opt);
+                });
+            } else if (el.tagName === 'SELECT') {
+                el.innerHTML = '';
+                (value || []).forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item;
+                    opt.textContent = item;
+                    el.appendChild(opt);
+                });
+            }
             break;
         case 'value':
             if (el.tagName === 'SELECT') el.value = value;

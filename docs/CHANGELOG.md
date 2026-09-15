@@ -19,6 +19,63 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.25
+
+**Kiosk is for run windows only — and giving task windows their dressing
+back uncovered a crash.** A task's FRONT page (its title, status lines and
+start button) was taking the whole display to show half a dozen widgets in
+the top-left corner. `TaskDressing.__init__` kiosked every task window, with
+one exception carved out for the chooser last week; the rule is about which
+KIND of window, not which task, so the run window `getrunwindow()` creates
+still kiosks itself and nothing else does. Kiosk pages also centre their
+content now, which tkinter has always done (`Window.post_tk_init` weights
+rows and columns 0 and 2) and webview did not.
+
+Three things that had been unreachable while those windows had no close box:
+
+* **Closing a window SEGFAULTED the app** (`apport … -s11`). Every window's
+  close box went to pywebview's own close, which DESTROYS the window, and
+  destroying one mid-teardown is the crash documented in
+  `_close_native_window`. tkinter has wired `WM_DELETE_WINDOW → on_quit` in
+  one line since forever; this backend wired it only at three call sites.
+* **`on_quit` never escalated for the main window.** tkinter:
+  `if (to_root or getattr(self,'ismainwindow',False))`. Webview checked only
+  `to_root`, so quitting the main window closed one window and left the app
+  running with nothing visible.
+* **`protocol()` added handlers instead of replacing them**, so a page
+  setting its own close behaviour (the alphabet chart hands it to `gettask`)
+  would have left both running.
+
+**Windows fit their content, and nothing is clipped.** The fit computation
+was broadly right and essentially unreachable — it ran at page load, before
+any page has content, and on release-from-fullscreen. It now also runs when
+content is built or rebuilt (asked for by the base widget, so no page can
+forget), on reveal, and on a double-click from any window state. Four
+distinct faults were in the way, each found from one log line after four
+rounds of inferring from screenshots:
+
+| fault | effect |
+|---|---|
+| `_FIT_MIN` clamped UP to | a fit on a bare page resized the window to the 420x260 floor — the chooser was left there holding a notebook of task buttons |
+| hidden windows measured | `gettask` rebuilds the chooser while it is withdrawn, so every refit landed where nothing could be measured |
+| undecoded images count as nothing | an `<img>` with no intrinsic size yet contributes no height, so a page with a card image measured short and grew past its window afterwards |
+| a JS exception in the probe | `evaluate_js` waits for a result that never comes, so the fit's thread parked and the log showed "fit requested" with no outcome |
+
+The measurement STILL under-reports by 227x95 on one page, so the clipping
+is fixed by not trusting it: `_grow_if_overflowing` asks the DISPLAYED page
+whether `scrollWidth > clientWidth` and grows by the shortfall, at most
+three times, capped at the screen. The fit predicts; that verifies. The
+discrepancy is recorded in the item rather than papered over.
+
+Also: windows are born in the theme's colour and (where the compositor
+allows positioning) off-screen rather than visible, so the startup no longer
+flashes a grey window over the splash; the document starts transparent so
+the window's own colour shows until the theme arrives; the debug window
+badge moved to the bottom-left, out from under the Tasks button; and
+`frontend/gallery.py` gained a Composites tab for the app's click-to-edit
+idiom — label ↔ entry, ↔ list box, ↔ editable combobox — which is written
+out five times in the alphabet pages and is a class nowhere.
+
 # Version 1.15.24
 
 **The LIFT load, 4.2 s → ~2.3 s, and the biggest piece of it was not a
@@ -67,8 +124,10 @@ than a test difference. Roughly a third of what it surfaced was wrong in the
 | `sticky`, all four | same flaw, plus the border was on the cell and not on the label, so a stretched label and an unstretched one were both invisible boxes |
 | drop events reaching the program | the gallery wired no drop handler at all and reported "(no drop yet)" from a label nothing could change |
 | drag feedback under Qt | the ghost was the *engine's*: WebKitGTK drags a translucent snapshot, QtWebEngine draws nothing, so the same page looked alive on one engine and dead on the other. Feedback is now the stylesheet's — dashed outline on what is being dragged, solid on what it is over |
+| an editable combobox — pick from the list OR type something that is not on it | `state` was ignored entirely, so there was no such control. Built on a `<datalist>` first, which **filters its suggestions by what is already in the field** — a combobox holding "choice 1" offered exactly one choice — so the dropdown is now ours: everything on open, narrowed as you type. Two things had to be fixed underneath it: `Combobox` never tracked its textvariable (read once at construction), and `focus_set` called `.focus()` on the widget element, which for a wrapper is not focusable — so the field never focused and its list never opened |
 
-**Fixed, awaiting verification:**
+**Also fixed, and checked on the gallery's Controls and Text tabs the same
+day:**
 
 * **A list box's selection never reached Python.** `ListBox.insert` filled the
   display list and never `choices`, and `_on_select` guards on

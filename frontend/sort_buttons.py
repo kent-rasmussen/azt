@@ -1191,7 +1191,20 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                     c=0)
             self.hasexample=True #make this error visible
             return
-        self.glyph_label_frame=ui.Frame(self, col=0)
+        # FULL ROW HEIGHT (Kent, 2026-09-15: "glyph buttons should have NS
+        # sticky"). The letter names the whole row, so a button sized to its
+        # own text leaves the row looking like the letter belongs to the
+        # first line of it rather than to all of it — and rows here vary in
+        # height with their example image.
+        #   THREE PARTS, and only the first is the sticky: `ns` on the frame
+        # so it takes the row's height, `ns` on the button so it takes the
+        # frame's, and WEIGHT on the frame's row so there is height to take.
+        # sticky stretches a widget into space its row or column HAS, and a
+        # row only has space beyond its content if weighted — which is why
+        # the sticky alone did nothing when tried first (azt/agenda/
+        # webview_window_sizing.md records the same rule biting the gallery).
+        self.glyph_label_frame=ui.Frame(self, col=0, sticky='ns')
+        self.glyph_label_frame.grid_rowconfigure(0, weight=1)
         if kwargs.get('on_select'):
             cmd=kwargs['on_select']
         else:
@@ -1201,7 +1214,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                                 text='?' if self.group.isdigit() else self.group,
                                 font='readbig',
                                 borderwidth=5,
-                                width=5, col=0)
+                                width=5, col=0, sticky='ns')
         if self.reverifiable:
             # Same move as SortGroupButtonFrame.maybe_reverify_menu, one level up:
             # on the letter distinguish page the group in question is the letter.

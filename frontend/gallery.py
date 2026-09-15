@@ -860,10 +860,177 @@ def tab_events(nb):
     return t
 
 
+# ── tab: Composites ──────────────────────────────────────────────────────
+
+def _click_to_edit(parent, row, what, var, editor, note, clear_on_edit=False):
+    """A label that becomes an editor when clicked, and a label again on OK.
+
+    THE APP'S OWN IDIOM, written five times and never once as a class. The
+    alphabet chart does it for its title and its copyright
+    (`alphabet_chart.py:548-580`), the comparison booklet for its title and
+    copyright (`alphabet_comparison.py:494-562`), each with its own pair of
+    `edit_x`/`save_x` methods and its own `grid_remove()`/`grid()` pair.
+    Kent, 2026-09-14: "We need to add to gallery a class for entry/label, as
+    we used in Alphabet, and repeated later. And another that turns a label
+    into a list box. there might be another."
+
+    ONE HELPER, THREE EDITORS — because that is what those five copies
+    differ by, and because the third ("there might be another") is then free
+    rather than a fourth copy. The mechanics it exercises are the same in
+    every case, and each is a real backend contract this harness had not
+    touched:
+
+      * `bind('<Button-1>')` ON A LABEL, not on a button;
+      * `grid_remove()` then `grid()` — hide and RESTORE in place, which is
+        different from destroying and rebuilding, and which the app relies
+        on to keep the layout from jumping;
+      * one variable shared by the label and the editor, so the label shows
+        what was typed or picked without anyone copying it across.
+
+    A backend that cannot do the second one will show the label and the
+    editor at once, or lose the row entirely — both visible on the page.
+    """
+    _note(parent, note, row=row, columnspan=3)
+    bar = ui.Frame(parent, row=row + 1, column=0, columnspan=3, sticky='w')
+    ui.Label(bar, text=what + ":", row=0, column=0, sticky='e')
+    shown = ui.Label(bar, textvariable=var, font='read', row=0, column=1,
+                     sticky='w', borderwidth=1, relief='sunken', ipadx=8)
+    box = ui.Frame(bar, row=0, column=1, sticky='w')
+    widget = editor(box)
+
+    # RETURN COMMITS, as the app's own copies do — `alphabet_chart.py:536`
+    # unbinds `<Return>` on save, so it is bound while editing and only
+    # then. Kent, 2026-09-14: "let's bind return to OK (which we shouldn't
+    # need, but leave for now)" — the OK button stays because the pages that
+    # use this idiom have one, and a harness that tests a tidier control
+    # than the app ships tests nothing.
+    #   Bound and UNBOUND rather than left in place, because that is the
+    # pair the app uses and `unbind` is its own contract: a backend that
+    # binds and cannot unbind leaves Return firing at a hidden editor.
+    # TWO KINDS OF OPEN, and only one of them clears (Kent, 2026-09-14):
+    #
+    #   1. CONVERTING THE LABEL into the editor. The field must start
+    #      EMPTY — the user is choosing afresh, and typing into "choice 1"
+    #      would append to a value they are replacing.
+    #   2. Typing and picking WITHIN that session, repeatedly, before
+    #      OK/Return. Filtering is the point there and must stay.
+    #
+    # So the clearing hangs off `edit()`, which is the conversion, and not
+    # off focus — focus happens again on every pick. Pressing OK without
+    # choosing anything restores what was there, so opening the editor is
+    # never destructive.
+    #   Under webview this needs `Combobox` to TRACK its variable, which it
+    # did not until today: `var.set('')` reached the object and not the
+    # page, so the field kept its text and the clearing was invisible.
+    held = {'was': None}
+
+    def commit(*args):
+        if clear_on_edit and not str(var.get() or '').strip():
+            var.set(held['was'] or '')
+        for w in (widget, box):
+            try:
+                w.unbind('<Return>')
+            except Exception as e:
+                log.info("gallery: could not unbind Return (%r)", e)
+        box.grid_remove()
+        shown.grid()
+
+    def edit(event=None):
+        if clear_on_edit:
+            held['was'] = var.get()
+            var.set('')
+        shown.grid_remove()
+        box.grid()
+        for w in (widget, box):
+            try:
+                w.bind('<Return>', commit)
+            except Exception as e:
+                log.info("gallery: could not bind Return (%r)", e)
+        try:
+            widget.focus_set()
+        except Exception as e:
+            log.info("gallery: no focus_set on the editor (%r)", e)
+
+    ui.Button(box, text="OK", command=commit, row=0, column=1)
+    try:
+        shown.bind('<Button-1>', edit)
+    except Exception as e:
+        _note(bar, "bind on a label failed: {!r}".format(e), row=1,
+              columnspan=2)
+    commit()        # start showing the label, editor hidden
+    return shown, widget
+
+
+def tab_composites(nb):
+    t = ui.Frame(nb)
+    _note(t, "COMPOSITES: the app's own click-to-edit idiom, which is "
+             "written out five times in the alphabet pages and is not a "
+             "class anywhere. Each row shows a bordered label; CLICK IT and "
+             "the label should be replaced IN PLACE by an editor and an OK "
+             "button, and OK should put the label back showing the new "
+             "value. Two failures to watch for: the label and the editor "
+             "visible at once (grid_remove did nothing), and the row "
+             "collapsing or jumping when it swaps (the restored widget lost "
+             "its cell). RETURN commits too, exactly as OK does — it is "
+             "bound when the editor appears and unbound when it goes, so a "
+             "backend that binds and cannot unbind will leave Return firing "
+             "at an editor nobody can see.", row=0, columnspan=3)
+
+    entry_var = ui.StringVar(value="click me to edit")
+    _click_to_edit(t, 1, "entry", entry_var,
+                   lambda box: ui.EntryField(box, textvariable=entry_var,
+                                             row=0, column=0),
+                   "1. LABEL ↔ ENTRY — the alphabet chart's title and "
+                   "copyright. Type something and press OK; the label must "
+                   "show what you typed.")
+
+    list_var = ui.StringVar(value=CHOICES[0])
+
+    def _list(box):
+        def picked(choice=None, **kw):
+            list_var.set(str(choice))
+        return _try("click-to-edit list", lambda: ui.ListBox(
+                        box, optionlist=CHOICES, command=picked,
+                        height=4, row=0, column=0), box, 1)
+
+    _click_to_edit(t, 3, "list", list_var, _list,
+                   "2. LABEL ↔ LIST BOX — same idiom, a list instead of a "
+                   "field. Pick a row and the label must show that choice "
+                   "before you press OK.")
+
+    # state='normal', NOT 'readonly'. Kent, 2026-09-14: "which of those
+    # (currently none) allows a user to type in something not currently on
+    # the list?" — none of them did, because this row was built readonly,
+    # which is the one setting that forbids exactly that. 'normal' is the
+    # combination the question is about: pick from the list OR type
+    # something that is not on it. Under webview it is the <input> with a
+    # <datalist>, which also narrows the list as you type; under tkinter it
+    # is ttk's default editable combobox.
+    combo_var = ui.StringVar(value=CHOICES[0])
+    _click_to_edit(t, 5, "combo", combo_var,
+                   lambda box: _try("click-to-edit combo",
+                                    lambda: ui.Combobox(
+                                        box, textvariable=combo_var,
+                                        optionlist=CHOICES,
+                                        state='normal',
+                                        command=lambda *a: None,
+                                        row=0, column=0), box, 1),
+                   "3. LABEL ↔ COMBOBOX, editable — the only row of the "
+                   "three where you can both PICK from the four choices and "
+                   "TYPE something that is not among them. Clicking the "
+                   "label must open an EMPTY field showing all four; typing "
+                   "narrows them; picking one, then typing again, narrows "
+                   "again. Type 'choice 9' and press Return: the label must "
+                   "come back reading 'choice 9'. Press OK having typed "
+                   "nothing and the old value must return.",
+                   clear_on_edit=True)
+    return t
+
+
 TABS = (("Alignment", tab_align), ("Controls", tab_controls),
         ("Text", tab_text), ("Images", tab_images),
-        ("Scrolling", tab_scrolling), ("Drag", tab_drag),
-        ("Events", tab_events))
+        ("Scrolling", tab_scrolling), ("Composites", tab_composites),
+        ("Drag", tab_drag), ("Events", tab_events))
 
 
 def build(window):

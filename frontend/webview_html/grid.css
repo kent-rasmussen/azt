@@ -1,5 +1,21 @@
 /* Grid layout — maps tkinter grid() to CSS Grid */
 
+/* THE DOCUMENT STARTS TRANSPARENT, so the window's own themed colour shows
+   through until the theme variables arrive.
+   The window is created in the theme's background colour now, which killed
+   the grey flash BEFORE the page — but the document then paints its own
+   default over it, so Kent saw "themed, then grey, then built"
+   (2026-09-15). `setThemeVars` runs after load, so between first paint and
+   that call there is no `--background` to use; a transparent document has
+   nothing of its own to paint and the native window colour stands in.
+   The fallback in the var() is what makes it work in both phases: absent
+   the variable it is transparent, and the moment the variable exists it is
+   the theme. */
+html, body {
+    background: var(--background, transparent);
+    margin: 0;
+}
+
 .wv-container {
     display: grid;
     width: 100%;
@@ -184,14 +200,39 @@
     border: 1px solid #999;
     padding: 2px 4px;
 }
-/* The editable form (state='normal'): an <input> plus the <datalist> that
-   holds its options. The wrapper carries the widget's grid placement, so it
-   must not add a box of its own. */
+/* The editable form (state='normal'): an <input> plus a dropdown we draw
+   ourselves, because a <datalist> only ever suggests what matches the text
+   already in the field — see the comment in widgets.js. The wrapper carries
+   the widget's grid placement, so it must not add a box of its own, and it
+   is the positioning context for the list. */
 .wv-combobox-wrap {
     display: inline-block;
+    position: relative;
     background: none;
     border: 0;
     padding: 0;
+}
+.wv-combobox-list {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    z-index: 30;
+    min-width: 100%;
+    max-height: 12em;
+    overflow-y: auto;
+    background: var(--white);
+    border: 1px solid #999;
+    /* It floats over the page, so it needs to read as a layer above it —
+       the shadow is the only thing separating it from the text beneath. */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+.wv-combobox-option {
+    padding: 2px 6px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.wv-combobox-option:hover {
+    background: var(--activebackground);
 }
 
 /* Progressbar — mirrors the tkinter TProgressbar style set in
@@ -359,7 +400,21 @@
    able to opt out of. A caller wanting narrower text still sets
    `wraplength`; this only stops anything exceeding the display. */
 .wv-label {
+    /* TWO CAPS, AND THE COLUMN ONE IS THE LOAD-BEARING HALF. 92vw stops a
+       label demanding more than the DISPLAY; `100%` stops it demanding more
+       than the CELL IT SITS IN, and only the second prevents clipping: a
+       label 520px across a 1050px window may be 92vw = 966px wide and still
+       be inside its screen budget while running 436px past the window edge.
+       That is the right-hand crop on the Add-and-Parse page — text cut
+       mid-word at the frame edge while the fit reported the page as 1022
+       wide, because a cap is not a width and the label measured narrower
+       than it later drew (Kent, 2026-09-15).
+       `min-width: 0` is what lets it happen at all: a grid item's automatic
+       minimum is its min-content size, so without this a long word keeps
+       the column wide no matter what the max-width says. */
     max-width: 92vw;
+    max-width: min(92vw, 100%);
+    min-width: 0;
     overflow-wrap: break-word;
 }
 
@@ -457,10 +512,46 @@
 }
 .wv-compound-top, .wv-compound-bottom { flex-direction: column; }
 .wv-compound-left, .wv-compound-right  { flex-direction: row; }
+/* compound='center' PUTS THE TEXT ON THE IMAGE, which is a stack and not a
+   direction — so it is the one compound value that flex cannot express, and
+   it fell through to side-by-side. The sort page's refresh button is exactly
+   this: `sort_buttons.py:958` draws the member count INSIDE the circular
+   arrow (`image=…, text=self._n, compound='center'`), and webview put the
+   number next to the icon instead (Kent, 2026-09-15: "tk has those numbers
+   inside the refresh loop; is that possible?").
+   A one-cell grid with both children in the same area centres one over the
+   other without absolute positioning, so the box still sizes to the image
+   and the text still centres if it grows. */
+.wv-compound-center {
+    display: inline-grid;
+    place-items: center;
+}
+.wv-compound-center > .wv-img,
+.wv-compound-center > .wv-img-text {
+    grid-area: 1 / 1;
+}
+.wv-compound-center > .wv-img-text {
+    /* Over a line-drawing icon, plain text can land on a black stroke. The
+       halo is legibility only — the number carries the meaning, and it is
+       readable with or without colour. */
+    text-shadow: 0 0 3px var(--white), 0 0 2px var(--white);
+    z-index: 1;
+}
 .wv-img {
     max-width: 100%;
     height: auto;
     flex: 0 0 auto;
+}
+/* An IMAGE-ONLY widget: no text, so no arrangement. The image states its
+   own size and the widget takes it, rather than being a flex container
+   whose single item can end up with no height at all. */
+.wv-image-only {
+    display: inline-block;
+    line-height: 0;         /* no text, so no room for a text line */
+}
+.wv-image-only > .wv-img {
+    max-width: none;
+    display: block;
 }
 .wv-img-text {
     min-width: 0;
@@ -516,11 +607,62 @@ body[data-page="splash"] .wv-progressbar {
     width: min(80%, 40em);
 }
 
+/* MEASURING STATE — set for the duration of one fit and removed again.
+   `fit_to_content` asks "how big would this like to be", and it cannot be
+   answered while the layout is pinned to the window: `#root` holds
+   `.wv-window`, which is `width:100%;height:100%`, so sizing #root to
+   max-content while its child demands 100% OF #root is circular and the
+   child goes on reporting the size it already had. That is why two fits in
+   a row disagreed by a few pixels instead of agreeing exactly — 1050x592
+   then 1305x716 on the same page, with the content still clipped at both
+   (Kent's log, 2026-09-15).
+   Releasing both, plus anything else that stretches to the window, lets the
+   content state its own width and height once. `!important` because
+   `sticky` arrives as an inline style and would otherwise win. */
+html.wv-measuring #root,
+html.wv-measuring .wv-window,
+html.wv-measuring .wv-container {
+    width: max-content !important;
+    height: max-content !important;
+    max-width: none !important;
+    max-height: none !important;
+    place-content: start !important;
+}
+/* THE LABEL CAP STAYS, deliberately. Releasing `max-width` here was tried
+   and is wrong: a label with no `wraplength` would then measure as ONE
+   UNWRAPPED LINE, so a paragraph would demand thousands of pixels and every
+   page with prose in it would ask for the whole screen. The cap is what
+   makes a label's measured width mean "as wide as I would wrap at".
+   A label capped at 92vw that starts halfway across the page does then
+   demand more width than the window has — and that is the RIGHT answer for
+   the fit to hear: it asks for a wider window (there is room, 1305 of 1920
+   was in use) instead of clipping the text. */
+
 /* Window (toplevel) */
 .wv-window {
     display: grid;
     width: 100%;
     height: 100%;
+    /* CONTENT CENTRED IN THE WINDOW, which is what tkinter already does and
+       this did not. `ui_tkinter.Window.post_tk_init` gives rows and columns
+       0 and 2 `weight=3` and leaves row/column 1 unweighted, so the content
+       frame sits in the middle of whatever space the window has; here the
+       tracks were packed at the top-left, so a page with room to spare left
+       everything huddled in one corner of it — the fault in Kent's kiosk
+       screenshot (2026-09-15: "kiosk screens should have their content
+       centered in the kiosk").
+       `place-content` centres the TRACKS, not each item inside its own
+       cell, so a page's internal alignment is untouched: the grid keeps its
+       shape and is placed in the middle of the surplus.
+       TWO DECLARATIONS, and the second is the important one: plain `center`
+       centres an OVERFLOWING grid too, which pushes its top-left off the
+       window where no scrollbar can reach it — the clipping fault this item
+       is about, reintroduced by the fix for the other half of it. `safe
+       center` falls back to `start` exactly when the content does not fit.
+       An engine that does not know `safe` keeps the first declaration, so
+       nothing is lost where it is not understood. */
+    place-content: center;
+    place-content: safe center;
 }
 
 /* Hidden state */

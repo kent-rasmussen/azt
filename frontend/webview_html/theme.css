@@ -115,3 +115,19 @@ body {
 .font-default      { font-size: calc(18px * var(--scale)); }
 .font-italic       { font-size: calc(18px * var(--scale)); font-style: italic; }
 .font-fixed        { font-size: calc(12px * var(--scale)); font-family: monospace; }
+/* THE TWO THAT MARK PART OF A STRING, and the two this file was missing.
+   A Tk Label carries one font for its whole text, so a highlighted segment
+   has to be its own Label in the same size — `Theme.fonts` defines `bold`
+   and `boldunderline` for exactly that, and `sort_buttons.py:601` uses the
+   second to say WHICH position of a syllable profile is being checked
+   (V1 → the first V marked, the rest plain). With no rule here the class
+   did nothing, so every profile tag on the sort page read as a flat
+   "cvcvc" with the check invisible — Kent, 2026-09-15: "profile: still
+   missing check". The check is the whole point of the tag: it is what
+   tells two otherwise identical profiles apart.
+   Underline as well as weight, deliberately, matching the tkinter comment:
+   "Bold ALONE didn't carry at this size against a raised button" — and a
+   second non-colour signal is the right kind of redundancy. */
+.font-bold         { font-size: calc(18px * var(--scale)); font-weight: bold; }
+.font-boldunderline { font-size: calc(18px * var(--scale));
+                      font-weight: bold; text-decoration: underline; }

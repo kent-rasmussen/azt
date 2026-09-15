@@ -2983,26 +2983,33 @@ class TaskDressing(HasMenus,ui.Window):
         if not getattr(self,'is_chooser',False):
             self._taskchooserbutton()
         self._removemenus() #self.correlatemenus()
-        # KIOSK IS FOR WORK PAGES, NOT FOR THE CHOOSER. Kiosk exists so a task
-        # page fills the screen and nothing distracts from the work; the task
-        # chooser IS the place to look around and pick something, and a
-        # fullscreen menu with no window dressing reads as the app having
-        # taken over the machine (Kent 2026-09-10). `is_chooser` was already
-        # consulted two lines above; this call ignored it.
-        if not getattr(self,'is_chooser',False):
-            self.takekioskscreen()
-        else:
-            # NEITHER kiosk NOR zoomed. `takefullscreen()` was tried here and
-            # the chooser still came up fullscreen (Kent 2026-09-10) — it asks
-            # for `-zoomed` and FALLS BACK TO takekioskscreen() on TclError,
-            # which XWayland/mutter appears to raise, so "maximise" quietly
-            # became "fullscreen" again.
-            #   So: leave the geometry alone and let the content size the
-            # window. The chooser is where a user looks around and picks
-            # something; it does not need the screen, and a menu with no
-            # window dressing reads as the app having taken over the machine.
-            log.info("task chooser: leaving the window at its natural size "
-                     "(kiosk is for work pages)")
+        # KIOSK IS FOR RUN WINDOWS, AND ONLY FOR RUN WINDOWS. This window is
+        # the task's MAIN window — its title, its status lines, its start
+        # button — and the work happens in the run window that
+        # `getrunwindow()` creates, which kiosks itself (ui_shell.py:2773).
+        # So nothing here takes the screen.
+        #
+        # THE DISTINCTION HAD BEEN LOST. This called `takekioskscreen()` for
+        # every task window, with one exception carved out for the chooser on
+        # 2026-09-10 — so "Add and Parse Words with Audio" came up owning a
+        # 1920x1200 display to show a title, five status lines, one card and
+        # two buttons, all in the top-left corner (Kent, 2026-09-15: "that
+        # screen (the task mainwindow) should not be kiosk. did we loose the
+        # distinction of runwindows (only) as kiosks?" — we had). Carving out
+        # the chooser treated the symptom: the rule is about WHICH KIND OF
+        # WINDOW, not about which task.
+        #
+        # Kiosk's reason is still good where it applies: a work page fills
+        # the screen so nothing distracts from the work. A task's front page
+        # is where you look around and decide, exactly like the chooser, and
+        # a fullscreen page with no window dressing reads as the app having
+        # taken over the machine.
+        #
+        # Nothing replaces it: both backends size a window to its content
+        # (tkinter natively, webview via `fit_to_content`), which is what a
+        # front page wants.
+        log.info("task window: natural size, not kiosk (kiosk is for run "
+                 "windows)")
         self.thread_names=list()
         #This withdrawn flag is only for the TaskChooser on startup
         if not self.exitFlag.istrue() and not kwargs.get('withdrawn'):
