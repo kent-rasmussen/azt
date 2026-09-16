@@ -19,6 +19,182 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.27
+
+**Settings values are edited where they are, not in a window each.** Four
+windows are gone from Sound Card Settings — Select Input Sound Card, Select
+Output Sound Card, Select Audio Format, Select Sampling Frequency — each of
+which was a title bar, a prompt and a list of buttons wrapped around a single
+value. A row now reads `Rate: 192khz`, and clicking the value turns it into a
+chooser in place. First delivery on `agenda/settings_prompts_one_window.md`,
+which Kent moved to the top of the agenda for this.
+
+The idiom behind it is now `frontend/composites.py` rather than a sixth copy
+of itself. The alphabet chart and the comparison booklet had written
+click-to-edit out five times with their own `edit_x`/`save_x` pairs, and
+`gallery.py` had a sixth to have something to test; the gallery now calls the
+shared one, so the harness exercises what the app runs. It is built around
+the three kinds of field Kent named, because getting the kind wrong is how a
+prompt ends up unable to express the answer:
+
+| Kind | Control | Example |
+|---|---|---|
+| An absolute list | readonly combo (`choice_field`) | the sound card; typing would offer a rate the hardware refuses |
+| Entry with typing | `entry_field` | the analysis language name |
+| Previous values, but a new one allowed | editable combo (`history_field`) | **replaces two windows**: a readonly list cannot say "something else", so the app asks twice |
+
+- **Picking is answering.** A list has nothing to confirm, so the pick-only
+  fields commit on selection and carry no OK button; only the kinds that
+  accept typing keep one.
+- **One field open at a time.** Opening a field commits whatever else was
+  open, so a page cannot accumulate editors — it was ending up as a column of
+  open combo boxes with no labels left to read.
+- **A readonly combobox is our own dropdown now, not a `<select>`.** A
+  `<select>` fires `change` only when the value DIFFERS: picking the option
+  already selected fires nothing at all, so a field that closes on selection
+  could not be closed by picking the value it already had. There is no native
+  event meaning "the user chose this".
+
+**A fit that measured the window it was computing.** Every display cap in
+`grid.css` was in `vw`/`vh` — the viewport, which for these windows is the
+thing being sized to the content. So the measured content size was a function
+of the window size, and `fit_to_content` computed a window from a number that
+changed as a result: the Add-and-Parse page walked 654x605 → 1043 → 1282x707
+over three fits and was cropped at every step, and a double-click re-fit of
+the SAME page with no rebuild moved its right edge 966 → 1132. Each cap is now
+a variable that is viewport-relative while the page is READ (so prose wraps
+into whatever window it got, and nothing is cropped) and screen-relative for
+the duration of a fit (so the measurement holds still). Two fits of the same
+page now report the same numbers.
+
+- `.wv-scrolling-frame` capped at `60vh`, which in a window sized to its own
+  content threw away 40% of that window and scrolled anyway — the Sound Card
+  Settings page cut its record button at ~450 of a 700px content area with
+  240px of empty field below it. Bounded by its own box now.
+- The fit log names the widest LEAF, not the outermost frame. `>` meant a
+  parent and the child pushing it out tied and the parent won on document
+  order, so four rounds of this item read `widest DIV.wv-widget wv-frame` and
+  learned nothing.
+
+**Two context menus that would not go away, one bug each.**
+
+- tkinter's released the grab immediately after `tk_popup` ("don't do Tk
+  redundant grab") — and that grab IS what dismisses the menu, so it sat there
+  after the user had chosen and they clicked again. Already found and fixed
+  once in the OTHER context menu: `sort_ui.py:179` carries the whole
+  explanation and names this implementation as the one still doing it.
+- webview's dismissed on `click`, and **a right-click never fires `click`** —
+  it fires `contextmenu` — so a second menu appeared on top of the first with
+  both left on screen. Dismisses on `mousedown`/`contextmenu` now, and
+  `tk_popup` removes any previous element rather than orphaning it in the DOM.
+
+**Two concurrent PortAudio streams on one device.** Changing the microphone
+records ~2s synchronously, and the clicks that arrive during it queue rather
+than being dropped — so under webview, where they arrive on the JS bridge's
+thread, a second measurement could start while the first still held the
+device. It became reachable because the UI got quicker, not because the audio
+changed: switching cards used to cost a window open and close, and is now two
+clicks. Guarded process-wide, and a click arriving mid-measurement is skipped
+rather than queued.
+
+The settings window's own dedup had the same door open from the other side:
+`self.soundsettingswindow` is only assigned once the constructor RETURNS, so
+for the whole of a build a second click saw no window to reuse — and each
+click runs a rate check before building. `_configure_sound` now refuses
+re-entry.
+
+**Also fixed**
+
+- `updateProp('text')` used `textContent`, which replaces every child — so
+  setting the text on a widget carrying a picture DELETED the picture. The two
+  cycle buttons on the sort page differed only in that one has its text
+  reassigned after construction; that is why the same image drew on one and
+  not the other.
+- A `Button` built with `text=<Variable>` resolved it once and never tracked
+  it, so the sort page's member count was whatever it happened to be at build
+  time. `Label` has traced it for a while.
+- `compound` arriving after `image` re-read the class it had just written and
+  kept the default, stacking every sort row's picture above its word.
+- `_applyGrid` tested `if (opts.ipadx)`, so **0 was read as "not asked"** and
+  a caller asking for no padding got the stylesheet's. Python now sends those
+  keys only when a caller asks, and `updateProp` handles them at all — it had
+  no case for `padx`/`pady`/`ipadx`/`ipady`/`borderwidth` and no `default:`,
+  so they were accepted and dropped. There is a `default:` now, which warns
+  once per unknown option name.
+- A widget could be evaluated in the page BEFORE its own parent: `_wv_loaded`
+  and `_started` were set before their queues were drained, so anything built
+  in the gap overtook the backlog and landed with nothing to attach to. That
+  is the orphaned sort group that laid itself out against the page.
+- A disabled control ignores its `bind()` handlers too, not just its command.
+  `state='disabled'` stops a button's command but not a binding, in Tk as in
+  the browser, so the greyed-out cycle button went on cycling on right-click.
+- Tooltips: one per page rather than one per widget (several could be on
+  screen at once), `position: fixed` so they sit on their widget on a scrolled
+  page, and state-aware text — a disabled control no longer advertises what it
+  refuses to do.
+
+**Not fixed, and recorded as such**: a window on native Wayland does not keep
+the size the fit gives it — the compositor re-configures a toplevel on almost
+any click and GTK answers from the size the window was CREATED with, because
+`resize()` is one-shot. Putting the size back afterwards works but flickers;
+`set_default_size` was tried and does not hold; `move()` cannot work there at
+all (xdg-shell has no toplevel positioning, by design) and is no longer
+attempted. See `agenda/webview_window_sizing.md`. Relatedly, the app has died
+silently several times with no traceback, no signal and no shell message; two
+concurrent-stream doors are now shut, but the cause is not established.
+
+# Version 1.15.26
+
+**The sort and macrosort pages work under webview, and one wrong keyword was
+most of what was wrong.** `presenttosort` calls
+`wait_window(window=self.sortitem)`; tkinter's parameter is `window`, this
+backend's was `widget`, so the call raised, the loop caught it as "sort item
+gone", and ran through every word without ever waiting. Three separate
+symptoms, chased for most of a session, were all that:
+
+* **no presented word** — the sort finished instantly, so the page you were
+  left looking at was the FINISHED sort with nothing to present;
+* **two presenters at once** — one sortitem built per word, all in the same
+  cell;
+* **a group's select button drawn full-width across the top of the page**,
+  with the row it belonged to left showing a count and tag and no word.
+
+A signature that differs only by a parameter NAME is the hardest port gap to
+see: the call site reads correctly, the method exists, and the failure
+surfaces as a caught exception three frames away. Both names are accepted
+now.
+
+Six more of the same family, each found in one log line and each previously
+swallowed by its caller's `try/except` — so the page built WITHOUT the thing
+and said so in a line naming the symptom rather than the cause:
+
+| missing | what it cost |
+|---|---|
+| `drive_work` on Toplevel (it was on Root only) | `sorting_engine.py:666` calls it on the safe window, which is never the root — a sort check raised "PORT GAP" and stopped |
+| `wrap_to_container(targets_parent=…)` | the sort page raised mid-build; a no-op that cannot be CALLED is not a no-op. `**kwargs` now, so a signature tkinter grows later is accepted rather than fatal |
+| `master` on any widget | the scroll re-arm failed |
+| `_root()` on any widget | the right-click menu was skipped |
+| `_configure_interior` / `_do_configure_interior` | `SortButtonFrame.reflow` failed; needed on the BASE widget, since the caller holds a plain Frame as often as a scroller |
+| `tk.call('tk','windowingsystem')` | the Aqua probe raised, so on macOS the context menu had no binding at all. Shimmed to answer that one question and to RAISE for any other Tcl call, rather than return None and make every future Tcl-shaped question silently wrong |
+
+Also on those pages: the member count now draws INSIDE the cycle icon
+(`compound='center'` is a stack, not a direction, and was the one compound
+value flex could not express); the profile tag marks the checked position
+again (`theme.css` had a class for every tkinter font except `bold` and
+`boldunderline` — the two that exist only to mark part of a string); glyph
+buttons take the full row height; an `image=…, text=''` widget is drawn as
+an image rather than wrapped in a compound container it has no use for; and
+the wait window builds its text in the CENTRED frame with the card image
+tkinter has always shown, with its progress bar under the content instead of
+in the outer left column.
+
+New diagnostics, because four of the above were found by measurement after
+being mis-read from screenshots: the fit probe reports the widest and
+tallest elements by name, how many images have yet to decode, and any widget
+drawn ABOVE OR LEFT of its own parent; a widget that asks for an image and
+gets nothing says so; and `createWidget`'s orphan fallback reports to the
+log rather than to a console nobody has open.
+
 # Version 1.15.25
 
 **Kiosk is for run windows only — and giving task windows their dressing

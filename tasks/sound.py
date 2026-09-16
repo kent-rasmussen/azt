@@ -21,8 +21,35 @@ class Sound(object):
         # has gone wrong, and it previously opened the window without checking
         # anything. mikecheck() is the automatic route, entered only when the
         # stored settings fail to validate.
-        message = self._verify_rate()
-        self._sound_settings_window()
+        #
+        # ONE OPEN AT A TIME, AND THE DEDUP BELOW CANNOT DO IT. That guard
+        # reads `self.soundsettingswindow`, which is only assigned once
+        # `SoundSettingsWindow(...)` RETURNS — so for the whole of the build
+        # it is unset and a second click sees no window to reuse. The build
+        # is not quick: this method runs `_verify_rate()` first, which
+        # RECORDS about two seconds of audio, and the page itself then takes
+        # a while. Kent, 2026-09-15: "the flash open of the settings window,
+        # requiring a second open immediately afterwards".
+        #   The cost is not just a duplicate window. Two clicks mean two
+        # `_verify_rate()` calls, and under webview they arrive on the JS
+        # bridge's thread, so the second can open a PortAudio input stream
+        # while the first still holds one — the same concurrent-stream fault
+        # guarded in `sound_ui._new_input_card`, by a different door. The app
+        # has been dying silently around exactly this, with no traceback and
+        # no signal.
+        #   A flag rather than a lock: this is "ignore a click", not "wait
+        # your turn". Queueing a second open behind the first would give the
+        # user the window twice, which is what the dedup exists to prevent.
+        if getattr(self, '_opening_sound_settings', False):
+            log.info("Sound settings is already opening; ignoring this click")
+            return
+        self._opening_sound_settings = True
+        message = None
+        try:
+            message = self._verify_rate()
+            self._sound_settings_window()
+        finally:
+            self._opening_sound_settings = False
         # AFTER the window exists, so the notice lands beside the thing it
         # talks about rather than alone on a bare desktop.
         if message:

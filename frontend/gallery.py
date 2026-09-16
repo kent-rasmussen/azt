@@ -50,7 +50,7 @@ and a fault is reportable without anyone having to describe a hue.
 """
 import sys
 
-from frontend import ui, backend
+from frontend import ui, backend, composites
 from utilities import logsetup
 log = logsetup.getlog(__name__)
 logsetup.setlevel('INFO', log)
@@ -863,102 +863,24 @@ def tab_events(nb):
 # ── tab: Composites ──────────────────────────────────────────────────────
 
 def _click_to_edit(parent, row, what, var, editor, note, clear_on_edit=False):
-    """A label that becomes an editor when clicked, and a label again on OK.
+    """The gallery's wrapper around `composites.ClickToEdit`.
 
-    THE APP'S OWN IDIOM, written five times and never once as a class. The
-    alphabet chart does it for its title and its copyright
-    (`alphabet_chart.py:548-580`), the comparison booklet for its title and
-    copyright (`alphabet_comparison.py:494-562`), each with its own pair of
-    `edit_x`/`save_x` methods and its own `grid_remove()`/`grid()` pair.
-    Kent, 2026-09-14: "We need to add to gallery a class for entry/label, as
-    we used in Alphabet, and repeated later. And another that turns a label
-    into a list box. there might be another."
+    THE HELPER MOVED OUT, 2026-09-15. It was written here first — as the
+    sixth copy of an idiom the alphabet pages already carried five times —
+    because the gallery needed something to test. It is now
+    `frontend/composites.py`, because the app needs it: settings raise a
+    whole WINDOW per value, and this is what replaces them
+    (`agenda/settings_prompts_one_window.md`, top of the agenda).
 
-    ONE HELPER, THREE EDITORS — because that is what those five copies
-    differ by, and because the third ("there might be another") is then free
-    rather than a fourth copy. The mechanics it exercises are the same in
-    every case, and each is a real backend contract this harness had not
-    touched:
-
-      * `bind('<Button-1>')` ON A LABEL, not on a button;
-      * `grid_remove()` then `grid()` — hide and RESTORE in place, which is
-        different from destroying and rebuilding, and which the app relies
-        on to keep the layout from jumping;
-      * one variable shared by the label and the editor, so the label shows
-        what was typed or picked without anyone copying it across.
-
-    A backend that cannot do the second one will show the label and the
-    editor at once, or lose the row entirely — both visible on the page.
-    """
+    What is left here is the HARNESS part — the note above each row, and the
+    row's placement in the tab's grid — so the gallery goes on exercising
+    the same code the app now runs, rather than a copy of it that can
+    drift."""
     _note(parent, note, row=row, columnspan=3)
-    bar = ui.Frame(parent, row=row + 1, column=0, columnspan=3, sticky='w')
-    ui.Label(bar, text=what + ":", row=0, column=0, sticky='e')
-    shown = ui.Label(bar, textvariable=var, font='read', row=0, column=1,
-                     sticky='w', borderwidth=1, relief='sunken', ipadx=8)
-    box = ui.Frame(bar, row=0, column=1, sticky='w')
-    widget = editor(box)
-
-    # RETURN COMMITS, as the app's own copies do — `alphabet_chart.py:536`
-    # unbinds `<Return>` on save, so it is bound while editing and only
-    # then. Kent, 2026-09-14: "let's bind return to OK (which we shouldn't
-    # need, but leave for now)" — the OK button stays because the pages that
-    # use this idiom have one, and a harness that tests a tidier control
-    # than the app ships tests nothing.
-    #   Bound and UNBOUND rather than left in place, because that is the
-    # pair the app uses and `unbind` is its own contract: a backend that
-    # binds and cannot unbind leaves Return firing at a hidden editor.
-    # TWO KINDS OF OPEN, and only one of them clears (Kent, 2026-09-14):
-    #
-    #   1. CONVERTING THE LABEL into the editor. The field must start
-    #      EMPTY — the user is choosing afresh, and typing into "choice 1"
-    #      would append to a value they are replacing.
-    #   2. Typing and picking WITHIN that session, repeatedly, before
-    #      OK/Return. Filtering is the point there and must stay.
-    #
-    # So the clearing hangs off `edit()`, which is the conversion, and not
-    # off focus — focus happens again on every pick. Pressing OK without
-    # choosing anything restores what was there, so opening the editor is
-    # never destructive.
-    #   Under webview this needs `Combobox` to TRACK its variable, which it
-    # did not until today: `var.set('')` reached the object and not the
-    # page, so the field kept its text and the clearing was invisible.
-    held = {'was': None}
-
-    def commit(*args):
-        if clear_on_edit and not str(var.get() or '').strip():
-            var.set(held['was'] or '')
-        for w in (widget, box):
-            try:
-                w.unbind('<Return>')
-            except Exception as e:
-                log.info("gallery: could not unbind Return (%r)", e)
-        box.grid_remove()
-        shown.grid()
-
-    def edit(event=None):
-        if clear_on_edit:
-            held['was'] = var.get()
-            var.set('')
-        shown.grid_remove()
-        box.grid()
-        for w in (widget, box):
-            try:
-                w.bind('<Return>', commit)
-            except Exception as e:
-                log.info("gallery: could not bind Return (%r)", e)
-        try:
-            widget.focus_set()
-        except Exception as e:
-            log.info("gallery: no focus_set on the editor (%r)", e)
-
-    ui.Button(box, text="OK", command=commit, row=0, column=1)
-    try:
-        shown.bind('<Button-1>', edit)
-    except Exception as e:
-        _note(bar, "bind on a label failed: {!r}".format(e), row=1,
-              columnspan=2)
-    commit()        # start showing the label, editor hidden
-    return shown, widget
+    c = composites.ClickToEdit(parent, var, editor, row=row + 1, column=0,
+                               columnspan=3, label=what + ":",
+                               clear_on_edit=clear_on_edit)
+    return c.shown, c.widget
 
 
 def tab_composites(nb):

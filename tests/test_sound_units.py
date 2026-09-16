@@ -176,11 +176,16 @@ def test_rate_check_possible_knows_its_own_arithmetic():
 
 
 def test_format_bits_is_reachable_from_io_put():
-    """`sound_ui.getsoundformat` ranks the format menu with
+    """`sound_ui._options_format` ranks the format menu with
     `sound.format_bits` through `io_put.sound`, so the re-export has to exist
     — otherwise the menu silently falls back to unranked order (it is wrapped
     in a try) and the menu disagrees with `default_sf`, which uses the same
-    function."""
+    function.
+
+    (Named `getsoundformat` until 2026-09-15, when the four chooser WINDOWS
+    became four combo boxes in the settings window itself and what was left
+    of each was its option list — see agenda/settings_prompts_one_window.md.
+    The ranking is unchanged; only the thing that displays it moved.)"""
     io_sound = pytest.importorskip('io_put.sound',
                                    reason='needs the audio module importable')
     assert callable(getattr(io_sound, 'format_bits', None))

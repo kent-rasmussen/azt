@@ -60,6 +60,16 @@ class Transcriber(ui.Frame):
         while not (isinstance(p,ui.Window) or isinstance(p,ui.Root)): # windows need window parents
             p=p.parent
         w=ui.Window(p, title=_("Configure Tone Beeps"))
+        # A DIALOG OF THE PAGE THAT OPENED IT. See
+        # ui_tkinter.Toplevel.declare_dialog_of — the window manager then puts
+        # it on its parent, keeps it above, and moves it with it, which is
+        # what `-topmost` below was approximating with a much bigger hammer
+        # (above every application, not above its own parent).
+        #   `-topmost` STAYS for now: it is what currently guarantees this is
+        # visible, and dropping it in the same change as adding this is how a
+        # fix becomes a regression. It should go once transience is confirmed
+        # to raise this properly.
+        w.declare_dialog_of(p)
         w.attributes("-topmost", True)
         ui.Button(w.frame,text=_("pitch up"),cmd=higher,
                         row=0,column=0)

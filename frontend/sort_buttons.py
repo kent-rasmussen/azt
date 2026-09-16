@@ -635,11 +635,33 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if self.kwargs['playable'] and self._playable:
             self.player.play()
     def backup(self,event=None):
+        # NOTHING TO BACK UP TO with one example, and the button says so by
+        # being disabled — but `state='disabled'` only stops a button's
+        # COMMAND. A `bind()` still fires, in Tk as in the browser, so
+        # right-click went on cycling a group of one while the control was
+        # greyed out (Kent, 2026-09-15: "it's active on back/right-click, not
+        # left/forward"). The guard belongs here rather than in the binding:
+        # it is the same answer for either backend, and for any other caller.
+        if not self.cycleable():
+            log.info("backup ignored: {} has {} example(s)"
+                     "".format(self.group,self._n.get()))
+            return
         self.kwargs['goback']=True
         self.kwargs['alwaysrefreshable']=True
         self.getexample(**self.kwargs)
         self.again()
         self.kwargs['goback']=False #don't keep going on next
+    def cycleable(self):
+        """Is there more than one example to cycle through?
+
+        The single question behind the refresh button's state, its tooltip and
+        both cycle directions — one method so those three cannot disagree,
+        which is how a greyed-out button came to have a tooltip promising it
+        would change the word."""
+        try:
+            return self._n.get() > 1
+        except Exception:
+            return True         # can't tell; don't block the user
     def remove(self):
         # self.task.groupbuttonlist.remove(self)
         self.destroy() # will this keep the variable around, if stored elsewhere?
@@ -785,8 +807,11 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             log.info("join drag-and-drop skipped for %s: %s",self.group,e)
     """buttons"""
     def labelbutton(self):
+        # 'nsew', matching `playbutton` — the three ways of showing the word
+        # differed only by accident, and the two 'ew' ones left the word
+        # floating in a frame now stretched to the row's height.
         self.label=self._display=ui.Label(self, text=self._text,
-                    column=1, row=0, sticky='ew',
+                    column=1, row=0, sticky='nsew',
                     **self.buttonkwargs()
                     )
         if hasattr(self,'_illustration'):
@@ -920,7 +945,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             cmd=self.selectnsortnext
         b=self.button_select=self._display=ui.Button(self, text=self._text,
                     cmd=cmd,
-                    column=1, row=0, sticky='ew',
+                    column=1, row=0, sticky='nsew',   # see labelbutton
                     **self.buttonkwargs())
         if hasattr(self,'_illustration'):
             b['image']=self._illustration
@@ -928,6 +953,13 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         bt=ui.ToolTip(b,_("Pick this group ({group})").format(group=self.group))
     def refresh(self):
         log.info("SGBF refresh called")
+        # Same guard as `backup`, for the same reason: the command route is
+        # blocked by the disabled state today, but nothing says it always
+        # will be, and a group of one has no other example to show.
+        if not self.cycleable():
+            log.info("refresh ignored: {} has {} example(s)"
+                     "".format(self.group,self._n.get()))
+            return
         self.kwargs['renew']=True
         self.kwargs['alwaysrefreshable']=True
         self.getexample(**self.kwargs)
@@ -945,10 +977,23 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
     def refresh_button_state(self):
         if not self.refreshbutton.winfo_exists():
             return
-        if self._n.get() <2:
-            self.refreshbutton['state'] = 'disabled'
-        else:
-            self.refreshbutton['state'] = 'normal'
+        # AND SAY THE SAME THING THE STATE SAYS. The tooltip was written once,
+        # at construction, and promised "Change example word; Right click to
+        # back up" whether or not there was another word to change to — so a
+        # greyed-out button still advertised a function it refused to perform
+        # (Kent, 2026-09-15: "the tooltip is lying"). A disabled control that
+        # explains WHY is more use than one that stays silent, which is why
+        # this replaces the text rather than removing the tooltip.
+        tip = getattr(self, 'refreshtip', None)
+        if tip is not None:
+            try:
+                tip.settext(self.refreshtiptext())
+            except Exception as e:
+                log.info("couldn't update the refresh tooltip ({!r})".format(e))
+        # `cycleable()`, not a second copy of `_n.get() < 2` — the state, the
+        # tooltip and both cycle directions now ask one method.
+        self.refreshbutton['state'] = ('normal' if self.cycleable()
+                                       else 'disabled')
     def makerefreshbutton(self):
         tinyfontkwargs=self.buttonkwargs()
         del tinyfontkwargs['font'] #so it will fit in the circle
@@ -964,9 +1009,18 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                         sticky='nsew',
                         **tinyfontkwargs)
         self.refreshbutton.bind('<ButtonRelease-3>',self.backup)
-        bct=ui.ToolTip(self.refreshbutton,
-                        text=_("Change example word; Right click to back up"))
+        # KEPT, so its text can follow the button's state (refresh_button_state).
+        # It was a local named `bct` and dropped on return, which is part of why
+        # the text could never be corrected.
+        self.refreshtip=ui.ToolTip(self.refreshbutton,
+                        text=self.refreshtiptext())
         self.refresh_button_state()
+    def refreshtiptext(self):
+        if not self.cycleable():
+            # Names the reason, not just the refusal: the count is the thing
+            # the user would otherwise have to work out from the button face.
+            return _("Only one example word in this group")
+        return _("Change example word; Right click to back up")
     def make_check_button(self):
         # ONE line, with the check's own segment(s) in bold — C**V**CC rather
         # than 'CVCC' stacked over 'V1', which made the user combine the two in
@@ -1064,6 +1118,14 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         kwargs.update(self.program.alphabet.parse_verificationcode(item))
         kwargs['column']=1 #specify other attributes shared with frame here
         kwargs['row']=0
+        # FILL THE ROW'S HEIGHT. The row is as tall as its TALLEST column, and
+        # that is the refresh column — the cycle circle with the profile:check
+        # beneath it — so with no vertical sticky the word and its picture sat
+        # centred in a box taller than they are, with slack above and below
+        # (Kent, 2026-09-15: "the sgbf should probably have sticky NS").
+        # Stretching costs nothing here: the frame's own children decide where
+        # the words land inside it.
+        kwargs['sticky']='nsew'
         kwargs['gridwait']=True
         kwargs['var']=self.var()
         # kwargs['playable']=True #This needs to apply with Sound...
@@ -1076,14 +1138,27 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         else:
             # log.info(_("No {group} SortGroupButtonFrame ex; removing").format(group=kwargs['group']))
             self.items=self.items[:-1]
+    def cycleable(self):
+        """Is there more than one item to cycle through? See
+        SortGroupButtonFrame.cycleable — same question, same three consumers
+        (button state, tooltip, both directions)."""
+        return len(self.items) > 1
     def next_item(self,event=None):
         # log.info(_("next_item ({index})").format(index=self.shown_index))
+        # WITH ONE ITEM THIS IS NOT A NO-OP, which the binding below assumed
+        # ("nothing on n=1", :1195): both directions land back on the item
+        # already shown, and `show_one` rebuilds the check display every time
+        # — so a disabled control still did work when right-clicked.
+        if not self.cycleable():
+            return
         if self.shown_index == len(self.items)-1: #loop back on last
             self.show_one()
         else:
             self.show_one(self.shown_index+1)
     def prev_item(self,event=None):
         # log.info(_("prev_item ({index})").format(index=self.shown_index))
+        if not self.cycleable():
+            return
         if self.shown_index == 0: #loop back on first
             self.show_one(len(self.items)-1)
         else:
@@ -1138,10 +1213,37 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         # (Kent 2026-08-25). Without the weight the column is exactly as wide as
         # the row, and there is nothing to centre within.
         self.check_segs.grid_columnconfigure(0, weight=1)
+        # KEPT and TRANSLATED. Dropped on return, the text could never follow
+        # the control's state, so a disabled cycle button went on inviting a
+        # click (Kent, 2026-09-15: "the tooltip is lying"); and the string was
+        # the one bare literal among these, so it stayed English everywhere.
+        self.checktips=[]
         for w in [self.refresh_frame,self.check_label]:#,self.group_count]:
-            ui.ToolTip(w,'click to change group')
+            self.checktips.append(ui.ToolTip(w,self.checktiptext()))
             # w.bind('<Button-1>', self.next_item)
             w.bind('<Button-3>', self.prev_item, add='+') #nothing on n=1
+        self.check_button_state()
+    def checktiptext(self):
+        if not self.cycleable():
+            return _("Only one group here")
+        return _("Click to change group; right click to go back")
+    def check_button_state(self):
+        """Keep the cycle control's state and its tooltip on the same story."""
+        for tip in getattr(self, 'checktips', ()):
+            try:
+                tip.settext(self.checktiptext())
+            except Exception as e:
+                log.info("couldn't update a check tooltip ({!r})".format(e))
+        # `updatecount` can run before `make_refresh` has built the button —
+        # the old code tested `winfo_exists()` for that, which only works
+        # once the ATTRIBUTE is there.
+        b = getattr(self, 'check_label', None)
+        if b is None or not b.winfo_exists():
+            return
+        # RE-ENABLED, not only disabled. `updatecount` set 'disabled' and had
+        # no other branch, so a group that grew past one example kept a dead
+        # cycle button for the rest of the session.
+        b['state'] = 'normal' if self.cycleable() else 'disabled'
     def updatecount(self,n=None):
         # log.info(_("Updating count for group {group} (n={n})").format(group=self.group,n=n))
         if n is not None:
@@ -1150,8 +1252,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             # nodes=self.exs.getexamples(self.group)
             # log.info(_("Found {count} examples: {nodes}").format(count=len(nodes),nodes=nodes))
             self._n.set(len(self.items))
-        if self._n.get() <2 and self.check_label.winfo_exists():
-            self.check_label['state'] = 'disabled'
+        self.check_button_state()
     def setcanary(self,canary):
         """This is needed because these buttons are reused across all words
         being sorted. so each word to sort is the canary, in tern, and it is

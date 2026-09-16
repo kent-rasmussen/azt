@@ -18,6 +18,7 @@ import os
 import platform
 import sys
 import threading
+import time
 import unicodedata
 from contextlib import contextmanager
 from random import randint
@@ -232,6 +233,17 @@ def _request_refit(window, trigger, delay=0.4):
             return
         log.info("window {}: fit requested by {}".format(
                     getattr(window, '_wid', 'root'), trigger))
+        # BEFORE the fit, and not inside it: `fit_to_content` returns at its
+        # first guard for a fullscreen window, and the page this check
+        # exists for — the macrosort run window — is always fullscreen. A
+        # diagnostic that cannot run where the fault happens is no
+        # diagnostic (Kent, 2026-09-15: leave it in and catch it next time).
+        try:
+            checker = getattr(window, '_check_displaced', None)
+            if checker:
+                checker()
+        except Exception as e:
+            log.debug("displacement check skipped: {!r}".format(e))
         try:
             window.fit_to_content()
         except Exception as e:
@@ -286,6 +298,102 @@ def _switch_value(name):
         if arg.startswith(prefix):
             return arg[len(prefix):].strip() or None
     return None
+
+
+# Whether this display stack lets us place our own windows. None = not
+# settled yet; see `_can_position`.
+_positioning = None
+
+# WHERE NON-KIOSK WINDOWS GO: one place for the whole session, not one
+# computed per window. Seeded by wherever the first window lands (the window
+# manager's choice) and replaced by the user's whenever they move one. See
+# `_place_window` for why this replaced centring, and `_learn_origin` for
+# how it is learned. None until something has been observed.
+_window_origin = None
+
+
+def _native_window(wv):
+    """The toolkit's own window object behind a pywebview window, or None.
+
+    REACHING PAST THE WRAPPER, and only for something the wrapper cannot do.
+    `resize()` is a ONE-SHOT request: on Wayland the compositor re-configures
+    a toplevel on almost any state change — focus in, focus out, a click on
+    the title bar — and the client must answer with a size. Once our resize
+    has been consumed GTK answers from the window's DEFAULT size, which is
+    the 800x600 `create_window` was given. So the window snapped back on
+    every click, and putting the size back each time turns a crop into a
+    flicker (Kent, 2026-09-15: "almost anywhere you click, 6x800 and back").
+    The default size is the thing being answered with, and pywebview exposes
+    no way to set it.
+
+    Written defensively on purpose: this is pywebview's private structure and
+    may move between versions. Every failure is a None and a log line, never
+    an exception — the caller's fallback is the behaviour we already have.
+    Only asked for on GTK; the other backends do not have this problem."""
+    if _engine() not in (None, 'gtk'):
+        return None
+    # NOT AN IMPORT OF Gtk/Gdk — see the warning in utilities/display.py: a
+    # fresh unversioned import of GDK inside a running Qt process took the
+    # gi type system apart. This only asks for pywebview's own module, which
+    # is already loaded if GTK is what we are running on.
+    plat = sys.modules.get('webview.platforms.gtk')
+    if plat is None:
+        return None
+    try:
+        view = getattr(plat, 'BrowserView', None)
+        instances = getattr(view, 'instances', None) or {}
+        bv = instances.get(getattr(wv, 'uid', None))
+        # pywebview's BrowserView holds the Gtk.Window as `window`; older
+        # layouts have used `_window`. Neither is contractual.
+        return getattr(bv, 'window', None) or getattr(bv, '_window', None)
+    except Exception as e:
+        log.debug("could not reach the native window ({!r})".format(e))
+        return None
+
+
+def _run_on_gui_thread(fn):
+    """Run `fn` on the toolkit's own thread, if we can tell which that is.
+
+    GTK IS NOT THREAD-SAFE and our resizes come from a page-building worker,
+    so touching a Gtk.Window directly from here is a crash waiting to
+    happen. `GLib.idle_add` is the marshalling GTK itself provides. If GLib
+    is not loaded we are not on GTK and there is nothing to marshal to."""
+    glib = sys.modules.get('gi.repository.GLib')
+    if glib is None:
+        fn()
+        return
+    try:
+        glib.idle_add(lambda: (fn(), False)[1])
+    except Exception as e:
+        log.debug("could not defer to the GUI thread ({!r})".format(e))
+
+
+def _can_position():
+    """May we move our own windows? See utilities.display.positioning_available
+    for what rides on the answer — on native Wayland a `move()` takes the
+    window's size with it.
+
+    Cached, because the stack cannot change mid-run — but NOT cached before
+    a toolkit has a display, because until then the honest answer is "don't
+    know" and caching that would make every later window unplaceable on a
+    stack that allows it."""
+    global _positioning
+    if _positioning is not None:
+        return _positioning
+    try:
+        from utilities import display
+        said = display.toolkit(_engine())
+        if not said:
+            return True     # no toolkit display yet: answer, don't remember
+        _positioning = 'NATIVE WAYLAND' not in display.verdict(said)
+        log.info("window placement: {} ({})".format(
+                    'available' if _positioning
+                    else 'NOT available — the compositor owns it', said))
+    except Exception as e:
+        log.info("could not tell whether windows may be placed ({!r}); "
+                 "assuming they may".format(e))
+        _positioning = True
+    return _positioning
 
 
 # Which environment variable each toolkit reads to choose its transport, and
@@ -807,18 +915,36 @@ def _get_window_owner(wv_window):
 # ── JS execution helper ──────────────────────────────────────────────
 def _js(window, code):
     """Evaluate JS in the webview window. Queues if webview hasn't started yet,
-    or if the specific window hasn't finished loading."""
+    or if the specific window hasn't finished loading.
+
+    A QUEUE THAT CAN BE OVERTAKEN IS NOT A QUEUE. Both gates below are read
+    and acted on under the lock that the corresponding flush holds while it
+    drains, so a call either joins the queue (and keeps its place) or is sent
+    directly (and the queue is already empty). Without that, "the page is
+    ready" became true the moment the flag was set — while the queue still
+    held every call made before it — so a widget created in that gap was
+    evaluated FIRST and its parent, still queued, arrived after: the child
+    could not find it, fell back to #root, and laid itself out against the
+    page. One such widget per run, wid varying, on whichever page happened to
+    be building as its window finished loading (Kent, 2026-09-15: three
+    rounds of "the extra sort group is there", widgets 221/222 in different
+    runs). See `_flush_js_queue` and `_drain_wv_js_queue`."""
     if not window:
         return None
     if not _started.is_set():
         with _js_queue_lock:
-            _js_queue.append((window, code))
-        return None
+            # RE-CHECKED INSIDE THE LOCK: the flush sets the flag holding it,
+            # so this either appends before the flag flips or sees it flipped.
+            if not _started.is_set():
+                _js_queue.append((window, code))
+                return None
     # Check per-window loaded state
     owner = _get_window_owner(window)
-    if owner and hasattr(owner, '_wv_loaded') and not owner._wv_loaded.is_set():
-        owner._wv_js_queue.append(code)
-        return None
+    if owner is not None and hasattr(owner, '_wv_loaded'):
+        with getattr(owner, '_wv_queue_lock', _js_queue_lock):
+            if not owner._wv_loaded.is_set():
+                owner._wv_js_queue.append(code)
+                return None
     if not getattr(window, '_destroyed', False):
         try:
             return window.evaluate_js(code)
@@ -865,20 +991,40 @@ def _eval_batched(window, codes):
 
 
 def _flush_js_queue():
-    """Execute all queued JS commands. Called once after root webview loads."""
-    with _js_queue_lock:
-        queue = list(_js_queue)
-        _js_queue.clear()
-    # Group consecutive calls by window so each window's batch travels whole.
-    run, current = [], None
-    for window, code in queue:
-        if window is not current and run:
+    """Send every pre-start JS call, THEN declare the engine started.
+
+    Setting `_started` is what makes `_js` evaluate directly instead of
+    queueing, so it must not become true until there is nothing left in the
+    queue to be overtaken — see the ordering note in `_js`. Draining is a
+    LOOP because a build thread goes on producing while we send: each pass
+    takes what is there, sends it outside the lock (a round trip into the
+    engine, not something to hold a lock across), and the flag is set only by
+    a pass that finds the queue already empty."""
+    passes = 0
+    while True:
+        with _js_queue_lock:
+            if not _js_queue:
+                _started.set()
+                return
+            queue = list(_js_queue)
+            _js_queue.clear()
+        passes += 1
+        if passes == 20:
+            # Not fatal, and not a reason to give up ordering: just worth
+            # seeing, because it means widgets were still being built well
+            # after the page reported itself ready.
+            log.info("pre-start JS queue still refilling after 20 passes "
+                     "({} in this one)".format(len(queue)))
+        # Group consecutive calls by window so each window's batch travels whole.
+        run, current = [], None
+        for window, code in queue:
+            if window is not current and run:
+                _eval_batched(current, run)
+                run = []
+            current = window
+            run.append(code)
+        if run:
             _eval_batched(current, run)
-            run = []
-        current = window
-        run.append(code)
-    if run:
-        _eval_batched(current, run)
 
 # ── Waiting on a widget's destruction ─────────────────────────────────
 # tkinter's wait_window(w) blocks until w is destroyed, and A-Z+T leans on it
@@ -966,10 +1112,16 @@ class _WebviewWidget:
             self._grid_opts['columnspan'] = kwargs.pop('columnspan',
                                             kwargs.pop('colspan', 1))
             self._grid_opts['rowspan'] = kwargs.pop('rowspan', 1)
-            self._grid_opts['padx'] = kwargs.pop('padx', 0)
-            self._grid_opts['pady'] = kwargs.pop('pady', 0)
-            self._grid_opts['ipadx'] = kwargs.pop('ipadx', 0)
-            self._grid_opts['ipady'] = kwargs.pop('ipady', 0)
+            # ONLY IF ASKED. These were defaulted to 0 and always sent, which
+            # made "asked for zero" and "said nothing" the same message — so
+            # the page could not honour `ipadx=0` without also stripping the
+            # stylesheet's padding off every gridded widget in the app. Left
+            # absent, `_applyGrid` leaves the stylesheet in charge; sent as 0,
+            # it means zero. (tkinter has no such ambiguity: its default IS
+            # 0, and the stylesheet is what has no equivalent there.)
+            for opt in ('padx', 'pady', 'ipadx', 'ipady'):
+                if opt in kwargs:
+                    self._grid_opts[opt] = kwargs.pop(opt)
             self._gridwait = kwargs.pop('gridwait', False)
         else:
             self._gridwait = kwargs.pop('gridwait', False)
@@ -986,8 +1138,20 @@ class _WebviewWidget:
         # Create in JS
         self._create_in_js()
 
-        # Do initial grid (mirrors Gridded.dogrid)
-        if self._has_grid:
+        # Do initial grid (mirrors Gridded.dogrid) — UNLESS THE CALLER SAID
+        # WAIT. `gridwait=True` means "I will place this myself, later", and
+        # ignoring it placed the widget immediately, against whatever the
+        # page had at that moment — which for a row still being built is the
+        # page itself. `sort_buttons.make_sgbf` sets it on every cycle
+        # example precisely because `show_one()` decides which one is
+        # placed; gridding them all on creation put the first one into the
+        # layout before its row existed, which is the group button drawn
+        # full-width across the top of the macrosort page with its own row
+        # left empty (Kent, 2026-09-15, twice).
+        #   tkinter's own comment on the kwarg says the same: it must not
+        # reach child buttons "or they grid_remove themselves and never
+        # restore" (sort_buttons.py:554).
+        if self._has_grid and not self._gridwait:
             self._dogrid()
 
         # Set up DnD bindings after widget exists in JS
@@ -1023,7 +1187,90 @@ class _WebviewWidget:
             # is the page) from "parent genuinely missing" (a real fault).
             'parent_is_window': bool(getattr(self.parent, 'is_window', False)),
         })
+        # A WIDGET WHOSE PARENT WAS NOT IN THE PAGE says so in the log, not
+        # only in a console nobody has open. See the `orphaned` event in
+        # widgets.js: the page falls back to #root, so the widget appears in
+        # the PAGE's grid rather than its frame's — full width at the top,
+        # typically — and the row it belonged to is left empty.
+        _api.register(self._wid, 'orphaned', self._report_orphaned)
+        # WHY THE PARENT MIGHT NOT BE THERE, said at the moment of creation
+        # rather than guessed at afterwards. The page can only report THAT a
+        # parent was missing (see `_report_orphaned`); these two conditions
+        # are visible only here, and they are the two things that can make a
+        # parent unfindable in a page:
+        #   * it was DESTROYED — `again()`/`refresh()` destroys a frame's
+        #     children and rebuilds, so a widget created against one of them
+        #     is building on something already gone;
+        #   * it belongs to ANOTHER WINDOW — `_widgets` is per page while
+        #     wids are global, so a parent from the previous run window
+        #     cannot be found in this one. `clear_runwindow` retires a run
+        #     window by HIDING it, so its widgets stay alive and referenced.
+        # A THIRD CAUSE existed and neither of these could see it: the
+        # parent's own `createWidget` was still sitting in a flush queue that
+        # the page had already declared drained, so the parent was perfectly
+        # healthy here and simply had not ARRIVED yet. That is fixed at the
+        # gate (see `_js`); these two remain because they are real and are
+        # invisible from the page side.
+        if self.parent is not None and not getattr(self.parent, 'is_window',
+                                                   False):
+            if not getattr(self.parent, '_exists', True):
+                log.error("widget {} ({}) is being created against parent {}, "
+                          "WHICH HAS BEEN DESTROYED — it will land in the "
+                          "page root. Text: {!r}".format(
+                            self._wid, self._widget_type, parent_wid,
+                            str(self._props.get('text', ''))[:40]))
+            elif getattr(self.parent, '_wv_window', None) is not wv:
+                log.error("widget {} ({}) is being created against parent {}, "
+                          "WHICH BELONGS TO ANOTHER WINDOW — wids are global "
+                          "but each page has its own map, so it cannot be "
+                          "found here. Text: {!r}".format(
+                            self._wid, self._widget_type, parent_wid,
+                            str(self._props.get('text', ''))[:40]))
         _js(wv, f'createWidget({spec})')
+
+    def _report_orphaned(self, data):
+        log.error("widget {} ({}) was created with parent {} — which the page "
+                  "does not have, so it was attached to #root and will lay "
+                  "itself out against the PAGE instead of its frame. Text: "
+                  "{!r}. This is a build-order fault. Look for a line above "
+                  "naming the cause (destroyed parent, or a parent in "
+                  "another window); if there is none, the parent was healthy "
+                  "and had merely not been SENT yet — which the flush gates "
+                  "in `_js` are supposed to make impossible."
+                  "".format(self._wid, (data or {}).get('type'),
+                            (data or {}).get('parent_wid'),
+                            (data or {}).get('text')))
+
+    def _drain_wv_js_queue(self):
+        """Send this window's queued JS, THEN mark the window loaded.
+
+        The per-window twin of `_flush_js_queue`, and for the same reason:
+        `_wv_loaded` is the flag `_js` reads to decide "send now" versus
+        "queue", so flipping it before the queue is empty lets a later call
+        overtake an earlier one. Windows are where it BIT — a task builds its
+        page from a worker thread while the window's `loaded` event runs on
+        the UI thread, so the two genuinely interleave, and a child that
+        overtakes its parent loses its parent (see `_js`).
+
+        Only a pass that finds the queue empty sets the flag; the loop exists
+        because the builder keeps adding while we send."""
+        queue = getattr(self, '_wv_js_queue', None)
+        if queue is None:
+            return
+        lock = getattr(self, '_wv_queue_lock', _js_queue_lock)
+        passes = 0
+        while True:
+            with lock:
+                if not queue:
+                    self._wv_loaded.set()
+                    return
+                batch = list(queue)
+                queue.clear()
+            passes += 1
+            if passes == 20:
+                log.info("window {} JS queue still refilling after 20 passes "
+                         "({} in this one)".format(self._wid, len(batch)))
+            _eval_batched(getattr(self, '_wv_window', None), batch)
 
     def _dogrid(self):
         """Mirrors Gridded.dogrid: grid, grid_remove, then grid if not gridwait."""
@@ -1179,8 +1426,21 @@ class _WebviewWidget:
             return self._config[key]
         return self._props.get(key, '')
 
-    def wait_window(self, widget=None):
+    def wait_window(self, widget=None, window=None):
         """Block until *widget* is destroyed — or self, if none is given.
+
+        BOTH KEYWORD NAMES, because both are used. tkinter's is `window`
+        (it is `Misc.wait_window(self, window=None)`), and this took only
+        `widget` — so `presenttosort`'s `wait_window(window=self.sortitem)`
+        raised TypeError, the sort loop caught it as "sort item gone",
+        continued, and ran through every word without ever waiting. The page
+        then sat there with no word presented and told the user they were
+        not done (Kent's log, 2026-09-15) — which is what "presentation
+        missing" was, for four screenshots.
+          A signature that differs by a parameter NAME is the hardest kind
+        of port gap to see: the call site reads correctly, the method
+        exists, and the failure surfaces as a caught exception three frames
+        away.
 
         ON THE BASE CLASS because tkinter puts it on Misc, so ANY widget has
         it. It was implemented only on Toplevel, and `ui_shell.py:2485` does
@@ -1191,7 +1451,8 @@ class _WebviewWidget:
         window, because that widget's destruction is the signal. Returns at
         once if the target is already gone, which is the other half of the
         deadlock."""
-        target = widget if widget is not None else self
+        target = widget if widget is not None else (
+                    window if window is not None else self)
         wid = getattr(target, '_wid', None)
         if wid is None:
             log.info("wait_window given {!r}, which has no widget id; not "
@@ -1208,6 +1469,78 @@ class _WebviewWidget:
 
     def winfo_children(self):
         return list(self._children)
+
+    # ── Tk names for the same two facts ───────────────────────────────
+    # Every widget in tkinter has `master` (its parent) and `_root()` (the
+    # interpreter's root window), and app code uses both on ordinary
+    # widgets. Missing here, they surfaced as caught exceptions that read
+    # like app bugs rather than port gaps (Kent's log, 2026-09-15):
+    #
+    #   SortButtonFrame scroll reflow re-arm failed:
+    #       'Frame' object has no attribute 'master'
+    #   context menu aqua bind skipped: 'Label' object has no attribute '_root'
+    #
+    # Both were swallowed by their callers' try/except, so the page built
+    # WITHOUT its scroll re-arm and WITHOUT its right-click menu, and said
+    # so in a line that named the symptom and not the cause.
+    @property
+    def master(self):
+        return self.parent
+
+    # ── ScrollingFrame internals, on EVERY widget ─────────────────────
+    # `SortButtonFrame`'s re-arm calls `_configure_interior` on whatever it
+    # is scrolling inside, and that is a plain Frame as often as a
+    # ScrollingFrame — "'Frame' object has no attribute '_configure_interior'"
+    # persisted after I put these on ScrollingFrame alone (Kent, 2026-09-15).
+    # Nothing to do in either place: `overflow:auto` needs no scrollregion
+    # recomputed. On the base class so no caller has to know which kind of
+    # frame it holds.
+    def _configure_interior(self, event=None):
+        pass
+
+    def _do_configure_interior(self, event=None):
+        pass
+
+    def _configure_canvas(self, event=None):
+        pass
+
+    def _root(self):
+        """The window this widget belongs to (tkinter's Misc._root())."""
+        return self._find_root() or self._root_for_binding() or self
+
+    # ── `tk.call('tk','windowingsystem')` ─────────────────────────────
+    # The one Tcl call app code makes directly, and it asks something this
+    # backend can answer honestly: `sort_ui.py:216` needs to know whether it
+    # is on macOS, because Aqua has no Button-3 and the context menu must
+    # hang off Control-Button-1 instead. With no `tk` to ask, the probe
+    # raised and the extra binding was skipped — "context menu aqua bind
+    # skipped: 'Root' object has no attribute 'tk'" — which on a Mac means
+    # no right-click menu anywhere in the app.
+    #   It answers ONLY that, and raises otherwise: a shim that returned
+    # None for every Tcl call would turn each future Tcl-shaped question
+    # into a wrong answer instead of a visible error.
+    class _TkShim:
+        def call(self, *args):
+            if list(args[:2]) == ['tk', 'windowingsystem']:
+                return {'darwin': 'aqua', 'win32': 'win32'}.get(
+                            sys.platform, 'x11')
+            raise NotImplementedError(
+                "this backend has no Tcl interpreter; tk.call{!r} has no "
+                "webview equivalent — ask it a different way".format(args))
+
+    @property
+    def tk(self):
+        return _WebviewWidget._TkShim()
+
+    def _find_root(self):
+        node = self
+        seen = 0
+        while node is not None and seen < 50:
+            if getattr(node, 'parent', None) is None:
+                return node
+            node = node.parent
+            seen += 1
+        return None
 
     # ── Geometry queries (best-effort from JS) ────────────────────────
     def _get_rect(self):
@@ -2222,8 +2555,17 @@ def _text_of(value):
     return nfc(str(value))
 
 
-def _image_src(value, parent=None):
+def _image_src(value, parent=None, where=''):
     """A data: URI for whatever was passed as `image=`, or None.
+
+    `where` names the caller for the log. A widget asked for an image that
+    resolves to nothing draws an empty box, and until 2026-09-15 the one
+    case that produced NO log line was the most likely one: a theme lookup
+    that returned None (a name absent from this backend's imagelist —
+    agenda/webview_imagelist_stale_copy.md) arrives here as None and
+    returns on the first line. So "the button is empty" and "no image was
+    asked for" were indistinguishable in a log, which is how the sort
+    page's cycle control stayed a mystery through three rounds.
 
     Callers pass a ui.Image (usually straight out of theme.photo), and Image
     already keeps its base64 data URI in `.img` — so the icons were reachable
@@ -2258,10 +2600,27 @@ def _image_src(value, parent=None):
         src = getattr(value, attr, None)
         if isinstance(src, str) and src:
             return src
-    log.info("No data URI for image {!r} (filename={!r}) — it produced no "
-             "output; see the theme-image warning at startup"
-             "".format(type(value).__name__, getattr(value, 'filename', None)))
+    log.info("No data URI for image {!r} (filename={!r}) on {} — it produced "
+             "no output; see the theme-image warning at startup"
+             "".format(type(value).__name__, getattr(value, 'filename', None),
+                       where or 'a widget'))
     return None
+
+
+def _image_asked(raw, resolved, where):
+    """Say so when an image was ASKED FOR and came to nothing.
+
+    The silent case, and the likeliest one: `theme.photo['name']` for a name
+    this backend's imagelist lacks hands back None, which `_image_src`
+    returns unchanged without a word. The widget then draws as an empty box
+    — for a bordered button, two thin lines with nothing between them, which
+    is exactly what the sort page's cycle control looked like for three
+    rounds (Kent, 2026-09-15: "right refresh is still missing image").
+    """
+    if raw is not None and not resolved:
+        log.info("{}: image={!r} was asked for and resolved to nothing; the "
+                 "widget will be empty".format(where, raw))
+    return resolved
 
 
 class Label(_WebviewWidget):
@@ -2287,7 +2646,11 @@ class Label(_WebviewWidget):
         # exact class agenda/webview_when_to_finish.md Step 6 is about.
         image_px = kwargs.pop('image_pixels', None)
         image_scaleto = kwargs.pop('image_scaleto', None)
-        image = _image_src(kwargs.pop('image', None), parent)
+        _raw_image = kwargs.pop('image', None)
+        _where = '{} {!r}'.format(type(self).__name__,
+                                  str(kwargs.get('text', ''))[:24])
+        image = _image_asked(_raw_image,
+                             _image_src(_raw_image, parent, _where), _where)
         compound = kwargs.pop('compound', None)
         if image:
             kwargs['image'] = image
@@ -2434,7 +2797,11 @@ class Button(_WebviewWidget):
         # dropping these was a real gap rather than tidiness.
         image_px = kwargs.pop('image_pixels', None)
         image_scaleto = kwargs.pop('image_scaleto', None)
-        image = _image_src(kwargs.pop('image', None), parent)
+        _raw_image = kwargs.pop('image', None)
+        _where = '{} {!r}'.format(type(self).__name__,
+                                  str(kwargs.get('text', ''))[:24])
+        image = _image_asked(_raw_image,
+                             _image_src(_raw_image, parent, _where), _where)
         compound = kwargs.pop('compound', None)
         if image:
             kwargs['image'] = image
@@ -2479,7 +2846,20 @@ class Button(_WebviewWidget):
             if k.startswith('b') and k[1:] in self._gridkwargs:
                 kwargs.pop(k)
         kwargs['font'] = font
+        # A VARIABLE PASSED AS `text=` IS STILL A VARIABLE, and Button kept
+        # only the value. Label captures it (`_passed_text_var`, :2603) and
+        # traces it; Button resolved it once and forgot it, so the sort
+        # page's member count was whatever it happened to be at build time —
+        # which for a group button being built is 0 or blank, and never
+        # changed again (Kent, 2026-09-15: "n variable not showing, on either
+        # end"). The app writes `text=self._n` rather than `textvariable=`
+        # because tkinter accepts it, so this is the common case here, not
+        # the exotic one.
+        _passed_text_var = None
         if 'text' in kwargs:
+            if isinstance(kwargs['text'], (Variable, StringVar, IntVar,
+                                           BooleanVar)):
+                _passed_text_var = kwargs['text']
             # `_text_of` FIRST, or a Variable passed as `text=` reaches the
             # page as its REPR. Label has done this for a while; Button
             # never did, and `nfc()` on a non-string stringifies it — so the
@@ -2491,17 +2871,19 @@ class Button(_WebviewWidget):
             # why this is the second time the same repr has been on screen.
             kwargs['text'] = nfc(_text_of(kwargs['text']))
         super().__init__(parent, widget_type='button', **kwargs)
-        self._textvariable = textvariable
-        if textvariable is not None:
+        tracked = textvariable if textvariable is not None \
+                  else _passed_text_var
+        self._textvariable = tracked
+        if tracked is not None:
 
-            def _to_dom(*_args, _var=textvariable):
+            def _to_dom(*_args, _var=tracked):
                 try:
                     self.configure(text=_text_of(_var))
                 except Exception as e:
                     log.info("couldn't update button {} from its variable "
                              "({})".format(getattr(self, '_wid', '?'), e))
             try:
-                textvariable.trace_add('write', _to_dom)
+                tracked.trace_add('write', _to_dom)
             except Exception as e:
                 log.info("couldn't trace a button's textvariable ({})"
                          "".format(e))
@@ -3256,8 +3638,26 @@ class Menu:
             _js(wv, f'destroyWidget({self._wid})')
         _api.unregister(self._wid)
         _api.register(self._wid, 'menuclick', on_menuclick)
-        # Create and position via JS
+        # Create and position via JS.
+        #
+        # DISMISS ON `mousedown` AND `contextmenu`, NOT ON `click`. A
+        # right-click does not fire `click` at all — it fires `contextmenu` —
+        # so a menu posted by right-click could not be dismissed by another
+        # right-click, and a second menu appeared on top of the first with
+        # both left on screen (Kent, 2026-09-15). `mousedown` covers the
+        # left-click-away case and fires BEFORE `contextmenu`, so opening a
+        # new menu takes the old one down first.
+        #   Clicking an ITEM still works: the dismissal ignores anything
+        # inside the menu, so `mousedown` on a row does nothing and the row's
+        # own `onclick` runs.
+        #
+        # AND REMOVE THE PREVIOUS ELEMENT FIRST. `_widgets.set` overwrites
+        # the map entry, so re-posting the same menu object left the old div
+        # in the DOM with nothing referring to it — invisible to
+        # `destroyWidget`, and permanent.
         js = (f'(function(){{'
+              f'var prev=_widgets.get({self._wid});'
+              f'if(prev&&prev.remove) prev.remove();'
               f'let el=document.createElement("div");'
               f'el.className="wv-menu";'
               f'el.style.left="{x}px";el.style.top="{y}px";'
@@ -3265,10 +3665,14 @@ class Menu:
               f'el.innerHTML={json.dumps(html)};'
               f'_widgets.set({self._wid},el);'
               f'document.body.appendChild(el);'
-              f'document.addEventListener("click",function _dismiss(e){{'
-              f'if(!el.contains(e.target)){{el.remove();_widgets.delete({self._wid});'
-              f'document.removeEventListener("click",_dismiss);}}}}'
-              f',{{capture:true,once:false}});'
+              f'function _dismiss(e){{'
+              f'if(el.contains(e.target)) return;'
+              f'el.remove();'
+              f'if(_widgets.get({self._wid})===el) _widgets.delete({self._wid});'
+              f'document.removeEventListener("mousedown",_dismiss,true);'
+              f'document.removeEventListener("contextmenu",_dismiss,true);}}'
+              f'document.addEventListener("mousedown",_dismiss,true);'
+              f'document.addEventListener("contextmenu",_dismiss,true);'
               f'}})()')
         _js(wv, js)
 
@@ -3320,6 +3724,23 @@ class ScrollingFrame(Frame):
         pass
     def reflow(self):
         pass                # the browser lays the box out
+
+    # TK'S INTERNALS ARE PART OF THE SURFACE, because callers reach for
+    # them: `SortButtonFrame.reflow` calls `_do_configure_interior` on its
+    # scroller, and its absence surfaced as "SortButtonFrame.reflow failed:
+    # 'SortButtonFrame' object has no attribute '_do_configure_interior'"
+    # (Kent's log, 2026-09-15) — caught by the caller, so the page built
+    # without its reflow and said nothing a reader could act on. Nothing to
+    # do here for the same reason `reflow` does nothing: the browser lays
+    # the box out and `overflow:auto` needs no scrollregion recomputed.
+    def _do_configure_interior(self, event=None):
+        pass
+
+    def _configure_interior(self, event=None):
+        pass
+
+    def _configure_canvas(self, event=None):
+        pass
 
     # SCROLLING IS REAL WORK, not a no-op. `main.py:1083` and
     # `tasks/tasks.py:914` scroll to the bottom so the newest line is the one
@@ -3675,6 +4096,11 @@ class ContextMenu:
         # callers that pass a synthetic event.
         x = getattr(event, 'x_root', None) or getattr(event, 'x', 0) or 0
         y = getattr(event, 'y_root', None) or getattr(event, 'y', 0) or 0
+        # NEVER TWO POSTED AT ONCE — the same rule `sort_ui.popup` states for
+        # the other context menu (:169). `tk_popup` now clears the previous
+        # element itself, so this is the belt to that braces; both are cheap
+        # and the failure they prevent is two menus on screen at once.
+        self.undo_popup()
         self.menu.tk_popup(x, y)
         self.popup = True
 
@@ -3750,6 +4176,10 @@ class Toplevel(_WebviewWidget):
         self._wv_deferred = []
         self._wv_loaded = threading.Event()
         self._wv_js_queue = []  # per-window JS queue
+        # Guards the queue AND the flag together — the pair is what has to be
+        # consistent, or a call can be queued into a queue nobody will drain
+        # again. See `_js` and `_drain_wv_js_queue`.
+        self._wv_queue_lock = threading.RLock()
 
         # WHY THIS IS NOT JUST A LATER hide(): `withdrawn` was ignored
         # entirely, so a window asked for hidden was created VISIBLE and only
@@ -3899,7 +4329,16 @@ class Toplevel(_WebviewWidget):
     def _on_loaded(self):
         """Called when this window's HTML/JS is ready."""
         log.info(f"Toplevel {self._wid} JS ready — flushing {len(self._wv_js_queue)} queued calls")
-        self._wv_loaded.set()
+        # SEND THE BACKLOG BEFORE ANNOUNCING READINESS. This used to set the
+        # flag here and flush thirty lines further down, past several
+        # synchronous round trips into the engine (hooks, theme, badge) —
+        # and the page build runs on another thread, so any widget created
+        # across that span was sent immediately and arrived AHEAD of the
+        # queued calls, its parent among them. That is the orphaned sort
+        # group: a child with nothing to attach to falls back to #root and
+        # lays itself out against the page. `_drain_wv_js_queue` sets the
+        # flag itself, once there is nothing left to jump.
+        self._drain_wv_js_queue()
         # DEFERRED WIRING — things that must wait for a live page.
         # Added 2026-09-11 because binding the context menu from
         # `TaskDressing.__init__` (i.e. during window construction) made
@@ -3935,9 +4374,20 @@ class Toplevel(_WebviewWidget):
         # a gate that always says no is not a gate.
         _badge(self._wv_window, 'window {}'.format(self._wid),
                getattr(self._find_root() or default_root(), 'program', None))
-        # Flush per-window JS queue
-        _eval_batched(self._wv_window, self._wv_js_queue)
-        self._wv_js_queue.clear()
+        # WATCH THE CLIENT AREA. See `installResizeReporter` in widgets.js:
+        # a window that is resized and then quietly reverted logs exactly the
+        # same lines as one that keeps the size, so the difference has only
+        # ever been visible on screen.
+        try:
+            _api.register(self._wid, 'clientresize', self._report_client_resize)
+            _js(self._wv_window, 'installResizeReporter({})'.format(self._wid))
+        except Exception as e:
+            log.info("window {}: could not watch the client area ({!r})"
+                     "".format(self._wid, e))
+        # Anything the lines above queued (they run with the page live, so
+        # most went straight out) plus anything the builder added while they
+        # ran. Drained, not merely sent: same reason as at the top.
+        self._drain_wv_js_queue()
         # Flush deferred wv calls (title, hide/show, etc.)
         self._flush_wv_calls()
         # Widgets are in the page now, so its content has a size — fit to it.
@@ -4090,16 +4540,29 @@ class Toplevel(_WebviewWidget):
                 'var kids=r.querySelectorAll("*");'
                 'var base=r.getBoundingClientRect();'
                 'var w=0,h=0,i,b;'
-                'var widest=null,tallest=null;'
+                'var widest=null,tallest=null,wleaf=null,wl=0;'
+                # '>=', NOT '>'. A parent and the child pushing it out have
+                # the SAME right edge, and document order puts the parent
+                # first — so with '>' the report always named the outermost
+                # frame, which is 1181 wide BECAUSE something inside it is.
+                # Four rounds of "widest DIV.wv-widget wv-frame[1181x628 at
+                # 0,0]" said nothing that distinguished one cause from
+                # another. '>=' keeps the LAST element at the maximum, which
+                # is the deepest one on that edge.
+                #   `wleaf` is the same edge attributed to an element with no
+                # element children — the actual text, image or control — so
+                # the log names the widget and not its box.
                 'for(i=0;i<kids.length;i++){'
                 ' if(kids[i].offsetParent===null&&kids[i].tagName!=="IMG")'
                 '  continue;'
                 ' b=kids[i].getBoundingClientRect();'
                 ' if(!b.width&&!b.height) continue;'
-                ' if(b.right-base.left>w){w=b.right-base.left;'
+                ' if(b.right-base.left>=w){w=b.right-base.left;'
                 '  widest=kids[i];}'
-                ' if(b.bottom-base.top>h){h=b.bottom-base.top;'
-                '  tallest=kids[i];}}'
+                ' if(b.bottom-base.top>=h){h=b.bottom-base.top;'
+                '  tallest=kids[i];}'
+                ' if(!kids[i].children.length&&b.right-base.left>=wl){'
+                '  wl=b.right-base.left;wleaf=kids[i];}}'
                 # WHO STICKS OUT, by name. Four rounds of this item have
                 # inferred the culprit from a screenshot; one string in the
                 # log ends that. `describe` is tag + classes + a little text,
@@ -4122,11 +4585,33 @@ class Toplevel(_WebviewWidget):
                 'var pending=0,imgs=document.images;'
                 'for(i=0;i<imgs.length;i++)'
                 ' if(!imgs[i].complete) pending++;'
+                # ANY WIDGET DRAWN OUTSIDE ITS OWN PARENT. Not the same as
+                # overflowing one — a scroller's rows legitimately exceed
+                # it downwards — so this looks only for a child whose TOP
+                # or LEFT is above/left of its parent's, which no normal
+                # layout produces. It is the shape of the macrosort page's
+                # displaced group button: a row's select button drawn
+                # full-width at the top of the page while the row it
+                # belongs to sits empty in the list (Kent, 2026-09-15). The
+                # DOM parent is right, so the question is which box it is
+                # being laid out against, and that needs measuring rather
+                # than reading.
+                'var displaced="-";'
+                'for(i=0;i<kids.length;i++){'
+                ' var k=kids[i],p=k.parentElement;'
+                ' if(!p||p===r||p===document.body) continue;'
+                ' var kb=k.getBoundingClientRect(),pb=p.getBoundingClientRect();'
+                ' if(!kb.width&&!kb.height) continue;'
+                ' if(!pb.width&&!pb.height) continue;'
+                ' if(kb.top<pb.top-8||kb.left<pb.left-8){'
+                '  displaced=describe(k)+" drawn outside "+describe(p);'
+                '  break;}}'
                 'return [Math.ceil(Math.max(w,nw)),Math.ceil(Math.max(h,nh)),'
                 'screen.availWidth,screen.availHeight,'
                 'window.innerWidth,window.innerHeight,'
                 'Math.ceil(nw),Math.ceil(nh),'
-                'describe(widest),describe(tallest),pending];'
+                'describe(widest),describe(tallest),pending,displaced,'
+                'describe(wleaf)];'
                 # The catch for the try above. Returning a SHORT list makes
                 # Python's unpack fail, which is already logged — so a JS
                 # fault becomes a log line instead of a parked thread. It
@@ -4148,7 +4633,8 @@ class Toplevel(_WebviewWidget):
             return
         try:
             (cw, ch, availw, availh, innerw, innerh,
-             probew, probeh, widest, tallest, pending) = measured
+             probew, probeh, widest, tallest, pending, displaced,
+             wleaf) = measured
             (cw, ch, availw, availh, innerw, innerh, probew, probeh,
              pending) = [int(n) for n in (cw, ch, availw, availh, innerw,
                                           innerh, probew, probeh, pending)]
@@ -4161,10 +4647,26 @@ class Toplevel(_WebviewWidget):
         # union — when they disagree, the union won, which means something is
         # sticking out of a layout that claims to be smaller. Naming the
         # element is what turns "still cropped" into a place to look.
-        log.info("window {}: fit measured {}x{} (probe {}x{}, {} image(s) "
-                 "still loading); widest {} | tallest {}".format(
-                    self._wid, cw, ch, probew, probeh, pending,
-                    widest, tallest))
+        # `inner` IS THE CLIENT AREA, and it is the only honest number here.
+        # The window's own reported size does not change when we resize it
+        # (every line of Kent's 2026-09-15 log says "was 800x600", including
+        # the ones logged after "settled at ... sized 1310x735"), so the
+        # difference between what we asked for and what the page actually
+        # got is invisible — and that difference IS the chrome, which
+        # `_FIT_PAD` otherwise guesses at 28 for titlebar, borders and a
+        # possible scrollbar. A GTK titlebar alone is about that. Logged so
+        # the allowance can be measured instead of assumed.
+        log.info("window {}: fit measured {}x{} (probe {}x{}, client {}x{}, "
+                 "{} image(s) still loading); widest {} | widest leaf {} | "
+                 "tallest {}".format(self._wid, cw, ch, probew, probeh,
+                                     innerw, innerh, pending,
+                                     widest, wleaf, tallest))
+        if displaced and displaced != '-':
+            log.error("window {}: fit found a widget DRAWN OUTSIDE ITS "
+                      "PARENT — {}. Its DOM parent is right, so it is being "
+                      "laid out against a different box: a `display` that "
+                      "does not establish one, or a grid placement the "
+                      "parent has no track for.".format(self._wid, displaced))
         # WAIT FOR THE PICTURES. Measuring now and resizing to the result
         # produces a window fitted to a page that is about to get bigger,
         # which is a crop the moment the image appears — and the app puts a
@@ -4222,10 +4724,40 @@ class Toplevel(_WebviewWidget):
                                delay=0.5)
             return
         self._floor_reads = 0
+        # THE CHROME, MEASURED. `resize()` sizes the WHOLE WINDOW — on GTK the
+        # titlebar is inside it — so a window sized to `content + 28` hands
+        # the page `content + 28 - titlebar - borders`, and a GTK titlebar is
+        # about 37 on its own. The page is then short of room by the
+        # difference and clips at the bottom, which is small enough to read
+        # as "still cropped" rather than as an obvious miss (Kent,
+        # 2026-09-15, on a page measuring 707 in a 735 window).
+        #   `_FIT_PAD` cannot be tuned into correctness: it is one constant
+        # for three backends and every window decoration a user might run.
+        # What IS knowable is the gap between the size we asked for last time
+        # and the client area the page actually got — that difference is the
+        # chrome, measured on this machine, for this window. It is available
+        # only after one resize, so the constant stays as the first guess and
+        # the real number takes over from the second fit on.
+        pad_w = pad_h = self._FIT_PAD
+        asked = getattr(self, '_fit_asked', None)
+        if asked and innerw > 0 and innerh > 0:
+            # Only believe it if the window still IS the size we asked for;
+            # a user-dragged window makes the difference meaningless.
+            chrome_w, chrome_h = asked[0] - innerw, asked[1] - innerh
+            if 0 <= chrome_w < 200 and 0 <= chrome_h < 200:
+                pad_w = max(pad_w, chrome_w)
+                pad_h = max(pad_h, chrome_h)
+                if (chrome_w, chrome_h) != getattr(self, '_chrome_said', None):
+                    self._chrome_said = (chrome_w, chrome_h)
+                    log.info("window {}: window chrome measures {}x{} (asked "
+                             "{}x{}, page got {}x{}); using it instead of the "
+                             "{}px guess".format(self._wid, chrome_w, chrome_h,
+                                                 asked[0], asked[1], innerw,
+                                                 innerh, self._FIT_PAD))
         # SHRINKS AS WELL AS GROWS, which is what tkinter does and what the
         # surplus space complaint was about. Capped above by the display.
-        want_w = min(cw + self._FIT_PAD, availw)
-        want_h = min(ch + self._FIT_PAD, availh)
+        want_w = min(cw + pad_w, availw)
+        want_h = min(ch + pad_h, availh)
         # Ignore differences too small to be worth a resize flicker — but
         # STILL PLACE THE WINDOW. Centring used to sit after this guard, so a
         # window that was already the right size was never positioned: in
@@ -4236,16 +4768,24 @@ class Toplevel(_WebviewWidget):
         # answering only one of them. A window that needs no resize still
         # needs to be somewhere.
         if abs(want_w - innerw) < 8 and abs(want_h - innerh) < 8:
-            self._centre_on_screen(innerw, innerh, availw, availh)
+            self._place_window(innerw, innerh, availw, availh)
             return
         try:
             wv.resize(want_w, want_h)
-            log.info("window {}: fitted to content {}x{} (was {}x{}, "
+            # WHAT WE ASKED FOR, so the next fit can tell chrome from a
+            # window that did not keep the size — see the chrome block above.
+            self._fit_asked = (want_w, want_h)
+            # AND MAKE IT STICK. `resize()` alone is consumed once; the
+            # window's DEFAULT size is what answers every later configure,
+            # and on Wayland those arrive on almost any click. See
+            # `_pin_default_size`.
+            self._pin_default_size(want_w, want_h)
+            log.info("window {}: fitted to content {}x{} (client was {}x{}, "
                      "screen {}x{})".format(self._wid, want_w, want_h,
                                             innerw, innerh, availw, availh))
         except Exception as e:
             log.debug("window {}: resize failed: {}".format(self._wid, e))
-        self._centre_on_screen(want_w, want_h, availw, availh)
+        self._place_window(want_w, want_h, availw, availh)
         # AND AGAIN, ONCE THE RESIZE HAS LANDED. A resize anchors the window
         # at its TOP-LEFT, so a window centred at one size and then grown
         # spills down and to the right — Kent, 2026-09-15: "this window seems
@@ -4265,6 +4805,315 @@ class Toplevel(_WebviewWidget):
             log.debug("window {}: could not schedule a re-centre: {}"
                       "".format(self._wid, e))
 
+    def declare_dialog_of(self, parent=None):
+        """Tell the window system this window BELONGS TO another one.
+
+        THE SAME CONTRACT AS ui_tkinter.Toplevel.declare_dialog_of, and the
+        same reason: `wm_transient` appeared nowhere in this codebase before
+        2026-09-15, in either backend, so no window manager had ever been
+        told that any of these windows were related. Under tkinter the WM was
+        left to guess ("the windows are a bit of a hot mess", Kent
+        2026-09-11); here I spent an afternoon trying to fake the same thing
+        with coordinates, which Wayland forbids on principle.
+
+        It is the ONE placement thing a Wayland client may say, and saying it
+        gets from the compositor everything the coordinates were for: the
+        child placed on its parent, stacked above it, raised and minimised
+        with it, grouped with it in the window switcher.
+
+        pywebview exposes no parent/transient option, so this goes through
+        the native window — the same route `_pin_default_size` uses, which is
+        known to reach a real Gtk.Window. Best-effort: a stack where it
+        cannot be reached is exactly as it was before.
+
+        NOT FOR A WINDOW WHOSE PARENT GETS WITHDRAWN. Many WMs hide a
+        transient child along with its parent, and this app's Wait dialog,
+        status window and ErrorNotice all withdraw theirs — so declaring
+        transience there would hide the dialog. Callers pick; there is
+        deliberately no automatic version of this."""
+        target = parent if parent is not None else getattr(self, 'parent', None)
+        wv = getattr(self, '_wv_window', None)
+        pwv = getattr(target, '_wv_window', None)
+        if not wv or pwv is None:
+            return False
+        win = _native_window(wv)
+        pwin = _native_window(pwv)
+        if win is None or pwin is None or not hasattr(win, 'set_transient_for'):
+            # Once per window, not per dialog: on a backend where the native
+            # window is not reachable (anything but GTK today) this would
+            # otherwise be a line for every dialog the app ever opens.
+            if not getattr(self, '_said_no_transient', False):
+                self._said_no_transient = True
+                log.info("window {}: could not declare it a dialog of window "
+                         "{} (no native window reachable); the window manager "
+                         "will place it as an unrelated window"
+                         "".format(self._wid, getattr(target, '_wid', '?')))
+            return False
+        _run_on_gui_thread(lambda: win.set_transient_for(pwin))
+        log.info("window {}: declared a dialog of window {} — the window "
+                 "manager places it on its parent and keeps it there"
+                 "".format(self._wid, getattr(target, '_wid', '?')))
+        return True
+
+    def _pin_default_size(self, w, h):
+        """Make a fitted size survive the next configure event.
+
+        THE SIZE WE SET AND THE SIZE THE WINDOW FALLS BACK TO ARE DIFFERENT
+        NUMBERS, and only the first was ever set. `resize()` is one-shot; the
+        DEFAULT size is what GTK answers a compositor configure with, and on
+        Wayland a configure arrives on nearly every interaction — focus in,
+        focus out, a click on the title bar. So a window fitted to 1310x735
+        reverted to its created 800x600 on the next click, every click, and
+        re-asserting the size afterwards only converted a crop into a
+        flicker (Kent, 2026-09-15: "almost anywhere you click, 6x800 and
+        back").
+
+        Best-effort by nature: it reaches past pywebview for something
+        pywebview does not expose, so it reports whether it worked and the
+        re-assert in `_reassert` stays as the fallback for when it did not.
+        Said once per window, not per fit."""
+        wv = getattr(self, '_wv_window', None)
+        if not wv:
+            return False
+        win = _native_window(wv)
+        if win is None or not hasattr(win, 'set_default_size'):
+            if not getattr(self, '_said_no_pinning', False):
+                self._said_no_pinning = True
+                log.info("window {}: cannot pin the default size (no native "
+                         "window reachable), so a size lost to a configure "
+                         "event has to be put back afterwards instead of "
+                         "prevented".format(self._wid))
+            return False
+        _run_on_gui_thread(lambda: win.set_default_size(w, h))
+        if not getattr(self, '_said_pinning', False):
+            self._said_pinning = True
+            log.info("window {}: default size pinned to {}x{}, so a configure "
+                     "event answers with this instead of the size the window "
+                     "was created at".format(self._wid, w, h))
+        return True
+
+    def _report_client_resize(self, data):
+        """Say when the page's client area changes, and whether we asked.
+
+        The distinction is the whole point. A fit that asks for 1310x735 and
+        gets it logs the same lines as one that asks, gets it, and has the
+        size taken back a moment later — Kent, 2026-09-15: "doubleclick
+        enlarges the window, then focusing on another window makes it shrink
+        again", and the cropped run and the good run were byte-identical in
+        the log. A shrink nobody asked for is the fault, and it is reported
+        as an error because a window smaller than its content is unusable,
+        not merely untidy."""
+        try:
+            w = int((data or {}).get('w') or 0)
+            h = int((data or {}).get('h') or 0)
+        except (TypeError, ValueError):
+            return
+        if w <= 0 or h <= 0:
+            return
+        was = getattr(self, '_client_seen', None)
+        self._client_seen = (w, h)
+        if was == (w, h):
+            return
+        asked = getattr(self, '_fit_asked', None)
+        # Within 8px of what the fit asked for: this IS our resize arriving.
+        if asked and abs(asked[0] - w) < 8 and abs(asked[1] - h) < 8:
+            self._reassert_strikes = 0
+            log.info("window {}: client area now {}x{} — the size the fit "
+                     "asked for".format(self._wid, w, h))
+            return
+        # SMALLER IN EITHER AXIS IS A CROP, and it is tested FIRST. Written
+        # the other way round — "larger in either axis means the user
+        # dragged it" — a revert from 654x735 to 800x600 matched on WIDTH
+        # (800 > 654) and was adopted as a deliberate resize, leaving 735 of
+        # content in 600 of window: cropped, and now recorded as wanted
+        # (Kent's log, 2026-09-15, line 217). A size that is bigger one way
+        # and smaller the other is not a preference, it is the created size
+        # coming back.
+        if asked and (w < asked[0] - 8 or h < asked[1] - 8):
+            self._reassert(w, h, asked)
+            return
+        if asked and (w > asked[0] + 8 or h > asked[1] + 8):
+            # BIGGER IN BOTH AXES (nothing smaller, by the test above) means
+            # a person dragged the frame. Adopt it rather than arguing: a
+            # user's size beats a computed one, and re-asserting ours would
+            # take their drag away from them.
+            log.info("window {}: client area now {}x{} — larger than the "
+                     "{}x{} the fit asked for, so treating it as yours and "
+                     "keeping it".format(self._wid, w, h, asked[0], asked[1]))
+            self._fit_asked = (w, h)
+            self._reassert_strikes = 0
+            return
+        log.info("window {}: client area now {}x{} (fit last asked for {})"
+                 "".format(self._wid, w, h, asked))
+
+    def _reassert(self, w, h, asked):
+        """Put back a size the window lost without being asked.
+
+        WHY THIS IS NEEDED AT ALL. On Wayland the compositor sends the client
+        an `xdg_toplevel.configure` whenever the toplevel's state changes —
+        including activated → deactivated, i.e. on losing focus — and the
+        client must answer it with a size. `resize()` is a ONE-SHOT request:
+        once it has been consumed, GTK answers later configures from the
+        window's DEFAULT size, which is the size the window was CREATED with.
+        So every task window snapped back to 800x600 the moment anything else
+        took focus — another window appearing, or a click on the desktop —
+        and the page was then smaller than the content the fit had just
+        measured, which is exactly a crop (Kent, 2026-09-15: "doubleclick
+        enlarges the window, then focusing on another window makes it shrink
+        again", and every revert in his log is to 800x600, the creation size).
+        The right fix is to set the window's default size, and pywebview
+        exposes no way to; re-asserting is what the public API allows.
+
+        NOT A LOOP, three ways: our own resize arriving is recognised and
+        clears the count; a size LARGER than we asked for is taken as the
+        user's and adopted; and if the window refuses the size three times in
+        a row we stop and say so, rather than fighting a compositor that has
+        its own reasons (a tiled or constrained layout is legitimate, and an
+        app that will not be tiled is worse than a small one)."""
+        strikes = getattr(self, '_reassert_strikes', 0) + 1
+        self._reassert_strikes = strikes
+        wv = getattr(self, '_wv_window', None)
+        if strikes > 3 or not wv or getattr(self, '_is_fullscreen', False):
+            if strikes == 4:
+                log.error("window {}: client area keeps reverting to {}x{} "
+                          "and will not hold the {}x{} its content needs. "
+                          "Giving up rather than fighting the window manager "
+                          "— the page will scroll instead. On Wayland this is "
+                          "the compositor answering a configure with the "
+                          "window's created size; --gdk-backend=x11 does not "
+                          "do it.".format(self._wid, w, h, asked[0], asked[1]))
+            return
+        # NOT MORE THAN ONCE A SECOND. This is driven by a resize REPORT from
+        # the page, and putting the size back causes another resize, which
+        # reports again — so a compositor that keeps taking the size away
+        # gives a tight loop of shrink/restore. Kent's log, 2026-09-15, shows
+        # six cycles in a row, each logged as "attempt 1 of 3" because the
+        # restore succeeded every time and reset the count. The strike count
+        # cannot catch that; only the clock can.
+        now = time.monotonic()
+        if now - getattr(self, '_reassert_at', 0) < 1.0:
+            return
+        self._reassert_at = now
+        log.info("window {}: client area dropped to {}x{} without being "
+                 "asked (content needs {}x{}); putting the size back "
+                 "(attempt {} of 3). Wayland re-configures a toplevel on "
+                 "focus change and GTK answers from the CREATED size, since "
+                 "resize() is one-shot.".format(self._wid, w, h,
+                                                asked[0], asked[1], strikes))
+
+        # ON THE GUI THREAD. This runs on the JS bridge's callback thread —
+        # the page reported its own resize — and GTK is not thread-safe, so
+        # resizing a window from here is undefined behaviour. The app died
+        # silently right after a burst of these (Kent, 2026-09-15), which is
+        # what touching a toolkit off its own thread looks like: no
+        # traceback, no signal message, nothing in the log.
+        def _put_back():
+            try:
+                wv.resize(asked[0], asked[1])
+            except Exception as e:
+                log.info("window {}: could not put the size back ({!r})"
+                         "".format(self._wid, e))
+        _run_on_gui_thread(_put_back)
+
+    def _check_displaced(self):
+        """Report any widget drawn ABOVE or LEFT of its own parent.
+
+        Its own probe, run on every refit request — including for a
+        FULLSCREEN window, which `fit_to_content` declines to measure and
+        which is precisely where the fault shows: the macrosort run window
+        is kiosk, and a group's select button has twice appeared full-width
+        across the top of it with the row it belongs to left empty (Kent,
+        2026-09-15, intermittent).
+        Only that one direction, because overflowing a parent DOWNWARD is
+        normal — a scroller's rows do it by design — while nothing normal
+        puts a child above its parent's top edge.
+        """
+        wv = getattr(self, '_wv_window', None)
+        if not wv or not _started.is_set():
+            return
+        if not getattr(self, '_wv_visible', True):
+            return
+        try:
+            found = wv.evaluate_js(
+                '(function(){try{'
+                'var r=document.getElementById("root")||document.body;'
+                'var base=r.getBoundingClientRect();'
+                'function d(el){var b=el.getBoundingClientRect();'
+                ' return el.tagName+"."+(el.className||"")+"["+'
+                '  Math.round(b.width)+"x"+Math.round(b.height)+" at "+'
+                '  Math.round(b.left-base.left)+","+'
+                '  Math.round(b.top-base.top)+"] "+'
+                '  (el.textContent||"").trim().slice(0,32);}'
+                # WHAT IS SITTING DIRECTLY IN THE PAGE. A window's content is
+                # ONE element under #root (its outer frame); anything else
+                # there is laying itself out against the page instead of
+                # against a frame, which is how a group's select button ends
+                # up full-width across the top with its own row left empty
+                # (Kent, 2026-09-15, twice — "the extra sort group is
+                # there").
+                #   This is the check that was missing: the containment test
+                # below SKIPS children of #root, so the one case that
+                # matters could never be reported by it.
+                # Menus and anything hidden are legitimately parked here: a
+                # ContextMenu is parented to the WINDOW, so the page is the
+                # only place for it to live, and it spends its life hidden.
+                'var top=r.children,tl=[];'
+                'for(i=0;i<top.length;i++){'
+                ' var t=top[i];'
+                ' if(t.classList.contains("wv-menu")) continue;'
+                ' if(t.offsetParent===null) continue;'
+                ' tl.push(d(t));}'
+                'if(tl.length>1) return "#root HAS "+tl.length+'
+                ' " VISIBLE CHILDREN (expected 1): "+tl.join(" || ");'
+                'var kids=r.querySelectorAll("*"),i,k,p,kb,pb;'
+                'for(i=0;i<kids.length;i++){'
+                ' k=kids[i];p=k.parentElement;'
+                ' if(!p||p===r||p===document.body) continue;'
+                ' kb=k.getBoundingClientRect();pb=p.getBoundingClientRect();'
+                ' if(!kb.width&&!kb.height) continue;'
+                ' if(!pb.width&&!pb.height) continue;'
+                ' if(kb.top<pb.top-8||kb.left<pb.left-8)'
+                '  return d(k)+" drawn outside "+d(p);}'
+                # AN IMAGE THAT ARRIVED AND DRAWS AT NOTHING. The sort
+                # page's right-hand cycle control has an <img> with a real
+                # data URI (nothing logs a resolution failure) and a box
+                # too small to hold it — so either the element is not there
+                # or it is there at zero size, and no log so far tells them
+                # apart (Kent, 2026-09-15: "what are we waiting on for the
+                # second cycle image?"). `naturalWidth` is what the decoded
+                # picture measures; the rect is what the page gave it.
+                # LAID OUT, NOT MERELY PRESENT. `offsetParent === null` means
+                # the element is not being laid out at all — `display:none`,
+                # which is how a hidden notebook panel and a grid_remove()d
+                # row are done here. Its rect is 0x0 by definition, so the
+                # first version of this check reported every image on every
+                # hidden tab: "Parse Already Collected Words" is a chooser
+                # button on a panel nobody is looking at, and it fired long
+                # before the page under test (Kent, 2026-09-15).
+                #   A collapsed image is only interesting when its box IS on
+                # screen, which is why the parent's own rect must be real.
+                'var im=document.images,j,b2,pp;'
+                'for(j=0;j<im.length;j++){'
+                ' if(im[j].offsetParent===null) continue;'
+                ' pp=im[j].parentElement;'
+                ' if(!pp) continue;'
+                ' var pr=pp.getBoundingClientRect();'
+                ' if(pr.width<2||pr.height<2) continue;'
+                ' b2=im[j].getBoundingClientRect();'
+                ' if(im[j].naturalWidth>0&&(b2.width<2||b2.height<2))'
+                '  return "IMAGE COLLAPSED: natural "+im[j].naturalWidth+'
+                '   "x"+im[j].naturalHeight+" drawn "+Math.round(b2.width)+'
+                '   "x"+Math.round(b2.height)+" in "+d(im[j].parentElement);}'
+                'return "";}catch(e){return "ERR "+String(e);}})()')
+        except Exception as e:
+            log.debug("window {}: displacement probe failed ({!r})"
+                      "".format(self._wid, e))
+            return
+        if isinstance(found, str) and found:
+            log.error("window {}: WIDGET DRAWN OUTSIDE ITS PARENT — {}. The "
+                      "DOM parent is right, so it is laying out against a "
+                      "different box.".format(self._wid, found))
+
     def _settle_placement(self, availw, availh):
         """Re-centre on the size the window ACTUALLY ended up, and say so."""
         wv = getattr(self, '_wv_window', None)
@@ -4278,9 +5127,51 @@ class Toplevel(_WebviewWidget):
         y = getattr(wv, 'y', None)
         log.info("window {}: settled at {},{} sized {}x{} on {}x{}"
                  "".format(self._wid, x, y, w, h, availw, availh))
+        self._learn_origin(x, y, availw, availh)
         if isinstance(w, int) and isinstance(h, int) and w > 0 and h > 0:
-            self._centre_on_screen(w, h, availw, availh)
+            self._place_window(w, h, availw, availh)
         self._grow_if_overflowing(availw, availh)
+
+    def _learn_origin(self, x, y, availw, availh):
+        """Remember where windows are, so the next one goes there too.
+
+        THE USER'S OWN CHOICE IS THE BEST INPUT, and this is the only place we
+        can see it: there is no move event, but every fit reads the window's
+        actual position afterwards, and a position we did not ask for is one
+        somebody else chose — the window manager placing the first window, or
+        the user dragging any of them. Either is a better answer than a
+        computed one, which is why both are simply adopted (Kent, 2026-09-15:
+        "if a user moves a window somewhere, that should count as a
+        preference to respect").
+
+        Fullscreen windows are skipped: their position is 0,0 by definition
+        and adopting it would send every later window to the corner."""
+        global _window_origin
+        if getattr(self, '_is_fullscreen', False) or not _can_position():
+            return
+        if not (isinstance(x, int) and isinstance(y, int)):
+            return
+        # ON SCREEN AND NOT THE OFF-SCREEN BIRTHPLACE. Windows are born at
+        # -32000 to avoid a startup flash (`_place_onscreen`), and adopting
+        # that would put every window where none can be seen. The upper
+        # bound catches a window dragged mostly off the far edge, which is
+        # a position the user may want for THAT window but not a place to
+        # put new ones.
+        if not (0 <= x <= max(0, availw - 100)
+                and 0 <= y <= max(0, availh - 100)):
+            return
+        if (x, y) == _window_origin:
+            return
+        # Ours, already applied — not new information.
+        if (x, y) == getattr(self, '_placed_at', None):
+            return
+        was = _window_origin
+        _window_origin = (x, y)
+        log.info("window {}: windows will open at {},{} from now on ({})"
+                 "".format(self._wid, x, y,
+                           'moved from {},{}'.format(*was) if was
+                           else "the window manager's choice for the first "
+                                "window"))
 
     def _grow_if_overflowing(self, availw, availh):
         """Ask the DISPLAYED page whether it is being clipped, and grow.
@@ -4344,8 +5235,12 @@ class Toplevel(_WebviewWidget):
             log.debug("window {}: could not re-check overflow: {}"
                       "".format(self._wid, e))
 
-    def _centre_on_screen(self, w, h, availw, availh):
-        """Put the window somewhere deliberate, not wherever the WM drops it.
+    def _place_window(self, w=None, h=None, availw=None, availh=None):
+        """Put the window where windows go, not wherever the WM drops it.
+
+        `w`/`h`/`availw`/`availh` are UNUSED and kept only so the call sites
+        did not all have to change: the position is remembered, not derived
+        from the size, which is the whole point of the change below.
 
         Kent, 2026-09-11, on four overlapping windows — task page, Sound Card
         Settings, the rate chooser and the status window, none of them related
@@ -4359,17 +5254,34 @@ class Toplevel(_WebviewWidget):
         one is a separate OS window with no stated relationship, so the
         family resemblance has to be supplied.
 
-        CENTRED, not cascaded, and centred on the SCREEN rather than on the
-        parent. Two reasons: a dialog centred on a parent that is itself
-        off-centre compounds the error, and `screen.avail*` is a number this
-        method already has in hand, whereas the parent's position is one more
-        thing to ask the WM for and get wrong. Centring also matches what the
-        fit is for — a window the size of its content, where its content is.
+        ONE PLACE, NOT ONE PER WINDOW — and it was CENTRING until
+        2026-09-15. Kent: "if a user moves a window somewhere, that should
+        count as a preference to respect. So can we just keep drawing
+        (non-kiosk) windows in the SAME place, rather than trying to centre
+        them?"
 
-        This does NOT fix the sizing item's real complaint (a window that
-        never asks to be fitted at all); it makes the windows that DO fit land
-        somewhere a person would put them. See
-        agenda/webview_window_sizing.md.
+        Centring was wrong on two counts beyond ignoring the user. It
+        DERIVES the position from the size, so every refit moved the window —
+        a window that grew by 40px slid 20px left, for no reason a user could
+        see. And a page whose content settles over several fits therefore
+        walked across the screen while it settled.
+
+        A remembered origin fixes both: the position is a fact, not a
+        computation, so a resize leaves it alone. The origin is seeded by
+        wherever the FIRST window lands — the window manager's own choice,
+        which is the best available guess and costs nothing to accept — and
+        replaced by the user's whenever they move one (`_settle_placement`
+        adopts any position we did not ask for). Windows then appear where
+        the last one was, which is where the user is looking.
+
+        Session-scoped, deliberately: a remembered origin in the settings
+        file would also need a screen-geometry check on load (a window
+        restored to a monitor that is no longer attached is unreachable), and
+        that is a bigger decision than this. Say if it should persist.
+
+        KIOSK WINDOWS ARE EXEMPT — they are fullscreen, so they have no
+        position to have a preference about; the guard is `_is_fullscreen`
+        in the callers. See agenda/webview_window_sizing.md.
         """
         wv = getattr(self, '_wv_window', None)
         if not wv:
@@ -4378,8 +5290,38 @@ class Toplevel(_WebviewWidget):
             log.info("window {}: this pywebview has no move(); leaving "
                      "placement to the window manager".format(self._wid))
             return
-        x = max(0, int((availw - w) / 2))
-        y = max(0, int((availh - h) / 2))
+        # A MOVE THAT CANNOT WORK MUST NOT BE ATTEMPTED, because it is not
+        # free. On native Wayland a client cannot place its own toplevel —
+        # and `move()` is not merely ignored there: it re-configures the
+        # surface, which brings the window back at its DEFAULT size. So a
+        # window fitted to 1310x735 and then centred reverted to the 800x600
+        # it was created with, and the log showed the shrink landing
+        # immediately after each `centred at` line, three cycles running
+        # (Kent, 2026-09-15). The page was then smaller than the content the
+        # fit had just measured — i.e. cropped — and the fit was blamed for
+        # it for most of a day. `--gdk-backend=x11` cured it because there
+        # the move genuinely works.
+        #   So: centring is a real improvement where it is possible, and a
+        # net loss where it is not. Said once per window, not per attempt.
+        if not _can_position():
+            if not getattr(self, '_said_no_positioning', False):
+                self._said_no_positioning = True
+                log.info("window {}: leaving placement to the compositor — "
+                         "this display stack does not let a client place its "
+                         "own windows, and the attempt is not free (it "
+                         "re-configures the surface, which costs the window "
+                         "the size it was just given). --gdk-backend=x11 "
+                         "allows positioning.".format(self._wid))
+            return
+        global _window_origin
+        if _window_origin is None:
+            # NOTHING TO GO ON YET. Let this one land where the window
+            # manager puts it and learn from that: `_settle_placement` reads
+            # the position it ended up at and makes it the origin. Moving it
+            # somewhere invented would be a worse guess than the WM's, and
+            # would be the first thing the user has to undo.
+            return
+        x, y = _window_origin
         try:
             wv.move(x, y)
             # LOGGED AT INFO, not debug, and on SUCCESS as well as failure.
@@ -4389,8 +5331,9 @@ class Toplevel(_WebviewWidget):
             # wrong numbers, or accepted and then undone. Three candidates
             # and the log distinguished none of them, which is the same
             # mistake as measuring a rate without recording the level.
-            log.info("window {}: centred at {},{} for {}x{} on {}x{}"
-                     "".format(self._wid, x, y, w, h, availw, availh))
+            self._placed_at = (x, y)
+            log.info("window {}: placed at {},{} — where windows go in this "
+                     "session".format(self._wid, x, y))
         except Exception as e:
             # pywebview's move() is not on every backend/version, and a
             # window in the wrong place is not worth an exception.
@@ -4540,6 +5483,11 @@ class Toplevel(_WebviewWidget):
         wv = getattr(self, '_wv_window', None)
         if not wv or not hasattr(wv, 'move'):
             return
+        # THE ONE MOVE THAT IS STILL WORTH TRYING where positioning is not
+        # available: a window born at -32000 is invisible, which is worse
+        # than a size reverting. The birth is also before any fit, so there
+        # is no fitted size to lose yet. See `_place_window` for why
+        # every LATER move is skipped on such a stack.
         try:
             wv.move(60, 60)
             log.info("window {}: brought on-screen from its off-screen "
@@ -5082,6 +6030,18 @@ class Window(Toplevel):
         except AttributeError:
             if not parent:
                 parent = self.outsideframe
+            # UNDER THE CONTENT, NOT IN THE OUTER LEFT COLUMN. `outsideframe`
+            # is a three-column grid whose middle column holds `frame` — the
+            # window's content — so a bar gridded with no column lands in
+            # column 0, to the left of everything it is reporting on, at its
+            # minimum width (Kent, 2026-09-15: "wait progress bar is in left
+            # column?"). tkinter parents it to `outsideframe` too and gets
+            # away with it because `Window.post_tk_init` weights the outer
+            # columns, which stretches the bar across; nothing weights them
+            # here.
+            #   `setdefault`, so a caller that names its own cell still wins.
+            kwargs.setdefault('column', 1)
+            kwargs.setdefault('sticky', 'ew')
             self.progressbar = Progressbar(parent, **kwargs)
             self.progressbar.current(value)
 
@@ -5118,11 +6078,36 @@ class Wait(Window):
         self.cancelbutton = None
         self.paused = False
         self.withdraw()
-        self.title(_("Please Wait!"))
-        self.l = Label(self.outsideframe, text=_("Please Wait..."),
+        # THE TITLE NAMES THE APP, as tkinter's does. A window saying only
+        # "Please Wait!" in the task bar, with no program name, is not
+        # identifiable among a dozen others.
+        try:
+            appname = self._find_root().program.name
+        except Exception:
+            appname = 'A-Z+T'
+        self.title(_("Please Wait! {azt} Dictionary and Orthography Checker "
+                     "in Process").format(azt=appname))
+        # `self.frame`, NOT `self.outsideframe` — the same parent tkinter
+        # uses (:4818). `frame` is the window's CENTRED cell (row/column 1,
+        # with 0 and 2 weighted); `outsideframe` is the outer one that holds
+        # the Exit and Cancel buttons. Building the wait's own text in the
+        # outer frame is why the webview wait came up flush to the top-left
+        # while tkinter's sat in the middle (Kent's three-way comparison,
+        # 2026-09-15).
+        self.l = Label(self.frame, text=_("Please Wait..."),
                        font='title', anchor='c', row=0, column=0, sticky='we')
-        self.l1 = Label(self.outsideframe, text='',
-                        font='default', anchor='c', row=1, column=0, sticky='we')
+        self.l1 = Label(self.frame, text='',
+                        font='default', anchor='c', row=1, column=0,
+                        sticky='we')
+        # AND THE CARD IMAGE, which was missing entirely. It is most of what
+        # the wait window IS — a user looking at a long operation sees the
+        # app's own picture rather than a blank field, and tkinter has shown
+        # it since the window existed (:4824). Same gate: a root created
+        # with noimagescaling has no scaled photos to draw.
+        if not getattr(getattr(self, '_find_root', lambda: None)(),
+                       'noimagescaling', False):
+            self.l2 = Label(self.frame, image='small', text='',
+                            row=2, column=0, sticky='we', padx=50, pady=50)
 
     def close(self):
         self.on_quit()
@@ -5232,6 +6217,7 @@ class Root(_WebviewWidget):
         self.showafterwait = True
         self._wv_loaded = threading.Event()
         self._wv_js_queue = []
+        self._wv_queue_lock = threading.RLock()   # see `_drain_wv_js_queue`
 
         noimagescaling = kwargs.pop('noimagescaling', False)
 
@@ -5404,8 +6390,17 @@ class Root(_WebviewWidget):
         """
         if webview:
             def on_loaded():
-                _started.set()
-                self._wv_loaded.set()
+                # BOTH GATES OPEN ONLY ONCE THEIR QUEUES ARE EMPTY, and they
+                # open FIRST, because everything below needs a live page:
+                # `_log_engine_in_use` reads a value back out of `_js` (a
+                # queued call returns None, so the engine would go unlogged)
+                # and `_flush_wv_calls` refuses to run until `_started`.
+                # Order matters between the two: a call made before the
+                # engine started is in the GLOBAL queue and one made after is
+                # in this window's, so the global one has to go out first or
+                # the window's later calls would precede it. See `_js`.
+                _flush_js_queue()          # drains, then sets `_started`
+                self._drain_wv_js_queue()  # drains, then sets `_wv_loaded`
                 _log_engine_in_use(self._wv_window)
                 # X11 or Wayland, from the toolkit and the open socket rather
                 # than from what GTK/Qt defaults are believed to be. Here
@@ -5423,7 +6418,6 @@ class Root(_WebviewWidget):
                 for child in self._children:
                     if hasattr(child, '_flush_wv_calls'):
                         child._flush_wv_calls()
-                _flush_js_queue()
                 if setup_callback:
                     def _safe_setup():
                         try:

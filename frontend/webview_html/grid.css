@@ -325,7 +325,11 @@ html, body {
    the widget and wins over this. */
 .wv-scrolling-frame {
     overflow: auto;
-    max-height: 60vh;
+    /* `--scrollcap`: 60vh while drawing (a scroller should be 60% of the
+       window it is in), 60% of the SCREEN while measuring — a cap that
+       rises as the window rises cannot bound the window. See "The caps, and
+       why they are variables". */
+    max-height: var(--scrollcap, 60vh);
     min-height: 0;
 }
 
@@ -348,15 +352,24 @@ html, body {
 }
 
 /* ToolTip */
+/* FIXED, NOT ABSOLUTE. It is positioned from `getBoundingClientRect()`,
+   which is in VIEWPORT coordinates, while `absolute` here resolves against
+   the document — the two agree only while the page is scrolled to the top,
+   and this page scrolls (body `overflow:auto`). So a tooltip on a scrolled
+   page was placed by as much as the scroll offset away from the widget it
+   belonged to, which is a tooltip floating in empty space (Kent, 2026-09-15).
+   `fixed` makes the stylesheet agree with the arithmetic.
+     Wraps rather than running off the edge, matching the tkinter helper's
+   180px `wraplength`: a long tip is the one most worth reading. */
 .wv-tooltip {
-    position: absolute;
+    position: fixed;
     background: #ffffe0;
     border: 1px solid #000;
     padding: 2px 6px;
     font-size: calc(10px * var(--scale));
     z-index: 2000;
     pointer-events: none;
-    white-space: nowrap;
+    max-width: min(24em, 90vw);
 }
 
 /* TOP-LEVEL COLUMNS SIZE TO THEIR CONTENT, like tkinter's grid.
@@ -412,8 +425,13 @@ html, body {
        `min-width: 0` is what lets it happen at all: a grid item's automatic
        minimum is its min-content size, so without this a long word keeps
        the column wide no matter what the max-width says. */
+       `--demandcap` rather than `92vw` directly: it IS 92vw while the page
+       is being read, and 92% of the SCREEN while the page is being measured.
+       See "The caps, and why they are variables" above — using the window's
+       own width during a fit made the fit ratchet the window wider on every
+       measurement. */
     max-width: 92vw;
-    max-width: min(92vw, 100%);
+    max-width: min(var(--demandcap, 92vw), 100%);
     min-width: 0;
     overflow-wrap: break-word;
 }
@@ -450,9 +468,15 @@ html, body {
    whatever window it is given. Growing the window to fit is then an
    improvement rather than a requirement — which matters because resize
    support varies by backend and we have three. */
+   VIEWPORT-RELATIVE WHILE DRAWING, screen-relative while measuring — see
+   "The caps, and why they are variables". `45vw` is what makes the picture
+   shrink into whatever window it gets instead of being clipped; `45vw`
+   DURING A FIT grew the picture every time the window chasing it grew,
+   which is the Add-a-Word illustration being enormous and cut off at once,
+   through three successive fits (Kent, 2026-09-15). */
 #root .wv-img {
-    max-width: 45vw;
-    max-height: 60vh;
+    max-width: var(--imgcapw, 45vw);
+    max-height: var(--imgcaph, 60vh);
     object-fit: contain;
 }
 
@@ -600,7 +624,7 @@ body[data-page="splash"] .wv-label {
     max-width: 40em;
 }
 body[data-page="splash"] .wv-img {
-    max-height: 55vh;
+    max-height: var(--splashimgcap, 55vh);            /* see #root .wv-img */
     object-fit: contain;
 }
 body[data-page="splash"] .wv-progressbar {
@@ -627,6 +651,64 @@ html.wv-measuring .wv-container {
     max-width: none !important;
     max-height: none !important;
     place-content: start !important;
+}
+
+/* ── The caps, and why they are variables ───────────────────────────────
+   A CAP ON WHAT A WIDGET MAY DEMAND has to answer two different questions,
+   and one unit cannot do both:
+
+     DISPLAYING — "how wide may you draw?" The answer is relative to THIS
+     WINDOW. That is what stops a paragraph running off the edge of whatever
+     window it ended up in, so prose wraps instead of needing a horizontal
+     scroll to read one sentence. Kent, 2026-09-15: "I frankly don't care if
+     that user facing message were wrapped or grew the window, but it should
+     do one of those, rather than cropping."
+
+     MEASURING — "how wide would you LIKE to be?" The answer must not
+     mention the window, because the window is what we are computing. With
+     `vw` here the measured content size was a function of the window size,
+     so `fit_to_content` sized the window from a number that then changed
+     because of it: the Add-and-Parse page walked 654x605 → 1043 → 1282x707
+     over three fits and was cropped at every step, and a double-click
+     re-fit of the SAME page with no rebuild moved its right edge 966 → 1132
+     (Kent's logs, 2026-09-15). How far it ran depended on how many refits a
+     build happened to fire, which is what made it look intermittent.
+
+   So each cap is a variable: viewport-relative by default, redefined
+   against the DISPLAY for the duration of a fit. Every widget rule below
+   reads the variable, and the inline `max-width` that `wraplength` sets
+   reads it too — so both states are handled in one place instead of each
+   rule having to know about measuring. The `vw`/`vh` fallbacks mean an
+   unset variable degrades to the old behaviour, never to no cap. */
+:root {
+    --demandcap: 92vw;          /* .wv-label, and wraplength's second term */
+    --imgcapw: 45vw;            /* #root .wv-img */
+    --imgcaph: 60vh;
+    /* A SCROLLER IS BOUNDED BY ITS BOX, NOT BY A FRACTION OF THE SCREEN.
+       `60vh` was a stand-in for "don't let a scroller eat the window", and
+       as a stand-in it is wrong in both directions: in a window sized to its
+       own content it throws away 40% of that window and scrolls anyway (the
+       Sound Card Settings page cut its record button at ~450 of a 700px
+       content area, with 240px of empty field below it — Kent, 2026-09-15:
+       "No idea what that space below is doing, but it shouldn't trigger a
+       scroll yet"), and in a page where the scroller is one element among
+       many it is unrelated to how much room that element actually has.
+         `100%` is the box it was given. When the row has a definite height
+       the scroller fills it and scrolls only past that; when the row is
+       content-sized the percentage is indefinite, the cap does not apply,
+       and the content states its full height — which is what the fit wants
+       to hear, and leaves scrolling as the last resort it is meant to be.
+       The screen-relative term is the backstop, so a thousand-row list asks
+       for a window and not a mile. */
+    --scrollcap: min(100%, calc(var(--screenh, 100vh) * 0.9));
+    --splashimgcap: 55vh;
+}
+html.wv-measuring {
+    --demandcap: calc(var(--screenw, 100vw) * 0.92);
+    --imgcapw: calc(var(--screenw, 100vw) * 0.45);
+    --imgcaph: calc(var(--screenh, 100vh) * 0.6);
+    --scrollcap: calc(var(--screenh, 100vh) * 0.6);
+    --splashimgcap: calc(var(--screenh, 100vh) * 0.55);
 }
 /* THE LABEL CAP STAYS, deliberately. Releasing `max-width` here was tried
    and is wrong: a label with no `wraplength` would then measure as ONE
@@ -661,8 +743,17 @@ html.wv-measuring .wv-container {
        center` falls back to `start` exactly when the content does not fit.
        An engine that does not know `safe` keeps the first declaration, so
        nothing is lost where it is not understood. */
+    /* PER AXIS, because `safe` is per axis and these pages overflow in one
+       of them. A sort page is taller than the window (its rows scroll) and
+       narrower than it — but `place-content: safe center` applied the
+       overflow fallback to BOTH axes, so a vertically-overflowing page also
+       stopped centring horizontally and sat against the left edge (Kent,
+       2026-09-15: "page content is left, not centered", then "and page
+       centering"). Splitting them centres the axis that fits and leaves the
+       axis that does not alone, which is what `safe` is for. */
     place-content: center;
-    place-content: safe center;
+    align-content: safe center;
+    justify-content: safe center;
 }
 
 /* Hidden state */

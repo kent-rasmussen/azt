@@ -95,6 +95,27 @@ body {
     overflow: auto;
 }
 
+/* FORM CONTROLS DO NOT INHERIT TYPE. A browser gives `button`, `input`,
+   `select` and `textarea` their own font family and size, so the reading
+   font on `body` reached every label and none of the CONTROLS — and this
+   app puts its words in buttons: every group row on the sort page, every
+   task on the chooser. The result was one page in two typefaces, the
+   surrounding prose in Charis and the words themselves in the engine's
+   sans, which is both ugly and wrong for the data (Kent, 2026-09-15: "Is
+   that all one font? looks weird").
+   It matters beyond looks: Charis SIL is chosen because it draws the IPA
+   and the diacritics this app exists to display. A form control falling
+   back to a UI sans is a control that may not be able to draw the language
+   being documented.
+   `font-size: inherit` is deliberately NOT set here — the `.font-*` classes
+   carry the sizes, and a control with no class should keep the body size,
+   which inherit gives it. */
+button, input, select, textarea, option {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+}
+
 /* Font classes matching theme.fonts keys.
    THESE NUMBERS ARE NOT ARBITRARY and were wrong until 2026-09-04: they read
    12/24/18/12/10/8 while Theme.fonts computes from default_size = 18*scale

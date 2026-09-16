@@ -80,6 +80,14 @@ def window_stand_in(**attrs):
     # measurement tests below pass while testing nothing.
     stand_in._new_input_card = types.MethodType(
         sound_ui.SoundSettingsWindow._new_input_card, stand_in)
+    # AND ITS BODY. `_new_input_card` is now a one-at-a-time guard around
+    # `_new_input_card_locked` (a second measurement while the first still
+    # holds the device is two PortAudio streams on one card), so the
+    # sequence these tests are about moved one method down. Without this the
+    # guard runs, the body is absorbed by Recorder's catch-all, and every
+    # assertion below passes on an empty list.
+    stand_in._new_input_card_locked = types.MethodType(
+        sound_ui.SoundSettingsWindow._new_input_card_locked, stand_in)
     # `waiting` ON THE WINDOW, because that is where the handler takes it —
     # `wait()` withdraws and `waitdone()` reveals the window it was called
     # on, so taking it on the task returned the user to the task page.
@@ -432,17 +440,39 @@ def test_a_known_value_still_gets_its_friendly_name():
         sound_ui.SoundSettingsWindow.soundcardoutindexlabel(stand_in)
 
 
-@pytest.mark.parametrize('name', LABELS)
-def test_every_row_says_what_it_is(name):
+VARNAMES = ['fs', 'sample_format', 'audio_card_in', 'audio_card_out']
+
+
+@pytest.mark.parametrize('varname', VARNAMES)
+def test_every_row_says_what_it_is(varname):
     """Two rows named themselves and two showed a bare value — "44.1khz" and
     "32 bit integer", with nothing saying what they were, on exactly the two
     settings this item exists to make honest. Step 6 of
-    agenda/honest_sound_settings.md."""
-    stand_in = label_stand_in()
-    label = getattr(sound_ui.SoundSettingsWindow, name)(stand_in)
-    assert ':' in label, \
-        "{} shows a value with no name: {!r}".format(name, label)
-    assert label.split(':')[0].strip(), 'the name must not be empty'
+    agenda/honest_sound_settings.md.
+
+    THE NAME IS A SEPARATE WIDGET NOW (2026-09-15), not a prefix on the
+    value. It had to become one: the value is swapped for a chooser in place
+    when the row is clicked, so a name folded into the same string
+    disappeared exactly when the user needed it, leaving an unlabelled box
+    (agenda/settings_prompts_one_window.md). So this asserts the same
+    guarantee against the table the row's name now comes from, and
+    `test_a_known_value_still_gets_its_friendly_name` below covers the value
+    half."""
+    names = sound_ui.SoundSettingsWindow.FIELD_NAMES
+    assert varname in names, \
+        "{} has no name for its row; it would show a bare value".format(varname)
+    assert names[varname].strip(), 'the name must not be empty'
+
+
+@pytest.mark.parametrize('name', LABELS)
+def test_every_label_is_a_string(name):
+    """`_describe` returns the raw stored value when it recognises nothing,
+    and that can be an int (a rate, a card index). The label feeds a
+    StringVar and a width-reserved Label, so it must be text whatever was
+    stored — `'192000' in label` used to raise TypeError instead."""
+    stand_in = label_stand_in(fs=192000, card_out=99)
+    assert isinstance(getattr(sound_ui.SoundSettingsWindow, name)(stand_in),
+                      str)
 
 
 @pytest.mark.parametrize('name', LABELS)

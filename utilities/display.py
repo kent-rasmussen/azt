@@ -165,6 +165,31 @@ def verdict(said):
     return 'stack UNKNOWN — toolkit answered {!r}'.format(said)
 
 
+def positioning_available(which=None, widget=None):
+    """May a client place its own windows on this stack?
+
+    NOT on native Wayland: the protocol has no way for a client to say where
+    a toplevel goes — placement is the compositor's, deliberately. X11 and
+    XWayland allow it, Windows and macOS allow it.
+
+    This is a CAPABILITY question, asked because the answer is not merely
+    "the move is ignored". Under GTK/Wayland a `move()` re-configures the
+    surface, and the window comes back at its DEFAULT size — so a window
+    fitted to 1310x735 and then centred reverted to the 800x600 it was
+    created with, three times in a row, immediately after each `centred at`
+    line (Kent, 2026-09-15: "doubleclick enlarges the window, then focusing
+    on another window makes it shrink again", and `--gdk-backend=x11`
+    cured it). The move buys nothing and costs the size, so it must not be
+    attempted where it cannot work.
+
+    Asks the TOOLKIT, not the environment: a Wayland session running through
+    XWayland can position perfectly well, and that is the common case here
+    (`--gdk-backend=x11`). Unknown counts as available — the failure mode of
+    trying is a move that does nothing, whereas refusing on a stack that
+    would have allowed it loses placement everywhere."""
+    return 'NATIVE WAYLAND' not in verdict(toolkit(which, widget))
+
+
 def describe(which=None, widget=None):
     """One log line: the environment, the toolkit's answer, and the reading of
     it. Weakest evidence first, so the last term is the one to believe."""

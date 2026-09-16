@@ -2750,6 +2750,62 @@ class Root(Waitable,UI,tkinter.Tk):
 class Toplevel(Childof,Waitable,UI,tkinter.Toplevel): #
     """This and all Childof classes should have a parent, to inherit a common
     theme. Otherwise, colors, fonts, and icons will be incongruous."""
+
+    def declare_dialog_of(self,parent=None):
+        """Tell the window system this window BELONGS TO another one.
+
+        THE DECLARATION THIS APP HAS NEVER MADE. `wm_transient` appeared
+        nowhere in the codebase before 2026-09-15 — not in either backend —
+        so no window manager has ever been told that the Wait dialog, the
+        status window, ErrorNotice or the Transcriber are dialogs of anything.
+        Each was left to be placed as an unrelated top-level window, which is
+        Kent's "the windows are a bit of a hot mess" (2026-09-11): four
+        overlapping windows, none of them positioned relative to any other.
+
+        What it buys, from the window manager rather than from us: the child
+        is placed on its parent, stays stacked above it, is minimised and
+        raised WITH it, and is grouped with it in the window switcher instead
+        of appearing as a separate application window.
+
+        WHY THIS AND NOT `-topmost`, which three of these windows use today
+        (status_window.py:174, error_notice.py:65, transcriber.py:63):
+        `-topmost` pins a window above EVERYTHING on the desktop, including
+        other applications, which is both too strong and the wrong
+        relationship — and `ui_tkinter.py` already carries a note about NOT
+        setting it because it deadlocks `update_idletasks`. Transience says
+        the thing that was actually meant.
+          The `-topmost` calls are deliberately LEFT IN PLACE for now: they
+        are what currently makes these windows reliably visible, and removing
+        them in the same change as adding this is how a fix becomes a
+        regression. They should go once transience is confirmed to raise
+        these windows properly.
+
+        THE SAME DECLARATION REACHES WAYLAND. Tk 8.6 has no Wayland backend,
+        so this is always XWayland here — and XWayland translates
+        `WM_TRANSIENT_FOR` into `xdg_toplevel.set_parent`, which is the ONLY
+        way a client may influence placement on Wayland (there is no
+        positioning call, by design). So the relational declaration works on
+        the new compositor where coordinates cannot.
+
+        Never raises: a window manager that ignores this is no worse off than
+        before, and a dialog is not worth an exception."""
+        target=parent if parent is not None else getattr(self,'parent',None)
+        if target is None:
+            return False
+        try:
+            # winfo_exists on a destroyed parent would make this a traceback
+            # inside window setup, which is the worst place for one.
+            if not target.winfo_exists():
+                return False
+            self.wm_transient(target)
+            log.log(2,"%s declared a dialog of %s",
+                    type(self).__name__,type(target).__name__)
+            return True
+        except Exception as e:
+            log.info("could not declare {} a dialog of {} ({!r})".format(
+                        type(self).__name__,type(target).__name__,e))
+            return False
+
     def withdraw(self):
         """Hide — and NAME WHO ASKED, which is the half the log never had.
 
@@ -3812,7 +3868,24 @@ class ContextMenu(Childof):
             # There is a default 'show menus only' one in HasMenus()
             self.parent.setcontext()
         self.menu.tk_popup(event.x_root, event.y_root)
-        self.menu.grab_release() #don't do Tk redundant grab
+        # NO grab_release() HERE — it was the reason the menu stayed up.
+        # THE GRAB `tk_popup` TAKES IS WHAT DISMISSES THE MENU: it routes
+        # every click, on the menu or off it, to the menu, which then unposts
+        # itself. Releasing it immediately ("don't do Tk redundant grab")
+        # leaves a posted menu with nothing listening for the click that
+        # should put it away — so it sat there after the user had already
+        # chosen, and they clicked again (Kent, 2026-09-15: "the context menu
+        # stays up after clicking. so I've clicked multiple times").
+        #   THIS WAS ALREADY KNOWN AND FIXED ONCE, in the other context menu:
+        # `sort_ui.py:179` carries the whole explanation and names THIS
+        # implementation as the one still doing it — "releasing it
+        # immediately (as ui.ContextMenu does …) leaves the menu posted until
+        # an item is picked (Kent 2026-07-28: 'these can't just stick
+        # around')". Two menus, one bug, fixed fourteen months apart because
+        # the fix went into the copy rather than into both.
+        #   The grab is not redundant and does not fight the app's modal
+        # waits: `tk_popup` saves whatever grab it displaces and restores it
+        # on dismissal.
         self.popup=True
     def _bind_to_makemenus(self,event=None): #all needed to cover all of window
         log.info("Binding to make menus")
@@ -4757,6 +4830,19 @@ class ToolTip(object):
         self.tw= None
         if tw:
             tw.destroy()
+    def settext(self, text):
+        """Change what this tooltip says.
+
+        `showtip` reads `self.text` each time it builds its Toplevel, so a
+        plain reassignment is enough here — but the webview ToolTip has to
+        PUSH the new text to the page, so it grew a `settext` and this didn't.
+        A caller that wants a tooltip to follow a widget's state (the sort
+        board's cycle buttons, whose tooltip promised a function the disabled
+        button refused — Kent, 2026-09-15: "the tooltip is lying") needs the
+        same call to exist on both backends. Hides any tip already showing,
+        so the OLD text cannot sit on screen after the change."""
+        self.text = text
+        self.hidetip()
 """Move back to main"""
 class Wait(Window): #tkinter.Toplevel?
     """The single 'Please Wait' window. Built ONCE (mastered by tk_root) and then

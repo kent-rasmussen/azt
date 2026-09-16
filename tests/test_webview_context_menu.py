@@ -308,14 +308,39 @@ def test_the_recorder_reports_nothing_recorded_rather_than_raising():
 
 def test_wraplength_is_clamped_to_the_viewport_in_the_page_script():
     """An inline style beats the stylesheet, so setting maxWidth from
-    `wraplength` silently defeated grid.css's `max-width: 92vw` — the cap that
-    stops a label demanding more width than the window has. The Sound Card
-    Settings caveat ran off the right edge of its window on exactly that path
-    (GTK, 2026-09-11). CSS min() keeps both constraints."""
+    `wraplength` silently defeated grid.css's cap — the one that stops a label
+    demanding more width than the window has. The Sound Settings caveat ran
+    off the right edge of its window on exactly that path (GTK, 2026-09-11).
+    CSS min() keeps both constraints.
+
+    THE SECOND TERM IS A VARIABLE NOW (2026-09-15), not `92vw` written out.
+    It still RESOLVES to 92vw while the page is being read; what changed is
+    that it resolves against the SCREEN for the duration of a fit, because a
+    cap measured against the window made the measured content size depend on
+    the window size the fit was computing — so the fit ratcheted the window
+    wider on every measurement instead of converging
+    (agenda/webview_window_sizing.md). So this checks the guarantee — the
+    caller's number is bounded by a cap — rather than the literal that used
+    to express it."""
     js = (Path(__file__).resolve().parents[1]
           / 'frontend' / 'webview_html' / 'widgets.js').read_text()
-    assert "'min(' + value + 'px, 92vw)'" in js, \
-        "an inline wraplength must not be allowed to exceed the viewport cap"
+    assert "'min(' + value + 'px, var(--demandcap, 92vw))'" in js, \
+        "an inline wraplength must not be allowed to exceed the display cap"
+
+
+def test_the_display_caps_are_screen_relative_while_measuring():
+    """The other half of the same guarantee, in the stylesheet: each cap is
+    viewport-relative by default and redefined against `--screenw`/`--screenh`
+    under `html.wv-measuring`. A cap that tracks the window cannot bound a
+    window that is being sized to fit it."""
+    css = (Path(__file__).resolve().parents[1]
+           / 'frontend' / 'webview_html' / 'grid.css').read_text()
+    assert 'html.wv-measuring {' in css, \
+        'the measuring state must redefine the caps'
+    for cap in ('--demandcap', '--imgcapw', '--imgcaph', '--scrollcap'):
+        assert cap in css, '{} is not defined'.format(cap)
+        assert '--screen' in css.split('html.wv-measuring {', 1)[1], \
+            'the measuring caps must be relative to the screen, not the window'
 
 
 def test_the_virtual_event_is_mapped_in_the_page_script():

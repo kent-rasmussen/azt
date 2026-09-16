@@ -307,7 +307,10 @@ class Menus(ui.Menu):
 
         if getattr(self.parent, 'is_record_task', False):
             recordmenu = ui.Menu(self.menubar, tearoff=0)
-            self.command(recordmenu, label=_("Sound Card Settings"),
+            # Matches the window's own title, renamed 2026-09-15 — a menu
+            # entry that names a different page than the one it opens is a
+            # small lie the user has to reconcile.
+            self.command(recordmenu, label=_("Sound Settings"),
                             cmd=self.parent.mikecheck)
             self.command(recordmenu, label=_("Record tone group examples"),
                             cmd=self.parent.showtonegroupexs)

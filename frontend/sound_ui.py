@@ -4,11 +4,21 @@ from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 from utilities.i18n import _
-from frontend import ui
+import threading
+
+from frontend import ui, composites
 from utilities.error_handler import notify_error as ErrorNotice
 from utilities.error_handler import notify_user
 from io_put import sound
 from utilities import file, executables, utilities as utils
+
+# ONE MICROPHONE MEASUREMENT AT A TIME, process-wide. `_new_input_card`
+# records about two seconds of audio synchronously, and under webview the
+# clicks that start it arrive on the JS bridge's thread — so without this a
+# second can begin while the first still holds the device. Two concurrent
+# PortAudio input streams on one device is a crash in C: no traceback, no
+# signal message, nothing in the log. See `_new_input_card`.
+_MEASURING = threading.Lock()
 class RecordButtonFrame(ui.Frame):
     """This is not implemented yet!!"""
     def _start(self, event=None):
@@ -208,7 +218,7 @@ class RecordButtonFrame(ui.Frame):
                     self.soundsettings.audio_card_in,
                     self.soundsettings.audio_card_out]:
             text=_("Set all sound card settings"
-                    "\n(Do|Recording|Sound Card Settings)"
+                    "\n(Do|Recording|Sound Settings)"
                     "\nand a record button will be here.")
             log.debug(text)
             ui.Label(self,text=text,borderwidth=1,
@@ -366,11 +376,20 @@ class RecordnTranscribeButtonFrame(RecordButtonFrame):
         self.show_repo_name_if_more_than=1
         super(RecordnTranscribeButtonFrame,self).__init__(parent,task,node,**kwargs)
 class SoundSettingsWindow(ui.Window):
-    def setsoundformat(self,choice,window):
+    # `window=None` ON ALL FOUR SETTERS. They were written when each setting
+    # was chosen in its own window, so each one closed that window as its
+    # last act. The chooser is now a combo box in the settings window itself
+    # (agenda/settings_prompts_one_window.md), so there is no window to
+    # close — and the setters are otherwise unchanged, which is why this is
+    # a default rather than a new signature. Kent, 2026-09-15, on the
+    # windows: "this is a no brainer, once I realized I didn't need a window
+    # to change a setting... those were from my first days in tkinter."
+    def setsoundformat(self,choice,window=None):
         self.soundsettings.sample_format=choice
         self.updatesoundformat()
         self._refresh_test_filename()   # see setsoundhz
-        window.destroy()
+        if window is not None:
+            window.destroy()
     def updatesoundformat(self):
         self.labeltext['sample_format'].set(self.soundformatlabel())
     def _describe(self, mapping, key, what):
@@ -400,10 +419,16 @@ class SoundSettingsWindow(ui.Window):
 
     def soundformatlabel(self):
         self.soundsettings.check()
-        cur=self._describe(self.soundsettings.hypothetical['sample_formats'],
-                           getattr(self.soundsettings,'sample_format',None),
-                           'format')
-        return _("Detail: {format}").format(format=cur)
+        # THE VALUE ONLY. The name is its own label beside it — see
+        # FIELD_NAMES and `_settings_field`. These four returned "Detail:
+        # int32" as one string, which meant the name vanished the moment the
+        # chooser replaced the label, leaving an unlabelled box (Kent,
+        # 2026-09-15: "you have name:value replaced. Let's keep name there,
+        # and just swap out the value label").
+        return str(self._describe(
+                    self.soundsettings.hypothetical['sample_formats'],
+                    getattr(self.soundsettings,'sample_format',None),
+                    'format'))
     def setsoundcard_byname(self,name):
         if name in self.soundsettings.cards['dict'].values():
             # choose_card, not a direct assignment: it also records WHICH
@@ -416,13 +441,36 @@ class SoundSettingsWindow(ui.Window):
             log.error(f"card {name} not available "
                         f" ({self.soundsettings.cards['dict'].keys()})")
         self._new_input_card()
-    def setsoundcardindex(self,choice,window):
+    def setsoundcardindex(self,choice,window=None):   # see setsoundformat
         # log.info("setsoundcardindex: {}".format(choice))
         self.soundsettings.choose_card('in',choice)
         self._new_input_card()
-        window.destroy()
+        if window is not None:
+            window.destroy()
     def _new_input_card(self):
         """A different microphone: re-derive the other settings and MEASURE it.
+
+        ONE MEASUREMENT AT A TIME, and the guard is not decoration. This
+        RECORDS about two seconds of audio, synchronously, on the calling
+        thread, with no wait dialog (commented out at Kent's request
+        2026-09-11, "I want to see it without") — so the window sits
+        unresponsive while it runs and the clicks that arrive meanwhile are
+        QUEUED, not discarded. Each of them then starts another measurement.
+        Under webview those arrive on the JS bridge's thread rather than a UI
+        loop, so a second can start while the first is still running: two
+        concurrent PortAudio input streams on the same device, which is a
+        crash in C with no Python traceback.
+          It became reachable today rather than being new. Changing the input
+        card used to cost a window open, a scroll, a click and a window
+        close; as of 2026-09-15 it is two clicks in the settings page itself
+        (agenda/settings_prompts_one_window.md), so "lots of clicking around
+        on the sound settings" — Kent, reporting the app vanishing — now
+        means opening and closing audio streams faster than anything before
+        could. The UI got quicker, not the audio buggier.
+          Skipped rather than queued: the user's last click is answered by
+        the measurement already in flight for the card they just chose, and
+        a backlog of measurements for cards they have moved on from is work
+        nobody wants done.
 
         Kent, 2026-09-11: "any card switch legitimately implies other settings
         change; let's offer the best the newly selected card has" — and, on the
@@ -445,6 +493,18 @@ class SoundSettingsWindow(ui.Window):
         would silently acquire a recording. Output cards do not come here at
         all; nothing about the speakers affects what gets recorded.
         """
+        if not _MEASURING.acquire(blocking=False):
+            log.info("sound settings: a microphone measurement is already "
+                     "running; skipping this one rather than opening a "
+                     "second stream on the same device")
+            return
+        try:
+            self._new_input_card_locked()
+        finally:
+            _MEASURING.release()
+
+    def _new_input_card_locked(self):
+        """The body of `_new_input_card`, under its one-at-a-time guard."""
         ss=self.soundsettings
         # The new card's best, before measuring: this is also the answer if the
         # room turns out to be too quiet to judge.
@@ -508,24 +568,23 @@ class SoundSettingsWindow(ui.Window):
         # Was the only guarded one of the four, which is why it is not the
         # one that broke. It showed `None` for an unknown card, though —
         # less useful than the index itself, which is what _describe gives.
-        cur=self._describe(self.soundsettings.cards['dict'],
-                           getattr(self.soundsettings,'audio_card_in',None),
-                           'input card')
-        return _(f"Microphone: '{cur}'")
-    def setsoundcardoutindex(self,choice,window):
+        return str(self._describe(self.soundsettings.cards['dict'],
+                              getattr(self.soundsettings,'audio_card_in',None),
+                              'input card'))  # value only; see soundformatlabel
+    def setsoundcardoutindex(self,choice,window=None):  # see setsoundformat
         # log.info("setsoundcardoutindex: {}".format(choice))
         self.soundsettings.choose_card('out',choice)
         self.updatesoundcardoutindex()
-        window.destroy()
+        if window is not None:
+            window.destroy()
     def updatesoundcardoutindex(self):
         self.labeltext['audio_card_out'].set(self.soundcardoutindexlabel())
     def soundcardoutindexlabel(self):
         self.soundsettings.check()
-        cur=self._describe(self.soundsettings.cards['dict'],
-                           getattr(self.soundsettings,'audio_card_out',None),
-                           'output card')
-        return _(f"Speakers: '{cur}'")
-    def setsoundhz(self,choice,window):
+        return str(self._describe(self.soundsettings.cards['dict'],
+                              getattr(self.soundsettings,'audio_card_out',None),
+                              'output card')) # value only; see soundformatlabel
+    def setsoundhz(self,choice,window=None):          # see setsoundformat
         self.soundsettings.fs=choice
         self.updatesoundhz()
         # THE TEST FILENAME ENCODES fs, sample_format AND the input card, so
@@ -537,57 +596,148 @@ class SoundSettingsWindow(ui.Window):
         # take (Kent 2026-09-10, the second sighting of this). The name lies
         # about the file, and every combination overwrites the last.
         self._refresh_test_filename()
-        window.destroy()
+        if window is not None:
+            window.destroy()
     def updatesoundhz(self):
         self.labeltext['fs'].set(self.soundhzlabel())
     def soundhzlabel(self):
         self.soundsettings.check()
-        # Named, like the card rows; it returned a bare "44.1khz".
-        cur=self._describe(self.soundsettings.hypothetical['fss'],
-                           getattr(self.soundsettings,'fs',None), 'rate')
-        return _("Rate: {rate}").format(rate=cur)
-    def getsoundcardindex(self,event=None):
-        log.info("Asking for input sound card...")
-        window=ui.Window(self,
-                    title=_('Select Input Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to record sound with with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['in']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundcardindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundcardoutindex(self,event=None):
-        log.info("Asking for output sound card...")
-        window=ui.Window(self,
-                title=_('Select Output Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to play sound with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['out']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundcardoutindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundformat(self,event=None):
-        log.info("Asking for audio format...")
-        window=ui.Window(self,
-                        title=_('Select Audio Format'))
-        ui.Label(window.frame, text=_('What audio format do you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
+        return str(self._describe(self.soundsettings.hypothetical['fss'],
+                              getattr(self.soundsettings,'fs',None),
+                              'rate'))        # value only; see soundformatlabel
+    # ── The options, without a window around them ────────────────────────
+    # FOUR WINDOWS BECAME FOUR COMBO BOXES. Each of these was a whole
+    # `ui.Window` — title bar, prompt label, button frame, and a setter that
+    # closed it — whose entire content was a list of values. That is a combo
+    # box inflated into a window, which is the finding
+    # `agenda/settings_prompts_one_window.md` is about, and the sound
+    # settings were its thickest instance: four windows for four values.
+    #   What survives is the part that was never about windows — WHICH
+    # options, in WHAT order, labelled HOW — returned as (value, text) so
+    # the caller can show the text and set the value. Each is re-read every
+    # time the field is opened, because three of the four depend on the
+    # currently selected card and a list captured at build time would be the
+    # previous card's (see composites._options_of).
+    #   ABSOLUTE LISTS, all four: these are what the device can do, so they
+    # are readonly. Typing here would offer the user a rate or a format the
+    # hardware will refuse.
+    def _options_card_in(self):
+        return [(card, self.soundsettings.cards['dict'][card])
+                for card in self.soundsettings.cards['in']]
+
+    # THE NAME OF EACH FIELD, kept apart from its value. These used to be
+    # baked into the four `*label()` strings; they are their own labels now,
+    # so the name stays on screen while the value is being chosen.
+    # EACH NAME CARRIES ITS OWN SCOPE, so the block needs no heading over
+    # part of it. "Recording settings" used to head the last two rows; it is
+    # gone, and the two say "Recording" themselves (Kent, 2026-09-15). That
+    # also means the four rows are one uninterrupted two-column grid, with
+    # nothing spanning it to break the alignment.
+    FIELD_NAMES = {
+        'audio_card_out': _("Speakers:"),
+        'audio_card_in': _("Microphone:"),
+        'fs': _("Recording Rate:"),
+        'sample_format': _("Recording Detail:"),
+    }
+
+    def _wrap_to_title(self, label, factor=2):
+        """Wrap `label` at `factor` times the width of the page title.
+
+        A MEASUREMENT, NOT A GUESS. Kent, 2026-09-15: "'plug in...' message
+        should wrap after twice the title length" — the title is the widest
+        deliberate thing on the page, so it is the natural yardstick, and it
+        gives a reading width that scales with the font and the translation
+        instead of a pixel count that suits neither.
+
+        Falls back to `wrap()` (the inherited wrap width) when the title
+        cannot be measured — at build time it may not have been laid out yet,
+        and under webview `winfo_reqwidth` is a round trip to a page that may
+        not have drawn. A wrong number here would be worse than the generic
+        one: it is the caveat nobody reads that ends up one character wide."""
+        width = 0
+        try:
+            title = getattr(self, 'titlelabel', None)
+            if title is not None:
+                width = int(title.winfo_reqwidth() or 0)
+        except Exception as e:
+            log.info("couldn't measure the title to wrap against ({!r})"
+                     "".format(e))
+        if width > 0:
+            try:
+                label.configure(wraplength=int(width * factor))
+                log.info("wrapped a caveat at %d (%dx the title's %d)",
+                         int(width * factor), factor, width)
+                return
+            except Exception as e:
+                log.info("couldn't wrap to the title width ({!r})".format(e))
+        # ZERO IS "NOT LAID OUT YET", NOT "NO TITLE". Under webview this is a
+        # round trip to a page that may not have drawn, and at build time it
+        # usually has not — so the first attempt falls back to the generic
+        # wrap width and the caveat is wrapped against a number nobody chose.
+        # That failure was SILENT until now: a fallback and a success looked
+        # the same in the log, which is why "did we break wrap to title?" had
+        # no answer in it (Kent, 2026-09-15).
+        #   One retry, once the page has had a moment. Not a loop: if the
+        # title cannot be measured after that, the generic wrap is a fair
+        # answer and worth leaving alone.
+        log.info("the title has no width yet; wrapping a caveat at the "
+                 "default width and re-measuring shortly")
+        label.wrap()
+        if not getattr(label, '_retried_title_wrap', False):
+            label._retried_title_wrap = True
+            try:
+                self.after(400, lambda: self._wrap_to_title(label, factor))
+            except Exception as e:
+                log.info("couldn't schedule the re-measure ({!r})".format(e))
+
+    def _settings_field(self, varname, options_fn, setter, row):
+        """One setting as a label that becomes a chooser IN PLACE.
+
+        The variable stays `self.labeltext[varname]`, which is the whole
+        reason this is a small change: every existing update path
+        (`updatesoundhz`, `_new_input_card`, `soundcheckrefresh`, …) already
+        writes the display sentence there, and goes on doing so. The
+        composite shows that variable, and hands it to the combo box while
+        the chooser is open.
+
+        NOT `clear_on_edit`. It was set while the variable held a SENTENCE
+        ("Rate: 48000"), which is not one of the offered values, so the box
+        had to be cleared or it would show something that was not on its own
+        list. The name is its own label now and the variable holds the value
+        alone — which IS an option — so clearing it would open the chooser
+        on the first item in the list rather than on the current setting
+        (Kent, 2026-09-15: "on edit the first one shows (not what was, which
+        would be better)"). Opening a chooser should show you where you are.
+
+        Mapped back BY LABEL because that is what the user picked: the combo
+        box deals in the text the row showed them (`_rate_option_label`'s
+        annotated rates, `_describe`'s friendly format names), and the
+        setters want the underlying value."""
+        var = self.labeltext[varname]
+
+        def commit(chosen):
+            for value, text in options_fn():
+                if str(text) == str(chosen):
+                    setter(value)
+                    return
+            # Not a failure worth a dialog: the label is about to be
+            # restored to the real setting anyway, so the user sees that
+            # nothing changed. The log says what was asked for.
+            log.info("sound settings: %r is not one of the offered values "
+                     "for %s; leaving it alone", chosen, varname)
+
+        return composites.choice_field(
+                    self.top, var,                 # inside the centred block
+                    lambda: [text for _value, text in options_fn()],
+                    editable=False,          # absolute list; see _options_*
+                    label=self.FIELD_NAMES.get(varname),
+                    on_commit=commit,
+                    row=row)
+    def _options_card_out(self):
+        return [(card, self.soundsettings.cards['dict'][card])
+                for card in self.soundsettings.cards['out']]
+
+    def _options_format(self):
         ss=self.soundsettings
         # WIDEST FIRST, for the same reason the rates run highest first: it is
         # what the audio layer already prefers. `default_sf`/`max_sf` both
@@ -606,27 +756,14 @@ class SoundSettingsWindow(ui.Window):
         except Exception as e:
             log.info("couldn't rank the sample formats by width ({})".format(e))
             formats=list(ss.cards['in'][ss.audio_card_in][ss.fs])
-        for sf in formats:
-            # _describe, not a bare index: this is the same unguarded lookup
-            # that kept the settings window from opening at all (see
-            # _describe), in the widget that lists the values rather than the
-            # one that shows the current one.
-            l+=[(sf, self._describe(ss.hypothetical['sample_formats'], sf,
-                                    'format'))]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundformat,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundhz(self,event=None):
-        log.info("Asking for sampling frequency...")
-        window=ui.Window(self,
-                        title=_('Select Sampling Frequency'))
-        ui.Label(window.frame, text=_('What sampling frequency you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
+        # _describe, not a bare index: this is the same unguarded lookup that
+        # kept the settings window from opening at all (see _describe), in
+        # the control that lists the values rather than the one that shows
+        # the current one.
+        return [(sf, self._describe(ss.hypothetical['sample_formats'], sf,
+                                    'format'))
+                for sf in formats]
+    def _options_fs(self):
         ss=self.soundsettings
         # HIGHEST FIRST. Kent, 2026-09-11: "rates are unintuitively ordered
         # lowest first?" — and lowest-first was my doing (it was dict order
@@ -638,14 +775,9 @@ class SoundSettingsWindow(ui.Window):
         #   Still a STABLE order, which was the reason for sorting at all: an
         # entry must not move between visits as evidence arrives (see
         # _rate_option_label).
-        for fs in sorted(ss.cards['in'][ss.audio_card_in], reverse=True):
-            l+=[(fs, self._rate_option_label(fs))]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=self.setsoundhz,
-                                    window=window,
-                                    column=0, row=1
-                                    )
+        return [(fs, self._rate_option_label(fs))
+                for fs in sorted(ss.cards['in'][ss.audio_card_in],
+                                 reverse=True)]
     def _rate_option_label(self, fs):
         """The rate, plus what has been MEASURED about it. ANNOTATE, DON'T
         WITHHOLD (Kent, 2026-09-11: "Can we show users what we believe is true
@@ -768,29 +900,58 @@ class SoundSettingsWindow(ui.Window):
         self.resetframe()
         self.scroll=ui.ScrollingFrame(self.frame, row=0, column=0)
         self.content=self.scroll.content
-        ui.Label(self.content, font='title',
+        # THE SETTINGS BLOCK IS CENTRED; ITS ROWS ARE NOT. Kent, 2026-09-15:
+        # "it would be nice to have the top 7 lines centered in a page, like
+        # the buttons are. left anchored in a frame that's centered would be
+        # fine." Those are two different alignments and they need two
+        # widgets to express: this frame is gridded `sticky=''`, which
+        # centres it in the page the way the record button and Done already
+        # are, and everything inside it is gridded west, so the names line up
+        # with each other instead of each row floating on its own centre.
+        #   Gridded into `self.content` like any other row, so the record
+        # button and the caveats below are unaffected.
+        # THE TITLE IS NOT PART OF THE BLOCK IT SITS ABOVE. Inside the frame
+        # it was the LONGEST line, so it set the frame's width — and a block
+        # centred on its own longest line puts that line's left edge where
+        # everything else begins, which reads as left-aligned rather than
+        # centred (Kent, 2026-09-15: "the title is longest, so forms the left
+        # edge"). Centred in the PAGE, above the frame, it is centred on the
+        # page and the settings block is centred independently of it.
+        self.titlelabel=ui.Label(self.content, font='title',
                 text=_(self.tasktitle),
-                row=self.content.nrows())
-        ui.Label(self.content, #font='title',
-                text=_("(click any to change)"),
-                row=self.content.nrows())
+                row=self.content.nrows(), sticky='')
+        self.top=ui.Frame(self.content, row=self.content.nrows(), sticky='')
+        # OUT FOR NOW, at Kent's request 2026-09-15 ("comment out click any to
+        # change line, for now"). Kept rather than deleted because the
+        # question it answers is real — nothing else on the page says the
+        # values are clickable — and whether it needs saying is a judgement
+        # to make with the finished layout in front of you.
+        # ui.Label(self.top,
+        #         text=_("(click any to change)"),
+        #         row=self.top.nrows(), columnspan=2, sticky='')
         self.labeltext={}
-        # Devices first, then the recording numbers under a heading. Every
-        # row names itself — the rate and format used to show a bare value.
+        self.fields={}
+        # Devices first, then the recording numbers. Every row names itself —
+        # the rate and format used to show a bare value, and until
+        # 2026-09-15 the last two were introduced by a "Recording settings"
+        # heading instead. They say "Recording" themselves now, which keeps
+        # the four rows one uninterrupted two-column grid: a heading spanning
+        # the pair is a row whose width has nothing to do with the names, and
+        # it broke the column alignment it sat in the middle of.
         # Step 6, agenda/honest_sound_settings.md; layout is Kent's.
-        for varname, cmd, heading in [
-            ('audio_card_out', self.getsoundcardoutindex, None),
-            ('audio_card_in', self.getsoundcardindex, None),
-            ('fs', self.getsoundhz, _("Recording settings")),
-            ('sample_format', self.getsoundformat, None),
+        for varname, options_fn, setter in [
+            ('audio_card_out', self._options_card_out,
+             self.setsoundcardoutindex),
+            ('audio_card_in', self._options_card_in,
+             self.setsoundcardindex),
+            ('fs', self._options_fs, self.setsoundhz),
+            ('sample_format', self._options_format,
+             self.setsoundformat),
                                                     ]:
-            if heading:
-                ui.Label(self.content,text=heading,font='instructions',
-                            row=self.content.nrows())
             self.labeltext[varname]=ui.StringVar()
-            l=ui.Label(self.content,text=self.labeltext[varname],
-                        row=self.content.nrows())
-            l.bind('<ButtonRelease-1>',cmd) #getattr(self,str(cmd)))
+            self.fields[varname]=self._settings_field(
+                        varname, options_fn, setter,
+                        row=self.top.nrows())
         log.info("Done setting up labels")
         self.updatesoundcard()
         self.updatesoundhz()
@@ -808,13 +969,17 @@ class SoundSettingsWindow(ui.Window):
                 text=l,font='read',
                 row=self.content.nrows(),
                 sticky='')
-        caveat.wrap()
+        self._wrap_to_title(caveat)
         l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
             "to open in Praat.").format(play)
         caveat3=ui.Label(self.content,
                 text=l,font='default',
                 row=self.content.nrows())
-        caveat3.wrap()
+        # The same yardstick as the caveat above. This is the label the fit
+        # kept reporting as the widest thing on the page — 1262px, one
+        # unwrapped line (Kent's log, 2026-09-15), which is what was making
+        # the window wider than anything on it needed.
+        self._wrap_to_title(caveat3)
         bd=ui.Button(self.content,
                     text=_("Done"),
                     cmd=self.soundcheckrefreshdone,
@@ -873,7 +1038,10 @@ class SoundSettingsWindow(ui.Window):
         except Exception as e:
             log.info("couldn't bring the task window back ({})".format(e))
         return super().on_quit(**kwargs)
-    tasktitle = "Sound Card Settings"
+    # "Sound Settings", not "Sound Card Settings" (Kent, 2026-09-15). The page
+    # is about how recording sounds — rate, detail, which microphone and
+    # speakers — and only two of those four are cards.
+    tasktitle = "Sound Settings"
     def __init__(self,task,**kwargs):
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow
         self.program=task.program #needed to find praat
