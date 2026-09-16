@@ -440,6 +440,51 @@ def test_a_known_value_still_gets_its_friendly_name():
         sound_ui.SoundSettingsWindow.soundcardoutindexlabel(stand_in)
 
 
+def test_a_picker_that_hands_back_an_event_still_reports_the_value():
+    """The two backends hand a Combobox's command different things.
+
+    webview calls it with the picked string; tkinter binds it to
+    `<<ComboboxSelected>>`, so it arrives as an Event. Trusting the argument
+    put "<Event ...>" in the field where the rate belongs, and then reading
+    the textvariable instead was one selection BEHIND — ttk fires the event
+    before that write lands (Kent, 2026-09-15: "showing real values now, but
+    not the ones selected"). The widget's own `get()` is the only thing that
+    is current at event time."""
+    from frontend import composites
+    from frontend import ui_variables
+    var = ui_variables.StringVar(value='')
+    committed = []
+    holder = {'c': types.SimpleNamespace(
+                    commit=lambda: committed.append(var.get()))}
+    picked = composites._committing(None, holder, var)
+
+    var.set('44.1khz')      # the STALE value ttk has not yet overwritten
+    combo = types.SimpleNamespace(get=lambda: '48khz')
+    picked(types.SimpleNamespace(widget=combo, x=1, y=2))
+    assert committed == ['48khz'], \
+        'the pick must come from the widget, not the lagging variable'
+    assert var.get() == '48khz'
+
+    picked('96khz')                  # webview's shape: the value itself
+    assert var.get() == '96khz'
+    assert committed[-1] == '96khz'
+
+
+def test_an_event_from_a_picker_with_nothing_to_ask_is_survivable():
+    """Not every backend's event carries a widget with a `get()`. The field
+    must not raise or blank itself; leaving the value alone is the right
+    answer when there is nothing to read."""
+    from frontend import composites
+    from frontend import ui_variables
+    var = ui_variables.StringVar(value='48khz')
+    committed = []
+    holder = {'c': types.SimpleNamespace(
+                    commit=lambda: committed.append(var.get()))}
+    composites._committing(None, holder, var)(
+        types.SimpleNamespace(x=1, y=2))          # no .widget at all
+    assert committed == ['48khz']
+
+
 VARNAMES = ['fs', 'sample_format', 'audio_card_in', 'audio_card_out']
 
 

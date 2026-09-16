@@ -8,6 +8,7 @@ import collections
 import re
 import datetime
 from frontend import ui
+from frontend import composites
 from frontend import visibility
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns, executables
@@ -650,6 +651,91 @@ class StatusFrame(ui.Frame):
             l.bind('<ButtonRelease-1>',kwargs.get('cmd'))
         if kwargs.get('tt'):
             ttl=ui.ToolTip(l,kwargs.get('tt'))
+        return l
+
+    def prosefield(self, key, prefix, var, options_fn, setter, tt,
+                   parent=None, editable=False, value_fn=None):
+        """A prose line whose LAST WORD is the setting, changed in place.
+
+        "Studying Kent's English" is a sentence with a value in it, and
+        clicking it used to raise a window — one per language question, five
+        of them, each a title bar and a list wrapped around a single choice
+        (agenda/settings_prompts_one_window.md). The sentence now ends in a
+        click-to-edit value: the chooser opens where the word is.
+
+        NO RESERVED WIDTH and the prefix anchored WEST, unlike the settings
+        page. These are sentences, not a column of names — "Using" must sit
+        against the language it names — and the status frame is left-aligned,
+        so a chooser wider than the word it replaces grows rightward into
+        empty space instead of shifting anything.
+
+        `options_fn` returns the app's own `{'code','name'}` dicts, so the
+        user picks a NAME and the setter is given the CODE it belongs to —
+        the same split `_option_dialog` made, without the window.
+        """
+        # A FRAME OF ITS OWN PER PAIR — the opposite of the settings page,
+        # and for the opposite reason. There, names and values share the
+        # parent's columns so they line up ACROSS rows. Here they must not:
+        # the prose lines sit in the same grid as "Using second form field
+        # ‘Plural’ (Noun)" and "Parse with confirmation at Two fields, which
+        # don't parse", so a shared column 0 is as wide as the longest of
+        # those and "Using" ended up an inch from the language it names
+        # (Kent, 2026-09-15: "excess spacing"). Inside its own frame a pair
+        # is measured only against itself, and the words sit together.
+        holder = ui.Frame(parent if parent is not None else self.proseframe,
+                          row=self.irow,
+                          column=(parent.ncolumns() if parent is not None
+                                  else self.opts['labelcolumn']),
+                          sticky='w')
+        field = composites.choice_field(
+                    holder, var,
+                    lambda: [o['name'] for o in options_fn()],
+                    editable=editable,
+                    label=prefix,
+                    label_anchor='w',
+                    # NO RESERVED WIDTH. That is the settings page's device
+                    # for stopping a column resizing when a chooser opens;
+                    # here it would put 25 characters of nothing between
+                    # "Using" and the language it names. A prose line is
+                    # left-aligned in a frame of its own, so a chooser wider
+                    # than the word it replaces grows rightward into empty
+                    # space and shifts nothing.
+                    width=None,
+                    font='report',
+                    on_commit=lambda chosen: self._setlang(chosen, options_fn,
+                                                           setter, value_fn,
+                                                           var),
+                    row=0, column=0)
+        for w in (field.namelabel, field.shown):
+            if w is not None:
+                ui.ToolTip(w, tt)
+        self.labels[key] = {'text': var, 'field': field}
+        return field
+
+    def _setlang(self, chosen, options_fn, setter, value_fn=None, var=None):
+        """Map the name the user picked back to the code the setter wants,
+        then show what the setting ACTUALLY became.
+
+        The two are not always the same word, and the second gloss language
+        is the case that proves it: picking "just use Kent's English" means
+        NO second language, so the line should read "and only" — but the
+        field was left showing the option's own label, because nothing
+        re-read the setting after the setter ran (Kent, 2026-09-15:
+        "glosslang2 behavior not consistent (should say 'only' if 'just
+        use ...' selected)").
+        """
+        for opt in options_fn():
+            if str(opt['name']) == str(chosen):
+                setter(opt['code'])
+                break
+        else:
+            log.info("%r is not one of the languages offered; leaving it "
+                     "alone", chosen)
+        if value_fn is not None and var is not None:
+            try:
+                var.set(value_fn())
+            except Exception as e:
+                log.info("couldn't re-read the language setting (%r)", e)
     def button(self,text,fn,**kwargs): #=opts['labelcolumn']
         """cmd overrides the standard button command system."""
         ttt=kwargs.pop('tttext',None)
@@ -668,49 +754,128 @@ class StatusFrame(ui.Frame):
         if hasattr(self,'proseframe'):
             self.proseframe.destroy()
         self.proseframe=ui.Frame(self,row=0,column=0,sticky='nw')
+    # ── The language lines: the value is what you click ──────────────────
+    # Each of these was a sentence bound to a handler that raised a WINDOW —
+    # five windows for five language questions, each a title bar and a list
+    # around one choice. The sentence now ends in a click-to-edit value, so
+    # the chooser opens where the word is
+    # (agenda/settings_prompts_one_window.md, 2026-09-15).
+    #   `…label()` still returns the whole sentence: the log and the stored
+    # `*_label` UI variables use it, and so does anything that wants the line
+    # as prose. `…value()` is the half that is now editable.
+    def interfacelangvalue(self):
+        return str(self.program.settings.languagenames[
+                                        self.program.interfacelang()])
+
+    def interfacelangoptions(self):
+        return [{'code': i,
+                 'name': self.program.settings.languagenames[i]}
+                for i in self.program.interfacelangs]
+
     def updateinterfacelang(self):
         if 'interfacelang' not in self.labels:
             return
-        self.labels['interfacelang']['text'].set(self.interfacelanglabel())
+        self.labels['interfacelang']['text'].set(self.interfacelangvalue())
     def interfacelanglabel(self):
         # for l in self.program.taskchooser.interfacelangs:
         #     if l['code']==self.program.interfacelang():
         #         interfacelanguagename=l['name']
         return (_("Using {lang}").format(lang=self.program.settings.languagenames[self.program.interfacelang()]))
     def interfacelangline(self):
-        self.labels['interfacelang']={
-                        'text':self.program.settings.get_ui_var('interfacelang_label', self.interfacelanglabel()),
-                        'columnplus':1,
-                        'cmd':self.program.ui_settings.getinterfacelang,
-                        'tt':_("change the interface language")}
-        self.proselabel(**self.labels['interfacelang'])
+        self.prosefield('interfacelang', _("Using"),
+                        self.program.settings.get_ui_var(
+                            'interfacelang_label', self.interfacelangvalue()),
+                        self.interfacelangoptions,
+                        self.program.settings.interfacelangwrapper,
+                        _("change the interface language"),
+                        value_fn=self.interfacelangvalue)
+    def analangvalue(self):
+        return str(self.program.settings.languagenames[
+                                        self.program.params.analang()])
+
+    def analangoptions(self):
+        return [{'code': lang,
+                 'name': self.program.settings.languagenames[lang]}
+                for lang in (self.program.db.analangs or [])]
+
     def updateanalang(self):
         if 'analangline' not in self.labels:
             return
-        self.labels['analangline']['text'].set(self.analanglabel())
+        self.labels['analangline']['text'].set(self.analangvalue())
     def analanglabel(self):
         analang=self.program.params.analang()
         langname=self.program.settings.languagenames[analang]
         return (_("Studying {lang}").format(lang=langname))
     def analangline(self):
         self.newrow()
-        if self.program.params.analang() not in self.program.settings.languagenames:
-            cmd=self.program.ui_settings.getanalangname
-            tt=_("Set analysis language Name")
+        var=self.program.settings.get_ui_var('analang_label',
+                                             self.analangvalue())
+        # ONE LINE, TWO KINDS, decided by the DATA. With two or more analysis
+        # languages in the file this is a choice between them; with one there
+        # is nothing to choose, and what the user wants is to NAME it — which
+        # is what `getanalang` did by redirecting to `getanalangname`
+        # (ui_shell.py:3837, "The user probably wants to change display").
+        # The old line picked its handler by whether the language had a name,
+        # and then that handler picked again by the count, so the name test
+        # only ever decided the tooltip.
+        if len(self.program.db.analangs or []) > 1:
+            self.prosefield('analangline', _("Studying"), var,
+                            self.analangoptions,
+                            self.program.settings.setanalang,
+                            _("Change analysis language"),
+                            value_fn=self.analangvalue)
         else:
-            cmd=self.program.ui_settings.getanalang
-            tt=_("Change analysis language")
-        self.labels['analangline']={
-                                'text':self.program.settings.get_ui_var('analang_label', self.analanglabel()),
-                                'columnplus':1,
-                                'cmd':cmd,
-                                'tt':tt}
-        self.proselabel(**self.labels['analangline'])
+            # ITS OWN FRAME, like `prosefield`'s — straight into `proseframe`
+            # it shared columns with "Using second form field ‘Plural’
+            # (Noun)" and sat an inch from its own value (Kent, 2026-09-15:
+            # the "Studying" line was the one still spaced out after the
+            # others came right).
+            holder=ui.Frame(self.proseframe, row=self.irow,
+                            column=self.opts['labelcolumn'], sticky='w')
+            self.labels['analangline']={'text':var,
+                    'field':composites.entry_field(
+                        holder, var,
+                        label=_("Studying"), label_anchor='w',
+                        font='report',
+                        on_commit=self.program.ui_settings.setanalangname,
+                        row=0, column=0)}
+            ui.ToolTip(self.labels['analangline']['field'].shown,
+                       _("Set analysis language Name"))
+    def glosslangvalue(self):
+        return str(self.program.settings.languagenames[
+                                self.program.settings.glosslangs.lang1()])
+
+    def glosslangvalue2(self):
+        if len(self.program.settings.glosslangs) > 1:
+            return str(self.program.settings.languagenames[
+                                self.program.settings.glosslangs.lang2()])
+        return _("only")
+
+    def glosslangoptions(self):
+        return [{'code': lang,
+                 'name': self.program.settings.languagenames[lang]}
+                for lang in set(self.program.db.glosslangs)
+                            | set(self.program.settings.glosslangs[1:])]
+
+    def glosslangoptions2(self):
+        langs=[{'code': lang,
+                'name': self.program.settings.languagenames[lang]}
+               for lang in set(self.program.db.glosslangs)
+                           | set(self.program.settings.glosslangs[:1])
+               if lang != self.program.settings.glosslangs[0]]
+        # "just use X" is how you say NO SECOND LANGUAGE — it has to be on
+        # the list, because a list you cannot decline is one you cannot undo.
+        langs.append({'code': None,
+                      'name': _('just use {name}').format(
+                          name=self.program.settings.languagenames[
+                              self.program.settings.glosslangs.lang1()])})
+        return langs
+
     def updateglosslangs(self):
         if 'glosslang' not in self.labels:
             return
-        self.labels['glosslang']['text'].set(self.glosslanglabel())
-        self.labels['glosslang2']['text'].set(self.glosslanglabel2())
+        self.labels['glosslang']['text'].set(self.glosslangvalue())
+        self.labels['glosslang2']['text'].set(self.glosslangvalue2())
     def glosslanglabel(self):
         lang=self.program.settings.glosslangs.lang1()
         return (_("Meanings in {lang}").format(lang=self.program.settings.languagenames[lang]))
@@ -724,22 +889,26 @@ class StatusFrame(ui.Frame):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w') #3 cols is the width of frame
-        self.labels['glosslang']={'text':self.program.settings.get_ui_var('glosslang_label', self.glosslanglabel()),
-                                'columnplus':1,
-                                # 'rowplus':1,
-                                'cmd':self.program.ui_settings.getglosslang,
-                                'parent':line,
-                                'tt':_("change this gloss language")
-                                    if len(self.program.settings.glosslangs) >1
-                                    else _("change this glosslang")
-                                    }
-        self.proselabel(**self.labels['glosslang'])
-        self.labels['glosslang2']={'text':self.program.settings.get_ui_var('glosslang2_label', self.glosslanglabel2()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getglosslang2,
-                                'parent':line,
-                                'tt':_("add another gloss language")}
-        self.proselabel(**self.labels['glosslang2'])
+        # BOTH GLOSS LANGUAGES ON ONE LINE, as before: "Meanings in X and Y".
+        # `parent=line` puts each pair in the next free columns of that one
+        # row, so the four widgets (two prefixes, two values) read as a
+        # sentence rather than stacking.
+        self.prosefield('glosslang', _("Meanings in"),
+                        self.program.settings.get_ui_var(
+                            'glosslang_label', self.glosslangvalue()),
+                        self.glosslangoptions,
+                        self.program.settings.setglosslang,
+                        _("change this gloss language")
+                            if len(self.program.settings.glosslangs) > 1
+                            else _("change this glosslang"),
+                        parent=line, value_fn=self.glosslangvalue)
+        self.prosefield('glosslang2', _("and"),
+                        self.program.settings.get_ui_var(
+                            'glosslang2_label', self.glosslangvalue2()),
+                        self.glosslangoptions2,
+                        self.program.settings.setglosslang2,
+                        _("add another gloss language"),
+                        parent=line, value_fn=self.glosslangvalue2)
     def updatefields(self):
         for ps in [self.program.settings.nominalps, self.program.settings.verbalps]:
             if 'fields'+ps in self.labels:
@@ -3799,22 +3968,39 @@ class Settings(object):
         return (getattr(task,'ui',None) if task else None) \
                 or getattr(self.program,'mainwindow',None) \
                 or self.program.tk_root
+    def setanalangname(self, name):
+        """Name the analysis language, or clear the name if given nothing.
+
+        EXTRACTED FROM THE DIALOG 2026-09-15 so the status line can call it
+        directly. `getanalangname` still exists and still works — it now
+        submits through this — but the common route is the line itself:
+        "Studying <name>", where the name is a text field opened in place
+        (agenda/settings_prompts_one_window.md).
+
+        Clearing is deliberate and was already the dialog's behaviour: an
+        empty answer deletes both the display name and the stored one, and
+        `langnames()` then re-derives the fallback ("Language with code
+        [xyz]"), so there is no way to end up with a language named "".
+        """
+        analang=self.program.params.analang()
+        if name:
+            self.program.settings.languagenames[analang]=name
+            #This stores to file:
+            setnesteddictobjectval(self.program.settings,'adnlangnames',
+                                   name,analang)
+        else:
+            if analang in self.program.settings.languagenames:
+                del self.program.settings.languagenames[analang]
+            if analang in self.program.settings.adnlangnames:
+                del self.program.settings.adnlangnames[analang]
+            self.program.settings.langnames([analang]) #refreshes w/above
+        self.program.settings.storesettingsfile()
+        self.program.mainwindow.status.updateanalang() #ui
+
     def getanalangname(self,event=None):
         log.info(_("this sets the language name"))
         def submit(event=None):
-            if namevar.get():
-                self.program.settings.languagenames[self.program.params.analang()]=namevar.get()
-                #This stores to file:
-                setnesteddictobjectval(self.program.settings,'adnlangnames',
-                                    namevar.get(),self.program.params.analang())
-            else:
-                if self.program.params.analang() in self.program.settings.languagenames:
-                    del self.program.settings.languagenames[self.program.params.analang()]
-                if self.program.params.analang() in self.program.settings.adnlangnames:
-                    del self.program.settings.adnlangnames[self.program.params.analang()]
-                self.program.settings.langnames([self.program.params.analang()]) #refreshes w/above
-            self.program.settings.storesettingsfile()
-            self.program.mainwindow.status.updateanalang() #ui
+            self.setanalangname(namevar.get())
             window.destroy()
         window=ui.Window(self.dialogparent(),title=_('Enter Analysis Language Name'))
         curname=self.program.settings.languagenames[self.program.params.analang()]

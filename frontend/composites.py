@@ -136,7 +136,7 @@ class ClickToEdit:
     def __init__(self, parent, var, editor, row=0, column=0, label=None,
                  clear_on_edit=False, on_commit=None, rebuild=False,
                  font='default', ok=_("OK"), show_ok=True, width=None,
-                 **gridkwargs):
+                 label_anchor='e', **gridkwargs):
         self.var = var
         self._editor = editor
         self._clear_on_edit = clear_on_edit
@@ -200,9 +200,16 @@ class ClickToEdit:
             # invisible (Kent, 2026-09-15: "right justify name column").
             # `anchor='e'` is where the TEXT sits inside the label, which is
             # the half that was missing.
-            self.namelabel = ui.Label(parent, text=label, row=row,
-                                      column=col, sticky='e', anchor='e',
-                                      **size)
+            #   `label_anchor` because not every caller wants a COLUMN. A
+            # settings page wants names right-aligned against the colons; a
+            # prose line ("Studying Kent's English") wants the words to run
+            # on, so it passes 'w' and no `width`, and the pair reads as a
+            # sentence with the last word clickable.
+            #   The SAME `font` as the value, which is the whole of what made
+            # the two sit on a line together (see above).
+            self.namelabel = ui.Label(parent, text=label, font=font, row=row,
+                                      column=col, sticky=label_anchor,
+                                      anchor=label_anchor, **size)
             col += 1
         # THE VALUE LABEL AND THE EDITOR SHARE ONE CELL. That is what makes
         # the swap happen in place instead of the row growing: grid_remove()
@@ -383,8 +390,40 @@ def _committing(command, holder, var):
     no finished object to close over yet. By the time a user can click an
     option there certainly is."""
     def picked(choice=None, **kw):
-        if choice is not None:
+        # THE TWO BACKENDS HAND THIS CALLBACK DIFFERENT THINGS, and only one
+        # of them is a value. `ui_tkinter.Combobox` binds the command
+        # straight to `<<ComboboxSelected>>` (:3625), so it arrives as a
+        # tkinter Event; `ui_webview` calls it with the picked string. Taking
+        # the argument on trust put "<Event ...>" in the field where the
+        # sample rate belongs (Kent, 2026-09-15: "sound settings broke in
+        # tkinter (event shown, rather than value, after selection)").
+        #   So: use the argument only if it IS a value. When it is not, the
+        # control's own `textvariable` already holds the pick — ttk writes it
+        # before generating the event — and that variable is `var`, which is
+        # why this can recover rather than guess.
+        #   (The wider disagreement is its own agenda item: "Button command
+        # arity: tkinter and webview disagree, one is wrong".)
+        if isinstance(choice, (str, int, float)) and str(choice) != '':
             var.set(str(choice))
+        else:
+            # ASK THE WIDGET, NOT THE VARIABLE. Reading `var` here was one
+            # selection behind: ttk generates `<<ComboboxSelected>>` before
+            # the textvariable write has landed, so the variable still held
+            # the PREVIOUS pick — "showing real values now, but not the ones
+            # selected" (Kent, 2026-09-15). The event carries the widget, and
+            # the widget's own `get()` is current at event time, which is the
+            # only thing here that is.
+            widget = getattr(choice, 'widget', None)
+            getter = getattr(widget, 'get', None)
+            if callable(getter):
+                try:
+                    picked_value = getter()
+                except Exception as e:
+                    log.info("click-to-edit: could not read the picker (%r)",
+                             e)
+                else:
+                    if str(picked_value) != '':
+                        var.set(str(picked_value))
         if command is not None:
             command(choice)
         c = holder.get('c')
@@ -419,16 +458,23 @@ def choice_field(parent, var, options, editable=False, command=None,
     #   `_EDITOR_CHROME` is that difference, in characters, rounded up. It
     # does not have to be exact — only big enough that the editor stays
     # inside the space the label has already claimed.
+    #   `width=None` MEANS "DO NOT RESERVE" — prose needs that. A settings
+    # page is a column and wants every row the same width; a sentence
+    # ("Studying Kent's English") wants the words against each other, and
+    # reserving 25 characters for each half put an inch of nothing between
+    # them and wrapped the longer values (Kent, 2026-09-15: "excess spacing",
+    # twice — the per-pair frame was not the whole of it).
     width = kwargs.pop('width', 20)
-    kwargs['width'] = width + _EDITOR_CHROME
+    if width is not None:
+        kwargs['width'] = width + _EDITOR_CHROME
 
     def _editor(box):
+        size = {} if width is None else {'width': width}
         return ui.Combobox(box, textvariable=var,
                            optionlist=_options_of(options),
                            state='normal' if editable else 'readonly',
                            command=_committing(command, holder, var),
-                           width=width,
-                           row=0, column=0)
+                           row=0, column=0, **size)
     kwargs.setdefault('rebuild', True)
     # An OK button only where typing is possible — a readonly list is
     # answered by the pick itself. See `_committing` and `ClickToEdit`.
