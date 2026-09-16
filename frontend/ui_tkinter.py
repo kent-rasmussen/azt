@@ -1376,6 +1376,15 @@ class UI():
                 pass
         self.withdrawn=kwargs.pop("withdrawn",True if isinstance(self,Root)
                                                     else False)
+        # KIOSK AT CREATION, as a kwarg, because that is what the webview
+        # backend needs and a call site may not say different things to the
+        # two backends. There it becomes `create_window(fullscreen=True)`,
+        # so the window is never seen at another size; here `-fullscreen` is
+        # an attribute that can be set whenever, so the kwarg is simply
+        # honoured at the end of construction and means the same thing.
+        #   Popped before tkinter sees kwargs either way: an unknown option
+        # reaches Tk as `-kiosk` and raises TclError, i.e. no window.
+        self.kiosk=kwargs.pop("kiosk",False)
         kwargs=self.pre_tk_init(**kwargs)
         if hasattr(self,'parent') and self.parent:
             super().__init__(self.parent, *args, **kwargs)
@@ -1383,6 +1392,12 @@ class UI():
             super().__init__(*args, **kwargs)
         if self.withdrawn:
             self.withdraw()  # withdraw immediately, before post_tk_init work
+        if self.kiosk:
+            try:
+                self.takekioskscreen()
+            except Exception as e:
+                log.info("kiosk=True at creation failed for %s: %s",
+                            type(self).__name__, e)
         # self.post_tk_init()
         self.waitcancelled=False
 class Exitable():

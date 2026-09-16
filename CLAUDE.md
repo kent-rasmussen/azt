@@ -34,8 +34,16 @@ python main.py --webview --no-kiosk        # DON'T make task windows fullscreen.
                                            # the intended default (task windows fill the
                                            # screen so users aren't distracted); this is
                                            # for debugging layout.
-python main.py --webview --webview-hidden  # re-test creating windows hidden (known broken
-                                           # on GTK: show() never maps them)
+python main.py --webview --webview-hidden  # re-test creating windows hidden. STILL BROKEN
+                                           # on WebKitGTK, re-confirmed 2026-09-16 on
+                                           # this pywebview: the windows are created
+                                           # hidden as asked, every show() is requested,
+                                           # and NOTHING appears (Kent: "Nope."). Don't
+                                           # re-test without a pywebview upgrade to
+                                           # justify it — and note the log cannot answer
+                                           # this, since our `_wv_visible` records what
+                                           # we asked for, not what the compositor
+                                           # mapped. It takes eyes.
 
 # The devtools console: OFF unless asked for. Nothing else turns it on — not
 # dev settings, not the engine. Known to segfault on Qt (show_inspector GCs
@@ -59,6 +67,48 @@ python main.py --webview --engine=qt --qt-platform=xcb    # or =wayland
 # the thing to re-measure once drag animation exists (the cost is per-frame,
 # and nothing yet draws frames continuously).
 python main.py --webview --dmabuf
+
+# WINDOW-SIZING DIAGNOSTICS (agenda/webview_window_sizing.md). On Wayland a
+# task window loses the size the fit gave it when focus moves elsewhere; the
+# app no longer argues with that (the page scrolls), so these exist to
+# measure it, not to change it.
+python main.py --webview --keep-window-size   # put the size back, as it used to
+python main.py --webview --window-size=640x480  # create windows at some other
+                                              # size, to separate "reverts to
+                                              # what it was created at" from
+                                              # "clamps to a number of its own"
+# Report EVERY resize sample (the normal report is debounced, so it shows
+# where the window settled and nothing of how it got there), each with the
+# native window's FRAME and CLIENT boxes and the gap between them. That pair
+# is the point: the page can see only the client area, so a client box that
+# shrinks is equally consistent with the frame shrinking and with the
+# decorations growing into a frame that stayed put — and those have opposite
+# fixes. One line per frame of a drag, so it is a switch.
+python main.py --webview --log-resizes
+# That trace found it, 2026-09-16: a fitted window's frame fell to EXACTLY
+# the size the fit had asked for as its CLIENT area, leaving the page one
+# decoration (52x89 here) short. `resize()` is in client units; the default
+# size and the MIN_SIZE hint that make a size survive a configure are in
+# FRAME units, and were being given the client figure. Both pins now add the
+# inset, read from the toolkit per window (`_inset_of`). This switch pins in
+# client units again, to measure against.
+python main.py --webview --no-frame-inset
+
+# Report the ANCESTOR CHAIN of every scroller on a page: authored height,
+# max-height, grid-template-rows, align-content, client/scroll heights. A
+# scroller bounds itself only when every ancestor up to the viewport has a
+# definite height — a percentage of `auto` is not a constraint, and an `fr`
+# track with no free space is just `auto` — so the double scroll says the
+# chain broke without saying where. Read `client` from the top down: where it
+# stops matching the viewport, the height stopped propagating.
+python main.py --webview --log-heights
+
+# A fullscreen page shows its OWN "Please Wait" instead of raising the shared
+# wait dialog over itself: one surface that says what is happening and then
+# becomes the page. `--no-page-wait` restores the separate dialog, for
+# comparison. A cancellable wait always keeps the dialog — that is where the
+# Cancel button is.
+python main.py --webview --no-page-wait
 
 # Install dependencies (CPU-only torch)
 pip install -r requirements.txt

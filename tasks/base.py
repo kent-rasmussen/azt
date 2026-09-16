@@ -75,8 +75,91 @@ class TaskBase:
         """
         pass
 
+    # ── Being finished, as a FACT rather than an inference ────────────
+    # WHY THIS EXISTS. Long builds ask "should I still be doing this?" and
+    # the answer used to be inferred from the WINDOW —
+    # `Senses._window_is_there()`, i.e. `winfo_exists()`. That was a reliable
+    # proxy only because tkinter's `on_quit` ends in `destroy()`. The webview
+    # backend HIDES windows instead (see `_close_native_window`: freeing a
+    # pywebview window at the wrong moment crashes Qt, and this app reuses
+    # windows anyway), so a closed task's window is alive and the proxy says
+    # "carry on".
+    #
+    # AND THE LOOPS ARE NOT INTERRUPTED ANY MORE. `lexicon.py:2101`'s comment
+    # describes the tkinter world exactly: "`waiting()` + `waitprogress`
+    # drain the event loop, so the click is serviced HERE". One event loop,
+    # one flow, so the window died mid-iteration and the guard caught it.
+    # Under webview every page event arrives on its OWN THREAD
+    # (`webview/util.py:_call`, visible in every faulthandler dump), so
+    # clicking Tasks does not interrupt the affix loop — it runs beside it.
+    # Two task flows, concurrently, neither aware of the other. That is what
+    # Kent saw as the parser still working after an unrelated task had
+    # started (2026-09-16): "the parser work shouldn't be continuing AFTER
+    # another unrelated task is already started. That wait shouldn't appear
+    # at all."
+    #
+    # SO ASK THE TASK, NOT THE WINDOW. A task that has been closed knows it;
+    # nothing has to be deduced. `program.task is self` is already the
+    # codebase's idiom for the same question — see `hide_chooser` — and a
+    # FLAG needs no handle, which answers this item's own objection to
+    # close-time cancellation ("half 1 can only cancel work whose handle the
+    # window holds"): a synchronous build ten frames down can read a flag.
+    #
+    # See agenda/webview_flows_run_concurrently.md.
+    _closed = False
+
+    def still_wanted(self):
+        """Should work belonging to this task keep going?
+
+        False once this task has been closed, or once the program has moved
+        on to another one. Never raises: a build asking this question is
+        mid-flight, and an exception here would replace the fault it exists
+        to prevent."""
+        if self._closed:
+            return False
+        try:
+            live = getattr(self.program, 'task', None)
+            # `None` means the chooser cleared it (`chooser.py:163`) and no
+            # task is live — which is also a reason to stop. A DIFFERENT
+            # task means the user moved on.
+            if live is not None and live is not self:
+                return False
+        except Exception:
+            return True
+        return True
+
+    def _on_close(self, why=''):
+        """Record that this task is finished, and drop what it is holding.
+
+        Called from `on_quit` and from `_dismiss_unshown` — the two ways a
+        task ends — so a task cannot be closed without its work being told.
+        Concrete tasks override to add their own teardown and should call
+        `super()._on_close(why)` first, so the flag is set even if their own
+        cleanup raises.
+
+        Idempotent: both exits can run for one task, and a second close must
+        not undo the first or log twice."""
+        if self._closed:
+            return
+        self._closed = True
+        log.info("task %s closed%s — work belonging to it should stop",
+                 type(self).__name__, ' ({})'.format(why) if why else '')
+        # WHAT THE TASK ITSELF HOLDS. `cancel_drive_work` is the one handle
+        # the window has, and tkinter's `on_quit` has always called it
+        # (`ui_tkinter.py:1420`); anything else a task holds belongs in its
+        # own override.
+        for attr in ('cancel_drive_work',):
+            fn = getattr(self, attr, None)
+            if callable(fn):
+                try:
+                    fn()
+                except Exception as e:
+                    log.info("task %s: %s failed on close (%r)",
+                             type(self).__name__, attr, e)
+
     def on_quit(self, **kwargs):
         """Delegate to the window's on_quit (ui.Window)."""
+        self._on_close('on_quit')
         self.ui.waitdone()
         self.ui.on_quit(**kwargs)
 
@@ -85,6 +168,10 @@ class TaskBase:
         the parent chooser or quitting to root (both of which on_quit would do).
         Used when the open-time syllable-profile offer sends the user to a
         different task: that task is already open, so this board must just go."""
+        # THE OTHER WAY A TASK ENDS, so it records the same fact. Without
+        # this a task dismissed by the profile offer would leave its loops
+        # believing they were still wanted. See `_on_close`.
+        self._on_close('dismissed unshown')
         try:
             self.ui.exitFlag.true()
             self.ui.cleanup()

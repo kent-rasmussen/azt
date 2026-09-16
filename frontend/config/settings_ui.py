@@ -304,14 +304,23 @@ class SettingsUI(object):
             self.program.mainwindow.status.maybeboard()
         if window:
             window.destroy()
-    def setanalang(self,choice,window):
+    # `window=None` ON EVERY SETTER THAT A LINE CAN NOW SET IN PLACE. These
+    # were written when each value was chosen in its own window, so each one
+    # closed that window as its last act — and calling them with one argument
+    # raised TypeError inside `on_commit`, which `ClickToEdit.commit` catches
+    # and logs. So the value changed on screen and nothing was saved: the
+    # second gloss language went on reading "just use Kent's English" because
+    # `setglosslang2` had never run (Kent, 2026-09-15). A caught exception is
+    # exactly as invisible as a dropped option.
+    def setanalang(self,choice,window=None):
         """This is only used when more than one analang exists in the database"""
         log.info(_("Setting Analysis Language to {lang}").format(lang=choice))
         self.program.params.analang(choice)
         self.program.mainwindow.status.updateanalang()
         self.attrschanged.append('analang')
         self.refreshattributechanges()
-        window.destroy()
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
         self.program.restart()
     def setgroup(self,choice,window):
         log.debug(_("setting group: {group}").format(group=choice))
@@ -324,7 +333,8 @@ class SettingsUI(object):
                 hasattr(self.program.task,'menu') and
                         self.program.task.menu):
             self.program.task.menubar.redoadvanced()
-        window.destroy()
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
         log.debug(_("group {group} set: {val}").format(group=choice, val=self.program.status.group()))
     def setgroup_comparison(self,choice,window):
         """This doesn't show up on the status window"""
@@ -384,22 +394,26 @@ class SettingsUI(object):
     def setmaxprofiles(self,choice,window):
         self.maxprofiles=choice
         self.program.mainwindow.status.updatemaxprofiles()
-        window.destroy()
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
     def setmaxpss(self,choice,window):
         self.maxpss=choice
         self.program.mainwindow.status.updatemaxpss()
-        window.destroy()
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
     def setmulticheckscope(self,choice,window):
         self.cvtstodo=self.program.task.cvtstodo=choice
         self.program.mainwindow.status.updatemulticheckscope()
-        window.destroy()
-    def setglosslang(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setglosslang(self,choice,window=None):    # see setanalang
         self.glosslangs.lang1(choice)
         self.program.mainwindow.status.updateglosslangs()
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
-        window.destroy()
-    def setglosslang2(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setglosslang2(self,choice,window=None):   # see setanalang
         if choice:
             self.glosslangs.lang2(choice)
         elif len(self.glosslangs)>1:
@@ -407,22 +421,26 @@ class SettingsUI(object):
         self.program.mainwindow.status.updateglosslangs()
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
-        window.destroy()
-    def setparserasklevel(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setparserasklevel(self,choice,window=None):   # see setanalang
         self.program.taskchooser.parser.asklevel(choice)
         self.program.mainwindow.status.updateparserasklevel()
-        window.destroy()
-    def setparserautolevel(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setparserautolevel(self,choice,window=None):  # see setanalang
         self.program.taskchooser.parser.autolevel(choice)
         self.program.mainwindow.status.updateparserautolevel()
-        window.destroy()
-    def setps(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setps(self,choice,window=None):               # see setanalang
         self.program.slices.ps(choice)
         self.program.mainwindow.status.updateps()
         self.attrschanged.append('ps')
         self.refreshattributechanges()
         self.program.mainwindow.status.maybeboard()
-        window.destroy()
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
 

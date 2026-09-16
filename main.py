@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.27' #This is a string...
+__version__='1.15.30' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -90,9 +90,11 @@ import urllib.parse #mailto: on the error page must be properly encoded
 import faulthandler, signal as _signal
 try:
     _stackfile = open('/tmp/azt_stacks.txt', 'w')
-    faulthandler.register(_signal.SIGUSR1, file=_stackfile, all_threads=True)
-    log.info("faulthandler armed: if it hangs, run `kill -USR1 %s` then send "
-             "/tmp/azt_stacks.txt", os.getpid())
+    all_threads=True
+    faulthandler.register(_signal.SIGUSR1, file=_stackfile, all_threads=all_threads)
+    log.info("faulthandler armed (all_threads=%s): if it hangs, run "
+             "`kill -USR1 %s` then send "
+             "/tmp/azt_stacks.txt", all_threads, os.getpid())
 except (AttributeError, ValueError, OSError) as e:
     log.info("faulthandler not armed: %s", e)  # e.g. Windows
 # ONE decider, not two. This used to read AZT_UI_BACKEND directly while

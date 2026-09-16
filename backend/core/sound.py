@@ -647,6 +647,39 @@ class SoundSettings(object):
     # additionally need ``audio_card_in`` — pass ``include_input=True``.
     required_attrs = ['fs', 'sample_format', 'audio_card_out']
 
+    # ONE THREAD IN THE AUDIO LAYER AT A TIME.
+    #
+    # PortAudio is not safe to drive from two threads at once, and this class
+    # is driven from several: the UI thread builds the settings page, the
+    # webview backend delivers clicks on the JS bridge's thread, and a card
+    # switch RECORDS a second of audio synchronously inside a click handler.
+    # The app died repeatedly with no traceback, no signal and no shell
+    # message while the sound settings were being clicked around (Kent,
+    # 2026-09-15/16), which is what a C library taken down by concurrent use
+    # looks like from Python: there is nothing left to raise.
+    #
+    # Guards at the UI layer closed two doors — `sound_ui._new_input_card`
+    # and `tasks/sound._configure_sound` — but `check()` and
+    # `resolve_cards()` are reached from every one of the four `*label()`
+    # methods, i.e. four times per page build and again on every relabel, so
+    # the layer's own entry points are where the guard belongs.
+    #
+    # RE-ENTRANT, because these call each other: `check()` calls
+    # `resolve_cards()` and `default_sf()`, and `verify_fs()` goes through
+    # `check()`. A plain Lock would deadlock on the first nested call rather
+    # than protect anything.
+    _audio_lock = None      # created on first use; see `_audio_busy`
+
+    @contextlib.contextmanager
+    def _audio_busy(self):
+        """Hold the audio layer for the duration of a device operation."""
+        cls = type(self)
+        if cls._audio_lock is None:
+            import threading
+            cls._audio_lock = threading.RLock()
+        with cls._audio_lock:
+            yield
+
     def test(self, pa):
         # only used from __main__; kept for parity
         import time
@@ -1059,7 +1092,16 @@ class SoundSettings(object):
         The user action behind "check this microphone" — the one place that
         pays the recording cost. Returns the verified rate and a sentence to
         show, or (None, reason) when the room was too quiet to judge.
+
+        Under `_audio_busy`, and this is the one that matters most: it OPENS
+        AN INPUT STREAM, for about two seconds, on whichever thread the
+        click arrived on. Two of these at once on the same device is the
+        crash the whole lock exists for.
         """
+        with self._audio_busy():
+            return self._verify_fs_locked()
+
+    def _verify_fs_locked(self):
         before = self.fs
         best = self.measured_fs(measure=True)
         if not best:
@@ -1416,6 +1458,15 @@ class SoundSettings(object):
             self.default_sf()
 
     def check(self):
+        """Negotiate the stored settings against the hardware.
+
+        Under `_audio_busy` — this queries PortAudio, and it is reached from
+        every one of the settings page's four label builders, on whichever
+        thread delivered the click. See `_audio_busy`."""
+        with self._audio_busy():
+            return self._check_locked()
+
+    def _check_locked(self):
         # PORTED 2026-09-09. This used `is_format_supported` and then decided
         # what to do by MATCHING THE TEXT of PyAudio's ValueError ('Device
         # unavailable', 'Invalid sample rate') — a translated-string
@@ -1619,7 +1670,15 @@ class SoundSettings(object):
           * the name still resolves, to the same index -> nothing to do
           * it resolves to a DIFFERENT index -> follow the device, and say so
           * it does not resolve -> drop the setting, so defaults re-derive
+
+        Under `_audio_busy`: this ENUMERATES DEVICES, which is a PortAudio
+        call, and `check()` reaches it on whichever thread delivered a click.
+        The lock is re-entrant, so `check()` holding it already is fine.
         """
+        with self._audio_busy():
+            return self._resolve_cards_locked()
+
+    def _resolve_cards_locked(self):
         for attr, name_attr in self._CARD_NAMES.items():
             direction = 'in' if attr.endswith('_in') else 'out'
             name = getattr(self, name_attr, None)

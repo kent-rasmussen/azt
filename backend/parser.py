@@ -70,8 +70,24 @@ class AffixCollector(object):
         self.catalog=catalog
         log.info("Looking in LIFT file for data")
         if kwargs.get('loadfromlift'):
+            # A `print()` PER YIELD WAS THE COST HERE. `getfromlift` yields a
+            # percentage for every inflection-class trait in the file — one
+            # per sense per part of speech — and each one was printed to
+            # stdout. Under `python -u`, which is how this gets run while
+            # testing, stdout is UNBUFFERED: that is one write syscall per
+            # yield, thousands of them, and the terminal has to render each.
+            # Nothing consumed the output; it was a debug print left in a hot
+            # loop, and it is the only obvious cost in that loop (Kent,
+            # 2026-09-16: "perhaps we also want to understand why the parser
+            # takes so long to load").
+            #   The progress is worth HAVING, though — this is what the
+            # "Loading Affixes" wait dialog is waiting on — so a caller can
+            # pass `progress=` and get it, which is what a progress bar
+            # wants. No callback, no cost.
+            progress = kwargs.get('progress')
             for i in self.getfromlift():
-                print(i)
+                if progress is not None:
+                    progress(i)
         self.catalog.report()
         # self.do()
 class Catalog(object):

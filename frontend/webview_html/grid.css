@@ -14,12 +14,51 @@
 html, body {
     background: var(--background, transparent);
     margin: 0;
+    /* A DEFINITE HEIGHT, OR NOTHING BELOW CAN HAVE ONE. Percentage heights
+       resolve against the parent's COMPUTED height, and `auto` is not a
+       value to take a percentage of — so with `html`/`body` unsized,
+       `.wv-window`'s `height: 100%` was `auto`, `#root`'s child rows were
+       content-sized, and a scroller's `max-height: 100%` was no constraint
+       at all. That chain is what made `grid_rowconfigure(weight=…)` and the
+       `100%` term of `--scrollcap` unable to do anything, however correctly
+       either was written (2026-09-16, the sort page's double scroll).
+       Released while measuring, below: a fit asks "how big would this like
+       to be", and a page pinned to the window cannot answer. */
+    height: 100%;
+}
+
+#root {
+    height: 100%;
 }
 
 .wv-container {
     display: grid;
     width: 100%;
     height: 100%;
+}
+
+/* CONTENT-SIZED ROWS MUST NOT STRETCH, now that containers have a definite
+   height. CSS Grid's `align-content: normal` behaves as `stretch`, which
+   hands leftover space to AUTO tracks — so a definite-height page would
+   inflate its title row to fill the window, which is not what tkinter does
+   with `weight=0`. `start` keeps an unweighted row at its content size and
+   leaves the leftover to `fr` rows, which is tkinter's rule exactly (and its
+   `grid_anchor` default, 'nw'). `fr` is unaffected: fr tracks consume free
+   space during track sizing, before alignment has anything to distribute.
+
+   THE ROW AXIS ONLY. `justify-content` would be the same argument for
+   columns, and it is NOT made here: widths were already definite (`body` has
+   always had one), so nothing about column distribution changes with this
+   commit, and changing it anyway would put an untested second alteration
+   inside one measurement. If a page turns out to spread its columns where
+   tkinter would bunch them, that is its own finding.
+
+   The splash overrides this with `align-content: center` and wins on
+   specificity — see `body[data-page="splash"]` below. */
+#root,
+.wv-frame,
+.wv-container {
+    align-content: start;
 }
 
 /* Widget base */
@@ -211,6 +250,33 @@ html, body {
     background: none;
     border: 0;
     padding: 0;
+}
+/* A LIST MUST LOOK LIKE A LIST. Switching the readonly form from <select>
+   to our own input (widgets.js — a <select> only reports a CHANGE, so
+   picking the value already selected reported nothing) took the native
+   dropdown arrow with it, and a readonly text box with no arrow reads as
+   somewhere to type: Kent, 2026-09-16, "parse levels are entry fields?
+   those should be lists, right?" They were lists; they just did not say so.
+     Drawn as a TRIANGLE — a shape, not a colour, so it carries the same
+   meaning for a colourblind reader (~/.claude-sil/CLAUDE.md). `currentColor`
+   so it follows the theme's text colour without a second variable to keep
+   in step. */
+.wv-combobox-wrap::after {
+    content: '';
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    margin-top: -2px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+    pointer-events: none;     /* the input underneath still takes the click */
+}
+/* Room for the arrow, so the value never runs under it. */
+.wv-combobox-wrap > .wv-combobox {
+    padding-right: 18px;
 }
 .wv-combobox-list {
     position: absolute;
@@ -480,6 +546,99 @@ html, body {
     object-fit: contain;
 }
 
+/* The in-page "Please Wait" cover (ui_webview.Toplevel._show_page_wait).
+
+   IT HAS TO ACTUALLY COVER. The first version put it in `frame`'s own grid
+   cell and relied on being a later sibling, which is neither opaque enough
+   nor big enough to depend on: Kent's window 389 showed the sort board's
+   group-count labels reading straight through "Please Wait…" (2026-09-16).
+   Content building behind the cover is the point of it; seeing that content
+   is the fault.
+
+   `position: FIXED`, not absolute, and that is the second half of the same
+   fault. Absolute against `outsideframe` made it opaque but not STILL:
+   `outsideframe` sits in the window's centred cell (columns 0 and 2 are
+   weighted — see `Window.__init__`), so as the board builds behind the
+   cover the content grows, the spacers rebalance, and the cover slides with
+   it. Kent asked the right question of the first fix — "opaque, but will it
+   move around, as it was doing?" — and the answer was yes. Fixed to the
+   VIEWPORT, nothing behind it can move it, because the page's own layout is
+   no longer its containing block.
+
+   The z-index is above page content and below `.wv-menu` (1000): a context
+   menu raised over a waiting page should still be reachable. `.wv-exit`
+   below is raised above it deliberately — see there.
+
+   CENTRED, both ways (Kent: "it would be nice to cnter the message"). A
+   wait screen has one thing on it, so there is nothing for a top-left
+   anchor to line up with — the text just sat in the corner of a 1920x1200
+   field. `place-content: center` puts the block in the middle of the
+   window; `justify-items: center` centres each line within it, and
+   `text-align` does the same for a line that wraps. The message is prose,
+   so it also gets a reading width rather than the full 1920 (the same
+   reason the splash caps its own text at 40em). */
+.wv-page-wait {
+    position: fixed;
+    inset: 0;
+    background: var(--background);
+    z-index: 100;
+    padding: var(--pady) var(--padx);
+    place-content: center;
+    justify-items: center;
+    text-align: center;
+}
+/* `justify-content`, NOT just `text-align`. `.wv-label` is a flex
+   container, so its text is an anonymous flex item sized to its content and
+   parked at flex-start — `text-align: center` then centres the LINES WITHIN
+   that item and cannot move the item itself. That is why the two-line
+   message looked centred (its short line centring inside a wide item) while
+   the "Please Wait…" title sat left of everything. */
+.wv-page-wait .wv-label {
+    max-width: min(48em, 90vw);
+    justify-content: center;
+}
+
+/* THE BAR MATCHES THE TEXT BLOCK. It had an arbitrary `min(32em, 70vw)`,
+   which is a width unrelated to anything else on the screen — Kent:
+   "this bar and the line above it should be the same length, one way or the
+   other." Letting `sticky='ew'` stretch it to the grid column instead means
+   the column is sized by the longest line and the bar is exactly that wide,
+   so the two agree by construction rather than by a number that happens to
+   look close. `.wv-progressbar`'s own `min-width: 10em` still keeps a very
+   short message from producing a stub. */
+
+/* THE DOCUMENT SCROLLBAR CANNOT BE COVERED — it is painted by the engine
+   outside the layout viewport, so no z-index reaches it (Kent, 2026-09-16:
+   "the scrollbar shows through, as well"). It is there because the page
+   behind the cover is taller than the window WHILE it builds, so the fix is
+   to stop the document scrolling for as long as the cover is up.
+   `setPageWaitCover` in widgets.js toggles this class. */
+html.wv-waiting,
+html.wv-waiting body {
+    overflow: hidden;
+}
+
+/* EXIT IS HIDDEN UNDER A WAIT, and that is Kent's call against my first
+   answer. I raised it above the cover on the grounds that a 21-second wait
+   with no way out is the mirror of the nothing-but-Quit page. But the
+   button lives in `outsideframe`, which sits in the window's CENTRED cell —
+   so as the page builds behind the cover the spacers rebalance and the
+   button wanders around an otherwise still screen. Kent, 2026-09-16: "the
+   exit button is still moving around; rather it be invisible."
+     Nobody is stranded: `takekioskscreen` binds Escape to
+   `releasefullscreen`, which brings the window's own decorations and close
+   box back. So the choice is between a button that jitters and a keystroke
+   that does not, and the quiet screen wins.
+     Stated as `visibility`, not left to paint order: the cover is `fixed`
+   and the button `relative`, and relying on which wins is how it came to be
+   visible in the first place. */
+.wv-exit {
+    position: relative;
+}
+html.wv-waiting .wv-exit {
+    visibility: hidden;
+}
+
 /* Notebook — tab strip above, one panel at a time below.
    The tab strip wraps rather than clipping: the chooser's three tab labels
    are translated, so their width is not knowable in advance. */
@@ -651,6 +810,18 @@ html.wv-measuring .wv-container {
     max-width: none !important;
     max-height: none !important;
     place-content: start !important;
+}
+/* AND THE DOCUMENT ITSELF, since 2026-09-16. `html`/`body` now carry
+   `height: 100%` — that is what finally gives the page a definite height for
+   `grid_rowconfigure(weight=…)` and the `100%` term of `--scrollcap` to
+   resolve against — and a page pinned to the window is exactly what cannot
+   answer "how big would you like to be". Same release, same reason as the
+   three above; it has to name `html` and `body` separately because the
+   measuring class sits ON `html`. */
+html.wv-measuring,
+html.wv-measuring body {
+    height: max-content !important;
+    max-height: none !important;
 }
 
 /* ── The caps, and why they are variables ───────────────────────────────

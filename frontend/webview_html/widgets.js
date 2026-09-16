@@ -110,6 +110,116 @@ function _applyGrid(el, opts) {
         el.style.paddingTop = el.style.paddingBottom = `${opts.ipady}px`;
 }
 
+// ── Where does a definite height stop? ───────────────────────────────
+// THE CHAIN IS THE THING, NOT ANY ONE RULE. A scroller only bounds itself
+// when every ancestor between it and the viewport has a definite height: a
+// percentage of `auto` is not a constraint, and an `fr` track with no free
+// space behaves as `auto`. Three separate rules have to hold at once for
+// that — the document's height, the weights on each grid in between, and
+// `align-content` not eating the leftover — and a page with the double
+// scroll tells you only that ONE of them failed, not which.
+//   So report the whole chain and let the log name the link. Sent through
+// `on_event` like every other measurement, under --log-heights.
+function reportHeightChain(wid) {
+    if (!(window.pywebview && window.pywebview.api)) return;
+    const seen = [];
+    const targets = document.querySelectorAll(
+                        '.wv-scrolling-frame, .wv-tabpanels');
+    for (const el of targets) {
+        const chain = [];
+        let node = el;
+        while (node && chain.length < 24) {
+            const cs = getComputedStyle(node);
+            chain.push({
+                tag: node.tagName,
+                cls: (node.className || '').toString().slice(0, 60),
+                id: node.id || '',
+                client: node.clientHeight,
+                scroll: node.scrollHeight,
+                // INLINE ONLY — `node.style` never sees the stylesheet, so
+                // this reads `(unset)` for a height set in grid.css. I
+                // labelled it "the authored height" and it is not; the
+                // first report came back `height=(unset)` on html/body/#root
+                // where the stylesheet plainly says `height: 100%`, and only
+                // the `client` column showed that the rule had in fact
+                // applied. Both are reported now: `inline` for what a widget
+                // set on itself, `computed` for what actually took effect.
+                styleh: node.style.height || '(unset)',
+                comph: cs.height,
+                maxh: cs.maxHeight,
+                rows: cs.gridTemplateRows,
+                align: cs.alignContent,
+                overflow: cs.overflowY,
+            });
+            if (node === document.documentElement) break;
+            node = node.parentElement;
+        }
+        seen.push({target: (el.className || '').toString().slice(0, 40),
+                   viewport: window.innerHeight,
+                   chain: chain});
+    }
+    window.pywebview.api.on_event(wid, 'heightchain', {scrollers: seen});
+}
+
+// ── Row/column weights ───────────────────────────────────────────────
+// tkinter's `weight` means "this track takes the space left over"; a CSS
+// Grid track is CONTENT-SIZED by default. `grid_rowconfigure` was a no-op in
+// ui_webview with the comment "CSS Grid handles this automatically", so every
+// weight in the app was discarded — and the cost was the double scroll on the
+// sort page: with row 1 content-sized, the scroller's `max-height: min(100%,
+// …)` had no definite height to resolve `100%` against, fell back to the
+// screen-relative backstop, and took 90% of the screen with the title stacked
+// above it. Page taller than window, so the page scrolled AND the list
+// scrolled inside it (Kent, 2026-09-16).
+function _trackSize(spec) {
+    const weight = Number(spec && spec.weight) || 0;
+    const minsize = Number(spec && spec.minsize) || 0;
+    // ZERO, NOT `auto`, IS THE RIGHT FLOOR FOR A WEIGHTED TRACK — and I
+    // wrote `auto` here first, with a comment claiming it was "identical in
+    // effect… but it states the floor". It is the opposite of identical: an
+    // `auto` minimum means the track can NEVER shrink below its content, so
+    // the `fr` has nothing to give away and the row grows exactly as if it
+    // were unweighted. Kent's height chain, 2026-09-16, with the fix in
+    // place: the scroller's row was `2196px` while the scroller itself
+    // rendered at 1080 — a 1116px hole under it, and the page scrolling
+    // anyway. (That hole is also his earlier "No idea what that space below
+    // is doing"; `max-height` clips the ITEM and does not shrink the TRACK.)
+    //   It is also the faithful reading of tkinter, whose grid SHRINKS rows
+    // when the master is too small rather than overflowing. `minsize` is
+    // the only floor a caller actually asked for.
+    const floor = minsize > 0 ? minsize + 'px' : '0';
+    if (weight > 0) return 'minmax(' + floor + ', ' + weight + 'fr)';
+    return minsize > 0 ? 'minmax(' + minsize + 'px, auto)' : 'auto';
+}
+
+function setGridTracks(wid, rows, cols) {
+    // A WINDOW IS NOT A DOM WIDGET, and windows are where the app's outer
+    // weights are set (`Window.post_tk_init` weights rows 0 and 2 to centre
+    // the content frame). In a window the window IS the page, so an
+    // unresolved wid means the page root — the same fallback createWidget
+    // makes, for the same reason.
+    const el = _widgets.get(wid) || document.getElementById('root');
+    if (!el) return;
+    const build = (map) => {
+        const keys = Object.keys(map || {});
+        if (!keys.length) return null;
+        let n = 0;
+        for (const k of keys) n = Math.max(n, Number(k) + 1);
+        const out = [];
+        // EVERY TRACK UP TO THE LAST ONE NAMED. `grid-template-rows` is
+        // positional, so a page that weights only row 1 still has to say
+        // something about row 0 — 'auto', which is what it had. Tracks PAST
+        // the last named one are left out deliberately: they stay implicit
+        // and `grid-auto-rows` sizes them, so weighting row 1 does not
+        // require knowing how many rows the page will end up with.
+        for (let i = 0; i < n; i++) out.push(_trackSize(map[String(i)]));
+        return out.join(' ');
+    };
+    const r = build(rows), c = build(cols);
+    if (r) el.style.gridTemplateRows = r;
+    if (c) el.style.gridTemplateColumns = c;
+}
+
 // ── API exposed to Python via pywebview.api ───────────────────────────
 
 function createWidget(spec) {
@@ -351,6 +461,14 @@ function createWidget(spec) {
                                                       {value: inp.value});
                     }
                 };
+                // The same value, reported as TEXT rather than as a choice —
+                // see the `input` listener below.
+                const typed = () => {
+                    if (window.pywebview && window.pywebview.api) {
+                        window.pywebview.api.on_event(spec.wid, 'typed',
+                                                      {value: inp.value});
+                    }
+                };
                 // `q` empty means SHOW EVERYTHING — opening the list is not
                 // a search, it is "what are my choices?". A readonly field
                 // never filters: there is nothing to type, so the list is
@@ -370,11 +488,21 @@ function createWidget(spec) {
                 inp.addEventListener('focus', () => show(''));
                 inp.addEventListener('click', () => show(''));
                 if (typeable) {
-                    // Typing reports as it goes, so a bound variable tracks
-                    // the text the way tkinter's textvariable does, and
-                    // narrows the list — which IS a search.
+                    // TYPING IS NOT CHOOSING. Both used to report as
+                    // 'select', so a field that closes when you pick a value
+                    // closed on the first KEYSTROKE — you could not type a
+                    // second character (Kent, 2026-09-16: "When typing in an
+                    // entry dropdown, a keypress validates and finishes").
+                    //   Typing still has to report, or a bound variable
+                    //   cannot track the text the way tkinter's textvariable
+                    //   does, and the list cannot narrow — which IS a
+                    //   search. So it reports under its own name, and only
+                    //   'select' means "this is my answer".
                     inp.addEventListener('input',
-                                         () => { show(inp.value); post(); });
+                                         () => { show(inp.value); typed(); });
+                    // `change` on a text input fires when the field is
+                    // COMMITTED — Enter, or focus leaving — which is a
+                    // choice, so that one keeps reporting as one.
                     inp.addEventListener('change', post);
                 }
                 inp.addEventListener('keydown', (e) => {
@@ -1453,7 +1581,15 @@ function bindEvent(wid, eventName) {
 //   `resize` fires on the page whenever the client box changes, whoever
 // changed it, so this is the one place the truth is observable. Debounced,
 // because a drag fires it continuously.
-function installResizeReporter(wid) {
+//   `everySample` (Python's --log-resizes) turns the debounce OFF. The
+// debounce is what makes the normal report usable and what makes it useless
+// as evidence: it reports where the window SETTLED, so a shrink that
+// overshoots and partly recovers arrives as one number with no sign that
+// anything else happened. Four such numbers looked like a constant 52x89
+// shortfall and produced a confident wrong theory (2026-09-16). With this on,
+// one focus change gives the whole trajectory — at the price of a line per
+// frame of any drag, which is why it is a switch.
+function installResizeReporter(wid, everySample) {
     let timer = null;
     const send = () => {
         timer = null;
@@ -1462,9 +1598,22 @@ function installResizeReporter(wid) {
                 w: window.innerWidth, h: window.innerHeight});
     };
     window.addEventListener('resize', () => {
+        if (everySample) { send(); return; }
         if (timer) clearTimeout(timer);
         timer = setTimeout(send, 150);
     });
+}
+
+// THE DOCUMENT SCROLLBAR CANNOT BE COVERED. It is painted by the engine
+// outside the layout viewport, so no z-index reaches it — Kent, 2026-09-16,
+// on the wait cover: "the scrollbar shows through, as well." It is there
+// because the page behind the cover is taller than the window WHILE it
+// builds (the board grows before the fit runs), so the only way to remove it
+// is to stop the document scrolling for as long as the cover is up.
+//   Scoped to a class on <html> rather than an inline style, so `grid.css`
+// keeps the rule and this keeps only the fact.
+function setPageWaitCover(on) {
+    document.documentElement.classList.toggle('wv-waiting', !!on);
 }
 
 function setThemeVars(vars) {

@@ -65,10 +65,44 @@ class Senses(object):
             when the work has nowhere to go, and never merely early.
             Webview answers it from `_exists`.
 
-        Absent or unaskable counts as THERE. A page that never appears is a
-        worse failure than one that raises, so this may only stop work on
-        positive evidence of a dead window.
+        AND THE WINDOW IS NO LONGER ENOUGH (2026-09-16). That third bullet
+        is a tkinter fact: webview HIDES windows rather than destroying them
+        (`_close_native_window` — freeing a pywebview window at the wrong
+        moment crashes Qt, and this app reuses windows anyway), so a closed
+        task's window is alive and answers "carry on". Worse, page events
+        each arrive on their own thread there, so a click no longer
+        interrupts the loop that is asking — two task flows run side by
+        side. Kent, watching the parser still working after starting an
+        unrelated task: "that wait shouldn't appear at all."
+          So this now asks the TASK as well, via `TaskBase.still_wanted()`,
+        and the task's answer is authoritative because a closed task KNOWS
+        it is closed instead of having it deduced. The window test is kept
+        rather than replaced: it still catches a window destroyed by
+        something that never routed through `on_quit`.
+          See agenda/webview_flows_run_concurrently.md.
+
+        Absent or unaskable counts as THERE, on both tests. A page that
+        never appears is a worse failure than one that raises, so this may
+        only stop work on positive evidence.
         """
+        # ON THE TYPE, NOT THE INSTANCE. `getattr(self, 'still_wanted',
+        # None)` resolves through `__getattr__` — the task/window bridge —
+        # and a default only swallows AttributeError, so a bridge raising
+        # anything else propagates straight out of this "never raises"
+        # method. Both of this item's own tests say so and both caught it:
+        # `test_a_hostile_bridge_counts_as_there` (the bridge raises
+        # RuntimeError while a window is dying) and
+        # `test_getwords_bails_before_touching_anything` (nothing may be
+        # resolved through the bridge on the way out). A type lookup finds
+        # the method `TaskBase` defines without consulting the instance at
+        # all, and answers None for a mixin used without a task.
+        wanted = getattr(type(self), 'still_wanted', None)
+        if callable(wanted):
+            try:
+                if not wanted(self):
+                    return False
+            except Exception:
+                pass        # unaskable counts as there; fall through
         try:
             ui = getattr(self, 'ui', None)
         except Exception:

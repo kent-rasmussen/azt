@@ -4,6 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>A-Z+T</title>
+<!-- THE BACKGROUND RULE HAS TO BE INLINE, ahead of the stylesheets.
+
+     `grid.css` already says `html, body { background: var(--background,
+     transparent) }`, and the `transparent` fallback is deliberate: the
+     window is created in the theme's colour, so a document with nothing of
+     its own to paint lets that colour stand in until `setThemeVars` runs.
+     That is the right design and it was arriving too late to work.
+
+     These stylesheets are fetched over pywebview's own local HTTP server
+     (bottle, single-threaded — visible in every stack dump as
+     `webview/http.py`), and until the first of them applies the document
+     paints the engine's default WHITE. So every new window flashed grey
+     before it flashed themed: four times in one boot on Kent's 20fps
+     recording (2026-09-16, tiles 4, 11, 19 and 24, each one frame before
+     the same window appears peach) — "lot's of ugly windows on windows
+     flashing around".
+
+     An inline <style> applies as the head is parsed, with no request to
+     wait for. It says only what must be true before anything can be
+     fetched; the themed colour still comes from grid.css and the theme. -->
+<style>html,body{background:transparent;margin:0}</style>
 <link rel="stylesheet" href="grid.css">
 <link rel="stylesheet" href="theme.css">
 <script src="widgets.js"></script>

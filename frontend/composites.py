@@ -136,7 +136,7 @@ class ClickToEdit:
     def __init__(self, parent, var, editor, row=0, column=0, label=None,
                  clear_on_edit=False, on_commit=None, rebuild=False,
                  font='default', ok=_("OK"), show_ok=True, width=None,
-                 label_anchor='e', **gridkwargs):
+                 label_anchor='e', delimit=None, **gridkwargs):
         self.var = var
         self._editor = editor
         self._clear_on_edit = clear_on_edit
@@ -165,6 +165,27 @@ class ClickToEdit:
         # lands on the block's centre. Characters, as tkinter and
         # `updateProp('width')` both mean it.
         size = {} if width is None else {'width': width}
+        # PADDING IS WHAT SEPARATES WORDS HERE, so where words must NOT be
+        # separated it has to go. `.wv-label` (and a Tk label) carries a
+        # couple of pixels each side, which reads as a space — right between
+        # two prose words, wrong on either side of a quotation mark: the
+        # field names came out as "‘ Plural ’" (Kent, 2026-09-16).
+        #   So a delimited value and its delimiters are drawn tight against
+        # each other, and the space before the opening quote comes from the
+        # PREFIX's own padding, which is exactly where a space belongs.
+        tight = {'ipadx': 0} if delimit else {}
+        # AN EMPTY PREFIX STILL TOOK UP A SPACE. The second gloss language
+        # has no prefix when there is no second language — the line reads
+        # "Meanings in X only" — but the label was still there with its
+        # padding on both sides, so "only" sat two spaces out instead of one
+        # (Kent, 2026-09-16: "…only has an extra space"). Judged on the text
+        # it has now: if it later gains a word, the value's own padding still
+        # separates them.
+        try:
+            shown_prefix = label.get() if hasattr(label, 'get') else label
+        except Exception:
+            shown_prefix = label
+        name_pad = {} if str(shown_prefix or '').strip() else {'ipadx': 0}
         col = column
         if label:
             # THE NAME STAYS PUT; ONLY THE VALUE IS SWAPPED. Kent,
@@ -209,7 +230,22 @@ class ClickToEdit:
             # the two sit on a line together (see above).
             self.namelabel = ui.Label(parent, text=label, font=font, row=row,
                                       column=col, sticky=label_anchor,
-                                      anchor=label_anchor, **size)
+                                      anchor=label_anchor,
+                                      **name_pad, **size)
+            col += 1
+        # DELIMITERS AROUND THE VALUE, as WIDGETS. `delimit=('‘','’')` gives
+        # "second form field ‘Plural’ (Noun)" without either quote ending up
+        # inside a translatable string — which is where they were first put,
+        # and a msgid reading `Using second form field ‘` is not something a
+        # translator can work with (Kent, 2026-09-16: "that use of quotes is
+        # going to be incomprehensible to translators").
+        #   Nor do they belong in the VALUE: the value is what the chooser
+        # edits, and quoting it would put the quotes in the box being typed
+        # into. Their own labels either side of the value's cell keep them
+        # on screen, and out of the way, while the field is open.
+        if delimit:
+            ui.Label(parent, text=delimit[0], font=font, row=row,
+                     column=col, sticky='e', **tight)
             col += 1
         # THE VALUE LABEL AND THE EDITOR SHARE ONE CELL. That is what makes
         # the swap happen in place instead of the row growing: grid_remove()
@@ -239,9 +275,17 @@ class ClickToEdit:
         # unit the editors are already specified in.
         self.shown = ui.Label(parent, textvariable=var, font=font,
                               row=row, column=col, sticky='w',
-                              **size, **gridkwargs)
+                              **tight, **size, **gridkwargs)
         self.box = ui.Frame(parent, row=row, column=col, sticky='w',
-                            **gridkwargs)
+                            **tight, **gridkwargs)
+        col += 1
+        if delimit:
+            ui.Label(parent, text=delimit[1], font=font, row=row,
+                     column=col, sticky='w', **tight)
+            col += 1
+        # The next free column, so a caller can put a trailing word after
+        # the value without counting the delimiters itself.
+        self.endcolumn = col
         if not rebuild:
             self.widget = self._build()
         # AN OK BUTTON ONLY WHERE THERE IS SOMETHING TO CONFIRM. A list has
@@ -479,6 +523,8 @@ def choice_field(parent, var, options, editable=False, command=None,
     # An OK button only where typing is possible — a readonly list is
     # answered by the pick itself. See `_committing` and `ClickToEdit`.
     kwargs.setdefault('show_ok', bool(editable))
+    if 'delimit' in kwargs and kwargs['delimit'] is None:
+        kwargs.pop('delimit')
     c = ClickToEdit(parent, var, _editor, **kwargs)
     holder['c'] = c
     return c

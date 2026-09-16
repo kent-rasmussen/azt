@@ -19,6 +19,254 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.29
+
+**Windows keep the size they are given.** Under the webview backend on
+Wayland, a window fitted to its content shrank the moment focus moved
+elsewhere — losing exactly 52x89 pixels every time, cropping the page and
+flashing as it went. Fixed (Kent: "window flashing resize looks fixed").
+
+It was ours, and it was a units error. `resize()` asks in CLIENT pixels and
+works. The two calls that make a size survive the next configure event — the
+window's default size and its minimum-size hint — are answered in FRAME
+pixels under client-side decorations, and were being handed the client
+figure. So the window settled on that number as a frame, and the page came
+out one window-decoration short. The minimum is now asked for in frame
+units, measured per window from the toolkit rather than assumed.
+
+Three earlier readings of this are worth recording as wrong, because all
+three came from measuring the page and never the frame: that the compositor
+was answering with the window's created size; that something below the app
+clamped to 800x600; and that the decorations were growing into a frame that
+stayed put. The app's own note had the arithmetic in it for three days — "a
+window with a 998x770 request was configured to 946x681" — without anyone
+doing the subtraction. 998-946 is 52; 770-681 is 89.
+
+Two diagnostics came out of it and are staying:
+
+- `--log-resizes` reports every resize sample, with the native frame and
+  client boxes and the gap between them. The ordinary report is debounced,
+  so it shows where a window settled and nothing of how it got there; four
+  such samples are what produced the third wrong reading.
+- `--no-frame-inset` asks in client units again, to measure against.
+
+**Switching a notebook tab asks the window to re-fit.** Every refit in the
+webview backend is triggered by a widget being created, and a tab switch
+creates nothing — so the chooser's tabs were all measured against whichever
+one happened to be showing, and selecting a fuller tab left its content
+cropped off the right and bottom edges with no way to reach it. Fixed
+(Kent: "notebook tag = size change fixed").
+
+Both paths ask, and the second is the one that hides: the page reports a tab
+change only for a USER click, while a programmatic `select()` deliberately
+does not notify — and selecting the starting tab programmatically is exactly
+what the chooser does, so a fix on the click path alone would have left the
+startup case cropped.
+
+**Exit on a run window no longer hangs the app** — it returns to the task,
+as it does under tkinter. Fixed (Kent: "it's now coming back to task"). It
+looked like the app closing, and was reported as exactly that; the log said
+otherwise, since no quit was ever requested. Two faults on one path, both
+webview-only.
+
+The first is a **hang**. Around thirty places in the app wait on a *canary
+widget* inside a window rather than on the window, because that widget's
+destruction is the signal that a page has finished. Destroying a widget
+released those waits correctly; quitting a window did not — it released only
+the waits on the window itself and then hid it, and hiding is not
+destroying. So the sort flow stayed blocked on a canary inside the closed
+window, forever. tkinter never had this, because destroying a window
+destroys everything in it. `wait_window` now also refuses to park inside a
+window that has already quit, so a flow arriving late cannot re-create the
+same hang.
+
+The second is that **nothing took the screen**. tkinter's window-close
+reveals the parent window; the webview backend had only the other half of
+that method, so closing a child hid it and showed nothing. Since a run
+window is handed over with its task window already withdrawn, that left an
+empty screen. Revealed now with tkinter's three guards rather than a bare
+reveal — a wait already covering the screen is left to do it, an empty
+parent is reported and stays hidden, and only a parent with content is
+shown — because revealing unconditionally produces the empty page whose
+only control is Exit.
+
+Found from a faulthandler dump.
+
+**Simplified, not fixed:** the decoration measurement no longer calls
+`gdk_window_get_frame_extents()`, whose rectangle is a caller-allocated
+out-parameter in C, and reads the same number off the GdkWindow directly
+instead. The only thing given up is the window's on-screen position, which
+Wayland does not report anyway. This was briefly believed to explain a
+segfault when the app is asked for a stack dump; it does not — that remains
+unexplained and is tracked in `agenda/webview_window_sizing.md`.
+
+**Pages fit the window again: the double scroll is gone.** Fixed (Kent:
+"now it's on page"). The sort page had two scrollbars — one for the page and
+another for the word list inside it — plus an empty band below the list and
+an Exit button about 1150px below the bottom of the screen. One fault, four
+parts, all in the webview backend's translation of tkinter's grid.
+
+- **`grid_rowconfigure`/`grid_columnconfigure` were bare `pass`**, with the
+  comment "CSS Grid handles this automatically". They don't: `weight=1`
+  means "this track takes the space left over", and a CSS Grid track is
+  content-sized by default. Every weight in the app was accepted and
+  discarded. They now emit real tracks.
+- **A weighted row must be able to SHRINK.** Stating the track as
+  `minmax(auto, Nfr)` looks equivalent to `Nfr` and is not: an `auto` floor
+  means the row can never go below its content, so the weight has nothing
+  to give away. `minmax(0, Nfr)` is both correct and the faithful reading of
+  tkinter, whose grid shrinks its rows when the master is too small — where
+  CSS Grid overflows instead. That difference is why the page grew rather
+  than squeezing, and it is worth remembering generally.
+- **The document needs a definite height** for any of it to resolve: a
+  percentage of `auto` is not a constraint, so the whole chain from `html`
+  down was indefinite. Released again while a window measures itself.
+- **Two rows nobody weighted**, and these were the actual break: a page's
+  content sits at row 1 of the window's outer frame, inside row 1 of the
+  window, and neither was ever weighted. So every page overflowed its window
+  before any of its own layout was consulted. tkinter weights one of the two
+  and gets away with the other because Tk shrinks.
+
+**Kiosk pages are born fullscreen** instead of being created at 800x600 and
+fullscreened afterwards. Fixed (Kent: "better"). A 20fps recording of one
+page load showed the cost: the run window appeared decorated at its creation
+size, was resized four times as content arrived, and only then went
+fullscreen — about 1.4 seconds of watching a window become correct. The
+fullscreen request could not arrive any sooner, because pywebview defers it
+until the page has loaded (visible in the log as `replaying deferred [...,
+'toggle_fullscreen']`). A window created at the size it is going to be has
+nothing to defer and nothing to change.
+
+`getrunwindow` says `kiosk=True` and both backends honour it — under webview
+as `create_window(fullscreen=True)`, under tkinter as the `-fullscreen`
+attribute at the end of construction. The later `takekioskscreen()` call
+stays: it is the fallback for a pywebview without `fullscreen=`, and it is
+what binds Escape as the way out.
+
+**And kiosk pages are centred again** (Kent: "centered now"). A page sat
+hard against the left of a fullscreen window with the spare width beside it.
+tkinter centres by weighting the empty spacer columns either side of the
+content — not the content column itself — and only the latter would stretch
+a page, so skipping the whole axis was one confusion too many. The spacers
+carry the weight now, which leaves every page its own width.
+
+Rows 0 and 2 stay unweighted, deliberately parting from tkinter: weighting
+them would centre vertically too, and a kiosk page wants its list to use the
+full height rather than sit in a band in the middle. tkinter can centre both
+ways because Tk shrinks its tracks under pressure; CSS Grid overflows.
+Neither change costs anything on a window fitted to its content — with no
+leftover space, a spacer track resolves to zero.
+
+Found with a new `--log-heights` switch, which reports the ancestor chain of
+every scroller on a page — authored and computed height, max-height,
+`grid-template-rows`, `align-content` — because a page with a double scroll
+says the chain broke without saying where.
+
+**Also:** `grid_size()` now counts spans instead of reporting `max(row) + 1`,
+so a frame holding one widget with `rowspan=4` no longer reports a one-row
+grid. `nrows()` is the consumer that matters — it is how the app finds the
+row after everything, and too small a number puts the next widget on top of
+existing content. `.grid()` as a method also normalises `colspan`/`r`/`c`
+now, as the constructor always did.
+
+# Version 1.15.28
+
+**Nine windows gone from the status lines and the sound page.** Every value
+on a task page's prose lines is now edited where it stands. Clicking
+"Studying Kent's English" opens a chooser on the word itself instead of
+raising a window; the same for the interface language, both gloss languages,
+both second-form fields, the two parse levels and the sense being parsed.
+
+Two of those replaced more than one window each:
+
+- **the second form field** replaced THREE — pick from the database's
+  fields, "other" for the defaults, "custom" to type a name. An editable
+  combo is all three at once.
+- **the sense picker** replaced TWO, and removed a workaround with them.
+  Picking a sense asked "What letter does your sense start with?" over
+  first-letter buckets and then listed that bucket's senses; the buckets
+  were never the user's question, they existed because a flat list of every
+  sense is too long to show as buttons. A field you can type into narrows
+  the list directly, which is what the letters were approximating.
+
+Along the way, three distinctions that the one-window-per-value shape had
+been hiding:
+
+- **Typing and choosing are different events.** The page reported both as
+  `select`, so a field that closes when you pick a value closed on the first
+  KEYSTROKE — you could not type a second character. Typing reports as
+  `typed` now: the variable still tracks the text and the list still
+  narrows, but only a pick runs the command.
+- **Typing and inventing are different permissions.** The sense field is
+  editable so it can be SEARCHED, but its codes are sense objects: a typed
+  string matching nothing is a search that found nothing, not a new sense.
+  The second form field is the opposite — its code IS the name. `editable`
+  and `allow_new` are separate.
+- **Prose and columns want opposite layout.** A settings page shares grid
+  columns so names line up across rows; a sentence must not, or "Using" sits
+  an inch from the language it names. Same composite, two modes — container,
+  anchor and reserved width all differ.
+
+**A caught exception is as invisible as a dropped option.** Every setter a
+line can now drive took `(choice, window)` and closed that window as its
+last act, so calling one with a single argument raised `TypeError` inside
+`on_commit`, which is caught and logged. The value changed on screen and
+nothing was saved — the second gloss language went on reading "just use
+Kent's English" because `setglosslang2` had never run. They all take
+`window=None` now.
+
+**Windows on Wayland: we stop fighting the compositor.** A window does not
+keep the size the fit gives it — the compositor re-configures a toplevel on
+almost any focus change. Four mechanisms were tried and all are declined:
+`move()` (forbidden by xdg-shell, and the attempt costs the window its
+size), the default size, a widget minimum, and geometry hints with
+`MIN_SIZE` (the call a compositor is obliged to respect). Correcting it
+afterwards works and flickers on every click.
+
+So the size is no longer put back: the window ends up a little smaller than
+asked, the page scrolls, and everything stays reachable — step 3 of the
+app's own layout order. `--keep-window-size` restores the correction.
+Research found a candidate cause that is NOT ours — a GTK theme whose
+`:backdrop` rules change window geometry, which would make this GTK's own
+recalculation rather than the compositor's refusal — and `--gtk-theme=` is
+the test for it. See `agenda/webview_window_sizing.md`.
+
+**The parser's load was a debug `print()`.** `getfromlift` yields a
+percentage for every inflection-class trait in the file, and each one was
+printed to stdout. Under `python -u` that is one unbuffered write syscall
+per yield, thousands of them, each rendered by the terminal, with nothing
+consuming the output. A caller can now pass `progress=` and drive the
+"Loading Affixes" bar with it instead.
+
+**Also fixed**
+
+- A readonly combo box was a `<select>`, and a `<select>` fires `change`
+  only when the value DIFFERS — so picking the option already selected
+  reported nothing at all, and a field that closes on selection could not be
+  closed by choosing what it already had. There is no native event meaning
+  "the user chose this". Our own dropdown reports every click, so both
+  states use it; `readOnly` is the only difference. It also needed a
+  dropdown arrow drawn, since a readonly text box without one reads as
+  somewhere to type.
+- The two backends hand a combo box's command different things: webview the
+  picked string, tkinter a `<<ComboboxSelected>>` Event. Trusting the
+  argument put "<Event …>" in the field; reading the textvariable instead
+  was one selection BEHIND, because ttk fires the event before that write
+  lands. The widget's own `get()` is the only thing current at event time.
+- `width` was dropped for every widget type but three. `case 'label'` in
+  widgets.js never read it, so a label asked to reserve a width silently
+  didn't — which is why two attempts at stopping a settings column resizing
+  changed nothing.
+- Two concurrent PortAudio streams on one device: changing the microphone
+  records ~2s synchronously and the clicks arriving during it queue rather
+  than being dropped. Guarded at both doors and, now, at the audio layer's
+  own entry points (`check`, `resolve_cards`, `verify_fs` hold a re-entrant
+  lock — re-entrant because they call each other).
+- The settings window's dedup could not see a window still being BUILT:
+  `self.soundsettingswindow` is assigned once the constructor returns, and
+  the constructor runs a rate check first. Hence "flash open, then open it
+  again", which was also producing the double rate check.
+
 # Version 1.15.27
 
 **Settings values are edited where they are, not in a window each.** Four
