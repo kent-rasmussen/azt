@@ -69,6 +69,7 @@ new answer — which is the same fault as the two-window flow, minus the
 second window.
 """
 import logging
+import types
 
 from frontend import ui
 from utilities.i18n import _
@@ -626,3 +627,48 @@ def list_field(parent, var, options, height=6, command=None, **kwargs):
     c = ClickToEdit(parent, var, _editor, **kwargs)
     holder['c'] = c
     return c
+
+
+# ── Press-and-hold ────────────────────────────────────────────────────────
+def hold(widget, press, release):
+    """A press-and-hold control: `press` on button-down, `release` ONCE when
+    the finger comes off — by lifting OR by sliding off the widget.
+
+    THE METAPHOR IS "FINGER OFF THE BUTTON" (Kent, 2026-09-17: "which includes
+    off=up and off=sideof"). Tk's implicit pointer grab hides the difference
+    between the two — `<ButtonRelease-1>` reaches the PRESSED widget wherever
+    the pointer has gone — but the webview backend has no grab. Its release is
+    DOM `click`, which needs press and release on the same element, so a
+    release off the widget never arrived, and the record button went on
+    recording (`sound_ui.makerecordbutton`; the mapping and why it is `click`
+    are at widgets.js:1498-1517). Binding `<Leave>` as well makes "off" mean
+    off on both backends, and matches what a finger does anyway.
+
+    ONCE, AND NEVER WITHOUT A PRESS. Under tkinter the grab still delivers
+    the release after a slide-off, so `release` would run twice — and
+    `RecordButtonFrame._stop` destroys the button and builds the play/delete
+    pair, so twice means two of each. A pointer merely passing over the
+    widget also fires `<Leave>`, with no press before it. One flag answers
+    both cases: `release` runs only if a press armed it, and disarms first.
+
+    `add='+'` on every bind, so this coexists with whatever else is on the
+    widget — the tooltip binds `<Leave>` on the same button.
+
+    Returns the state object (`.held`), for tests and for anyone who needs to
+    know whether the finger is currently down."""
+    state = types.SimpleNamespace(held=False)
+
+    def _press(event=None):
+        state.held = True
+        return press(event)
+
+    def _release(event=None):
+        if not state.held:
+            return
+        state.held = False
+        return release(event)
+
+    widget.bind('<ButtonPress-1>', _press, add='+')
+    widget.bind('<ButtonRelease-1>', _release, add='+')
+    widget.bind('<Leave>', _release, add='+')
+    return state

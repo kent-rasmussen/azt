@@ -4791,10 +4791,16 @@ class ToolTip(object):
         self.dispy = 20
         self.widget = widget
         self.text = text
-        self.widget.bind("<Enter>", self.enter)
-        self.widget.bind("<Leave>", self.leave)
-        self.widget.bind("<ButtonPress>", self.leave)
-        self.widget.bind("<Destroy>", self.hidetip)
+        # ADDITIVE, so a tooltip never silently replaces a binding the
+        # widget's owner made. These were bare binds, and a bare `bind`
+        # REPLACES the instance binding for that sequence — so the record
+        # button's `<Leave>` (press-and-hold ends on slide-off,
+        # `composites.hold`) was wiped the moment its tooltip was created
+        # after it, and again by `showtip` below (2026-09-17).
+        self.widget.bind("<Enter>", self.enter, add='+')
+        self.widget.bind("<Leave>", self.leave, add='+')
+        self.widget.bind("<ButtonPress>", self.leave, add='+')
+        self.widget.bind("<Destroy>", self.hidetip, add='+')
         self.id = None
         self.tw = None
     def enter(self, event=None):
@@ -4818,7 +4824,11 @@ class ToolTip(object):
         if id:
             self.widget.after_cancel(id)
     def showtip(self, event=None):
-        self.widget.unbind("<Leave>")
+        # No `unbind("<Leave>")` here any more: it removed EVERY `<Leave>`
+        # binding on the widget, not only this tooltip's, and the rebind at
+        # the end of this method restored only the tooltip's own. Net effect
+        # on the tooltip: none. Net effect on everyone else: their `<Leave>`
+        # binding vanished the first time the tip showed.
         x = y = 0
         x, y, cx, cy = self.widget.bbox("insert")
         # #based on widgets (flashy):
@@ -4838,7 +4848,6 @@ class ToolTip(object):
                        wraplength = self.wraplength)
         label['background']="#ffffff"
         label.pack(ipadx=1)
-        self.widget.bind("<Leave>", self.leave)
         self.widget.after(self.showtime, self.hidetip)
     def hidetip(self, event=None):
         tw = self.tw

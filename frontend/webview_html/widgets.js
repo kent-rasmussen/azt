@@ -1514,6 +1514,16 @@ function bindEvent(wid, eventName) {
         // element — which is the grab semantics, for the case that matters.
         // Ordering is still press-then-release: `click` follows `mouseup`,
         // and `<Button-1>` is `mousedown`.
+        //   It is also Tk's OWN convention for a button (Kent, 2026-09-17:
+        // "tkinter had slideoff=cancel"): tk::ButtonUp invokes the command
+        // only if the pointer is still over the widget it pressed, and a
+        // release over some other widget completes nothing there either.
+        // The one control that wants a release delivered wherever the
+        // pointer went is press-and-hold, and that binds <Leave> as well
+        // (frontend/composites.hold): a finger off the button is off,
+        // upward or sideways. Known residue: a raw <ButtonRelease-1> bind
+        // on a tkinter LABEL has no such check, so the prose labels
+        // complete on slide-off under tkinter and cancel here.
         '<ButtonRelease-1>': 'click',
         '<Double-Button-1>': 'dblclick',
         '<Enter>': 'mouseenter',

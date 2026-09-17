@@ -77,8 +77,15 @@ class RecordButtonFrame(ui.Frame):
                         ipadx=20, ipady=15
                         )
         self.b.grid(row=0, column=0,sticky='w')
-        self.b.bind('<ButtonPress-1>', self._start)
-        self.b.bind('<ButtonRelease-1>', self._stop)
+        # PRESS-AND-HOLD, ending on lift OR slide-off. Two bare binds
+        # (`<ButtonPress-1>`/`<ButtonRelease-1>`) were right under tkinter,
+        # whose pointer grab delivers the release to this button wherever
+        # the pointer went, and wrong under webview, where release is
+        # `click` and a release OFF the button never came — so `_stop` never
+        # ran and the recording did not end (Kent, 2026-09-17). `hold` binds
+        # `<Leave>` too and guarantees `_stop` runs once, and only after
+        # `_start`: twice would build two play/delete pairs (see `_stop`).
+        composites.hold(self.b, self._start, self._stop)
         self.bt=ui.ToolTip(self.b,_("press-speak-release"))
     def _play(self,event=None):
         log.debug("Asking PA to play now")

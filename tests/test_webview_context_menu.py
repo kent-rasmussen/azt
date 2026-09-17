@@ -294,10 +294,12 @@ def test_press_and_release_map_to_press_and_release():
     click on the second-form combo both chose from it AND activated the
     prose label the closing dropdown uncovered (Kent, 2026-09-17). `click`
     needs press and release on the same element, which is the grab for that
-    case. This asserts the decision as made; what it does NOT give is a
-    release that happens OFF the widget (press the record button, release
-    elsewhere: `click` never fires, so `_stop` never runs). See
-    agenda/settings_prompts_one_window.md for the grab-emulation proposal."""
+    case. What `click` does NOT give is a release that happens OFF the
+    widget: press the record button, release elsewhere, and `click` never
+    fires. Press-and-hold controls therefore bind `<Leave>` as well
+    (`composites.hold`, Kent: "finger off the button … off=up and
+    off=sideof"), so the record button stops on slide-off on both backends.
+    See `tests/test_hold_binding.py`."""
     js = (Path(__file__).resolve().parents[1]
           / 'frontend' / 'webview_html' / 'widgets.js').read_text()
     for name in ("'<Button-1>': 'mousedown'",

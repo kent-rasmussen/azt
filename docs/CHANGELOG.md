@@ -68,6 +68,22 @@ a window in order to exist, which was the one thing preventing the chooser's
 selection logic — none of which touches a widget — from running without its
 UI. See `agenda/modal_window_stack.md`.
 
+**The record button stops when your finger comes off it, either way.** Fix
+awaiting verification. Under the webview backend a mouse release is `click`
+(needed so one click on the second-form combo stopped also activating the
+label it uncovered), and `click` needs press and release on the same
+element — so pressing Record, drifting off the button and releasing never
+ran the stop, and the recording did not end. Kent: the metaphor is "finger
+off the button", which includes off=up and off=sideways. Press-and-hold is
+now one shared idiom, `composites.hold`, which binds press, release AND
+leave, and runs the stop exactly once and only after a start (tkinter's
+grab still delivers the release after a slide-off; two stops would have
+built two play/delete pairs). Found in passing: the tkinter tooltip bound
+`<Leave>` on its widget with a bare `bind`, and re-bound it wholesale
+whenever the tip showed, wiping any `<Leave>` binding the widget's owner
+had made. It binds additively now. Headless tests in
+`tests/test_hold_binding.py`.
+
 # Version 1.15.30
 
 **One surface says what is happening, instead of screens flashing past.**
