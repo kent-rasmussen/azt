@@ -469,6 +469,10 @@ class _WordCollectionSecondForm(WordCollection,Task):
     """Base for word collection tasks that require a second form field."""
     ftype_code = None  # override in subclasses
     form_label = None  # override in subclasses
+    # IT READS THE FIELD — `storethisword` writes into it by name. The flag
+    # said otherwise while this class was the clearest user of the setting
+    # in the app (it refuses to start without one, below).
+    uses_second_forms = True
     def __init__(self, program, **kwargs):
         self.ftype=program.params.ftype(self.ftype_code)
         super().__init__(program=program, **kwargs)

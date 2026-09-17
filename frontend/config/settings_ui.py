@@ -234,7 +234,27 @@ class SettingsUI(object):
                 self.refreshattributechanges()
         else:
             log.debug(_("No change: {attr} == {val}").format(attr=attribute,val=choice))
+    def _refuse_unset_field(self,ps,choice):
+        """True if `choice` is the display placeholder, not an answer.
+
+        THE FIELD THAT OFFERS FREE TEXT WILL HAND YOU ANYTHING. The second
+        form line is `editable=True, allow_new=True` — deliberately, since a
+        field name the database has never seen is a perfectly good answer —
+        and committing it without choosing (clicking away commits it) passes
+        the placeholder `fieldsvalue` was SHOWING. That reached
+        `project.json` as `"Verb": "<unset>"`, where it read as a defined
+        value to every guard that tested presence. Refused at the setter, so
+        no caller can store it however it got there."""
+        if str(choice).strip() in ('', self.UNSETFIELD):
+            log.info("declining to store %r as the %s second form field: "
+                     "that is the placeholder shown when there is none",
+                     choice, ps)
+            return True
+        return False
+
     def setsecondformfieldN(self,choice,window=None):
+        if self._refuse_unset_field(self.nominalps,choice):
+            return
         self.secondformfield[self.nominalps]=self.pluralname=choice
         if self.statusisup():
             self.program.mainwindow.status.updatefields()
@@ -245,6 +265,8 @@ class SettingsUI(object):
         if window:
             window.destroy()
     def setsecondformfieldV(self,choice,window=None):
+        if self._refuse_unset_field(self.verbalps,choice):
+            return
         self.secondformfield[self.verbalps]=self.imperativename=choice
         if self.statusisup():
             self.program.mainwindow.status.updatefields()

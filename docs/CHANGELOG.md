@@ -19,6 +19,125 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.31
+
+**The progress board shows which slice you are on again.** Fixed (Kent:
+"current cell operation looks good"). The board marks the current
+profile × check cell with the theme's active background, and has done all
+along — `StatusFrame.activate_cell` is backend-neutral code that reads the
+cell's colour and writes it back:
+
+    cell.inactive_background = cell['background']
+    cell.configure(background=cell['activebackground'])
+
+Under tkinter that works because Tk keeps a value for every option of every
+widget, from its own defaults and the theme. The webview backend knew only
+what a caller had passed, so both reads answered `''` — and writing `''`
+back CLEARS the inline style rather than setting one. The marker was
+therefore doing nothing, silently, on a page where three different markers
+are supposed to be distinguishable.
+
+Three fixes in the option layer, leaving the board's own code alone:
+
+- an option read falls back to the THEME for the options a theme defines,
+  so asking a widget for a colour it was never given answers what tkinter
+  would answer;
+- `command` is readable, because `activate_cell` stores it and
+  `deactivate_cell` puts it back — answering `''` there would have made the
+  restore install nothing and left the cell permanently unclickable;
+- `configure(command=…)` rebinds instead of being discarded for not being
+  serialisable, and REPLACES the handler rather than adding a second one.
+  So the current cell is inert while it is current, and clickable again when
+  it is not.
+
+**Windows know what they cover, separately from what owns them.** Fix
+awaiting verification. A window's parent was carrying two unrelated jobs:
+supplying its theme and root, and being the thing it covers — what closing
+returns to. Those are now separate facts, which matters because the second
+is the only window relationship a Wayland compositor will accept
+(`xdg_toplevel.set_parent`), and the first belongs to the root.
+
+A window closing with nothing underneath it now shows the task list. That
+case previously left the screen empty and was noticed afterwards by two
+safety nets, at 15 and 25 seconds; giving the close path an answer removes
+the case rather than watching for it. The run window also declares itself
+modal on its task, completing chooser ← task ← run window.
+
+The immediate benefit is that a task no longer REQUIRES the chooser to have
+a window in order to exist, which was the one thing preventing the chooser's
+selection logic — none of which touches a widget — from running without its
+UI. See `agenda/modal_window_stack.md`.
+
+# Version 1.15.30
+
+**One surface says what is happening, instead of screens flashing past.**
+A 20fps recording of opening one sort task counted six distinct states
+before the page appeared — an empty fullscreen window, an unthemed grey
+flash, a dimmed window, a small wait dialog, and **two intervals with
+nothing on screen at all**, the longer of them 3.6 seconds. Kent: "much
+more than the presence of the bar, I'm concerned with the flashing of
+screens."
+
+Four changes, from the outside in:
+
+- **A run window is reused, not destroyed and rebuilt.** Every page load
+  built one fullscreen window for the flow that needed somewhere to work,
+  then built a second and threw the first away unused. Fixed; the rule
+  already existed one class up for the slice loop ("never destroy+recreate
+  the kiosk-fullscreen window per slice") and is now applied where the churn
+  came from.
+- **The wait lives ON the page** under the webview backend, instead of
+  raising a separate dialog over it. It covers the content area, carries the
+  message and a progress bar, shows the app's card image, and is cleared
+  when the wait ends, when the page is rebuilt, or when the window quits —
+  with a timeout that removes it and says so, because a cover nobody clears
+  is indistinguishable from a hung app. tkinter keeps the dialog: it has no
+  cheap overlay, and painting during a build is where its known deadlocks
+  live. The two backends now differ in form and agree in intent.
+- **The wait is raised BEFORE the outgoing page is hidden.** Both blank
+  intervals were the same ordering fault — the task window was withdrawn
+  while the run window was still hidden, so nothing was on screen until
+  something later revealed it. That also makes the long-standing
+  "reveal something, anything" safety net unnecessary on this path rather
+  than merely load-bearing.
+- **One window, a stack of claims.** Two flows can want the shared wait at
+  once (see below), so it records who raised it: a flow releasing a claim
+  that is not the top one leaves the window up for whoever is using it,
+  releasing the top one hands back to whoever is still waiting, and each
+  flow reveals only the page it asked to reveal. A handover is logged as a
+  fault to chase, not as normal operation.
+
+**Work stops when its task closes.** The guard that was supposed to stop a
+long build after the user navigates away asked whether its WINDOW still
+existed — reliable under tkinter, where closing a window destroys it, and
+wrong here, where windows are hidden and reused. Worse, it assumed the
+click that closed the task was serviced *inside* the loop that was asking,
+which is true of tkinter's single event loop and false of pywebview, where
+every page event arrives on its own thread: two task flows simply run side
+by side. So the affix catalogue went on loading while an unrelated task
+started, and announced itself over it.
+
+Being finished is now a fact a task records rather than something deduced
+from a window, and the loops ask the task. Kent's report — "the parser work
+shouldn't be continuing AFTER another unrelated task is already started" —
+is what this is, and the guard now fires: *"affix catalog: the window closed
+part way through loading (at 93%)"*.
+
+The concurrency itself is filed as its own item
+(`agenda/webview_flows_run_concurrently.md`), since it produced the JS-queue
+overtaking and the two-concurrent-audio-streams faults earlier in the day
+and was fixed as a one-off both times.
+
+**Also**
+
+- Progress bars appeared on neither wait surface after the first one built:
+  `activate` hides the bar so a wait that never reports has none, and
+  `progress()` only re-showed it the first time the bar was created. Both
+  implementations had the same one-line omission.
+- The default wait message was resolved at import time, where `_()` runs
+  before the live translator is installed — it would have been English for
+  the session whatever interface language was chosen.
+
 # Version 1.15.29
 
 **Windows keep the size they are given.** Under the webview backend on

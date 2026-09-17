@@ -1953,6 +1953,24 @@ class _WebviewWidget:
 
     # ── Configure ─────────────────────────────────────────────────────
     def configure(self, **kwargs):
+        # A CALLABLE IS NOT SERIALISABLE, so `command` fell through the loop
+        # below and was silently discarded — `configure(command=…)` did
+        # nothing at all. `StatusFrame.activate_cell` uses it to make the
+        # current cell inert (`command=donothing`) and `deactivate_cell` to
+        # give its click back, so both halves were no-ops and the current
+        # cell stayed clickable. Handled before the loop, and NOT passed to
+        # the page: the page knows the widget by id and calls back through
+        # `_api`, so rebinding is entirely this side's business.
+        if 'command' in kwargs or 'cmd' in kwargs:
+            self.command = kwargs.pop('command', None) or kwargs.pop('cmd',
+                                                                     None)
+            rebuild = getattr(self, '_build_command', None)
+            if callable(rebuild):
+                try:
+                    rebuild()
+                except Exception as e:
+                    log.info("widget {}: could not rebind its command ({!r})"
+                             "".format(self._wid, e))
         self._config.update(kwargs)
         wv = getattr(self, '_wv_window', None)
         for k, v in kwargs.items():
@@ -1965,8 +1983,53 @@ class _WebviewWidget:
     def __setitem__(self, key, value):
         self.configure(**{key: value})
 
+    # Options whose value Tk ALWAYS has, because they come from the widget's
+    # own defaults and the theme rather than from the caller. Read back from
+    # the theme when nobody set them explicitly — see `__getitem__`.
+    _THEME_OPTIONS = ('background', 'bg', 'activebackground', 'foreground',
+                      'fg', 'highlightbackground', 'highlightcolor',
+                      'selectcolor', 'troughcolor', 'menubackground')
+
     def __getitem__(self, key):
-        return self._config.get(key, self._props.get(key, ''))
+        """tkinter's option read — WITH THE THEME BEHIND IT.
+
+        Tk keeps every option for every widget, so `cell['activebackground']`
+        answers with a real colour even on a widget created without one. Ours
+        knew only what a caller had passed, and answered `''`. That is not a
+        cosmetic difference: the app READS an option, then WRITES it back.
+        `StatusFrame.activate_cell` is exactly that —
+
+            cell.inactive_background = cell['background']
+            cell.configure(background=cell['activebackground'])
+
+        — so it read `''`, wrote `background: ''`, and the current-cell
+        marker on the progress board silently did nothing. Kent, 2026-09-17,
+        of the board's three markers: "this is already done, just not
+        showing." It was done, and backend-neutral; the read underneath it
+        was not.
+
+        Only the options a THEME defines, and only when unset: anything else
+        keeps answering `''` rather than inventing a value."""
+        # `command` LIVES ON THE WIDGET, not in the props: Button pops it in
+        # `__init__`. Reading it is half of a store-and-restore pair —
+        # `activate_cell` keeps `cell['command']`, sets `donothing`, and
+        # `deactivate_cell` puts the original back — so answering `''` here
+        # does not merely fail to report: it makes the restore install
+        # nothing and leaves the cell permanently inert.
+        if key in ('command', 'cmd'):
+            return getattr(self, 'command', '') or ''
+        if key in self._config:
+            return self._config[key]
+        if key in self._props:
+            return self._props[key]
+        if key in self._THEME_OPTIONS:
+            theme = getattr(self, 'theme', None)
+            if theme is not None:
+                name = {'bg': 'background', 'fg': 'foreground'}.get(key, key)
+                value = getattr(theme, name, None)
+                if value:
+                    return value
+        return ''
 
     def keys(self):
         return list(set(list(self._config.keys()) + list(self._props.keys())))
@@ -3545,6 +3608,12 @@ class Button(_WebviewWidget):
         else:
             # Either no choice to pass, or a command that will not accept one.
             self._final_cmd = lambda data: cmd()
+        # REPLACE, DON'T STACK. `_api.register` APPENDS, so rebinding a
+        # command — which `configure(command=…)` now does, for
+        # `activate_cell`/`deactivate_cell` — would leave the previous
+        # handler live and fire both. Harmless at construction (there is
+        # nothing to clear) and load-bearing on every later call.
+        _api.unregister(self._wid, 'command')
         _api.register(self._wid, 'command', self._final_cmd)
 
 
@@ -4925,12 +4994,47 @@ class Toplevel(_WebviewWidget):
             place = {'x': -32000, 'y': -32000}
         if bg:
             place['background_color'] = bg
+        # SAID ONCE, because it halves the grey-flash question. Every new
+        # window paints WHITE for a moment before its document exists
+        # (Kent's recordings, one flash per window), and the document cannot
+        # be the cause: `base.html` sets `background: transparent` inline,
+        # ahead of both stylesheets, so what shows through is whatever is
+        # BEHIND it. Either this colour never gets set, or pywebview applies
+        # it to the GtkWindow and the WebView paints its own white on top.
+        # This line settles the first of those.
+        _say_once("windows are created with background_color={!r} (from the "
+                  "theme), and the page is told the same colour in the URL "
+                  "fragment — see the inline script in base.html for why "
+                  "both are needed".format(bg))
         # Create a new pywebview window
         if webview:
             html_path = os.path.join(_HTML_DIR, 'base.html')
+            # THE COLOUR GOES TO THE PAGE AS WELL AS TO THE WINDOW. Both are
+            # needed and they cover different moments: `background_color`
+            # paints the window before the web view has anything (which
+            # works — Kent's log: `background_color='#ffbb99'`), and this
+            # paints the DOCUMENT before either stylesheet is fetched.
+            # Without it every window went theme-grey-theme, because a
+            # transparent document composites onto the web view's own opaque
+            # white rather than onto the window. See the inline script in
+            # base.html.
+            #   A FRAGMENT, so it is never sent to pywebview's http server
+            # and survives a plain file path; if it is ever dropped the page
+            # still loads and we are back to the flash, never to a broken
+            # page.
+            page_url = html_path if os.path.exists(html_path) else None
+            if page_url and bg:
+                try:
+                    from urllib.parse import quote
+                    page_url = '{}#bg={}'.format(page_url,
+                                                 quote(str(bg), safe=''))
+                except Exception as e:
+                    log.info("could not tell the page its background colour "
+                             "({!r}); it will flash white before the "
+                             "stylesheet arrives".format(e))
             self._wv_window = webview.create_window(
                 'A-Z+T',
-                url=html_path if os.path.exists(html_path) else None,
+                url=page_url,
                 html='<div id="root"></div>' if not os.path.exists(html_path) else None,
                 js_api=_api,
                 width=_created_size()[0], height=_created_size()[1],
@@ -4952,10 +5056,33 @@ class Toplevel(_WebviewWidget):
                 # The url is logged because a window pointed at nothing loads
                 # pywebview's SERVER ROOT instead, which its own asset route
                 # cannot serve: `GET / -> 500`, and the window shows nothing.
-                log.info("window {}: created {}{}, url={}".format(
+                # AND WHO ASKED FOR IT. Nothing named the caller, so "is
+                # this window being built twice?" could not be answered from
+                # a log at all — and it is the right question to ask: the
+                # run window WAS being built twice until today, and Kent,
+                # reading a 40fps sheet, asked the same of two more: "I
+                # actually wonder if sh1.26 and sh2.15 aren't the same
+                # window being built twice, like with the runwindow issue we
+                # fixed earlier today" (2026-09-16).
+                #   Two frames up, as in `getrunwindow`: one names the
+                # constructor's caller, the one above it says which flow it
+                # belongs to — which is what distinguishes two steps of one
+                # page load from the same step running twice.
+                try:
+                    import traceback as _tb
+                    frames = _tb.extract_stack()[:-1][-3:-1]
+                    who = ' <- '.join('{}:{} in {}()'.format(
+                                        f.filename.rsplit('/', 1)[-1],
+                                        f.lineno, f.name)
+                                      for f in reversed(frames))
+                except Exception:
+                    who = 'caller unknown'
+                log.info("window {}: created {}{} as {}, asked by {}, url={}"
+                         "".format(
                     self._wid,
                     'HIDDEN' if create_hidden else 'visible',
                     ' (asked withdrawn)' if withdrawn else '',
+                    type(self).__name__, who,
                     html_path if os.path.exists(html_path) else '(NONE — will '
                     'load the server root and fail)'))
                 _all_wv_windows.append(self._wv_window)
@@ -5577,6 +5704,16 @@ class Toplevel(_WebviewWidget):
         transience there would hide the dialog. Callers pick; there is
         deliberately no automatic version of this."""
         target = parent if parent is not None else getattr(self, 'parent', None)
+        # RECORDED, NOT ONLY DECLARED. Modal-on is a different relationship
+        # from ownership — a window is OWNED by whoever supplies its theme
+        # and root, and MODAL ON whatever it covers — and the app has been
+        # reading one off the other. Keeping it here means "what do I return
+        # to when I close?" has an answer that does not depend on the
+        # ownership tree having the same shape, which is what lets a task be
+        # owned by the root and still return to the chooser. See
+        # `_reveal_parent_on_quit` and agenda/modal_window_stack.md.
+        if target is not None:
+            self._modal_on = target
         wv = getattr(self, '_wv_window', None)
         pwv = getattr(target, '_wv_window', None)
         if not wv or pwv is None:
@@ -7015,6 +7152,40 @@ class Toplevel(_WebviewWidget):
         _release_waiters_below(self, 'the window it is in has quit')
         _close_native_window(self, 'Toplevel {}'.format(self._wid))
 
+    def _nothing_behind_me(self):
+        """This window closed and there is nothing underneath it.
+
+        THE CLOSE PATH OWNS WHAT COMES NEXT. Until now a task closing with
+        nothing behind it simply left the screen empty, and two separate
+        safety nets existed to notice afterwards — `guardvisible` at 15s and
+        the visibility watchdog at 25s. Both are there because this case had
+        no answer; giving it one removes the case rather than watching for
+        it.
+
+        The answer is the task list, which is what a user who has finished a
+        task wants and is the one page that is always meaningful. It is also
+        what makes a window-less chooser possible: the first task of a
+        session is modal on nothing, so closing it is exactly when the
+        chooser first needs to exist. See agenda/modal_window_stack.md.
+
+        Never raises: this runs inside `on_quit`, where an exception would
+        cost the close itself."""
+        try:
+            root = self._find_root() or default_root()
+            chooser = getattr(getattr(root, 'program', None),
+                              'taskchooser', None)
+            if chooser is None or chooser is getattr(self, 'task', None):
+                log.info("window {}: nothing behind it and no task chooser "
+                         "to fall back to; the screen is now empty"
+                         "".format(self._wid))
+                return
+            log.info("window {}: nothing behind it — showing the task list"
+                     "".format(self._wid))
+            chooser.gettask()
+        except Exception as e:
+            log.info("window {}: nothing behind it, and the task list could "
+                     "not be shown ({!r})".format(self._wid, e))
+
     def _reveal_parent_on_quit(self):
         """Put the parent window back when this one closes, or say why not.
 
@@ -7022,12 +7193,21 @@ class Toplevel(_WebviewWidget):
         `on_quit` for what its absence cost. Never allowed to raise: this
         runs during teardown, and a failed reveal must not also break the
         close."""
-        parent = getattr(self, 'parent', None)
+        # WHAT THIS WINDOW COVERS, not what owns it. `_modal_on` is set by
+        # `declare_dialog_of`; `parent` is the fallback and is what every
+        # window used before the two were separated. A task owned by the
+        # root still returns to the chooser, because the chooser is what it
+        # was covering. See agenda/modal_window_stack.md.
+        parent = getattr(self, '_modal_on', None) \
+                 or getattr(self, 'parent', None)
         if parent is None or not getattr(parent, '_exists', False):
+            self._nothing_behind_me()
             return
         if isinstance(parent, Root):
             # The root has no page of its own worth revealing, and tkinter
-            # excludes it for the same reason.
+            # excludes it for the same reason — but something must still
+            # come next, or the user is left with nothing.
+            self._nothing_behind_me()
             return
         try:
             from frontend.visibility import has_content, report_empty_page
@@ -7281,8 +7461,14 @@ class Toplevel(_WebviewWidget):
             # image is what makes the screen the app's rather than a browser's.
             if not getattr(getattr(self, '_find_root', lambda: None)(),
                            'noimagescaling', False):
+                # `sticky=''` — CENTRED IN THE COLUMN, not stretched across
+                # it. `'ew'` makes the label fill the column and then the
+                # image sits wherever the label's own flex layout puts it;
+                # an empty sticky is tkinter's way of saying "centre me in
+                # my cell", and it is the grid that does the centring rather
+                # than something inside the label.
                 Label(holder, image='small', text='',
-                      row=3, column=0, sticky='ew', pady=30)
+                      row=3, column=0, sticky='', pady=30)
             try:
                 bar.grid_remove()
             except Exception as e:
@@ -7303,8 +7489,14 @@ class Toplevel(_WebviewWidget):
             # happened, and it says so at ERROR because a page that took
             # this long to say nothing is a bug with a caller's name on it.
             try:
-                self.after(self._PAGE_WAIT_LIMIT_MS, self._page_wait_expired,
-                           holder)
+                # A CLOSURE, because this backend's `after` takes no extra
+                # arguments — tkinter's does (`after(ms, func, *args)`) and
+                # ui_webview's is `after(ms, func=None)`, so passing the
+                # holder raised TypeError and the timeout silently did not
+                # exist (Kent's log, 2026-09-16 — caught only because the
+                # fallback says so out loud).
+                self.after(self._PAGE_WAIT_LIMIT_MS,
+                           lambda h=holder: self._page_wait_expired(h))
             except Exception as e:
                 log.info("window {}: page wait has no timeout ({!r})"
                          "".format(self._wid, e))

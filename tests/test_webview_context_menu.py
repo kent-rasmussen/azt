@@ -280,18 +280,29 @@ def test_windows_are_NOT_created_hidden():
 
 def test_press_and_release_map_to_press_and_release():
     """A press-and-hold control cannot work otherwise, and the record button
-    is one: press starts, release stops (`sound_ui.py:70-71`).
+    is one: press starts, release stops (`sound_ui.py:80-81`).
 
     `<ButtonPress-1>` was absent from the map, so it registered a listener for
     an event nothing fires and recording never STARTED — then release raised
     on state that `start()` creates. And `<Button-1>` mapped to 'click', which
     fires AFTER mouseup, so the two synonyms ran in the wrong order relative
-    to each other. In tkinter both names mean press."""
+    to each other. In tkinter both names mean press.
+
+    RELEASE IS `click`, NOT `mouseup` (2026-09-17). Tk holds an implicit
+    pointer grab, so ButtonRelease goes to the widget that got the PRESS; a
+    DOM mouseup goes to whatever is under the pointer. With `mouseup`, one
+    click on the second-form combo both chose from it AND activated the
+    prose label the closing dropdown uncovered (Kent, 2026-09-17). `click`
+    needs press and release on the same element, which is the grab for that
+    case. This asserts the decision as made; what it does NOT give is a
+    release that happens OFF the widget (press the record button, release
+    elsewhere: `click` never fires, so `_stop` never runs). See
+    agenda/settings_prompts_one_window.md for the grab-emulation proposal."""
     js = (Path(__file__).resolve().parents[1]
           / 'frontend' / 'webview_html' / 'widgets.js').read_text()
     for name in ("'<Button-1>': 'mousedown'",
                  "'<ButtonPress-1>': 'mousedown'",
-                 "'<ButtonRelease-1>': 'mouseup'"):
+                 "'<ButtonRelease-1>': 'click'"):
         assert name in js, "press/release mapping wrong or missing: " + name
 
 

@@ -168,8 +168,37 @@ class StatusWindow(ui.Window):
         """The two transitions themselves. Only ever reached via `_surface`."""
         try:
             if not self.winfo_exists():
+                log.info("status window: not surfacing, it no longer exists")
                 return
-            if not self.winfo_viewable():
+            # SAY IT, because the absence of a line here is not evidence.
+            # This method is DEFERRED and logs only on failure, so a message
+            # that never appeared looked identical in the log to one that
+            # appeared behind something: the withdraw at construction is
+            # instrumented with its caller, this was not, and the log could
+            # not tell "never surfaced" from "surfaced and is not on top"
+            # (Kent, 2026-09-17: "I don't see the NotifyUser window; the
+            # task window is visible, but not active").
+            viewable = self.winfo_viewable()
+            # AND WHO HOLDS THE GRAB. A window that is mapped, painted, and
+            # takes WM actions (minimise, move) while NOTHING IN IT CLICKS
+            # has had its input routed away, and a Tk grab is the only thing
+            # in this app that does that — `tk_popup`'s, since there is no
+            # explicit `grab_set` anywhere. If the grabbing widget belonged
+            # to a window that has since been destroyed, the grab is
+            # orphaned and the whole app goes input-dead with the event loop
+            # perfectly idle (Kent, 2026-09-17: "it minimizes and moves,
+            # etc, but nothin on it clicks", still dead minutes later, so
+            # `-topmost` is not the cause).
+            #   `grab_current()` is the only way to see it: a grab appears in
+            # no traceback and no py-spy dump, which is why this class of
+            # fault has been suspected twice and never confirmed.
+            try:
+                grabber = self.grab_current()
+            except Exception as e:
+                grabber = 'unaskable ({!r})'.format(e)
+            log.info("status window: surfacing (was viewable=%s); grab held "
+                     "by %r", viewable, grabber)
+            if not viewable:
                 self.deiconify()
             self.attributes('-topmost', True)
             self.after(1200, self._release_topmost)

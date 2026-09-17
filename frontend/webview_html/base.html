@@ -25,6 +25,36 @@
      wait for. It says only what must be true before anything can be
      fetched; the themed colour still comes from grid.css and the theme. -->
 <style>html,body{background:transparent;margin:0}</style>
+<script>
+/* THE THEME COLOUR, BEFORE ANYTHING IS FETCHED.
+   `transparent` above is not enough and was the wrong idea: on WebKitGTK a
+   transparent document composites onto the WEB VIEW's own base colour,
+   which is opaque white — not onto the GtkWindow behind it. So every new
+   window went theme-grey-theme: peach while only the window was painted,
+   white the moment the document existed, peach again once grid.css and
+   setThemeVars arrived (Kent's 20fps sheets, 2026-09-16, one flash per
+   window: "in the video, we see theme-grey-theme on each new window").
+   The document must paint a real colour, and the only colour available
+   before a fetch is one handed to us.
+   IN THE FRAGMENT, not a query string: a fragment is not sent to a server
+   and survives a plain `file://` path, and if it is ever dropped the page
+   still loads — the failure mode is the grey flash we already have, never a
+   broken page. Python appends it in Toplevel.__init__. */
+(function () {
+    try {
+        var m = /(?:^|[#&])bg=([^&]+)/.exec(location.hash || '');
+        if (m) {
+            var bg = decodeURIComponent(m[1]);
+            document.documentElement.style.background = bg;
+            /* <body> too: it inherits nothing here, and grid.css sets both. */
+            if (document.body) document.body.style.background = bg;
+            else document.addEventListener('DOMContentLoaded', function () {
+                document.body.style.background = bg;
+            });
+        }
+    } catch (e) { /* a colour is not worth a broken page */ }
+})();
+</script>
 <link rel="stylesheet" href="grid.css">
 <link rel="stylesheet" href="theme.css">
 <script src="widgets.js"></script>

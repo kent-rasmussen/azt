@@ -631,6 +631,33 @@ class Sort(Categories):
         self.program.settings.storesettingsfile()
         # t=(_('Run Check'))
         log.info("Running check...")
+        # SECOND FORMS, ASKED HERE AND NOT WHILE SETTINGS ARE DRAWN. The
+        # status frame used to define an unset second-form field as a side
+        # effect of rendering its own line, so the guarantee depended on
+        # that line being drawn and arrived while the user was still reading
+        # the page. This is the point of USE (Kent, 2026-09-17), and it asks
+        # once.
+        #   It opens the field in place rather than raising a dialog, and
+        # hands itself back as `then` so committing the value resumes this
+        # check — so two undefined fields cost two answers, not two clicks
+        # on Sort!. The resume fires ONLY for a field this call opened and
+        # ONLY once a value is actually there; see `assure_second_forms`.
+        #   GATED ON THE TASK SAYING IT READS THE FIELD. `uses_second_forms`
+        # is that claim; a vowel sort never touches a plural field and must
+        # not be stopped for one (Kent, 2026-09-17: the field line
+        # "shouldn't even be on this page").
+        #   WHICH MAKES THIS INERT TODAY, deliberately: NO sort declares the
+        # flag, because `<unset>` is a legal state for a sort — with no field
+        # defined there is no second-form check to select (see tasks/base.py).
+        # The two tasks that cannot work without the field assure it
+        # themselves (Parse asks per word, lexicon.py:1767; the collection
+        # tasks refuse to start, tasks.py:475). Kept as the hook for a task
+        # that later needs asking at the point of use; delete it with
+        # `StatusFrame.assure_second_forms` and `composites`' `after_commit`
+        # if that never arrives — agenda/settings_prompts_one_window.md.
+        if (getattr(self,'uses_second_forms',False) and
+                not self.ui.assure_second_forms(then=self.runcheck)):
+            return
         cvt=self.program.params.cvt()
         # The missing-profiles offer also fires here (on 'Sort!' and on advancing
         # to a new profile/check via ncheck/nprofile). On 'sort' we tear down THIS

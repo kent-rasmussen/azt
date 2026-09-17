@@ -131,17 +131,28 @@ class ClickToEdit:
     Needed when the CHOICES change — the sound settings' rate list depends
     on which card is selected, so an editor built once would go on offering
     the first card's rates forever.
+
+    `placeholder` is a string the label may SHOW but the editor must never
+    contain, and which is never reported as a choice. The second-form field
+    line displays `<unset>` when no field is defined, and that word was
+    appearing in the combo as if it were the current answer — "we don't want
+    that value to show in the editor at all" (Kent, 2026-09-17). It reached
+    `project.json` the same way, by being committed when the user clicked
+    elsewhere.
     """
 
     def __init__(self, parent, var, editor, row=0, column=0, label=None,
                  clear_on_edit=False, on_commit=None, rebuild=False,
                  font='default', ok=_("OK"), show_ok=True, width=None,
-                 label_anchor='e', delimit=None, **gridkwargs):
+                 label_anchor='e', delimit=None, placeholder=None,
+                 **gridkwargs):
         self.var = var
         self._editor = editor
         self._clear_on_edit = clear_on_edit
         self._on_commit = on_commit
         self._rebuild = rebuild
+        self._placeholder = placeholder
+        self._cleared = False
         self._was = None
         self.widget = None
         self.namelabel = None
@@ -321,6 +332,15 @@ class ClickToEdit:
             log.info("click-to-edit: could not build the editor (%r)", e)
             return None
 
+    def showing_placeholder(self):
+        """Is the value on show a stand-in rather than an answer?"""
+        if not self._placeholder:
+            return False
+        try:
+            return str(self.var.get()).strip() == str(self._placeholder)
+        except Exception:
+            return False
+
     def edit(self, event=None):
         """Show the editor in the label's place."""
         global _editing
@@ -338,8 +358,12 @@ class ClickToEdit:
         # focus, which happens again on every pick. Committing without
         # having chosen anything restores what was there, so opening an
         # editor is never destructive.
-        if self._clear_on_edit:
+        # A PLACEHOLDER IS NOT A STARTING VALUE. `<unset>` is what the label
+        # says when nothing is defined; putting it in the editor offers it as
+        # the current answer, and typing then edits the word "<unset>".
+        if self._clear_on_edit or self.showing_placeholder():
             self._was = self.var.get()
+            self._cleared = True
             self.var.set('')
         self.shown.grid_remove()
         self.box.grid()
@@ -374,8 +398,14 @@ class ClickToEdit:
         global _editing
         if _editing is self:
             _editing = None
-        if self._clear_on_edit and not str(self.var.get() or '').strip():
+        # WHAT WAS THERE COMES BACK when the field closes with nothing in it
+        # — including the placeholder, which is the label's business and not
+        # a value. `_cleared` records that THIS open emptied the box, so a
+        # field that was left empty on purpose is not silently refilled.
+        if ((self._cleared or self._clear_on_edit) and
+                not str(self.var.get() or '').strip()):
             self.var.set(self._was or '')
+        self._cleared = False
         for w in (self.widget, self.box):
             if w is None:
                 continue
@@ -385,7 +415,20 @@ class ClickToEdit:
                 log.info("click-to-edit: could not unbind Return (%r)", e)
         self.box.grid_remove()
         self.shown.grid()
-        if notify and self._on_commit is not None:
+        # THE PLACEHOLDER IS NEVER REPORTED AS A CHOICE. `close_open_field`
+        # commits this field when the user clicks a different one, so a
+        # commit is not proof that anything was chosen — and the setter was
+        # duly handed `<unset>`, which is how it reached `project.json`
+        # (Kent, 2026-09-17). The layer that owns the sentinel refuses it as
+        # well; this is the same guarantee one step earlier, where the
+        # difference between "shown" and "chosen" is still known.
+        #   `after_commit` still runs: it belongs to whoever opened the field
+        # and it clears itself, so suppressing it here would leave the hook
+        # armed for a later, unrelated edit.
+        if notify and self.showing_placeholder():
+            log.info("click-to-edit: closed on the placeholder %r; nothing "
+                     "chosen, so nothing set", self._placeholder)
+        elif notify and self._on_commit is not None:
             try:
                 self._on_commit(self.var.get())
             except Exception as e:
@@ -394,6 +437,22 @@ class ClickToEdit:
                 # sees their choice; the log says why it did not stick.
                 log.error("click-to-edit: %r rejected the value %r (%r)",
                           self._on_commit, self.var.get(), e)
+        # AND WHOEVER WAS WAITING FOR THIS VALUE, separately from whoever
+        # OWNS it. `on_commit` belongs to the field's builder and persists
+        # the setting; `after_commit` belongs to whatever opened the field
+        # because it could not proceed without one — `assure_second_forms`
+        # sets it so committing resumes the sort that asked, instead of the
+        # user having to press Sort! again for each missing value.
+        #   AFTER the setter, so the resumed work reads the stored value and
+        #   not the one being replaced. Cleared by its own handler, so a
+        #   later edit of the same field does not restart anything.
+        after = getattr(self, 'after_commit', None)
+        if notify and callable(after):
+            try:
+                after(self.var.get())
+            except Exception as e:
+                log.error("click-to-edit: after_commit %r failed (%r)",
+                          after, e)
 
 
 def _options_of(options):

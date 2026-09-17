@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.30' #This is a string...
+__version__='1.15.31' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -1729,9 +1729,9 @@ class App:
             self.testlift='Demo_en' #portion of filename
             # self.testtask='NoChooser' #stop at splash, before Chooser
             # self.testtask=None #Just open Chooser
-            self.testtask='WordCollectnParsewRecordings'
+            # self.testtask='WordCollectnParsewRecordings'
             # self.testtask='SortT' #Will convert from string to class later
-            # self.testtask='SortV' #Will convert from string to class later
+            self.testtask='SortV' #Will convert from string to class later
             # self.testtask='SortSyllables' #Will convert from string to class later
             # self.testtask='WordCollectnParsewRecordings'
             # self.default_task='WordCollectnParse'

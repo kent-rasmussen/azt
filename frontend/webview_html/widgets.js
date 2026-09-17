@@ -1495,7 +1495,26 @@ function bindEvent(wid, eventName) {
         // wants "activated" uses `command=`, not a press binding.
         '<Button-1>': 'mousedown',
         '<ButtonPress-1>': 'mousedown',
-        '<ButtonRelease-1>': 'mouseup',
+        // 'click', NOT 'mouseup' — TK HOLDS AN IMPLICIT POINTER GRAB.
+        // ButtonRelease goes to the widget that received the PRESS, wherever
+        // the pointer has since moved to; a DOM `mouseup` goes to whatever
+        // is under the pointer at release. `mouseup` therefore looks like a
+        // faithful translation and is not, and any widget that DISAPPEARS
+        // between press and release hands its release to whatever it was
+        // covering.
+        //   Kent, 2026-09-17: one click on the second-form combo box both
+        // chose from the combo AND opened the next setting's dialog — "one
+        // click", with WHICH dialog depending on where in the combo he
+        // clicked. The dropdown closes on the press, and the release lands
+        // on the prose label now beneath the cursor, whose
+        // `<ButtonRelease-1>` is how every prose field is activated
+        // (`ui_shell.proselabel`).
+        //   A DOM `click` fires on the nearest common ancestor of the
+        // mousedown and mouseup targets, so it requires both on the same
+        // element — which is the grab semantics, for the case that matters.
+        // Ordering is still press-then-release: `click` follows `mouseup`,
+        // and `<Button-1>` is `mousedown`.
+        '<ButtonRelease-1>': 'click',
         '<Double-Button-1>': 'dblclick',
         '<Enter>': 'mouseenter',
         '<Leave>': 'mouseleave',

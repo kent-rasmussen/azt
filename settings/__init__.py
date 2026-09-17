@@ -781,9 +781,31 @@ class Settings(SettingsUI):
             self.program.mainwindow.getsecondformfieldN()
         if self.verbalps not in self.secondformfield:
             self.program.mainwindow.getsecondformfieldV()
+    #: What the status line SHOWS when a second-form field has no value.
+    #: It is a display string and must never be stored — but it was, and
+    #: reached `project.json` (Kent, 2026-09-17: `"Verb": "<unset>"`, with
+    #: "is that going to get us into trouble?"). It is defined HERE, in the
+    #: layer that must refuse it, so the display and the guard cannot drift
+    #: apart; `ui_shell.fieldsvalue` shows it and `setsecondformfield*`
+    #: rejects it.
+    UNSETFIELD='<unset>'
+
+    def secondformfieldset(self,ps):
+        """Has `ps` a real second-form field? Presence is not enough.
+
+        The placeholder counts as UNSET wherever the question is asked.
+        Three separate consumers were fooled by the stored placeholder —
+        this predicate, `assure_second_forms`, and anything reading the
+        value in order to find a LIFT field of that name (which would have
+        gone looking for a field literally called `<unset>`)."""
+        if not ps or ps not in self.secondformfield:
+            return False
+        return str(self.secondformfield[ps]).strip() not in (
+                    '', self.UNSETFIELD)
+
     def secondformfieldsOK(self):
-        if (self.nominalps in self.secondformfield and
-            self.verbalps in self.secondformfield):
+        if (self.secondformfieldset(self.nominalps) and
+            self.secondformfieldset(self.verbalps)):
             return True
     def fields(self):
         try:

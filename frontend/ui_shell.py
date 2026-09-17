@@ -645,8 +645,20 @@ class StatusFrame(ui.Frame):
         else:
             l=ui.Button(parent,text=text,font='report',anchor='w',
                 relief=self.mainrelief)
+        # A GAP BETWEEN WORDS THAT ARE SEPARATE WIDGETS. These labels are
+        # gridded side by side to make one sentence — "Looking at {profile}"
+        # then "{ps} words ({count})" — and with nothing between them the
+        # page read "Looking at CVCVNoun words (51)". The space cannot go
+        # in either string: each is a translatable sentence fragment, and a
+        # leading or trailing space in a catalogue entry is invisible to a
+        # translator and routinely lost (the same reason yesterday's field
+        # quotes became their own widgets rather than parts of the
+        # neighbouring text).
+        #   So it is padding, on every label after the first in a line. The
+        # first gets none, or the sentence would start indented.
+        padx=(0 if column == 0 else 4)
         l.grid(column=column, row=self.irow, columnspan=columnspan,
-                ipadx=ipadx, sticky='w')
+                ipadx=ipadx, padx=padx, sticky='w')
         if kwargs.get('cmd'):
             l.bind('<ButtonRelease-1>',kwargs.get('cmd'))
         if kwargs.get('tt'):
@@ -655,7 +667,8 @@ class StatusFrame(ui.Frame):
 
     def prosefield(self, key, prefix, var, options_fn, setter, tt,
                    parent=None, editable=False, value_fn=None, suffix=None,
-                   prefix_fn=None, allow_new=False, delimit=None):
+                   prefix_fn=None, allow_new=False, delimit=None,
+                   placeholder=None):
         """A prose line whose LAST WORD is the setting, changed in place.
 
         "Studying Kent's English" is a sentence with a value in it, and
@@ -713,6 +726,10 @@ class StatusFrame(ui.Frame):
                     # space and shifts nothing.
                     width=None,
                     delimit=delimit,
+                    # A WORD THE LABEL MAY SAY AND THE EDITOR MAY NOT —
+                    # `<unset>` on the second-form field line. See
+                    # `ClickToEdit.showing_placeholder`.
+                    placeholder=placeholder,
                     font='report',
                     on_commit=lambda chosen: self._setlang(
                                     chosen, options_fn, setter, value_fn,
@@ -973,9 +990,14 @@ class StatusFrame(ui.Frame):
                     field=self.fieldsvalue(ps), ps=ps))
 
     def fieldsvalue(self,ps):
-        if ps in self.program.settings.secondformfield:
+        # ONE SENTINEL, OWNED BY THE LAYER THAT REFUSES IT. This returned a
+        # literal `'<unset>'` while `settings` knew nothing about the
+        # string, so the setter had no way to tell a placeholder from an
+        # answer — and one duly reached `project.json` (Kent, 2026-09-17).
+        # `secondformfieldset` is the same test every other consumer uses.
+        if self.program.settings.secondformfieldset(ps):
             return str(self.program.settings.secondformfield[ps])
-        return '<unset>'
+        return self.program.settings.UNSETFIELD
 
     def fieldsoptions(self,ps):
         """The field names already in the database, plus the defaults.
@@ -1005,16 +1027,18 @@ class StatusFrame(ui.Frame):
             if not ps:
                 continue
             self.newrow()
-            # These shouldn't need to be updated:
-            if ps == self.program.settings.nominalps:
-                cmd=self.program.ui_settings.getsecondformfieldN
-            else:
-                cmd=self.program.ui_settings.getsecondformfieldV
-            if ps not in self.program.settings.secondformfield and (
-                    self.program.task.uses_second_forms or ( #Parse
-                        self.program.task.ftype not in ['lx','lc'])):
-                cmd() #Make sure these are defined where needed (i.e., parsing or collecting them.)
-                # return #just do one at a time
+            # THE ASSURANCE MOVED OUT OF HERE. This used to call the chooser
+            # dialog to define an unset field, which made the guarantee a
+            # SIDE EFFECT OF RENDERING: a task that needed the setting but
+            # did not draw this line never got it, and a page that drew the
+            # line raised a dialog while the user was still reading it.
+            # Kent, 2026-09-17: "assuring second forms are there before
+            # using them is good, but maybe that should be on runcheck(),
+            # rather than displaying settings (given that settings display
+            # can be all kinds of wonky before finally settling on the
+            # values to use, before using them)."
+            #   It is `Sort.runcheck` that now asks, once, at the point of
+            # use — see `assure_second_forms`.
             # EDITABLE, because the answer may not be on the list. The old
             # flow was three windows deep for this one value — pick from the
             # database's fields, or "other" for the defaults, or "custom" to
@@ -1039,12 +1063,101 @@ class StatusFrame(ui.Frame):
                             editable=True, allow_new=True,
                             value_fn=lambda ps=ps: self.fieldsvalue(ps),
                             delimit=('‘','’'),
+                            # SHOWN, NEVER OFFERED. `fieldsvalue` says
+                            # `<unset>` when no field is defined; the combo
+                            # opened with that word in it as though it were
+                            # the current field name, and committing it is
+                            # how the string reached `project.json` (Kent,
+                            # 2026-09-17: "we don't want that value to show
+                            # in the editor at all").
+                            placeholder=self.program.settings.UNSETFIELD,
                             suffix=_("({ps})").format(ps=ps))
+    def assure_second_forms(self, then=None):
+        """Every second-form field defined? If not, open the first one.
+
+        ASKED AT THE POINT OF USE, not while settings are being drawn.
+        `fieldsline` used to define an unset field as a side effect of
+        rendering itself, which meant the guarantee depended on the line
+        being drawn and arrived while the user was still reading the page.
+        Kent, 2026-09-17: settings display "can be all kinds of wonky before
+        finally settling on the values to use, before using them."
+
+        AN EDIT IN PLACE, NOT A MODAL. The old path raised a chooser window
+        per field. Kent: "in the current paradigm, it would make more sense
+        for getsecondformfield to simply mark the appropriate settings label
+        as 'edit', rather than keeping the old dialog just for this." The
+        cost he named is real — two undefined fields means two passes — and
+        `then` is what stops those being two CLICKS: committing the field
+        re-enters the work, so the user makes one gesture per missing value
+        and the sort starts when the last one lands.
+
+        `<unset>` is a DISPLAY string (`fieldsvalue`), never a stored value,
+        so the test is membership in the settings dict, not the text shown.
+
+        Returns True when nothing was missing and the caller may proceed."""
+        # `secondformfieldset`, NOT membership. A stored `<unset>` is a
+        # placeholder that reached `project.json`, and testing presence read
+        # it as an answer — so this would never have prompted for a field
+        # that was never set. See `SettingsManager.UNSETFIELD`.
+        missing=[ps for ps in (self.program.settings.nominalps,
+                               self.program.settings.verbalps)
+                 if ps and not self.program.settings.secondformfieldset(ps)]
+        if not missing:
+            return True
+        ps=missing[0]
+        field=(self.labels.get('fields'+ps) or {}).get('field')
+        if field is None or not hasattr(field,'edit'):
+            # No field on this page to open — the line is not drawn here.
+            # Say so and let the caller proceed rather than blocking work on
+            # a widget that does not exist.
+            log.info("second form field for %s is undefined and this page "
+                     "has no field to open; continuing without it",ps)
+            return True
+        log.info("second form field for %s is undefined; opening it rather "
+                 "than raising a dialog",ps)
+        if then is not None:
+            # ONLY IF WE OPENED IT, AND ONLY IF A VALUE ARRIVED. Kent,
+            # 2026-09-17, on the resume: "ONLY ONLY ONLY if it got there
+            # from runcheck. NEVER runcheck just because that was set."
+            #
+            # Three guards, because `commit` fires on more than a
+            # deliberate answer:
+            #   * the hook exists ONLY on a field this method opened, so
+            #     editing the same field by hand never carries it;
+            #   * it is cleared FIRST, so it can fire at most once and a
+            #     later edit cannot resurrect it;
+            #   * and it checks the setting is now actually DEFINED —
+            #     `close_open_field` commits our field when the user clicks
+            #     a different one, so a commit is not proof that the value
+            #     was supplied. Without this, walking away from the field
+            #     would start a sort nobody asked for, which is exactly the
+            #     case being forbidden.
+            def resume(*args,**kwargs):
+                field.after_commit=None
+                # `secondformfieldset`, NOT membership: a stored `<unset>`
+                # is present and still means nothing is defined.
+                if not self.program.settings.secondformfieldset(ps):
+                    log.info("second form field for %s still undefined "
+                             "after the field closed; NOT resuming",ps)
+                    return
+                try:
+                    then()
+                except Exception as e:
+                    log.info("could not resume after defining the second "
+                             "form field for %s: %r",ps,e)
+            field.after_commit=resume
+        field.edit()
+        return False
+
     def updateprofile(self):
         if 'profile' not in self.labels:
             return
-        self.labels['profile']['text'].set(self.profilelabel())
-        self.labels['ps']['text'].set(self.pslabel())
+        # VALUES, not sentences: "Looking at" and "words (N)" are their own
+        # widgets now (see `sliceline`), so these set only the part the
+        # fields show. Delegating the ps half to `updateps` keeps the word
+        # count in one place rather than two.
+        self.labels['profile']['text'].set(self.profilevalue())
+        self.updateps()
     def profilelabel(self):
         if self.program.params.cvt()=='S':
             # 'S' sorts the whole ps across all profiles; the per-profile label
@@ -1057,7 +1170,12 @@ class StatusFrame(ui.Frame):
     def updateps(self):
         if 'ps' not in self.labels:
             return
-        self.labels['ps']['text'].set(self.pslabel())
+        # THE VALUE AND ITS TAIL ARE NOW TWO WIDGETS, so both are set: the
+        # field shows the category, the suffix carries the word count that
+        # used to be part of the same sentence.
+        self.labels['ps']['text'].set(self.psvalue())
+        if 'ps_suffix' in self.labels:
+            self.labels['ps_suffix'].set(self.pssuffix())
         self.makesliceattrs()
     def pslabel(self):
         count=self.program.slices.count()
@@ -1065,24 +1183,112 @@ class StatusFrame(ui.Frame):
         if not ps:
             ps=_("<no grammatical category>")
         return (_("{ps} words ({count})").format(ps=ps, count=count))
+    def profilevalue(self):
+        """The syllable profile alone — the part the field edits.
+
+        `profilelabel()` returns the whole sentence, which was right while
+        the line was one clickable label. A click-to-edit field needs the
+        VALUE by itself, with "Looking at" as its own prefix."""
+        if self.program.params.cvt()=='S':
+            # 'S' sorts the whole ps across profiles; there is no single
+            # profile to show or to choose. See `profilelabel`.
+            return ''
+        return self.program.slices.profile() or _("<no syllable profile>")
+
+    def profileoptions(self):
+        """Profiles for the current ps, each with its word count.
+
+        THE COUNT IS PART OF THE NAME, as it was in the window this
+        replaces (`ui_settings.getprofile` built `f"{x} ({count})"` for its
+        list box): choosing a profile with no words in it is a mistake the
+        count prevents. `code` is the bare profile, which is what the setter
+        takes.
+
+        Empty when there is no ps — the old window raised an ErrorNotice for
+        that, which is the wrong shape for a field that opens in place; an
+        empty list simply offers nothing to pick."""
+        ps=self.program.slices.ps()
+        if not ps:
+            return []
+        counts={}
+        try:
+            counts.update(self.program.slices.valid() or {})
+            adhoccounts=self.program.slices.adhoccounts()
+            if adhoccounts:
+                counts.update(adhoccounts)
+        except Exception as e:
+            log.info("no profile counts to offer: %s",e)
+        profiles=list(self.program.status.profiles())
+        try:
+            adhoc=self.program.slices.adhoc()
+            if ps in adhoc:
+                profiles+=[p for p in adhoc[ps] if p not in profiles]
+        except Exception as e:
+            log.info("no ad hoc profiles to offer: %s",e)
+        out=[]
+        for p in dict.fromkeys(profiles):
+            n=counts.get((p,ps))
+            out.append({'code':p,
+                        'name':f"{p} ({n})" if n is not None else str(p)})
+        return out
+
+    def psvalue(self):
+        return self.program.slices.ps() or _("<no grammatical category>")
+
+    def pssuffix(self):
+        """"words (N)" — the tail of the ps half of the line.
+
+        A VARIABLE, not a fixed string, because N changes with the slice.
+        `prosefield` puts the suffix in a Label, and a Label takes a
+        Variable as its text in both backends, so the count stays live
+        without the line being rebuilt."""
+        return _("words ({count})").format(count=self.program.slices.count())
+
+    def psoptions(self):
+        """Lexical categories, as the old `getps` window offered them."""
+        pss=list(self.program.db.pss)
+        extra=getattr(self.program.settings,'additionalps',None)
+        if extra:
+            pss+=[p for p in extra if p not in pss]
+        return [{'code':p,'name':p} for p in pss]
+
     def sliceline(self):
+        # TWO FIELDS, ONE SENTENCE. Both `prosefield`s share this frame so
+        # they sit side by side — "Looking at CVCV" + "Noun words (51)" —
+        # rather than each making its own row. Converted from two clickable
+        # labels, each of which raised a window: the profile one built its
+        # own list box with counts (`ui_settings.getprofile`), the category
+        # one an `_option_dialog`. See
+        # agenda/settings_prompts_one_window.md.
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
-        self.labels['profile']={'text':self.program.settings.get_ui_var('profile_label', self.profilelabel()),
-                                'columnplus':1,
-                                'rowplus':1,
-                                'cmd':self.program.ui_settings.getprofile,
-                                'parent':line,
-                                'tt':_("change this syllable profile")}
-        self.proselabel(**self.labels['profile'])
-        self.program.settings.get_ui_var('profile_label').trace_add("write", self.update_active_cell)
-        self.labels['ps']={'text':self.program.settings.get_ui_var('ps_label', self.pslabel()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getps,
-                                'parent':line,
-                                'tt':_("change this grammatical category")}
-        self.proselabel(**self.labels['ps'])
+        profile_var=self.program.settings.get_ui_var('profile_label',
+                                                     self.profilevalue())
+        self.prosefield('profile',
+                        _("Looking at"),
+                        profile_var,
+                        self.profileoptions,
+                        self.program.settings.setprofile,
+                        _("change this syllable profile"),
+                        parent=line,
+                        value_fn=self.profilevalue)
+        # THE TRACE STAYS. The board's current-cell marker follows this
+        # variable (`update_active_cell`), and it fires on any write —
+        # including the one `_setlang` makes after the setter has run, which
+        # is what keeps the marker and the working slice from diverging.
+        profile_var.trace_add("write", self.update_active_cell)
+        self.labels['ps_suffix']=ui.StringVar(value=self.pssuffix())
+        self.prosefield('ps',
+                        None,
+                        self.program.settings.get_ui_var('ps_label',
+                                                         self.psvalue()),
+                        self.psoptions,
+                        self.program.settings.setps,
+                        _("change this grammatical category"),
+                        parent=line,
+                        value_fn=self.psvalue,
+                        suffix=self.labels['ps_suffix'])
     def updatecvt(self):
         if 'cvt' not in self.labels:
             return
@@ -2112,9 +2318,21 @@ class StatusFrame(ui.Frame):
                     if node == {} or not hasboarddata(node):
                         continue
                     #Make row header
+                    # THE COUNT IS NOT A DETAIL. It was gated on
+                    # `showdetails`, so the row said `CVCV` in one mode and
+                    # `CVCV (51)` in the other — Kent, 2026-09-17: "I can't
+                    # recall if this was intentional, but I don't like it.
+                    # this should always appear." How many words a profile
+                    # has is the first thing you need to read the row at
+                    # all; `showdetails` is for swapping counts for group
+                    # NAMES inside the cells, which is a different question.
                     t=profile
-                    if self.program.settings.showdetails:
+                    try:
                         t+=(f" ({len(self.program.profiles.profilesbysense[ps][profile])})")
+                    except (KeyError,TypeError) as e:
+                        # A profile with no sense list yet: show the bare
+                        # name rather than losing the row.
+                        log.info("no word count for profile %s: %s",profile,e)
                     h=ui.Label(self.leaderboardtable,text=t,
                                 row=row,
                                 column=column,
@@ -2711,6 +2929,29 @@ class TaskDressing(HasMenus,ui.Window):
             self.deiconify()
         self.program.settings.storesettingsfile()
         log.info(_("{type} StatusFrame created").format(type=type(self)))
+    def assure_second_forms(self, then=None):
+        """Forward to the settings pane, which owns the field widgets.
+
+        THE WINDOW IS WHAT BACKEND CODE CAN REACH. `self.ui` is this window
+        (`task.ui`), and the method that opens the field lives on the
+        StatusFrame, because that is what holds `self.labels` — so
+        `self.ui.assure_second_forms` was an AttributeError at the one call
+        site that needed it (Kent, 2026-09-17, from `runcheck`).
+
+        No pane, or a pane that has been replaced, means there is no field to
+        open: say so and let the caller proceed rather than blocking work on
+        a widget that does not exist."""
+        status=getattr(self,'status',None)
+        fn=getattr(status,'assure_second_forms',None)
+        try:
+            alive=bool(fn) and status.winfo_exists()
+        except Exception:
+            alive=False
+        if not alive:
+            log.info("no settings pane to open a second form field on; "
+                     "continuing without it")
+            return True
+        return fn(then=then)
     def getparserlevels(self,event=None):
         try:
             levels=self.parser.levels()
@@ -3247,6 +3488,18 @@ class TaskDressing(HasMenus,ui.Window):
         # tkinter it is a no-op repeat of an attribute already set.
         self.runwindow=ui.Window(self,title=title,withdrawn=True,kiosk=True)
         self.runwindow.title(title)
+        # MODAL ON ITS TASK, which is the third link of the stack: the
+        # chooser is behind the task, the task is behind its run window, and
+        # closing each returns to the one below. Saying so is the only
+        # placement statement a Wayland client may make, and it is what
+        # `_reveal_parent_on_quit` reads to decide what comes back.
+        # Best-effort by nature — see `declare_dialog_of`; a stack that
+        # cannot be told is exactly as it was.
+        try:
+            self.runwindow.declare_dialog_of(self)
+        except Exception as e:
+            log.info("run window could not be declared modal on its task "
+                     "({!r})".format(e))
         self.runwindow.takekioskscreen()
         self.runwindow.cleanup=self.runwindowcleanup
         self._cover_run_window(self.runwindow, msg)

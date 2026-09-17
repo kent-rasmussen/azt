@@ -60,8 +60,18 @@ class FakeParent:
 class FakeChild:
     _wid = 237
 
-    def __init__(self, parent):
+    def __init__(self, parent, modal_on=None):
         self.parent = parent
+        if modal_on is not None:
+            self._modal_on = modal_on
+        self.fell_back = 0
+
+    def _nothing_behind_me(self):
+        """THE CLOSE PATH OWNS WHAT COMES NEXT. Every branch that declines
+        to reveal must reach this instead of returning into an empty
+        screen — that is the whole of `_nothing_behind_me`, and these three
+        tests were written when the branches just returned."""
+        self.fell_back += 1
 
 
 @pytest.fixture(autouse=True)
@@ -106,17 +116,39 @@ def test_a_parent_under_a_wait_is_left_to_the_wait(monkeypatch):
     assert parent.revealed == 0
 
 
-def test_no_parent_is_not_an_error(monkeypatch):
+def test_no_parent_falls_back_to_the_task_list(monkeypatch):
+    """Nothing behind it is not "do nothing" — it is the case that used to
+    leave the screen empty and let two watchdogs notice 15 and 25 seconds
+    later."""
     _with_content(monkeypatch, True)
-    _reveal(FakeChild(None))
+    child = FakeChild(None)
+    _reveal(child)
+    assert child.fell_back == 1
 
 
-def test_a_gone_parent_is_not_revealed(monkeypatch):
+def test_a_gone_parent_falls_back_too(monkeypatch):
     _with_content(monkeypatch, True)
     parent = FakeParent()
     parent._exists = False
-    _reveal(FakeChild(parent))
+    child = FakeChild(parent)
+    _reveal(child)
     assert parent.revealed == 0
+    assert child.fell_back == 1
+
+
+def test_what_it_covers_beats_what_owns_it(monkeypatch):
+    """OWNER AND MODAL-ON ARE DIFFERENT RELATIONSHIPS. A task owned by the
+    root is modal on the chooser, and closing it must return to the chooser
+    — the thing it covered — not to its owner. See
+    agenda/modal_window_stack.md."""
+    _with_content(monkeypatch, True)
+    owner = FakeParent()
+    covered = FakeParent()
+    child = FakeChild(owner, modal_on=covered)
+    _reveal(child)
+    assert covered.revealed == 1
+    assert owner.revealed == 0
+    assert child.fell_back == 0
 
 
 def test_the_root_is_never_revealed(monkeypatch):
@@ -130,8 +162,11 @@ def test_the_root_is_never_revealed(monkeypatch):
     root._wid = 0
     root.revealed = 0
     root.deiconify = lambda: setattr(root, 'revealed', root.revealed + 1)
-    _reveal(FakeChild(root))
+    child = FakeChild(root)
+    _reveal(child)
     assert root.revealed == 0
+    # But something still has to come next — the root has no page to show.
+    assert child.fell_back == 1
 
 
 def test_a_deiconify_that_raises_does_not_break_the_close(monkeypatch):

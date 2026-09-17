@@ -546,6 +546,29 @@ html, body {
     object-fit: contain;
 }
 
+/* AN EMPTY LABEL IS NOT A GAP. `proselabel` pads every label after the
+   first in a line, so two widgets gridded side by side read as one sentence
+   with a space between them ("Looking at CVCV" + "Noun words (51)", which
+   without it ran together as "CVCVNoun"). But a prose field can COLLAPSE:
+   the gloss-language line replaces both the 'and' and the second language
+   with a single "only", and two empty-but-padded widgets then put two
+   spaces in front of it — Kent, 2026-09-17: "if you leave both spaces, then
+   you get two spaces before 'only'."
+
+   The emptiness is dynamic — the text comes from a variable that changes —
+   so the padding cannot be decided when the label is built. `:empty` is
+   decided by the browser on every change, which is exactly the right
+   granularity.
+
+   NOTE it matches only a TRULY empty element: a label set to ' ' keeps its
+   margin. The durable cross-backend fix is for a collapsing field to
+   `grid_remove()` rather than blank itself, which costs nothing in either
+   backend; this handles it without every such caller having to know. */
+.wv-label:empty {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
 /* The in-page "Please Wait" cover (ui_webview.Toplevel._show_page_wait).
 
    IT HAS TO ACTUALLY COVER. The first version put it in `frame`'s own grid
@@ -596,6 +619,16 @@ html, body {
 .wv-page-wait .wv-label {
     max-width: min(48em, 90vw);
     justify-content: center;
+}
+/* AND THE IMAGE, belt as well as braces. The label holding it is centred in
+   its column by `sticky=''` (see `_show_page_wait`), which is the load-
+   bearing half; this covers the case where the label ends up wider than the
+   picture anyway — `.wv-image-only` and the `#root .wv-img` caps both apply
+   here and neither says anything about horizontal placement. */
+.wv-page-wait .wv-img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* THE BAR MATCHES THE TEXT BLOCK. It had an arbitrary `min(32em, 70vw)`,

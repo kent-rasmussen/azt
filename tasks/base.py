@@ -15,6 +15,24 @@ class TaskBase:
     is_chooser=False
     is_report=False
     is_record_task=False
+    # TWO FLAGS, TWO QUESTIONS — they are one letter apart in meaning and
+    # were being used as if they were the same (Kent, 2026-09-17: "I think
+    # we need to talk about these two attributes"):
+    #   `uses_second_forms`  — this task READS OR WRITES the second-form
+    #       field, so the setting must be defined before it works. It gates
+    #       `Sort.runcheck`'s call to `assure_second_forms`.
+    #   `show_second_fields` — the settings pane DRAWS the editable field
+    #       line, so the user can SEE and SET the field whether or not this
+    #       task needs it. It sits on `Segments` (lexicon.py) — every
+    #       segmental task — and that is right (Kent, 2026-09-17: "SortS is
+    #       actually a good use case for 'show': <unset> in UI is legal …
+    #       so people can continue without having set those values, but
+    #       should be able to see and set them, if they want/need").
+    # `<unset>` IS A LEGAL STATE, and no sort may be stopped for it: with no
+    # field defined there is simply no second-form check to select (for cvt
+    # 'S' the check list is `[params.ftype()]`, analysis.py:1857, and the
+    # ftype defaults to 'lc'). So no sort sets `uses_second_forms`. See
+    # agenda/settings_prompts_one_window.md for the confirmation in full.
     uses_second_forms=False
     do_not_show_slices=False
     multislice_max=False
@@ -239,11 +257,41 @@ class Task(TaskBase):
             self.program.params.cvt(self.cvt)
         if not hasattr(self,'ftype'):
             self.ftype=self.program.params.ftype('lc')
+        # OWNER AND MODAL-ON ARE DIFFERENT RELATIONSHIPS, and this line
+        # conflated them. A task window was parented to the CHOOSER'S
+        # WINDOW, which meant the chooser had to have one before any task
+        # could exist — the single blocker to building the chooser's logic
+        # without its UI (`agenda/modal_window_stack.md`).
+        #
+        # What the parent is actually used for splits cleanly in two:
+        #   * OWNER — `theme`, `wraplength`, `renderer`, and resolving the
+        #     root. All of that is on the root already, so the root is the
+        #     honest owner.
+        #   * MODAL-ON — closing returns you to what launched you, and
+        #     `set_transient_for` tells the compositor to keep the two
+        #     together. That IS the chooser, and it is declared separately
+        #     (`TaskWindow` does it), when there is a window to declare it
+        #     against.
+        # Kent's framing, 2026-09-16: "the task is a modal on the
+        # taskchooser, which is only visible/useful when the task it called
+        # is gone. the runwindow is a further modal on that."
+        #
+        # NO BEHAVIOUR CHANGE TODAY: the chooser always has a window, so
+        # this still picks it. The `else` is what lets a window-less chooser
+        # exist later without this line being the thing that stops it.
         if self.program.taskchooser == self:
             parent=self.program.tk_root
         else:
             self.i_am_the_task()
-            parent=self.program.taskchooser.ui
+            chooser_ui=getattr(self.program.taskchooser,'ui',None)
+            if chooser_ui is not None and getattr(chooser_ui,'winfo_exists',
+                                                  lambda: False)():
+                parent=chooser_ui
+            else:
+                log.info("the task chooser has no window, so %s is owned by "
+                         "the root; it is modal on nothing because nothing "
+                         "is behind it",type(self).__name__)
+                parent=self.program.tk_root
         self.analang=self.program.db.analang
         self.min_to_multicolumn=6
         self.makeeverythingok()
