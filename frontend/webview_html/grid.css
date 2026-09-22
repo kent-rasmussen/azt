@@ -416,6 +416,18 @@ html, body {
 .wv-menu-item:hover {
     background: var(--activebackground);
 }
+/* A popup panel (ui_webview.Popup): a menu-shaped box holding a grid of
+   ordinary widgets, positioned by the page at the pointer. Same chrome as
+   the menu so the two read as one kind of thing. */
+.wv-popup {
+    position: fixed;
+    display: grid;
+    background: var(--menubackground);
+    border: 1px solid #999;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    z-index: 1000;
+    padding: 4px;
+}
 
 /* ToolTip */
 /* FIXED, NOT ABSOLUTE. It is positioned from `getBoundingClientRect()`,

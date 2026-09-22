@@ -61,51 +61,58 @@ class Transcriber(ui.Frame):
     def configurebeeps(self,event=None):
         if self.beeps is None: # only reachable via the play button, which stays
             return             # hidden without beeps — but it's event-bound
-        def higher():
-            self.beeps.higher()
-            self.labelcompiled=False
-        def lower():
-            self.beeps.lower()
-            self.labelcompiled=False
-        def wider():
-            self.beeps.wider()
-            self.labelcompiled=False
-        def narrower():
-            self.beeps.narrower()
-            self.labelcompiled=False
-        def shorter():
-            self.beeps.shorter()
-            self.labelcompiled=False
-        def longer():
-            self.beeps.longer()
-            self.labelcompiled=False
+        def adjust(change):
+            """One setting: change it, HEAR it, and stay. Kent, 2026-09-22:
+            "clicking on a setting should change the setting, play at the
+            new settings, and leave the user able to continue modifying
+            settings." The staying is the menu's (`sticky=True`)."""
+            def run():
+                change()
+                self.labelcompiled=False        # the melody is recompiled
+                self.playbeeps(self.newname.get())
+            return run
+        # A PANEL AT THE POINTER, NOT A WINDOW AND NOT A MENU. Six actions on
+        # one button were a whole "Configure Tone Beeps" window — six buttons
+        # in the corner of an otherwise empty page, plus Quit (Kent,
+        # 2026-09-22: "this should be a context menu"); as six menu entries
+        # they were "a bit weird to have six one line options" for what is
+        # three binary settings. So: three rows, `-|pitch|+`, `-|L↔H|+`,
+        # `-|speed|+`, in a `ui.Popup` that stays through clicks on its own
+        # buttons and goes away on a click anywhere else, like a context
+        # menu. Each click changes the setting and plays the melody as it
+        # now sounds (`adjust`). Both backends provide `Popup`; the
+        # standalone run of this module (below, `__main__`) keeps working
+        # because nothing here needs an app: the parent is whatever window
+        # holds the transcriber.
         p=self.parent
-        while not (isinstance(p,ui.Window) or isinstance(p,ui.Root)): # windows need window parents
-            p=p.parent
-        w=ui.Window(p, title=_("Configure Tone Beeps"))
-        # A DIALOG OF THE PAGE THAT OPENED IT. See
-        # ui_tkinter.Toplevel.declare_dialog_of — the window manager then puts
-        # it on its parent, keeps it above, and moves it with it, which is
-        # what `-topmost` below was approximating with a much bigger hammer
-        # (above every application, not above its own parent).
-        #   `-topmost` STAYS for now: it is what currently guarantees this is
-        # visible, and dropping it in the same change as adding this is how a
-        # fix becomes a regression. It should go once transience is confirmed
-        # to raise this properly.
-        w.declare_dialog_of(p)
-        w.attributes("-topmost", True)
-        ui.Button(w.frame,text=_("pitch up"),cmd=higher,
-                        row=0,column=0)
-        ui.Button(w.frame,text=_("pitch down"),cmd=lower,
-                        row=1,column=0)
-        ui.Button(w.frame,text=_("more H-L difference"),cmd=wider,
-                        row=0,column=1)
-        ui.Button(w.frame,text=_("less H-L difference"),cmd=narrower,
-                        row=1,column=1)
-        ui.Button(w.frame,text=_("slower"),cmd=longer,
-                        row=2,column=0)
-        ui.Button(w.frame,text=_("faster"),cmd=shorter,
-                        row=2,column=1)
+        while not (isinstance(p,ui.Window) or isinstance(p,ui.Root)):
+            p=p.parent                # popups want a window parent
+        # tkinter's event carries screen coordinates (`x_root`); the webview
+        # one carries page coordinates as `x`/`y`, which is what its
+        # positioned element wants — the same resolution
+        # ui_webview.ContextMenu does.
+        x=getattr(event,'x_root',None) or getattr(event,'x',0) or 0
+        y=getattr(event,'y_root',None) or getattr(event,'y',0) or 0
+        pop=ui.Popup(p, x, y)
+        # A title row: an undecorated panel has no title bar, and this one
+        # is meant to be understood at a glance (Kent, 2026-09-22: "let's
+        # title the popup 'configure tone playback'").
+        ui.Label(pop,text=_("Tone Playback"),font='read',
+                 row=0,column=0,columnspan=3,sticky='ew',pady=4)
+        # "L↔H": U+2194 LEFT RIGHT ARROW, from the arrows block Charis covers
+        # in part (the app already shows ← from it). Confirm on a machine
+        # with `fc-list ':charset=2194' family | grep -i charis`; if Charis
+        # lacks it there, "L-H" is the one-character fallback.
+        rows=((_("pitch"), self.beeps.lower,    self.beeps.higher),
+              (_("L↔H"),   self.beeps.narrower, self.beeps.wider),
+              (_("speed"), self.beeps.longer,   self.beeps.shorter))
+        for r,(label,less,more) in enumerate(rows,start=1):
+            ui.Button(pop,text='-',cmd=adjust(less),font='read',
+                      row=r,column=0,sticky='ew')
+            ui.Label(pop,text=label,font='read',
+                     row=r,column=1,sticky='ew',padx=8)
+            ui.Button(pop,text='+',cmd=adjust(more),font='read',
+                      row=r,column=2,sticky='ew')
     def set_value(self,x):
         if str(x).isdigit():
             log.info(f"Not setting transcriber default value to '{x}' (was '{self.newname.get()}')")
@@ -223,6 +230,16 @@ class Transcriber(ui.Frame):
                                 row=1,column=0,sticky='new'
                                 )
         # fieldframe.grid_columnconfigure(0, weight=1)
+        # AND THE VARIABLE, not only the key. A character button inserts
+        # through the PAGE under webview (EntryField.insert at the caret), so
+        # the variable is written when the page reports back — after
+        # `addchar` has already called updatelabels() on the old text. Following
+        # the variable keeps the play button and the hash label current
+        # whichever way the text arrived; under tkinter it merely repeats the
+        # KeyRelease call, which is idempotent. `*a`: a tkinter trace passes
+        # (name, index, mode). Added HERE, after every widget updatelabels
+        # touches exists.
+        self.newname.trace_add('write', lambda *a: self.updatelabels())
         self.updatelabels()
 if __name__ == "__main__":
     try:

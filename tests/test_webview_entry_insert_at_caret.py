@@ -9,6 +9,8 @@ value through the ordinary 'input' event — the Python side writes nothing,
 because two writers would race. A field with no page yet keeps the old
 append.
 """
+import json
+import re
 import types
 from pathlib import Path
 
@@ -35,7 +37,9 @@ def test_insert_at_caret_is_delegated_to_the_page(monkeypatch):
     monkeypatch.setattr(ui_webview, '_js', lambda wv, code: sent.append(code))
     f = _field('abc', with_window=True)
     ui_webview.EntryField.insert(f, ui_webview.INSERT, '˥')
-    assert len(sent) == 1 and 'insert_at_caret' in sent[0] and '˥' in sent[0]
+    assert len(sent) == 1 and 'insert_at_caret' in sent[0]
+    # `json.dumps` escapes non-ASCII, so the letter travels as ˥
+    assert json.dumps('˥') in sent[0]
     assert f.textvariable.get() == 'abc', \
         "the variable is set by the page's 'input' report, not here"
 
@@ -56,8 +60,12 @@ def test_a_field_with_no_page_yet_appends():
 
 
 def test_the_page_splices_at_the_selection_and_reports_input():
-    case = JS[JS.index("case 'insert_at_caret':"):]
-    case = case[:case.index('break;')]
+    # The whole case block, up to the next case label: it has an early
+    # `break;` guard (no input element) before the splice, so slicing at the
+    # first `break;` read only the guard.
+    m = re.search(r"case 'insert_at_caret':(.*?)\n        case '", JS, re.S)
+    assert m, "no insert_at_caret case in updateProp"
+    case = m.group(1)
     assert 'setRangeText' in case
     assert "dispatchEvent(new Event('input'" in case
     assert 'wvTouched' in case, "an untouched field must append, not prepend"

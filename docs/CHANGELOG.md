@@ -47,6 +47,23 @@ through a thread that shares the task's probe rather than starting another
 Transcriber accepts its sound settings after construction, showing the play
 button on the next keystroke.
 
+**Configuring tone beeps is a small panel at the pointer.** Fix awaiting
+verification. Right-clicking the transcriber's play button opened a whole
+window titled "Configure Tone Beeps" holding six small buttons in one
+corner and a Quit button in the other (Kent: "this should be a context
+menu"). Six menu entries for what are three binary settings read as odd
+too, so it is now a three-row panel, minus / setting / plus for pitch,
+low-high spread and speed, at the pointer, on both backends. Each click
+changes the setting and plays the melody as it now sounds; the panel
+stays for the next adjustment and goes away on a click anywhere else,
+like a context menu. Under tkinter that is an undecorated toplevel holding
+a local grab, logged on acquire and release and released on destroy; under
+webview an element inside the page, since a window there cannot be
+placed. `ui.Popup` is available to any other page that has a handful of
+controls belonging to one gesture. The transcriber still runs on its own
+as a module. (Both backends' menus also gained a `sticky` option along the
+way, kept for a menu that wants it.)
+
 **No more `<unk>` in the French and Arabic interface.** Fix awaiting a
 recompile (`translations/compile.py`) and a look. The tone rename page's
 hint read "comme '[<unk> <unk> <unk> <unk> <unk> ]'" (Kent: "it's bad"). Not a

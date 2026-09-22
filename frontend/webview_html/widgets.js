@@ -276,6 +276,46 @@ function createWidget(spec) {
             if (spec.props.borderwidth || spec.props.relief)
                 _setBorder(el, spec.props.borderwidth, spec.props.relief);
             break;
+        case 'popup': {
+            // A PANEL AT THE POINTER (ui_webview.Popup): a frame that is
+            // positioned by the page rather than gridded by its parent, and
+            // dismissed like a menu — a mousedown or right-click anywhere
+            // outside it, or Escape. `fixed`, because the coordinates are the
+            // viewport's (clientX/Y) and the page may be scrolled. Python is
+            // told ('dismiss') so the object stops claiming to exist.
+            el = document.createElement('div');
+            el.className = 'wv-widget wv-frame wv-popup';
+            el.style.left = (spec.props.popup_x || 0) + 'px';
+            el.style.top = (spec.props.popup_y || 0) + 'px';
+            const wid = spec.wid;
+            function _gone() {
+                el.remove();
+                if (_widgets.get(wid) === el) _widgets.delete(wid);
+                document.removeEventListener('mousedown', _outside, true);
+                document.removeEventListener('contextmenu', _outside, true);
+                document.removeEventListener('keydown', _escape, true);
+                if (window.pywebview && window.pywebview.api)
+                    window.pywebview.api.on_event(wid, 'dismiss', {});
+            }
+            function _outside(e) {
+                if (el.contains(e.target)) return;
+                _gone();
+            }
+            function _escape(e) {
+                if (e.key === 'Escape') _gone();
+            }
+            // AFTER this event, not during it: the right-click that opened
+            // the popup is still being dispatched, and a `contextmenu`
+            // listener registered now would see it and close what it just
+            // opened.
+            setTimeout(() => {
+                if (!el.isConnected) return;
+                document.addEventListener('mousedown', _outside, true);
+                document.addEventListener('contextmenu', _outside, true);
+                document.addEventListener('keydown', _escape, true);
+            }, 0);
+            break;
+        }
         case 'label':
             el = document.createElement('div');
             el.className = 'wv-widget wv-label';

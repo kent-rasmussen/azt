@@ -4386,6 +4386,13 @@ class Menu:
         # from an oversight — tests/manual/dropped_options_sweep.py.)
         kwargs.pop('tearoff', None)
         kwargs.pop('font', None)
+        # `sticky=True`: the posted element is NOT removed when an item is
+        # clicked, so the user can click several in a row; a mousedown
+        # outside it still dismisses it. The transcriber's tone-beep
+        # settings want this (Kent, 2026-09-22: change, play, keep
+        # adjusting). ui_tkinter.Menu gives the same behaviour by
+        # re-posting after each command.
+        self._sticky = kwargs.pop('sticky', False)
         # Inherit wv_window
         if hasattr(parent, '_wv_window'):
             self._wv_window = parent._wv_window
@@ -4432,8 +4439,9 @@ class Menu:
                 _, _, cmd = self._items[idx]
                 if cmd:
                     cmd()
-            # Remove menu after click
-            _js(wv, f'destroyWidget({self._wid})')
+            # Remove menu after click — unless it is sticky (see __init__).
+            if not self._sticky:
+                _js(wv, f'destroyWidget({self._wid})')
         _api.unregister(self._wid)
         _api.register(self._wid, 'menuclick', on_menuclick)
         # Create and position via JS.
@@ -4483,6 +4491,54 @@ class Menu:
 class Scrollbar(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, widget_type='frame', **kwargs)
+
+
+class Popup(_WebviewWidget):
+    """A panel at the pointer for a handful of controls that belong to one
+    gesture; grid `ui.Button`/`ui.Label` into it as into a frame. Stays
+    through clicks on its own controls, goes away on a click anywhere else
+    (like a context menu) or on Escape — Kent, 2026-09-22, on the tone-beep
+    settings: `-|pitch|+` on three rows, "go away on a click anywhere else".
+
+    AN ELEMENT IN THE PAGE, NOT A WINDOW. A Wayland client may not place a
+    window, and this must appear at the pointer, so it is a fixed-position
+    element inside the window that holds it — the same shape as `Menu`'s
+    posted list, which is why the dismissal is the same. `x`/`y` are page
+    coordinates, which is what the events this backend delivers carry as
+    `x`/`y`. Never gridded into its parent (`gridwait`): the page positions
+    it. The tkinter `Popup` is an undecorated toplevel under a local grab,
+    for the same reason the other way round.
+
+    The page tells Python when it dismissed the element ('dismiss'), so a
+    caller's `on_dismiss` runs and this object stops claiming to exist."""
+
+    def __init__(self, parent, x, y, on_dismiss=None, **kwargs):
+        kwargs['gridwait'] = True
+        kwargs['popup_x'] = int(x)
+        kwargs['popup_y'] = int(y)
+        self._on_dismiss = on_dismiss
+        super().__init__(parent, widget_type='popup', **kwargs)
+        _api.register(self._wid, 'dismiss', lambda data: self._dismissed())
+
+    def _dismissed(self):
+        if not self._exists:
+            return
+        self._exists = False
+        try:
+            if self.parent and self in self.parent._children:
+                self.parent._children.remove(self)
+        except Exception:
+            pass
+        _api.unregister(self._wid)
+        if callable(self._on_dismiss):
+            try:
+                self._on_dismiss()
+            except Exception as e:
+                log.info("popup {}: on_dismiss failed ({!r})".format(self._wid, e))
+
+    def dismiss(self):
+        """Take it down from Python; the page's listeners fall away with it."""
+        self.destroy()
 
 
 class ScrollingFrame(Frame):

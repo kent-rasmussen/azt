@@ -2876,7 +2876,28 @@ class Menu(Childof,tkinter.Menu): #not Text
         return label
     def add_command(self,label,command):
         label=self.pad(label)
+        if self._sticky and command is not None:
+            command=self._reposting(command)
         tkinter.Menu.add_command(self,label=label,command=command)
+    def _reposting(self,command):
+        """A STICKY menu's command: run it, then put the menu back where it
+        was. Tk unposts a menu the moment an entry is invoked, and there is
+        no option to stop it — so "stays up" is re-posting at the recorded
+        spot once the command has run (`after_idle`, so the unpost has
+        happened first). `post`, not `tk_popup`: no grab, so the menu sits
+        there for the next adjustment and goes away when the pointer leaves
+        it (the `<Leave>` bind in `__init__`, the window context menu's own
+        rule). Kent, 2026-09-22, on the tone-beep settings: "clicking on a
+        setting should change the setting, play at the new settings, and
+        leave the user able to continue modifying settings."""
+        def run():
+            command()
+            if self._at is not None:
+                self.after_idle(lambda: self.post(*self._at))
+        return run
+    def tk_popup(self,x,y,entry=""):
+        self._at=(x,y)              # where a sticky menu re-posts itself
+        tkinter.Menu.tk_popup(self,x,y,entry)
     def insert_cascade(self,label,menu,index):
         label=self.pad(label)
         tkinter.Menu.insert_cascade(self,label=label,menu=menu,index=index)
@@ -2884,9 +2905,103 @@ class Menu(Childof,tkinter.Menu): #not Text
         label=self.pad(label)
         tkinter.Menu.add_cascade(self,label=label,menu=menu)
     def __init__(self,parent,**kwargs):
+        # `sticky=True`: the menu stays through item clicks (see
+        # `_reposting`). Popped off before Tk sees the kwargs; Tk has no
+        # such option.
+        self._sticky=kwargs.pop('sticky',False)
+        self._at=None
         kwargs['font']=kwargs.get('font','default')
         super().__init__(parent,**kwargs)
         self.post_tk_init()
+        if self._sticky:
+            self.bind('<Leave>',lambda e: self.unpost())
+class Popup(Toplevel):
+    """An undecorated panel at the pointer for a handful of controls that
+    belong to one gesture. It stays through clicks on its OWN controls and
+    goes away on a click anywhere else, like a context menu — Kent,
+    2026-09-22, on the tone-beep settings: six one-line menu entries for
+    three binary options "is a bit weird"; wanted `-|pitch|+` on three rows,
+    and "I want it to go away on a click anywhere else, like context menus".
+    A Tk Menu is a vertical list of entries; this is a grid you can put
+    anything into (`ui.Button`, `ui.Label`, gridded as usual).
+
+    THE GRAB IS WHAT MAKES "ANYWHERE ELSE" WORK, exactly as `tk_popup` does
+    for a menu: with a local grab on this toplevel, a press anywhere in the
+    app is delivered to this window, with coordinates outside its box when it
+    was not on it — so one binding sees every outside click without an
+    application-wide `bind_all` that would have to be unpicked from
+    whatever else binds Button-1. Local, never global. LOGGED on acquire and
+    on release, because a stuck grab is invisible to a stack dump — the
+    mainloop is idle and merely not delivering — and the log is the only
+    thing that can pair an acquire with no release
+    (agenda/settings_prompts_one_window.md, "LOG EVERY GRAB"). Released on
+    `<Destroy>`, which cannot be skipped, and the grab it displaced is put
+    back.
+
+    Undecorated and placed by coordinates: Tk here is always XWayland, where
+    that works (`declare_dialog_of` explains why native Wayland could not).
+    The webview backend's `Popup` is an element inside the page for the same
+    reason the other way round."""
+    def __init__(self,parent,x,y,**kwargs):
+        super().__init__(parent,**kwargs)
+        self.wm_overrideredirect(True)
+        self.wm_geometry("+%d+%d" % (int(x),int(y)))
+        try:
+            self['background']=self.theme.menubackground
+        except Exception:
+            pass
+        self._prev_grab=None
+        self._grabbed=False
+        # Any button, not only the first: a right-click elsewhere must also
+        # take this down (and is then consumed, as a menu's grab consumes it).
+        self.bind('<ButtonPress>',self._press,add='+')
+        self.bind('<Destroy>',self._release,add='+')
+        self.after_idle(self._grab)
+    def _grab(self):
+        if not self.winfo_exists():
+            return
+        try:
+            self._prev_grab=self.grab_current()
+            self.grab_set()
+            self._grabbed=True
+            log.info("Popup %s: grab_set (local; displaced %s) — released on "
+                     "destroy",self,self._prev_grab)
+        except tkinter.TclError as e:
+            log.info("Popup %s: could not grab (%s); it will not dismiss on an "
+                     "outside click",self,e)
+    def _press(self,event):
+        # Descendants deliver their own presses (event.widget is the child):
+        # those are the controls being used. A press delivered to THIS window
+        # with coordinates outside it is the grab handing us an outside
+        # click.
+        if event.widget is not self:
+            return
+        w,h=self.winfo_width(),self.winfo_height()
+        if not (0 <= event.x < w and 0 <= event.y < h):
+            self.dismiss()
+    def dismiss(self):
+        if self.winfo_exists():
+            self.destroy()
+    def _release(self,event=None):
+        # `<Destroy>` on a toplevel also fires for every descendant; only our
+        # own matters, and only once.
+        if event is not None and event.widget is not self:
+            return
+        if not self._grabbed:
+            return
+        self._grabbed=False
+        try:
+            self.grab_release()
+        except tkinter.TclError:
+            pass
+        prev=self._prev_grab
+        try:
+            if prev is not None and prev.winfo_exists():
+                prev.grab_set()
+        except tkinter.TclError:
+            prev=None
+        log.info("Popup %s: grab released%s",self,
+                 " (previous grab restored)" if prev is not None else "")
 class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
     def post_tk_init(self):
         super().post_tk_init()
