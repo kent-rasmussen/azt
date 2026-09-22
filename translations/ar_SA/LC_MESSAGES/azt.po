@@ -304,7 +304,7 @@ msgstr "كلمة <{lang}>"
 
 #: /home/kentr/bin/raspy/azt/main.py:12808
 msgid "A label that describes the surface tone form in this context would be best, like ‘[˥˥˥ ˨˨˨]’"
-msgstr "التسمية التي تصف شكل نغمة السطح في هذا السياق هي الأفضل، مثل \"[<unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> ]\""
+msgstr "التسمية التي تصف شكل نغمة السطح في هذا السياق هي الأفضل، مثل ‘[˥˥˥ ˨˨˨]’"
 
 #: /home/kentr/bin/raspy/azt/main.py:16843
 msgid "AZT source"
@@ -1198,11 +1198,11 @@ msgstr "تفضيل كلمة غير ناسية/غليدي سونورتنز أخي
 
 #: /home/kentr/bin/raspy/azt/main.py:4342
 msgid "Distinguish glottal stops (ʔ) initially and medially?"
-msgstr "تميزت الوقفات الكلاسيكية (<unk> ) في البداية وبوسط؟"
+msgstr "تميزت الوقفات الكلاسيكية (ʔ) في البداية وبوسط؟"
 
 #: /home/kentr/bin/raspy/azt/main.py:4344
 msgid "Distinguish glottal stops word finally (ʔ#)?"
-msgstr "تمييز كلمة وقف الكرة أخيراً (<unk> #)؟"
+msgstr "تمييز كلمة وقف الكرة أخيراً (ʔ#)؟"
 
 #: /home/kentr/bin/raspy/azt/main.py:4348
 msgid "Distinguish likely depressor consonants (D) initially and medially?"
@@ -1860,7 +1860,7 @@ msgid "Go back and join \n"
 "← these groups"
 msgstr "عد وانضم إلى \n"
 "مع واحد من\n"
-"<unk> هذه المجموعات"
+"← هذه المجموعات"
 
 #: /home/kentr/bin/raspy/azt/main.py:1881
 msgid "Go to the next check"
@@ -2092,7 +2092,7 @@ msgstr "إذا كنت تتوقع واحدة (بالفعل في بياناتك) �
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:28
 msgid "If you have errors containing ˋportaudioˊ above, you should install pyaudio with your package manager."
-msgstr "إذا كان لديك أخطاء تحتوي على <unk> portaudio<unk> أعلاه، فيجب عليك تثبيت pyaudio مع مدير الحزمة الخاص بك."
+msgstr "إذا كان لديك أخطاء تحتوي على ˋportaudioˊ أعلاه، فيجب عليك تثبيت pyaudio مع مدير الحزمة الخاص بك."
 
 #: /home/kentr/bin/raspy/azt/main.py:4411
 msgid "If you make changes, this button==> \n"
@@ -2489,7 +2489,7 @@ msgstr "يبدو أن {lx} ليس مجموعة فرعية من {pl} أو {imp} (
 
 #: /home/kentr/bin/raspy/azt/utilities.py:70
 msgid "Looks like ˋ{}ˊ contains single and double quotes!"
-msgstr "يبدو أن <unk> {}<unk> تحتوي على اقتباسات واحدة و مزدوجة!"
+msgstr "يبدو أن ˋ{}ˊ تحتوي على اقتباسات واحدة و مزدوجة!"
 
 #: /home/kentr/bin/raspy/azt/main.py:17549
 #, python-brace-format
@@ -3475,7 +3475,7 @@ msgstr "مشكلة مع SequenceMatcher: {t} != {b_match} (أ={a},b={b},المب
 #: /home/kentr/bin/raspy/azt/main.py:2185
 #, python-brace-format
 msgid "Problem with attribute {s}; {val1}≠{val2}"
-msgstr "مشكلة في السمة {s}؛ {val1}=<unk>{val2}"
+msgstr "مشكلة في السمة {s}؛ {val1}≠{val2}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2649
 #, python-brace-format
@@ -4179,7 +4179,7 @@ msgid "Set all sound card settings\n"
 "(Do|Recording|Sound Card Settings)\n"
 "and a record button will be here."
 msgstr "عيّن جميع إعدادات بطاقة الصوت\n"
-"(Do<unk> التسجيل<unk> Sound card إعدادات البطاقة الصوتية)\n"
+"(Do|التسجيل|إعدادات البطاقة الصوتية)\n"
 "وسيكون زر التسجيل هنا."
 
 #: /home/kentr/bin/raspy/azt/main.py:1293
@@ -4627,7 +4627,7 @@ msgstr "لقد تم التحويل الآن، لذلك سوف يخرج {name} . 
 
 #: /home/kentr/bin/raspy/azt/main.py:11809
 msgid "The data in this report is given by most restrictive test first, followed by less restrictive tests (e.g., V1=V2 before V1 or V2). Additionally, each word only appears once per segment in a given position, so a word that occurs in a more restrictive environment will not appear in the later less restrictive environments. But where multiple examples of a segment type occur with different values, e.g., V1≠V2, those words will appear multiple times, e.g., for both V1=x and V2=y."
-msgstr "والبيانات الواردة في هذا التقرير يوفرها الاختبار التقييدي أولا ثم الاختبارات الأقل تقييدا (مثل V1=V2 قبل V1 أو V2). وبالإضافة إلى ذلك، فإن كل كلمة تظهر مرة واحدة فقط لكل جزء في وضع معين، ولذلك فإن كلمة تحدث في بيئة أكثر تقييداً لن تظهر في البيئات الأخيرة الأقل تقييداً. ولكن عندما تحدث أمثلة متعددة من نوع الشريحة مع قيم مختلفة، مثل V1=<unk> V2، ستظهر هذه الكلمات عدة مرات، على سبيل المثال، لكل من V1=x و V2=y."
+msgstr "والبيانات الواردة في هذا التقرير يوفرها الاختبار التقييدي أولا ثم الاختبارات الأقل تقييدا (مثل V1=V2 قبل V1 أو V2). وبالإضافة إلى ذلك، فإن كل كلمة تظهر مرة واحدة فقط لكل جزء في وضع معين، ولذلك فإن كلمة تحدث في بيئة أكثر تقييداً لن تظهر في البيئات الأخيرة الأقل تقييداً. ولكن عندما تحدث أمثلة متعددة من نوع الشريحة مع قيم مختلفة، مثل V1≠V2، ستظهر هذه الكلمات عدة مرات، على سبيل المثال، لكل من V1=x و V2=y."
 
 #: /home/kentr/bin/raspy/azt/utilities.py:115
 #: /home/kentr/bin/raspy/azt/utilities.py:118
@@ -5071,7 +5071,7 @@ msgstr "هذه المهمة تساعدك على فرز الكلمات في شك�
 
 #: /home/kentr/bin/raspy/azt/main.py:12741
 msgid "This task helps you transcribe your surface groups, giving them meaniningful names (e.g., [˥˥ ˨˨]) instead of numbers."
-msgstr "تساعدك هذه المهمة على نسخ المجموعات السطحية الخاصة بك، وإعطائها أسماء ذات معنى (على سبيل المثال [<unk> <unk> <unk> <unk> <unk> <unk> <unk> ]) بدلا من الأرقام."
+msgstr "تساعدك هذه المهمة على نسخ المجموعات السطحية الخاصة بك، وإعطائها أسماء ذات معنى (على سبيل المثال [˥˥ ˨˨]) بدلا من الأرقام."
 
 #: /home/kentr/bin/raspy/azt/main.py:8800
 msgid "This task will help you parse your citation forms, automatically and with confirmation."

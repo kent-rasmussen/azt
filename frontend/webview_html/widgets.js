@@ -323,6 +323,12 @@ function createWidget(spec) {
                     window.pywebview.api.on_event(spec.wid, 'input', {value: el.value});
                 }
             });
+            // Read by updateProp('insert_at_caret'): a field the user has
+            // never been in has no caret worth honouring — engines report
+            // 0 or the end for a fresh input, and 0 would PREPEND — so the
+            // first insertion into an untouched field goes to the end, as
+            // it always did.
+            el.addEventListener('focus', () => { el.dataset.wvTouched = '1'; });
             break;
         case 'progressbar':
             el = document.createElement('div');
@@ -384,7 +390,7 @@ function createWidget(spec) {
             el = document.createElement('div');
             el.className = 'wv-widget wv-listbox';
             el.tabIndex = 0;
-            if (spec.props.height) el.style.maxHeight = (spec.props.height * 1.5) + 'em';
+            if (spec.props.height) _listboxRows(el, spec.props.height);
             if (spec.props.width) el.style.width = spec.props.width + 'ch';
             if (spec.props.font) el.classList.add('font-' + spec.props.font);
             // Read by the click handler in updateProp('items'), which is
@@ -1121,6 +1127,21 @@ function setStyleRule(selector, decls) {
 // message rather than one per widget that sets it.
 const _reportedProps = new Set();
 
+// A LIST'S HEIGHT IS A ROW COUNT, as tkinter's is, and it has to be applied
+// the same way at creation and on configure. The new-language page creates
+// its two lists at height=1 and reconfigures them to min(4, n) once it knows
+// n (ui_shell.py:4019, :4147, :4219) — and `updateProp` had no 'height'
+// case, so the reconfigure went to the console warning below, which nobody
+// watches, and both lists stayed one row tall, scrollbar and all (Kent,
+// 2026-09-22: "very difficult to use"). 1.5em per row is the row's line box
+// plus .wv-listbox-item's vertical padding, near enough that four rows show
+// four items.
+function _listboxRows(el, rows) {
+    const n = Number(rows);
+    if (!(n > 0)) return;
+    el.style.maxHeight = (n * 1.5) + 'em';
+}
+
 function updateProp(wid, prop, value) {
     const el = _widgets.get(wid);
     if (!el) return;
@@ -1381,6 +1402,32 @@ function updateProp(wid, prop, value) {
                 if (inp) inp.value = value;
             }
             break;
+        case 'insert_at_caret': {
+            // tkinter's `insert(INSERT, text)`: splice at the caret, caret
+            // ends up after the new text, and the variable learns the result
+            // the same way typing tells it — through 'input'. The Python
+            // side deliberately writes nothing itself (ui_webview
+            // EntryField.insert). Untouched field: append, see the 'entry'
+            // case's focus listener.
+            const inp = el.tagName === 'INPUT' ? el : el.querySelector('input');
+            if (!inp) break;
+            const text = String(value);
+            const touched = inp.dataset.wvTouched === '1'
+                            || document.activeElement === inp;
+            let s = inp.value.length, e = s;
+            if (touched && typeof inp.selectionStart === 'number') {
+                s = inp.selectionStart;
+                e = typeof inp.selectionEnd === 'number' ? inp.selectionEnd : s;
+            }
+            if (typeof inp.setRangeText === 'function') {
+                inp.setRangeText(text, s, e, 'end');
+            } else {
+                inp.value = inp.value.slice(0, s) + text + inp.value.slice(e);
+                inp.setSelectionRange(s + text.length, s + text.length);
+            }
+            inp.dispatchEvent(new Event('input', {bubbles: true}));
+            break;
+        }
         // SPACING IS SETTABLE AFTER CONSTRUCTION, because tkinter makes the
         // app do it that way: `ui.Label` routes a constructor `padx` to the
         // GRID, so a Label's own padding is only reachable once it exists
@@ -1409,6 +1456,17 @@ function updateProp(wid, prop, value) {
             if (Number(value) > 0) el.style.borderWidth = `${value}px`;
             else el.style.border = 'none';
             break;
+        case 'height':
+            // ROWS, for a list — the same rule as at creation, see
+            // _listboxRows. For any other widget 'height' means something
+            // this page has no rule for yet (lines for a Text, pixels for a
+            // Frame), so fall through and let the report below say so
+            // rather than guess.
+            if (el.classList.contains('wv-listbox')) {
+                _listboxRows(el, value);
+                break;
+            }
+            // falls through
         default:
             // SAY WHAT WAS IGNORED. A silent drop here is how `compound`,
             // `image`, `anchor`, `relief` and the padding above each went

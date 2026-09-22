@@ -28,6 +28,29 @@ class Transcriber(ui.Frame):
             self.namehash.set('')
             self.formfieldplay.grid_remove()
         self.labelcompiled=False
+    def attach_sound(self,soundsettings):
+        """Take sound settings, at construction or LATER.
+
+        Later is the webview case: a Sound task's device probe (~7s) runs
+        beside the UI there, so a glyph window opened in those first seconds
+        has nothing to hand us yet. Making the click wait for the probe put a
+        seven-second "please wait" on a rename window (Kent, 2026-09-22: "I
+        thought the wait page was broken"); instead the window opens without
+        beeps and `tasks.transcribe_glyph.sound_settings_when_ready` calls
+        this when the probe is done. The play button follows automatically:
+        `updatelabels` shows it on the next keystroke if `beeps` exists.
+        Attribute assignment only — safe from the thread that calls it, and
+        no widget is touched here."""
+        if soundsettings is None or soundsettings is self.soundsettings:
+            return
+        self.soundsettings=soundsettings
+        self.audio=getattr(soundsettings,'audio',None)
+        if self.audio is not None:
+            try:
+                self.beeps=sound.BeepGenerator(audio=self.audio,
+                                            settings=self.soundsettings)
+            except Exception as e:
+                log.info("No tone beeps in this transcriber: {}".format(e))
     def playbeeps(self,pitches):
         if self.beeps is None:
             log.info("No audio on this machine; can't play tone beeps.")
@@ -107,15 +130,10 @@ class Transcriber(ui.Frame):
         # (tasks/transcribe_glyph.py gets it from SoundSettings.ensure); with no
         # audio on this machine we simply have no beeps, which is a hidden play
         # button, not a traceback.
-        self.soundsettings=soundsettings
-        self.audio=getattr(soundsettings,'audio',None)
+        self.soundsettings=None
+        self.audio=None
         self.beeps=None
-        if self.audio is not None:
-            try:
-                self.beeps=sound.BeepGenerator(audio=self.audio,
-                                            settings=self.soundsettings)
-            except Exception as e:
-                log.info("No tone beeps in this transcriber: {}".format(e))
+        self.attach_sound(soundsettings)
         if 'chars' in kwargs and kwargs['chars'] and type(kwargs['chars']) is list:
             chars=kwargs.pop('chars')
             if len(chars)> 50:

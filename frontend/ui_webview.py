@@ -1756,7 +1756,30 @@ class _WebviewWidget:
         wv = getattr(self, '_wv_window', None)
         opts = json.dumps(self._grid_opts)
         _js(wv, f'gridWidget({self._wid}, {opts})')
+        # `getattr`: the base sets `_grid_visible` in `__init__`, but the
+        # grid-spans test drives this method on a bare stand-in, and a
+        # widget that never said it was hidden is not being revealed.
+        revealed = not getattr(self, '_grid_visible', True)
         self._grid_visible = True
+        # SHOWING SOMETHING IS A SIZE CHANGE, like a tab switch. Refits are
+        # asked for when a widget is CREATED (`_finish_creation`), and a page
+        # that builds everything up front and reveals part of it later with
+        # `grid()` creates nothing — so the window kept the size it had
+        # before the territory frame appeared, and the frame sat below the
+        # bottom edge (the new-language page, Kent, 2026-09-22: "content is
+        # off the page"). Same class as the notebook's `_refit_for_tab`,
+        # fixed 2026-09-16, and the same short delay: nothing is arriving in
+        # a burst, and the user is looking at the cropped page now. Only on
+        # a REVEAL (hidden → shown); a widget that is already showing has not
+        # changed the page's size. `grid_remove` does not ask: shrinking a
+        # window under the user is the flicker this item removed.
+        if revealed:
+            try:
+                win = self._root_for_binding()
+                if win is not None and win is not self:
+                    _request_refit(win, 'widget shown', delay=0.05)
+            except Exception as e:
+                log.debug("could not ask for a refit on grid ({!r})".format(e))
 
     def grid_remove(self):
         wv = getattr(self, '_wv_window', None)
@@ -3619,11 +3642,17 @@ class Button(_WebviewWidget):
 
 class EntryField(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
-        # DROPPED ON PURPOSE: `render` asks tkinter to draw the text as a
-        # BITMAP, which is how that backend shows glyphs its widget fonts
-        # cannot (`Renderer`). A browser has no such problem and no such
-        # path, so there is nothing here to turn on or off.
-        kwargs.pop('render', None)
+        # `render` asks tkinter to draw the text as a BITMAP, which is how
+        # that backend shows glyphs its widget fonts cannot (`Renderer`). A
+        # browser has no such problem and no such path, so the MECHANISM is
+        # dropped — but the SHAPE is not: tkinter's field grows a `rendered`
+        # Label when `render=True` (ui_tkinter.EntryField.post_tk_init), and
+        # the app grids it itself (`lexicon.py:970`,
+        # `formfield.rendered.grid(row=2, …)`), so dropping the attribute made
+        # Add-a-Word die on its first prompt under webview: "PORT GAP:
+        # 'EntryField' object has no attribute 'rendered'" (Kent, 2026-09-22).
+        # See below, after the widget exists.
+        render = kwargs.pop('render', False)
         # KEPT. An entry field asked for `font='readbig'` and got the browser
         # default, which matters more here than on a label: these are the
         # fields people type IPA and tone into, and the reading font is how
@@ -3646,6 +3675,13 @@ class EntryField(_WebviewWidget):
         if initial:
             self.textvariable.set(initial)
         super().__init__(parent, widget_type='entry', **kwargs)
+        if render is True:
+            # PARITY OF SHAPE, NOT OF MECHANISM. An empty label the app may
+            # grid and remove exactly as it does tkinter's; it never gets
+            # text, because the entry itself already renders tone letters
+            # correctly here (theme.css asks the font for the feature). Placed
+            # nowhere until the app places it, so an unused one costs no cell.
+            self.rendered = Label(parent, text='', gridwait=True)
         # ── BOTH DIRECTIONS, which is new (2026-09-09) ────────────────────
         # Only entry → variable was wired, so a field built with a
         # `textvariable` that already had a value came up EMPTY, and any later
@@ -3731,6 +3767,22 @@ class EntryField(_WebviewWidget):
         self._put(current[:start] + current[stop:])
 
     def insert(self, index, text):
+        # AT THE CARET, IN THE PAGE. Python does not know where the caret is —
+        # the DOM does — so `_index` had mapped INSERT to the end, and the
+        # Transcriber's character buttons appended wherever the user had
+        # clicked (Kent, 2026-09-22, the tone page: "only append, not input
+        # where the cursor is"). tkinter's INSERT is the caret, so the page
+        # does the splice with `setRangeText` at its own selection and
+        # reports the new value through the ordinary 'input' event, which
+        # is what sets the variable (`_from_dom`). Nothing is written to the
+        # variable here for that case: two writers would race, and the DOM
+        # is the one that knows. A field with no page yet keeps the old
+        # append, since there is no caret to speak of.
+        wv = getattr(self, '_wv_window', None)
+        if index in (INSERT, 'insert') and wv is not None:
+            _js(wv, f'updateProp({self._wid}, "insert_at_caret", '
+                    f'{json.dumps(str(text))})')
+            return
         current = self.textvariable.get() or ''
         at = self._index(index, current)
         self._put(current[:at] + str(text) + current[at:])
@@ -4113,11 +4165,24 @@ class ListBox(_WebviewWidget):
         return self._selection
 
     def get(self, first, last=None):
+        """Tk's `Listbox.get`: one row's text, or a TUPLE of rows.
+
+        `'end'` IS AN INDEX. `get(0, 'end')` is how a caller reads the whole
+        list — the new-language page does it to size the list to its longest
+        entry (ui_shell.py:4145) — and this computed `last + 1` on the
+        string, raising TypeError. `show_possibles` caught it and logged it,
+        so the items appeared and the `configure(width=…, height=…)` on the
+        next line never ran: both lists stayed 10 characters wide and one
+        row tall (Kent, 2026-09-22, "not fixed", after the page-side height
+        handler had been added). Tk also accepts `'end'` as `first`."""
+        n = len(self._items)
+        first = n - 1 if first in (END, 'end') else int(first)
         if last is None:
-            if 0 <= first < len(self._items):
+            if 0 <= first < n:
                 return self._items[first]
             return ''
-        return self._items[first:last + 1]
+        last = n - 1 if last in (END, 'end') else int(last)
+        return tuple(self._items[max(first, 0):last + 1])
 
     def insert(self, index, *elements):
         """Add rows, keeping VALUES and DISPLAY TEXT in step.
@@ -8204,6 +8269,33 @@ def default_root():
     if _app_root is not None and getattr(_app_root, '_exists', False):
         return _app_root
     return None
+def _screen_pixels():
+    """(width, height) of the primary screen, in pixels, BEFORE any page exists.
+
+    `program.screenw`/`screenh` are set by tkinter's `Theme.setscale`
+    (ui_tkinter.py:589-590) and read by two task builders that size a button
+    frame against the screen (`tasks.py:1955`, `transcribe_glyph.py:342` —
+    the raw layout arithmetic ADR 0004 D3 lists for cleanup). This backend
+    never set them, so opening a glyph window under webview died with
+    `'App' object has no attribute 'screenw'` (Kent, 2026-09-22, twice). The
+    webview `setscale` is not the place: nothing calls it at boot — the only
+    `.setscale()` call in the app is tkinter's own — so the root sets them
+    at construction, as early as tkinter does.
+
+    pywebview's `screens` is usable before `start()`; the JS `screen.width`
+    route is not, since no page is loaded yet. A guess is logged as one."""
+    try:
+        if webview is not None:
+            s = webview.screens[0]
+            w, h = int(s.width), int(s.height)
+            if w > 0 and h > 0:
+                return w, h
+    except Exception as e:
+        log.info("could not read the screen size from pywebview (%r); "
+                 "assuming 1920x1080 until a page can say", e)
+    return 1920, 1080
+
+
 class Root(_WebviewWidget):
     """The root window — starts the pywebview event loop."""
 
@@ -8242,6 +8334,11 @@ class Root(_WebviewWidget):
             self.theme = program.theme
         else:
             self.theme = Theme(program, noimagescaling=noimagescaling)
+
+        # What tkinter's Theme.setscale publishes; see `_screen_pixels`.
+        program.screenw, program.screenh = _screen_pixels()
+        log.info("screen %dx%d px (program.screenw/screenh)",
+                 program.screenw, program.screenh)
 
         self.renderer = Renderer()
         self.exitFlag = ExitFlag()

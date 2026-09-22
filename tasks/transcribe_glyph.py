@@ -55,6 +55,76 @@ CONSONANT_GLYPHS = [
 ]
 
 
+def sound_settings_for(program, task):
+    """The sound settings a glyph window may use RIGHT NOW, or None. Never
+    raises, never probes, never waits.
+
+    A Sound task holds `soundsettings` once its probe has run. Under webview
+    the probe (~7s) runs BESIDE the UI, so a click in the first seconds after
+    opening the task finds no attribute; tkinter blocks on the probe, which
+    is why a bare `self.soundsettings` never failed there. And a task without
+    the Sound mixin (`name_new_glyphs` from a sort) never has one.
+
+    What the task holds, else what the program has PUBLISHED, else None. The
+    first version of this called `SoundSettings.ensure` here, which builds
+    the object — and so ran the whole probe inside the click, under a
+    "please wait" that read as broken (Kent, 2026-09-22: "Wow; that took
+    forever"), and raced the task's own probe into a second object. Creation
+    is `sound_settings_when_ready`'s job, off the click. No audio here means
+    no tone beeps, not no window. The caller decides whether to
+    `confirm_audio()`.
+
+    ONE COPY. The segmental glyph window had this logic inline and the tone
+    rename window (`tasks.py`, `makewindow`) had only the bare read, and died
+    on it with the task window already withdrawn — the Sort Tone
+    no-window-at-all, 2026-09-22."""
+    soundsettings = getattr(task, 'soundsettings', None)
+    if soundsettings is not None or getattr(program, 'nosound', False):
+        return soundsettings
+    try:
+        from backend.core.sound import SoundSettings
+        return SoundSettings.published(program)
+    except Exception as e:
+        log.info("No audio settings for the glyph window: {}".format(e))
+        return None
+
+
+def sound_settings_when_ready(program, task, on_ready):
+    """Hand `on_ready(soundsettings)` the settings once they exist — now if
+    they do, else from a thread that waits for (or performs) the probe.
+
+    `SoundSettings.ensure` shares one construction across callers, so this
+    thread JOINS a probe the task is already running rather than starting a
+    second; where nobody is probing (a glyph window from a sort task) it does
+    the one probe itself, still off the click. `on_ready` receives attributes
+    only (`Transcriber.attach_sound`), so a widget is never touched from the
+    thread. Returns the Thread when one was started, else None. Never raises."""
+    now = sound_settings_for(program, task)
+    if now is not None:
+        on_ready(now)
+        return None
+    if getattr(program, 'nosound', False):
+        return None
+
+    def fetch():
+        try:
+            from backend.core.sound import SoundSettings
+            try:   # seed ASR for the right language if we're first to ensure
+                analang_obj = program.languages.get_obj(getattr(task, 'analang', None))
+            except Exception:
+                analang_obj = None
+            ss = SoundSettings.ensure(program, analang_obj=analang_obj)
+            if ss is not None:
+                on_ready(ss)
+        except Exception as e:
+            log.info("No audio settings for the glyph window: {}".format(e))
+    import threading
+    t = threading.Thread(target=fetch, name='sound-settings-when-ready',
+                         daemon=True)
+    t.start()
+    return t
+
+
 class GlyphTranscribeHelper:
     """Handles glyph naming/renaming window.
 
@@ -298,27 +368,11 @@ class GlyphTranscribeHelper:
         Blocks (via wait_window) until the user submits or closes.
         Sets self.ok_done and self.window_failed accordingly.
         """
-        # Sound settings (optional): the PROGRAM singleton. A Sound task already
-        # holds it; anyone else must go through SoundSettings.ensure, the one
-        # accessor that creates it, loads the persisted device choices, and (via
-        # confirm_audio) owns program.audio. Reading
+        # Sound settings (optional) — see `sound_settings_for`. Reading
         # program.settings.soundsettings raw handed None to the Transcriber
         # whenever no Sound task had run this session — same miss as the sort
         # play button. Never raises: no audio here just means no tone beeps.
-        soundsettings = getattr(self.task, 'soundsettings', None)
-        if soundsettings is None and not getattr(self.program, 'nosound', False):
-            try:
-                from backend.core.sound import SoundSettings
-                try:   # seed ASR for the right language if we're first to ensure
-                    analang_obj = self.program.languages.get_obj(
-                                            getattr(self.task, 'analang', None))
-                except Exception:
-                    analang_obj = None
-                soundsettings = SoundSettings.ensure(self.program,
-                                                     analang_obj=analang_obj)
-            except Exception as e:
-                log.info("No audio settings for glyph transcription: {}".format(e))
-                soundsettings = None
+        soundsettings = sound_settings_for(self.program, self.task)
         if soundsettings is not None:
             soundsettings.confirm_audio()
 
@@ -368,6 +422,10 @@ class GlyphTranscribeHelper:
                                                   soundsettings=soundsettings,
                                                   chars=self.glyphspossible,
                                                   row=0, column=0, sticky='')
+        # Beeps arrive when the probe is done, if it is not yet — off the
+        # click; see `sound_settings_when_ready`.
+        sound_settings_when_ready(self.program, self.task,
+                                  self.transcriber.attach_sound)
         self.transcriber.newname.trace_add('write', self.updateform)
         infoframe = ui.Frame(inputfeedbackframe,
                              row=0, column=1, sticky='')

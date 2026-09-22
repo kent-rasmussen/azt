@@ -308,7 +308,7 @@ msgstr "< Mots {lang} >"
 
 #: /home/kentr/bin/raspy/azt/main.py:12808
 msgid "A label that describes the surface tone form in this context would be best, like ‘[˥˥˥ ˨˨˨]’"
-msgstr "Une étiquette qui décrit la forme de la tonalité de surface dans ce contexte serait la meilleure, comme '[<unk> <unk> <unk> <unk> <unk> ]'"
+msgstr "Une étiquette qui décrit la forme de la tonalité de surface dans ce contexte serait la meilleure, comme ‘[˥˥˥ ˨˨˨]’"
 
 #: /home/kentr/bin/raspy/azt/main.py:16843
 msgid "AZT source"
@@ -1218,11 +1218,11 @@ msgstr "Distinguish Non-Nasal/Glide Sonorants mot enfin (S#)?"
 
 #: /home/kentr/bin/raspy/azt/main.py:4342
 msgid "Distinguish glottal stops (ʔ) initially and medially?"
-msgstr "Distinguez les arrêts glottaux (<unk> ) initialement et medialement?"
+msgstr "Distinguer les arrêts glottaux (ʔ) à l’initiale et à l’intérieur du mot ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:4344
 msgid "Distinguish glottal stops word finally (ʔ#)?"
-msgstr "Distinguish glottal arrêter mot enfin (<unk> #)?"
+msgstr "Distinguer les arrêts glottaux en fin de mot (ʔ#) ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:4348
 msgid "Distinguish likely depressor consonants (D) initially and medially?"
@@ -2116,7 +2116,7 @@ msgstr "Si vous vous attendez à une (déjà dans vos données) qui n'est pas li
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:28
 msgid "If you have errors containing ˋportaudioˊ above, you should install pyaudio with your package manager."
-msgstr "Si vous avez des erreurs contenant <unk> portaudio<unk> ci-dessus, vous devriez installer pyaudio avec votre gestionnaire de paquets."
+msgstr "Si vous avez des erreurs contenant ˋportaudioˊ ci-dessus, vous devriez installer pyaudio avec votre gestionnaire de paquets."
 
 #: /home/kentr/bin/raspy/azt/main.py:4411
 msgid "If you make changes, this button==> \n"
@@ -2514,7 +2514,7 @@ msgstr "On dirait que {lx} n'est pas un sous-ensemble de {pl} ou {imp} ({error})
 
 #: /home/kentr/bin/raspy/azt/utilities.py:70
 msgid "Looks like ˋ{}ˊ contains single and double quotes!"
-msgstr "On dirait que <unk> {}<unk> contient des guillemets simples et doubles !"
+msgstr "On dirait que ˋ{}ˊ contient des guillemets simples et doubles !"
 
 #: /home/kentr/bin/raspy/azt/main.py:17549
 #, python-brace-format
@@ -3505,7 +3505,7 @@ msgstr "Problème avec SequenceMatcher: {t} != {b_match} (a={a},b={b},match={m})
 #: /home/kentr/bin/raspy/azt/main.py:2185
 #, python-brace-format
 msgid "Problem with attribute {s}; {val1}≠{val2}"
-msgstr "Problème avec l'attribut {s}; {val1}=<unk>{val2}"
+msgstr "Problème avec l'attribut {s}; {val1}≠{val2}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2649
 #, python-brace-format

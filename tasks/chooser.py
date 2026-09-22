@@ -470,10 +470,19 @@ class TaskChooser(Task):
         BulkASR(self.program).run()
     def changedatabase(self):
         log.debug("Preparing to change database name.")
+        # WHATEVER OPENED THE CHOOSER IS HIDDEN UNTIL IT RETURNS. This hid
+        # `program.task`, which is None when the user is AT the task chooser
+        # — the usual case, since this is a chooser menu item — so the
+        # LiftChooser opened over a still-visible task list, and on the way
+        # back `None.deiconify()` below raised (Kent, 2026-09-22: "left with
+        # two pages: the liftchooser and the task chooser. whichever page lead
+        # to the liftchooser should not be visible until it exits").
+        opener=self.program.task if self.program.task is not None else self
         try:
-            self.program.task.withdraw() #so users don't do stuff while waiting
-        except (AttributeError, Exception):
-            log.info(_("There doesn’t seem to be a task to hide; moving on."))
+            opener.withdraw() #so users don't do stuff while waiting
+        except Exception as e:
+            log.info(_("Couldn’t hide {opener}; moving on ({e})").format(
+                                            opener=type(opener).__name__, e=e))
         curname = self.program.filename
         log.info(_("Current database: {name}").format(name=curname))
         # window=LiftChooser(self,file.getfilenames())
@@ -503,7 +512,7 @@ class TaskChooser(Task):
             self.program.restart()
         else:
             log.info(_("User didn’t select a new database; continuing."))
-            self.program.task.deiconify()
+            opener.deiconify()
         # self.restart(self.filename)
     def usbcheck(self):
         if self.program.splash.exitFlag.istrue():

@@ -1995,12 +1995,24 @@ class TranscribeT(Transcribe,Tone):
         inputfeedbackframe=ui.Frame(self.ui.runwindow.frame,
                             row=2,column=0,sticky=''
                             )
+        # NOT `self.soundsettings` bare: under webview the audio probe runs
+        # beside the UI, so a click in the first seconds after opening the
+        # task finds no attribute yet — and by this line the task window is
+        # already withdrawn (`getrunwindow`), so dying here left NO window at
+        # all (Kent, 2026-09-22). The segmental glyph window already read it
+        # tolerantly; this is the same one function.
+        from tasks.transcribe_glyph import (sound_settings_for,
+                                            sound_settings_when_ready)
         self.transcriber=transcriber.Transcriber(inputfeedbackframe,
                                 initval=self.group,
-                                soundsettings=self.soundsettings,
+                                soundsettings=sound_settings_for(self.program, self),
                                 chars=self.glyphspossible,
                                 row=0,column=0,sticky=''
                                 )
+        # And the beeps arrive when the probe is done, if it is not yet —
+        # off the click, so the rename window is not a seven-second wait.
+        sound_settings_when_ready(self.program, self,
+                                  self.transcriber.attach_sound)
         self.transcriber.formfield.bind('<KeyRelease>', self.updateerror)
         infoframe=ui.Frame(inputfeedbackframe,
                             row=0,column=1,sticky=''

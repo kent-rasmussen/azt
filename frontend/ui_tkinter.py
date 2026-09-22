@@ -3525,12 +3525,79 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
         sel=self.curselection()
         if not sel or not self.command:
             return
-        code=self.choices[sel[0]]
+        idx=sel[0]
+        # THE ROW'S TEXT IF THE VALUES LIST IS SHORT. `choices` is kept in
+        # step by `insert`/`delete` below; this is the guard for anything
+        # that still bypasses them, because an IndexError here dies inside
+        # Tk's callback — the page shows the row highlighted and nothing
+        # else happens, which is exactly how the new-language page looked
+        # (Kent, 2026-09-22: English selected, no code, no territories).
+        code=self.choices[idx] if idx < len(self.choices) else self.get(idx)
         if self._window is not None:
             self.command(code,window=self._window)
         else:
             log.info(f"Running {self.command=} with {code=}")
             self.command(code)
+    def _split_choices(self,elements):
+        """(values, display texts) for rows arriving by `insert`, through the
+        same normaliser the constructor's `optionlist` goes through."""
+        codes=[]; texts=[]
+        for e in elements:
+            if self._raw_command:
+                codes.append(e); texts.append(e)
+                continue
+            ck=ButtonFrame.regularize_choice(self,e)
+            if not ck:
+                continue
+            if 'image' in ck:
+                log.info(f"ListBox dropping image for {ck['choice']!r}")
+            codes.append(ck['choice']); texts.append(ck['text'])
+        return codes,texts
+    def insert(self,index,*elements):
+        """Add rows, keeping VALUES and DISPLAY TEXT in step.
+
+        `choices` was filled ONLY from the constructor's `optionlist`, and
+        `insert` was Tk's own — so a list filled after construction, which is
+        what the new-language page, the alphabet comparison and the sound
+        settings all do, had rows on screen and an empty `choices`, and
+        `_on_select` raised IndexError on every click (2026-09-22). The
+        webview `ListBox` had already been given this override for the same
+        reason (ui_webview.py, `insert`); the two backends now agree."""
+        codes,texts=self._split_choices(elements)
+        if not texts:
+            return
+        try:                        # 0, '0': a position; 'end', 'active'…: not
+            pos=int(index)
+        except (TypeError,ValueError):
+            pos=None
+        if pos is not None and 0 <= pos <= len(self.choices):
+            self.choices[pos:pos]=codes
+        else:                       # 'end', END, 'active', '@x,y' …: append
+            if index not in (END,'end'):
+                log.info(f"ListBox.insert at {index!r}: values appended at "
+                         "the end; a mismatch is resynced from the rows")
+            self.choices.extend(codes)
+        tkinter.Listbox.insert(self,index,*texts)
+        self._resync_choices()
+    def delete(self,first,last=None):
+        n=self.size()               # BEFORE the rows go: 'end' means the last one
+        try:
+            f=n-1 if first in (END,'end') else int(first)
+            l=f if last is None else (n-1 if last in (END,'end') else int(last))
+            del self.choices[f:l+1]
+        except (TypeError,ValueError):
+            pass                    # 'active', '@x,y': the resync below decides
+        tkinter.Listbox.delete(self,first,last)
+        self._resync_choices()
+    def _resync_choices(self):
+        """If the two lists ever disagree in length, the display wins: a
+        value list that is out of step is worse than no value list, because
+        it hands the caller the WRONG row's code without a sound."""
+        n=self.size()
+        if len(self.choices) != n:
+            log.info(f"ListBox: {len(self.choices)} values for {n} rows; "
+                     "taking the row texts as the values")
+            self.choices=list(self.get(0,'end'))
     def __init__(self, parent, *args, **kwargs):
         """selectmode can be
         tkinter.BROWSE – allows a single selection. This is the default.

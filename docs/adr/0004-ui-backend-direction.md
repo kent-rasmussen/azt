@@ -94,15 +94,17 @@ simpler than its Tk counterpart, not merely different.
 
 ### Stale in the original, corrected here
 
-- **D8** names `AZT_WEBVIEW_GUI`. It is `--engine=gtk|qt` now, under the
-  standing switches-not-environment-variables rule (2026-09-08). The devtools
-  console is `--console`, off unless asked for; transports can be forced with
-  `--gdk-backend=` / `--qt-platform=`.
+- **D8** named `AZT_WEBVIEW_GUI`. **Rewritten 2026-09-22** to the switches
+  (`--engine=`, `--console`, `--gdk-backend=` / `--qt-platform=`).
 - **D1**'s "detect availability and fall back to tkinter with a log line" is
   only half met — `ui_backend.chosen()` refuses and substitutes, but
   `agenda/webview_requested_but_absent.md` is still open, and under A3 that
-  matters more than it did.
-- **D5**'s `requirements-webview.txt` has not been verified to exist.
+  matters more than it did. **Moved to the top of the agenda 2026-09-22** to be
+  fixed next.
+- **D5**'s `requirements-webview.txt` has not been verified to exist. **Handed
+  to the installer item 2026-09-22** (`aztinstaller/agenda/aztinstaller_updates.md`,
+  "Bring aztinstaller current"): whether the file exists, and whether the
+  installer offers it, is decided there.
 - **D6** stands and gains weight: a ported page must state what replaced its
   XWayland flush rule, because under A1 the Tk page keeps its rule while the
   webview page needs none.
@@ -181,13 +183,17 @@ the mainloop and therefore keeps `VisibilityWatchdog`/`QuitOnlyGuard`, and can *
 kill and re-render the page in Tk** if the child wedges. Suite precedent: the collab daemon's
 Kivy subprocess UIs (`requirements.txt:63-67`, 2026-07-16).
 
-**D8. The Linux renderer is a setting, defaulting to GTK.** `AZT_WEBVIEW_GUI` →
-`webview.start(gui=…)`; today `ui_webview.py:1815` passes no `gui=` and `debug=True`
-unconditionally (gate that on `program['testing']`). GTK by default so the app looks native
-on an Ubuntu desktop; Qt/QtWebEngine on demand for engine parity with the Windows field and
-as the escape hatch for WebKitGTK's DMABUF blank-window bug on NVIDIA + Wayland. The page
-itself is our own HTML/CSS and looks identical either way; what differs is native chrome —
-decorations, file dialogs, menus.
+**D8. The Linux renderer is a command-line switch, defaulting to GTK.** (Updated
+2026-09-22; the original named an environment variable, `AZT_WEBVIEW_GUI`, against the
+standing switches-not-environment-variables rule.) `--engine=gtk|qt` → `webview.start(gui=…)`.
+GTK by default so the app looks native on an Ubuntu desktop; Qt/QtWebEngine on demand for
+engine parity with the Windows field and as the escape hatch for WebKitGTK's DMABUF
+blank-window bug on NVIDIA + Wayland. The page itself is our own HTML/CSS and looks identical
+either way; what differs is native chrome — decorations, file dialogs, menus. The devtools
+console is `--console`, off unless asked for, on every engine (the original's "`debug=True`
+unconditionally" is gone). A toolkit's transport can be forced with `--gdk-backend=x11|wayland`
+or `--qt-platform=xcb|wayland`, and every run logs the stack it actually got. `azt/CLAUDE.md`
+is the switch reference.
 
 ## Consequences
 

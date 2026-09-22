@@ -19,6 +19,138 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.32
+
+**Renaming a tone group under webview no longer leaves no window at all.**
+Fix awaiting verification. Kent clicked a group in Sort Tone within seven
+seconds of opening the task and every window vanished, with the process
+healthy. Two faults, read from the log. First, every run window's "please
+wait" cover had been failing silently for six days: the code still named a
+class attribute that had been turned into a method, the failure was caught
+and logged, and under webview that cover is what reveals the run window,
+so run windows were only ever shown by whatever came after. Second, what
+came after died: the tone rename window read the task's sound settings
+directly, and under webview the audio probe runs beside the UI and had not
+finished, whereas tkinter blocks on it. The segmental glyph window already
+tolerated a missing probe result; the tone one now does the same, through
+one shared function, and the cover names the method. The general lesson,
+recorded in the page walk: an except-and-log around something that must
+happen is how a fault hides for a week.
+The first version of that fix built the sound settings inside the click,
+which ran the whole seven-second probe under the wait page (Kent: "Wow;
+that took forever … I thought the wait page was broken") and, since the
+task's own probe was still running, built a second object and ran a second
+probe, 17.7 seconds under contention. Now: the click takes what is already
+published or nothing; the tone beeps arrive when the probe finishes,
+through a thread that shares the task's probe rather than starting another
+(concurrent callers of `SoundSettings.ensure` now get one object); and the
+Transcriber accepts its sound settings after construction, showing the play
+button on the next keystroke.
+
+**No more `<unk>` in the French and Arabic interface.** Fix awaiting a
+recompile (`translations/compile.py`) and a look. The tone rename page's
+hint read "comme '[<unk> <unk> <unk> <unk> <unk> ]'" (Kent: "it's bad"). Not a
+font or a page fault: the machine translation that produced those two
+catalogues wrote `<unk>` for every character it did not know — the tone
+letters in both example melodies, the glottal stop, two kinds of quotes,
+`≠`, `←`, and the `|` of a menu path — sixteen entries in all. Each now has
+the character its English original has, and a test fails if `<unk>` ever
+returns. Two French entries that were not French at all ("Distinguish
+glottal arrêter mot enfin") are translated while there.
+
+**Character buttons insert at the caret under webview.** Fix awaiting
+verification. On the tone transcribe page the buttons appended, wherever
+the caret was (Kent: "only append, not input where the cursor is").
+Python cannot know the caret; the page can. tkinter's `INSERT` is now
+honoured by the page splicing at its own selection and reporting the new
+value the way typing does, so the variable has one writer. A field the user
+has never been in still appends, since a fresh field's caret is not a
+choice anyone made.
+
+**The new-language page's two lists are as tall as they ask to be.** Fix
+awaiting verification (webview). The page builds its language list and its
+territory list one row tall and resizes each to up to four rows once it
+knows how many entries there are. tkinter did that natively; the webview
+page had no handler for a listbox's `height` on reconfigure — it had one
+for `width`, and for its own `max_height_em` — so the request went to a
+console-only warning and both lists stayed at one row with a scrollbar in
+it (Kent: "very difficult to use"). One rule now sets the row count at
+creation and on configure. A `height` on any other kind of widget still
+falls through to the warning rather than borrowing the list's rule.
+That alone changed nothing on screen ("not fixed"): the page asks the list
+for all its rows with `get(0, 'end')` before resizing, and the webview list
+did not accept `'end'` as an index, so the resize was never reached. It
+does now, and answers a tuple as Tk does.
+
+**Three webview finds from one look around.** The third is FIXED (Kent,
+2026-09-22: "staveless is working"); the first two await verification.
+Opening any glyph or transcribe window died with `'App' object has no
+attribute 'screenw'`: tkinter publishes the screen size at start-up and two
+task builders size a frame against it, and the webview root never did. It
+does now, from pywebview's screen list. Add-a-Word died on its first prompt
+because the webview entry field had dropped tkinter's `rendered` label along
+with the bitmap mechanism behind it, and the prompt grids that label itself;
+the label is back, empty, gridded only when the page asks. And tone letters
+showed their staves on every page because nothing ever asked the font to
+hide them: the stylesheet had the classes and no page used one. The feature
+is now asked for on every element, not only inherited from the root,
+because the browser's own rules for entry fields and buttons reset it, and
+those are where tone letters are typed and shown. So tone text is staveless
+wherever the installed Charis can do it, which is what tkinter shows on a
+machine with a `-tstv` file. Tone-number and Chinantec variants ask for
+their own feature alone. Seeing it work also closed the tone gate's one
+open question: the Charis this machine resolves for the browser does carry
+cv92.
+
+**A window grows when a page reveals something it had hidden.** Fix
+awaiting verification (webview). The new-language page shows its dialect
+and territory frame only once a language is chosen; it was built at the
+start and hidden, so showing it created nothing, and a window refit is
+asked for when widgets are created. The window kept its earlier size and
+the new frame sat below the bottom edge, unreachable. Showing a hidden
+widget now asks for the refit, on the same short fuse as switching a
+notebook tab. Hiding one does not: shrinking a window under the user is
+the flicker removed last week. Also observed on that page, and recorded
+rather than fixed: content beyond the window that is not inside a scroller
+does not scroll, the case the window-sizing item had marked as not yet
+seen.
+
+**The same page under tkinter had no title, no code, and a list that did
+nothing when clicked.** Fix awaiting verification. Two faults, neither
+new. The title and code frames were created with `gridwait` inherited
+from a shared defaults dict, and nothing ever placed them; the title is
+placed outright now and the code frame when a code exists. And the
+tkinter ListBox kept its list of values only from the constructor's
+option list, so a list filled afterwards with `insert()` — this page, the
+alphabet comparison, the sound settings — raised IndexError inside Tk's
+callback on every click, leaving the row highlighted and nothing else
+done. `insert`/`delete` now keep values and rows in step, as the webview
+list already did, and a selection falls back to the row's text if they
+ever disagree.
+
+**Changing database hides the page that asked.** Fix awaiting
+verification. The change-database action hid the current task, which is
+None when the request comes from the task chooser itself — so the LIFT
+chooser opened over a visible task list, and on return the code tried to
+re-show None. It hides the chooser in that case, and shows it again if no
+new database was chosen.
+
+**The record button stops when your finger comes off it, either way.** Fix
+awaiting verification. Under the webview backend a mouse release is `click`
+(needed so one click on the second-form combo stopped also activating the
+label it uncovered), and `click` needs press and release on the same
+element — so pressing Record, drifting off the button and releasing never
+ran the stop, and the recording did not end. Kent: the metaphor is "finger
+off the button", which includes off=up and off=sideways. Press-and-hold is
+now one shared idiom, `composites.hold`, which binds press, release AND
+leave, and runs the stop exactly once and only after a start (tkinter's
+grab still delivers the release after a slide-off; two stops would have
+built two play/delete pairs). Found in passing: the tkinter tooltip bound
+`<Leave>` on its widget with a bare `bind`, and re-bound it wholesale
+whenever the tip showed, wiping any `<Leave>` binding the widget's owner
+had made. It binds additively now. Headless tests in
+`tests/test_hold_binding.py`.
+
 # Version 1.15.31
 
 **The progress board shows which slice you are on again.** Fixed (Kent:
@@ -67,22 +199,6 @@ The immediate benefit is that a task no longer REQUIRES the chooser to have
 a window in order to exist, which was the one thing preventing the chooser's
 selection logic — none of which touches a widget — from running without its
 UI. See `agenda/modal_window_stack.md`.
-
-**The record button stops when your finger comes off it, either way.** Fix
-awaiting verification. Under the webview backend a mouse release is `click`
-(needed so one click on the second-form combo stopped also activating the
-label it uncovered), and `click` needs press and release on the same
-element — so pressing Record, drifting off the button and releasing never
-ran the stop, and the recording did not end. Kent: the metaphor is "finger
-off the button", which includes off=up and off=sideways. Press-and-hold is
-now one shared idiom, `composites.hold`, which binds press, release AND
-leave, and runs the stop exactly once and only after a start (tkinter's
-grab still delivers the release after a slide-off; two stops would have
-built two play/delete pairs). Found in passing: the tkinter tooltip bound
-`<Leave>` on its widget with a bare `bind`, and re-bound it wholesale
-whenever the tip showed, wiping any `<Leave>` binding the widget's owner
-had made. It binds additively now. Headless tests in
-`tests/test_hold_binding.py`.
 
 # Version 1.15.30
 

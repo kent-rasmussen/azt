@@ -9,6 +9,7 @@ import contextlib
 import copy
 import os
 import sys
+import threading
 from utilities import file, rx, logsetup
 from utilities import utilities as utils
 from utilities.i18n import _   # verify_fs() returns text for the user
@@ -1762,21 +1763,43 @@ class SoundSettings(object):
         """Persist values out through the Settings file writer."""
         self.program.settings.storesettingsfile(setting='soundsettings')
 
+    # ONE CREATION AT A TIME. Constructing SoundSettings runs the device probe
+    # (~7s, 150 checks), and the object is published only when that returns.
+    # Under webview a Sound task's own `soundcheck` runs beside the UI, so a
+    # second caller during those seconds — a glyph window asking for tone
+    # beeps — saw nothing published and built a SECOND one, probe and all
+    # (Kent's log, 2026-09-22: "Making new soundsettings object" while the
+    # first probe was still running, then "Wow; that took forever"). Under
+    # tkinter the probe blocks the mainloop, so the race could not happen.
+    # The lock makes the second caller wait for the first and get its object.
+    _ensure_lock = threading.RLock()
+
     @classmethod
     def ensure(cls, program, analang_obj=None):
         """Return ``program.soundsettings``, creating and loading it if
-        missing. Idempotent; safe to call from every sound-using task.
+        missing. Idempotent; safe to call from every sound-using task — and
+        from several at once: concurrent callers share one construction.
+        BLOCKS for the probe when nothing exists yet; a UI path that must not
+        wait asks `published()` instead, or `tasks.transcribe_glyph.
+        sound_settings_when_ready` for a callback.
         """
-        ss = getattr(program.settings, 'soundsettings', None)
-        if ss is None:
-            log.info("Making new soundsettings object")
-            ss = cls(program, analang_obj=analang_obj)
-            program.settings.soundsettings = ss
-            program.soundsettings = ss
-            ss.load_from_file()
-        elif not hasattr(program, 'soundsettings'):
-            program.soundsettings = ss
-        return ss
+        with cls._ensure_lock:
+            ss = getattr(program.settings, 'soundsettings', None)
+            if ss is None:
+                log.info("Making new soundsettings object")
+                ss = cls(program, analang_obj=analang_obj)
+                program.settings.soundsettings = ss
+                program.soundsettings = ss
+                ss.load_from_file()
+            elif not hasattr(program, 'soundsettings'):
+                program.soundsettings = ss
+            return ss
+
+    @classmethod
+    def published(cls, program):
+        """The settings object if one has finished being made, else None.
+        Never probes, never waits: what a click handler may ask."""
+        return getattr(getattr(program, 'settings', None), 'soundsettings', None)
 
     def __init__(self, program, audio=None, analang_obj=None):
         # `audio` is ACCEPTED AND IGNORED, as `pyaudio` was before it: the

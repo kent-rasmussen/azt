@@ -3544,11 +3544,20 @@ class TaskDressing(HasMenus,ui.Window):
 
         Never raises: this is on the way to returning a window, and a failed
         cover must not cost the caller its window."""
+        # `_runwindow_default_msg()`, the METHOD. This line still named the
+        # class attribute it replaced, so the cover raised AttributeError on
+        # every run window of every task, was caught below, and the run
+        # window was never revealed by the cover's `thenshow` — the log said
+        # "it will be blank until something reveals it" and, under webview,
+        # nothing else does. When the caller then died as well (Kent's Sort
+        # Tone NWAA, 2026-09-22, `soundsettings` not yet probed), the task
+        # window had already been withdrawn at :3506 and there was no window
+        # at all. Except-and-log hid a bug on every page for six days.
         try:
-            window.wait(msg=msg or self.RUNWINDOW_DEFAULT_MSG, thenshow=True)
+            window.wait(msg=msg or self._runwindow_default_msg(), thenshow=True)
         except Exception as e:
-            log.info("could not cover the run window while it builds ({!r}); "
-                     "it will be blank until something reveals it".format(e))
+            log.error("could not cover the run window while it builds ({!r}); "
+                      "it will be blank until something reveals it".format(e))
 
     RUNWINDOW_GUARD_MS=15000
     def guardvisible(self,delay=None):
@@ -3985,7 +3994,18 @@ class LiftChooser(ui.Window,HasMenus):
     def newfile_page(self):
         self._new_w=ui.Window(self.program.tk_root,title=_("Start New LIFT Database"))
         defaults={'pady':20,'padx':20,'column':0,'sticky':'w','gridwait':True}
-        self.title_frame=ui.Frame(self._new_w.frame, row=0, **defaults)
+        # THE FRAMES ARE PLACED HERE OR BY NAME BELOW, never by accident.
+        # `gridwait=True` in `defaults` is for the children that appear later
+        # (the code label, the "Use this code" button, the dialect button),
+        # and the frames inherited it through `**defaults` — so `title_frame`
+        # and `code_frame` were created removed and NOTHING ever gridded them.
+        # Under tkinter the page opened with no title, no instructions, no
+        # code and no button (Kent's screenshot, 2026-09-22); the webview page
+        # happened to show them, which is the two backends disagreeing, not
+        # either being right. The title is placed now; the code frame is
+        # placed by `update_code` when there is a code to show.
+        self.title_frame=ui.Frame(self._new_w.frame, row=0,
+                                  **{**defaults,'gridwait':False})
         self.code_frame=ui.Frame(self._new_w.frame, row=1, **defaults)
         self.entryframe=ui.Frame(self._new_w.frame, row=2, **defaults)
         self.subtags_frame=ui.Frame(self._new_w.frame, row=3, **defaults)
@@ -4173,6 +4193,7 @@ class LiftChooser(ui.Window,HasMenus):
         if self.variant_entry.get():
             self.code+='-x-'+self.variant_entry.get().lower() #in case caps
         self.code_label['text']=f"code: {self.code}"
+        self.code_frame.grid()      # the frame too, or its children are placed in nothing
         self.code_label.grid()
         self.use_code_button.grid()
         self.check_tag_validity()

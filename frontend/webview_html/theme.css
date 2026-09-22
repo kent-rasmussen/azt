@@ -61,13 +61,41 @@
    VERIFIED 2026-09-04 on WebKitGTK and WebView2 (tests/manual/
    tone_feature_check): cv92 hides staves and cv92 0 restores them, cv91
    gives tone numbers, and adjacent tone letters JOIN into one contour with
-   no feature at all. cvNN variants are off by default, so plain tone text
-   keeps its staves — which is what the app does today.
+   no feature at all. cvNN variants are off by default in the FONT, so with
+   nothing asked plain tone text keeps its staves.
+
+   STAVELESS IS THE DEFAULT HERE (2026-09-22). Until then these four classes
+   existed and NOTHING applied them, so every page showed staves — Kent: "I
+   see ligatures working correctly, but staves are there; not sure if that's
+   a bug or not asking." It was not asking. Under tkinter the same machine
+   renders staveless wherever a `-tstv` file exists (the Renderer prefers
+   it), and ADR 0004 D4 says the browser gets that from the feature — so the
+   page-walk criterion "same as tk or better" means asking, everywhere, once.
+   ON EVERY ELEMENT, NOT AT :root. `font-feature-settings` is inherited, so
+   :root looked sufficient — but the browser's own stylesheet gives input,
+   button, select and textarea a `font` SHORTHAND, and the shorthand resets
+   font-feature-settings to normal on those elements, and a declared value
+   beats inheritance. Those are exactly where tone letters live: the
+   transcriber's entry, the sort buttons. `*` is an author rule, and author
+   beats user-agent whatever the specificity, so the controls get it too
+   (Kent, 2026-09-22: "if not everywhere, does it matter?" — it does, and
+   :root was not everywhere). Our own CSS uses no `font` shorthand anywhere.
+   The property is REPLACED, not merged, by a descendant's own declaration —
+   which does not matter for the classes below: cv91 shows tone as NUMBERS
+   and cv90 as Chinantec superscripts, so neither has staves to hide and
+   neither needs cv92 ("numbers without staves?" — there are none).
+   `.tone-staves` is the opt-out; `.tone-staveless` is now redundant and kept
+   as the explicit spelling.
+   If staves remain after this on a given machine, its Charis has no cv92 —
+   that is the tone gate's open leg (agenda/webview_when_to_finish.md, font
+   inspection), not a page fault, and the -tstv file is then the only route,
+   as under Tk.
 
    Do NOT delete the -tstv mechanism in ui_tkinter on the strength of this:
    a machine with a tuned font legitimately renders differently from one
    without, and pulling it would take stave-free output away from anyone who
    has the file. See agenda/tstv_font_availability.md. */
+*                { font-feature-settings: "cv92" 1; }
 .tone-staveless  { font-feature-settings: "cv92" 1; }
 .tone-staves     { font-feature-settings: "cv92" 0; }
 .tone-numbers    { font-feature-settings: "cv91" 1; }
