@@ -177,6 +177,24 @@ def _make_link(target, lp):
     """Point lp at target: relative symlink, or a directory junction on
     Windows (no privilege needed, unlike symlinks without Developer Mode)."""
     parent = os.path.dirname(lp)
+    # A MISSING PARENT IS A BROKEN CHECKOUT, AND MUST NOT BE PAPERED OVER.
+    # Every link we make lives INSIDE a tracked directory of this repo —
+    # `lift_templates/SILCAWL` sits beside `lift_templates/__init__.py`, and
+    # `images/toselect` beside the images. Only the link itself is
+    # gitignored. So the parent is git's to deliver, and its absence means the
+    # working copy is incomplete (Kent, 2026-09-24: "lift_templates isn't the
+    # repo link, l_t/SILCAWL is").
+    #   Creating it was my first fix and it was wrong: `mklink` would then
+    # succeed while `import lift_templates` still failed, because the tracked
+    # `__init__.py` is gone too — trading a clear error for a confusing one.
+    # Say what is actually wrong instead.
+    if parent and not os.path.isdir(parent):
+        log.error(_("{dir} is missing. That directory is part of A-Z+T "
+                    "itself, not something we fetch, so this working copy is "
+                    "incomplete — check the branch and whether the files "
+                    "arrived. Nothing can be linked into it until it is "
+                    "back.").format(dir=parent))
+        return False
     rel = os.path.relpath(target, parent)
     if _is_link(lp):
         # SAME PLACE? compare resolved paths, not the stored text. A junction
@@ -194,9 +212,35 @@ def _make_link(target, lp):
                     link=lp, old=_link_target(lp), new=rel))
         _remove_link(lp)
     elif os.path.isdir(lp):
-        log.warning(_("{link} is a real directory, not a link; not touching "
-                    "it. Move it aside (or fix it) and restart.").format(
-                        link=lp))
+        # ASK WHETHER IT CAN BE UPDATED, NOT WHETHER IT IS A LINK. Kent,
+        # 2026-09-24: *"Does it matter if windows treats it as a link? the
+        # point was that this directory is a copy of a repo being maintained
+        # outside this repo."* Quite so. A link is one mechanism for reaching
+        # the managed clone; what the user loses by not having one is UPDATES.
+        # So test for the thing we actually care about.
+        #   This matters on Windows specifically, because Git Bash prints
+        # `lrwxrwxrwx` for its own "symlinks" while MSYS may have made a copy
+        # or a .lnk that Windows does not treat as a link at all. Judging by
+        # linkness there produced a warning that contradicted what the user
+        # could plainly see (Kim, same day), and judged the wrong property
+        # besides.
+        resolved = os.path.realpath(lp)
+        if resolved == os.path.realpath(target):
+            # It resolves to the managed clone by SOME mechanism — a native
+            # symlink, a junction, an MSYS shortcut. Invisible to us, and
+            # entirely fine: updates land here because this IS there.
+            log.info(_("{link} already resolves to {target}; leaving it."
+                       "").format(link=lp, target=target))
+            return True
+        if os.path.isdir(os.path.join(resolved, '.git')):
+            log.info(_("{link} is its own clone rather than the managed one. "
+                       "It can still be updated, just not by us; leaving it "
+                       "alone.").format(link=lp))
+            return True
+        log.warning(_("{link} is a detached copy — not the managed clone and "
+                    "not a repository, so NOTHING WILL EVER UPDATE IT. It "
+                    "works today and will silently fall behind. Move it aside "
+                    "and restart to have it managed.").format(link=lp))
         return False
     elif os.path.exists(lp):
         os.remove(lp)
