@@ -48,7 +48,14 @@ def _js_classes(text):
     # `className = 'a b'` and `className += ' a b'` — several at once.
     for m in re.finditer(r"""className\s*\+?=\s*['"]([^'"]+)['"]""", text):
         names.update(m.group(1).split())
-    return {n for n in names if n and not n.startswith('${')}
+    # A NAME ENDING IN `-` IS HALF OF A CONCATENATION, not a class. The JS
+    # builds some classes as `'font-' + name` and `'wv-compound-' + side`, and
+    # a literal-string scan sees only the prefix. Reported as missing on the
+    # first run, which is the honest failure mode for a scan like this: the
+    # real classes are `font-read`, `wv-compound-left` and so on, and no class
+    # legitimately ends in a hyphen.
+    return {n for n in names
+            if n and not n.startswith('${') and not n.endswith('-')}
 
 
 def _css_classes(text):
