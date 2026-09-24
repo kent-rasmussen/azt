@@ -97,10 +97,21 @@ def test_webview_sticky_menu_keeps_its_element_on_click():
     parent = types.SimpleNamespace(_wv_window=None)
     assert wv.Menu(parent, sticky=True)._sticky is True
     assert wv.Menu(parent)._sticky is False
+    # THE FLAG MOVED, THE BEHAVIOUR DID NOT (2026-09-24). Dismissal used to be
+    # decided in `on_menuclick`, which is why this looked for
+    # `if not self._sticky:` there. Rendering is now `postMenu` in widgets.js,
+    # shared with the menu bar so cascades draw in both, so the flag is passed
+    # across and the page decides whether to close. Assert it at both ends
+    # rather than deleting the check.
     src = (ROOT / 'frontend' / 'ui_webview.py').read_text()
-    click = src[src.index('def on_menuclick('):]
-    click = click[:click.index('_api.unregister')]
-    assert 'if not self._sticky:' in click
+    popup = src[src.index('    def tk_popup(self, x, y):'):]
+    popup = popup[:popup.index('\n    def ', 1)]
+    assert 'self._sticky' in popup, "sticky is not reaching postMenu"
+    js = (ROOT / 'frontend' / 'webview_html' / 'widgets.js').read_text()
+    post = js[js.index('function postMenu('):]
+    post = post[:post.index('\nfunction ', 1)]
+    assert 'if (!sticky)' in post, \
+        "postMenu no longer honours sticky: a menu meant to stay would close"
 
 
 # ── the two Popups ─────────────────────────────────────────────────────────

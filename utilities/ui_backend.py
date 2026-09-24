@@ -232,6 +232,17 @@ def gtk_host_problem():
     global _gtk_checked
     if _gtk_checked is not None:
         return _gtk_checked
+    if platform.system() != 'Linux':
+        # NOT A FAULT ANYWHERE ELSE. macOS renders through Cocoa and Windows
+        # through WebView2, so GTK is simply not the road there — and every
+        # caller already guards on Linux. Said plainly because the manual
+        # host check prints this line on every platform, and "PyGObject is
+        # not importable" on a Mac reads as a problem when it is an
+        # irrelevance.
+        _gtk_checked = ("not applicable on {} — GTK is the Linux host; this "
+                        "platform renders through its own"
+                        "".format(platform.system()))
+        return _gtk_checked
     if not _importable('gi'):
         # "NOT IMPORTABLE HERE", NEVER "NOT INSTALLED" (Kent, 2026-09-23,
         # reading a diagnostic that said the latter: "the second NOT INSTALLED

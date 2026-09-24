@@ -416,6 +416,74 @@ html, body {
 .wv-menu-item:hover {
     background: var(--activebackground);
 }
+/* THE MENU BAR (ui_webview._set_menubar). Same chrome as the popup menu, so
+   the two read as one kind of thing, and laid across the top of the page
+   because a Wayland client may not place a native menu and pywebview's own is
+   set once at start() while this app rebuilds its menus per task.
+   Submenus open on click rather than hover: a hover-only menu cannot be
+   opened at all on a touch screen, and field machines have them. */
+.wv-menubar {
+    display: flex;
+    background: var(--menubackground);
+    border-bottom: 1px solid #999;
+    font: inherit;
+    user-select: none;
+}
+.wv-menubar-top {
+    padding: 4px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    position: relative;
+}
+.wv-menubar-top:hover {
+    background: var(--activebackground);
+}
+.wv-menubar-drop,
+.wv-menu-sub {
+    display: none;
+    position: absolute;
+    background: var(--menubackground);
+    border: 1px solid #999;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    z-index: 1001;
+    min-width: 160px;
+}
+.wv-menubar-drop { top: 100%; left: 0; }
+.wv-menu-sub    { top: 0; left: 100%; }
+/* `wv-menu-open` — the class `_buildMenuRows` actually sets. It was
+   `wv-menubar-open` here while the JS set `wv-menu-open`, so no dropdown
+   could ever display: the bar drew, and nothing on it opened (Kent,
+   2026-09-24: "menus showed, but nothing was clickable"). Renaming in one
+   file and not the other is the whole fault. */
+.wv-menu-open > .wv-menubar-drop,
+.wv-menu-open > .wv-menu-sub {
+    display: block;
+}
+/* A cascade row needs somewhere for its submenu to hang from, and a marker
+   saying there is more — a submenu that only appears on click is invisible
+   without one. */
+.wv-menu-cascade {
+    position: relative;
+}
+.wv-menu-cascade::after {
+    content: " \25B8";      /* small right-pointing triangle */
+}
+.wv-menubar-top.wv-menu-cascade::after {
+    content: "";            /* top-level items drop DOWN; no arrow wanted */
+}
+/* A rule between groups of entries (Menu.add_separator). */
+.wv-menu-sep {
+    height: 0;
+    border-top: 1px solid #999;
+    margin: 3px 0;
+}
+/* A cascade we could not serialise: shown, and shown as unavailable, rather
+   than dropped — an absent entry is indistinguishable from a bug. */
+.wv-menu-disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
 /* A popup panel (ui_webview.Popup): a menu-shaped box holding a grid of
    ordinary widgets, positioned by the page at the pointer. Same chrome as
    the menu so the two read as one kind of thing. */

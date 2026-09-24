@@ -1534,6 +1534,139 @@ function gridRemove(wid) {
     if (el) el.classList.add('wv-hidden');
 }
 
+// ── Menu bar ──────────────────────────────────────────────────────────────
+// Drawn from the same `spec()` the popup uses, so the two cannot disagree
+// about which item kinds exist — which is how cascades came to be silently
+// dropped from every menu (see ui_webview.Menu.spec).
+//
+// `spec` is a nested list of {kind, label, path, items?}. A click on a
+// command sends its PATH back, because an index alone cannot name anything
+// below the top level. `spec === null` removes the bar.
+function setMenubar(wid, spec) {
+    let bar = document.getElementById('wv-menubar');
+    if (!spec) { if (bar) bar.remove(); return; }
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'wv-menubar';
+        bar.className = 'wv-menubar';
+        document.body.insertBefore(bar, document.body.firstChild);
+    }
+    // `replaceChildren()` rather than innerHTML, and every LABEL below is set
+    // with textContent rather than interpolated into markup. Menu labels come
+    // from translations and from lexical data, so a label containing `<` must
+    // render as a character and not as a tag. (`Menu.tk_popup` still builds
+    // its rows by f-string — worth changing when the popup moves onto this
+    // same spec.)
+    bar.replaceChildren();
+
+    _buildMenuRows(spec, bar, 0, function (path) {
+        // CLOSE FIRST, THEN DISPATCH. Choosing an item must retire the menu —
+        // staying open is the `sticky` behaviour built for the transcriber's
+        // tone-beep panel, and nothing else wants it (Kent, 2026-09-24: "the
+        // menu cascade remains after something is clicked on … this smells
+        // like a setting we made for the tone play configuration"). It was an
+        // omission rather than a setting: the refactor that gave the bar and
+        // the popup a shared builder left this closer behind.
+        //   Before dispatch, so a command that opens a window does not leave
+        // the menu standing over it.
+        bar.querySelectorAll('.wv-menu-open').forEach(
+            function (e) { e.classList.remove('wv-menu-open'); });
+        pywebview.api.on_event(wid, 'menubarclick', {path: path});
+    });
+    // ONE listener for the life of the page, not one per rebuild. The menu
+    // tree is rebuilt on every setcontext(), so adding a listener here would
+    // accumulate one per rebuild for as long as the window lived.
+    if (!window._wvMenubarCloserBound) {
+        window._wvMenubarCloserBound = true;
+        document.addEventListener('mousedown', function () {
+            document.querySelectorAll('.wv-menu-open').forEach(
+                function (e) { e.classList.remove('wv-menu-open'); });
+        });
+    }
+}
+
+// Shared by the bar and the popup, which is the point: the cascade bug was
+// two renderers, one of which only knew about `command` items. `onPick` takes
+// the item's PATH, since an index cannot name anything below the top level.
+function _buildMenuRows(items, into, depth, onPick) {
+    (items || []).forEach(function (item) {
+        if (item.kind === 'separator') {
+            const rule = document.createElement('div');
+            rule.className = 'wv-menu-sep';
+            into.appendChild(rule);
+            return;
+        }
+        const row = document.createElement('div');
+        row.className = (depth === 0 ? 'wv-menubar-top' : 'wv-menu-item');
+        if (item.kind === 'disabled') row.className += ' wv-menu-disabled';
+        // textContent, never markup: labels come from translations and from
+        // lexical data.
+        row.textContent = item.label;
+        if (item.kind === 'cascade') {
+            row.className += ' wv-menu-cascade';
+            const sub = document.createElement('div');
+            sub.className = (depth === 0 ? 'wv-menubar-drop' : 'wv-menu-sub');
+            _buildMenuRows(item.items, sub, depth + 1, onPick);
+            row.appendChild(sub);
+            // Open on click, not hover: a hover-only submenu cannot be opened
+            // at all on a touch screen, and field machines have them.
+            row.addEventListener('mousedown', function (ev) {
+                ev.stopPropagation();
+                const wasOpen = row.classList.contains('wv-menu-open');
+                let scope = row.parentElement;
+                while (scope && !scope.classList.contains('wv-menubar')
+                             && !scope.classList.contains('wv-menu')) {
+                    scope = scope.parentElement;
+                }
+                (scope || document).querySelectorAll('.wv-menu-open').forEach(
+                    function (e) { e.classList.remove('wv-menu-open'); });
+                if (!wasOpen) row.classList.add('wv-menu-open');
+            });
+        } else if (item.kind === 'command') {
+            row.addEventListener('mousedown', function (ev) {
+                ev.stopPropagation();
+                onPick(item.path);
+            });
+        }
+        into.appendChild(row);
+    });
+}
+
+// A posted context menu, from the same spec as the bar — so cascades appear
+// here too, which they never did before (ui_webview.Menu.tk_popup built its
+// rows itself and skipped every non-command item).
+function postMenu(wid, spec, x, y, sticky) {
+    const prev = _widgets.get(wid);
+    if (prev && prev.remove) prev.remove();
+    const el = document.createElement('div');
+    el.className = 'wv-menu';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.dataset.wid = wid;
+    _buildMenuRows(spec, el, 1, function (path) {
+        pywebview.api.on_event(wid, 'menuclick', {path: path});
+        if (!sticky) {
+            el.remove();
+            if (_widgets.get(wid) === el) _widgets.delete(wid);
+        }
+    });
+    _widgets.set(wid, el);
+    document.body.appendChild(el);
+    // DISMISS ON mousedown AND contextmenu, NOT on click: a right-click never
+    // fires `click`, so a menu posted by right-click could not be dismissed by
+    // another right-click and two stacked up (Kent, 2026-09-15). Anything
+    // inside the menu is ignored, so rows and submenus still work.
+    function _dismiss(e) {
+        if (el.contains(e.target)) return;
+        el.remove();
+        if (_widgets.get(wid) === el) _widgets.delete(wid);
+        document.removeEventListener('mousedown', _dismiss, true);
+        document.removeEventListener('contextmenu', _dismiss, true);
+    }
+    document.addEventListener('mousedown', _dismiss, true);
+    document.addEventListener('contextmenu', _dismiss, true);
+}
+
 function destroyWidget(wid) {
     const el = _widgets.get(wid);
     if (el) {

@@ -2051,11 +2051,54 @@ class _WebviewWidget:
                 except Exception as e:
                     log.info("widget {}: could not rebind its command ({!r})"
                              "".format(self._wid, e))
+        # A MENU BAR IS NOT A PROPERTY. `ui_shell._setmenus` does
+        # `self.config(menu=self.menubar)`, and a `Menus` object is not a
+        # str/int/float/bool, so it fell past the loop below into `_config`
+        # and nothing reached the page — "Show Menus" logged that it had
+        # shown menus and did nothing (Kent, 2026-09-24). `menu=None` takes
+        # the bar down again, which is what `_removemenus` needs.
+        if 'menu' in kwargs:
+            self._set_menubar(kwargs.pop('menu'))
         self._config.update(kwargs)
         wv = getattr(self, '_wv_window', None)
         for k, v in kwargs.items():
             if isinstance(v, (str, int, float, bool)):
                 _js(wv, f'updateProp({self._wid}, {json.dumps(k)}, {json.dumps(v)})')
+
+    def _set_menubar(self, menu):
+        """Draw `menu` as a bar across the top of this window, or clear it.
+
+        AN ELEMENT IN THE PAGE, not a native menu — the same decision as
+        `Popup`, and for the same reasons: pywebview's own menu is set once,
+        globally, at `start()`, while this app rebuilds its menus per task and
+        on every `setcontext()`; and everything else in the port is HTML."""
+        wv = getattr(self, '_wv_window', None)
+        bar_id = getattr(self, '_menubar_wid', None)
+        if bar_id is None:
+            bar_id = self._menubar_wid = _next_wid()
+        if menu is None or not getattr(menu, '_items', None):
+            _api.unregister(bar_id)
+            _js(wv, 'setMenubar({}, null)'.format(bar_id))
+            self._menubar = None
+            return
+        self._menubar = menu
+
+        def on_menubar(data):
+            cmd = menu.command_at(data.get('path') or [])
+            if callable(cmd):
+                try:
+                    cmd()
+                except Exception:
+                    import traceback
+                    log.error("menu bar command failed:\n%s",
+                              traceback.format_exc())
+            else:
+                log.info("menu bar: nothing to run at path %r",
+                         data.get('path'))
+        _api.unregister(bar_id)
+        _api.register(bar_id, 'menubarclick', on_menubar)
+        _js(wv, 'setMenubar({}, {})'.format(bar_id,
+                                            json.dumps(menu.spec())))
 
     def config(self, **kwargs):
         return self.configure(**kwargs)
@@ -4473,71 +4516,137 @@ class Menu:
 
     def insert_cascade(self, label, menu, index):
         label = self.pad(label)
-        self._items.insert(index, ('cascade', label, menu))
+        # A LABEL THAT IS NOT THERE GIVES NO INDEX. `redoadvanced` does
+        # `i = self.index(title)` and passes it straight back here, so a menu
+        # rebuilt before that entry exists would hand us None and
+        # `list.insert(None, …)` raises. Append instead: the ordering is a
+        # preference, the crash is not.
+        if not isinstance(index, int):
+            self._items.append(('cascade', label, menu))
+        else:
+            self._items.insert(index, ('cascade', label, menu))
+
+    def add_separator(self):
+        """A rule between groups of entries.
+
+        MISSING UNTIL 2026-09-24, and it stopped the menu bar dead: building
+        the tree calls this seven times, so `Menus(self)` raised
+        AttributeError before any of it could be drawn. Tk has it, the app
+        uses it, and the webview `Menu` simply never had one."""
+        self._items.append(('separator', '', None))
+
+    def index(self, label):
+        """Position of the entry with this LABEL, or None.
+
+        Labels are padded by `pad()` on the way in, so the comparison strips —
+        callers pass the text they wrote, not the text we stored."""
+        want = str(label).strip()
+        for i, (_kind, text, _target) in enumerate(self._items):
+            if str(text).strip() == want:
+                return i
+        return None
+
+    def delete(self, first, last=None):
+        """Remove entries, addressed by label or by index, as Tk's does.
+
+        `redoadvanced` deletes the Advanced cascade by label and rebuilds it
+        at the index it had, which is the whole reason `index` and this exist
+        as a pair."""
+        start = self.index(first) if isinstance(first, str) else first
+        if not isinstance(start, int):
+            return
+        if last is None:
+            end = start
+        else:
+            end = self.index(last) if isinstance(last, str) else last
+        if not isinstance(end, int):
+            end = start
+        del self._items[start:end + 1]
+
+    def spec(self, path=()):
+        """This menu as a JSON-safe nested tree, commands addressed by PATH.
+
+        ONE SERIALISATION FOR THE POPUP AND THE BAR, so they cannot drift
+        apart — which is exactly how the cascade bug arrived. `add_cascade`
+        stored items happily while `tk_popup` rendered only `kind ==
+        'command'`, so every submenu in the app was accepted and silently not
+        drawn (found 2026-09-24, `agenda/webview_menubar_and_cascades.md`).
+        Two renderers, one of which knew about half the item kinds.
+
+        A command's address is its path from the root — `[0, 2]` is the third
+        item of the first submenu — because an index alone cannot name
+        anything below the top level."""
+        out = []
+        for i, (kind, label, target) in enumerate(self._items):
+            here = list(path) + [i]
+            if kind == 'separator':
+                out.append({'kind': 'separator', 'label': '', 'path': here})
+            elif kind == 'cascade' and hasattr(target, 'spec'):
+                out.append({'kind': 'cascade', 'label': label,
+                            'path': here, 'items': target.spec(here)})
+            elif kind == 'cascade':
+                # A cascade whose menu is not one of ours: show the label
+                # disabled rather than dropping it, so it is visibly wrong
+                # instead of invisibly absent.
+                out.append({'kind': 'disabled', 'label': label, 'path': here})
+            elif target is None:
+                # A LABEL, NOT AN ACTION. `Menus.__init__` adds the open
+                # filename as a top-level entry with `cmd=None`, so clicking
+                # it logged "nothing to run at path [2]" as though something
+                # had gone wrong (Kent, 2026-09-24). It renders inert instead,
+                # and sends nothing.
+                out.append({'kind': 'disabled', 'label': label, 'path': here})
+            else:
+                out.append({'kind': 'command', 'label': label, 'path': here})
+        return out
+
+    def command_at(self, path):
+        """The callable a `spec()` path names, or None."""
+        menu, cmd = self, None
+        for step in path or []:
+            items = getattr(menu, '_items', None)
+            if not items or not (0 <= step < len(items)):
+                return None
+            kind, _label, target = items[step]
+            if kind == 'cascade':
+                menu, cmd = target, None
+            else:
+                cmd = target
+        return cmd
 
     def tk_popup(self, x, y):
-        """Show the menu at position (x, y) as a positioned div."""
+        """Show the menu at (x, y) as a positioned div.
+
+        FROM `spec()`, LIKE THE BAR. This used to build its own rows with an
+        f-string and an `if kind == 'command'`, so every cascade was stored
+        and never drawn — submenus were missing from every context menu in the
+        app, silently (2026-09-24). Rendering is now `postMenu` in widgets.js,
+        shared with the menu bar, and a click comes back as a PATH rather than
+        an index because an index cannot name anything below the top level.
+
+        It also means labels are no longer interpolated into markup: they come
+        from translations and lexical data, and `postMenu` sets them with
+        `textContent`."""
         wv = getattr(self, '_wv_window', None)
         if not wv:
             return
-        # Build menu items as HTML
-        items_html = []
-        for i, (kind, label, _) in enumerate(self._items):
-            if kind == 'command':
-                items_html.append(
-                    f'<div class="wv-menu-item" data-idx="{i}" '
-                    f'onclick="pywebview.api.on_event({self._wid},\'menuclick\','
-                    f'{{index:{i}}})">{label}</div>')
-        html = ''.join(items_html)
-        # Register handler
+
         def on_menuclick(data):
-            idx = data.get('index', 0)
-            if 0 <= idx < len(self._items):
-                _, _, cmd = self._items[idx]
-                if cmd:
+            cmd = self.command_at(data.get('path') or [])
+            if callable(cmd):
+                try:
                     cmd()
-            # Remove menu after click — unless it is sticky (see __init__).
-            if not self._sticky:
-                _js(wv, f'destroyWidget({self._wid})')
+                except Exception:
+                    import traceback
+                    log.error("menu command failed:\n%s",
+                              traceback.format_exc())
+            else:
+                log.info("menu: nothing to run at path %r", data.get('path'))
         _api.unregister(self._wid)
         _api.register(self._wid, 'menuclick', on_menuclick)
-        # Create and position via JS.
-        #
-        # DISMISS ON `mousedown` AND `contextmenu`, NOT ON `click`. A
-        # right-click does not fire `click` at all — it fires `contextmenu` —
-        # so a menu posted by right-click could not be dismissed by another
-        # right-click, and a second menu appeared on top of the first with
-        # both left on screen (Kent, 2026-09-15). `mousedown` covers the
-        # left-click-away case and fires BEFORE `contextmenu`, so opening a
-        # new menu takes the old one down first.
-        #   Clicking an ITEM still works: the dismissal ignores anything
-        # inside the menu, so `mousedown` on a row does nothing and the row's
-        # own `onclick` runs.
-        #
-        # AND REMOVE THE PREVIOUS ELEMENT FIRST. `_widgets.set` overwrites
-        # the map entry, so re-posting the same menu object left the old div
-        # in the DOM with nothing referring to it — invisible to
-        # `destroyWidget`, and permanent.
-        js = (f'(function(){{'
-              f'var prev=_widgets.get({self._wid});'
-              f'if(prev&&prev.remove) prev.remove();'
-              f'let el=document.createElement("div");'
-              f'el.className="wv-menu";'
-              f'el.style.left="{x}px";el.style.top="{y}px";'
-              f'el.dataset.wid={self._wid};'
-              f'el.innerHTML={json.dumps(html)};'
-              f'_widgets.set({self._wid},el);'
-              f'document.body.appendChild(el);'
-              f'function _dismiss(e){{'
-              f'if(el.contains(e.target)) return;'
-              f'el.remove();'
-              f'if(_widgets.get({self._wid})===el) _widgets.delete({self._wid});'
-              f'document.removeEventListener("mousedown",_dismiss,true);'
-              f'document.removeEventListener("contextmenu",_dismiss,true);}}'
-              f'document.addEventListener("mousedown",_dismiss,true);'
-              f'document.addEventListener("contextmenu",_dismiss,true);'
-              f'}})()')
-        _js(wv, js)
+        _js(wv, 'postMenu({}, {}, {}, {}, {})'.format(
+            self._wid, json.dumps(self.spec()), int(x), int(y),
+            'true' if self._sticky else 'false'))
 
     def destroy(self):
         self._exists = False
