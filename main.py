@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.32' #This is a string...
+__version__='1.15.36' #This is a string...
 # Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
@@ -723,6 +723,57 @@ class App:
                  "they are free from software.sil.org."
                  ).format(name=self.name)]
         ErrorNotice('\n'.join(lines),title=_("Missing font!"),wait=True)
+    def warn_backend_problems(self):
+        """A UI backend or engine the user ASKED FOR BY NAME could not run.
+
+        A THIRD TIER, and the first of its kind here: worth saying, not worth
+        stopping for. Sound and bootstrap problems both block, because a
+        fieldworker must not record silence or rely on a half-built install.
+        This one must not: the app is completely usable, it is simply drawing
+        its windows with the other toolkit.
+
+        But it must be SEEN, and it is in one way MORE explicit than either
+        blocking case — nobody asks for working sound by name, and this user
+        typed a switch. Until 2026-09-22 the refusal was a log line only, so
+        `--webview` on a machine without pywebview gave a normal tkinter
+        session and a line that scrolled past (Kent, 2026-09-11: "at some
+        point, we're going to want to complain more loudly if someone asks for
+        webview and it isn't installed"). A whole session could be spent
+        believing the webview was under test while looking at tkinter.
+
+        The BULLETS carry the technical detail, which is deliberate: the
+        message from `ui_backend` names the interpreter, which is the thing
+        people get wrong, and the exact pip line to fix it.
+        """
+        from utilities.ui_backend import BACKEND_PROBLEMS, chosen
+        if not BACKEND_PROBLEMS:
+            return
+        lines=[_("{name} could not use the screens you asked for:"
+                 ).format(name=self.name),'']
+        lines+=[f"• {request}: {problem}"
+                for request,problem in BACKEND_PROBLEMS]
+        # SAY WHAT IS RUNNING, not just what isn't. The first version of this
+        # named the problem and then said only that "the screen toolkit" was
+        # different, never which one (Kent, 2026-09-22: "the UserNotice
+        # doesn't mention using tkinter … I think it would be better to be
+        # more explicit"). A notice about a substitution that does not name
+        # the substitute sends the reader to the log for the one fact it
+        # exists to deliver.
+        if chosen() == 'tkinter':
+            lines+=['',_("{name} is running its standard tkinter screens "
+                     "instead.").format(name=self.name)]
+        else:
+            lines+=['',_("{name} is running the webview screens, with the "
+                     "substitute named above.").format(name=self.name)]
+        lines+=[_("Everything works: sorting, recording, reports and all your "
+                 "data are unaffected."),'',
+                _("To get the screens you asked for, fix the problem above "
+                  "and start {name} again with the same option."
+                  ).format(name=self.name)]
+        log.info("backend/engine requested but not delivered: %s",
+                 '; '.join('{}: {}'.format(r,p) for r,p in BACKEND_PROBLEMS))
+        ErrorNotice('\n'.join(lines),
+                    title=_("Not the screens you asked for"))
     def _run_setup(self):
         """All setup that must happen after the UI event loop is live.
 
@@ -763,6 +814,9 @@ class App:
         #                           be silent in a sound-centric app
         self.warn_font_problems() #a substituted font silently changes every
         #                          layout on this machine only
+        self.warn_backend_problems() #LAST, and the only one that does NOT
+        #                             block: the app works, it just isn't the
+        #                             toolkit that was asked for by name
         self.prep_to_write()
         langtags.Languages(self)
         self.get_lift_file() #self.filename, maybe LiftChooser (NOT self.analang)

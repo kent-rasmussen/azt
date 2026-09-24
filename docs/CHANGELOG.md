@@ -19,6 +19,181 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.36
+
+**Three modules that could not be imported at all now can.** Nothing
+user-facing: `praatfns.py`, `setdefaults.py` and `utilities/openclipart.py`
+each carried a bare `import logsetup` or `import urls` dating from before
+those moved into `utilities/`, so they failed from any directory they would
+be run from. `praatfns.py` had two such lines, and the second only surfaced
+once the first was fixed.
+
+The reason nothing noticed is the interesting part. All three sat in the
+import smoke test's `EXPECTED_NOT_IMPORTABLE` list, described as "standalone
+scripts" — an exemption from the one test that would have complained, with a
+reason that was not true. `praatfns.py` is not even unused: `requirements.txt`
+pins `praat-parselmouth` and `tgt` with comments naming it as their consumer,
+so its dependencies have been installed on every machine while the module
+itself would not load. That list now carries a note that an entry in it needs
+a reason which will still be true later, since anything added there stops
+being checked.
+
+Suite: 757 passed, 6 skipped, up from 754 and 9.
+
+# Version 1.15.35
+
+**The webview now uses the toolkit your desktop is built on.** Confirmed on
+Linux/GNOME, 2026-09-24: `--webview` with no engine named repaired the virtual
+environment, restarted, and chose GTK because that is this desktop's own
+toolkit. Before, the engine was whichever host happened to be importable
+first, always trying GTK — so A-Z+T looked like a visitor on every KDE or LXQt
+machine, and looked wrong on a GNOME one that happened to have Qt installed.
+The desktop is read from the session's own environment, availability still
+wins, and the log says which reason applied.
+
+**And a recoverable GTK is no longer masked by an installed Qt.** The venv
+repair fired only when NO host was available, so on a machine with Qt present,
+`--engine=gtk` quietly got Qt while GTK sat one line of `pyvenv.cfg` away.
+Naming an engine is asking for that engine; an installed alternative is not a
+reason to stop trying to honour it. The repair now runs when GTK is wanted —
+asked for by name, or nothing named on a GTK-native desktop, or nothing named
+on an unrecognised desktop where Qt cannot run either. An explicit
+`--engine=qt`, and an unrecognised desktop where Qt already works, are left
+alone, because flipping that flag has a real cost and nothing there needs it.
+
+**One decision, one log line, again.** "No engine specified; using gtk"
+appeared twice per boot: the choice was derived, and announced, once per
+caller across the five places that ask for it. Cached, like the backend
+refusal two versions ago — the same fault one module over.
+
+# Version 1.15.34
+
+**Asking for the webview now GETS you the webview.** Confirmed on Linux/GTK,
+2026-09-24: one command repaired the virtual environment, restarted itself,
+installed pywebview and came up on GTK. Until now, asking for a backend that
+was one pip install away produced a polite refusal and a tkinter session —
+which is an opt-in, and as Kent put it when asked whether users would take it
+one machine at a time, "which they WON'T, is the point." So the app now gets
+what was asked for, when it can, and the whole question is whether it can.
+
+Three things had to be knowable first, and two of them were not. Whether
+`gi` imports was already answerable; whether the venv is even ALLOWED to see
+system packages was too. Whether the GObject TYPELIBS are installed was not —
+and `python3-gi` alone gives an importable `gi` that cannot render a web page,
+because the WebKit typelib is a separate apt package and is the one usually
+missing. Qt had the identical hole one layer up: `qtpy` is only a shim over
+PyQt/PySide, so it can import with nothing behind it, and pywebview needs
+QtWebEngine besides. Both are now tested the way pywebview itself tests them,
+and a leftover empty directory from `pip uninstall` no longer counts as an
+installed package.
+
+With that known, the response fits the cause. A missing python package that
+pip can supply is installed, in-process, with no restart — the backend is
+decided before the frontend is imported, so the same run continues into it.
+`--engine=qt` on a machine without Qt installs `pywebview[qt]`, which is pure
+wheels. `--engine=gtk` never installs anything, because PyGObject is apt's
+and pip would either fail to build it or shadow the system copy. And if the
+only thing hiding a host is this venv's own `include-system-site-packages`,
+that is corrected and the app restarts itself.
+
+**That venv setting is repaired on demand, never set globally**, and the
+reason is worth keeping: the flag's cost is that the venv stops being a
+guarantee, since a package missing from it silently resolves to the system's
+at whatever version the distribution ships. That is how apt's pywebview 5.0.5
+stood in for the pinned 6.2.1. A Qt user gets nothing for that cost, and nor
+does Windows or macOS. So it is paid only by someone about to use GTK, only
+when it is the one thing in their way, and only when the base interpreter
+demonstrably has PyGObject — which is checked by asking it, rather than
+guessed.
+
+Along the way: A-Z+T has never created a venv that can see system packages.
+No installer and no code path passes `--system-site-packages`, so GTK could
+never have worked on a fresh Linux install; the developer machine worked only
+because of a hand edit in September. Fixing that at the source belongs to
+`agenda/update_install_non-windows-specific.md`.
+
+Both engines confirmed the same day, with the page seen rendering in each
+case. `--engine=gtk` repaired the venv, restarted and came up on GTK;
+`--engine=qt` installed `pywebview[qt]` and came up on Qt. The Qt run did NOT
+touch the venv, which is the design working: Qt needs nothing from the system,
+so a Qt user never pays the cost of making system packages visible.
+
+Not yet verified: every non-Linux platform.
+
+# Version 1.15.33
+
+**The tone playback panel goes away again, and the grab it relied on is
+gone.** CONFIRMED by Kent, 2026-09-22 ("tkinter translation menu is good";
+the panel belongs to the Transcriber). Under tkinter the panel never dismissed
+at all (Kent, 2026-09-22, with a screenshot of two of them stacked: "the
+tone playback configuration window doesn't go away (ever?)"), while the
+webview one was fine: "not in gtk". The panel was built on the claim that a
+local grab delivers outside presses to it, the way a Tk menu dismisses under
+the grab `tk_popup` takes. That claim was wrong, and the screenshot is the
+proof: opening the second panel takes a right-click, which is a press
+outside the first panel, and the first panel was still there. What unposts a
+Tk menu is Tk's own menu implementation running under that grab; a plain
+toplevel calling `grab_set` inherits the grab's effect on delivery and none
+of its dismissal, so the grab could only ever keep the press from reaching
+anything that would act on it. With no title bar and no key binding there
+was nothing else, so the panel was permanent. The grab is now gone, and two
+independent ways out replace it: a press anywhere on the owning window,
+through one binding on that toplevel that every widget in it carries in its
+bindtags, and Escape. Panels are tracked, so opening one takes down any
+other, which is why they used to stack. The bindings arm at idle rather than
+at creation, because the press that opens a panel is still being dispatched
+while the panel is built and the owning window's bindtags come after the
+clicked widget's own, so a binding live immediately would dismiss the panel
+on the very press that created it. The webview backend is untouched.
+What is given up: a click on another application no longer dismisses the
+panel, which a real context menu would. That is the trade for a panel that
+goes away at all.
+
+**Asking for a backend that cannot run now says so on the screen, not only
+in the log.** CONFIRMED by Kent, 2026-09-22, on a machine with pywebview
+removed from both the venv and apt ("the guard against no pywebviews seems
+to work"); the wording change below is awaiting verification. `main.py
+--webview` on a machine
+without pywebview started a perfectly normal tkinter session and wrote one
+line about it, which scrolled past among a hundred others (Kent, 2026-09-11:
+"at some point, we're going to want to complain more loudly if someone asks
+for webview and it isn't installed"). A whole session could be spent
+believing the webview was under test while looking at tkinter — which under
+ADR 0004's amendment, where the way back to tkinter is the entire safety
+net, is exactly the confusion that must not happen. The refusal is now kept
+and raised as a notice once there is a window to put it in, beside the
+degraded-sound and unfinished-setup notices. It is the first of a third
+tier: worth saying, not worth stopping for. Sound and bootstrap problems
+block because a fieldworker must not record silence or trust a half-built
+install; this one does not, because the app is completely usable and only
+the toolkit drawing the windows is different. The message keeps what was
+already good about it — it names the interpreter, which is the thing people
+get wrong, and the exact pip line — and now names the request the way it was
+actually made, `--webview` or `AZT_UI_BACKEND=webview`, since blaming a
+switch the user never typed is the same fault in the other direction.
+An engine asked for by name and quietly swapped (`--engine=qt` on a machine
+with only GTK) is reported the same way, for the same reason: the point of
+naming an engine is to measure that engine.
+The notice now also NAMES WHAT IS RUNNING. The first version said what had
+failed and then only that "the screen toolkit" was different, never which one
+(Kent, 2026-09-22: "the UserNotice doesn't mention using tkinter … I think it
+would be better to be more explicit"). A notice about a substitution that
+does not name the substitute sends the reader to the log for the one fact it
+exists to deliver. It now says plainly that tkinter is running, or, when an
+engine rather than the backend was swapped, that the webview is running with
+the substitute named above.
+
+**The refusal was printed twice, and it was never two decisions.** Fix
+awaiting verification. The duplicate looked like two places deciding one
+thing, which is the shape of several real faults here, so it was worth
+chasing; it was not that. `logsetup` attaches a `StreamHandler` on the real
+stderr to the ROOT logger at import, formatted as the bare message, so
+`log.warning` had already put the text on stderr by the time the following
+`sys.stderr.write` put it there again. The comment claiming the log and
+stderr were separate audiences was simply wrong about this program. The
+second write is gone, a test asserts nothing is written to stderr there, and
+the decision itself was always made exactly once.
+
 # Version 1.15.32
 
 **Renaming a tone group under webview no longer leaves no window at all.**

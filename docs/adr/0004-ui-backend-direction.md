@@ -101,10 +101,16 @@ simpler than its Tk counterpart, not merely different.
   `agenda/webview_requested_but_absent.md` is still open, and under A3 that
   matters more than it did. **Moved to the top of the agenda 2026-09-22** to be
   fixed next.
-- **D5**'s `requirements-webview.txt` has not been verified to exist. **Handed
-  to the installer item 2026-09-22** (`aztinstaller/agenda/aztinstaller_updates.md`,
-  "Bring aztinstaller current"): whether the file exists, and whether the
-  installer offers it, is decided there.
+- **D5**'s `requirements-webview.txt` has not been verified to exist.
+  **CORRECTED 2026-09-23.** It was handed on 2026-09-22 to
+  `aztinstaller/agenda/aztinstaller_updates.md`, which was the wrong home:
+  that repo (renamed `aztinstaller_windows_exe` on 2026-09-23) is the Windows
+  executable and nothing else. It *runs* `requirements.txt` but expects to
+  find it in `azt/`, so what gets installed — on any platform — is decided
+  here. The question now belongs to
+  `azt/agenda/update_install_non-windows-specific.md`.
+  The file itself **does exist** in `azt/`; what is unverified is whether any
+  installer offers it.
 - **D6** stands and gains weight: a ported page must state what replaced its
   XWayland flush rule, because under A1 the Tk page keeps its rule while the
   webview page needs none.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-import logsetup
+from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 import os #,sys
@@ -8,7 +8,7 @@ import re
 import numpy
 import parselmouth
 import tgt #TextGridTools
-import file
+from utilities import file
 from tqdm import tqdm
 import time
 try: #translation

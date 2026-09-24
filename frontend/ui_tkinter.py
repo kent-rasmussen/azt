@@ -2925,23 +2925,70 @@ class Popup(Toplevel):
     A Tk Menu is a vertical list of entries; this is a grid you can put
     anything into (`ui.Button`, `ui.Label`, gridded as usual).
 
-    THE GRAB IS WHAT MAKES "ANYWHERE ELSE" WORK, exactly as `tk_popup` does
-    for a menu: with a local grab on this toplevel, a press anywhere in the
-    app is delivered to this window, with coordinates outside its box when it
-    was not on it — so one binding sees every outside click without an
-    application-wide `bind_all` that would have to be unpicked from
-    whatever else binds Button-1. Local, never global. LOGGED on acquire and
-    on release, because a stuck grab is invisible to a stack dump — the
-    mainloop is idle and merely not delivering — and the log is the only
-    thing that can pair an acquire with no release
-    (agenda/settings_prompts_one_window.md, "LOG EVERY GRAB"). Released on
-    `<Destroy>`, which cannot be skipped, and the grab it displaced is put
-    back.
+    THE GRAB WAS THE BUG, AND IT IS GONE (2026-09-22). Kent, with a
+    screenshot of two panels stacked on each other: "in tkinter, the tone
+    playback configuration window doesn't go away (ever?)" — and, on the
+    webview: "not in gtk". So this is a tkinter-only fault, and the webview
+    `Popup`, which dismisses from the page's own listeners, is left alone.
+
+    What was claimed here: a local grab makes "anywhere else" work the way
+    `tk_popup` does for a menu, delivering outside presses to this window
+    with coordinates outside its box. IT DOES NOT, and the screenshot is the
+    proof — opening the second panel took a right-click, which IS a press
+    outside the first panel, and the first panel was still there. What
+    dismisses a Tk MENU is Tk's own menu implementation unposting itself
+    under that grab (see `do_popup` below and `sort_ui.py:179`); a plain
+    toplevel that calls `grab_set()` inherits none of that behaviour. It
+    inherits the grab's effect on delivery and none of its dismissal, so the
+    grab could only ever keep the press from reaching anything else. With no
+    title bar (`overrideredirect`) and no key binding, the panel was then
+    permanent — exactly as reported.
+
+    So: NO GRAB, and two independent ways out instead.
+
+      1. A press ANYWHERE on the owning window or its widgets, via ONE
+         binding on that toplevel. Every descendant carries its toplevel in
+         its bindtags, so that single binding sees them all — no
+         application-wide `bind_all` to unpick from whatever else binds
+         Button-1, and nothing to unbind per panel.
+      2. `<Escape>`, on the panel and on the owning window.
+
+    `_press` is kept for presses delivered to the panel itself, which is now
+    only its own background.
+
+    WHAT IS GIVEN UP with the grab: a click on ANOTHER APPLICATION no longer
+    dismisses the panel, which a real context menu would. That is the honest
+    trade for a panel that goes away at all, and it is the smaller failure.
+
+    ARMED AT IDLE, NOT AT CREATION. The press that opens a panel is still
+    being dispatched while `__init__` runs, and the owning toplevel's
+    bindtags come AFTER the clicked widget's own — so a binding that was live
+    immediately would fire for the very event that created the panel and take
+    it straight down again. The webview `Popup` defers for the same reason
+    (`setTimeout` in its `widgets.js` case, asserted by its test).
+
+    ONE AT A TIME: `_open` holds the live panels, so opening one takes down
+    any other. Nothing tracked them before, which is why they stacked — and
+    a caller keeping no reference had no way to take one down either.
 
     Undecorated and placed by coordinates: Tk here is always XWayland, where
     that works (`declare_dialog_of` explains why native Wayland could not).
     The webview backend's `Popup` is an element inside the page for the same
     reason the other way round."""
+    _open=[]                  # every live, armed Popup — newest last
+    @classmethod
+    def dismiss_open(cls,event=None):
+        """Take down every panel that has finished arming.
+
+        UNARMED PANELS ARE SKIPPED, and that is the whole reason `_armed`
+        exists: the right-click that opens panel two reaches the clicked
+        widget's binding first (which builds the panel) and the owning
+        toplevel's binding second (this) — so without the guard a panel
+        would dismiss itself on the press that created it, and right-click
+        would look like it did nothing."""
+        for pop in list(cls._open):
+            if getattr(pop,'_armed',False):
+                pop.dismiss()
     def __init__(self,parent,x,y,**kwargs):
         super().__init__(parent,**kwargs)
         self.wm_overrideredirect(True)
@@ -2950,30 +2997,58 @@ class Popup(Toplevel):
             self['background']=self.theme.menubackground
         except Exception:
             pass
-        self._prev_grab=None
-        self._grabbed=False
+        self._armed=False
+        # ONE AT A TIME. Any panel already up goes now, before this one is
+        # registered — a second right-click replaces the panel rather than
+        # adding to the pile.
+        Popup.dismiss_open()
+        Popup._open.append(self)
         # Any button, not only the first: a right-click elsewhere must also
-        # take this down (and is then consumed, as a menu's grab consumes it).
+        # take this down.
         self.bind('<ButtonPress>',self._press,add='+')
-        self.bind('<Destroy>',self._release,add='+')
-        self.after_idle(self._grab)
-    def _grab(self):
+        self.bind('<Escape>',lambda e:self.dismiss(),add='+')
+        self.bind('<Destroy>',self._forget,add='+')
+        self._owner=self._owner_toplevel(parent)
+        self.after_idle(self._arm)
+    def _owner_toplevel(self,parent):
+        """The window this panel belongs to, whose bindtag every widget in it
+        carries. `winfo_toplevel()` on the parent, defensively: a Root is its
+        own toplevel and a Frame parent resolves to the window holding it."""
+        try:
+            return parent.winfo_toplevel()
+        except Exception as e:
+            log.info("Popup %s: no owning toplevel (%s); it can be dismissed "
+                     "with Escape on the panel only",self,e)
+            return None
+    def _arm(self):
+        """Live from here: the press that created this panel has finished
+        dispatching, so the owner's bindings can no longer see it."""
         if not self.winfo_exists():
             return
+        self._armed=True
+        owner=self._owner
+        if owner is None:
+            return
+        # BOUND ONCE PER OWNER, FOR THE LIFE OF THAT WINDOW. Binding per panel
+        # would need an unbind per panel, and tkinter's `unbind(seq, funcid)`
+        # clears EVERY binding for that sequence, not just ours — so it would
+        # silently take out whatever else the window binds. A single
+        # class-level dispatcher needs no unbinding at all.
         try:
-            self._prev_grab=self.grab_current()
-            self.grab_set()
-            self._grabbed=True
-            log.info("Popup %s: grab_set (local; displaced %s) — released on "
-                     "destroy",self,self._prev_grab)
+            if not getattr(owner,'_azt_popup_dismiss_bound',False):
+                owner._azt_popup_dismiss_bound=True
+                owner.bind('<ButtonPress>',Popup.dismiss_open,add='+')
+                owner.bind('<Escape>',Popup.dismiss_open,add='+')
+                log.info("Popup %s: owner %s now dismisses panels on a press "
+                         "or Escape",self,owner)
         except tkinter.TclError as e:
-            log.info("Popup %s: could not grab (%s); it will not dismiss on an "
-                     "outside click",self,e)
+            log.info("Popup %s: could not bind its owner (%s); Escape on the "
+                     "panel still closes it",self,e)
     def _press(self,event):
         # Descendants deliver their own presses (event.widget is the child):
-        # those are the controls being used. A press delivered to THIS window
-        # with coordinates outside it is the grab handing us an outside
-        # click.
+        # those are the controls being used. A press on the panel's own
+        # background with coordinates outside its box should not happen now
+        # that no grab redirects anything here, but it costs nothing to keep.
         if event.widget is not self:
             return
         w,h=self.winfo_width(),self.winfo_height()
@@ -2982,26 +3057,17 @@ class Popup(Toplevel):
     def dismiss(self):
         if self.winfo_exists():
             self.destroy()
-    def _release(self,event=None):
+    def _forget(self,event=None):
         # `<Destroy>` on a toplevel also fires for every descendant; only our
         # own matters, and only once.
         if event is not None and event.widget is not self:
             return
-        if not self._grabbed:
+        self._armed=False
+        try:
+            Popup._open.remove(self)
+        except ValueError:
             return
-        self._grabbed=False
-        try:
-            self.grab_release()
-        except tkinter.TclError:
-            pass
-        prev=self._prev_grab
-        try:
-            if prev is not None and prev.winfo_exists():
-                prev.grab_set()
-        except tkinter.TclError:
-            prev=None
-        log.info("Popup %s: grab released%s",self,
-                 " (previous grab restored)" if prev is not None else "")
+        log.info("Popup %s: dismissed (%s still open)",self,len(Popup._open))
 class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
     def post_tk_init(self):
         super().post_tk_init()

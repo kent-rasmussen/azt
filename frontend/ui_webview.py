@@ -902,6 +902,10 @@ def _supports_created_hidden():
     return False
 
 
+_NO_DEFAULT_YET = object()      # None is a real answer (macOS), so sentinel
+_default_cached = _NO_DEFAULT_YET
+
+
 def _default_engine():
     """The engine to use when nobody said — CHOSEN BY US, not by pywebview.
 
@@ -922,26 +926,61 @@ def _default_engine():
     webview backend when neither host is importable, and falls back to
     tkinter with the reason on the log and on stderr — a refusal that names
     itself, rather than an exit."""
+    # ANSWERED ONCE. `_engine()` is called from five places, so without this
+    # the choice was re-derived — and re-LOGGED — per caller: "no engine
+    # specified; using gtk" appeared twice in one boot (Kent, 2026-09-24).
+    # That is the same shape as the duplicated backend refusal this module's
+    # neighbour was fixed for: one decision, announced once. Safe to cache
+    # because nothing it reads changes after `ui_backend.chosen()` has run,
+    # and any auto-install happened there, before this module was imported.
+    global _default_cached
+    if _default_cached is not _NO_DEFAULT_YET:
+        return _default_cached
+    _default_cached = _decide_default_engine()
+    return _default_cached
+
+
+def _decide_default_engine():
     if platform.system() == 'Windows':
         # Named explicitly so a missing WebView2 runtime fails loudly instead
         # of silently dropping to mshtml, which has no CSS Grid.
         return 'edgechromium'
     if platform.system() != 'Linux':
         return None                     # macOS: pywebview uses Cocoa
-    for module, engine in (('gi', 'gtk'), ('qtpy', 'qt')):
-        try:
-            if importlib.util.find_spec(module) is not None:
-                log.info("no engine specified; defaulting to {} ({} is "
-                         "importable)".format(engine, module))
-                return engine
-        except (ImportError, ValueError):
-            continue
+    # MATCH THE DESKTOP FIRST, then fall back to whatever works. Kent,
+    # 2026-09-24: "it would be nice if we could tell which toolkit their OS
+    # uses natively, in cases where people just put --webview". On KDE or
+    # LXQt a Qt window has native decorations, file dialogs and menus; on
+    # GNOME or XFCE a GTK one does. Preferring GTK unconditionally, as this
+    # did, made A-Z+T look like a visitor on every Qt desktop.
+    #   Availability still wins: a Qt desktop with no Qt gets GTK rather than
+    # nothing. The checks are the app's own host tests, not `find_spec`,
+    # because an importable `gi` with no WebKit typelib renders nothing.
+    from utilities import ui_backend as _sel
+    order = [('gtk', _sel.gtk_host_problem), ('qt', _sel.qt_host_problem)]
+    native = _sel.native_toolkit()
+    if native == 'qt':
+        order.reverse()
+    for engine, problem in order:
+        if problem() is None:
+            log.info("no engine specified; using {}{}".format(
+                engine, " (this desktop's native toolkit)"
+                if engine == native else
+                " ({} is unavailable here)".format(order[0][0])
+                if engine != order[0][0] else ""))
+            return engine
     # Neither host present. ui_backend.webview_problem() should already have
     # refused the backend before we got here; returning None lets pywebview
     # produce its own error rather than us inventing one.
     log.warning("no webview host toolkit found (neither gi nor qtpy); "
                 "pywebview will fail to start")
     return None
+
+
+# Has the engine substitution been announced yet? `_engine()` is called from
+# several places and recomputes each time; the REPORT must happen once. Mirrors
+# `ui_backend._warned`.
+_engine_reported = False
 
 
 def _engine():
@@ -976,18 +1015,36 @@ def _engine():
     problem = _select.engine_problem()
     if not problem:
         return requested
+    # AN ENGINE ASKED FOR BY NAME AND NOT DELIVERED IS WORTH SEEING, exactly
+    # as a backend asked for and not delivered is: the whole point of naming
+    # an engine is to measure THAT engine, and a substitution nobody notices
+    # makes every measurement taken afterwards unreasonable-about. Recorded
+    # rather than raised here because this runs while deciding what to pass to
+    # webview.start() — there is no window yet. main.py's
+    # warn_backend_problems() shows it once there is.
+    #
+    # ANNOUNCED ONCE, LIKE ui_backend.chosen()'s refusal. This function is NOT
+    # cached and is called from five places (the display-stack banner, the
+    # dmabuf guard, two log lines and the dev console), so an unguarded report
+    # here would say the same thing five times — which is how the backend
+    # refusal's duplicate read as "something decides this twice" when nothing
+    # did. The ANSWER is the same every call (argv, the environment and what
+    # is importable do not change mid-run); only the announcement needs to be
+    # once.
+    global _engine_reported
     substitute = _default_engine()
     if substitute and substitute != requested:
-        log.warning("{}; using {} instead".format(problem, substitute))
-        return substitute
-    log.warning("{}; no alternative engine is available either"
-                "".format(problem))
-    return None
-    if name not in ENGINES:
-        log.warning("Unknown webview engine {!r}; letting pywebview choose. "
-                    "Known: {}".format(name, ', '.join(ENGINES)))
-        return None
-    return name
+        detail = "{}; using {} instead".format(problem, substitute)
+    else:
+        substitute = None
+        detail = "{}; no alternative engine is available either".format(problem)
+    if not _engine_reported:
+        _engine_reported = True
+        log.warning(detail)
+        source = (_select.engine_request_source()
+                  or '--engine={}'.format(requested))
+        _select.BACKEND_PROBLEMS.append((source, detail))
+    return substitute
 
 
 # EVERY pywebview window we create, held strongly and forever.

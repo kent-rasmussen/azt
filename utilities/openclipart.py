@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-import urls
+from utilities import urls
 import secrets
 
 class Client(object):
