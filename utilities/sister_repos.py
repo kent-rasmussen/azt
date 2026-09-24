@@ -125,17 +125,74 @@ def available(name, spec=None):
                for c in _candidates(name, spec))
 
 
+def _is_link(path):
+    """Is `path` a link of any kind — including a Windows JUNCTION?
+
+    WE MAKE JUNCTIONS AND THEN CANNOT SEE THEM. `_make_link` falls back to
+    `mklink /J` on Windows, because a real symlink there needs Developer Mode
+    or admin. But `os.path.islink()` is False for a junction: it is a reparse
+    point, not a symlink. So every start found our own link, judged it "a real
+    directory, not a link", and warned the user to move it aside — about
+    something that was exactly what we had created (Kim, Windows,
+    2026-09-24, with `ls -l` showing the link plainly).
+
+    `os.path.isjunction` would answer this directly but arrived in 3.12, and
+    ADR 0005 puts our floor at 3.10, so the reparse-point attribute is the
+    fallback. It has been on `os.lstat` results since 3.8."""
+    if os.path.islink(path):
+        return True
+    isjunction = getattr(os.path, 'isjunction', None)   # 3.12+
+    if isjunction is not None:
+        try:
+            if isjunction(path):
+                return True
+        except OSError:
+            pass
+    try:
+        return bool(getattr(os.lstat(path), 'st_reparse_tag', 0))
+    except OSError:
+        return False
+
+
+def _link_target(path):
+    """Where a link points, for a log line. `os.readlink` handles junctions
+    on Windows too; anything it refuses is reported as unknown."""
+    try:
+        return os.readlink(path)
+    except OSError:
+        return '?'
+
+
+def _remove_link(path):
+    """Delete a link without following it. A junction is a DIRECTORY entry, so
+    `os.remove` refuses it on Windows and `os.rmdir` is the one that works —
+    and it removes only the link, never what it points at."""
+    try:
+        os.remove(path)
+    except OSError:
+        os.rmdir(path)
+
+
 def _make_link(target, lp):
     """Point lp at target: relative symlink, or a directory junction on
     Windows (no privilege needed, unlike symlinks without Developer Mode)."""
     parent = os.path.dirname(lp)
     rel = os.path.relpath(target, parent)
-    if os.path.islink(lp):
-        if os.readlink(lp) == rel:
+    if _is_link(lp):
+        # SAME PLACE? compare resolved paths, not the stored text. A junction
+        # stores an ABSOLUTE target while a symlink here stores a RELATIVE
+        # one, so `os.readlink(lp) == rel` is false for every junction we
+        # made ourselves, and the link was replaced on every start.
+        try:
+            same = os.path.realpath(lp) == os.path.realpath(
+                os.path.join(parent, rel))
+        except OSError:
+            same = False
+        if same:
             return True
         log.info(_("Fixing link {link} (was {old}, now {new})").format(
-                    link=lp, old=os.readlink(lp), new=rel))
-        os.remove(lp)
+                    link=lp, old=_link_target(lp), new=rel))
+        _remove_link(lp)
     elif os.path.isdir(lp):
         log.warning(_("{link} is a real directory, not a link; not touching "
                     "it. Move it aside (or fix it) and restart.").format(
@@ -248,8 +305,21 @@ def ensure_detail(name):
         log.info(_("Fetching {name} timed out; will try again next start."
                     "").format(name=name))
     except Exception as e:
-        log.info(_("Couldn’t set up {name} ({error}); maybe no internet? "
-                    "Will try again next start.").format(name=name, error=e))
+        # DON'T BLAME THE NETWORK FOR EVERYTHING. This said "maybe no
+        # internet?" for any failure at all, and on Kim's Windows machine the
+        # actual fault was a MISSING LOCAL DIRECTORY — `mklink` reporting "The
+        # system cannot find the path specified" because `lift_templates\` was
+        # not in her checkout. Nothing had touched the network. The guess sent
+        # two people looking at cloning and connectivity for a folder that was
+        # simply absent (2026-09-24).
+        #   Only the steps that actually reach out get the network guess; a
+        # link failure is local by definition.
+        network = not isinstance(e, (OSError, subprocess.CalledProcessError)) \
+            or 'clone' in str(e) or 'fetch' in str(e)
+        log.info(_("Couldn’t set up {name}: {error}.{guess} Will try again "
+                    "next start.").format(
+                        name=name, error=e,
+                        guess=_(" Maybe no internet?") if network else ''))
     return False, ''
 
 

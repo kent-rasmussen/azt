@@ -62,7 +62,18 @@ try:
     import soundfile
     soundfileOK=True
 except ModuleNotFoundError:
-    print("Module soundfile not installed; to use sound features, install.")
+    # SILENT ON PURPOSE, AND IT USED TO PRINT AN INSTRUCTION NOBODY SHOULD
+    # FOLLOW. `soundfile` IS in requirements.txt, so the app installs it
+    # itself; and this module loads on the BARE-VENV BOOTSTRAP PATH (see the
+    # note below), which is BEFORE any pip dependency exists. So the message
+    # fired on the pre-relaunch interpreter, where the absence is expected,
+    # and told the user to go and install something that was about to be
+    # installed for them (Kent, on a Windows run, 2026-09-24: "are we
+    # commenting on that and not installing it for the user?").
+    #   It was a bare `print`, too, so it landed on stdout whatever the log
+    # level. If soundfile is still missing once the app is actually up, that
+    # is a real fault and belongs to the sound layer's SOUND_PROBLEMS, which
+    # `main.warn_sound_problems` shows at a point where a user can act.
     soundfileOK=False
 # import samplerate
 # (librosa dropped 2026-07-16 — resampling now scipy; see file_sound.py)

@@ -839,6 +839,18 @@ class Alphabet():
         self.conflicts={} #keep track of what has been kicked out of a group before
         self.unsorted={}
 
+class NoAlphabetData(Exception):
+    """No glyphs recorded for this language yet, so there is no chart to make.
+
+    A TYPED REFUSAL, NOT A KeyError. The caller needs to tell the user
+    something useful and go back, and it cannot do that from a bare subscript
+    failing three frames down. Carries the language so the message can name
+    it."""
+    def __init__(self, analang):
+        self.analang = analang
+        super().__init__("no alphabet data for {!r}".format(analang))
+
+
 class AlphabetChartData:
     """Backend data/logic mixin for alphabet chart. No UI imports."""
     my_settings = ['exids', 'order', 'ncolumns', 'chart_title', 'pagesize']
@@ -889,7 +901,17 @@ class AlphabetChartData:
         log.info(f"using {self.imgdir=}")
         if not self.order:
             log.info(f"No alphabetical order found; using all known glyphs")
-            self.order = [str(i) for j in self.db.s[self.db.analang].values() for i in j]
+            # A LANGUAGE WITH NO DATA IS NOT A CRASH. `db.s` is keyed by
+            # analang and has no entry until something has been entered for
+            # it, so this was `KeyError: 'nm1'` out of a bare subscript —
+            # a traceback on the way into the Alphabet Chart, on a new
+            # project, on Windows (Kim, 2026-09-24). The key being absent and
+            # the key being empty mean the same thing here, so both take the
+            # same road.
+            glyphs = self.db.s.get(self.db.analang) or {}
+            if not glyphs:
+                raise NoAlphabetData(self.db.analang)
+            self.order = [str(i) for j in glyphs.values() for i in j]
             self.order.sort()
         if hasattr(self.program, 'alphabet'):
             gd = {str(i) for j in self.program.alphabet.glyphdict().values() for i in j}

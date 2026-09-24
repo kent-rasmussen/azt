@@ -43,7 +43,33 @@ class AlphabetChart(AlphabetChartData, OrderAlphabetUI):
         # program.task.ui.on_quit().
         self.program.task = self
         self.ui = self
-        self.init_chart_data()
+        # SAY SO AND GO BACK, rather than opening a chart of nothing. A
+        # language with no glyphs recorded raised `KeyError: 'nm1'` from deep
+        # inside the data build (Kim, Windows, 2026-09-24), which is a
+        # traceback where the honest answer is one sentence. An EMPTY chart
+        # would be worse than the notice: it looks broken, and the user
+        # cannot tell "nothing here yet" from "this feature is failing".
+        from backend.core.alphabet import NoAlphabetData
+        try:
+            self.init_chart_data()
+        except NoAlphabetData as e:
+            # RETURN, DO NOT RAISE. `chooser.maketask` calls this constructor
+            # with no handler, so an exception here reaches the Tk error
+            # catcher and the user gets an error SCREEN — which is the
+            # traceback again in a nicer frame. Returning leaves the chooser
+            # up, which is where they already were.
+            from utilities.error_handler import notify_user
+            names = getattr(self.program.settings, 'languagenames', {}) or {}
+            log.info("Alphabet Chart not opened: %s", e)
+            notify_user(_("There is no alphabet to chart for {lang} yet.\n\n"
+                          "The chart is built from the letters found in your "
+                          "words, so it appears once some words have been "
+                          "entered and sorted. Nothing is wrong with this "
+                          "database.").format(
+                              lang=names.get(e.analang, e.analang)),
+                        title=_("Nothing to chart yet"))
+            self.program.task = None
+            return
         # A read-only webview PREVIEW of this page ran here briefly
         # (2026-09-14, --serve=alphabet_chart) and proved the point it was
         # built for: the same chart, real data, ~0s against this page's 37-42s

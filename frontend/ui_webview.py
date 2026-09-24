@@ -1240,6 +1240,50 @@ def _app_identity(program):
         log.debug("could not set desktop identity ({}): {}".format(name, e))
 
 
+def _ico_for(png):
+    """A `.ico` made from our PNG, cached; or None if it cannot be made.
+
+    WINDOWS DOES NOT HAVE TO SETTLE FOR A GENERIC ICON (Kent, 2026-09-24:
+    "generic icon should be resolvable, though, right?"). It is, and with a
+    library already in `requirements.txt`: Pillow writes multi-size ICO, which
+    is the one format `System.Drawing.Icon` accepts and the reason every
+    `--webview` run died on Windows 11.
+
+    SQUARED FIRST, by padding rather than scaling. ICO frames are square, and
+    handing PIL a non-square image makes it stretch — the logo is wider than
+    it is tall, so it would arrive squashed. The macOS installer pads for the
+    same reason (`sips --padToHeightWidth` in RunMetoInstall_Mac.command).
+
+    Cached in the temp directory rather than beside the source, which lives in
+    the repo, and regenerated when the PNG is newer. Failure is not fatal:
+    returning None just means no icon, which is what the crash was costing us
+    anyway."""
+    import tempfile
+    out = os.path.join(tempfile.gettempdir(), 'azt-webview-icon.ico')
+    try:
+        if (os.path.exists(out)
+                and os.path.getmtime(out) >= os.path.getmtime(png)):
+            return out
+        from PIL import Image
+        im = Image.open(png).convert('RGBA')
+        side = max(im.size)
+        if im.size != (side, side):
+            square = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+            square.paste(im, ((side - im.width) // 2,
+                              (side - im.height) // 2))
+            im = square
+        im.save(out, format='ICO',
+                sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128),
+                       (256, 256)])
+        log.info("made a Windows icon at %s from %s", out, png)
+        return out
+    except Exception as e:
+        log.info("could not make a .ico from %s (%s); starting without an "
+                 "icon, which is better than the crash a PNG causes here",
+                 png, e)
+        return None
+
+
 def _icon_path(program):
     """A real file path for the window icon, or None.
 
@@ -8773,6 +8817,26 @@ class Root(_WebviewWidget):
             _apply_dmabuf_default()
             kwargs = _start_kwargs(self.program)
             icon = _icon_path(self.program)
+            # WINDOWS TAKES ONLY A .ico, AND KILLS THE APP OVER IT. The
+            # EdgeChromium backend hands this to System.Drawing.Icon through
+            # pythonnet, which rejects a PNG — and not with a Python
+            # exception we could catch, but as an unhandled .NET
+            # ArgumentException on a background thread:
+            #
+            #   Unhandled Exception: System.ArgumentException: Argument
+            #   'picture' must be a picture that can be used as an Icon
+            #       at System.Drawing.Icon.Initialize(Int32, Int32)
+            #
+            # So EVERY `--webview` run died on Windows 11, right after
+            # "Using webview engine edgechromium" (Kim's machine, 2026-09-24).
+            # The `TypeError` guard below cannot help: that catches pywebview
+            # REFUSING the argument, and here it accepted it and crashed
+            # later. `theme.photo` holds PNGs, so on Windows the icon is
+            # simply not passed — a generic icon is a cost worth paying for
+            # an app that starts.
+            if icon and platform.system() == 'Windows' \
+                    and not str(icon).lower().endswith('.ico'):
+                icon = _ico_for(icon)
             if icon:
                 kwargs['icon'] = icon
             try:

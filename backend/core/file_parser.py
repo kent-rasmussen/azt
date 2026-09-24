@@ -35,6 +35,12 @@ class FileParser(object):
             file.writefilename()
             raise
     def dailybackup(self):
+        """ONE PER RUN, despite the name. `backupfilename` carries a
+        timestamp to the second (`xmletfns`), so the existence test below
+        never matches an earlier run and this writes on every start. That is
+        the intended behaviour — the name is left from when it was daily, and
+        is kept only because callers use it. Worth knowing before reading the
+        `if` as a guard against frequent writes: it is not one."""
         if not file.exists(self.program.db.backupfilename):
             self.program.db.write(self.program.db.backupfilename)
         else:

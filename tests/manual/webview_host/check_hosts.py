@@ -231,6 +231,25 @@ def predict(b, switches):
             have_pkg = True
 
         after = ' (after fixing the venv and restarting)' if repaired else ''
+
+        # WINDOWS AND macOS HAVE A HOST THAT IS NOT GTK OR QT. Windows renders
+        # through the in-box WebView2 runtime and macOS through Cocoa, so
+        # neither `gtk_host_problem` nor `qt_host_problem` describes them and
+        # both answer "no". Treating that as "no host at all" made this table
+        # predict a tkinter fallback that the app would never do — Kent, on
+        # Windows, 2026-09-24: "is this output correct? seems like if
+        # --webview we should give something". It was not correct: only the
+        # PREDICTION was wrong, and `webview_problem()` had it right all
+        # along by returning None off Linux.
+        if not _is_linux():
+            if not have_pkg:
+                return need, 'tkinter — pywebview absent'
+            native = 'edgechromium (WebView2)' if _is_windows() else 'Cocoa'
+            if engine in ('gtk', 'qt'):
+                return need, ('webview on {}, NOT the {} you asked for — that '
+                              'is a Linux host'.format(native, engine))
+            return need, 'webview on {}'.format(native)
+
         if not gtk_ok and not qt_ok:
             # SAY WHICH IT IS. "pip cannot fix it" was wrong here and read as
             # a contradiction of the auto-install that had just been seen
@@ -265,6 +284,11 @@ def predict(b, switches):
 def _is_linux():
     import platform
     return platform.system() == 'Linux'
+
+
+def _is_windows():
+    import platform
+    return platform.system() == 'Windows'
 
 
 def _safe(name):
