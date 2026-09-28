@@ -317,6 +317,62 @@ reads the test-branch name out of `main.py` rather than hardcoding it.
 `<branch>:refs/remotes/origin/<branch>` with an explicit refspec for exactly
 this reason (its docstring says so) — don't "fix" that by widening refspecs.
 
+### The branches you add are ISLANDS: never merge across them while shallow
+
+Both fetches above are `--depth 1`, so each branch arrives as a **lone tip
+with no parents**. `main` and `testing` share a root in the real repository;
+nothing in the clone proves it. Git cannot see a common ancestor it was never
+sent.
+
+So anything that MERGES across two of those branches fails with:
+
+```
+fatal: refusing to merge unrelated histories
+```
+
+and the message is misleading — the histories are perfectly related, they are
+just not both present. Suspected cause of a Windows `git pull` failure,
+2026-09-28 (Kent: *"I think it was on the wrong branch"*); the mechanism is
+certain, that this was the instance is not.
+
+**Checking a branch out is fine. Merging between them is not.** The usual way
+in is a plain `git pull` while standing on a branch other than the one being
+pulled, which is a merge whether or not it looks like one.
+
+**THE APP NEVER DOES THIS — the trap is for hand-git only.** Both of its
+switch paths are checkouts, and neither asks for a common ancestor:
+
+- `switchbranches()` (the developer publish loop) is a plain `checkout`. Git
+  refuses if uncommitted work would be clobbered, which is the honest answer
+  on a maintainer's machine.
+- `hard_checkout()` (the user-facing "Try testing version" / "Revert to main")
+  is `checkout -f -B <b> origin/<b>`, which CREATES OR RESETS the branch to
+  the start point. A reset needs no ancestry at all.
+
+And note the asymmetry that makes this section necessary: the procedure above
+fetches with `--depth 1`, while `fetch_tracking_branch()` fetches
+`<b>:refs/remotes/origin/<b>` with **no depth cap**. So it is the DOCUMENTED
+HAND PROCEDURE that manufactures the island, not the app. Keep that in mind
+before blaming the clone for something a shell session did.
+
+Two ways out:
+
+```bash
+git checkout <the branch you meant>   # then pull THAT branch: no crossing
+git fetch --deepen 50                 # or: make them genuinely related
+```
+
+`--deepen` extends the existing boundary; repeat with a larger number until
+the ancestor appears. **Not `--unshallow`**, which fetches the entire history
+and throws away what the shallow clone was for (~50 MB becomes ~2 GB).
+
+**`--ff-only` does not cause this and does not prevent it.** It is a merge
+POLICY, not a fetch size, and it changes only which refusal you get: with it,
+`Not possible to fast-forward`; without it, the unrelated-histories message
+above. Neither pulls extra history. Worth knowing because the app runs both
+policies in one update — `sister_repos.update()` passes `--ff-only`,
+`vcs.py::pull()` does not.
+
 ## Build Notes
 
 - Python 3.13 from a custom build (`~/IT/Python-3.13.7`), used via the **suite** virtualenv

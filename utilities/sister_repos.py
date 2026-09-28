@@ -280,7 +280,8 @@ def ensure_detail(name):
     try:
         if available(name, spec):
             lp = linkpath(spec)
-            if lp and os.path.isdir(lp) and not os.path.islink(lp):
+            if lp and os.path.isdir(lp) and not _is_link(lp) \
+                    and not os.path.isdir(os.path.join(lp, '.git')):
                 # THE SILENT STATE. `available()` is satisfied by a populated
                 # real directory at the link path, so we return here — before
                 # _make_link, whose warning for exactly this case is therefore
@@ -289,6 +290,28 @@ def ensure_detail(name):
                 # and `update()` will keep reporting success. Seen on a copy
                 # made with cp -r, which dereferenced the symlink into ~1700
                 # real files (Kent, 2026-09-01).
+                #
+                # TWO FALSE ALARMS FIXED HERE 2026-09-28, both reported by Kent
+                # on Windows: *"the boot is still complaining that images and
+                # templates can't be updated, which I understand to be false."*
+                # It was false, and this line was why.
+                #
+                #   1. `os.path.islink` IS FALSE FOR A JUNCTION, and junctions
+                #      are what `_make_link` creates on Windows (a real symlink
+                #      there needs Developer Mode or admin). So every Windows
+                #      install warned about the links WE had just made. That is
+                #      the same trap `_is_link` was written for, and it was
+                #      applied in `_make_link` and missed here — the check now
+                #      uses `_is_link`, so there is one answer to "is this a
+                #      link" rather than two.
+                #   2. A directory that is its OWN clone can be updated, just
+                #      not by us, so warning that it "can never be updated" is
+                #      wrong. `_make_link` already says exactly that, and this
+                #      branch now agrees with it.
+                #
+                # What survives is the case the warning was written for: a real
+                # directory, not a link, with no `.git` — the `cp -r` copy that
+                # dereferenced a symlink into real files.
                 log.warning(_("{link} is a real directory, not a link to a "
                             "managed clone of {name}. It works, but {name} can "
                             "never be updated this way. Move it aside and "

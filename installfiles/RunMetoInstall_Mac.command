@@ -11,10 +11,15 @@
 #   2. install the Charis SIL fonts
 #   3. git clone azt into the home folder
 #   4. leave a double-clickable launcher
-# It does NOT create env/ or pip-install anything: A-Z+T does that itself on
-# first run (utilities/py_modules.py ensure_venv + sync_requirements, which is
-# also what keeps every install in sync with requirements.txt). Duplicating it
-# here would just fight the stamp logic.
+# It ALSO creates env/ and pip-installs requirements.txt into it (sections 4b
+# and 4c), then writes the requirements stamp so first run starts straight
+# away. The Linux script does the same as of 2026-09-24.
+#   This comment said the opposite until 2026-09-24 — "It does NOT create env/
+# or pip-install anything" — which was true of the first draft and was never
+# updated when 4b/4c were added below. A-Z+T's own first-run path
+# (utilities/py_modules.py ensure_venv + sync_requirements) is unchanged and
+# still the thing that keeps every EXISTING install in step with
+# requirements.txt; the stamp is what stops the two duplicating work.
 #
 # ─── WHY THIS SCRIPT IS SHAPED THE WAY IT IS ────────────────────────────────
 # Measured on a real Mac, 2026-09-08: the machine had NO Xcode command-line

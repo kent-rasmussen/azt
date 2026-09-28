@@ -1168,17 +1168,18 @@ class GitReadOnly(Git):
         # Safe precisely because the name is OURS (program.testversionname /
         # 'main'), not a guess at something a user might have: if it ever goes
         # away, that is our doing and our problem to see.
-        self.fetch_tracking_branch(branchname)
+        fetched,why=self.fetch_tracking_branch(branchname)
         if self.do(['rev-parse','--verify','--quiet',start]):
             r=self.do(['checkout','-f','-B',branchname,start])
         elif self.do(['rev-parse','--verify','--quiet',
                         'refs/heads/'+branchname]):
             # A local branch of that name already exists: switching to it is a
             # real answer, just not a RESET one. Say which we did.
-            log.warning(_("No {start} (and could not fetch it); switching to "
-                        "the existing local ‘{branch}’ WITHOUT resetting it to "
-                        "the published version.").format(start=start,
-                        branch=branchname))
+            log.warning(_("No {start} (and could not fetch it: {why}); "
+                        "switching to the existing local ‘{branch}’ WITHOUT "
+                        "resetting it to the published version.").format(
+                        start=start,branch=branchname,
+                        why=why or _("no reason given")))
             r=self.checkout(branchname)
         else:
             # DO NOT fall through to checkout() here. With no local branch it
@@ -1189,10 +1190,12 @@ class GitReadOnly(Git):
             # the reason azt/agenda/checkout_b_from_head_not_remote.md exists.
             # Better to fail loudly and stay put than to lie about which code
             # is running.
-            r=_("Could not switch to ‘{branch}’: there is no published "
-                "{start} to take it from, and no local ‘{branch}’ to switch "
-                "to. Nothing was changed — you are still on ‘{now}’."
-                ).format(branch=branchname,start=start,now=self.branch)
+            r=_("Could not switch to ‘{branch}’.\n\n{why}\n\nThere is no local "
+                "‘{branch}’ to fall back to either, so nothing was changed — "
+                "you are still on ‘{now}’."
+                ).format(branch=branchname,now=self.branch,
+                         why=why or _("There is no published {start} to take "
+                                      "it from.").format(start=start))
             log.error(r)
         log.info(r)
         self.branchname() #because this changes
@@ -1216,7 +1219,13 @@ class GitReadOnly(Git):
 
         Internet remotes only: a USB clone can be stale or a bare mirror of this
         same machine, and "the published version" means the published one.
-        Returns True when the ref is there afterwards."""
+
+        Returns ``(ok, reason)``: ``ok`` is whether the ref is there
+        afterwards, ``reason`` is '' on success or a sentence fit to show a
+        user on failure. It returned a bare bool until 2026-09-28 and threw the
+        fetch output away, so a temporary outage, a clone with no known remote
+        and a RENAMED branch all reached the caller as the same flat
+        nothing."""
         start='origin/'+branchname
         # remoteurls(), NOT findpresentremotes(). The latter is not a read-only
         # lookup: it offers the user a USB drive and does
@@ -1235,22 +1244,70 @@ class GitReadOnly(Git):
         except Exception as e:
             log.info(_("Could not list remotes to fetch ‘{branch}’: {error}"
                         ).format(branch=branchname,error=e))
-            return False
+            remotes=[]
+        # LAST-RESORT REMOTE: the URL THIS CLONE CAME FROM (2026-09-28).
+        # Without it, a clone whose settings hold no remote URLs tries NOTHING
+        # — the loop below never runs a single command — and the caller cannot
+        # tell that from a fetch that ran and failed. `remote.origin.url` is
+        # present in every clone by construction and needs no settings, no
+        # prompting and no scraping.
+        if not any(self.isinternet(r) for r in remotes):
+            origin=self.do(['config','--get','remote.origin.url'])
+            origin=(origin or '').strip().split('\n')[0].strip()
+            if origin and isinterneturl(origin):
+                log.info(_("No usable remote in settings; falling back to the "
+                            "URL this clone came from: {url}").format(url=origin))
+                remotes.append(origin)
         spec='{b}:refs/remotes/origin/{b}'.format(b=branchname)
+        # WHY A REASON, NOT JUST A BOOL (Kent, 2026-09-28: failures of kind (2)
+        # "will happen, and should be recoverable"). Three things can leave the
+        # ref absent and they need different responses from the user:
+        #   1. nothing was even tried — no remote looked like an internet URL;
+        #   2. the fetch ran and failed — offline, proxy, credentials. TRANSIENT,
+        #      so the message must invite a retry rather than read as final;
+        #   3. the remote has no such branch — which is what a RENAMED
+        #      testversionname looks like, the lockout Kent is guarding against.
+        # The old code discarded the fetch output entirely, so all three
+        # surfaced as one flat "there is no published origin/<b>" — a transient
+        # outage disguised as a permanent absence, and a rename disguised as
+        # both.
+        tried,lasterr=False,''
         for remote in remotes:
             try:
                 if not self.isinternet(remote):
                     continue
+                tried=True
                 log.info(_("No {start} yet; fetching ‘{branch}’ from {remote}."
                             "").format(start=start,branch=branchname,
                             remote=remote))
-                self.do(['fetch',str(remote),spec])
+                out=self.do(['fetch',str(remote),spec]) or ''
                 if self.do(['rev-parse','--verify','--quiet',start]):
-                    return True
+                    return True,''
+                lasterr=str(out).strip() or lasterr
             except Exception as e:
+                lasterr=str(e)
                 log.info(_("Fetching ‘{branch}’ from {remote} failed: {error}"
                             ).format(branch=branchname,remote=remote,error=e))
-        return bool(self.do(['rev-parse','--verify','--quiet',start]))
+        if self.do(['rev-parse','--verify','--quiet',start]):
+            return True,''
+        if not tried:
+            return False,_("No internet remote to fetch it from. A-Z+T knows "
+                            "of no published address for this copy, so nothing "
+                            "was tried.")
+        tail='\n'.join(lasterr.split('\n')[-4:]).strip()
+        if 'find remote ref' in lasterr or 'not found' in lasterr.lower():
+            # Case 3. Say the BRANCH is missing, not the network — this is what
+            # a renamed test branch looks like, and calling it a network fault
+            # would send the reader hunting in the wrong place for a long time.
+            return False,_("The published repository has no branch called "
+                            "‘{branch}’. If the test version was renamed, "
+                            "A-Z+T is looking for the old name.{tail}").format(
+                            branch=branchname,
+                            tail='\n'+tail if tail else '')
+        return False,_("Could not reach the published repository to fetch "
+                        "‘{branch}’. This is usually temporary — try again "
+                        "when you are online.{tail}").format(
+                        branch=branchname,tail='\n'+tail if tail else '')
     def reverttomain(self,event=None):
         r=self.hard_checkout('main')
         log.info(r)

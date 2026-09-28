@@ -990,11 +990,18 @@ def _engine():
     worse than a failure: if the WebView2 runtime is missing, pywebview can
     drop to **mshtml** — the legacy Trident/IE engine, which has no CSS Grid.
     Our pages would then render as garbage rather than not rendering, and it
-    would look like our bug instead of a missing runtime. Naming the engine
-    makes a missing WebView2 raise at start, which the backend selector can
-    report and fall back to tkinter over. WebView2 ships with Windows 11 and
-    is present on most Windows 10, with a ~2MB bootstrapper otherwise, so a
-    loud failure is actionable.
+    would look like our bug instead of a missing runtime.
+
+    THIS USED TO CLAIM that naming the engine "makes a missing WebView2 raise
+    at start, which the backend selector can report and fall back to tkinter
+    over". **That was never true and cannot be made true.** The selector runs
+    BEFORE start, so it could not have seen such a raise; and a failure inside
+    the Windows backend does not reach Python at all — it arrives as an
+    unhandled .NET exception on a background thread and kills the process
+    (2026-09-24, over an icon, on Kim's machine). A comment asserting a
+    fallback nobody wrote is how that gap stayed invisible for months.
+    The check is now a PRE-FLIGHT one in `ui_backend.webview2_problem()`,
+    which is the only kind that can work.
 
     An explicit --engine= or AZT_WEBVIEW_ENGINE still wins, so mshtml or cef
     remain reachable deliberately."""

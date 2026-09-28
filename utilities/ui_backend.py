@@ -330,6 +330,89 @@ def gtk_host_problem():
     return _gtk_checked
 
 
+_webview2_checked = None
+
+
+def webview2_problem():
+    """Why WebView2 cannot render here, or None. Windows only, cached.
+
+    THE PRE-FLIGHT CHECK IS THE ONLY ONE THAT CAN WORK, and that is not a
+    preference. A failure inside the Windows backend arrives as an UNHANDLED
+    .NET exception on a background thread — Python never sees it and the
+    process dies (observed 2026-09-24 on Kim's machine, over an icon). So a
+    `try` around `webview.start()` cannot rescue a missing runtime, and
+    `_engine()`'s old claim that the selector could "report and fall back to
+    tkinter over" a start-time raise was never achievable. Either we know
+    BEFORE committing, or we crash.
+
+    NO HARDCODED GUID. WebView2 registers under EdgeUpdate's `Clients` as a
+    client id nobody should have to memorise, and a wrong constant would fail
+    silently in the direction that matters. So this ENUMERATES the clients and
+    matches on the `name` value, then falls back to the install directory.
+
+    ERRS TOWARDS PRESENT. If the registry cannot be read at all, this returns
+    None and lets the app proceed: a false refusal would drop a working
+    machine to tkinter, and the runtime ships with Windows 11 and is on most
+    Windows 10. Only a positive "looked, and it is not there" refuses."""
+    global _webview2_checked
+    if _webview2_checked is not None:
+        return _webview2_checked
+    if platform.system() != 'Windows':
+        _webview2_checked = "not applicable on {}".format(platform.system())
+        return _webview2_checked
+    for folder in (os.environ.get('ProgramFiles(x86)'),
+                   os.environ.get('ProgramFiles')):
+        if folder and os.path.isdir(os.path.join(
+                folder, 'Microsoft', 'EdgeWebView', 'Application')):
+            _webview2_checked = None
+            return None
+    found = looked = False
+    try:
+        import winreg
+    except ImportError:
+        _webview2_checked = None            # cannot ask; assume present
+        return None
+    for hive, path in (
+            (winreg.HKEY_LOCAL_MACHINE,
+             r'SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients'),
+            (winreg.HKEY_LOCAL_MACHINE,
+             r'SOFTWARE\Microsoft\EdgeUpdate\Clients'),
+            (winreg.HKEY_CURRENT_USER,
+             r'SOFTWARE\Microsoft\EdgeUpdate\Clients')):
+        try:
+            with winreg.OpenKey(hive, path) as clients:
+                looked = True
+                index = 0
+                while True:
+                    try:
+                        sub = winreg.EnumKey(clients, index)
+                    except OSError:
+                        break
+                    index += 1
+                    try:
+                        with winreg.OpenKey(clients, sub) as client:
+                            name = str(winreg.QueryValueEx(client, 'name')[0])
+                            version = winreg.QueryValueEx(client, 'pv')[0]
+                        if 'webview2' in name.lower().replace(' ', '') \
+                                and version:
+                            log.info("WebView2 runtime %s found (%s)",
+                                     version, name)
+                            found = True
+                            break
+                    except OSError:
+                        continue
+        except OSError:
+            continue
+        if found:
+            break
+    _webview2_checked = None if (found or not looked) else (
+        "the Microsoft Edge WebView2 runtime is not installed. It ships with "
+        "Windows 11 and is on most Windows 10 machines; where it is missing, "
+        "Microsoft's Evergreen Bootstrapper installs it per-user in about "
+        "2 MB, with no administrator rights")
+    return _webview2_checked
+
+
 _qt_checked = None
 
 
@@ -404,8 +487,15 @@ def webview_problem():
     # frontend.ui_webview._engine(), which REPORTS the problem and then
     # substitutes (Kent, 2026-09-08: "we could report then substitute").
     # Only "no host at all" blocks the backend, below.
+    if platform.system() == 'Windows':
+        # THE ONE HOST CHECK THAT EXISTS OFF LINUX. Windows renders through
+        # WebView2, and a missing runtime cannot be recovered from later —
+        # see `webview2_problem`. So it is decided here, before anything
+        # commits, and a machine without it falls back to tkinter with a
+        # reason rather than dying on a background thread.
+        return webview2_problem()
     if platform.system() != 'Linux':
-        return None
+        return None                 # macOS: Cocoa, always present
     # A HOST IS A HOST ONLY IF IT CAN ACTUALLY RENDER. `gi` importing was
     # accepted as proof until 2026-09-23; it is not, because the typelibs are
     # separate packages. See `gtk_host_problem`.

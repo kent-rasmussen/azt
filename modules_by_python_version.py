@@ -1530,6 +1530,22 @@ def compare(before, after, platforms, old, new):
             now = entry['row'][p][0]
             if was == now:
                 continue
+            # A REQUIREMENT SWITCHED ON OR OFF BY A `python_version` MARKER IS
+            # NOT A CHANGE IN AVAILABILITY, and without this it reads as the
+            # opposite of what it is. `n/a` outranks every real verdict
+            # (RANK[SKIP] is the highest), so a line that does not apply on the
+            # OLD python and does apply on the NEW one goes n/a → wheel, scores
+            # as a rank DROP, and gets printed under "these block the move".
+            #
+            # That is exactly backwards: such a line exists BECAUSE somebody
+            # made the new python work. Added 2026-09-25 with the torch split
+            # (`torch==2.7.1+cpu; ... python_version < "3.14"` beside
+            # `torch==2.14.0+cpu; ... python_version >= "3.14"`), which would
+            # otherwise have reported torch as blocking 3.14 on every compare
+            # — and reported the other half as an improvement — burying the
+            # kivy answer the command is actually being run for.
+            if SKIP in (was, now):
+                continue
             line = '   {:<24} {:<16} {} → {}'.format(entry['req'].name, p,
                                                      was, now)
             if RANK[now] < RANK[was]:

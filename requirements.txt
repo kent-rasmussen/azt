@@ -104,8 +104,28 @@ tgt                     # praatfns.py (TextGridTools)
 # `torch==2.2.2` for that platform. Not done, because 2.2.x predates the
 # numpy>=2.1 pin this file carries and would need its own compatibility
 # check — a real piece of work, not a one-line marker.
-torch==2.7.1+cpu; sys_platform != "darwin"
-torch==2.7.1; sys_platform == "darwin" and platform_machine == "arm64"
+# PYTHON-VERSION SPLIT ADDED 2026-09-25 (Kent: "in order to keep torch from
+# breaking, in any case, let's pin current to py <3.14, and then 2.14.0 to py
+# >=3.14"). 2.7.1 predates python 3.14 and has no cp314 wheel — it never will
+# — so on 3.14 the old pin resolves to nothing and fails the whole `-r`, which
+# withholds the requirements stamp and re-resolves on every boot. The split
+# makes that impossible BEFORE anyone reaches 3.14, rather than after.
+#   THESE TWO NEW LINES ARE INERT TODAY. Their marker excludes every python in
+# use, so they cannot change any existing install; they are a guard, not a
+# rollout.
+#   2.14.0 is the top of what the 2026-09-23 sweep found on 3.14 (2.9.0–2.14.0
+# on windows-amd64, linux-x86_64 and macos-arm64). It is NOT from a `pip
+# freeze` of a working 3.14 environment, because there is no such environment
+# — so it breaks this file's pin discipline knowingly, and must be re-checked
+# before anyone actually moves. `--via-pip 3.14` is the check.
+#   `python_version` is always MAJOR.MINOR ("3.14", never "3.14.0"), so the
+# comparison is written against "3.14". `>= "3.14.0"` would also work, since
+# PEP 440 makes 3.14 == 3.14.0, but it invites the reader to think patch
+# releases are being distinguished here. They are not, and cannot be.
+torch==2.7.1+cpu; sys_platform != "darwin" and python_version < "3.14"
+torch==2.14.0+cpu; sys_platform != "darwin" and python_version >= "3.14"
+torch==2.7.1; sys_platform == "darwin" and platform_machine == "arm64" and python_version < "3.14"
+torch==2.14.0; sys_platform == "darwin" and platform_machine == "arm64" and python_version >= "3.14"
 tqdm
 transformers
 urllib3
