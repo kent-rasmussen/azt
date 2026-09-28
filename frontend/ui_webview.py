@@ -2082,6 +2082,25 @@ class _WebviewWidget:
         `Menu.tk_popup` already dismisses on an outside click."""
         pass
 
+    def grab_current(self):
+        """Nothing holds a grab here, ever — so: None.
+
+        The honest answer rather than the absent one. `status_window` asks
+        this while logging why a window may not have surfaced, because a Tk
+        grab held elsewhere is one explanation and its comment notes the fault
+        "has been suspected twice and never confirmed". That call is wrapped
+        in try/except, so the missing method never crashed; it logged
+        "grab held by: unaskable (AttributeError…)" and the diagnostic was
+        simply dead on this backend — which is where you would want it, since
+        the webview windows are the ones whose surfacing is in question.
+        None says what is true (see `grab_release`: a browser has no grabs)
+        and lets the log rule the explanation out instead of shrugging.
+
+        Found by `tests/test_tkinter_methods_in_disguise.py` on its first run,
+        2026-09-28 — the sweep Kent asked for after two of these were found by
+        crashing."""
+        return None
+
     # ── Configure ─────────────────────────────────────────────────────
     def configure(self, **kwargs):
         # A CALLABLE IS NOT SERIALISABLE, so `command` fell through the loop
@@ -7062,6 +7081,41 @@ class Toplevel(_WebviewWidget):
         self._wv_visible = False
         self._wv_call('hide')
 
+    def state(self, newstate=None):
+        """Is this window showing? Tk's vocabulary, so callers need not care
+        which backend they are on: 'normal' or 'withdrawn'.
+
+        MISSING UNTIL 2026-09-28, and it took the word page down with it.
+        `lexicon.updatereturnbind()` asks `self.state()` through the
+        task↔window bridge, and tkinter windows have it from `tkinter.Wm`
+        while these never did:
+
+            File "backend/core/lexicon.py", line 1448, in updatereturnbind
+                log.info(_("Updating binding ({state})").format(
+                                                        state=self.state()))
+            AttributeError: 'WordCollectnParsewRecordings' object has no
+            attribute 'state'
+
+        The visible symptom was nothing like the cause. `getword()` calls this
+        at :1552 and builds the RECORD BUTTON at :1559, so the page came up
+        with no way to record and no error in front of the user — reported as
+        "Add and parse words with audio has no audio button" (Kent,
+        2026-09-28). Two days were nearly spent looking at sound settings.
+
+        Same shape as `Root.quit` the same day: a Tk method used across the
+        app, free on tkinter by inheritance, absent here, and reached only on
+        a path nobody had run under `--webview`.
+
+        'iconic' and 'zoomed' have no equivalent and are never returned —
+        saying 'normal' for a minimised window is a smaller lie than inventing
+        a state the caller then tests for. Setting a state is not supported;
+        `deiconify`/`withdraw` are the way, and asking is refused rather than
+        silently ignored."""
+        if newstate is not None:
+            raise NotImplementedError(
+                'state() is read-only here; use deiconify()/withdraw()')
+        return 'normal' if getattr(self, '_wv_visible', True) else 'withdrawn'
+
     def _place_onscreen(self):
         """Bring a window created OFF-SCREEN back where it can be seen.
 
@@ -8858,6 +8912,58 @@ class Root(_WebviewWidget):
                          "".format(e))
                 kwargs.pop('icon', None)
                 webview.start(**kwargs)
+
+    def quit(self):
+        """End the main loop and return from `mainloop()`, as `tkinter.Tk.quit`
+        does — WITHOUT tearing the interpreter down.
+
+        MISSING UNTIL 2026-09-28, and it crashed the restart handover:
+
+            File "main.py", line 1503, in _leave_to_successor
+                self.tk_root.quit()
+            AttributeError: 'Root' object has no attribute 'quit'
+
+        The tkinter Root inherits `tkinter.Tk`, so it got `quit()` for free and
+        nobody noticed it was never part of `RootInterface`. It is now declared
+        there, because the contract is what stops the next one of these.
+
+        Why it had to be `quit()` and not `sys.exit()` is main.py's story:
+        exceptions raised inside an `after()` callback are swallowed, so
+        `SystemExit` never left the callback and the predecessor sat there
+        forever — two live copies on one project, which is the exact outcome
+        the restart handshake exists to prevent.
+
+        Here, ending the loop means closing every pywebview window, because
+        `webview.start()` returns when the last one goes. RAISES if it cannot
+        do that, deliberately: the caller answers a failure with `os._exit(0)`,
+        and a lingering predecessor is worse than an abrupt exit."""
+        if not webview:
+            raise RuntimeError('no pywebview: no main loop to end')
+        windows = list(getattr(webview, 'windows', None) or [])
+        if self._wv_window is not None and self._wv_window not in windows:
+            windows.append(self._wv_window)
+        if not windows:
+            raise RuntimeError('no pywebview windows: nothing to end')
+        failed = []
+        for w in windows:
+            try:
+                w.destroy()
+            except Exception as e:
+                failed.append(e)
+                log.info('quit: could not destroy a window ({})'.format(e))
+        if len(failed) == len(windows):
+            raise RuntimeError('every pywebview window refused to close: '
+                               '{}'.format(failed[0]))
+        log.info('quit: closed {} window(s); the main loop should return'
+                 ''.format(len(windows) - len(failed)))
+
+    def state(self, newstate=None):
+        """As Toplevel.state — see there for why this exists. Root tracks
+        `_wv_visible` separately, so it needs its own."""
+        if newstate is not None:
+            raise NotImplementedError(
+                'state() is read-only here; use deiconify()/withdraw()')
+        return 'normal' if getattr(self, '_wv_visible', True) else 'withdrawn'
 
     def withdraw(self):
         """As Toplevel.withdraw: say who hid it."""

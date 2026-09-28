@@ -1176,10 +1176,48 @@ const _reportedProps = new Set();
 // 2026-09-22: "very difficult to use"). 1.5em per row is the row's line box
 // plus .wv-listbox-item's vertical padding, near enough that four rows show
 // four items.
+// MEASURE THE ROW; DO NOT GUESS AT IT (2026-09-28). The line above used to
+// end here with `maxHeight = n * 1.5em`, and the estimate was wrong in the
+// direction that costs a row: Kent asked for 4 and saw 3, then asked for 5 and
+// saw 4. A row is a line box plus 2px of padding top and bottom, inside a
+// bordered container, and none of that is knowable from an em.
+//   Kent, 2026-09-28: *"does height start at 0 or 1? 5 gives four lines..."*
+// Neither — it was never an index, which is exactly why the off-by-one
+// reading did not fit. Raising the constant would only move the rounding
+// error to a different font size or theme.
+//   So: remember the row count on the element, and set the height from a
+// REAL row once one exists. The em estimate survives only as the fallback for
+// the moment before any items are added, when there is nothing to measure.
 function _listboxRows(el, rows) {
     const n = Number(rows);
     if (!(n > 0)) return;
-    el.style.maxHeight = (n * 1.5) + 'em';
+    el.dataset.rows = n;
+    _applyListboxHeight(el);
+}
+
+function _applyListboxHeight(el) {
+    const n = Number(el.dataset.rows);
+    if (!(n > 0)) return;
+    const item = el.querySelector('.wv-listbox-item');
+    const h = item ? item.getBoundingClientRect().height : 0;
+    if (!(h > 0)) {                     // no items yet, or not displayed
+        el.style.maxHeight = (n * 1.5) + 'em';
+        return;
+    }
+    // `max-height` applies to the CONTENT box under content-box and to the
+    // BORDER box under border-box, so the container's own border and padding
+    // come out of the budget in one case and not the other. Ask rather than
+    // assume: `.wv-listbox` carries a 1px border, which is a whole row over
+    // enough rows.
+    const cs = getComputedStyle(el);
+    let extra = 0;
+    if (cs.boxSizing === 'border-box') {
+        extra = (parseFloat(cs.borderTopWidth) || 0)
+              + (parseFloat(cs.borderBottomWidth) || 0)
+              + (parseFloat(cs.paddingTop) || 0)
+              + (parseFloat(cs.paddingBottom) || 0);
+    }
+    el.style.maxHeight = (n * h + extra) + 'px';
 }
 
 function updateProp(wid, prop, value) {

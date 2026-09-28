@@ -157,6 +157,19 @@ class RootInterface(WidgetInterface):
     @abstractmethod
     def mainloop(self): ...
     @abstractmethod
+    def quit(self):
+        """End the main loop so `mainloop()` returns, WITHOUT exiting the
+        interpreter — the caller then shuts down in its own time.
+
+        DECLARED 2026-09-28, after its absence crashed the restart handover:
+        `main.py::_leave_to_successor` calls it, the tkinter Root had it free
+        from `tkinter.Tk`, and the webview Root simply did not, so the
+        predecessor process died with an AttributeError instead of handing
+        over. A method used across the backends but named in neither the
+        interface nor one implementation is exactly what this file exists to
+        prevent."""
+        ...
+    @abstractmethod
     def withdraw(self): ...
     @abstractmethod
     def deiconify(self): ...
@@ -172,6 +185,23 @@ class RootInterface(WidgetInterface):
 class ToplevelInterface(WidgetInterface):
     @abstractmethod
     def withdraw(self): ...
+    @abstractmethod
+    def state(self, newstate=None):
+        """'normal' or 'withdrawn', in Tk's vocabulary.
+
+        DECLARED 2026-09-28, after its absence took down the word page under
+        `--webview`. `lexicon.updatereturnbind()` asks for it through the
+        task↔window bridge; tkinter windows have it from `tkinter.Wm` and the
+        webview ones did not, so `getword()` raised at the line that logs it
+        and never reached the line eight below that builds the record button.
+        The report was "no audio button", which is three removes from the
+        cause.
+
+        That is the second of these in one day (see `RootInterface.quit`) and
+        both have the same shape: a Tk method the app calls freely, present on
+        one backend by INHERITANCE rather than by decision, and absent on the
+        other until some rarely-run path finds out."""
+        ...
     @abstractmethod
     def deiconify(self): ...
     @abstractmethod

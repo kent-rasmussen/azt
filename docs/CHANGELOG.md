@@ -19,6 +19,168 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.37
+
+**MOST OF THIS IS AWAITING VERIFICATION, not fixed.** Two app changes and two
+installer changes below have never been run: the installers need a fresh
+machine, and the app changes need a Windows boot. Steps 7–9 of the new
+non-regression check exist to settle them, and are queued in
+`agenda/cross_platform_checks.md` §7. Only the documentation changes are
+confirmed, because reading them is the whole test.
+
+**"Add and parse words with audio" had no audio button under `--webview`, and
+the cause was three removes from the symptom. Awaiting verification.** The
+word page calls `updatereturnbind()` to decide whether Return should move to
+the next word, and that asks the window `state()`. tkinter windows have
+`state()` from `tkinter.Wm`; the webview ones never did, so it raised:
+
+    AttributeError: 'WordCollectnParsewRecordings' object has no attribute
+    'state'
+
+`getword()` builds the record button eight lines after that call, so the page
+came up complete except for the one control the task exists for, with no error
+in front of the user. Kent: *"Add and parse words with audio has no audio
+button?"* Nothing was wrong with the recording code, the sound settings or the
+LIFT entry, all of which were searched first.
+
+`Toplevel.state()` and `Root.state()` now answer in Tk's vocabulary, 'normal'
+or 'withdrawn', from the visibility the backend already tracks.
+
+**This is the SECOND missing Tk method found today**, after `Root.quit()`
+crashed the restart handover, and they share a shape worth naming: a method
+the app calls freely, present on tkinter by INHERITANCE rather than by
+decision, absent on webview, and reached only on a path nobody had run there.
+Both are now declared in `ui_interface.py`, and
+`tests/test_root_surface_is_shared.py` asserts that every abstract name on
+those interfaces exists on both backends. Inheriting a method is not the same
+as promising one, and only the promise can be tested.
+
+**And a sweep for the rest of them**, at Kent's suggestion: *"perhaps we should
+be watching for other tkinter-specific methods in disguise."* In disguise is
+exact — `self.state()` inside a backend mixin looks like the task's own
+method, and nothing in `backend/` or `tasks/` mentions tkinter anywhere.
+`tests/test_tkinter_methods_in_disguise.py` finds every call through the three
+bridge receivers whose name tkinter defines and the webview backend does not,
+deriving both name sets at run time so neither can drift.
+
+Its first run flagged three. Two are permanent collisions with our own
+vocabulary and are now exempted with reasons: `command`, which is the menu
+helper here and a window-manager property in tkinter, and `group`, which is
+this app's sort-group accessor and tkinter's window-group leader. The third
+was real but quiet: `grab_current`, asked by the status window while logging
+why a window may not have surfaced. The call is wrapped in try/except, so it
+never crashed — it logged "unaskable" and the diagnostic was dead on the
+backend whose surfacing is actually in question. It now answers None, which is
+true, since a browser has no grabs.
+
+**The language code now appears once you have typed something, not before. A
+CHANGE, not a fix.** On the page that starts a new language, the "code: " line
+sat above the entry box from the moment the page opened, with nothing after
+the colon. That was deliberate and nothing about it was broken; Kent: *"it was
+there intentionally, but I find it distracting."* It is now hidden until there
+is something to show, and hidden again if the box is emptied — which the code
+already intended (`_show_possibles` calls the updater with the comment "remove
+code and button") but never did. Reverting is one deleted line, marked as
+such. Unverified: nobody has opened the page since.
+
+**The language list on that page now shows up to five matches, not four.**
+Asked for as "max at 5 languages, not three" — and the gap between "three"
+seen and four asked for is worth noting rather than papering over. On the
+webview backend the row count is turned into a CSS `max-height` of
+`rows × 1.5em`, so a row taller than 1.5em yields fewer visible rows than
+requested. If five now shows as four, that conversion is why, and the number
+to change is in `widgets.js`, not here. The territory list below it still caps
+at four; it was not asked about.
+
+**Every Windows install was warned that its own links were broken. Awaiting
+verification.** `sister_repos.ensure_detail` asked `os.path.islink`, which
+returns False for a Windows JUNCTION — and junctions are exactly what
+`_make_link` creates there, since a real symlink on Windows needs Developer
+Mode. So the app warned that images and lift templates were "a real directory,
+not a link to a managed clone" and "can never be updated" about links it had
+just made itself. Kent: *"the boot is still complaining that images and
+templates can't be updated, which I understand to be false."* It was false.
+The check now uses `_is_link`, which knows about junctions, and also accepts a
+directory that is its own clone — updatable, just not by us. What still warns
+is the case the message was written for: a real directory, no link, no `.git`,
+which is the `cp -r` copy that dereferenced a symlink into real files.
+
+**"Try testing version" now says WHY it could not. Awaiting verification.** It
+could only ever say *"there is no published origin/testing to take it from"*,
+which reads as permanent and is usually not. `fetch_tracking_branch` discarded
+the fetch's output entirely and returned a bare boolean, so three quite
+different situations arrived identically. They are now distinguished, because
+they need different responses:
+
+- **Could not reach the repository** — offline, a proxy, refused credentials.
+  Says so, and invites a retry when online. Kent: this one *"will happen, and
+  should be recoverable"*.
+- **The published repository has no such branch** — which is what a RENAMED
+  test branch looks like, and calling that a network fault would send the
+  reader hunting in the wrong place.
+- **Nothing was even tried**, because no known remote looked like an internet
+  address. Rarer now: it falls back to `remote.origin.url`, the address the
+  clone came from, which every clone has and which needs no settings.
+
+**torch is pinned on both sides of python 3.14, so it cannot break there.**
+`torch==2.7.1` predates 3.14 and has no wheel for it, so on 3.14 the pin would
+resolve to nothing, fail the whole requirements install, withhold the
+requirements stamp, and re-resolve on every boot thereafter. Four lines now
+carry a `python_version` marker beside the existing platform and chip ones.
+**The new lines are inert** — their marker excludes every python in use — so
+nothing about any current install changes. The 2.14.0 figure is the top of a
+measurement sweep rather than a known-good environment, and is expected to be
+re-checked before anyone moves.
+
+**The Linux installer now fills the virtual environment before it says it is
+done. Awaiting verification; it has never been run.** Previously only the
+macOS script did this; Linux left everything to first run, which meant
+"installed" was not true when it was said. It now creates `env/`, installs
+`requirements.txt` into it, and writes the requirements stamp — without which
+the app re-resolves the whole file on first run anyway and the upfront install
+buys nothing. The stamp is deliberately withheld when anything failed, so a
+partial install still lets the app finish the job. `--no-deps` skips it. The
+section runs LAST, so a failure leaves a complete, launchable install behind.
+
+**Installers resolve their downloads instead of naming a version.** A pinned
+download URL is a link that works until it does not, in a file nobody
+revisits. The macOS script asked for one exact python; it now pins only the
+MINOR and finds the newest patch of it that actually has a macOS installer,
+walking backwards when the newest does not. It asks python.org nothing when a
+usable python is already present. Three user-facing documents that handed out
+a `python-3.12.4-amd64.exe` link now point at the per-minor latest page
+instead. The reasoning is recorded as **ADR 0006**, along with the lookup
+endpoints for every program the installers fetch, and the rule that matters
+most in practice: read the asset name from the answer, because three of the
+four GitHub projects involved do not name their files after their tags.
+
+While in those documents, instructions that would simply fail if followed were
+corrected: `pip install pyaudio`, gone since the 2026 move to `sounddevice`,
+and `pip install tkinter`, which is not a package at all.
+
+**ADR 0005 amended: python 3.14 is not reachable, and the reason is kivy, not
+torch.** A sweep found kivy source-only on 3.14 across all four platforms, so
+it is a wait on upstream rather than a decision anyone here can take. That
+matters more than it sounds: kivy is checked at boot in the mandatory block,
+so a 3.14 machine would attempt to COMPILE it twice on every start, forever.
+The install target is therefore 3.13.15. A separate kivy virtual environment
+was considered and rejected, because it would require users to have two
+pythons installed to be worth anything.
+
+**Tests.** `test_markers_are_passed_through_verbatim` asserted that
+`requirements.txt` yields exactly two torch lines, so a correct change failed
+it with `4 == 2`. The count is now derived from the file and compared by
+value, so losing a line still fails while adding a platform or a python range
+does not. Two guards were added for the split itself, which is otherwise
+invisible until someone reaches 3.14.
+
+**Also recorded:** `CLAUDE.md` now explains why branches added to a shallow
+clone are islands, and that merging across them reports "refusing to merge
+unrelated histories" although the histories are perfectly related. The app
+never does this — both of its switch paths are checkouts, which need no common
+ancestor — so the trap belongs to hand-git, and the documented hand procedure
+is what creates it.
+
 # Version 1.15.36
 
 **Three modules that could not be imported at all now can.** Nothing

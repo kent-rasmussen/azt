@@ -4007,6 +4007,20 @@ class LiftChooser(ui.Window,HasMenus):
         self.title_frame=ui.Frame(self._new_w.frame, row=0,
                                   **{**defaults,'gridwait':False})
         self.code_frame=ui.Frame(self._new_w.frame, row=1, **defaults)
+        # HIDDEN UNTIL THERE IS A CODE TO SHOW — A CHANGE, NOT A FIX (Kent,
+        # 2026-09-28). The code line was
+        # visible from the moment the page opened, and that was INTENTIONAL;
+        # nothing was broken about it. Kent: *"this is a change, not a fix. it
+        # was there intentionally, but I find it distracting"* — *"the
+        # 'code:...' line should show up after the user has typed something in
+        # the box."* So this is a preference about when to reveal it, and if
+        # the old behaviour is ever wanted back, deleting this one line is the
+        # whole revert.
+        #   `gridwait=True` in `defaults` did not achieve this on its own: the
+        # webview backend placed the frame regardless. Saying it explicitly
+        # makes both backends agree, and matches subtags_frame three lines
+        # below, which has always been explicit for the same reason.
+        self.code_frame.grid_remove()
         self.entryframe=ui.Frame(self._new_w.frame, row=2, **defaults)
         self.subtags_frame=ui.Frame(self._new_w.frame, row=3, **defaults)
         self.subtags_frame.grid_remove()
@@ -4164,8 +4178,15 @@ class LiftChooser(ui.Window,HasMenus):
             self.list_of_possibles.insert("end", i)
         max_value_len=max([0]+[len(self.list_of_possibles.get(i))
                     for i in range(len(self.list_of_possibles.get(0,'end')))])
+        # FIVE, not four (Kent, 2026-09-28: "let's make the initial size on the
+        # language scrollbox max at 5 languages, not three"). The cap is what
+        # decides how many matches you can see without scrolling, and this list
+        # is the one you actually pick from. The TERRITORY list below still
+        # caps at four; it was not asked about, and it is chosen from far less
+        # often. If the two should agree, the other number is at the
+        # `list_of_territories.configure` call.
         self.list_of_possibles.configure(width=max(10,max_value_len),
-                                        height=min(4,len(self.options)))
+                                        height=min(5,len(self.options)))
         log.info(f"Done updating possibles for '{value}'")
     def lang_name_selected(self,*args):
         log.info("lang_name_selected")
@@ -4187,6 +4208,14 @@ class LiftChooser(ui.Window,HasMenus):
             self.check_tag_validity()
             self._new_w.update_idletasks()
             self.code_label['text']=f"code: {self.code}"
+            # AND HIDE IT AGAIN. `_show_possibles` calls this when the entry
+            # box has been emptied, with the comment "remove code and button"
+            # — which nothing here did, so the line stayed on screen reading
+            # "code: " with nothing after it. That is the same distraction
+            # Kent asked to defer at page open (2026-09-28), arrived at from
+            # the other direction, so it follows the same rule: no text in the
+            # box, no code line.
+            self.code_frame.grid_remove()
             return
         if self.territory_entry.get():
             self.code+='-'+self.territory_entry.get()
