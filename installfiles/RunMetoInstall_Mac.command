@@ -49,8 +49,10 @@
 # ─── THE TWO DOWNLOAD URLS — CHECKED 2026-09-08 ─────────────────────────────
 # Both were opened by hand and both serve a file:
 #   PYTHON_URL — python.org's ftp pattern is confirmed: the download offered
-#     itself as `python-3.13.15-macos11.pkg`. That also confirms 3.13.15 is a
-#     real release (the tested Mac reported it), so it is the default here.
+#     itself as `python-3.13.15-macos11.pkg`. 3.13.15 is now the FALLBACK only
+#     (it was the default until 2026-09-28); resolve_python_url() asks
+#     python.org which patch is current and walks back to one that has a
+#     macOS installer. See ADR 0006.
 #   GIT_URL — SourceForge's "latest release" redirect for git-osx-installer
 #     does start a download. BUT the project is marked **Abandoned** there.
 #     Consequences to expect, and to check on the first real run:
@@ -77,8 +79,22 @@ set -o pipefail
 DEST="$HOME/azt"
 REPO="https://github.com/kent-rasmussen/azt.git"
 BRANCH=""
-PY_VERSION="3.13.15"     # confirmed available as python-3.13.15-macos11.pkg
-PYTHON_URL=""            # derived from PY_VERSION unless given
+# PYTHON: PIN THE MINOR, RESOLVE THE PATCH (ADR 0006 D5/D6, 2026-09-28).
+# PY_VERSION was "3.13.15" here, a hardcoded patch, which is precisely the
+# shape that broke the Windows installer: it asked for a python.org file by
+# exact version and one day that stopped being the version anyone could get.
+# The minor is a COMPATIBILITY decision and belongs in ADR 0005; the patch
+# affects nothing about what installs and must never be written down.
+PY_MINOR="3.13"          # from docs/adr/0005-python-version-floor-and-ceiling.md
+PY_VERSION=""            # resolved at install time, or set by --python-version
+# D3's named fallback — NOT the mechanism. Only reached when python.org cannot
+# be asked at all (no network, a proxy, a page restructure). One release behind
+# beats no python.
+PY_FALLBACK="3.13.15"
+PY_LATEST="https://www.python.org/downloads/latest/python"   # + PY_MINOR + /
+PY_FTP="https://www.python.org/ftp/python"
+PY_WALK=30               # how many patches below the newest to probe
+PYTHON_URL=""            # derived below unless given
 GIT_URL="https://sourceforge.net/projects/git-osx-installer/files/latest/download"
 FONT_ZIP=""              # a Charis zip you already downloaded
 FONT_URL=""              # exact zip to fetch; overrides everything below
@@ -131,7 +147,11 @@ Install A-Z+T on macOS, without Xcode.
   --dest=PATH            Where to put A-Z+T (default: ~/azt)
   --repo=URL             Repository to clone (default: kent-rasmussen/azt)
   --branch=NAME          Branch to check out (default: the repo's default)
-  --python-version=X.Y.Z Python to install if none is usable (default 3.13.15)
+  --python-minor=X.Y     Which python line to install (default 3.13). The
+                         newest patch of it that has a macOS installer is
+                         found at install time, so there is no version here
+                         to go stale.
+  --python-version=X.Y.Z Pin one exact python instead of resolving it
   --python-url=URL       Exact python .pkg to install instead
   --git-url=URL          Exact git .dmg/.pkg to install instead
   --fonts=PATH           A Charis zip you have already downloaded
@@ -160,6 +180,7 @@ for arg in "$@"; do
         --dest=*)           DEST="${arg#*=}" ;;
         --repo=*)           REPO="${arg#*=}" ;;
         --branch=*)         BRANCH="${arg#*=}" ;;
+        --python-minor=*)   PY_MINOR="${arg#*=}" ;;
         --python-version=*) PY_VERSION="${arg#*=}" ;;
         --python-url=*)     PYTHON_URL="${arg#*=}" ;;
         --git-url=*)        GIT_URL="${arg#*=}" ;;
@@ -175,7 +196,10 @@ for arg in "$@"; do
         *)  printf 'I do not understand "%s".\n\n' "$arg" >&2; usage >&2; exit 2 ;;
     esac
 done
-[ -n "$PYTHON_URL" ] || PYTHON_URL="https://www.python.org/ftp/python/${PY_VERSION}/python-${PY_VERSION}-macos11.pkg"
+# NOTHING IS DERIVED HERE ANY MORE. The URL used to be built at parse time
+# from a hardcoded PY_VERSION; it is now resolved in resolve_python_url(),
+# called ONLY when no usable python was found. That ordering matters: on a Mac
+# that already has a good python, this script now asks python.org nothing.
 
 # ─── Output. No colour anywhere: a step's result is in its words. ───────────
 say()  { printf '\n== %s\n' "$*"; }
@@ -224,6 +248,70 @@ safe_tool() {
             [ "$CLT_PRESENT" = yes ] || return 1 ;;
     esac
     printf '%s' "$path"
+}
+
+# ─── Which python, and where to get it (ADR 0006 D5/D6) ─────────────────────
+# Pin the MINOR; find the newest PATCH of it that actually has a macOS
+# installer. Two steps, and the second earns its place:
+#
+#   1. ASK which patch is current. python.org's per-minor "latest" page
+#      redirects to .../downloads/release/python-<digits>/, where <digits> is
+#      the version with its dots removed — 3.13.15 arrives as "31315".
+#      Stripping the minor's own digits ("313") leaves the patch ("15").
+#      Endpoint verified by hand, Kent 2026-09-25/28.
+#   2. WALK BACKWARDS until a .pkg actually responds. The newest patch is not
+#      guaranteed to ship a macOS installer, and "no such file" is
+#      indistinguishable from "no network" unless something checks.
+#
+# Sets PY_VERSION and PYTHON_URL. Never fatal: it falls back to PY_FALLBACK
+# and lets the caller's existing download-failure message do the rest.
+resolve_python_url() {
+    [ -n "$PYTHON_URL" ] && return 0      # --python-url= wins outright
+    local want="$PY_VERSION" digits prefix patch eff url n
+    if [ -n "$want" ]; then
+        note "using the python version you named: $want"
+    elif [ "$DRY_RUN" = yes ]; then
+        want="$PY_FALLBACK"
+        note "would ask python.org for the newest $PY_MINOR; assuming $want"
+    else
+        note "asking python.org which $PY_MINOR release is current"
+        eff="$(curl -fsSIL -o /dev/null -w '%{url_effective}' \
+                "${PY_LATEST}${PY_MINOR}/" 2>/dev/null)" || eff=""
+        digits="${eff##*/python-}"; digits="${digits%%/*}"
+        prefix="$(printf '%s' "$PY_MINOR" | tr -d '.')"
+        patch=""
+        case "$digits" in "$prefix"[0-9]*) patch="${digits#"$prefix"}" ;; esac
+        case "$patch" in ''|*[!0-9]*) patch="" ;; esac
+        if [ -n "$patch" ]; then
+            want="${PY_MINOR}.${patch}"
+            note "current $PY_MINOR release is $want"
+        else
+            want="$PY_FALLBACK"
+            note "couldn't read a version from python.org; falling back to $want"
+        fi
+    fi
+    patch="${want##*.}"
+    case "$patch" in ''|*[!0-9]*) patch=0 ;; esac
+    n=0
+    while [ "$patch" -ge 0 ] && [ "$n" -le "$PY_WALK" ]; do
+        url="${PY_FTP}/${PY_MINOR}.${patch}/python-${PY_MINOR}.${patch}-macos11.pkg"
+        if [ "$DRY_RUN" = yes ]; then
+            PY_VERSION="${PY_MINOR}.${patch}"; PYTHON_URL="$url"
+            note "would check for an installer at $url"
+            return 0
+        fi
+        if curl -fsI -o /dev/null "$url" 2>/dev/null; then
+            PY_VERSION="${PY_MINOR}.${patch}"; PYTHON_URL="$url"
+            note "installer found for $PY_VERSION"
+            return 0
+        fi
+        note "no macOS installer for ${PY_MINOR}.${patch}; trying the one before"
+        patch=$((patch-1)); n=$((n+1))
+    done
+    PY_VERSION="$PY_FALLBACK"
+    PYTHON_URL="${PY_FTP}/${PY_VERSION}/python-${PY_VERSION}-macos11.pkg"
+    warn "no macOS installer found for any recent $PY_MINOR; trying $PY_VERSION"
+    return 0
 }
 
 say "A-Z+T installer for macOS (draft)"
@@ -276,8 +364,11 @@ if find_python; then
 elif [ "$DO_PYTHON" = no ]; then
     die "no usable python, and --no-python says not to install one"
 else
-    note "no usable python found; installing python $PY_VERSION from python.org"
+    note "no usable python found; installing python $PY_MINOR from python.org"
     note "(NOT Homebrew — brew itself requires the Xcode command-line tools)"
+    # Resolved HERE, not at argument parsing: a Mac that already has a good
+    # python never asks python.org anything.
+    resolve_python_url
     PKG="$TMPDIR_AZT/python.pkg"
     note "downloading $PYTHON_URL"
     if [ "$DRY_RUN" = no ]; then

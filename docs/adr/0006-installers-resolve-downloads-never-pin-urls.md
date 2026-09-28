@@ -185,10 +185,21 @@ evidence the endpoint works — **not** as a version to write into anything.
 
 | Installer | Status |
 |---|---|
-| `aztinstaller_windows_exe` | the reason this ADR exists. **PR2 (drafted 2026-09-25, untested) implements D5, D6 and D7** — reads the minor from this repo, takes the newest patch of it with a Windows installer, walks back when the newest is source-only, never bumps the minor |
-| `RunMetoInstall_Mac.command` | **partial** — Charis resolves via the GitHub API with a pinned fallback (compliant); the git URL is SourceForge's "latest" redirect (compliant); `PY_VERSION="3.13.15"` is a pinned patch (**not** compliant, D5/D6) |
+| `aztinstaller_windows_exe` | the reason this ADR exists. **STATE UNVERIFIED FROM HERE** — see note below |
+| `RunMetoInstall_Mac.command` | **compliant 2026-09-28, UNTESTED.** Charis resolves via the GitHub API with a pinned fallback; the git URL is SourceForge's "latest" redirect; python is now `PY_MINOR="3.13"` plus `resolve_python_url()`, which asks the per-minor latest page and walks back to a patch that has a macOS installer (D5/D6), with 3.13.15 demoted to the D3 fallback. Nobody has run it |
 | `RunMetoInstall_Linux.sh` | **compliant by construction** — apt takes a package name and supplies its own newest patch; `PYMINOR` names only the minor, per D6 |
 | `RunMeAsAdmin-RightClick-toInstall.bat` | dead file, not in use; its hardcoded 3.12.4 and Charis 6.200 are exactly what this ADR forbids |
 
-**Known gap:** the macOS script's `PY_VERSION` should become a minor plus the
-D5 walk. Nothing else in `azt/` pins a download URL.
+**Known gaps:** none left in `azt/` as of 2026-09-28. The macOS script's
+pinned patch was the last one, and the three user-facing docs that handed out
+a dead `python-3.12.4-amd64.exe` link (`SIMPLEINSTALL.md`, `INSTALL.md`,
+`INSTALL_BOUNTY.md`) now point at the per-minor latest page. **None of it is
+tested** — the macOS resolution in particular has never run.
+
+**DO NOT DESCRIBE THE EXE'S STATE FROM THIS REPO (2026-09-28).** An earlier
+version of the row above said what the exe's PR1 and PR2 did, taken from notes
+in `azt/agenda/`. Kent, marking that work done: *"it's notes aren't current,
+apparently, if they say what you think."* They were not. The exe repo is the
+only authority on what the exe does, and the boundary this whole item exists
+to protect is the same one that makes second-hand notes go stale here without
+anyone noticing. Record what `azt/` decides; ask the exe repo what it does.

@@ -11,7 +11,9 @@ Before you can [Set up A-Z+T for normal use](#set-up-azt-for-normal-use), you ne
 2. [Install Git and Download A-Z+T](#install-git-and-download-azt)
 
 ## Install Python
-1. Download and install Python from [here](https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe). As of July 2024, versions 3.9-3.12 seem to work for Windows modules. At this step:
+1. Download and install Python from [here](https://www.python.org/downloads/latest/python3.13/), which always offers the current **3.13** release. Take the "Windows installer (64-bit)" download. At this step:
+
+    > **Take 3.13, not 3.14.** A-Z+T needs Python 3.10 or newer, and 3.14 does not yet work: one of its components has no 3.14 build, so the install would fail partway. (This link used to name one exact version, 3.12.4, which stopped being downloadable and left people stuck at the first step. That is why it now points at "the latest 3.13" instead of a fixed file.)
 
 ![Add Python to Path](images/Python_path.png "Add Python to Path")
 
@@ -21,8 +23,9 @@ Before you can [Set up A-Z+T for normal use](#set-up-azt-for-normal-use), you ne
 
 2. **This should be obsolete; skip unless you have problems later**: Open a terminal (hit the Windows key then type `cmd` in the search box), and paste each of these (and hit enter):
     - `python -m pip install --upgrade pip setuptools wheel`
-    - `python -m pip install pyaudio`
     - `python -m pip install Pillow lxml` (not required; if you get an error here, just skip it)
+
+    > `python -m pip install pyaudio` used to be in this list and has been removed: PyAudio was replaced by `sounddevice` in 2026, so that command now installs something A-Z+T does not use.
     - `python -m pip install patiencediff` (not required as of Jan 2022; if you get an error here, just skip it)
 
 ## Install Git and Download A-Z+T
