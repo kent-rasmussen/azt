@@ -51,18 +51,51 @@ def test_every_requirement_becomes_its_own_pip_invocation():
     assert any(n.startswith('soundfile') for n in names)
 
 
+def torch_lines_in_the_file():
+    """Every uncommented line of requirements.txt that pins torch."""
+    req = (APP / 'requirements.txt').read_text(encoding='utf-8')
+    return [l.split('#', 1)[0].strip() for l in req.splitlines()
+            if l.split('#', 1)[0].strip().startswith('torch')]
+
+
 def test_markers_are_passed_through_verbatim():
     """THE REGRESSION. The marker is what makes one line right on Linux and
     another right on macOS; pip evaluates it when given on the command line,
-    so it must arrive intact rather than being re-expressed in python."""
+    so it must arrive intact rather than being re-expressed in python.
+
+    COUNT DERIVED, NOT HARDCODED (2026-09-28). This asserted `== 2` and broke
+    the moment torch gained a `python_version` split, reporting `4 == 2` — a
+    correct change failing a test that was measuring the wrong thing. The
+    property worth pinning is that EVERY torch line in the file becomes its
+    own invocation, so losing one still fails; adding a platform or a python
+    range does not."""
     names = [e[0] for e in py_modules.requirements_one_at_a_time(str(APP))]
     torch_lines = [n for n in names if n.startswith('torch')]
-    assert len(torch_lines) == 2, 'both platform torch lines must survive'
+    expected = torch_lines_in_the_file()
+    assert len(torch_lines) == len(expected), \
+        'every torch line in requirements.txt must survive as its own entry'
+    assert sorted(torch_lines) == sorted(expected), \
+        'the lines must arrive verbatim, not rebuilt'
     assert any('sys_platform != "darwin"' in n and '+cpu' in n
                for n in torch_lines), 'the Linux/Windows CPU pin'
     assert any('sys_platform == "darwin"' in n and '+cpu' not in n
                for n in torch_lines), \
         'the macOS line must NOT ask for +cpu — no such build exists'
+
+
+def test_compound_markers_survive_intact():
+    """A torch line now carries THREE clauses joined by `and` — platform, chip
+    and python version. That is the strongest form of the regression above: a
+    marker re-expressed in python would mangle a compound one long before a
+    simple one, and pip would then be handed a requirement nobody wrote."""
+    names = [e[0] for e in py_modules.requirements_one_at_a_time(str(APP))]
+    compound = [n for n in names if n.startswith('torch') and ' and ' in n]
+    assert compound, 'the compound torch markers went missing'
+    for line in compound:
+        assert line.count(';') == 1, \
+            'a requirement carries exactly one marker separator'
+        marker = line.split(';', 1)[1]
+        assert ' and ' in marker, 'the join must stay inside the marker'
 
 
 def test_pip_option_lines_apply_to_every_requirement():
@@ -132,6 +165,29 @@ def test_requirements_txt_still_carries_both_torch_lines():
     req = (APP / 'requirements.txt').read_text()
     assert 'sys_platform == "darwin"' in req
     assert 'torch==2.7.1;' in req
+
+
+def test_torch_is_split_across_the_python_3_14_boundary():
+    """`torch==2.7.1` predates python 3.14 and has no cp314 wheel, so on 3.14
+    the old pin resolves to NOTHING and fails the whole `-r` — which withholds
+    the requirements stamp and re-resolves on every boot thereafter. The split
+    added 2026-09-25 makes that impossible before anyone reaches 3.14, and
+    these lines are inert until then, so nothing would notice if they were
+    dropped. See ADR 0005 and ADR 0006.
+
+    Deliberately NOT asserting the versions: 2.14.0 is the top of a sweep, not
+    a `pip freeze` of a working 3.14 environment, and it is expected to be
+    re-checked. What must not vanish is the BOUNDARY."""
+    lines = torch_lines_in_the_file()
+    below = [l for l in lines if 'python_version < "3.14"' in l]
+    atorabove = [l for l in lines if 'python_version >= "3.14"' in l]
+    assert below, 'the pre-3.14 torch pins went missing'
+    assert atorabove, 'the 3.14-and-later torch pins went missing'
+    assert len(below) == len(atorabove), \
+        'each platform case needs a line on BOTH sides of the boundary'
+    for group in (below, atorabove):
+        assert any('sys_platform != "darwin"' in l for l in group)
+        assert any('sys_platform == "darwin"' in l for l in group)
 
 
 def test_the_macos_torch_line_is_restricted_to_apple_silicon():
