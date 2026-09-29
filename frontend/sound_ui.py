@@ -888,7 +888,47 @@ class SoundSettingsWindow(ui.Window):
             if obj is not None:
                 obj.filenameURL=name
 
+    def _ensure_full_table(self):
+        """The full card sweep belongs HERE, and only here.
+
+        THIS PAGE IS THE ONLY THING THAT NEEDS IT. Everywhere else is
+        CONFIRMING one stored combination, which is one check; this page is
+        CHOOSING among everything, which is the whole table. The sweep used
+        to run in `SoundSettings.__init__` instead — 6.83s on the first sound
+        task of a session, after its page had painted, with nothing on screen
+        — while this page, the one that must show devices attached since,
+        never re-probed at all. Plug in a microphone with A-Z+T running and
+        it was not offered.
+
+        CHEAP WHEN NOTHING CHANGED. `full_table_is_current()` compares the
+        device list by NAME against the one last probed; enumeration costs
+        0.000s where the sweep costs about a second. That matters because
+        `soundcheckrefresh` re-runs on every setting change, so probing
+        unconditionally would put a second between each click.
+
+        THE WAIT IS SHOWN WHETHER OR NOT THE USER CAME HERE DELIBERATELY
+        (Kent, 2026-09-29). A failed validation DROPS people here, and those
+        are the ones least able to explain a page that has gone quiet.
+        """
+        ss = self.soundsettings
+        try:
+            if ss.full_table_is_current():
+                return
+        except Exception as e:
+            log.info("couldn't tell whether the card table is current "
+                     "({!r}); probing".format(e))
+        # No progress FRACTION, and that is a CHOICE rather than a
+        # constraint: `getactual` is a plain nested loop that already counts
+        # its probes, so yielding a percentage from it is mechanical. Nothing
+        # resists a bar. A message is enough while the sweep is about a
+        # second (Kent, 2026-09-29: *"we won't change unless it feels long,
+        # but may want to add progress here"*), and a bar that has to be
+        # invented would say less than a sentence does.
+        with self.waiting(_("Checking which sound cards are available…")):
+            ss.getactual()
+
     def soundcheckrefresh(self,dict=None):
+        self._ensure_full_table()
         self.soundsettings.makedefaultifnot()
         self._refresh_test_filename()
         dictnow={

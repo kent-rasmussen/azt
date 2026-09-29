@@ -1007,8 +1007,8 @@ class StatusFrame(ui.Frame):
         either kind back for the setter.
 
         `othername` is excluded: the other grammatical category's field
-        cannot also be this one's, which is what `getsecondformfield`'s
-        `othername` argument was for."""
+        cannot also be this one's. The dialog this replaced took the same
+        precaution, by an argument of that name."""
         s=self.program.settings
         if ps == s.nominalps:
             opts, othername = s.plopts, s.imperativename
@@ -1042,7 +1042,7 @@ class StatusFrame(ui.Frame):
             # EDITABLE, because the answer may not be on the list. The old
             # flow was three windows deep for this one value — pick from the
             # database's fields, or "other" for the defaults, or "custom" to
-            # type a name (`getsecondformfield` → `getother` → `getcustom`).
+            # type a name — three windows deep, and deleted 2026-09-29.
             # An editable combo is all three: the existing names are offered,
             # and anything else can be typed. Kent, 2026-09-15: "second forms
             # combo/entry".
@@ -1083,9 +1083,10 @@ class StatusFrame(ui.Frame):
         finally settling on the values to use, before using them."
 
         AN EDIT IN PLACE, NOT A MODAL. The old path raised a chooser window
-        per field. Kent: "in the current paradigm, it would make more sense
-        for getsecondformfield to simply mark the appropriate settings label
-        as 'edit', rather than keeping the old dialog just for this." The
+        per field, and is gone (2026-09-29). Kent: "in the current paradigm,
+        it would make more sense for [the chooser] to simply mark the
+        appropriate settings label as 'edit', rather than keeping the old
+        dialog just for this." The
         cost he named is real — two undefined fields means two passes — and
         `then` is what stops those being two CLICKS: committing the field
         re-enters the work, so the user makes one gesture per missing value
@@ -1701,18 +1702,11 @@ class StatusFrame(ui.Frame):
         #     pass
         except Exception as e:
             log.error(f"Problem: {e}")
-    def makesecondfieldsOK(self):
-        """Not called anywhere?"""
-        for ps in [self.program.settings.nominalps, self.program.settings.verbalps]:
-            if ps not in self.program.settings.secondformfield and (
-                isinstance(self.program.task,Parse) or (
-                    isinstance(self.program.task,WordCollection) and
-                    self.type not in ['lx','lc'])):
-                if ps == self.program.settings.nominalps:
-                    self.program.ui_settings.getsecondformfieldN()
-                else:
-                    self.program.ui_settings.getsecondformfieldV()
-                return #just do one at a time
+    # `makesecondfieldsOK` DELETED 2026-09-29. Its own docstring asked "Not
+    # called anywhere?" and the answer was no — see plan 7 of
+    # agenda/azt/second_form_flags_audit.md. It was also the last
+    # `isinstance(self.program.task, Parse)` dispatch in this file, which the
+    # flag-based approach replaced everywhere else.
     """Right side"""
     def maybeboard(self):
         if not self.winfo_exists(): #stale after()/post-wait call; this frame's
@@ -4804,128 +4798,22 @@ class Settings(object):
                             row=0, column=1)
             listbox.config(yscrollcommand=sb.set)
             window.wait_window(window)
-    def getsecondformfieldN(self,event=None):
-        ps=self.program.settings.nominalps
-        opts=self.program.settings.plopts
-        othername=self.program.settings.imperativename
-        setcmd=self.program.settings.setsecondformfieldN
-        self.getsecondformfield(ps,opts,othername,setcmd)
-    def getsecondformfieldV(self,event=None):
-        # log.info(".impopts: {}".format(self.program.settings.impopts))
-        ps=self.program.settings.verbalps
-        opts=self.program.settings.impopts
-        othername=self.program.settings.pluralname
-        setcmd=self.program.settings.setsecondformfieldV
-        self.getsecondformfield(ps,opts,othername,setcmd)
-    def getcustomsecondformfield(self,ps,othername,setcmd):
-        def updateerror(event=None):
-            if event.keysym != 'Return':
-                self.program.task.errorlabel['text'] = ''
-        def submitform(event=None):
-            log.info(_("setting {custom} (not {other})").format(custom=custom.get(), other=othername))
-            if custom.get() == othername:
-                text=_("That name is already used!")
-                log.error(text)
-                self.program.task.errorlabel['text']=text
-                return
-            setcmd(custom.get())
-            window.on_quit()
-        title=_('Make Custom Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self.dialogparent(),title=title)
-        #should never be othername
-        l=ui.Label(window,
-                text=_("What field name do you want to use for {ps} words?"
-                        ).format(ps=ps),
-                row=0,column=0)
-        custom=ui.StringVar()
-        formfield = ui.EntryField(window, render=True,
-                                    text=custom,
-                                    row=1,column=0,
-                                    sticky='')
-        formfield.focus_set()
-        formfield.bind('<Return>',submitform)
-        formfield.bind('<KeyRelease>',updateerror)
-        self.program.task.errorlabel=ui.Label(window,text='',
-                            fg='red',
-                            wraplength=int(self.program.task.frame.winfo_screenwidth()/3),
-                            row=2,column=0,sticky='nsew'
-                            )
-        window.wait_window()
-    def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
-        """'other' is used when fields already present in the database
-        do not include a good option. 'Othername' is used to exclude another
-        grammatical category, e.g., verb fields for a noun second form.
-        If there are no such fields in the db (e.g., if you just started
-        a new db for word collection), the user will go straight to selecting
-        from default options, or providing a custom name for the new field"""
-        def getother():
-            """Current db fields aren't enough, ask for default or custom"""
-            window.destroy()
-            self.getsecondformfield(ps=ps,
-                                    opts=opts,
-                                    othername=othername,
-                                    setcmd=setcmd,
-                                    other=True)
-        def getcustom():
-            """Current db fields and custom names aren't enough, get custom"""
-            window.destroy()
-            self.getcustomsecondformfield(ps=ps,
-                                    # opts=opts,
-                                    othername=othername,
-                                    setcmd=setcmd,
-                                    # other=True
-                                    )
-        log.info(_("Asking for ‘{ps}’ second form field...").format(ps=ps))
-        try:
-            assert other == False
-            othernames=[i for i in self.program.db.fieldnames[self.program.params.analang()]
-                    if i != othername and i not in ['lc','lx']]
-        except (KeyError,AssertionError):
-            othernames=[]
-        if othernames:
-            if len(othernames)-1:
-                text=_("Select a database field "
-                        "to use for second forms of ‘{ps}’ words").format(ps=ps)
-                otherbuttontext=_("None of these; make a new field")
-            else:
-                text=_("Select the ‘{field}’ database field "
-                        "for second forms of ‘{ps}’ words").format(field=othernames[0],ps=ps)
-                otherbuttontext=_("No; make a new field")
-            cmd=getother
-            optionslist=othernames
-        else:
-            setcmd(opts[0])
-            # ErrorNotice(_("No suitable database fields were found for second "
-            #             f"forms of '{ps}' words; using '{opts[0]}'."))
-            return
-            # text=_("No suitable database fields were found; what name "
-            #         f"do you want to use for second forms of '{ps}' words?")
-            # otherbuttontext=_("None of these work; make my own field")
-            # cmd=getcustom
-            # optionslist=opts
-        title=_('Select Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self.dialogparent(),title=title)
-        ui.Label(window.frame, text=text, column=0, row=0)
-        """What does this extra frame do?"""
-        window.scroll=ui.Frame(window.frame)
-        window.scroll.grid(column=0, row=2)
-        buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                optionlist=optionslist,
-                command=setcmd,
-                window=window,
-                column=0, row=0
-                )
-        otherbutton=ui.Button(buttonFrame1.content,
-                            text=otherbuttontext,
-                            column=0, row=1,
-                            cmd=cmd
-                            )
-        if self.program.task.winfo_viewable():
-            self.program.task.withdraw()
-            window.wait_window(window)
-            self.program.task.deiconify()
-        else:
-            window.wait_window(window)
+    # ── The second-form field chooser: DELETED 2026-09-29 ─────────────────
+    # `getsecondformfieldN`, `getsecondformfieldV`, `getcustomsecondformfield`
+    # and `getsecondformfield` stood here, three windows deep for one value:
+    # pick from the database's fields, or "other" for the defaults, or
+    # "custom" to type a name. Nothing had called any of them since the
+    # settings pane stopped defining the field as a side effect of drawing
+    # itself (2026-09-17).
+    #   What replaced them is `StatusFrame.assure_second_forms`, which opens
+    # the field IN PLACE on the settings pane. Kent, 2026-09-15: "in the
+    # current paradigm, it would make more sense for getsecondformfield to
+    # simply mark the appropriate settings label as 'edit', rather than
+    # keeping the old dialog just for this." An editable combo is all three
+    # old windows at once — the existing names are offered, and anything
+    # else can be typed.
+    #   Plan 7 of agenda/azt/second_form_flags_audit.md; the whole cluster
+    # was a closed call graph with no entry point from the rest of the app.
     def getmulticheckscope(self,event=None):
             log.info(_("Asking for multicheckscope..."))
             cvts=[[i] for i in self.program.params.cvts()]
@@ -4956,14 +4844,10 @@ class Settings(object):
         for cvt in self.cvtstodo:
             output+=[self.program.params.cvtdict()[cvt]['pl']]
         return output
-    def secondfieldnames(self):
-        """Not called anywhere?"""
-        if self.program.settings.nominalps not in self.program.settings.secondformfield:
-            self.getsecondformfieldN()
-        if self.program.settings.verbalps not in self.program.settings.secondformfield:
-            self.getsecondformfieldV()
-        return (self.program.settings.secondformfield[self.program.settings.verbalps],
-                self.program.settings.secondformfield[self.program.settings.nominalps])
+    # `secondfieldnames` DELETED 2026-09-29 with the chooser it called. Its
+    # own docstring asked "Not called anywhere?" — correct. It also indexed
+    # `secondformfield` directly, which is the read that a stored `<unset>`
+    # fools; `secondformfieldset()` is the predicate now.
     def getbuttoncolumns(self,event=None):
         log.info(_("Asking for number of button columns..."))
         _option_dialog(self.dialogparent(),

@@ -99,6 +99,30 @@ except NameError:
 # was a bug somewhere that made 32float cause problems, so I stopped short of
 # that. But that was some time ago, so may no longer apply." Enabling it is
 # its own change with its own test, never a side effect of choosing a default.
+# HOW LONG ONE DEVICE MAY TAKE TO ANSWER, across all its rate/format
+# combinations, before `getactual` stops asking it. See the budget comment
+# there for the measurement that set it: every healthy device on the test
+# machine finished in under 0.26s, while one pathological PCM took 5.42s, so
+# anything from about half a second up separates them with room to spare.
+# Raise it if a real device is ever seen to need longer.
+PROBE_BUDGET_S = 0.6
+
+# ALSA PLUMBING THAT WEARS A DEVICE'S NAME. These are PCM plugins, not
+# hardware: `dmix` mixes several outputs onto one card, `dsnoop` does the same
+# for inputs, `null` discards. None is a thing a user means to record through,
+# and each is reachable anyway through `default`, which routes to the same
+# hardware — measured at 0.18s against `dmix`'s 5.42s on the same machine
+# (2026-09-28), because opening the plugin directly waits on hardware the
+# sound server already holds and then gives up.
+#
+# A STATIC LIST IS LEGITIMATE HERE, and is not the thing Kent ruled out. His
+# objection — *"we're not going to run that check first, then exclude, I
+# assume..."* — was to learning the names BY PROBING, which is circular and
+# does not survive a new machine. These names are ALSA's own vocabulary,
+# known without measuring anything. `PROBE_BUDGET_S` remains the answer for
+# whatever is slow on a machine nobody has seen.
+SKIP_PCM_PREFIXES = ('dmix', 'dsnoop', 'null')
+
 SAMPLE_FORMATS = {
     'int32': {'bits': 32, 'label': _('32 bit integer')},
     'int16': {'bits': 16, 'label': _('16 bit integer')},
@@ -603,6 +627,21 @@ class AudioInterface(object):
                             'rate': d.get('default_samplerate')})
         except Exception as e:
             log.error("could not list audio devices ({})".format(e))
+        return out
+
+    def default_indices(self):
+        """{input index, output index} as PortAudio reports them, minus any
+        it declines to name (-1). The seed for a narrow probe: with no stored
+        settings these are the devices that would be chosen anyway, so they
+        are the ones worth knowing about before anything else."""
+        out = set()
+        try:
+            pair = sounddevice.default.device
+            for i in (pair if isinstance(pair, (list, tuple)) else [pair]):
+                if isinstance(i, int) and i >= 0:
+                    out.add(i)
+        except Exception as e:
+            log.info("no default audio devices reported ({})".format(e))
         return out
 
     def supported(self, device, rate, fmt, output, channels=1):
@@ -1308,8 +1347,17 @@ class SoundSettings(object):
     def next(self):
         return self.next_sf()
 
-    def getactual(self, test=True):
+    def getactual(self, test=True, only=None):
         """Build `self.cards` — what each device REALLY does, per direction.
+
+        `only` — an iterable of device indices — PROBES JUST THOSE, which is
+        the difference between ~1.1s and ~0.05s. Added 2026-09-29 after the
+        measurement below stopped being the whole story: the table is needed
+        for CHOOSING (first run, a failed validation, the settings page) and
+        merely READ for confirming, which is one device and one combination.
+        `cards['dict']` is still filled for EVERY device, because it is the
+        index→name map the rest of the module reads and a hole in it would
+        turn a later lookup into '?'.
 
         `test` now defaults to TRUE, and that is the substance of this change
         rather than a tidy-up. It defaulted to False and its only caller
@@ -1343,21 +1391,67 @@ class SoundSettings(object):
         # Noise suppression lives in `devices()` and `supported()`, which are
         # the only calls here that touch PortAudio — wrapping this method as
         # well would just nest the same thing.
+        skipped = []
         for dev in self.audio.devices():
             i = dev['index']
+            # NAME KEPT EVEN WHEN SKIPPED: `cards['dict']` is the index→name
+            # map the rest of the module reads, and a hole in it would turn a
+            # later lookup into '?' for no reason.
+            self.cards['dict'][i] = dev['name']
+            name = str(dev.get('name') or '').strip().lower()
+            if name.startswith(SKIP_PCM_PREFIXES):
+                skipped.append(dev['name'])
+                continue
+            if only is not None and i not in only:
+                continue
             if dev['in'] > 0:
                 self.cards['in'][i] = {}
             if dev['out'] > 0:
                 self.cards['out'][i] = {}
-            self.cards['dict'][i] = dev['name']
+        if skipped:
+            log.info("not probing ALSA plumbing (reachable via `default`): %s",
+                     ', '.join(skipped))
         probes = 0
+        # PER-CARD TIMING (2026-09-28). The harness says 150 checks cost
+        # 6.75s, 11.05s and 11.07s on three consecutive runs — identical work,
+        # a four-second swing — against the 1.26s this was measured at when
+        # the decision to probe was taken. A swing like that is not a sweep
+        # that is uniformly slow; it is one or two devices blocking, and the
+        # mean hides which. So: seconds per card/direction, worst first.
+        percard = []
+        gaveup = []
         for io, is_output in (('in', False), ('out', True)):
             for card in list(self.cards[io]):
+                _c0 = _time.perf_counter()
                 self.cards[io][card] = {}
                 for fs in self.hypothetical['fss']:
                     keep = []
                     for fmt in self.hypothetical['sample_formats']:
                         if test:
+                            # A BUDGET PER DEVICE, so one slow PCM cannot own
+                            # the startup. MEASURED 2026-09-28: of a 6.83s
+                            # probe, ALSA's `dmix` output took 5.42s on its
+                            # own and every other device came in under 0.26s.
+                            # `dmix` is a software-mixing plugin sitting on
+                            # hardware PipeWire already holds, so each open
+                            # waits and then gives up — half a second per
+                            # combination, ten combinations.
+                            #   A TIME BUDGET, NOT A BLOCKLIST, deliberately.
+                            # Kent: *"we're not going to run that check first,
+                            # then exclude, I assume..."* — quite so; naming
+                            # devices would mean probing to learn the names,
+                            # and a new machine would have new ones. This
+                            # needs no prior knowledge and adapts to whatever
+                            # is slow here today.
+                            #   Giving up is also the HONEST answer: a device
+                            # that cannot say whether it supports a format in
+                            # half a second is not one to record through, and
+                            # `supported()` already treats any failure to
+                            # answer as "no".
+                            if _time.perf_counter() - _c0 > PROBE_BUDGET_S:
+                                if card not in gaveup:
+                                    gaveup.append(card)
+                                continue
                             probes += 1
                             # A device that refuses — or that hangs its own
                             # probe and raises — costs us THAT COMBINATION,
@@ -1368,12 +1462,109 @@ class SoundSettings(object):
                         keep.append(fmt)
                     if keep:
                         self.cards[io][card][fs] = keep
+                percard.append((_time.perf_counter() - _c0, io, card,
+                                self.cards['dict'].get(card, '?')))
                 if not self.cards[io][card]:
                     del self.cards[io][card]
-        log.info("audio devices probed in {:.2f}s ({} checks): {} input, {} "
-                 "output configurations usable".format(
+        if gaveup:
+            log.info("gave up probing %s after %.1fs each (too slow to be "
+                     "worth recording through): %s", len(gaveup),
+                     PROBE_BUDGET_S,
+                     ', '.join('{} ({})'.format(self.cards['dict'].get(c, '?'),
+                                                c) for c in gaveup))
+        log.info("audio devices probed in {:.2f}s ({} checks, {}): {} input, "
+                 "{} output configurations usable".format(
                         _time.perf_counter() - started, probes,
+                        'all devices' if only is None
+                        else 'narrow: {}'.format(sorted(only)),
                         len(self.cards['in']), len(self.cards['out'])))
+        # The device set this table describes, so a later caller can ask
+        # whether anything has been plugged in or removed WITHOUT probing —
+        # enumeration is free (0.000s measured) and the sweep is not. Kent,
+        # 2026-09-29: "If it is VERY laggy, we might want to put in a cheap
+        # read of cards, and only fully probe on changes."
+        self.probed_fingerprint = self.device_fingerprint()
+        self.probed_only = None if only is None else set(only)
+        if test and percard:
+            percard.sort(reverse=True)
+            log.info("slowest devices to probe: %s",
+                     '; '.join('{} {} ({}) {:.2f}s'.format(io, name, card, secs)
+                               for secs, io, card, name in percard[:6]))
+
+    def narrow_indices(self):
+        """The few devices worth probing when we are only CONFIRMING.
+
+        PortAudio's defaults, plus whatever is stored — the latter matters
+        because the constructor runs BEFORE `load_from_file`, so the first
+        narrow probe cannot see a stored choice and a second one after the
+        load has to pick it up. Without that, anyone whose microphone is not
+        the system default would fail validation every session and be sent to
+        the settings page for no reason."""
+        want = set(self.audio.default_indices())
+        for attr in ('audio_card_in', 'audio_card_out'):
+            i = getattr(self, attr, None)
+            if isinstance(i, int) and i >= 0:
+                want.add(i)
+        return want
+
+    def probe_for_stored(self):
+        """Probe narrowly, now that stored settings are loaded.
+
+        Called by `ensure` after `load_from_file`. Cheap by construction: two
+        to four devices rather than every PCM on the machine.
+
+        THE UNPROBED PASS FIRST IS NOT OPTIONAL, and leaving it out would
+        silently destroy the user's choice. `resolve_cards` follows a
+        remembered device NAME to its index of the day, and
+        `_index_for_name` will only return an index that is already in
+        `cards[direction]` — which, straight after construction, is EMPTY. So
+        every stored card would look "not present now", be deleted, and be
+        re-derived from defaults on every single start.
+          `getactual(test=False)` builds the membership table by CLAIMING
+        rather than asking, which is what it did before real probing existed
+        and is measured at 0.000s. That is enough for names to resolve. The
+        real probe then follows, narrowed to the indices resolution just
+        confirmed — which is why `narrow_indices()` is read AFTER
+        `resolve_cards`, not before."""
+        self.getactual(test=False)          # free: names and directions only
+        self.resolve_cards()                # stored names → today's indices
+        self.getactual(only=self.narrow_indices())
+        self.makedefaultifnot()
+
+    def device_fingerprint(self):
+        """What devices exist, by NAME, as a comparable value.
+
+        Enumeration costs 0.000s (measured) while the capability sweep costs
+        ~1.1s, so this is how a caller asks "has anything changed?" without
+        paying for the answer. Names, not indices: indices are renumbered by
+        the mere arrival of a device, which is the thing `resolve_cards`
+        exists to survive, so an index-based fingerprint would report a change
+        every time one appeared regardless of which."""
+        try:
+            return tuple(sorted(str(d.get('name') or '')
+                                for d in self.audio.devices()))
+        except Exception as e:
+            log.info("could not fingerprint the audio devices (%r)", e)
+            return None
+
+    def devices_changed(self):
+        """True when the device set differs from the one last probed — or
+        when we cannot tell, because not knowing must not be read as "no
+        change" by a caller deciding whether to re-probe."""
+        now = self.device_fingerprint()
+        was = getattr(self, 'probed_fingerprint', None)
+        if now is None or was is None:
+            return True
+        return now != was
+
+    def full_table_is_current(self):
+        """Has a FULL sweep been done, for the devices attached right now?
+
+        Both halves matter. A narrow probe leaves `probed_only` set, and a
+        table describing two devices must not satisfy a page whose job is to
+        offer all of them."""
+        return (getattr(self, 'probed_only', 'unset') is None
+                and not self.devices_changed())
 
     def printactuals(self):
         for io in ['in', 'out']:
@@ -1787,10 +1978,17 @@ class SoundSettings(object):
             ss = getattr(program.settings, 'soundsettings', None)
             if ss is None:
                 log.info("Making new soundsettings object")
-                ss = cls(program, analang_obj=analang_obj)
+                # ORDER IS THE FIX (2026-09-29): build WITHOUT probing,
+                # publish, load the stored settings, and only THEN probe —
+                # narrowly, at the device the file names. The sweep used to
+                # run in the constructor, before anything knew what was
+                # stored, so it had to cover every device: 150 checks and
+                # 6.83s, of which the task needed one.
+                ss = cls(program, analang_obj=analang_obj, probe=False)
                 program.settings.soundsettings = ss
                 program.soundsettings = ss
                 ss.load_from_file()
+                ss.probe_for_stored()
             elif not hasattr(program, 'soundsettings'):
                 program.soundsettings = ss
             return ss
@@ -1801,7 +1999,7 @@ class SoundSettings(object):
         Never probes, never waits: what a click handler may ask."""
         return getattr(getattr(program, 'settings', None), 'soundsettings', None)
 
-    def __init__(self, program, audio=None, analang_obj=None):
+    def __init__(self, program, audio=None, analang_obj=None, probe=True):
         # `audio` is ACCEPTED AND IGNORED, as `pyaudio` was before it: the
         # handle comes from confirm_audio() below, which reuses program.audio
         # so there is exactly one. Kept in the signature because callers pass
@@ -1809,10 +2007,46 @@ class SoundSettings(object):
         # `program` belongs (frontend/transcriber.py:87-99 documents that
         # trap), which this parameter's existence is what made survivable.
         self.program = program
+        # TIMED 2026-09-28. `SoundSettings.ensure` measured at 7.89s of an
+        # 8.29s wait before a Parse task shows its first word — the whole
+        # delay, with the affix catalog it was blamed on at 0.38s. These four
+        # calls are the "probe" the classmethod's docstring says it blocks
+        # for, and they would want different fixes: opening the audio
+        # interface is one thing, enumerating what the hardware really
+        # supports is another.
+        import time as _t
+        _t0 = _t.perf_counter()
         self.confirm_audio()
+        _t1 = _t.perf_counter()
         self.sethypothetical()
-        self.getactual()
-        self.makedefaultifnot()
+        _t2 = _t.perf_counter()
+        # `probe=False` SKIPS THE SWEEP, and `ensure` uses it so the settings
+        # file can be loaded FIRST and the probe narrowed to the device that
+        # is actually stored. Kent, 2026-09-29: *"i assume that means we move
+        # up the settings load"* — yes, and the load cannot happen in here
+        # because `loadsettingsfile` writes onto `program.settings.
+        # soundsettings`, which is published one line out in `ensure`.
+        #   The default stays True, and the reason is smaller than it looks:
+        # the constructors that skip `ensure` are three standalone `__main__`
+        # demos (`sound_ui.py`, `transcriber.py`, `io_put/sound.py`), one
+        # fallback whose own comment calls it "a trap for the next one" and
+        # notes every real caller now passes settings, and the settings
+        # manager's legacy `.py` converter, which wants an object to load
+        # onto rather than a card table. NONE is a path a user takes. They
+        # keep the sweep so they do not get an empty table and fail
+        # confusingly — it costs nothing, because they are not the app.
+        self.cards = {'in': {}, 'out': {}, 'dict': {}}
+        if probe:
+            self.getactual()
+            _t3 = _t.perf_counter()
+            self.makedefaultifnot()
+        else:
+            _t3 = _t.perf_counter()
+        _t4 = _t.perf_counter()
+        log.info("SoundSettings init: confirm_audio %.2fs, sethypothetical "
+                 "%.2fs, getactual %.2fs, makedefaultifnot %.2fs, total %.2fs"
+                 "%s", _t1-_t0, _t2-_t1, _t3-_t2, _t4-_t3, _t4-_t0,
+                 '' if probe else ' (probe deferred to ensure)')
         # Exclude accidental recordings: 44.8 kHz @ 1 s = 14.6 k
         self.min_audio_length_ms = 500
         # bulk-ASR visibility (Kent 2026-07-14): which model/language units
@@ -1841,7 +2075,19 @@ class SoundSettings(object):
         except (Exception, AssertionError) as e:
             log.error("Exception loading ASR: {}".format(e))
             self.asrOK = False
-        self.check()
+        # DEFERRED WITH THE PROBE. `check()` negotiates the stored settings
+        # against `self.cards` and reaches `default_sf()`, which reads
+        # `self.audio_card_in` — an attribute `makedefaultifnot()` creates.
+        # Skipping the probe skips that too, so calling this here raised
+        # `'SoundSettings' object has no attribute 'audio_card_in'` on every
+        # sound task (2026-09-29, caught immediately on the first run).
+        #   Deferring it is right rather than merely safe: with `probe=False`
+        # there is nothing to validate AGAINST yet. `ensure` loads the file
+        # and calls `probe_for_stored()`, which probes and runs
+        # `makedefaultifnot()`, and the caller's own `soundcheck()` then
+        # calls `check()` with a table that means something.
+        if probe:
+            self.check()
         self.chunk = 1024
         self.channels = 1
 

@@ -297,6 +297,14 @@ class Task(TaskBase):
         self.makeeverythingok()
         from frontend.task_window import TaskWindow
         ui_kwargs={k:v for k,v in kwargs.items() if k in self.ui_kwargs}
+        # TIMED 2026-09-28: this is where the task WINDOW is built, and the
+        # screencast shows the page painted about 1.7s after the task is
+        # asked for, then a 6.47s silence. Knowing which side of this line
+        # that silence falls on decides whether to look at window building or
+        # at what the subclasses do afterwards.
+        import time as _time
+        _t_win=_time.perf_counter()
         self.ui = TaskWindow(self, parent, **ui_kwargs)
         log.info(f"Done initializing {self.__class__.__name__} "
-                 f"(base: {self.program.task_base()})")
+                 f"(base: {self.program.task_base()}) — TaskWindow built in "
+                 f"{_time.perf_counter()-_t_win:.2f}s")

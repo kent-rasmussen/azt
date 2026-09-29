@@ -7560,8 +7560,26 @@ class Toplevel(_WebviewWidget):
         session is modal on nothing, so closing it is exactly when the
         chooser first needs to exist. See agenda/modal_window_stack.md.
 
+        NOT WHILE THE APP IS LEAVING. `Root.quit()` closes every window to
+        end the loop, and the last one to go has nothing behind it BY
+        DEFINITION — so this fired during shutdown and built a task list,
+        with a wait over it, at the moment the loop that would drive them
+        ended. The predecessor's log, 2026-09-29: `quit: closed 7 window(s)`
+        then `nothing behind it — showing the task list` then `Waiting:
+        Getting your task list…`, then nothing ever again, because
+        `gettask()` blocks on a wait that can no longer be released.
+          A window closing because the app is going away is not a user
+        finishing a task, which is the only case this method is for.
+
         Never raises: this runs inside `on_quit`, where an exception would
         cost the close itself."""
+        try:
+            if self.exitFlag.istrue():
+                log.info("window {}: nothing behind it, but we are quitting; "
+                         "building nothing".format(self._wid))
+                return
+        except Exception:
+            pass        # no flag to read is not a reason to skip the reveal
         try:
             root = self._find_root() or default_root()
             chooser = getattr(getattr(root, 'program', None),
@@ -8939,6 +8957,30 @@ class Root(_WebviewWidget):
         and a lingering predecessor is worse than an abrupt exit."""
         if not webview:
             raise RuntimeError('no pywebview: no main loop to end')
+        # SAY WE ARE LEAVING BEFORE CLOSING ANYTHING. Destroying a window
+        # runs close handling, and close handling asks "what should the user
+        # see next?" — which during shutdown is nothing. Kent, 2026-09-29:
+        # "exitFlag is the only one; it should already be set by quit()." It
+        # was not. See `_nothing_behind_me`, which built a whole task list
+        # and raised a wait over it while this method was ending the loop
+        # that would have serviced them.
+        try:
+            self.exitFlag.true()
+        except Exception as e:
+            log.info('quit: could not set exitFlag ({!r})'.format(e))
+        # AND MARK OUR OWN WRAPPERS DEAD. Below we destroy PYWEBVIEW's
+        # windows, which does not run `Toplevel.on_quit` — and `on_quit` is
+        # what sets `_exists = False`. Without this the wrappers still report
+        # themselves alive after their native side is gone, so
+        # `_waitwindow()` hands the dead reused wait window straight back to
+        # the next caller: a new message written into a window that is not
+        # there, keeping the OLD title on screen. That is Kent's reading of
+        # the screenshot, 2026-09-29, and it is what the reuse code does.
+        for child in list(getattr(self, '_children', ()) or ()):
+            try:
+                child._exists = False
+            except Exception:
+                pass
         windows = list(getattr(webview, 'windows', None) or [])
         if self._wv_window is not None and self._wv_window not in windows:
             windows.append(self._wv_window)
@@ -8954,8 +8996,17 @@ class Root(_WebviewWidget):
         if len(failed) == len(windows):
             raise RuntimeError('every pywebview window refused to close: '
                                '{}'.format(failed[0]))
-        log.info('quit: closed {} window(s); the main loop should return'
-                 ''.format(len(windows) - len(failed)))
+        # "ASKED", NOT "CLOSED". This said `closed N window(s)` and knew no
+        # such thing — only that N `destroy()` calls returned without
+        # raising. A window was still on screen while the log claimed it had
+        # gone, and the claim is what sent the diagnosis the wrong way for
+        # half an hour (Kent, 2026-09-29: "showing more log content doesn't
+        # tell you quit() finished cleanly; the window is still on my
+        # screen"). Same rule as `_wv_visible` in azt/CLAUDE.md: this
+        # backend's log records what we ASKED the toolkit for, never what it
+        # did, and writing it the other way makes the log lie.
+        log.info('quit: asked {} window(s) to close, {} refused; the main '
+                 'loop should return'.format(len(windows), len(failed)))
 
     def state(self, newstate=None):
         """As Toplevel.state — see there for why this exists. Root tracks
@@ -9132,6 +9183,22 @@ class Root(_WebviewWidget):
         if ww is None or not getattr(ww, '_exists', False):
             if not create:
                 return None
+            # NOTHING NEW ONCE WE ARE LEAVING. Kent, 2026-09-29: the point of
+            # the flag is "letting the program know that we're _going_ to
+            # close things, so backend logic (and new wait windows) can stop
+            # more cleanly." A wait raised during teardown is the worst of
+            # them, because raising one means BLOCKING on it, and the loop
+            # that would release it is the thing being shut down — which is
+            # how the predecessor ended up sitting on `Waiting: Getting your
+            # task list…` forever.
+            #   Returning None is already a supported answer here (see the
+            # no-root case above), so callers need no change.
+            try:
+                if root.exitFlag.istrue():
+                    log.info('not building a wait window: the app is quitting')
+                    return None
+            except Exception:
+                pass
             ww = Wait(root)
             root.ww = ww
         return ww

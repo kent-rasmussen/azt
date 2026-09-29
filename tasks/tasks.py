@@ -466,7 +466,21 @@ class WordCollectionCitationwRecordings(WordCollectionwRecordings,Task):
         log.info("Initializing {}".format(_(self.tasktitle)))
         self.getwords()
 class _WordCollectionSecondForm(WordCollection,Task):
-    """Base for word collection tasks that require a second form field."""
+    """Base for word collection tasks that require a second form field.
+
+    EXPECT THIS TO GO (Kent, 2026-09-29: these "will be obsoleted, almost
+    absolutely certainly"). Its two subclasses, `WordCollectionPlural` and
+    `WordCollectionImperative`, are imported in `main.py` and offered by the
+    chooser NOWHERE — so nothing reaches them today. The reason they are not
+    wanted is not merely that they are unreachable: collecting plurals and
+    imperatives by hand is the workflow parsing replaces. Kent, 2026-09-17:
+    "collecting pl and imp is unlikely, given that we do it through parsing
+    in the ideal case."
+
+    Do not build on this. If a second-form collection task is ever needed
+    again it should come back through the check-driven one-collection-task
+    design, not by reviving a class per ftype. See plan 2 of
+    `agenda/azt/second_form_flags_audit.md`."""
     ftype_code = None  # override in subclasses
     form_label = None  # override in subclasses
     # IT READS THE FIELD — `storethisword` writes into it by name. The flag
@@ -503,6 +517,16 @@ class ParseWords(Parse,Task):
         return _("This task will help you parse your citation forms, "
                 "automatically and with confirmation.")
     def run_getparses(self):
+        # THE SAME GATE AS "Next", AT THIS TASK'S EQUIVALENT MOMENT. ParseWords
+        # has no word page, so there is no Next to hold — its button IS the
+        # point of use. Before `wait_and_drive_work`, because that hands the
+        # window to a progress display and the settings field could not be
+        # opened underneath it.
+        #   `then=self.run_getparses` so that supplying the value starts the
+        # parse the user already asked for, instead of making them press it
+        # again. See `Segments.second_forms_ready`.
+        if not self.second_forms_ready(then=self.run_getparses):
+            return
         msg=_("Parsing (ask: {ask} auto: {auto})").format(
             ask=self.parser.ask, auto=self.parser.auto)
         self.ui.wait_and_drive_work(msg, self.getparses())
@@ -617,12 +641,14 @@ class WordsParse(Parse,WordCollection,Task):
         self.ftype=program.params.ftype('lc') #always correct?
         # self.nodetag='citation'
         super().__init__(program=program, **kwargs)
-        # if not self.program.settings.secondformfieldsOK():
-        #     ErrorNotice(_("To parse, you must first define which fields "
-        #                     "should contain secondary forms"),
-        #                     wait=True)
-        #     self.shutdowntask()
-        #     return
+        # A COMMENTED-OUT REFUSAL stood here — shut the task down unless both
+        # second-form fields were already defined — and it is deleted rather
+        # than revived (2026-09-29). It is the wrong shape twice over: it
+        # turns a missing SETTING into a dead end, with no way to supply the
+        # value from the page that just refused; and it blocks the whole task
+        # when what needs the value is the parse. `Segments.second_forms_ready`
+        # asks for the field where it is needed and lets the page work
+        # meanwhile. See agenda/azt/second_form_flags_audit.md plan 4.
         self.dodone=True #give me words with citation done
         self.checkeach=True #confirm each word (not default)
         self.dodoneonly=True #don't give me other words

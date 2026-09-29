@@ -776,11 +776,13 @@ class Settings(SettingsUI):
             _log.info(_("Problem with finding a nominal and verbal lexical "
             "category (looked in first two of [{pss}])")
             .format(pss=self.program.db.pss))
-    def makesecondformfieldsOK(self):
-        if self.nominalps not in self.secondformfield:
-            self.program.mainwindow.getsecondformfieldN()
-        if self.verbalps not in self.secondformfield:
-            self.program.mainwindow.getsecondformfieldV()
+    # `makesecondformfieldsOK` DELETED 2026-09-29 with the rest of the
+    # second-form dialog cluster (plan 7 of
+    # agenda/azt/second_form_flags_audit.md). It called
+    # `mainwindow.getsecondformfieldN/V`, which are gone; its only remaining
+    # mention was already commented out in `Parse.__init__`. What replaced it
+    # is `StatusFrame.assure_second_forms`, which opens the field in place
+    # instead of raising a chooser window.
     #: What the status line SHOWS when a second-form field has no value.
     #: It is a display string and must never be stored — but it was, and
     #: reached `project.json` (Kent, 2026-09-17: `"Verb": "<unset>"`, with
@@ -802,6 +804,17 @@ class Settings(SettingsUI):
             return False
         return str(self.secondformfield[ps]).strip() not in (
                     '', self.UNSETFIELD)
+
+    def missing_second_form_pss(self):
+        """Which parts of speech still have no second-form field, in order.
+
+        ONE PREDICATE, THREE CALLERS. `assure_second_forms` opens the first of
+        these, and the Parse page gate names them in the notice it shows while
+        it waits — both were about to build this list themselves, and a second
+        copy of "what counts as set" is exactly how the stored `<unset>`
+        fooled three consumers at once (see `secondformfieldset`)."""
+        return [ps for ps in (self.nominalps, self.verbalps)
+                if ps and not self.secondformfieldset(ps)]
 
     def secondformfieldsOK(self):
         if (self.secondformfieldset(self.nominalps) and

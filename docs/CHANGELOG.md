@@ -19,6 +19,156 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.40
+
+**Restarting into a different database no longer leaves a dead "Please Wait"
+on screen. CONFIRMED** (Kent: *"hang gone"*).
+
+The predecessor handed over correctly and then, on its way out, built a new
+window it could not drive. Ending the loop on this backend means destroying
+windows — pywebview has no stop-the-loop call — and every destroy runs close
+handling. The last window to close has nothing behind it BY DEFINITION, so
+the handler for that case did what it is for and opened the task list, whose
+wait then blocked on the loop that was shutting down. The log ended
+mid-restart on "Getting your task list…".
+
+Four changes, and the first is the one that matters:
+
+- **Quitting says so before it closes anything.** Kent: the point is *"letting
+  the program know that we're _going_ to close things, so backend logic (and
+  new wait windows) can stop more cleanly."* The flag existed and is widely
+  read — backend work gates on it all over — but it was never raised by this
+  path, and nothing in the frontend consulted it anyway.
+- **No new wait window while leaving.** Raising a wait means blocking on it,
+  which is the worst thing to start during teardown.
+- **Nothing is revealed on close while leaving.** A window closing because the
+  app is going away is not a user finishing a task.
+- **Our own window wrappers are marked closed.** Destroying pywebview's
+  windows bypasses the handler that normally records it, so a wrapper kept
+  reporting itself alive after its native side was gone — and the single
+  reused wait window was then handed back dead, which is why the stale
+  "Restarting A-Z+T" title stayed on screen. Kent's reading, and the reuse
+  code bears it out.
+
+**The general point is recorded rather than the fix alone**
+(`exit_flag_names_its_scope.md`): backend code asks this flag whether to
+CONTINUE, everywhere and correctly. Nothing in the frontend asks whether to
+BEGIN. Scheduling a callback, starting a work chain and creating a window all
+still start during teardown.
+
+**Also: a dead dialog cluster removed.** Eight functions for choosing a
+second-form field — three windows deep for one value — with no caller
+anywhere: they only called each other. Two carried the docstring "Not called
+anywhere?" and were right. This also retires a `NameError` waiting to happen,
+since one of them called an `after()` that this module neither defines nor
+imports; nothing but itself ever called it, so it never fired.
+
+# Version 1.15.39
+
+**The sound-card sweep now happens where it is needed, and not where it was
+not.** 1.15.38 cut it from 6.83s to about 1 by skipping ALSA's `dmix`. This
+moves what remains off the path that never wanted it.
+
+It used to run in `SoundSettings.__init__`, which happens BEFORE the settings
+file is read — so it could not know which device was stored, and had to
+measure every device on the machine to be sure of covering it. Now the object
+is built without probing, the file is loaded, and only then is the probe run,
+narrowed to the stored device and the system defaults.
+
+**The settings page sweeps instead, on every open that needs it.** That page
+is the only thing that genuinely needs the whole table, because it is the
+only place where the user chooses among devices rather than using one already
+chosen. It carries a wait while it works, shown however the page was reached
+— a failed validation DROPS people there, and those are the ones least able
+to explain a page that has gone quiet.
+
+**Which fixes something separate: a microphone plugged in while A-Z+T is
+running is now offered.** It never was. The table was built once at startup
+and never rebuilt, so the settings page listed whatever existed when the app
+launched. It now compares the device list by name against the one last
+probed, and re-sweeps only when that differs — enumeration is free where the
+sweep is not, and the page rebuilds on every setting change.
+
+**One trap found and avoided in the process.** A remembered device is
+followed by NAME, and the lookup only accepts an index already present in the
+probed table. Probing narrowly would therefore have made every stored
+microphone look absent, and `resolve_cards` would have dutifully deleted the
+setting on every start. The narrow path now builds the free, unprobed table
+first, so names resolve before anything is narrowed.
+
+**A floor worth knowing about:** the first real device open of a session costs
+roughly a second whatever is asked of it — the same device measured 0.53s in
+the first pass and 0.22s in the second. The cost is bringing up the sound
+server connection, not the number of devices, so probing even fewer would buy
+nothing. That also reconciles the two honest-looking measurements that
+started this, since the timing harness averages three passes and diluted its
+own warm-up.
+
+# Version 1.15.38
+
+**Opening a Parse task took over eight seconds, and almost all of it was one
+ALSA plugin. CONFIRMED FIXED** (Kent: *"much better"*).
+
+The wait was blamed on the affix parser for two reasons: it is the last thing
+that writes to the log before the silence, and its wait screen is the only one
+that ever appears. Measurement disagreed with both of us. A screencast put a
+6.47 second gap AFTER the page had painted and BEFORE the affix load, and
+timing the phases apportioned it:
+
+| phase | time |
+|---|---|
+| task window built | 0.01s |
+| **sound card probe** | **6.83s** |
+| affix catalog | 0.38s |
+| parser engine | 0.0000s |
+| word page, including scanning 1699 entries | 0.19s |
+
+Then per device: **ALSA's `dmix` output alone was 5.42s**, with every healthy
+device under 0.26s. It is a software-mixing plugin sitting on hardware the
+sound server already holds, so each open waits and then gives up.
+
+Two changes, because they answer different questions:
+
+- **`dmix`, `dsnoop` and `null` are no longer probed.** They are ALSA plugins
+  rather than hardware, and `default` reaches the same card in 0.18s.
+- **A time budget per device**, so one pathological PCM cannot own startup on
+  a machine nobody has seen, where no list would have named it.
+
+A list learned BY probing was considered and rejected, since it is circular
+and useless on the next machine. These three names are ALSA's own vocabulary.
+
+Two things this leaves open, both recorded: the probe still runs on the first
+sound task rather than at startup behind the splash, which is where it was
+decided to go and why the wait has no indicator; and the remaining second of
+`SoundSettings.ensure` is loading the settings file and has never been looked
+at.
+
+**Parsing tasks now ask for the second-form fields, three times, and only the
+third withholds anything.** Parsing indexes that setting directly by part of
+speech, so a project whose database has none of the default field names
+reached a KeyError. Nothing had asked for the value since the settings pane
+stopped defining it as a side effect of drawing itself.
+
+The field opens when the page loads, again on the first click into the word
+entry, and again on Next. Only Next refuses, and what it refuses is the
+advance rather than the page. The word can be typed either way, and the parse
+rides on Next, so gating Next gates the parse — which is the thing that
+actually needs the value. Kent: *"If a user wants to see the whole page first,
+or not fill out that field yet, fine."*
+
+This replaced a written design that held the first word back until both fields
+were set. That design spent most of its length on what to do when the user
+walks away; escalation dissolves the question instead of answering it.
+
+**Clicking away from a settings field now closes it, and commits nothing.**
+Two faults, one from the other. Nothing was bound to a click outside an open
+editor at all, so only its OK button or opening a different field could close
+one. And when it did close, it COMMITTED — which is how the display
+placeholder `<unset>` was once handed to a setter and written to the project
+file. Every field here has an explicit OK, so leaving one is abandonment, not
+agreement. The placeholder refusal stays as a second line of defence for
+project files that already carry it.
+
 # Version 1.15.37
 
 **MOST OF THIS IS AWAITING VERIFICATION, not fixed.** Two app changes and two

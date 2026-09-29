@@ -101,16 +101,86 @@ _EDITOR_CHROME = 5
 
 
 def close_open_field(exceptfor=None):
-    """Commit whatever field is open, if it is not `exceptfor`."""
+    """CANCEL whatever field is open, if it is not `exceptfor`.
+
+    IT USED TO COMMIT, AND THAT WAS THE BUG (Kent, 2026-09-28: *"given we have
+    the OK button, click away should not commit"*). Every field here carries
+    an explicit OK, so leaving one — by opening another, or by clicking away —
+    is abandonment, not agreement. Treating it as agreement is precisely how
+    the display placeholder `<unset>` was handed to a setter and reached
+    `project.json` (2026-09-17); the setters were then taught to refuse it,
+    which guards the symptom. Not committing removes the cause.
+
+    `commit(notify=False)` IS the cancel: it restores what was there, puts the
+    label back and unbinds Return, while calling neither the setter nor
+    `after_commit`. Not calling `after_commit` is the part that matters for
+    `assure_second_forms` — an abandoned field must not resume the work that
+    asked for the value, which is the rule Kent set for sorting and which this
+    now enforces by construction rather than by that hook's own re-check."""
     global _editing
     open_one = _editing
     if open_one is None or open_one is exceptfor:
         return
     _editing = None
     try:
-        open_one.commit()
+        open_one.commit(notify=False)
     except Exception as e:
         log.info("click-to-edit: could not close the open field (%r)", e)
+
+
+def _click_landed_inside(event, field):
+    """Did this click land on the open editor, or on something else?
+
+    TWO MECHANISMS, BECAUSE THE BACKENDS IDENTIFY A CLICK DIFFERENTLY. The
+    first version asked only `event.widget` and failed safe to "inside" when
+    it could not tell — which on the webview backend is ALWAYS, because
+    `bind_all` there routes to the window and ultimately `document`, and the
+    handler receives no Tk-shaped event. So the watch never fired and clicking
+    away did nothing at all (Kent, 2026-09-28: *"clicking away does exactly
+    what it did before"*).
+
+      * **tkinter** gives `event.widget`, so walk its parents. A click on a
+        CHILD of the editor never fires the editor's own binding there — Tk
+        dispatches widget, class, toplevel, all, and does not bubble to parent
+        widgets — so the walk is the only thing that can see it.
+      * **webview** bubbles through the DOM, so a handler on the editor's own
+        box runs before the document handler for any click within it. That
+        sets a flag, which is what this reads when there is no widget.
+
+    Fail-safe is still "inside" when NEITHER answers: closing an editor
+    someone is using is worse than leaving one open that they are done with,
+    and OK always works."""
+    if getattr(field, '_click_was_inside', False):
+        field._click_was_inside = False
+        return True
+    w = getattr(event, 'widget', None)
+    box = getattr(field, 'box', None)
+    if w is None or box is None:
+        # No widget on the event: the flag above was this click's only
+        # witness, and it did not speak, so the click was elsewhere.
+        return w is not None
+    node, hops = w, 0
+    while node is not None and hops < 50:      # bounded: never trust a parent chain
+        if node is box:
+            return True
+        node = getattr(node, 'master', None)
+        hops += 1
+    return False
+
+
+def _cancel_on_click_away(event=None):
+    """Close the open field when a click lands outside it, committing nothing.
+
+    Added 2026-09-28. Nothing bound this before, which is why an open editor
+    could only be closed by its OK button or by opening a different field —
+    Kent: *"Does clicking off the edit normally return it to the label? it
+    isn't here."*"""
+    field = _editing
+    if field is None:
+        return
+    if _click_landed_inside(event, field):
+        return
+    close_open_field()
 
 
 class ClickToEdit:
@@ -393,12 +463,49 @@ class ClickToEdit:
                 self.widget.focus_set()
             except Exception as e:
                 log.info("click-to-edit: no focus_set on the editor (%r)", e)
+        # WATCH FOR A CLICK ELSEWHERE, but only while this field is open, and
+        # only from the NEXT idle moment. Installed immediately, the binding
+        # would catch the very click that opened the field: Tk dispatches
+        # widget, then class, then toplevel, then "all", so the click on the
+        # label would reach an "all" handler added midway and close what it
+        # just opened. Deferring by one turn of the loop puts it after this
+        # event is finished with.
+        # THE WITNESS FOR A CLICK THAT LANDED ON US. On the webview backend
+        # the application-wide handler gets no widget to inspect, so this
+        # bubbling handler is the only thing that can say "that one was mine".
+        # Harmless under tkinter, where it fires solely for clicks on the box
+        # itself and `event.widget` answers the question anyway.
+        self._click_was_inside = False
+        try:
+            self.box.bind('<Button-1>', self._note_click_inside, add='+')
+        except Exception as e:
+            log.info("click-to-edit: could not watch clicks on the editor "
+                     "(%r)", e)
+        def _arm():
+            try:
+                self.box.bind_all('<Button-1>', _cancel_on_click_away)
+            except Exception as e:
+                log.info("click-to-edit: could not watch for a click away "
+                         "(%r)", e)
+        try:
+            self.box.after(0, _arm)
+        except Exception as e:
+            log.info("click-to-edit: could not schedule the click-away "
+                     "watch (%r)", e)
+
+    def _note_click_inside(self, event=None):
+        """A click landed on this editor. Read and cleared by
+        `_click_landed_inside`; returns None so the click still works."""
+        self._click_was_inside = True
 
     def commit(self, event=None, notify=True):
         """Put the label back, showing whatever was chosen."""
         global _editing
         if _editing is self:
             _editing = None
+        # A stale True would swallow the next click-away, so it dies with the
+        # open editor rather than outliving it.
+        self._click_was_inside = False
         # WHAT WAS THERE COMES BACK when the field closes with nothing in it
         # — including the placeholder, which is the label's business and not
         # a value. `_cleared` records that THIS open emptied the box, so a
@@ -414,6 +521,13 @@ class ClickToEdit:
                 w.unbind('<Return>')
             except Exception as e:
                 log.info("click-to-edit: could not unbind Return (%r)", e)
+        # The click-away watch belongs to an OPEN field; leaving it bound
+        # would run it on every click in the app for the rest of the session.
+        try:
+            self.box.unbind_all('<Button-1>')
+        except Exception as e:
+            log.info("click-to-edit: could not drop the click-away watch "
+                     "(%r)", e)
         self.box.grid_remove()
         self.shown.grid()
         # THE PLACEHOLDER IS NEVER REPORTED AS A CHOICE. `close_open_field`

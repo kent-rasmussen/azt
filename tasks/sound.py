@@ -103,11 +103,32 @@ class Sound(object):
         self.context.menuitem("Sound settings", self._configure_sound)
 
     def soundcheck(self):
+        # TIMED 2026-09-28. A screencast put a 6.47s gap between the task page
+        # painting and anything else happening, and this runs in exactly that
+        # window: `Sound.__init__` calls `super().__init__()` — which builds
+        # and paints the task window — and THEN calls this. The affix catalog,
+        # long blamed for the wait, comes later still and measures under a
+        # second.
+        #   The comment below already records a "blocking ~1s audio probe"
+        # being taken out of this same spot for this same reason, so audio
+        # work here has form. Three phases, because `ensure` may construct the
+        # settings (and open the device) while `soundcheck` validates stored
+        # settings against the hardware, and they would want different fixes.
+        import time as _time
+        _t0 = _time.perf_counter()
         analang_obj = self.program.languages.get_obj(self.analang)
         ss = SoundSettings.ensure(self.program, analang_obj=analang_obj)
+        _t_ensure = _time.perf_counter()
         self.soundsettings = ss
         self.audio = ss.audio
-        if ss.soundcheck(include_input=getattr(self, 'is_record_task', False)):
+        _needs = ss.soundcheck(include_input=getattr(self, 'is_record_task',
+                                                     False))
+        _t_check = _time.perf_counter()
+        log.info("task soundcheck: SoundSettings.ensure %.2fs, "
+                 "soundcheck %.2fs, total %.2fs (mikecheck needed: %s)",
+                 _t_ensure - _t0, _t_check - _t_ensure, _t_check - _t0,
+                 bool(_needs))
+        if _needs:
             self.mikecheck()
         # NOTHING ELSE HERE. A `_verify_rate()` call was added in this branch
         # to measure the rate before any real recording, and it was in the

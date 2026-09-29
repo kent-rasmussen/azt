@@ -181,6 +181,54 @@ class Senses(object):
 class Segments(Senses):
     """docstring for Segments."""
     show_second_fields=True
+    def second_forms_ready(self,then=None):
+        """Are the second-form fields set? If not, open the first one.
+
+        ON `Segments` BECAUSE BOTH SIDES NEED IT: `Parse` and `WordCollection`
+        each extend this, and `ParseWords(Parse,Task)` has no word page at all
+        — its point of use is the "Parse!" button, not a Next button — so a
+        home on either subclass would miss one of them.
+
+        THREE ASKS, NONE OF THEM A WALL (Kent, 2026-09-28). The written design
+        was a gate: no first word until both fields were set. He replaced it
+        with escalation, which is better, because it dissolves the abandonment
+        problem the gate design spent most of its length on — what to do when
+        the user walks away and the page is left with an empty work area and
+        nothing explaining it. Kent: *"If a user wants to see the whole page
+        first, or not fill out that field yet, fine."*
+
+          1. **page load** — open the field. Click away and you still get a
+             word; the page is never held hostage.
+          2. **clicking into the word field** — open it again, cancellable.
+             You can still type the word.
+          3. **Next** — open it again, and this time do not move on.
+
+        Kent: *"they can see the whole page, but the last button doesn't allow
+        the user to move on."* So what is withheld is the ADVANCE, not the
+        page and not the typing. The parse rides on Next (`nextword` →
+        `storethisword` → parse), so gating Next gates the parse — which is
+        the thing that actually needs the fields.
+
+        Gating at Next also avoids what killed the point-of-need gate:
+        `parse_foreground` withdraws the window on its first line and then
+        runs modal prompts, and a field can only be opened on a mapped pane.
+        Next is before all of that.
+
+        Returns True when the caller may proceed. A task without
+        `uses_second_forms` always may, so the flag is the gate and no
+        `isinstance` is needed."""
+        if not getattr(self,'uses_second_forms',False):
+            return True
+        return self.ui.assure_second_forms(then=then)
+    def second_forms_set(self):
+        """The same question WITHOUT opening anything.
+
+        `second_forms_ready` has a side effect — it opens the editor — which
+        makes it useless for asking "should I say something?" Ask 2 needs the
+        answer and must NOT open: see `_ask_second_forms`."""
+        if not getattr(self,'uses_second_forms',False):
+            return True
+        return not self.program.settings.missing_second_form_pss()
     def buildregex(self,**kwargs):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
@@ -902,7 +950,10 @@ class WordCollection(Segments):
                      "window that is no longer there")
             return
         p = self.lex_ui
+        import time as _time
+        _t_todo=_time.perf_counter()
         self.entries=self.getlisttodo()
+        _t_frames=_time.perf_counter()
         self.nentries=len(self.entries)
         self.index=0
         # A5 in-place reload: resume at the word the user was on. Guid-keyed
@@ -921,7 +972,23 @@ class WordCollection(Segments):
                                     text=self.getinstructions(),
                                     row=0, column=0)
         self.dirfn=self.nextword
+        # TIMED because the affix catalog was exonerated by measurement and
+        # the wait is still there (Kent, 2026-09-28: catalog 0.41s, 0 yields,
+        # "it takes forever"). `getlisttodo` walks every entry deciding what is
+        # done, and `getword` builds the word frame and loads an illustration.
+        # Both are on the path to the first word; neither has ever been timed.
+        _t1=_time.perf_counter()
         r=self.getword()
+        log.info("word page: getlisttodo %.2fs (%s entries), page frames "
+                 "%.2fs, first getword %.2fs",
+                 _t_frames-_t_todo, self.nentries, _t1-_t_frames,
+                 _time.perf_counter()-_t1)
+        # ASK 1 OF 3 (see `second_forms_ready`): open the field on page load,
+        # AFTER the first word is on screen. Order is the point — Kent,
+        # 2026-09-28: *"we open this on page load, and if someone clicks off,
+        # they can see a word."* Asking first and blocking on the answer is
+        # the design this replaced.
+        self.second_forms_ready()
     def promptstrings(self,lang):
         if lang == self.analang:
             text=_("What is the form of the new "
@@ -1104,9 +1171,60 @@ class WordCollection(Segments):
                     "").format(missing=self.program.taskchooser.cawlmissing)
         log.info(text)
         ErrorNotice(text,title=title)
+    def _ask_second_forms(self,event=None):
+        """Ask 2 of 3: open the field the FIRST time the user clicks into the
+        word entry, and never again.
+
+        ONCE, BECAUSE OPENING TAKES THE FOCUS. `ClickToEdit.edit()` ends with
+        `focus_set()` on its editor, so opening from a click ON THE WORD FIELD
+        pulls focus off the field just clicked. Unarmed, that repeats on every
+        click and the word entry can never be typed in at all — Kent,
+        2026-09-28: *"typing in the entry space is not possible, whether one
+        clicked off, hit OK, or left it alone."* Kent's fix: *"let's just arm
+        the entry field once, maybe?"*
+          Once is enough precisely because clicking away now CANCELS (see
+        `composites.close_open_field`): the second click into the word field
+        closes the editor and leaves it closed, so the user types.
+
+        Per PAGE, and per word would be identical — Kent, 2026-09-28: *"you
+        can't get to a second word without passing this, so this is fine."*
+        Quite so: ask 3 gates Next on the fields being set, so word two is
+        unreachable while they are unset, and by the time it is reached this
+        would decline anyway. The flag's scope is therefore unobservable, and
+        the choice is not worth defending on either side.
+
+        Returns None so neither backend treats the click as handled."""
+        if getattr(self,'_second_forms_asked_on_entry',False):
+            return
+        self._second_forms_asked_on_entry=True
+        self.second_forms_ready()
+    def say_second_forms_needed(self):
+        """Put the reason beside the button that just refused to move."""
+        notice=getattr(self,'secondformnotice',None)
+        if notice is None:
+            return
+        pss=self.program.settings.missing_second_form_pss()
+        notice['text']=_("Parsing needs the second form field for {pss}. "
+                         "Set it above, and this word will go through."
+                         ).format(pss=', '.join(pss)) if pss else ''
+        try:
+            notice.wrap()
+        except Exception:
+            pass
     def nextword(self,nostore=False):
         self.dirfn=self.nextword
         # log.info("running nextword (nostore = {})".format(nostore))
+        # ASK 3 OF 3, and the only one that withholds anything. Gated on
+        # STORING, not on navigating: `<Down>`/`<Next>` pass nostore=True and
+        # are pure browsing, which needs no field and should stay free.
+        #   `then=self.nextword` so that committing the value completes the
+        # action the user just asked for, rather than making them press Next
+        # twice.
+        if not nostore and not self.second_forms_ready(then=self.nextword):
+            self.say_second_forms_needed()
+            return
+        if getattr(self,'secondformnotice',None) is not None:
+            self.secondformnotice['text']=''
         if not nostore:
             # log.info("storing nextword (nostore = {})".format(nostore))
             self.storethisword()
@@ -1436,6 +1554,27 @@ class WordCollection(Segments):
                         fg='red',
                         row=7,column=0,columnspan=3,sticky='ew')
         self.var.trace_add('write',self.check_input_warnings)
+        # WHY "Next" IS NOT MOVING. Its own label, not `inputwarning` (which
+        # `check_input_warnings` rewrites on every keystroke, and whose
+        # docstring says it informs and never blocks) and not `instructions2`
+        # (which the transcription tasks own). This one says the opposite: it
+        # appears only when something IS blocked.
+        self.secondformnotice=p.label(self.wordframe,text='',font='small',
+                        row=8,column=0,columnspan=3,sticky='ew')
+        # ASK 2 OF 3 (see `second_forms_ready`): clicking into the word field
+        # is the moment before the value is needed, so re-open the settings
+        # field then — cancellable, and the user can still type.
+        # `<Button-1>` ONLY, NEVER `<FocusIn>` (2026-09-28). `getword()` ends
+        # with `self.lxenter.focus_set()`, so a FocusIn binding fires on every
+        # word load — programmatically, with no user anywhere near it. Two
+        # symptoms, one cause, both reported by Kent within a minute:
+        #   * the field appeared to open by itself after the first word, which
+        #     looked like ask 1 and was ask 2 wearing its coat;
+        #   * "clicking off the edit" never returned it to a label, because it
+        #     DID close, focus went back to the word entry, and it reopened.
+        # A user click is the signal ask 2 wants; focus arriving on its own is
+        # not a signal at all.
+        self.lxenter.bind('<Button-1>',self._ask_second_forms)
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
         next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
@@ -2116,9 +2255,14 @@ class Parse(Segments):
         collector=parser.AffixCollector(self.program.parsecatalog,
                                         self.program.db)
         if self.loadfromlift:
+            import time as _time
+            _t0=_time.perf_counter()
+            _yields=_reports=0
+            _last=None
             with self.ui.waiting(_("Loading Affixes")):
                 # for i in collector.do():
                 for i in collector.getfromlift():
+                    _yields+=1
                     # log.info("Progress: {}".format(i))
                     # THE DIESELING LOOP, and where the check belongs. Kent,
                     # 2026-09-14: "the answer here may be more of a check the
@@ -2138,8 +2282,31 @@ class Parse(Segments):
                                  "than finishing into a window that is no "
                                  "longer there",i)
                         return
-                    self.waitprogress(i)
+                    # ONLY WHEN THE NUMBER CHANGES. `getfromlift` yields once
+                    # per inflection-class trait — one per sense per ps — and
+                    # the value is an integer percentage, so most calls set
+                    # the bar to what it already says. Same shape as the
+                    # `print()` per yield removed from that loop on
+                    # 2026-09-16, one layer up. Kent reports not seeing the
+                    # "Loading Affixes" wait in practice, in which case these
+                    # were cheap no-ops and this changes nothing — which is
+                    # why the counters below exist rather than a conclusion.
+                    if i != _last:
+                        _last=i
+                        _reports+=1
+                        self.waitprogress(i)
                 self.program.parsecatalog.report()
+            # MEASURE, DO NOT THEORISE (agenda/sound_card_probe_blocks_first_task.md
+            # plan 1). This is the wait Kent describes as "can take awhile",
+            # and nothing has ever timed it. Three numbers, because they
+            # separate three different problems: total time says whether it is
+            # worth attacking at all; the yield count says whether the cost
+            # scales with the lexicon; and reports-vs-yields says how much of
+            # it was progress reporting rather than work.
+            log.info("affix catalog loaded in %.2fs (%s yields, %s progress "
+                     "reports, %s parts of speech)",
+                     _time.perf_counter()-_t0,_yields,_reports,
+                     len(getattr(self,'pss',()) or ()))
     def showwhenready(self):
         """Deiconify the parser UI once the status window exists.
 
@@ -2206,24 +2373,52 @@ class Parse(Segments):
             log.info(f"Not storing word (Parse): {e}")
         except Exception as e:
             log.info(f"Exception storing word (Parse): {e}")
-    def waitforOKsecondfields(self):
-        while not self.program.settings.secondformfieldsOK():
-            after(10*100,callback=self.waitforOKsecondfields) # wait a second
+    # `waitforOKsecondfields` DELETED 2026-09-29, and deleting it is what
+    # closes `agenda/azt/lexicon_bare_after_nameerror.md`. It called a bare
+    # `after(...)`, which this module does not define or import — verified:
+    # the only wildcard import is `utilities.utilities`, which has no
+    # `after` — so it would have raised NameError on its first iteration.
+    # Nothing but itself ever called it, so that never happened.
+    #   It was also a busy-wait spelling of what plan 4 now does properly:
+    # `Segments.second_forms_ready` asks, and the field's own commit hook
+    # resumes the work. See agenda/azt/second_form_flags_audit.md plan 7.
     def __init__(self, **kwargs): #frame, filename=None
+        # TIMED IN PHASES, because the page waits on ALL of this and not only
+        # on the part that looks slow
+        # (agenda/sound_card_probe_blocks_first_task.md).
+        # Kent, 2026-09-28, when told the engine build was not the suspect:
+        # *"but the page doesn't finish loading and show the first word until
+        # it is finished being built."* Quite right — what matters is what the
+        # user waits for, not which line I find interesting. So measure the
+        # whole span and let the numbers apportion it.
+        import time as _time
+        _t=_time.perf_counter
+        _t0=_t()
         self.byslice=False
         self.initsensetodo()
         super().__init__(**kwargs)
+        _t_super=_t()
         self.secondformfield=self.program.settings.secondformfield
         self.nominalps=self.program.settings.nominalps
         self.verbalps=self.program.settings.verbalps
         self.loadfromlift=True
-        # self.program.settings.makesecondformfieldsOK() #do elsewhere
         if not hasattr(self.program,'parsecatalog'):
             self.initparsecatalog()
         self.parsecatalog=self.program.parsecatalog
+        _t_catalog=_t()
         # else:
         if not hasattr(self.program,'parser'):
             self.program.parser=parser.Engine(self.parsecatalog,self)
+        _t_engine=_t()
+        # Read as "of the wait before the first word, how much was each".
+        # `super()` builds the task and its window; `catalog` is the affix
+        # sweep of the LIFT file; `engine` should be ~0 (setlevels plus four
+        # attribute reads) and is timed anyway, because that is the claim
+        # being checked rather than assumed.
+        log.info("Parse.__init__ phases: super %.2fs, catalog %.2fs, "
+                 "engine %.4fs, total %.2fs",
+                 _t_super-_t0, _t_catalog-_t_super,
+                 _t_engine-_t_catalog, _t_engine-_t0)
         #     self.parser=self.program.parser
         # else:
         #     self.parser=

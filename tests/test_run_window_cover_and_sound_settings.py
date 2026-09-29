@@ -133,12 +133,23 @@ def test_ensure_shares_one_construction_across_threads(monkeypatch):
     builds = []
 
     class Fake:
-        def __init__(self, program, analang_obj=None):
+        # `probe` AND `probe_for_stored` BOTH ADDED 2026-09-29, when `ensure`
+        # stopped probing in the constructor. The order is now build without
+        # probing, publish, load the settings file, then probe narrowly at
+        # the device the file names — so the stand-in has to accept the
+        # keyword and answer the later call, or every thread dies inside
+        # `ensure` and the lock it is testing is never exercised. The failure
+        # said "three concurrent callers built 0 objects", which is true and
+        # says nothing about locking.
+        def __init__(self, program, analang_obj=None, probe=True):
             builds.append(self)
             import time
             time.sleep(0.05)           # the "probe"
 
         def load_from_file(self):
+            pass
+
+        def probe_for_stored(self):
             pass
     monkeypatch.setattr(sound.SoundSettings, '__new__',
                         lambda cls, *a, **k: Fake(*a, **k))
