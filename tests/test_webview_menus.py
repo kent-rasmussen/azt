@@ -11,7 +11,7 @@ Neither fault could fail a test that only checked commands, which is why there
 was not one. These assert the SHAPE that reaches the page: the serialisation
 both renderers now share, and the path that carries a click back.
 
-See `agenda/webview_menubar_and_cascades.md`.
+See the webview menubar-and-cascades item.
 """
 import types
 

@@ -779,6 +779,116 @@ class CheckParameters(object):
             self._check=None
         # log.info(_("Returning check {check}").format(check=self._check))
         return self._check
+    def second_form_checks(self):
+        """The `pl`/`imp` whole-word checks — ONLY where the field exists.
+
+        A CHECK NAME MUST FOLLOW THE FIELD NAME, and a check for a field
+        nobody has named is not a check. These two were listed
+        unconditionally and their names formatted with the field, so an
+        unset one produced the literal string **"Whole None Word Syllable
+        Profile"** — offered as a choice, and describing nothing.
+
+        THE CODE STAYS `pl`/`imp` WHATEVER THE FIELD IS CALLED. Only the
+        NAME follows the field, so renaming 'Plural' to 'Pluriel' relabels
+        the check and leaves every stored verification code untouched. That
+        distinction is the whole reason this is safe to do.
+
+        Never raises: check building runs early and a settings object that
+        is not ready yet must cost the two conditional checks, not all of
+        them."""
+        return [(code, _("Whole {field} Word Syllable Profile"
+                         "").format(field=field))
+                for code, ps, field in self.second_forms_available()]
+
+    def second_forms_available(self):
+        """`(code, ps, fieldname)` for each second form whose field is named.
+
+        THE AVAILABILITY TEST, factored out, because two different lines ask
+        it and they must never disagree: the syllable sort's check list
+        (`second_form_checks`) and the word-check line on whole-word tasks
+        (`word_checks`). One offers a check the other does not and the user
+        gets a choice that does nothing.
+
+        Never raises — see `second_form_checks`."""
+        rows=[]
+        try:
+            s=self.program.settings
+            for code, ps in (('pl', s.nominalps), ('imp', s.verbalps)):
+                if not s.secondformfieldset(ps):
+                    continue
+                rows.append((code, ps, self.secondfield(ps)))
+        except Exception as e:
+            log.info("no second forms available this time (%r)", e)
+        return rows
+
+    def word_checks(self):
+        """The WORD checks: which FORM of the word a task works on.
+
+        A WORD CHECK IS NOT A CVT CHECK, and the app had a line only for the
+        second (Kent, 2026-09-29: "these are **word** checks, not cvt
+        checks"). A cvt check picks segments WITHIN a form — `V1`, `C2`,
+        `V1xV2`, the tone frame. A word check picks the form: the citation
+        form, the root, or a second form. They are independent: you sort the
+        first vowel OF the citation form.
+
+        Returned as `(code, name)`, the codes being the ftype codes, so
+        picking a word check is picking an ftype. `lc` and `lx` are always
+        available; `pl` and `imp` only where their field is named, because a
+        check for a field nobody has named is not a check.
+
+        NAMED FOR A FORM, not for a syllable profile. `second_form_checks`
+        names the same codes "Whole {field} Word Syllable Profile" because
+        there they ARE profile checks on the syllable sort. On a collection
+        page that sentence describes nothing the page does."""
+        rows=[('lc', _("citation forms")),
+              ('lx', _("root forms"))]
+        rows+= [(code, _("‘{field}’ forms ({ps})").format(field=field, ps=ps))
+                for code, ps, field in self.second_forms_available()]
+        return rows
+
+    def resolve_word_check(self, code=None):
+        """An AVAILABLE word check, whatever was asked for.
+
+        THIS GUARDS THE FTYPE, NOT THE CHECK LIST. A check that is not real
+        is never built — plan 5's rule, and `word_checks` above honours it:
+        `pl` and `imp` appear only while their field is named. But the ftype
+        is a different thing from a check, and it is written by callers that
+        never consult the list — `sort_on_group_by_item` takes it from a
+        stored verification code. So the ftype in hand can name a form the
+        user has no field for, and Kent, 2026-09-29: **"we cannot collect
+        without a field name."**
+
+        An unresolvable code therefore becomes `lc`, which always exists, and
+        the fallback is logged. Naming and setting both come through here, so
+        a page can never say it is working on a form it cannot reach.
+
+        Belt and braces, deliberately: the setter resolves, the field setters
+        refuse to unset a field, and the four classes that hard-coded an
+        ftype are gone (plan 2, 2026-09-29). Kept because the LABEL reads
+        `ftype()` directly, and a wrong word there is silent."""
+        if code is None:
+            code=self.ftype()
+        available=[c for c, name in self.word_checks()]
+        if code in available:
+            return code
+        log.info("word check %r is not available (%s): there is no field for "
+                 "it, so falling back to citation forms", code, available)
+        return 'lc'
+
+    def word_check_name(self, code=None):
+        """The name of one word check; the current ftype's, by default.
+
+        Resolves first, so an unavailable code is named for what the page
+        will actually do rather than echoed back as a bare code."""
+        code=self.resolve_word_check(code)
+        for c, name in self.word_checks():
+            if c == code:
+                return name
+        # Only reachable if `lc` itself went missing, which `word_checks`
+        # does not allow. Say something rather than raise inside a label.
+        log.error("no word check named %r", code)
+        return code
+
     def build_checknames(self):
         self._checknames={
             'S':{ 1:[
@@ -787,11 +897,7 @@ class CheckParameters(object):
                 ('syls',_("Syllable Count")),
                 ('lc', _("Whole Citation Word Syllable Profile")),
                 ('lx', _("Whole Root Syllable Profile")),
-                ('pl', _("Whole {field} Word Syllable Profile"
-                        "").format(field=self.nominalps_secondfield())),
-                ('imp', _("Whole {field} Word Syllable Profile"
-                        "").format(field=self.verbalps_secondfield())),
-                ]},
+                ]+self.second_form_checks()},
             'T':{
                 1:[('T', _("Tone Melody"))]},
             'V':{
@@ -908,6 +1014,27 @@ class CheckParameters(object):
     def assure_checknames(self):
         if not hasattr(self,'_checknames'):
             self.build_checknames()
+
+    def rebuild_checknames(self):
+        """Rebuild the check names and everything derived from them.
+
+        BUILT ONCE AT STARTUP WAS THE BUG. `assure_checknames` builds on
+        first use and never again, so naming a second-form field after that
+        — which is most of the time, since the field is asked for when the
+        work needs it — left the checks describing the world as it was at
+        boot. The `pl`/`imp` checks did not appear, and a RENAMED field left
+        its check advertising the old name.
+        Three things go stale together, so they are refreshed together:
+        `_checknames` itself, `_checkcodes_by_cvt` (which decides what counts
+        as a valid check for a cvt) and `_cvchecknames` (the code→name
+        lookup the labels read). Plan 5 of
+        the second-form flags audit."""
+        self.build_checknames()
+        try:
+            self.checkcodes_by_cvt()
+            self.cvchecknamesdict()
+        except Exception as e:
+            log.info("check names rebuilt, derived tables not (%r)", e)
     def checkcodes_by_cvt(self):
         self.assure_checknames()
         self._checkcodes_by_cvt={cvt:{code_tuple[0]

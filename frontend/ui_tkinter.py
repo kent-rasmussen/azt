@@ -11,7 +11,7 @@ logsetup.setlevel('INFO',log) #for this file
 # logsetup.setlevel('DEBUG',log) #for this file
 log.info("Importing ui_tkinter.py")
 import unicodedata
-# DIAG scroller timing — agenda/wayland_freeze_audit.md. Kent, 2026-09-14:
+# DIAG scroller timing — the Wayland freeze audit. Kent, 2026-09-14:
 # 37s and 42s inside single scroller passes building the alphabet chart, while
 # **GTK builds the same page in ~0s** — so the cost is Tk's synchronous
 # geometry round-trips on this display, not the content or the layout maths.
@@ -1477,7 +1477,7 @@ class Exitable():
                 # this fell to the deiconify below and the window was withdrawn
                 # again by something else — OR iswaiting() was true here and
                 # the wait never revealed it. These lines distinguish those.
-                # See agenda/fullscreen_with_only_quit.md.
+                # See the fullscreen-with-only-Quit item.
                 #   Never let a diagnostic break teardown: same rule as the
                 # resetframe guard.
                 try:
@@ -1522,7 +1522,7 @@ class Exitable():
                     # is the audit's own conclusion arrived at from the other
                     # direction — the fix has to REMOVE the round-trip (inline
                     # progress, no second window to paint), not reposition it.
-                    # See azt/agenda/wayland_freeze_audit.md.
+                    # See the Wayland freeze audit.
                     #
                     # ORIGINAL RATIONALE, kept because the diagnosis stands and
                     # only the remedy failed:
@@ -1532,7 +1532,7 @@ class Exitable():
                     # BLANK AND INPUT-DEAF — "nothing but theme", less even the
                     # Exit button, because nothing paints at all. Kent hit it
                     # 2026-09-03 (and the same shape is the parked 2026-07-13
-                    # incident in azt/agenda/wayland_freeze_audit.md).
+                    # incident in the Wayland freeze audit).
                     #   The evidence for this path specifically: the blank
                     #   window appears right after "Shutting down runwindow",
                     #   i.e. it is the PARENT revealed here; there is no
@@ -2115,7 +2115,7 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         scrolling.
       * NO update()/update_idletasks() anywhere in here: this runs on Wayland,
         where a synchronous round-trip during a layout change is the documented
-        deadlock (see azt/agenda/wayland_freeze_audit.md).
+        deadlock (see the Wayland freeze audit).
 
     Returns the apply function, so a caller that knows a build has finished can
     call it once more."""
@@ -2196,7 +2196,7 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
           3. wrap to that (WRAP on that space).
 
         Costs ~9 reqwidth reads, no update()/update_idletasks(), so no
-        synchronous X round-trip (azt/agenda/wayland_freeze_audit.md)."""
+        synchronous X round-trip (the Wayland freeze audit)."""
         # A MEASUREMENT MUST BE FLUSHED TO BE WORTH ANYTHING. Setting
         # `wraplength` updates the LABEL's own requested width at once, but the
         # content frame's requested width is recomputed on the idle queue — so
@@ -2208,7 +2208,7 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         # already calls on this same widget, so this is established practice in
         # this file rather than a new synchronous-X hazard, and it is a
         # measurement flush with no window transition in flight — see
-        # azt/agenda/wayland_freeze_audit.md, which now says that is the safe
+        # the Wayland freeze audit, which now says that is the safe
         # shape. It is still a flush, so the count is kept small.
         def _settle():
             try:
@@ -2333,7 +2333,7 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                 # those candidates is `maxwidth` from availablexy, which is
                 # screen-minus-siblings and documented to overshoot badly when
                 # the siblings are themselves scrollable content
-                # (azt/agenda/scrollframe_sizes_from_layout.md). Budgeting text
+                # (the scroller-sizes-from-layout item). Budgeting text
                 # against width the layout cannot actually deliver puts the row
                 # past the viewport edge and clips it: on the macrosort page
                 # capw read 1479 against a viewport of ~1360 (Kent 2026-09-04).
@@ -2416,7 +2416,7 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         # wrap: set wraplength=0, read winfo_reqwidth(). reqwidth is computed by
         # Tk when the content changes and needs no update()/flush, so this costs
         # no synchronous round-trip — which matters here (see
-        # azt/agenda/wayland_freeze_audit.md).
+        # the Wayland freeze audit).
         # ITERATE TO FIT, where there is a viewport to fit INTO. cols>1 (the
         # chooser) keeps the cell arithmetic: its buttons are a grid whose
         # columns define the width, there is no single widest row to search
@@ -2621,7 +2621,7 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
     # one page wrapped at two different widths (~447px and ~533px) instead of
     # sharing one.
     #   after_idle, not update_idletasks: no synchronous X round-trip, per
-    # azt/agenda/wayland_freeze_audit.md. Idempotent — _apply's hysteresis makes
+    # the Wayland freeze audit. Idempotent — _apply's hysteresis makes
     # a redundant call free.
     try:
         container.after_idle(_apply)
@@ -2755,7 +2755,7 @@ class Root(Waitable,UI,tkinter.Tk):
         # and one line per run is the point. Tk 8.6 has no Wayland backend, so
         # on a Wayland session this is XWayland with no way to be otherwise;
         # the socket check in display.py confirms rather than assumes it.
-        # See agenda/wayland_freeze_audit.md.
+        # See the Wayland freeze audit.
         if not globals().get('_said_display_stack'):
             globals()['_said_display_stack']=True
             from utilities import display
@@ -3086,7 +3086,7 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
         # 2026-09-02: faulthandler shows update_idletasks at this line, reached
         # via progress → waitprogress → sort_buttons:497 during a verify build,
         # with a half-drawn wait dialog. It is freeze point 3 in
-        # azt/agenda/wayland_freeze_audit.md, listed there since June and never
+        # the Wayland freeze audit, listed there since June and never
         # closed; 1.3.24 scope-guarded the same call in Wait.__init__ and left
         # this one). Two changes, both aimed at the same hazard:
         #
@@ -4510,7 +4510,7 @@ class ScrollingFrame(Frame):
                 -> _do_configure_interior -> ...
 
         Each level is an X round trip, which on this display costs about a
-        second (see agenda/wayland_freeze_audit.md), so the pass he timed took
+        second (see the Wayland freeze audit), so the pass he timed took
         **35 seconds** and the alphabet chart sat half-built the whole time —
         which is what he read as a nothing-but-Quit page. It was not a layout
         decision; it was a build that had not finished.

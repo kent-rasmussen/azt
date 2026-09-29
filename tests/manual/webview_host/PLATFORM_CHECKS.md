@@ -1,6 +1,6 @@
 # Machine time: the Mac and Windows walkthrough
 
-Print this. It merges the standing queue in `agenda/cross_platform_checks.md`
+Print this. It merges the standing queue in the cross-platform-checks item
 (sections 1-7) with the webview backend work of 2026-09-22 to 09-24, which has
 only ever run on Linux. Ordered to minimise restarts, not by topic.
 
@@ -52,12 +52,12 @@ python main.py --tkinter
 That number decides something: fast here means the Tk round-trip volume only
 hurts on X11 and is a Linux-desktop problem; slow here means it hurts
 everywhere and is worth fixing rather than leaving to the webview port.
-→ `agenda/wayland_freeze_audit.md`
+→ file under the Wayland freeze audit
 
 **Leaving a page mid-load.** Open **Add and parse words with audio**, then
 click **Tasks** before it finishes building.
 - [ ] no traceback, and the chooser is really there and usable ☐
-→ `agenda/work_outliving_its_window.md`
+→ file under the work-outliving-its-window item
 
 **Sound Settings.** Open it; look at the rate and format lists.
 - [ ] rates descending, formats widest-first ☐
@@ -67,17 +67,19 @@ click **Tasks** before it finishes building.
 - [ ] closing returns to the task window ☐
 
 The annotations come from what the hardware really reports, so this is a
-genuinely different test here, not a repeat. → `agenda/honest_sound_settings.md`
+genuinely different test here, not a repeat. → file under the
+honest-sound-settings item
 
 **Two known macOS faults, while you are in a tkinter session:**
 
 - [ ] **Do clicks land below the pointer?** Try the task chooser and a list of
       options. ☐ reproduces ☐ does not. The open lead is a 57px screen-height
       discrepancy; it has never been reproduced outside A-Z+T, and it may be
-      the touchpad rather than us. → `agenda/macos_clicks_land_below_the_pointer.md`
+      the touchpad rather than us. → file under the macOS clicks-land-below-
+      the-pointer item
 - [ ] **Do theme colours reach buttons and frames?** Compare against the
       Linux look: ☐ themed ☐ system-default grey.
-      → `agenda/macos_widget_colours_ignored.md`
+      → file under the macOS widget-colours-ignored item
 
 ## 1.2 The webview auto-install — new, never run off Linux
 
@@ -105,7 +107,7 @@ python main.py --webview
 
 That second point is its own item: the installer's dead PyAudio block was
 withholding the requirements stamp, so pip re-ran on every open.
-→ `agenda/pyaudio_to_sounddevice.md`
+→ file under the PyAudio-to-sounddevice item
 
 ## 1.4 Ask for an engine that cannot exist here
 
@@ -144,7 +146,7 @@ pinning an older torch would mean shipping an older PYTHON to that machine,
 which collides with ADR 0005's install target. Then the decision is made and
 what is left here is only the WORDING — which is the checkbox above, and is
 worth your eye precisely because the machine is not broken and must not be
-told it is. → `agenda/torch_for_intel_mac.md`
+told it is. → file under the torch-for-Intel-Mac item
 
 ---
 
@@ -167,7 +169,7 @@ python main.py --tkinter
 
 - [ ] **'Change syllable profile name' page — does it scroll?** Reported as
       not scrolling on Windows specifically. ☐ scrolls ☐ does not
-      → `agenda/syllable_profile_rename_scroll.md`
+      → file under the syllable-profile rename-scroll item
 
 ## 2.2 The webview auto-install
 
@@ -188,7 +190,7 @@ Record and stop rather than chasing it:
 - [ ] what you saw → ____________
 - [ ] `C:\Program Files (x86)\Microsoft\EdgeWebView\Application`
       ☐ present ☐ absent
-→ `agenda/windows_webview2_unchecked.md`
+→ file under the Windows-WebView2-unchecked item
 
 ## 2.3 Second run, and a refused engine
 

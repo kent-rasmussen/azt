@@ -380,7 +380,7 @@ html, body {
 
    This falsifies a documented assumption. `windowsize`/`reflow` are no-ops in
    ui_webview, filed under "correct as no-ops — the browser sizes and lays out
-   its own boxes" (agenda/webview_when_to_finish.md, PILE 1). For WIDTH that
+   its own boxes" (the webview-when-to-finish item, PILE 1). For WIDTH that
    holds. For HEIGHT it does not: a browser will not cap a box's height by
    itself, and capping the viewport is most of what a scroller IS. tkinter's
    ScrollingFrame computes that cap in `_caps`/`windowsize`.

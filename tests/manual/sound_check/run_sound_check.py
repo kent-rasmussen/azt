@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 """Manual sound check — and the BEFORE/AFTER instrument for the PyAudio →
-sounddevice port (agenda/pyaudio_to_sounddevice.md).
+sounddevice port (the PyAudio-to-sounddevice item).
 
     cd <azt>            # must run from the azt directory
     ../env/bin/python tests/manual/sound_check/run_sound_check.py --help

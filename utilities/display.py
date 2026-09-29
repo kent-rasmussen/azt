@@ -25,7 +25,7 @@ document it in the logs, so we're clear going forward."
 
 He is right that this should be readable off a log rather than reasoned about
 from toolkit defaults. It bears directly on
-`agenda/wayland_freeze_audit.md`: the alphabet chart takes 37-42s to build on
+the Wayland freeze audit: the alphabet chart takes 37-42s to build on
 tkinter and ~0s on both webview engines, and whether that indicts XWayland or
 merely Tk's round-trip volume depends on which of them share a stack.
 

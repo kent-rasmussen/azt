@@ -49,7 +49,7 @@ def _profile_if_asked(name,fn,*a):
     named them. cProfile names the function in one run.
 
     Temporary, with the rest of the DIAG-liftload instrumentation — see
-    agenda/rescan_instead_of_grouping.md.
+    the rescan-instead-of-grouping item.
     """
     if '--profile-load' not in sys.argv:
         return fn(*a)
@@ -161,8 +161,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         with the CAWL template
         self.get_langs should work for Demo databases, or 
         for new langauges from template."""
-        # TEMPORARY per-step timing — REMOVE WITH agenda/rescan_instead_of_
-        # grouping.md, as the matching lines in langtags.Languages.__init__
+        # TEMPORARY per-step timing — REMOVE WITH the rescan-instead-of-
+        # grouping item, as the matching lines in langtags.Languages.__init__
         # are. This whole sequence sits inside ONE gap in the boot profile
         # (3.1s on 2026-09-14, down from 4.2s), so the log can say the load
         # is slow and not which of fifteen steps is slow — and reading to
@@ -774,7 +774,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # PER KEY to collect the ids for it — so `imgselectiondir` and
         # `collectionglosses` were evaluated len(keys)×len(senses) times, and
         # both are properties that do work. It is the `dict_by` shape again
-        # (agenda/rescan_instead_of_grouping.md), and it costs nothing when
+        # (the rescan-instead-of-grouping item), and it costs nothing when
         # every sense has an image directory and everything when none does,
         # which is exactly the situation it exists to report on.
         #   Same keys, same ids, same order: the group lists come out in
@@ -802,8 +802,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         """{lang: {text: [entries with that text]}} in ONE PASS per language.
 
         These three were the `dict_by` shape, and the most expensive instance
-        of it left after the 1.15.23 sweep (agenda/rescan_instead_of_
-        grouping.md). Written out, the old form was:
+        of it left after the 1.15.23 sweep (the rescan-instead-of-grouping
+        item). Written out, the old form was:
 
             {l:{t:[j for j in self.entries if t == j.lx.textvaluebylang(l)]
                 for t in [i.lx.textvaluebylang(l) for i in self.entries]
@@ -2812,7 +2812,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             # the app's largest collection, spent entirely on saying how far
             # along we were. It was also wrong on duplicates: .index returns
             # the FIRST match, so equal senses reported the same percentage
-            # and the bar stalled. (agenda/rescan_instead_of_grouping.md;
+            # and the bar stalled. (the rescan-instead-of-grouping item;
             # found by tests/manual/rescan_sweep.py.)
             yield n*100/total
 class EmptyTextNodePlaceholder(object):
@@ -3643,7 +3643,7 @@ class Sense(Node,FieldParent):
         # CACHED: this runs for EVERY SENSE, and the uncached form re-read
         # `images/toselect/` each time — 2.82s of the LIFT load on Kent's
         # 1700-entry Demo, which was the whole of what remained after the
-        # comprehension fixes (agenda/rescan_instead_of_grouping.md). The
+        # comprehension fixes (the rescan-instead-of-grouping item). The
         # directory is static for a session; `ensure_available` above is the
         # one thing that can change it, and it drops the cache.
         if self.word_list_n:

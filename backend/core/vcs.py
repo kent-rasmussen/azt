@@ -1187,7 +1187,7 @@ class GitReadOnly(Git):
             # — so "try the testing version" reported success (the caller only
             # checks that self.branch matches the NAME) while running exactly
             # the code it was already running. Silent and self-confirming, and
-            # the reason azt/agenda/checkout_b_from_head_not_remote.md exists.
+            # the reason the checkout-B-from-HEAD-not-remote item exists.
             # Better to fail loudly and stay put than to lie about which code
             # is running.
             r=_("Could not switch to ‘{branch}’.\n\n{why}\n\nThere is no local "

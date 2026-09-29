@@ -175,7 +175,7 @@ project files that already carry it.
 installer changes below have never been run: the installers need a fresh
 machine, and the app changes need a Windows boot. Steps 7–9 of the new
 non-regression check exist to settle them, and are queued in
-`agenda/cross_platform_checks.md` §7. Only the documentation changes are
+the cross-platform-checks item §7. Only the documentation changes are
 confirmed, because reading them is the whole test.
 
 **"Add and parse words with audio" had no audio button under `--webview`, and
@@ -422,7 +422,7 @@ Along the way: A-Z+T has never created a venv that can see system packages.
 No installer and no code path passes `--system-site-packages`, so GTK could
 never have worked on a fresh Linux install; the developer machine worked only
 because of a hand edit in September. Fixing that at the source belongs to
-`agenda/update_install_non-windows-specific.md`.
+the non-Windows install item.
 
 Both engines confirmed the same day, with the page seen rendering in each
 case. `--engine=gtk` repaired the venv, restarted and came up on GTK;
@@ -702,7 +702,7 @@ modal on its task, completing chooser ← task ← run window.
 The immediate benefit is that a task no longer REQUIRES the chooser to have
 a window in order to exist, which was the one thing preventing the chooser's
 selection logic — none of which touches a widget — from running without its
-UI. See `agenda/modal_window_stack.md`.
+UI. See the modal-window-stack item.
 
 # Version 1.15.30
 
@@ -760,7 +760,7 @@ is what this is, and the guard now fires: *"affix catalog: the window closed
 part way through loading (at 93%)"*.
 
 The concurrency itself is filed as its own item
-(`agenda/webview_flows_run_concurrently.md`), since it produced the JS-queue
+(the concurrent-webview-flows item), since it produced the JS-queue
 overtaking and the two-concurrent-audio-streams faults earlier in the day
 and was fixed as a one-off both times.
 
@@ -853,7 +853,7 @@ out-parameter in C, and reads the same number off the GdkWindow directly
 instead. The only thing given up is the window's on-screen position, which
 Wayland does not report anyway. This was briefly believed to explain a
 segfault when the app is asked for a stack dump; it does not — that remains
-unexplained and is tracked in `agenda/webview_window_sizing.md`.
+unexplained and is tracked in the webview window-sizing item.
 
 **Pages fit the window again: the double scroll is gone.** Fixed (Kent:
 "now it's on page"). The sort page had two scrollbars — one for the page and
@@ -984,7 +984,7 @@ app's own layout order. `--keep-window-size` restores the correction.
 Research found a candidate cause that is NOT ours — a GTK theme whose
 `:backdrop` rules change window geometry, which would make this GTK's own
 recalculation rather than the compositor's refusal — and `--gtk-theme=` is
-the test for it. See `agenda/webview_window_sizing.md`.
+the test for it. See the webview window-sizing item.
 
 **The parser's load was a debug `print()`.** `getfromlift` yields a
 percentage for every inflection-class trait in the file, and each one was
@@ -1029,7 +1029,7 @@ windows are gone from Sound Card Settings — Select Input Sound Card, Select
 Output Sound Card, Select Audio Format, Select Sampling Frequency — each of
 which was a title bar, a prompt and a list of buttons wrapped around a single
 value. A row now reads `Rate: 192khz`, and clicking the value turns it into a
-chooser in place. First delivery on `agenda/settings_prompts_one_window.md`,
+chooser in place. First delivery on the settings-prompts-in-one-window item,
 which Kent moved to the top of the agenda for this.
 
 The idiom behind it is now `frontend/composites.py` rather than a sixth copy
@@ -1142,7 +1142,7 @@ any click and GTK answers from the size the window was CREATED with, because
 `resize()` is one-shot. Putting the size back afterwards works but flickers;
 `set_default_size` was tried and does not hold; `move()` cannot work there at
 all (xdg-shell has no toplevel positioning, by design) and is no longer
-attempted. See `agenda/webview_window_sizing.md`. Relatedly, the app has died
+attempted. See the webview window-sizing item. Relatedly, the app has died
 silently several times with no traceback, no signal and no shell message; two
 concurrent-stream doors are now shut, but the cause is not established.
 
@@ -1286,7 +1286,7 @@ one function.
 
 `io_put/lift.py::init_post_analang` carries temporary per-step timing
 (`DIAG-liftload`), as `langtags.Languages.__init__` does; both come out when
-`agenda/rescan_instead_of_grouping.md` closes.
+the rescan-instead-of-grouping item closes.
 
 **Nine webview faults, found by building one page that both backends draw.**
 `frontend/gallery.py` (`python -m frontend.gallery [--webview]`) builds every
@@ -1364,7 +1364,7 @@ None of them raised, none logged, and all three were *correct* — so every
 test passed and the slowness got attributed to the LIFT parse, to Tk, or to
 the machine. They were found by timing, and two attempts to find the third
 by reading guessed wrong before per-step timing named it in one run. Pattern
-and the remaining sweep: `agenda/rescan_instead_of_grouping.md`.
+and the remaining sweep: the rescan-instead-of-grouping item.
 
 `langtags.dict_by` grouped `iso.list` by running its outer loop over each of
 ~9582 distinct codes and rescanning all ~9582 entries for each — about 92
@@ -1611,7 +1611,7 @@ distinct scrollers**. That last pair is the point: the `_sizing` guard stops a
 scroller re-entering itself, so if the cascade hops between instances the
 guard is the wrong shape, and the existing log lines are deduped on content
 size so they could never show the count. See
-`agenda/wayland_freeze_audit.md`, which also records that the webview
+the Wayland freeze audit, which also records that the webview
 comparison does NOT by itself exonerate XWayland — GTK3 probably runs as a
 native Wayland client, so the discriminating question is whether Qt is on
 `xcb`.
@@ -1627,11 +1627,11 @@ native Wayland client, so the discriminating question is whether Qt is on
   exitFlag" means *class*-inherited; read as widget-inherited it produces a
   wrong diagnosis, as it did here. What has no name is the program-level
   flag, currently spelled `program.tk_root.exitFlag` —
-  `agenda/exit_flag_names_its_scope.md`.
+  the exit-flag-names-its-scope item.
 - The 400 ms wait-dialog delay from 1.15.20 was **reverted**: `after()` is not
   serviced while the main thread is held, so the dialog arrived last or never
   while the page stayed hidden — a 35-second blank screen.
-  `agenda/wait_dialog_flicker.md` records it as attempted, not fixed.
+  the wait-dialog-flicker item records it as attempted, not fixed.
 - `tests/test_work_outliving_its_window.py` (28 tests) covers both faults,
   including which signals must NOT be used, and asserts that the three
   short-lived predicates written on the way to this one stay retired.
@@ -1890,7 +1890,7 @@ Speakers and Microphone first, then a "Recording settings" heading over Rate and
 The rate and format rows used to show a bare value (`44.1khz`, `32 bit integer`) with
 nothing naming them — the two settings this item exists to make honest.
 
-That completes plan step 6 of `agenda/honest_sound_settings.md`, and with it the item's
+That completes plan step 6 of the honest-sound-settings item, and with it the item's
 plan. Layout and wording are Kent's; a first draft carried an explanatory line under each
 row and he cut them.
 
@@ -2005,7 +2005,7 @@ match the tkinter implementation either, which has no `updatebindings` at all.
 
 ## Filed, not fixed
 
-- **macOS clicks land off the control** (`agenda/macos_clicks_land_below_the_pointer.md`)
+- **macOS clicks land off the control** (the macOS clicks-land-below-the-pointer item)
   — seen on pages with a SINGLE button, which rules out every row/index explanation and
   makes it a displacement. The same session logged two screen heights, `1680x968` and
   `1680x1025`; that 57px is a menu bar, and it would read as "one row off" in a settings
@@ -2013,16 +2013,16 @@ match the tkinter implementation either, which has no `updatebindings` at all.
   is testing whether the touchpad is at fault, and a code change now would muddy that.
 - **The webview splash renders four of its seven parts** — the bottom three, including
   the progress bar, which is the only thing that moves during boot
-  (`agenda/webview_splash_missing_parts.md`).
+  (the webview splash missing-parts item).
 - **The webview image list is a short hand copy of tkinter's** — 35 names missing,
   including every sort-board verb image and the numbered C/V images, all failing silently
-  (`agenda/webview_imagelist_stale_copy.md`).
-- Card images on a lighter rectangle (`agenda/webview_card_image_backing.md`); the Sound
+  (the stale image-list copy item).
+- Card images on a lighter rectangle (the webview card-image-backing item); the Sound
   Card Settings caveat label wider than its window, added to
-  `agenda/scrollframe_sizes_from_layout.md`.
+  the scroller-sizes-from-layout item.
 - The language chooser's dicts are now **proved** to come from the call site, not the
   widget: the app logs `asking with these options: [{'code': 'ar', 'name': 'Arabic'}, …]`
-  before any widget is involved (`agenda/language_options_show_objects.md`).
+  before any widget is involved (the language-options-show-objects item).
 
 ## Awaiting verification
 
@@ -2345,7 +2345,7 @@ whether every requirement has a wheel, given no compiler — with a pip dry run 
 installs nothing; the two known trouble spots are `torch==2.7.1+cpu` (that `+cpu` build
 exists only for Linux/Windows) and `PyAudio`. Switches throughout, no environment
 variables, and `--dry-run` for the first attempt. Details and open items in
-`agenda/rework_install_procedure.md`.
+the install-procedure rework.
 
 **FOUND ON macOS, WORKED AROUND (not fixed): the venv relaunch dies under a terminal
 launcher.** First real run on the Mac installed fine, printed `Relaunching inside the
@@ -2484,7 +2484,7 @@ test anyone can run.** Documentation and one manual test; **no application code 
   is the rollout mechanism. Records that pywebview 6.2.1 is pure-Python and that pythonnet
   ships cp313 Windows wheels, so the `allosaurus` failure mode (a missing Windows py3.13
   wheel taking down the whole `-r`) does not repeat here.
-- **`agenda/webview_when_to_finish.md` rewritten** with the research it asked for. The item's
+- **the webview-when-to-finish item rewritten** with the research it asked for. The item's
   own gating unknown — WebView2 on Windows — is **answered: not a blocker** (in-box on
   Win11, on "the vast majority" of Win10 devices per Microsoft, per-user installable without
   admin from a 2 MB bootstrapper, one registry read to detect, Fixed Version as a floor). The
@@ -2547,7 +2547,7 @@ costs more than it saves.
 Known and harmless: `box=` trails `content=` by one pass, so a shorter row can briefly sit in
 a viewport slightly wider than it needs — blank space to the right, never a clip.
 
-Still open, in `azt/agenda/scrollframe_sizes_from_layout.md`: the per-site `reserve` values
+Still open, in `azt/the scroller-sizes-from-layout item`: the per-site `reserve` values
 are still picked rather than derived, and `availablexy` still walks up through scrolling
 ancestors, counting scrollable content as consumed screen space.
 
@@ -2620,7 +2620,7 @@ ones wrap inside the viewport, and every row keeps its profile tag on screen.
   content-drives-box circularity up one level rather than breaking it — a parent that is
   itself content-sized hands down a small number — and a `MIN_PLAUSIBLE=300` floor let a bad
   number through while looking like caution. Filed as
-  `azt/agenda/scrollframe_sizes_from_layout.md`, whose first task is now establishing, by
+  `azt/the scroller-sizes-from-layout item`, whose first task is now establishing, by
   measurement per page, which widget has a layout-derived width all the way up.
 - Logging: `PART_BYTES` back to **10MB** (settled by measurement — 3.5MB of parts compress
   22:1, so part size never governed emailability, only how big one file is to read);
@@ -2706,7 +2706,7 @@ and the 1MB cap are what that test is for.
   machinery had never actually been watched work. What 1MB proves is `_nextpart` allocating
   FORWARD and `sweep` keeping `RUNS_KEPT` runs, neither of which depends on the threshold,
   so this is a test convenience and not yet a policy decision. Kent to decide after the run;
-  the trade is recorded in `azt/agenda/modernize_logging_rotation.md` (10MB = few large
+  the trade is recorded in `azt/the modernize-logging-rotation item` (10MB = few large
   parts; 1MB = more parts per run, numbered forward, so a long day can reach `_020`).
 - **An empty page now says so on screen**, not only in the log. New
   `visibility.report_empty_page(where, window, outcome)` logs `EMPTY PAGE` (the grep token)
@@ -2751,7 +2751,7 @@ and the 1MB cap are what that test is for.
     bind, so a width-only guard would wrap the first rows and none of the rest; and
     **`add='+'`** on the bind, so it can't displace `ScrollingFrame`'s own `<Configure>`
     handler. No `update()`/`update_idletasks()` inside it, per
-    `azt/agenda/wayland_freeze_audit.md`.
+    `azt/the Wayland freeze audit`.
   - No-op mirror added to `ui_webview`, which would otherwise `AttributeError` on the
     chooser: a browser wraps text in its containing box already, which is what the tkinter
     helper is emulating by hand.
@@ -2779,7 +2779,7 @@ and the 1MB cap are what that test is for.
     the fallback threshold raised to 400px (no real chooser window is narrower, so anything
     smaller is Tk's default or a stale read from the withdrawn rebuild in `gettask`), and
     the fallback is the work area rather than the raw screen.
-  - This is the cause `azt/agenda/chooser_wrap_xpad.md` listed as the open question and
+  - This is the cause `azt/the chooser wrap/xpad item` listed as the open question and
     `DIAG-chooser-xpad` was added to answer, so **the field round-trip is no longer needed
     for it** — though the DIAG stays, since it will now confirm the fix in one line
     (`avail` should come back as the window width, not 200).
@@ -2796,7 +2796,7 @@ What the returning log should be read for, in order of what it settles:
 - **`DIAG-chooser-xpad`** — one line per tab. The whole reason for the trip. `avail` small
   ⇒ the `avail < 100` threshold is the wrap bug; `maxwidth (unset — wrap() never ran)` ⇒
   `availablexy` was never involved for those buttons and the asked-for wraplength is the
-  whole story. See `azt/agenda/chooser_wrap_xpad.md` for the full reading table.
+  whole story. See `azt/the chooser wrap/xpad item` for the full reading table.
 - **`Profile scrub: … is not a profile … clearing the sort and the confirmed profile`** —
   the `NAV` repair firing. Expect it for their 9 words, once each. Its absence means the
   scrub didn't run, not that the data was clean.
@@ -3560,7 +3560,7 @@ Four field-diagnosed faults, all from OBT's nml project and Kent's own reproduct
   and the REASON, which is the field that earns its keep: an update failing to come
   back is a different diagnosis from a branch switch failing) immediately before the
   restart, and the successor clears it once its UI is genuinely up. Level 1 of
-  `azt/agenda/restart_recovery_handshake.md`; it makes the failure NAMEABLE, not yet
+  `azt/the restart-recovery-handshake item`; it makes the failure NAMEABLE, not yet
   survivable.
 - Two things it took live testing to get right, both about *when* a marker means
   something:
@@ -4195,7 +4195,7 @@ Consolidates the 1.13.22 and 1.13.23 bumps, which carried no notes.
   not in tone" — which turned out to mean the `buttoncolumns` SETTING (1/2/3
   columns), not the button widgets. So this change fixes nothing that was
   reported. Kept because it only widens fallbacks and cannot break a path that
-  worked. The actual report is `azt/agenda/sort_group_buttons_dead.md`, and it
+  worked. The actual report is `azt/the dead-sort-group-buttons item`, and it
   is untouched.
 
 # Version 1.13.12
@@ -4381,7 +4381,7 @@ were working whole sessions off the server with no way to tell.
   FUNCTION, not a module constant — a module-level `_()` would freeze the
   untranslated string at import, before `set_translator()` runs.
 
-Still open (in `azt/agenda/boot_without_server_access.md`): no ⇅ title-bar state
+Still open (in `azt/the boot-without-server-access item`): no ⇅ title-bar state
 for the outage, and no re-attach without a restart. Neither is needed to SEE the
 problem, which is what this version is for.
 
@@ -4476,7 +4476,7 @@ tell is that the probe failed, the session never had a base, or the work is ours
   the prompt) and un-latches when every human commit since our base is ours. A
   `MERGED_WITH_LOCAL` latch deliberately survives it: the team commits our save was
   merged with are inside base..HEAD, so that range is not ours-only.
-- NA AUDIT (`agenda/na_audit.md`), and the three defects it found. The audit's
+- NA AUDIT (the NA audit), and the three defects it found. The audit's
   product is that "groups" was doing three jobs with a different NA rule in each,
   which is why two implementations could both look right and disagree:
   **A membership/tracking** (NA always kept, every check), **B verify offer** (NA
@@ -4615,7 +4615,7 @@ tell is that the probe failed, the session never had a base, or the work is ours
     for verification. That full re-read is the occasion to remove anything added in
     error (Kent) — presenting only the uncoded words would lose it.
   - An audit of every other NA site is filed for 2026-07-31
-    (`azt/agenda/na_audit.md`): this fix was found by reading four files, and the
+    (`azt/the NA audit`): this fix was found by reading four files, and the
     rest were spot-checked, which isn't the same thing.
 
 # Version 1.13.1
@@ -5105,7 +5105,7 @@ blank-letter diagnostic.
   one-line `if`, so restoring it is deleting that line. The defensive macrosort
   branch in `sortselected` stays too, in case anything else ever sets
   `vardict['skip']`. Revisit 2026-08-16 —
-  `azt/agenda/macrosort_skip_affordance.md` records the question: in sort, skip
+  `azt/the macrosort skip-affordance item` records the question: in sort, skip
   is a durable judgement about a WORD (→ NA, returning only via `tryNAgain`),
   whereas a macrosort item is a verified sort GROUP that must land in SOME
   letter or the alphabet is incomplete, so there is no equivalent judgement to
@@ -5864,7 +5864,7 @@ blank-letter diagnostic.
   restart the app themselves once the notice is closed (the seams re-branch
   only at startup). Not yet wired: mid-session reload on peer
   changes (Phase 3 — merged peer content appears on next open; plan in
-  agenda/azt_run_with_server.md).
+  the run-with-server item).
 - FIX — **draft selector no longer collapses to zero buttons.** When the
   'top models only' window was unanimous (top-5 all emitting the same form),
   dedup left one value and the selector showed nothing — reading as "ASR didn't
@@ -6064,7 +6064,7 @@ blank-letter diagnostic.
   is resolved in practice). Not bug-free — remaining issues are tracked separately
   (glyph-rename conflict when a default group collides with an existing glyph
   member; the conflict dialog's Retry leaving no UI) — but the redesign itself is
-  done. See azt/agenda/syllable_sort_redesign.md.
+  done. See azt/the syllable-sort redesign item.
 - FIX (Alphabet word-selection window — chart AND booklet): showed words by
   ORTHOGRAPHY (every word whose spelling contained the glyph), including words not
   actually verified into the group. Now resolves a glyph's VERIFIED members only:

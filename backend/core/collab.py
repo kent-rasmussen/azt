@@ -8,7 +8,7 @@ entry point degrades to "legacy path, untouched" so a non-connected
 project cannot be affected by any of this.
 
 Contract: azt-collab/azt_collab_client/CLIENT_INTEGRATION.md § 8b
-(whole-file editor). Plan: azt/agenda/azt_run_with_server.md.
+(whole-file editor). Plan: the run-with-server item.
 
 Wiring (all in place as of Phase 2):
 - ``attach(program)`` from ``main._run_setup`` right after FileParser —
@@ -1042,7 +1042,7 @@ class CollabSession:
 # fix it"). Silence is correct ONLY for a project that never opted in.
 # Before this, eight distinct causes collapsed into one indistinguishable
 # silent legacy fallback, and only the identity mismatch ever spoke — see
-# azt/agenda/boot_without_server_access.md for the audit.
+# the boot-without-server-access item for the audit.
 #
 # The reason is kept on program.collab_wanted so the Advanced menu can
 # say WHICH failure this was instead of showing the same "Connect to
@@ -1234,7 +1234,7 @@ def attach(program):
         # The daemon-side causes (down / wedged / too old / busy) and
         # "not registered" are indistinguishable from here: open_project
         # returns a bare None. Asking the collab team for the reason is
-        # filed in azt/agenda/desktop_collab_unavailable_visible.md.
+        # filed in the desktop-collab-unavailable-visible item.
         return _decline(program, langcode, NO_SERVER,
             _("server not answering"),
             _("Collaboration: server not answering"),

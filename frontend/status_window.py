@@ -139,7 +139,7 @@ class StatusWindow(ui.Window):
         that hung, blocked in `tkraise` while being called from this window's own
         constructor (Kent's faulthandler dump, 2026-08-25). Raising a window is a
         WM round trip, and under XWayland those are exactly the calls that wedge;
-        see azt/agenda/wayland_freeze_audit.md. One call, and it is the one that
+        see the Wayland freeze audit. One call, and it is the one that
         also makes the window visible over a fullscreen kiosk page.
 
         NEVER INLINE — ALWAYS ONE BEAT LATER (Kent 2026-09-03: "waiting a beat

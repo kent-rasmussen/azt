@@ -155,7 +155,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         # alphabet is incomplete. Kept rather than deleted in case there is a
         # use we haven't thought of — drop the `if` below (one line) to
         # restore it. Revisit 2026-08-16:
-        # azt/agenda/macrosort_skip_affordance.md
+        # the macrosort skip-affordance item
         if not self.macrosort:
             vardict['skip']=ui.BooleanVar()
             # log.info("Making skip button")
@@ -1302,8 +1302,8 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         # frame's, and WEIGHT on the frame's row so there is height to take.
         # sticky stretches a widget into space its row or column HAS, and a
         # row only has space beyond its content if weighted — which is why
-        # the sticky alone did nothing when tried first (azt/agenda/
-        # webview_window_sizing.md records the same rule biting the gallery).
+        # the sticky alone did nothing when tried first (the webview
+        # window-sizing item records the same rule biting the gallery).
         self.glyph_label_frame=ui.Frame(self, col=0, sticky='ns')
         self.glyph_label_frame.grid_rowconfigure(0, weight=1)
         if kwargs.get('on_select'):

@@ -41,7 +41,7 @@ SOUND_PROBLEMS = []  # (component, error) — main.py surfaces these LOUDLY
 # leaks in one session took the sound card away from every other program on
 # the machine, Praat included. Probing was measured and does NOT explain it
 # (192 kHz/int32 is reported supported), so the model had to go, not the
-# settings. See agenda/pyaudio_to_sounddevice.md.
+# settings. See the PyAudio-to-sounddevice item.
 try:
     import sounddevice
     AUDIO_OK = True
@@ -424,7 +424,7 @@ def quietest_window_db(block, rate, window_ms=200.0):
     gives one — no prompt, no "be quiet for five seconds", no button. That
     matters because the checks worth having are the ones needing no test
     signal and no instructions to follow or fail (the triage in
-    agenda/honest_sound_settings.md), and because the card-switch measurement
+    the honest-sound-settings item), and because the card-switch measurement
     had just finished removing the human from this loop.
 
     IT IS AN UPPER BOUND, and that is the safe direction: a speaker who never
@@ -883,7 +883,7 @@ class SoundSettings(object):
                 # graph rate is sticky, so the rate tested immediately before
                 # can leak into the next measurement and a path that would
                 # rather resample than renegotiate gets blamed for it
-                # (agenda/honest_sound_settings.md, finding 2b — 48489 Hz
+                # (the honest-sound-settings item, finding 2b — 48489 Hz
                 # being almost exactly 96k/2 was the giveaway). The prober
                 # was fixed with a settle pause and a mandatory retry; this
                 # had neither until 2026-09-11.
@@ -1225,7 +1225,7 @@ class SoundSettings(object):
     #   A card we cannot find is exactly the case for starting at the first
     # one, which is what these are for. The proper fix is to persist the
     # device NAME and resolve it at use time; see
-    # agenda/pyaudio_to_sounddevice.md.
+    # the PyAudio-to-sounddevice item.
     def _next_card(self, io, current):
         """The next card after `current` in direction `io`, or None when
         there are no more to try. Starts at the first when `current` is not

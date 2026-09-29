@@ -12,7 +12,7 @@ from tasks.tasks import (Sound, SortV,
     ReportCitationMultisliceTBackground, ReportCitationMultisliceTLBackground,
     ReportCitationByUFBackground, ReportCitationByUFMulticheckBackground,
     ReportCitationByUFMultichecksliceBackground,
-    WordCollectionCitation, WordCollectionCitationwRecordings,
+    WordCollectionCitationwRecordings,
     WordCollectnParse, WordCollectnParsewRecordings, RecordCitation,
     SortSyllables, SortC, SortT, RecordCitationT,
     WordsParse, TranscribeV, TranscribeC, TranscribeT,
@@ -193,8 +193,12 @@ class TaskChooser(Task):
                 tasks.append(ReportCitationByUFMulticheckBackground)
                 tasks.append(ReportCitationByUFMultichecksliceBackground)
         elif category == 'datacollection':
+            # TWO COLLECTION TASKS, with and without Parse. The commented
+            # `WordCollectionCitation` here was the no-recordings twin of the
+            # first, and it is gone (plan 2, 2026-09-29) along with the three
+            # other classes that existed only to hard-code an ftype — the
+            # form is now a WORD CHECK on the page, not a class.
             tasks=[
-                    # WordCollectionCitation,
                     WordCollectionCitationwRecordings,
                     # WordCollectnParse,
                     WordCollectnParsewRecordings,

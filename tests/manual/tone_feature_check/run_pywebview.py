@@ -168,7 +168,7 @@ def main():
         print("Loading staveless build: {}".format(fontpath))
         if others:
             # Which tstv builds a machine carries is the open question in
-            # agenda/tstv_font_availability.md, so print all of them.
+            # the TSTV font-availability item, so print all of them.
             print("Other tstv files on this machine (pass one as an argument "
                   "to use it instead):")
             for p in others:
@@ -179,7 +179,7 @@ def main():
     else:
         print("No '*tstv*' font file on this machine - so the page's dropped-font\n"
               "column will stay empty unless you pick a file by hand. That is\n"
-              "itself the answer to agenda/tstv_font_availability.md for this box.")
+              "itself the answer to the TSTV font-availability item for this box.")
 
     # Served over pywebview's bundled server rather than file://, which its own
     # docs recommend against.

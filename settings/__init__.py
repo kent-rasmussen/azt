@@ -778,7 +778,7 @@ class Settings(SettingsUI):
             .format(pss=self.program.db.pss))
     # `makesecondformfieldsOK` DELETED 2026-09-29 with the rest of the
     # second-form dialog cluster (plan 7 of
-    # agenda/azt/second_form_flags_audit.md). It called
+    # the second-form flags audit). It called
     # `mainwindow.getsecondformfieldN/V`, which are gone; its only remaining
     # mention was already commented out in `Parse.__init__`. What replaced it
     # is `StatusFrame.assure_second_forms`, which opens the field in place
@@ -816,10 +816,13 @@ class Settings(SettingsUI):
         return [ps for ps in (self.nominalps, self.verbalps)
                 if ps and not self.secondformfieldset(ps)]
 
-    def secondformfieldsOK(self):
-        if (self.secondformfieldset(self.nominalps) and
-            self.secondformfieldset(self.verbalps)):
-            return True
+    # `secondformfieldsOK` DELETED 2026-09-29 with `_WordCollectionSecondForm`,
+    # its last caller (plan 2). It asked "are BOTH fields set?", which was the
+    # right question only for a task that refused to start without them —
+    # and that refusal was a dead end, since the window that refused offered
+    # no way to set one. `missing_second_form_pss` above answers the same
+    # question usefully (WHICH are missing, so the page can open that one),
+    # and `secondformfieldset` answers it per ps.
     def fields(self):
         try:
             self.fieldnames=self.program.db.fieldnames[self.analang]
@@ -1187,7 +1190,42 @@ class Settings(SettingsUI):
             if isinstance(self.program.task,WordCollection):
                 self.program.task.getword() #update UI for glosses
         if 'secondformfield' in self.attrschanged:
+            # NAMING THE FIELD CHANGES WHICH CHECKS EXIST. `pl` exists only
+            # once the nominal field is named and `imp` only once the verbal
+            # one is (see `CheckParameters.second_form_checks`), so this
+            # branch used to drop the flag and refresh NOTHING — the new
+            # check was built but never offered, and a renamed field left
+            # the old name on screen. Plan 5 of
+            # the second-form flags audit.
+            #   Only for cvt 'S': the second-form checks are whole-word
+            #   syllable-profile checks and appear nowhere else.
+            if t == 'S':
+                try:
+                    self.program.status.updatechecksbycvt()
+                    self.program.status.makecheckok()
+                except Exception as e:
+                    _log.info(_("Could not refresh checks after the second "
+                                "form field changed: {error}").format(error=e))
             self.attrschanged.remove('secondformfield')
+        if 'ftype' in self.attrschanged:
+            # THE WORD CHECK CHANGED, so the page is looking at a different
+            # set of words. The collection page's todo list is built from
+            # `self.ftype` (`getlisttodo`, lexicon.py), so it reloads — the
+            # gloss-language precedent two branches up, data refreshed into
+            # the same widgets rather than a rebuilt page. Kent, 2026-09-17,
+            # on switching to plurals mid-page: "this workflow shouldn't
+            # break us."
+            #   `loadwords`, not `getwords`: the latter builds the frames and
+            # grids a SECOND `wordsframe` if called twice. Plan 2 of
+            # the second-form flags audit.
+            task=getattr(self.program,'task',None)
+            if hasattr(task,'loadwords'):
+                try:
+                    task.loadwords()
+                except Exception as e:
+                    _log.info(_("Could not reload the word list after the "
+                                "word check changed: {error}").format(error=e))
+            self.attrschanged.remove('ftype')
         if 'showdetails' in self.attrschanged:
             # Display-only pref: persist it now (defaults→ui domain) so the choice
             # survives a restart, and clear it from attrschanged so it doesn't fall

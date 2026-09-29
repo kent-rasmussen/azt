@@ -171,7 +171,7 @@ def test_there_is_exactly_one_predicate_for_this():
     """Three overlapping versions of this test were written in one session
     (`_task_quit`, `_task_gone_reason`, `_task_is_gone`). Two names for one
     question is the `mainwindow`/`ismainwindow` trap — see
-    agenda/bridge_shadowed_attributes.md — so the retired ones must stay
+    the bridge-shadowed-attributes item — so the retired ones must stay
     retired."""
     senses = _lexicon().Senses
     stale = [n for n in ('_task_quit', '_task_gone_reason', '_task_is_gone',

@@ -74,7 +74,7 @@ def test_an_unknown_env_value_is_not_a_request(monkeypatch):
 
 
 # --- how the request was made, and how the refusal reaches the user ---------
-# `agenda/webview_requested_but_absent.md`: a declined switch used to leave no
+# The webview-requested-but-absent item: a declined switch used to leave no
 # trace but a log line, and that line was printed twice.
 
 

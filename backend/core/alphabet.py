@@ -667,7 +667,7 @@ class Alphabet():
         # the whole structure rebuilt for every item present, and then
         # scanned linearly to answer one membership question. Same shape as
         # `getcawlmissing` and the two comprehensions fixed with it
-        # (agenda/rescan_instead_of_grouping.md); nothing in the loop body
+        # (the rescan-instead-of-grouping item); nothing in the loop body
         # changes glyph_members, so hoisting it is behaviour-preserving.
         glyphed={i for j in self.glyph_members().values() for i in j}
         for item in self.items_present_in_cvt(cvt):

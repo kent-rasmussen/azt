@@ -36,7 +36,7 @@ a sudo password, and it will continue"
 (wget -O- https://packages.sil.org/keys/pso-keyring-2016.gpg | sudo tee /etc/apt/trusted.gpg.d/pso-keyring-2016.gpg)&>/dev/null
 (. /etc/os-release && sudo tee /etc/apt/sources.list.d/packages-sil-org.list>/dev/null <<< "deb http://packages.sil.org/$ID $VERSION_CODENAME main")
 # PortAudio: libportaudio2, NOT portaudio19-dev (changed 2026-09-11 with the
-# sounddevice port, agenda/pyaudio_to_sounddevice.md). `-dev` supplies HEADERS,
+# sounddevice port). `-dev` supplies HEADERS,
 # which were needed only because PyAudio compiled against them. sounddevice
 # binds PortAudio at runtime with cffi, so the RUNTIME library is all that is
 # wanted and no compiler is involved. Machines that ran the older version of
@@ -88,7 +88,7 @@ gtk-update-icon-cache -f -t "${HOME}/.local/share/icons/hicolor" 2>/dev/null || 
 cd -
 
 # ─── The virtual environment and its packages — BUILT HERE, ON PURPOSE ──────
-# DECIDED 2026-09-23 (agenda/update_install_non-windows-specific.md). Kent: "I
+# DECIDED 2026-09-23 (ADR 0005, python version floor and ceiling). Kent: "I
 # don't like people on any platform thinking they have installed, only to find
 # that on first run there's a bunch more to install." A-Z+T can still do all of
 # this itself on first run — that path is NOT going away, because it is how a

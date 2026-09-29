@@ -87,14 +87,14 @@
    `.tone-staves` is the opt-out; `.tone-staveless` is now redundant and kept
    as the explicit spelling.
    If staves remain after this on a given machine, its Charis has no cv92 —
-   that is the tone gate's open leg (agenda/webview_when_to_finish.md, font
+   that is the tone gate's open leg (the webview-when-to-finish item, font
    inspection), not a page fault, and the -tstv file is then the only route,
    as under Tk.
 
    Do NOT delete the -tstv mechanism in ui_tkinter on the strength of this:
    a machine with a tuned font legitimately renders differently from one
    without, and pulling it would take stave-free output away from anyone who
-   has the file. See agenda/tstv_font_availability.md. */
+   has the file. See the TSTV font-availability item. */
 *                { font-feature-settings: "cv92" 1; }
 .tone-staveless  { font-feature-settings: "cv92" 1; }
 .tone-staves     { font-feature-settings: "cv92" 0; }

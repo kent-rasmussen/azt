@@ -15,11 +15,11 @@ without it.
 Writes one PNG per family into a temp directory (printed at the end) - never
 into the repo, so it is safe on a read-only or unwritable checkout. Put those
 beside a screenshot of the same rows in index.html; that side-by-side IS Step 2
-of `agenda/webview_when_to_finish.md`.
+of the webview-when-to-finish item.
 
 The console output matters as much as the images: it names the font file that
 actually won for each family, which is the open question in
-`agenda/tstv_font_availability.md` - whether any machine besides the dev box
+the TSTV font-availability item - whether any machine besides the dev box
 carries a `-tstv` build at all.
 
 Unlike index.html this one DOES import azt, so it is dev-box only. That is
@@ -53,7 +53,7 @@ SIZE = 46
 def sfnt_info(path):
     """What does this font FILE declare? The Python half of the page's
     inspector, and the `has_feature(path, 'cv92')` of §3 in
-    agenda/webview_when_to_finish.md — about 60 lines of struct, no new
+    the webview-when-to-finish item — about 60 lines of struct, no new
     dependency.
 
     It exists because the browser and the app can end up using DIFFERENT

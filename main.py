@@ -185,8 +185,7 @@ from backend.core.file_parser import FileParser
 from settings import Settings
 from tasks.tasks import (ExportData, AlphabetChart, AlphabetComparisonPages,
     Sound, Record, Transcription, WordCollectionwRecordings,
-    WordCollectionLexeme, WordCollectionCitation, WordCollectionCitationwRecordings,
-    WordCollectionPlural, WordCollectionImperative, ParseWords, WordCollectnParse,
+    WordCollectionCitationwRecordings, ParseWords, WordCollectnParse,
     WordCollectnParsewRecordings, WordsParse, ParseSlice, ParseSliceWords, Placeholder,
     ToneFrameDrafter, SortSyllables, SortCV, SortV, SortC, SortT, Transcribe,
     TranscribeS, TranscribeV, TranscribeC, TranscribeT, JoinUFgroups, RecordCitation,

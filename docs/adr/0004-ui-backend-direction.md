@@ -8,7 +8,7 @@
   `ui_webview.py` + `frontend/webview_html/`), the `frontend/ui_interface.py` contract, and
   the task↔window seam in `tasks/ui_protocol.py`. Touches every page.
 - Author: drafted by Claude (AI agent) with Kent, from
-  `agenda/webview_when_to_finish.md`'s 2026-09-04 research. Records decisions that were
+  the webview-when-to-finish item's 2026-09-04 research. Records decisions that were
   implicit and contradictory across `Electron_Conversion.md`, `UIvTasks.md`, `CLAUDE.md` and
   the code.
 
@@ -54,7 +54,7 @@ only one, and no state where the user is half in each.
 
 **A2. Webview is pursued aggressively.** Bug hunts first, page by page, to
 turn "the webview is unfinished" into a list of named faults. Two such hunts
-exist already: `agenda/webview_discards_widget_options.md` (ten options
+exist already: the dropped-widget-options item (ten options
 accepted and silently thrown away) and Step 6(a) below, the AST audit of
 calls against the contract.
 
@@ -98,17 +98,16 @@ simpler than its Tk counterpart, not merely different.
   (`--engine=`, `--console`, `--gdk-backend=` / `--qt-platform=`).
 - **D1**'s "detect availability and fall back to tkinter with a log line" is
   only half met — `ui_backend.chosen()` refuses and substitutes, but
-  `agenda/webview_requested_but_absent.md` is still open, and under A3 that
+  the webview-requested-but-absent item is still open, and under A3 that
   matters more than it did. **Moved to the top of the agenda 2026-09-22** to be
   fixed next.
 - **D5**'s `requirements-webview.txt` has not been verified to exist.
   **CORRECTED 2026-09-23.** It was handed on 2026-09-22 to
-  `aztinstaller/agenda/aztinstaller_updates.md`, which was the wrong home:
+  the aztinstaller-updates item, which was the wrong home:
   that repo (renamed `aztinstaller_windows_exe` on 2026-09-23) is the Windows
   executable and nothing else. It *runs* `requirements.txt` but expects to
   find it in `azt/`, so what gets installed — on any platform — is decided
-  here. The question now belongs to
-  `azt/agenda/update_install_non-windows-specific.md`.
+  here. The question now belongs to the non-Windows install item.
   The file itself **does exist** in `azt/`; what is unverified is whether any
   installer offers it.
 - **D6** stands and gains weight: a ported page must state what replaced its
@@ -121,7 +120,7 @@ simpler than its Tk counterpart, not merely different.
 `frontend/served_alphabet_chart.py`, the `--serve=` switch, `SERVED_PAGES`,
 and the three-way splash choice in `main.py` all implement D7. Under A1 they
 have no role. Deleting them is mechanical; what should be kept is written
-down here and in `agenda/webview_when_to_finish.md`, because two of the
+down here and in the webview-when-to-finish item, because two of the
 findings that came out of building them — `Toplevel._on_loaded` never firing
 for pre-start windows, and `image_pixels` silently dropped — were real
 webview bugs that the exercise surfaced.
@@ -144,7 +143,7 @@ pure rewrite would discard ~2,500 working lines of transport and chrome.
 **The altitude for this seam already exists**: `tasks/ui_protocol.py::TaskUI` — semantic,
 toolkit-free, headless-stubbable, with `drive_work` as the one member the codebase actually
 adopted. Grow the view model there rather than inventing a new seam. See
-`agenda/ui_protocol_finish_or_kill.md`; that decision is a prerequisite, and it must **not**
+the protocol's finish-or-kill item; that decision is a prerequisite, and it must **not**
 be "finished" by adding the `wait`/`waitdone` family, which would harden it in Tk's
 vocabulary.
 
@@ -169,7 +168,7 @@ FeatureList) to `utilities/fonts.py`, and **never block — always say so**, in 
 only after that page shows tone correctly by feature.
 **The `-tstv` file preference is NOT removed.** Machines that have such a file get
 stave-free output; removing the preference would take that away from everyone who has it —
-a strict regression. Whether anyone but the dev has one is `agenda/tstv_font_availability.md`.
+a strict regression. Whether anyone but the dev has one is the TSTV font-availability item.
 
 **D5. Nothing enters `requirements.txt` until D1's condition is met.** Webview dependencies
 live in `requirements-webview.txt` (opt-in), because `requirements.txt` re-installs on every
@@ -223,7 +222,7 @@ is the switch reference.
 - **`wayland_freeze_audit` Phase 2 must not be done for pages scheduled to be ported** — it
   rewrites exactly the flush-then-measure code a ported page deletes.
 - **No trigger is recorded, deliberately.** Kent's rule is value versus cost in his own
-  judgement, so `agenda/webview_when_to_finish.md` carries a **ledger** that is appended to
+  judgement, so the webview-when-to-finish item carries a **ledger** that is appended to
   as bugs are paid for and measurements come in. Two gates (Keyman, tone features) are
   binary preconditions, not value judgements.
 - A-Z+T 2.0's multi-client sort would get its client pages as a by-product. This is recorded

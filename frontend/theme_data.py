@@ -14,7 +14,7 @@ there are more:
     no icon while the other seven did). `theme.photo.get(name)` returns None
     for a name that was never in the list, and a Button given `image=None`
     draws no image and logs nothing, so all of it failed silently.
-    See agenda/webview_imagelist_stale_copy.md.
+    See the stale image-list copy item.
   * **Kent's own theme missing** — `Kim` is defined under tkinter and absent
     from the webview copy's four entries, and `ui_webview.Theme.__init__`
     answered an unknown name by falling back to `greygreen` WITHOUT SAYING

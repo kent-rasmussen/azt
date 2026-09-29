@@ -11,9 +11,9 @@ speculative. The webview backend reached the screen on 2026-09-08 (splash,
 LIFT chooser, task chooser and a sort board all rendering under
 WebKitGTK), and getting there produced evidence about what this seam has to
 say and what it must NOT say. Those findings are written up below as a spec
-to grow into, per `agenda/webview_when_to_finish.md` Step 3 ("grow TaskUI by
-exactly this page's worth — no more") and the finish-or-kill decision in
-`agenda/ui_protocol_finish_or_kill.md`.
+to grow into, per the webview-when-to-finish item's Step 3 ("grow TaskUI by
+exactly this page's worth — no more") and the open finish-or-kill decision on
+this protocol.
 
 WHY THIS MATTERS MORE THAN IT DID: the alternative seam,
 `frontend/ui_interface.py`, is Tk's vocabulary written as an ABC — it

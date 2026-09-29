@@ -4,7 +4,7 @@
 A-Z+T's tone letters the way the app must show them — joined into contours,
 and (where wanted) without staves?**
 
-This is **Step 2** of `agenda/webview_when_to_finish.md`, and unlike the Keyman
+This is **Step 2** of the webview-when-to-finish item, and unlike the Keyman
 check it has a **real kill condition**. Keyman was political: a failure there
 costs acceptance, not function. This one is functional. If tone letters cannot
 render correctly in a webview, tone pages cannot be ported and the whole
@@ -107,7 +107,7 @@ Use the **extra feature column** box to try any tag the inspector reports —
 
 Optionally run `render_pil_baseline.py` and put its PNGs beside the page. Its
 console output also names the font file that actually won for each family —
-which is the open question in `agenda/tstv_font_availability.md`.
+which is the open question in the TSTV font-availability item.
 
 ## Reading the result
 

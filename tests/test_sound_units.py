@@ -4,7 +4,7 @@
 
 Sketchy on purpose (Kent 2026-09-09: "can we draft even sketchy sound
 tests?"), and written now because `backend/core/sound.py` is about to have its
-audio backend replaced (agenda/pyaudio_to_sounddevice.md). Anything device-
+audio backend replaced (the PyAudio-to-sounddevice item). Anything device-
 shaped lives in tests/manual/sound_check/ instead — this file is only the part
 that can run in CI, on a machine with no sound card at all.
 
@@ -184,7 +184,7 @@ def test_format_bits_is_reachable_from_io_put():
 
     (Named `getsoundformat` until 2026-09-15, when the four chooser WINDOWS
     became four combo boxes in the settings window itself and what was left
-    of each was its option list — see agenda/settings_prompts_one_window.md.
+    of each was its option list — see the settings-prompts-in-one-window item.
     The ranking is unchanged; only the thing that displays it moved.)"""
     io_sound = pytest.importorskip('io_put.sound',
                                    reason='needs the audio module importable')

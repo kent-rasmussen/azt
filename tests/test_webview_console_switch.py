@@ -73,7 +73,7 @@ def test_the_retired_switch_names_do_nothing(monkeypatch, engine):
     """One switch, one name. `--webview-devtools` and
     `--no-webview-devtools` both existed within a day of `--console` and must
     not linger as half-working aliases — the `mainwindow`/`ismainwindow` trap
-    (agenda/bridge_shadowed_attributes.md)."""
+    (the bridge-shadowed-attributes item)."""
     engine('gtk')
     for stale in ('--webview-devtools', '--no-webview-devtools'):
         _argv(monkeypatch, stale)

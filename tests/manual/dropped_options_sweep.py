@@ -4,7 +4,7 @@
     ../env/bin/python -m tests.manual.dropped_options_sweep
     ../env/bin/python -m tests.manual.dropped_options_sweep frontend/ui_webview.py
 
-`agenda/webview_discards_widget_options.md`, plan step 5: "make the class
+The dropped-widget-options item, plan step 5: "make the class
 impossible to reintroduce — every deliberate drop gets a comment… A drop
 with no comment then reads as a bug, which is the only way this stops
 recurring."

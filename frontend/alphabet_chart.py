@@ -53,8 +53,8 @@ class OrderAlphabetUI(ui.Window):
         in that log is the picker, fitted to the content it never got.
 
         A window hidden for a child, revealed on the happy path only, is the
-        most-repeated bug shape in this app (`agenda/work_outliving_its_
-        window.md`, and the run-window reveals before it). The body moved
+        most-repeated bug shape in this app (the work-outliving-its-window
+        item, and the run-window reveals before it). The body moved
         into `_select_example` so the guarantee is structural rather than a
         rule someone has to remember while editing.
         """

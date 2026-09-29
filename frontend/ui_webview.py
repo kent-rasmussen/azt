@@ -194,7 +194,7 @@ def _request_refit(window, trigger, delay=0.4):
     nowhere else — so a window whose content was built AFTER the page loaded,
     which is most of them, was measured while empty and never measured again.
     That is the clipped chooser and the screen-filling USB prompt both:
-    windows that never asked. See agenda/webview_window_sizing.md.
+    windows that never asked. See the webview window-sizing item.
 
     COALESCED, because the obvious fix is worse than the bug: asking after
     every widget would resize the window a few hundred times during a build.
@@ -662,7 +662,7 @@ def _inset_of(win):
     every window and both created sizes. Nothing took the size away: the
     minimum was honoured EXACTLY, in units nobody had checked. The
     "compositor took the size" reading in the log lines and in
-    agenda/webview_window_sizing.md was ours all along, and
+    the webview window-sizing item was ours all along, and
     `_pin_min_size`'s own docstring had the arithmetic in it ("a window with
     a 998x770 minimum was configured to 946x681") without the subtraction
     being done.
@@ -749,7 +749,7 @@ def _apply_dmabuf_default():
     "I've seen something similar multiple times. it typically resolves, just
     wondering". That shear is the signature of a STRIDE MISMATCH — the page
     renders correctly and the compositor reads the buffer with the wrong
-    pitch. `agenda/webview_when_to_finish.md` Step 0 already knew the
+    pitch. The webview-when-to-finish item's Step 0 already knew the
     mitigation ("if GTK is blank retry with
     WEBKIT_DISABLE_DMABUF_RENDERER=1") and ADR 0004 D8 keeps Qt available as
     the escape hatch for the blank-window variant of the same bug.
@@ -764,7 +764,7 @@ def _apply_dmabuf_default():
     chooser is a grid of buttons, the splash is text and an occasional
     progress tick, the alphabet chart is a grid of images that renders in
     ~0s. The two things that WOULD feel it do not exist yet — drag with
-    animation (agenda/drag_and_drop_animation.md, Step 4) and scrolling a
+    animation (the drag-and-drop animation item, Step 4) and scrolling a
     long image-bearing verify list. `--dmabuf` is how those get measured
     both ways when they arrive; the note is in that item too.
 
@@ -798,7 +798,7 @@ def _apply_transport_switches():
     """Export the toolkit transport the user asked for. MUST run before the
     toolkit initialises, i.e. before webview.start().
 
-    This exists for one experiment (agenda/wayland_freeze_audit.md): the
+    This exists for one experiment (the Wayland freeze audit): the
     alphabet chart takes 37-42s on tkinter and ~0s on both webview engines,
     but tkinter is the only backend on XWayland — both webview engines came
     up NATIVE WAYLAND — so toolkit and transport vary together and the
@@ -2723,7 +2723,7 @@ class Theme:
     # absent from the list resolves to None, which draws nothing and logs
     # nothing. `Kim`, Kent's own theme, was likewise absent from the four
     # themes copied here, and an unknown name fell back to greygreen in
-    # silence. See agenda/webview_imagelist_stale_copy.md.
+    # silence. See the stale image-list copy item.
     imagelist = theme_data.IMAGELIST
     themes = theme_data.THEMES
 
@@ -2860,7 +2860,7 @@ class Theme:
         while a real ruler against the page shows CSS inches running about ¾ of
         an inch (2026-09-04, tests/manual/tone_feature_check). Trusting it there
         renders everything at 75 % — the same under-scaling as
-        agenda/ui_scaling_dpi_and_real_estate.md, arriving through a different
+        the UI-scaling and DPI item, arriving through a different
         API. On Windows it does track the OS 'Scale and layout' setting, so it
         is a reasonable input THERE and useless here.
 
@@ -3420,7 +3420,7 @@ def _image_src(value, parent=None, where=''):
     resolves to nothing draws an empty box, and until 2026-09-15 the one
     case that produced NO log line was the most likely one: a theme lookup
     that returned None (a name absent from this backend's imagelist —
-    agenda/webview_imagelist_stale_copy.md) arrives here as None and
+    the stale image-list copy item) arrives here as None and
     returns on the first line. So "the button is empty" and "no image was
     asked for" were indistinguishable in a log, which is how the sort
     page's cycle control stayed a mystery through three rounds.
@@ -3501,7 +3501,7 @@ class Label(_WebviewWidget):
         # 2026-09-14), and `sort_ui.py:455,1238-1255` has been passing
         # image_pixels for the sort page's icons and join images all along
         # with no effect. A silently-dropped kwarg with no error is the
-        # exact class agenda/webview_when_to_finish.md Step 6 is about.
+        # exact class the webview-when-to-finish item Step 6 is about.
         image_px = kwargs.pop('image_pixels', None)
         image_scaleto = kwargs.pop('image_scaleto', None)
         _raw_image = kwargs.pop('image', None)
@@ -3669,7 +3669,7 @@ class Button(_WebviewWidget):
             if image_scaleto:
                 kwargs['image_scaleto'] = image_scaleto
         # DROPPED ON PURPOSE, the last row of
-        # agenda/webview_discards_widget_options.md to be settled (Kent,
+        # the dropped-widget-options item to be settled (Kent,
         # 2026-09-14). A button already looks like a button here: the engine
         # draws its own raised/pressed states and hover, where Tk draws
         # nothing unless told. Reproducing tkinter's relief on top of that
@@ -3903,7 +3903,7 @@ class EntryField(_WebviewWidget):
     #   That is the SIXTH tkinter call this backend didn't answer (after
     # takekioskscreen, after_idle, cget, wait_window, lift) and the second to
     # arrive silently through a callback. The conformance check against
-    # ui_interface.py — noted in agenda/webview_when_to_finish.md — is what
+    # ui_interface.py — noted in the webview-when-to-finish item — is what
     # stops the seventh being found this way.
     #
     # Both keep the variable and the DOM in step, in that order: the variable
@@ -4406,7 +4406,7 @@ class ListBox(_WebviewWidget):
         a sensible __str__ displays properly and one without shows something
         obviously wrong rather than crashing the list. The real fix for the
         latter is at the CALL SITE — an option list should carry display
-        names — see agenda/language_options_show_objects.md."""
+        names — see the language-options-show-objects item."""
         wv = getattr(self, '_wv_window', None)
         texts = [_text_of(item) for item in self._items]
         _js(wv, f'updateProp({self._wid}, "items", {json.dumps(texts)})')
@@ -4640,7 +4640,7 @@ class Menu:
         apart — which is exactly how the cascade bug arrived. `add_cascade`
         stored items happily while `tk_popup` rendered only `kind ==
         'command'`, so every submenu in the app was accepted and silently not
-        drawn (found 2026-09-24, `agenda/webview_menubar_and_cascades.md`).
+        drawn (found 2026-09-24, the webview menubar-and-cascades item).
         Two renderers, one of which knew about half the item kinds.
 
         A command's address is its path from the root — `[0, 2]` is the third
@@ -4850,7 +4850,7 @@ class ScrollingFrame(Frame):
     # ACCEPTED AND IGNORED, deliberately — not "not written yet".
     # tkinter suspends its <Configure> handler around a bulk update because
     # each reflow costs a synchronous X round trip (see the scrollframe work
-    # in agenda/scrollframe_sizes_from_layout.md). A browser reflows its own
+    # in the scroller-sizes-from-layout item). A browser reflows its own
     # layout and there is nothing here to suspend, so these are no-ops with a
     # reason rather than gaps. The app calls both, and before this the calls
     # raised inside callbacks that swallow it.
@@ -5120,7 +5120,7 @@ class ContextMenu:
         # injection. Commenting out this one line let Qt through, which is
         # what identified it (Kent, 2026-09-11: "But this was working just
         # fine until this last hour. you sure this is not on our end?" — it
-        # was on our end). Full analysis: agenda/webview_when_to_finish.md,
+        # was on our end). Full analysis: the webview-when-to-finish item,
         # CORRECTION (6).
         #   So wait for the page. `_on_loaded` runs these hooks alongside the
         # theme and page-name pushes, which is where per-window JS belongs.
@@ -5458,7 +5458,7 @@ class Toplevel(_WebviewWidget):
                 # palette but never the user's theme (Kent, 2026-09-14:
                 # "icon but no theme color (either) on Splash"), which is
                 # also the likeliest half of
-                # agenda/webview_splash_missing_parts.md. Each pywebview
+                # the webview splash missing-parts item. Each pywebview
                 # window is a separate document, so theme variables set on
                 # one page cannot reach another.
                 #
@@ -5502,7 +5502,7 @@ class Toplevel(_WebviewWidget):
         # Added 2026-09-11 because binding the context menu from
         # `TaskDressing.__init__` (i.e. during window construction) made
         # QtWebEngine segfault on every startup; see
-        # agenda/webview_when_to_finish.md, CORRECTION (6). Anything that
+        # the webview-when-to-finish item, CORRECTION (6). Anything that
         # needs the page to exist belongs here, with the theme and page-name
         # pushes below, rather than racing the engine's own page setup.
         for hook in list(getattr(self, '_on_loaded_hooks', ())):
@@ -5561,7 +5561,7 @@ class Toplevel(_WebviewWidget):
         # exactly where the fit was least needed (a fullscreen window is
         # already the size it wants) and was missing everywhere it was:
         # an OS-maximized window has nothing to release, and a merely
-        # mis-sized one has no gesture at all (agenda/webview_window_sizing.md).
+        # mis-sized one has no gesture at all (the webview window-sizing item).
         #   Same gesture, one dispatcher: release fullscreen if we are in it,
         # otherwise fit. A user who has learned "double-click fixes the
         # window" is then right in both cases.
@@ -6068,7 +6068,7 @@ class Toplevel(_WebviewWidget):
         # to when I close?" has an answer that does not depend on the
         # ownership tree having the same shape, which is what lets a task be
         # owned by the root and still return to the chooser. See
-        # `_reveal_parent_on_quit` and agenda/modal_window_stack.md.
+        # `_reveal_parent_on_quit` and the modal-window-stack item.
         if target is not None:
             self._modal_on = target
         wv = getattr(self, '_wv_window', None)
@@ -6523,7 +6523,7 @@ class Toplevel(_WebviewWidget):
         # since we're looking for long-term value." A window that is the
         # wrong size shows a scrollbar and everything stays reachable, which
         # is step 3 of this app's own layout schema
-        # (agenda/webview_window_sizing.md); a window that strobes is a
+        # (the webview window-sizing item); a window that strobes is a
         # different and worse kind of broken.
         #
         # `--keep-window-size` puts the correction back, for measuring
@@ -6895,7 +6895,7 @@ class Toplevel(_WebviewWidget):
 
         KIOSK WINDOWS ARE EXEMPT — they are fullscreen, so they have no
         position to have a preference about; the guard is `_is_fullscreen`
-        in the callers. See agenda/webview_window_sizing.md.
+        in the callers. See the webview window-sizing item.
         """
         wv = getattr(self, '_wv_window', None)
         if not wv:
@@ -7178,7 +7178,7 @@ class Toplevel(_WebviewWidget):
         `after_idle`, `cget`, `wait_window`): a call that tkinter answers and
         this backend did not, swallowed by a handler that keeps going. It is
         also why implementing this is not enough on its own — see the note on
-        `on_event` swallowing in agenda/webview_when_to_finish.md.
+        `on_event` swallowing in the webview-when-to-finish item.
 
         pywebview has no stacking API, so `show()` is the honest equivalent: on
         every engine it maps AND raises, and calling it on an already-visible
@@ -7558,7 +7558,7 @@ class Toplevel(_WebviewWidget):
         task wants and is the one page that is always meaningful. It is also
         what makes a window-less chooser possible: the first task of a
         session is modal on nothing, so closing it is exactly when the
-        chooser first needs to exist. See agenda/modal_window_stack.md.
+        chooser first needs to exist. See the modal-window-stack item.
 
         NOT WHILE THE APP IS LEAVING. `Root.quit()` closes every window to
         end the loop, and the last one to go has nothing behind it BY
@@ -7607,7 +7607,7 @@ class Toplevel(_WebviewWidget):
         # `declare_dialog_of`; `parent` is the fallback and is what every
         # window used before the two were separated. A task owned by the
         # root still returns to the chooser, because the chooser is what it
-        # was covering. See agenda/modal_window_stack.md.
+        # was covering. See the modal-window-stack item.
         parent = getattr(self, '_modal_on', None) \
                  or getattr(self, 'parent', None)
         if parent is None or not getattr(parent, '_exists', False):
@@ -7773,7 +7773,7 @@ class Toplevel(_WebviewWidget):
                   "nothing cleared it — removing it, because a cover nobody "
                   "clears looks exactly like a hung app. Whoever raised this "
                   "wait never called waitdone(); see "
-                  "agenda/webview_flows_run_concurrently.md"
+                  "the concurrent-webview-flows item"
                   "".format(self._wid, self._PAGE_WAIT_LIMIT_MS / 1000.0))
         self._hide_page_wait()
 
@@ -8313,7 +8313,7 @@ class Window(Toplevel):
         # a kiosk page wants its list to USE the height rather than sit in a
         # band in the middle — row 1 taking the vertical leftover is what
         # lets the scroller bound itself at all (see `_inset_of`'s
-        # neighbours and agenda/webview_window_sizing.md). tkinter can
+        # neighbours and the webview window-sizing item). tkinter can
         # afford to centre vertically because Tk shrinks its tracks under
         # pressure; CSS Grid overflows.
         #
@@ -8468,7 +8468,7 @@ class Wait(Window):
     # underneath — its message restored — or closes the window when nothing
     # is. Each claim carries its own reveal target, so a flow's page is
     # revealed by ITS release and not by someone else's.
-    #   See agenda/webview_flows_run_concurrently.md.
+    #   See the concurrent-webview-flows item.
     owner = None
 
     def _claim_list(self):
@@ -8524,7 +8524,7 @@ class Wait(Window):
             log.info("wait window: window {} takes it over from window {} "
                      "({} claim(s) still open underneath). TWO FLOWS WANT "
                      "THE WAIT AT ONCE — one of them should have stopped; "
-                     "see agenda/webview_flows_run_concurrently.md"
+                     "see the concurrent-webview-flows item"
                      "".format(getattr(parent, '_wid', '?'),
                                getattr(self.owner, '_wid', '?'),
                                len(self._claims)))
@@ -8865,7 +8865,7 @@ class Root(_WebviewWidget):
                 # beside the engine line because both answer "what are we
                 # actually running on"; a separate `events.loaded` handler
                 # registered nearby did not report at all, and this one
-                # demonstrably fires. See agenda/wayland_freeze_audit.md.
+                # demonstrably fires. See the Wayland freeze audit.
                 from utilities import display
                 display.report('pywebview {} running'.format(
                                                 _engine() or 'default'))

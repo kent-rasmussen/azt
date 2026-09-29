@@ -31,7 +31,7 @@ left exactly as they are (`python -m frontend.ui_tkinter` still runs
 `testapp`); ADR 0004's amendment makes "tkinter must not regress" an
 invariant, and that includes Kent's own tools. Their coverage is gathered
 here, plus the options from
-`agenda/webview_discards_widget_options.md`:
+the dropped-widget-options item:
 
   * testapp2  — drag and drop on labels
   * testapp3  — a widget parented to each kind of container
@@ -706,7 +706,7 @@ def tab_drag(nb):
              "the first onto any other — the report below counts the drops it "
              "was told about and names the last three targets. Nothing "
              "visibly moving during the drag is a known gap "
-             "(agenda/drag_and_drop_animation.md), not a failure of this row.",
+             "(the drag-and-drop animation item), not a failure of this row.",
           row=0, columnspan=3)
     bar = ui.Frame(t, row=1, column=0, columnspan=3, sticky='w')
     report = ui.Label(t, text="drops seen (0): (none yet)", row=2, column=0,
@@ -870,7 +870,7 @@ def _click_to_edit(parent, row, what, var, editor, note, clear_on_edit=False):
     because the gallery needed something to test. It is now
     `frontend/composites.py`, because the app needs it: settings raise a
     whole WINDOW per value, and this is what replaces them
-    (`agenda/settings_prompts_one_window.md`, top of the agenda).
+    (the settings-prompts-in-one-window item, top of the agenda).
 
     What is left here is the HARNESS part — the note above each row, and the
     row's placement in the tab's grid — so the gallery goes on exercising

@@ -5,7 +5,7 @@
     ../env/bin/python -m tests.manual.rescan_sweep io_put backend/core
     ../env/bin/python -m tests.manual.rescan_sweep --all      # loose forms too
 
-`agenda/rescan_instead_of_grouping.md` plan steps 2 and 3. Three instances
+The rescan-instead-of-grouping item, plan steps 2 and 3. Three instances
 found by hand in one session cost 42 seconds of boot between them, and the
 item's own conclusion was that three by hand implies more — but they are
 invisible to every other tool we have. They do not raise, they do not log,

@@ -16,8 +16,8 @@
   *"we should start an ADR to track the floor and ceiling, with clear
   rationale for each. this will enable us to not start this conversation
   afresh the next time."*
-- Related: `agenda/update_install_non-windows-specific.md` (the install work
-  this governs), `agenda/torch_for_intel_mac.md`, ADR 0004 D5, and **ADR 0006
+- Related: the non-Windows install item (the install work this governs), the
+  torch-for-Intel-Mac item, ADR 0004 D5, and **ADR 0006
   — installers resolve downloads and never pin a URL**, which generalises this
   ADR's install-target lesson to every program an installer fetches. The rule
   "pin the minor, resolve the patch" is stated in both; 0006 owns the URL half
@@ -120,7 +120,7 @@ a requirements edit.
 **This number should be replaced by evidence of what is actually installed in
 the field, when that exists.** A floor set by what still resolves is a
 convenience; a floor set by what people are running is the real thing. See
-`agenda/cross_platform_checks.md`.
+the cross-platform-checks item.
 
 **D3. CEILING: python 3.13, and it is REAL: python 3.14 breaks kivy.**
 (Restated 2026-09-28. Kent: *"adr5 needs to acknowledge the ceiling, as
@@ -212,7 +212,7 @@ never finishes starting.
 REASON IS RECORDED.** The changelog mentions the version only when explaining
 the macOS marker split; the requirements comments explain the split and the
 `+cpu` build but never the number; and the code uses only `import torch` and
-`torch.cuda.is_available()` (grep recorded in `agenda/torch_for_intel_mac.md`).
+`torch.cuda.is_available()` (grep recorded in the torch-for-Intel-Mac item).
 What IS visible: the error note at the foot of `requirements.txt` shows
 `torch==2.6.0+cpu` failing against a list ending at 2.8.0, so 2.7.1 was picked
 when 2.8.0 was newest. **Inference, not record**: it most likely came from a
@@ -220,7 +220,7 @@ when 2.8.0 was newest. **Inference, not record**: it most likely came from a
 discipline prescribes, one release back from the newest.
 
 One constraint points the other way and must not be lost:
-`agenda/asr_model_expansion_design.md` notes fairseq2 publishes against
+The ASR model-expansion design item notes fairseq2 publishes against
 `pt2.7.0/cpu` and says to verify the pin before building that engine. That is
 a planned engine, not a shipped one, and it names 2.7.0 rather than 2.7.1.
 
@@ -230,7 +230,7 @@ about the ASR roadmap, not about anything running today.
 **D4. RAISING THE FLOOR IS A MIGRATION, AND MUST BE HELPED.** It may never
 happen as a side effect of a dependency change, and never as a release note
 saying "install python 3.13". Given the upfront-install decision in
-`agenda/update_install_non-windows-specific.md`, the installers are the
+the non-Windows install item, the installers are the
 natural place to carry it: they already locate or install a python, and they
 run at the one moment a user is present and watching. What that help looks
 like — detect-and-offer, or a separate migration path — is open. The
@@ -509,7 +509,7 @@ One row per bump, per D7. All installers move together on the same date.
 | Date | Floor | Target installed | Why |
 |---|---|---|---|
 | (before 2026-09-23) | undeclared | Linux 3.12, Windows 3.13, macOS 3.13.15 | no policy; each installer chose its own |
-| 2026-09-23 | **3.10** | *unchanged, pending alignment* | floor declared by this ADR; aligning the installers belongs to `agenda/update_install_non-windows-specific.md` |
+| 2026-09-23 | **3.10** | *unchanged, pending alignment* | floor declared by this ADR; aligning the installers belongs to the non-Windows install item |
 | 2026-09-25 | 3.10 | **3.13.15** *(decided; not yet applied anywhere)* | kivy is sdist-only on 3.14, so 3.14 is a wait on upstream and 3.13.15 is the highest target that exists. Linux moves 3.12 → 3.13. **Held here until kivy ships cp314 wheels; review ~2026-11-06 with the `--compare` command in D10.** |
 
 The Windows cell read **3.12.4** until 2026-09-24. It was taken from the dead

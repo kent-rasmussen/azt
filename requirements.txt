@@ -6,7 +6,7 @@
 # only from a known-good env (pip freeze), and never below what deployed
 # envs already run (2026-07-16: a stale numpy<=2.0 cap broke a working
 # ASR stack by downgrading under its scipy/transformers).
-# (Audited 2026-07-16 against actual imports; see agenda/rework_install_procedure.md.)
+# (Audited 2026-07-16 against actual imports; see the install-procedure rework.)
 allosaurus; sys_platform == "linux"  # backend/asr.py (IPA recognizer;
                         # optional engine). Linux-only marker: its
                         # editdistance C-extension has no Windows py3.13
@@ -56,7 +56,7 @@ Pillow
 polib                   # not imported by azt itself; translation tooling
 psutil
 sounddevice             # recording/playback. REPLACED PyAudio 2026-09-09
-                        # (agenda/pyaudio_to_sounddevice.md). Ships PortAudio
+                        # (the PyAudio-to-sounddevice item). Ships PortAudio
                         # INSIDE its wheel for macOS (universal2: Intel and
                         # Apple Silicon) and Windows (incl. arm64), and its
                         # wheels are py3-none-* rather than cp-specific, so a
@@ -77,7 +77,7 @@ sounddevice             # recording/playback. REPLACED PyAudio 2026-09-09
                         # Sound is optional (program['nosound']), so this
                         # degrades rather than blocks. The way out is a
                         # library that ships PortAudio inside its wheel
-                        # (sounddevice): see agenda/rework_install_procedure.md.
+                        # (sounddevice): see the install-procedure rework.
 pydub                   # not imported by azt itself (candidate to drop post-workshop)
 reportlab               # PDF output (alphabet chart/booklet)
 samplerate              # not imported (utilities/file.py has it commented; candidate to drop)
@@ -136,7 +136,7 @@ urllib3
 # without stdlib lzma (<3.3), which we don't support.
 # azt-collab collaboration (the daemon runs in this env on desktop):
 # dulwich = git ops; cryptography+zeroconf = LAN identity + discovery;
-# segno = pairing-QR rendering. See agenda/rework_install_procedure.md.
+# segno = pairing-QR rendering. See the install-procedure rework.
 cryptography
 dulwich
 segno
@@ -144,7 +144,7 @@ zeroconf
 # kivy: NOT imported by azt itself — the collab daemon's project picker and
 # settings UI are Kivy subprocesses, and on a standalone install azt's venv
 # is the only python available to run them (decision 2026-07-16; see
-# agenda/rework_install_procedure.md item 6 and team_project_picker.md).
+# the install-procedure rework, item 6, and the team-project-picker item).
 kivy
 --extra-index-url https://download.pytorch.org/whl/cpu
 

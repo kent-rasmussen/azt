@@ -252,10 +252,32 @@ class SettingsUI(object):
             return True
         return False
 
+    def _checknames_follow_the_field(self):
+        """A check named after a field must be rebuilt when the field is.
+
+        THE RULE, not a plan item (the second-form flags audit):
+        built once at startup is nonsense the moment a user renames the
+        field. Naming the nominal field is what MAKES the `pl` check exist,
+        and renaming it should relabel that check rather than leave it
+        advertising a field nobody has.
+
+        The check CODE is untouched either way — `pl` stays `pl` — so no
+        stored verification code is affected by a rename. Only the name the
+        user reads follows.
+
+        Never raises: a settings change must not fail because a label could
+        not be rebuilt."""
+        try:
+            self.program.params.rebuild_checknames()
+        except Exception as e:
+            log.info("could not rebuild check names after the field "
+                     "changed (%r)", e)
+
     def setsecondformfieldN(self,choice,window=None):
         if self._refuse_unset_field(self.nominalps,choice):
             return
         self.secondformfield[self.nominalps]=self.pluralname=choice
+        self._checknames_follow_the_field()
         if self.statusisup():
             self.program.mainwindow.status.updatefields()
         self.attrschanged.append('secondformfield')
@@ -268,6 +290,7 @@ class SettingsUI(object):
         if self._refuse_unset_field(self.verbalps,choice):
             return
         self.secondformfield[self.verbalps]=self.imperativename=choice
+        self._checknames_follow_the_field()
         if self.statusisup():
             self.program.mainwindow.status.updatefields()
         self.attrschanged.append('secondformfield')
@@ -376,6 +399,36 @@ class SettingsUI(object):
         else:
             self.program.mainwindow.status.updatecvcheck()
         self.attrschanged.append('check')
+        self.refreshattributechanges()
+        if window:
+            window.destroy()
+    def setwordcheck(self,choice=None,window=None):
+        """Pick WHICH FORM of the word a whole-word task works on.
+
+        A WORD CHECK, NOT A CVT CHECK (Kent, 2026-09-29: "these are **word**
+        checks, not cvt checks"). `setcheck` above picks segments WITHIN a
+        form; this picks the form. They are independent, so this does not go
+        near `params.check()` or `updatechecksbycvt` — see §9 of
+        the second-form flags audit.
+
+        NOT A GATE. An unavailable choice — a `pl` whose field was cleared
+        while the page was open — falls back to `lc` and says so, because
+        `lc` always exists and a collection page with no form to collect is
+        worse than one collecting the wrong one.
+
+        BOTH COPIES MOVE TOGETHER. The task keeps its own `self.ftype`
+        alongside the global `params.ftype()`, and `categories.py:166` raises
+        an ErrorNotice when they disagree. Collapsing them to one owner is
+        `ftype_as_a_setting.md`; until then, whoever writes one writes both.
+        """
+        choice=self.program.params.resolve_word_check(choice)
+        self.program.params.ftype(choice)
+        task=getattr(self.program,'task',None)
+        if task is not None:
+            task.ftype=choice
+        if self.statusisup():
+            self.program.mainwindow.status.updatewordcheck()
+        self.attrschanged.append('ftype')
         self.refreshattributechanges()
         if window:
             window.destroy()

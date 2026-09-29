@@ -68,7 +68,7 @@ python main.py --webview --engine=qt --qt-platform=xcb    # or =wayland
 # and nothing yet draws frames continuously).
 python main.py --webview --dmabuf
 
-# WINDOW-SIZING DIAGNOSTICS (agenda/webview_window_sizing.md). On Wayland a
+# WINDOW-SIZING DIAGNOSTICS (the webview window-sizing item). On Wayland a
 # task window loses the size the fit gave it when focus moves elsewhere; the
 # app no longer argues with that (the page scrolls), so these exist to
 # measure it, not to change it.
@@ -206,7 +206,7 @@ Bidirectional `__getattr__` links them:
 - `TaskBase.__getattr__` delegates unknown attrs to `self.ui`
 - `TaskWindow.__getattr__` delegates unknown attrs to `self.task` (via `object.__getattribute__` to prevent recursion)
 
-The `tasks/ui_protocol.py` module defines `TaskUI`, a semantic interface that backend mixins were *intended* to use for UI operations (`show_run_window`, `hide`, `show`, `wait_for_window`, etc.). **It is not adopted: nothing imports it.** Backend/tasks code instead calls the TaskWindow's Tk-shaped API through the `__getattr__` bridges above (`getrunwindow`, `withdraw`, `deiconify`, `wait_window`, `waitdone`, `runwindow.…`) — `drive_work` is the one member the two agree on. Finish-or-delete is an open decision: `agenda/ui_protocol_finish_or_kill.md`.
+The `tasks/ui_protocol.py` module defines `TaskUI`, a semantic interface that backend mixins were *intended* to use for UI operations (`show_run_window`, `hide`, `show`, `wait_for_window`, etc.). **It is not adopted: nothing imports it.** Backend/tasks code instead calls the TaskWindow's Tk-shaped API through the `__getattr__` bridges above (`getrunwindow`, `withdraw`, `deiconify`, `wait_window`, `waitdone`, `runwindow.…`) — `drive_work` is the one member the two agree on. Finish-or-delete is an open decision, tracked on the agenda as the protocol's finish-or-kill item.
 
 Sound tasks use a mixin split: `backend/core/sound.py` (headless audio logic) and `tasks/sound.py` (UI task mixin inheriting from it + `frontend/sound_ui.py`).
 
@@ -266,7 +266,7 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
   - `sound.py` — Sound task UI mixin (bridges `backend/core/sound.py` + `frontend/sound_ui.py`).
   - `chooser.py` — `TaskChooser`: task selection logic, category lists. UI lives in TaskDressing.
   - `transcribe_glyph.py` — `GlyphTranscribeHelper`: shared glyph transcription UI for Transcribe and `name_new_glyphs`.
-  - `ui_protocol.py` — `TaskUI`, a semantic task↔window interface. **Unadopted — imported by nothing**; see `agenda/ui_protocol_finish_or_kill.md`.
+  - `ui_protocol.py` — `TaskUI`, a semantic task↔window interface. **Unadopted — imported by nothing**; see the protocol's finish-or-kill agenda item.
 - **`backend/core/`** — Domain logic (zero frontend imports):
   - `lexicon.py` — `Senses`, `Segments`, `WordCollection`, `Parse`, `Tone`.
   - `categories.py` — `Categories` mixin: group creation, renaming, reassignment, verification node manipulation. Inherited by both Sort and Transcribe.
@@ -288,11 +288,11 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
 ### Key Patterns
 
 - **`program` dict**: Created at `main.py:9`, threaded through most classes as `self.program`. Contains runtime config, flags, and references to major objects.
-- **Sound is optional**: `sounddevice`/sound imports are wrapped in try/except; `program['nosound']` gates audio features. (`sounddevice` replaced PyAudio 2026-09-09 — `agenda/pyaudio_to_sounddevice.md`.)
+- **Sound is optional**: `sounddevice`/sound imports are wrapped in try/except; `program['nosound']` gates audio features. (`sounddevice` replaced PyAudio 2026-09-09 — the PyAudio-to-sounddevice item.)
 
 ## Shallow clones: widen the refspec before checking out a branch
 
-Clones are `--depth 1` by design (agenda/rework_install_procedure.md). That
+Clones are `--depth 1` by design (the install-procedure rework item). That
 implies `--single-branch`, so the clone's refspec covers ONLY the default
 branch and `git checkout testing` fails with "did not match any file(s) known
 to git" — no ref for it can ever arrive. The clone looks normal; it isn't.
@@ -395,5 +395,5 @@ policies in one update — `sister_repos.update()` passes `--ff-only`,
 - Sound needs the PortAudio **runtime** library only: `sudo apt install libportaudio2`.
   No compiler and no headers — `sounddevice` binds it at runtime via cffi. This said
   `PyAudio requires system portaudio headers (portaudio19-dev)` until 2026-09-11; that
-  was true of PyAudio, which is gone (`agenda/pyaudio_to_sounddevice.md`). `-dev` still
+  was true of PyAudio, which is gone (the PyAudio-to-sounddevice item). `-dev` still
   works, since it depends on `libportaudio2`, so machines set up the old way are fine.

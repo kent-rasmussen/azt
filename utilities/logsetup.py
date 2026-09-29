@@ -111,7 +111,7 @@ PART_BYTES=10*1024*1024    #size cap per part. SETTLED 2026-09-03 after
                            #RUNAWAY log — rather than splitting routine ones.
                            #1MB was a temporary test value so a roll could be
                            #watched at all (verified: _003 → _004, forward).
-                           #See azt/agenda/modernize_logging_rotation.md.
+                           #See the modernize-logging-rotation item.
 TOTAL_BYTES=200*1024*1024  #drop whole runs, oldest first, above this
 
 

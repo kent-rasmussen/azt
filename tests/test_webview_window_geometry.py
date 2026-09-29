@@ -4,7 +4,7 @@
 WHY THIS HAS A TEST AT ALL. It is a diagnostic, and diagnostics do not
 usually earn tests — except that this one exists because a previous reading
 of the same fault was wrong, and wrong in a way that cost a day. The window
-sizing item (`agenda/webview_window_sizing.md`) had four debounced samples
+sizing item had four debounced samples
 showing a constant 52x89 shortfall in the page's client area; I read that as
 client-side decorations growing into a frame that stayed put, which fit
 everything except what Kent could see — "I'm seeing the window frame

@@ -662,7 +662,7 @@ def pip_fix_for():
 
     THE WHOLE QUESTION FOR AUTO-INSTALL, and it is answerable (Kent,
     2026-09-23: "any reason we can't just do this for the user, then?").
-    `agenda/webview_requested_but_absent.md` argued against installing
+    The webview-requested-but-absent item argued against installing
     because on Linux pywebview ALSO needs a host toolkit pip cannot supply.
     That is true only when the host is missing TOO — and we can see whether
     it is. So:

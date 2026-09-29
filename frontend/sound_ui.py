@@ -386,7 +386,7 @@ class SoundSettingsWindow(ui.Window):
     # `window=None` ON ALL FOUR SETTERS. They were written when each setting
     # was chosen in its own window, so each one closed that window as its
     # last act. The chooser is now a combo box in the settings window itself
-    # (agenda/settings_prompts_one_window.md), so there is no window to
+    # (the settings-prompts-in-one-window item), so there is no window to
     # close — and the setters are otherwise unchanged, which is why this is
     # a default rather than a new signature. Kent, 2026-09-15, on the
     # windows: "this is a no brainer, once I realized I didn't need a window
@@ -470,7 +470,7 @@ class SoundSettingsWindow(ui.Window):
           It became reachable today rather than being new. Changing the input
         card used to cost a window open, a scroll, a click and a window
         close; as of 2026-09-15 it is two clicks in the settings page itself
-        (agenda/settings_prompts_one_window.md), so "lots of clicking around
+        (the settings-prompts-in-one-window item), so "lots of clicking around
         on the sound settings" — Kent, reporting the app vanishing — now
         means opening and closing audio streams faster than anything before
         could. The UI got quicker, not the audio buggier.
@@ -617,7 +617,7 @@ class SoundSettingsWindow(ui.Window):
     # `ui.Window` — title bar, prompt label, button frame, and a setter that
     # closed it — whose entire content was a list of values. That is a combo
     # box inflated into a window, which is the finding
-    # `agenda/settings_prompts_one_window.md` is about, and the sound
+    # the settings-prompts-in-one-window item is about, and the sound
     # settings were its thickest instance: four windows for four values.
     #   What survives is the part that was never about windows — WHICH
     # options, in WHAT order, labelled HOW — returned as (value, text) so
@@ -820,7 +820,7 @@ class SoundSettingsWindow(ui.Window):
         ANNOTATED FROM THE PROBE TOO, since 2026-09-11. It was withheld
         because `measured_fs` swept rates back to back with no settle pause —
         the condition that produced a false accusation in the manual prober
-        (agenda/honest_sound_settings.md, finding 2b). But withholding it was
+        (the honest-sound-settings item, finding 2b). But withholding it was
         incoherent: `verify_fs`'s notice already asserted the same result in
         prose. Kent: "we're checking on load; why not share that with the
         user?" So the sweep got the settle pause and the confirm-on-repeat the
@@ -985,7 +985,7 @@ class SoundSettingsWindow(ui.Window):
         # the four rows one uninterrupted two-column grid: a heading spanning
         # the pair is a row whose width has nothing to do with the names, and
         # it broke the column alignment it sat in the middle of.
-        # Step 6, agenda/honest_sound_settings.md; layout is Kent's.
+        # Step 6, the honest-sound-settings item; layout is Kent's.
         for varname, options_fn, setter in [
             ('audio_card_out', self._options_card_out,
              self.setsoundcardoutindex),

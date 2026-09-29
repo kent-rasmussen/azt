@@ -1,6 +1,6 @@
 """The restart breadcrumb (added in v1.15.x).
 
-Level 1 of `azt/agenda/restart_recovery_handshake.md`. AZT restarts itself, and
+Level 1 of the restart-recovery-handshake item. AZT restarts itself, and
 until now a restart that never came back produced no evidence at all — the
 2026-07-29 field report had no log line, because `os.execl` leaves no process to
 write one. This marker is the evidence, so its two invariants are tested rather

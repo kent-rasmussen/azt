@@ -149,6 +149,7 @@ class Transcription(object):
         super().__init__(**kwargs)
         self.soundsettings.load_ASR() #after file settings are loaded
 class WordCollectionwRecordings(WordCollection,Record):
+    taskicon = 'iconWordRec'
     def getinstructions(self):
         return _("Record a word in your language that goes with these "
                 "meanings."
@@ -434,28 +435,26 @@ class WordCollectionwRecordings(WordCollection,Record):
         super().__init__(**kwargs)
         # Record.__init__(self,**kwargs)
         # WordCollection.__init__(self,**kwargs)
-class WordCollectionLexeme(WordCollection,Task):
-    def tooltip(self):
-        return _("Don’t use this task.")
-    tasktitle = "Word Collection for Lexeme Forms"
-    def __init__(self, program, **kwargs): #frame, filename=None
-        """This should never really be used, though I made it first, so I've
-        left it"""
-        self.ftype=program.params.ftype('lx') #lift.Entry.citationformnodeofentry
-        super().__init__(program=program, **kwargs)
-        log.info("Initializing {}".format(_(self.tasktitle)))
-        #Status frame is 0,0
-        self.getwords()
-class WordCollectionCitation(WordCollection,Task):
-    def tooltip(self):
-        return _("This task helps you collect words in citation form.")
-    tasktitle = "Add Words" # for Citation Forms
-    def __init__(self, program, **kwargs): #frame, filename=None
-        self.ftype=program.params.ftype('lc') #lift.Entry.citationformnodeofentry
-        super().__init__(program=program, **kwargs)
-        log.info("Initializing {}".format(_(self.tasktitle)))
-        #Status frame is 0,0
-        self.getwords()
+# A CLASS PER WORD FORM — DELETED 2026-09-29 (plan 2 of
+# the second-form flags audit). `WordCollectionLexeme` (lx),
+# `WordCollectionCitation` (lc), `_WordCollectionSecondForm` and its
+# `WordCollectionPlural` (pl) / `WordCollectionImperative` (imp) each
+# existed to hard-code one ftype before `super().__init__`, and the chooser
+# offered NONE of them — they were imported by `main.py` and unreachable.
+#
+# What replaces them is the WORD-CHECK LINE on the one live collection task
+# (`StatusFrame.wordcheckline`): the user picks the form, so the four codes
+# are a choice rather than four classes. Kent, 2026-09-29: "can we
+# generalize [it] to include a check line that would allow users to select
+# between lx, lc, pl, and imp? I think that was the original intent, and
+# still makes sense, for at least some users."
+#
+# `_WordCollectionSecondForm` also carried the only `uses_second_forms`
+# outside Parse. It refused to start without a field — an assurance of a
+# kind, but a dead end, since the user could not set the field from the
+# window that refused. The word-check line does the same job by never
+# OFFERING a form whose field is unnamed (`CheckParameters.word_checks`),
+# and Kent, 2026-09-29: "we cannot collect without a field name."
 class WordCollectionCitationwRecordings(WordCollectionwRecordings,Task):
     def tooltip(self):
         return _("This task helps you collect words in citation form through "
@@ -465,52 +464,6 @@ class WordCollectionCitationwRecordings(WordCollectionwRecordings,Task):
         super().__init__(**kwargs)
         log.info("Initializing {}".format(_(self.tasktitle)))
         self.getwords()
-class _WordCollectionSecondForm(WordCollection,Task):
-    """Base for word collection tasks that require a second form field.
-
-    EXPECT THIS TO GO (Kent, 2026-09-29: these "will be obsoleted, almost
-    absolutely certainly"). Its two subclasses, `WordCollectionPlural` and
-    `WordCollectionImperative`, are imported in `main.py` and offered by the
-    chooser NOWHERE — so nothing reaches them today. The reason they are not
-    wanted is not merely that they are unreachable: collecting plurals and
-    imperatives by hand is the workflow parsing replaces. Kent, 2026-09-17:
-    "collecting pl and imp is unlikely, given that we do it through parsing
-    in the ideal case."
-
-    Do not build on this. If a second-form collection task is ever needed
-    again it should come back through the check-driven one-collection-task
-    design, not by reviving a class per ftype. See plan 2 of
-    `agenda/azt/second_form_flags_audit.md`."""
-    ftype_code = None  # override in subclasses
-    form_label = None  # override in subclasses
-    # IT READS THE FIELD — `storethisword` writes into it by name. The flag
-    # said otherwise while this class was the clearest user of the setting
-    # in the app (it refuses to start without one, below).
-    uses_second_forms = True
-    def __init__(self, program, **kwargs):
-        self.ftype=program.params.ftype(self.ftype_code)
-        super().__init__(program=program, **kwargs)
-        if not self.program.settings.secondformfieldsOK():
-            ErrorNotice(_("To collect {form} forms, you must first "
-                            "define which fields should contain those forms"
-                            ).format(form=self.form_label),
-                            wait=True)
-            self.shutdowntask()
-            return
-        log.info("Initializing {}".format(_(self.tasktitle)))
-        self.getwords()
-class WordCollectionPlural(_WordCollectionSecondForm):
-    def tooltip(self):
-        return _("This task helps you collect plural word forms.")
-    tasktitle = "Add plural forms"
-    ftype_code = 'pl'
-    form_label = "Plural"
-class WordCollectionImperative(_WordCollectionSecondForm):
-    def tooltip(self):
-        return _("This task helps you collect imperative word forms.")
-    tasktitle = "Add imperative forms"
-    ftype_code = 'imp'
-    form_label = "Imperative"
 class ParseWords(Parse,Task):
     taskicon = 'iconWord'
     def tooltip(self):
@@ -593,7 +546,7 @@ class WordCollectnParse(Parse,WordCollection,Task):
 class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
     """This task collects words, from the SIL CAWL, or one by one.
     First in citation form, then pl or imperativewith Parse"""
-    taskicon = 'iconWordRec'
+    # taskicon = 'iconWordRec' # commended until we get a distinct icon for parsing
     def tooltip(self):
         return _("This task helps you collect and parse words by recording "
                 "them, with an automatic draft.")
@@ -648,7 +601,7 @@ class WordsParse(Parse,WordCollection,Task):
         # value from the page that just refused; and it blocks the whole task
         # when what needs the value is the parse. `Segments.second_forms_ready`
         # asks for the field where it is needed and lets the page work
-        # meanwhile. See agenda/azt/second_form_flags_audit.md plan 4.
+        # meanwhile. See the second-form flags audit plan 4.
         self.dodone=True #give me words with citation done
         self.checkeach=True #confirm each word (not default)
         self.dodoneonly=True #don't give me other words

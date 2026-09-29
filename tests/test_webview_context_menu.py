@@ -332,7 +332,7 @@ def test_wraplength_is_clamped_to_the_viewport_in_the_page_script():
     cap measured against the window made the measured content size depend on
     the window size the fit was computing — so the fit ratcheted the window
     wider on every measurement instead of converging
-    (agenda/webview_window_sizing.md). So this checks the guarantee — the
+    (the webview window-sizing item). So this checks the guarantee — the
     caller's number is bounded by a cap — rather than the literal that used
     to express it."""
     js = (Path(__file__).resolve().parents[1]

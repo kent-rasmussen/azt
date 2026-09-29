@@ -328,7 +328,7 @@ def getfilesofdirectory_cached(dir,regex='*'):
     senses read that directory n times and fnmatched every file in it each
     time. That was 2.82 seconds of `getentries` — the whole of the LIFT
     load's remaining cost — found by the per-step timing added for
-    agenda/rescan_instead_of_grouping.md (2026-09-14). It is the same
+    the rescan-instead-of-grouping item (2026-09-14). It is the same
     disease as the comprehensions in that item: rescanning a whole
     collection per item where an index was wanted, with the collection here
     being a directory.

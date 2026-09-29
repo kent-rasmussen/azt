@@ -537,7 +537,7 @@ if [ -n "$GIT" ] && [ "$DRY_RUN" = no ]; then
         note "'master' where the program expects 'main', because this git has"
         note "no --initial-branch. Tell the developer if you hit that; a newer"
         note "git without Xcode is possible (see the notes in"
-        note "agenda/rework_install_procedure.md)."
+        note "the install-procedure rework item)."
     fi
 fi
 
@@ -651,7 +651,7 @@ fi
 
 # ─── 4. The program itself ──────────────────────────────────────────────────
 say "Getting A-Z+T into $DEST"
-# Shallow, per the decided item in agenda/rework_install_procedure.md
+# Shallow, per the decided install-procedure rework item
 # ("Shallow cloning everywhere", Kent 2026-07-27): ~2 GB → ~50 MB, and an
 # install has no use for history. The pull below is also depth-limited, since
 # a plain `git pull` against a shallow clone starts deepening it again.
@@ -822,7 +822,7 @@ else
     # NO FILTERING, AND NO SEPARATE SOUND ATTEMPT (2026-09-11). Both existed
     # for PyAudio, which needed a compiler this machine may not have, so it
     # was held out of `-r` and tried on its own where its failure could be
-    # survived. `sounddevice` replaced it (agenda/pyaudio_to_sounddevice.md)
+    # survived. `sounddevice` replaced it (the PyAudio-to-sounddevice item)
     # and ships PortAudio in a universal2 wheel, so sound now installs like
     # everything else and the special case is not just unnecessary, it was
     # actively harmful:

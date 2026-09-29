@@ -8,7 +8,7 @@ done `git pull` already has it — nothing to install for tier 1, nothing to
 configure, no paths to edit.
 
 Why it exists: A-Z+T's UI may move from tkinter to a webview
-(`agenda/webview_when_to_finish.md`). Keyman **works today** with tkinter, so
+(the webview-when-to-finish item). Keyman **works today** with tkinter, so
 this is a regression check, not a hopeful experiment. There is one unresolved
 2025 report on SIL's community forum of Keyman 18 on Windows 11
 *"sporadically fail[ing] either to create special characters, or to produce any
@@ -47,7 +47,7 @@ necessary but not sufficient.
 6. Switch to another keyboard and back, then type some more. The forum report
    mentions other keyboards being involved.
 7. Press **Build report**, then **Copy report**, and paste it into the agenda
-   item (`agenda/webview_when_to_finish.md`, Research section) or back to Claude.
+   item (webview-when-to-finish, Research section) or back to Claude.
 
 Optionally, for a baseline: type the same lines into the running app's
 Transcriber and compare. That is the behaviour we must not regress from.

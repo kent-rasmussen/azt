@@ -674,7 +674,7 @@ class StatusFrame(ui.Frame):
         "Studying Kent's English" is a sentence with a value in it, and
         clicking it used to raise a window — one per language question, five
         of them, each a title bar and a list wrapped around a single choice
-        (agenda/settings_prompts_one_window.md). The sentence now ends in a
+        (the settings-prompts-in-one-window item). The sentence now ends in a
         click-to-edit value: the chooser opens where the word is.
 
         NO RESERVED WIDTH and the prefix anchored WEST, unlike the settings
@@ -819,7 +819,7 @@ class StatusFrame(ui.Frame):
     # five windows for five language questions, each a title bar and a list
     # around one choice. The sentence now ends in a click-to-edit value, so
     # the chooser opens where the word is
-    # (agenda/settings_prompts_one_window.md, 2026-09-15).
+    # (the settings-prompts-in-one-window item, 2026-09-15).
     #   `…label()` still returns the whole sentence: the log and the stored
     # `*_label` UI variables use it, and so does anything that wants the line
     # as prose. `…value()` is the half that is now editable.
@@ -1019,6 +1019,72 @@ class StatusFrame(ui.Frame):
             if name and name != othername and name not in names:
                 names.append(name)
         return [{'code':n,'name':n} for n in names]
+    def updatewordcheck(self):
+        if 'wordcheck' not in self.labels:
+            return
+        self.labels['wordcheck']['text'].set(self.wordcheckvalue())
+
+    def wordcheckvalue(self):
+        return self.program.params.word_check_name()
+
+    def wordcheckoptions(self):
+        """The word checks, shaped for `_setlang`'s code/name mapping.
+
+        Unlike `fieldsoptions` the code and the name are DIFFERENT here: the
+        user picks "‘Plural’ forms (Noun)" and the setter is given `pl`."""
+        return [{'code':code,'name':name}
+                for code, name in self.program.params.word_checks()]
+
+    def wordcheckline(self):
+        """WHICH FORM OF THE WORD this task works on — a word check.
+
+        NOT the cvt check line (`cvcheck`, further down), which picks
+        segments WITHIN a form: the first vowel, the tone frame. Kent,
+        2026-09-29: "these are **word** checks, not cvt checks." The two are
+        independent — you sort the first vowel OF the citation form — and
+        this page never draws the cvt line anyway (`WordCollection` sets
+        `do_not_show_slices`, so `makeui` skips the whole slice block).
+
+        This replaces a CLASS PER FORM. `WordCollectionLexeme`,
+        `WordCollectionCitation`, `WordCollectionPlural` and
+        `WordCollectionImperative` each existed to hard-code one ftype, and
+        the chooser offered none of them. Kent, 2026-09-29: "can we
+        generalize [the one live collection task] to include a check line
+        that would allow users to select between lx, lc, pl, and imp? I think
+        that was the original intent." Plan 2 of
+        the second-form flags audit.
+
+        NOT EDITABLE, unlike the field line below it. A field name the
+        database has never seen is a fine answer; a form code it has never
+        heard of is not — there are exactly four, and two of them exist only
+        when their field is named.
+
+        DECLINES WHERE THE CHANGE CANNOT BE HONOURED. `whole_word_checks` is
+        also True on `Syllables`, and the syllable sort genuinely wants this
+        line — but changing its form means rebuilding its `(ps, ftype)`
+        slices and its board, not reloading a word list, and that is plan 6,
+        still blocked on `ftype_as_a_setting.md`. Drawing a control there now
+        would change the ftype and leave the board showing the old form's
+        data, silently. So the line asks whether the task can act on it, and
+        says in the log when it cannot.
+        """
+        if not hasattr(self.program.task,'loadwords'):
+            log.info("not drawing the word-check line for %s: it declares "
+                     "whole_word_checks but has no loadwords, so changing "
+                     "the form would leave the page showing the old one "
+                     "(plan 6)", type(self.program.task).__name__)
+            return
+        self.newrow()
+        self.prosefield('wordcheck',
+                        _(getattr(self.program.task,'word_check_prefix',
+                                  "Working on")),
+                        self.program.settings.get_ui_var(
+                            'wordcheck_label', self.wordcheckvalue()),
+                        self.wordcheckoptions,
+                        self.program.settings.setwordcheck,
+                        _("change which form of the word you are working on"),
+                        value_fn=self.wordcheckvalue)
+
     def fieldsline(self):
         # log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
         # log.info("Starting fieldsline w/task {} ({})".format(self.task,
@@ -1260,7 +1326,7 @@ class StatusFrame(ui.Frame):
         # labels, each of which raised a window: the profile one built its
         # own list box with counts (`ui_settings.getprofile`), the category
         # one an `_option_dialog`. See
-        # agenda/settings_prompts_one_window.md.
+        # the settings-prompts-in-one-window item.
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
@@ -1704,7 +1770,7 @@ class StatusFrame(ui.Frame):
             log.error(f"Problem: {e}")
     # `makesecondfieldsOK` DELETED 2026-09-29. Its own docstring asked "Not
     # called anywhere?" and the answer was no — see plan 7 of
-    # agenda/azt/second_form_flags_audit.md. It was also the last
+    # the second-form flags audit. It was also the last
     # `isinstance(self.program.task, Parse)` dispatch in this file, which the
     # flag-based approach replaced everywhere else.
     """Right side"""
@@ -2501,7 +2567,24 @@ class StatusFrame(ui.Frame):
         if not self.program.task or self.is_descendant_of(self.program.taskchooser):
             return
         self.glosslangline()
-        if getattr(self.program.task,'show_second_fields'):
+        # TWO REASONS TO DRAW THIS LINE, and they are different reasons
+        # (plan 1 of the second-form flags audit, 2026-09-29):
+        #   `whole_word_checks` — the task lets the user choose WHICH form to
+        #       work on, and the field is what makes a pl/imp choice exist.
+        #       Word collection and the syllable sort. `<unset>` is fine.
+        #   `uses_second_forms` — the task FAILS without the field. Parse.
+        # It used to be one flag on `Segments`, so every segmental task drew
+        # a line for a setting it never read: eleven task families showing
+        # it, two needing it.
+        # THE WORD CHECK COMES FIRST, and the field line explains it: "you
+        # can also work on ‘Plural’ forms, and that field is where they
+        # live." Only `whole_word_checks` draws it — Parse pins `lc` on
+        # purpose (lexicon.py, `Parse.__init__`), so offering it a choice
+        # would be offering one that cannot be taken.
+        if getattr(self.program.task,'whole_word_checks',False):
+            self.wordcheckline()
+        if (getattr(self.program.task,'whole_word_checks',False)
+                or getattr(self.program.task,'uses_second_forms',False)):
             self.fieldsline()
         if (hasattr(self.program, 'slices') and
                 not getattr(self.program.task,'do_not_show_slices')):
@@ -2541,6 +2624,15 @@ class StatusFrame(ui.Frame):
         self.updateanalang()
         self.updateglosslangs()
         self.updatefields()
+        # AFTER `updatefields`, and that order is the point: NAMING A SECOND
+        # FORM FIELD MAKES ITS WORD CHECK EXIST, and Kent, 2026-09-29, wants
+        # the user to "define a second form field, then immediately select
+        # the check for it". The chooser's OPTIONS need no help — a callable
+        # `options` is re-read on every open (`composites.choice_field`,
+        # `rebuild=True`) — but a RENAME also changes the name of the check
+        # already selected, and the label would otherwise go on advertising
+        # a field nobody has.
+        self.updatewordcheck()
         self.updateprofile()
         self.updateps()
         self.updatecvt()
@@ -3017,7 +3109,7 @@ class TaskDressing(HasMenus,ui.Window):
             # the screen with the wait dialog, leaving deiconifies. So the
             # window is never mapped-and-empty AND never left hidden — the two
             # failures this area keeps alternating between. See
-            # agenda/fullscreen_with_only_quit.md, whose rule this follows.
+            # the fullscreen-with-only-Quit item, whose rule this follows.
             with self.waiting(_("Getting that word ready..."),thenshow=True):
                 task.getword()
     def getsensetodobyletter(self,choice,window,event=None):
@@ -3508,9 +3600,9 @@ class TaskDressing(HasMenus,ui.Window):
         IMPORT time, before `set_translator()` has installed the live
         translator (`utilities/i18n.py`), so the string would be frozen in
         English for the session no matter what interface language was
-        chosen. Same trap as the f-string-before-translation item in
-        `azt_recorder/agenda/audit_2026-05-04.md`, and easy to write by
-        accident — I just did."""
+        chosen. Same trap as the f-string-before-translation finding in the
+        recorder's 2026-05-04 audit, and easy to write by accident — I just
+        did."""
         return _("Getting the next page ready…")
 
     def _cover_run_window(self, window, msg=None):
@@ -4618,7 +4710,7 @@ class Settings(object):
         directly. `getanalangname` still exists and still works — it now
         submits through this — but the common route is the line itself:
         "Studying <name>", where the name is a text field opened in place
-        (agenda/settings_prompts_one_window.md).
+        (the settings-prompts-in-one-window item).
 
         Clearing is deliberate and was already the dialog's behaviour: an
         empty answer deletes both the display name and the stored one, and
@@ -4812,7 +4904,7 @@ class Settings(object):
     # keeping the old dialog just for this." An editable combo is all three
     # old windows at once — the existing names are offered, and anything
     # else can be typed.
-    #   Plan 7 of agenda/azt/second_form_flags_audit.md; the whole cluster
+    #   Plan 7 of the second-form flags audit; the whole cluster
     # was a closed call graph with no entry point from the rest of the app.
     def getmulticheckscope(self,event=None):
             log.info(_("Asking for multicheckscope..."))

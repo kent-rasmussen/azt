@@ -66,7 +66,7 @@ Switches (no environment variables; nothing identified by colour):
   --output=NAME     Output device to play through (default: system default).
   --rate=N          Capture/playback rate (default 48000, which is what is
                     genuinely available on typical hardware — see
-                    agenda/honest_sound_settings.md. Higher rates are usually
+                    the honest-sound-settings item. Higher rates are usually
                     resampled, and the speaker limits the top end anyway).
   --seconds=S       Noise burst length (default 3.0).
   --quiet-seconds=S Silent capture before each mic (default 1.5).

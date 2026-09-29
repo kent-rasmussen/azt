@@ -1,7 +1,7 @@
 # coding=UTF-8
 """A widget option may be dropped — but not SILENTLY.
 
-This is the gate `agenda/webview_discards_widget_options.md` plan step 5
+This is the gate the dropped-widget-options item's plan step 5
 asks for: "every deliberate drop gets a comment… A drop with no comment then
 reads as a bug, which is the only way this stops recurring."
 

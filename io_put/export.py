@@ -15,7 +15,7 @@ class Exporter(object):
         # find the item the loop just handed us, so reporting progress cost
         # more than the work — n²/2 comparisons over the app's largest
         # collection, purely to say how far along we are
-        # (agenda/rescan_instead_of_grouping.md, found by
+        # (the rescan-instead-of-grouping item, found by
         # tests/manual/rescan_sweep.py). It was also WRONG on duplicates:
         # .index returns the FIRST match, so equal senses reported the same
         # percentage and the bar stalled.

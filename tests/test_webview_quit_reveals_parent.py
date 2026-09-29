@@ -140,7 +140,7 @@ def test_what_it_covers_beats_what_owns_it(monkeypatch):
     """OWNER AND MODAL-ON ARE DIFFERENT RELATIONSHIPS. A task owned by the
     root is modal on the chooser, and closing it must return to the chooser
     — the thing it covered — not to its owner. See
-    agenda/modal_window_stack.md."""
+    the modal-window-stack item."""
     _with_content(monkeypatch, True)
     owner = FakeParent()
     covered = FakeParent()

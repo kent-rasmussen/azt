@@ -147,7 +147,7 @@ def rate_opens(rate):
 
     By opening one, not by asking. `check_input_settings()` reports what a
     device will ACCEPT, and this project has now been burned by that answer in
-    both directions (see agenda/honest_sound_settings.md).
+    both directions (see the honest-sound-settings item).
     """
     try:
         s = sounddevice.InputStream(samplerate=rate, device=DEVICE,

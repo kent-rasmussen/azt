@@ -37,7 +37,7 @@ TWO FAILURE MODES, and this finds only the first:
   * PRESENT AND INERT — a stub returning None. Silent everywhere: nothing
     raises, so nothing is logged, and the caller reports success. This is
     what `ContextMenu` was, and no report can find it. That one is swept by
-    hand; the result is in agenda/webview_when_to_finish.md, Step 6(b).
+    hand; the result is in the webview-when-to-finish item, Step 6(b).
 
 READS SOURCE, IMPORTS NOTHING HEAVY. `ui_tkinter` needs tkinter and
 `ui_webview` needs pywebview; this has to run where neither is installed, so

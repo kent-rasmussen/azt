@@ -20,19 +20,35 @@ class TaskBase:
     # we need to talk about these two attributes"):
     #   `uses_second_forms`  — this task READS OR WRITES the second-form
     #       field, so the setting must be defined before it works. It gates
-    #       `Sort.runcheck`'s call to `assure_second_forms`.
-    #   `show_second_fields` — the settings pane DRAWS the editable field
-    #       line, so the user can SEE and SET the field whether or not this
-    #       task needs it. It sits on `Segments` (lexicon.py) — every
-    #       segmental task — and that is right (Kent, 2026-09-17: "SortS is
-    #       actually a good use case for 'show': <unset> in UI is legal …
-    #       so people can continue without having set those values, but
-    #       should be able to see and set them, if they want/need").
+    #       `Segments.second_forms_ready`, which Parse's word loader, its
+    #       word-entry binding and its Next button each consult (three
+    #       escalating asks; only Next withholds anything).
+    #       It USED to gate a call in `Sort.runcheck`, deleted 2026-09-29:
+    #       no task that reaches `runcheck` declares this flag, and no task
+    #       that declares it reaches `runcheck`, so that gate could never
+    #       fire. See the second-form flags audit, plans 3 and 4.
+    #   `whole_word_checks`  — this task lets the user choose WHICH WHOLE-WORD
+    #       FORM to work on, so the settings pane draws the second-form field
+    #       line: the field is what makes a pl/imp choice exist at all.
+    #       RENAMED FROM `show_second_fields` AND REHOMED 2026-09-29 (plan 1
+    #       of the second-form flags audit). It sat on `Segments`,
+    #       i.e. EVERY segmental task, so SortV, SortC, SortCV, Transcribe*,
+    #       Record* and Report* all drew a line for a setting they never
+    #       read. It now sits on `WordCollection` and `Syllables` only —
+    #       word collection and the syllable sort, the two places where
+    #       choosing the form is a rational act (Kent, 2026-09-17).
+    #       Parse draws the same line through `uses_second_forms` instead,
+    #       because it needs the field rather than merely offering it.
+    #       It now draws the WORD-CHECK line too (`StatusFrame.wordcheckline`,
+    #       plan 2, 2026-09-29): which FORM of the word — lc, lx, and pl/imp
+    #       where their field is named. A word check is not a cvt check;
+    #       the cvt line picks segments WITHIN the form, and this page does
+    #       not draw one.
     # `<unset>` IS A LEGAL STATE, and no sort may be stopped for it: with no
     # field defined there is simply no second-form check to select (for cvt
     # 'S' the check list is `[params.ftype()]`, analysis.py:1857, and the
     # ftype defaults to 'lc'). So no sort sets `uses_second_forms`. See
-    # agenda/settings_prompts_one_window.md for the confirmation in full.
+    # the settings-prompts-in-one-window item for the confirmation in full.
     uses_second_forms=False
     do_not_show_slices=False
     multislice_max=False
@@ -43,7 +59,14 @@ class TaskBase:
     icon_leaderboard=False
     glyph_leaderboard=False
     cvt_sensitive=False
-    show_second_fields=False
+    whole_word_checks=False
+    # THE VERB ON THE WORD-CHECK LINE. "Collecting citation forms" on a
+    # collection page, "Sorting citation forms" on the syllable sort — the
+    # value is the same word check either way, but the sentence it sits in
+    # is the task's. NOT wrapped in `_()` here: a module-level call would
+    # freeze the string in whatever language was live at import, the same
+    # reason `tasktitle` is a bare string and translated at use.
+    word_check_prefix="Working on"
     show_buttoncolumnsline=False
 
     def __getattr__(self, name):
@@ -123,7 +146,7 @@ class TaskBase:
     # close-time cancellation ("half 1 can only cancel work whose handle the
     # window holds"): a synchronous build ten frames down can read a flag.
     #
-    # See agenda/webview_flows_run_concurrently.md.
+    # See the concurrent-webview-flows item.
     _closed = False
 
     def still_wanted(self):
@@ -261,7 +284,7 @@ class Task(TaskBase):
         # conflated them. A task window was parented to the CHOOSER'S
         # WINDOW, which meant the chooser had to have one before any task
         # could exist — the single blocker to building the chooser's logic
-        # without its UI (`agenda/modal_window_stack.md`).
+        # without its UI (the modal-window-stack item).
         #
         # What the parent is actually used for splits cleanly in two:
         #   * OWNER — `theme`, `wraplength`, `renderer`, and resolving the

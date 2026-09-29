@@ -72,7 +72,7 @@ def dict_by(key):
     Third instance of this exact shape found in one session, after
     `LiftXML.getsensefieldnames` (32.6s) and
     `TaskChooser.getcawlmissing` (4.6s). See
-    agenda/rescan_instead_of_grouping.md.
+    the rescan-instead-of-grouping item.
 
     Identical output: same keys (every value of `key` among entries that
     have it) and same values (the entries carrying it, in `iso.list` order).

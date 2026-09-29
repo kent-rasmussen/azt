@@ -58,7 +58,7 @@ class Senses(object):
             replaces it with a fresh one (`:1529`). Not used here because it
             only reports a quit that went through `on_quit`, where
             `winfo_exists` also covers a window destroyed any other way.
-            See agenda/exit_flag_names_its_scope.md.
+            See the exit-flag-names-its-scope item.
           * **the window** is created by `Task.__init__` before any of the
             slow work, and `on_quit` ends in `self.destroy()`
             (`ui_tkinter.py:1527`). So `winfo_exists()` is false exactly
@@ -79,7 +79,7 @@ class Senses(object):
         it is closed instead of having it deduced. The window test is kept
         rather than replaced: it still catches a window destroyed by
         something that never routed through `on_quit`.
-          See agenda/webview_flows_run_concurrently.md.
+          See the concurrent-webview-flows item.
 
         Absent or unaskable counts as THERE, on both tests. A page that
         never appears is a worse failure than one that raises, so this may
@@ -180,7 +180,16 @@ class Senses(object):
         super().__init__(**kwargs)
 class Segments(Senses):
     """docstring for Segments."""
-    show_second_fields=True
+    # `show_second_fields=True` STOOD HERE and is gone (2026-09-29, plan 1 of
+    # the second-form flags audit). On `Segments` it meant EVERY
+    # segmental task drew the second-form field line — SortV, SortC, SortCV,
+    # TranscribeS/V/C, RecordCitation and the whole Report family — none of
+    # which ever reads the setting. The audit's matrix found the line was
+    # drawn on eleven task families and needed by two.
+    #   It is now `whole_word_checks`, on `WordCollection` and `Syllables`.
+    # Parse gets the line from `uses_second_forms` instead, which is the
+    # honest reason in its case: it does not merely offer the field, it
+    # fails without one.
     def second_forms_ready(self,then=None):
         """Are the second-form fields set? If not, open the first one.
 
@@ -842,6 +851,14 @@ class Vowels():
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     taskicon = 'iconWord'
+    # WHICH FORM to collect is a rational choice here, so the second-form
+    # field line belongs on the page: the field is what makes a pl/imp
+    # choice exist. Moved off `Segments` 2026-09-29, plan 1 of
+    # the second-form flags audit.
+    whole_word_checks=True
+    # "Collecting citation forms" — the verb on the word-check line
+    # (`StatusFrame.wordcheckline`). Translated at use, not here.
+    word_check_prefix="Collecting"
     do_not_show_slices=True
     no_leaderboard=True
     def run_addCAWLentries(self):
@@ -942,7 +959,7 @@ class WordCollection(Segments):
 
         Stopping the build is not the whole job: the click that stopped it
         still has to be honoured. That is `hide_chooser`'s half — see
-        agenda/work_outliving_its_window.md.
+        the work-outliving-its-window item.
         """
         if not self._window_is_there():
             log.info("word collection: the window closed while this page was "
@@ -951,9 +968,55 @@ class WordCollection(Segments):
             return
         p = self.lex_ui
         import time as _time
+        _t_frames=_time.perf_counter()
+        # THE FRAMES ARE BUILT ONCE; THE WORDS LOAD AS OFTEN AS ASKED. This
+        # method used to do both, which is why it could not be called twice:
+        # it grids a NEW `wordsframe` into the same cell on every call, while
+        # `dowordframe` returns early when a `wordframe` already exists — so
+        # a second call left the old word inside the first frame and stacked
+        # an empty second one over it. Changing the word check has to reload
+        # the list without that (plan 2 of
+        # the second-form flags audit), so the reloadable half is
+        # `loadwords` below.
+        #   Guarded like `dowordframe`, and for the same reason.
+        if not hasattr(self,'wordsframe'):
+            self.wordsframe=p.frame(self.ui.frame,row=1,column=1,sticky='ew')
+            self.instructions=p.label(self.wordsframe,
+                                        text=self.getinstructions(),
+                                        row=0, column=0)
+        self.dirfn=self.nextword
+        _t1=_time.perf_counter()
+        self.loadwords()
+        log.info("word page: page frames %.2fs, load %.2fs",
+                 _t1-_t_frames, _time.perf_counter()-_t1)
+        # ASK 1 OF 3 (see `second_forms_ready`): open the field on page load,
+        # AFTER the first word is on screen. Order is the point — Kent,
+        # 2026-09-28: *"we open this on page load, and if someone clicks off,
+        # they can see a word."* Asking first and blocking on the answer is
+        # the design this replaced.
+        #   ON THE BUILD ONLY, not on every load: a reload comes from the
+        # user changing the word check, and re-opening the field editor
+        # under their hands as they do it is not an ask, it is a fight.
+        self.second_forms_ready()
+
+    def loadwords(self):
+        """Rebuild the todo list and show its first word, into frames that
+        already exist.
+
+        THE RE-RUNNABLE HALF of `getwords`. Called on every page build, and
+        again whenever the WORD CHECK changes — a different ftype is a
+        different set of words (`getlisttodo` filters on `self.ftype`), but
+        the same widgets. Kent, 2026-09-17, on switching form mid-page:
+        "this workflow shouldn't break us."
+
+        The caller that changes the check is
+        `SettingsManager.refreshattributechanges`, via the `ftype` branch —
+        the same place the gloss-language change calls `getword()`.
+        """
+        import time as _time
         _t_todo=_time.perf_counter()
         self.entries=self.getlisttodo()
-        _t_frames=_time.perf_counter()
+        _t_word=_time.perf_counter()
         self.nentries=len(self.entries)
         self.index=0
         # A5 in-place reload: resume at the word the user was on. Guid-keyed
@@ -967,28 +1030,16 @@ class WordCollection(Segments):
                 log.info("word collection: resuming at %s (reload anchor)",
                          anchor['guid'])
             self.program._reload_anchor=None
-        self.wordsframe=p.frame(self.ui.frame,row=1,column=1,sticky='ew')
-        self.instructions=p.label(self.wordsframe,
-                                    text=self.getinstructions(),
-                                    row=0, column=0)
-        self.dirfn=self.nextword
         # TIMED because the affix catalog was exonerated by measurement and
         # the wait is still there (Kent, 2026-09-28: catalog 0.41s, 0 yields,
         # "it takes forever"). `getlisttodo` walks every entry deciding what is
         # done, and `getword` builds the word frame and loads an illustration.
         # Both are on the path to the first word; neither has ever been timed.
-        _t1=_time.perf_counter()
         r=self.getword()
-        log.info("word page: getlisttodo %.2fs (%s entries), page frames "
-                 "%.2fs, first getword %.2fs",
-                 _t_frames-_t_todo, self.nentries, _t1-_t_frames,
-                 _time.perf_counter()-_t1)
-        # ASK 1 OF 3 (see `second_forms_ready`): open the field on page load,
-        # AFTER the first word is on screen. Order is the point — Kent,
-        # 2026-09-28: *"we open this on page load, and if someone clicks off,
-        # they can see a word."* Asking first and blocking on the answer is
-        # the design this replaced.
-        self.second_forms_ready()
+        log.info("word load: getlisttodo %.2fs (%s entries), getword %.2fs",
+                 _t_word-_t_todo, self.nentries,
+                 _time.perf_counter()-_t_word)
+        return r
     def promptstrings(self,lang):
         if lang == self.analang:
             text=_("What is the form of the new "
@@ -1613,7 +1664,7 @@ class WordCollection(Segments):
         method's preconditions being assumed by an inner one that other code
         calls directly (see also `sensetodo` and the withdraw-without-reveal
         in `setsensetodo`). Worth reading with
-        agenda/bridge_shadowed_attributes.md.
+        the bridge-shadowed-attributes item.
         """
         if not hasattr(self,'instructions'):
             log.info("getword: the word page isn't built yet (no "
@@ -2296,7 +2347,7 @@ class Parse(Segments):
                         _reports+=1
                         self.waitprogress(i)
                 self.program.parsecatalog.report()
-            # MEASURE, DO NOT THEORISE (agenda/sound_card_probe_blocks_first_task.md
+            # MEASURE, DO NOT THEORISE (the sound-card-probe item
             # plan 1). This is the wait Kent describes as "can take awhile",
             # and nothing has ever timed it. Three numbers, because they
             # separate three different problems: total time says whether it is
@@ -2374,18 +2425,18 @@ class Parse(Segments):
         except Exception as e:
             log.info(f"Exception storing word (Parse): {e}")
     # `waitforOKsecondfields` DELETED 2026-09-29, and deleting it is what
-    # closes `agenda/azt/lexicon_bare_after_nameerror.md`. It called a bare
+    # closes the bare-`after`-NameError item. It called a bare
     # `after(...)`, which this module does not define or import — verified:
     # the only wildcard import is `utilities.utilities`, which has no
     # `after` — so it would have raised NameError on its first iteration.
     # Nothing but itself ever called it, so that never happened.
     #   It was also a busy-wait spelling of what plan 4 now does properly:
     # `Segments.second_forms_ready` asks, and the field's own commit hook
-    # resumes the work. See agenda/azt/second_form_flags_audit.md plan 7.
+    # resumes the work. See the second-form flags audit plan 7.
     def __init__(self, **kwargs): #frame, filename=None
         # TIMED IN PHASES, because the page waits on ALL of this and not only
         # on the part that looks slow
-        # (agenda/sound_card_probe_blocks_first_task.md).
+        # (the sound-card-probe item).
         # Kent, 2026-09-28, when told the engine build was not the suspect:
         # *"but the page doesn't finish loading and show the first word until
         # it is finished being built."* Quite right — what matters is what the
@@ -2593,6 +2644,16 @@ class Syllables(Senses):
     Primitives are seeded by orthography from the computed profile (the user then
     judges by ear). The profile annotation is named by the ftype; the three
     primitives by their check code."""
+    # `<unset>` IS LEGAL HERE AND THE LINE IS STILL WANTED — the one place
+    # the audit found the display question genuinely separate from the
+    # needs-it question. The lc check runs with no second-form field at all;
+    # a pl or imp check only EXISTS once one is named, so this line is how
+    # the user makes that check available (Kent, 2026-09-17: "SortS is
+    # actually a good use case for 'show': <unset> in UI is legal … so
+    # people can continue without having set those values, but should be
+    # able to see and set them"). Reaches `SortSyllables` through this
+    # class. Plan 1 of the second-form flags audit.
+    whole_word_checks=True
     def updateformtoannotations(self,*args,**kwargs):
         pass  # never rewrite the surface form
     def name_new_glyphs(self):

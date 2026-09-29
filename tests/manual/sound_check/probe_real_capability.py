@@ -357,7 +357,7 @@ def probe_input(device, rate, fmt):
         # was refuting itself in print.
         #
         # THIS IS A DOCUMENTED BUG CLASS AND I REINTRODUCED IT. The four-bug
-        # list in agenda/honest_sound_settings.md opens with exactly this:
+        # list in the honest-sound-settings item opens with exactly this:
         # "a real-rate figure computed from `spectral_ceiling`, which
         # estimates its floor inside the very hole being detected", and
         # "the same arithmetic producing a self-contradiction — 'says 96000 Hz

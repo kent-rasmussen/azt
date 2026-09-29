@@ -11,7 +11,7 @@
   `requirements.txt`, which stays pinned; see "What this does not change".
 - Author: drafted by Claude with Kent, from the 2026-09-25/28 sessions.
 - Related: ADR 0005 (the python range — this is the generalisation of its
-  install-target lesson), `agenda/update_install_non-windows-specific.md`.
+  install-target lesson), and the non-Windows install item.
 
 ## Context
 
@@ -36,7 +36,7 @@ https://www.python.org/ftp/python/3.13.7/python-3.13.7-amd64.exe
 A plausible reconciliation is that the per-minor "latest" page names only the
 current patch while the FTP archive keeps every past one, so both statements
 are about different places. **That has not been verified and is not relied on
-anywhere in this ADR.** See `agenda/update_install_non-windows-specific.md`,
+anywhere in this ADR.** See the non-Windows install item,
 which carries the open question.
 
 **The decision survives without it**, on reasons that are demonstrated rather
@@ -198,7 +198,7 @@ tested** — the macOS resolution in particular has never run.
 
 **DO NOT DESCRIBE THE EXE'S STATE FROM THIS REPO (2026-09-28).** An earlier
 version of the row above said what the exe's PR1 and PR2 did, taken from notes
-in `azt/agenda/`. Kent, marking that work done: *"it's notes aren't current,
+in the azt agenda items. Kent, marking that work done: *"it's notes aren't current,
 apparently, if they say what you think."* They were not. The exe repo is the
 only authority on what the exe does, and the boundary this whole item exists
 to protect is the same one that makes second-hand notes go stale here without

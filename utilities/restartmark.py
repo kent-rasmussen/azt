@@ -22,7 +22,7 @@ Clearing at startup would destroy the evidence in exactly the case we care about
 nothing to report. So a marker survives until the app is genuinely usable, and a
 successor that never gets there leaves it for the start after that.
 
-This is level 1 of `azt/agenda/restart_recovery_handshake.md`: it makes the
+This is level 1 of the restart-recovery-handshake item: it makes the
 failure NAMEABLE, not survivable. Level 2 (the predecessor holding a visible
 "Restarting…" modal until the successor signals it is up) is what makes it
 recoverable, and this marker is the obvious channel for that signal — the

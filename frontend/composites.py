@@ -13,7 +13,7 @@ lifted here, because the gallery had already reduced the five copies to one
 helper with three editors.
 
 WHY THIS MODULE EXISTS RATHER THAN THE HELPER STAYING IN THE GALLERY: the
-gallery is a test harness. `agenda/settings_prompts_one_window.md` (promoted
+gallery is a test harness. The settings-prompts-in-one-window item (promoted
 to the top of the agenda 2026-09-15) is about the app raising a whole WINDOW
 per settings value — "Enter Analysis Language Name" containing one prompt and
 one entry; "Select Input Sound Card" containing a list — when what it wants

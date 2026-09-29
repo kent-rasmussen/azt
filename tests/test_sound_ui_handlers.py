@@ -492,14 +492,14 @@ VARNAMES = ['fs', 'sample_format', 'audio_card_in', 'audio_card_out']
 def test_every_row_says_what_it_is(varname):
     """Two rows named themselves and two showed a bare value — "44.1khz" and
     "32 bit integer", with nothing saying what they were, on exactly the two
-    settings this item exists to make honest. Step 6 of
-    agenda/honest_sound_settings.md.
+    settings this item exists to make honest. Step 6 of the
+    honest-sound-settings item.
 
     THE NAME IS A SEPARATE WIDGET NOW (2026-09-15), not a prefix on the
     value. It had to become one: the value is swapped for a chooser in place
     when the row is clicked, so a name folded into the same string
     disappeared exactly when the user needed it, leaving an unlabelled box
-    (agenda/settings_prompts_one_window.md). So this asserts the same
+    (the settings-prompts-in-one-window item). So this asserts the same
     guarantee against the table the row's name now comes from, and
     `test_a_known_value_still_gets_its_friendly_name` below covers the value
     half."""
