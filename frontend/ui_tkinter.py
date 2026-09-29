@@ -54,7 +54,7 @@ from utilities.display import USING_WAYLAND
 # XWayland update guard — ONE-LINE TOGGLE. Set True to make UI.update/
 # update_idletasks skip the synchronous X round-trip on Wayland (the old guard);
 # False = always call through (current default — pulling it correlated with the
-# window transition working). See docs/wayland_freeze_audit.md.
+# window transition working). See the Wayland freeze audit.
 WAYLAND_UPDATE_GUARD=False
 log.info("Display server: %s (USING_WAYLAND=%s; Wayland update guard %s)",
          os.environ.get('XDG_SESSION_TYPE','?'), USING_WAYLAND,
@@ -1553,7 +1553,7 @@ class Exitable():
                     # deiconify + -topmost + synchronous reflow when a
                     # NotifyUser fires at the same moment (as it did: "Not
                     # Done!"). If blanking survives this change, that collision
-                    # is the next suspect — see wait_below_status_window.md.
+                    # is the next suspect — see the wait-below-status-window item.
                     # (the after_idle(update) that stood here is gone — see
                     # REVERTED above)
         self.cleanup()
@@ -4662,7 +4662,7 @@ class ScrollingFrame(Frame):
         # content-sized hands down a small number, so "ask the parent" just
         # moves the content-drives-box circularity one level up. The allotted
         # space has to come from something whose size is set by the layout all
-        # the way up, which is what scrollframe_sizes_from_layout.md now has to
+        # the way up, which is what the ScrollingFrame-sizes-from-layout item now has to
         # work out; MIN_PLAUSIBLE=300 was not enough of a guard.
         # EXPAND BEFORE WRAPPING (Kent's rule), and WIDEN ONLY.
         #

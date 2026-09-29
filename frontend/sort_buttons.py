@@ -177,7 +177,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         profiles already sorted here), plus 'Other…' → a by-hand entry page.
         Picking one sorts the current word into that real, primitive-consistent
         profile (via sortselected's _pending_new_profile path). See ADR 0003 /
-        cv_group_creation_merging."""
+        the CV-group creation-and-merging item."""
         params=self.program.params
         beg,syls,end=params.parse_profile_class(self.program.slices.profile())
         if beg is None:

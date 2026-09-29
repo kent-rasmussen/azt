@@ -1063,7 +1063,7 @@ class StatusFrame(ui.Frame):
         also True on `Syllables`, and the syllable sort genuinely wants this
         line — but changing its form means rebuilding its `(ps, ftype)`
         slices and its board, not reloading a word list, and that is plan 6,
-        still blocked on `ftype_as_a_setting.md`. Drawing a control there now
+        still blocked on the ftype-as-a-setting item. Drawing a control there now
         would change the ftype and leave the board showing the old form's
         data, silently. So the line asks whether the task can act on it, and
         says in the log when it cannot.
@@ -1359,8 +1359,12 @@ class StatusFrame(ui.Frame):
     def updatecvt(self):
         if 'cvt' not in self.labels:
             return
-        self.labels['cvt']['text'].set(self.cvtlabel())
+        # REFRESH, THEN RENDER. These two lines were the other way round, so
+        # every explicit update painted the label from the PREVIOUS cvt:
+        # `cvtlabel()` reads `self.cvt`, and `makesliceattrs` is what
+        # re-reads it from `params`. One step stale, every time (2026-09-29).
         self.makesliceattrs()
+        self.labels['cvt']['text'].set(self.cvtlabel())
     def cvtlabel(self):
         return (_("Checking {cvt},").format(cvt=self.program.params.cvtdict()[self.cvt]['pl']))
     def cvtline(self):
@@ -2009,7 +2013,7 @@ class StatusFrame(ui.Frame):
         groups (#C #V | C# V# | 1 2 3 …) under check headers, ragged rows = the
         stable ≤MAX_SLICE slices within each group. Each cell shows the live word
         count, dressed verified (✓) / not (bordered); clicking verifies that slice
-        next. See docs/syllable_sort_redesign.md."""
+        next. See the syllable-sort redesign."""
         self._cells={}
         self._active_cell=None
         params=self.program.params
@@ -2089,7 +2093,7 @@ class StatusFrame(ui.Frame):
         (consonant/vowel). Each cell is the Beg+count+End profile class,
         showing its word count, dressed verified (✓) / not (bordered) / active
         (highlighted); clicking sets the current slice. See
-        docs/sort_syllables_design.md."""
+        the sort-syllables design."""
         self._cells={}
         self._active_cell=None
         params=self.program.params
@@ -3523,7 +3527,7 @@ class TaskDressing(HasMenus,ui.Window):
         # whose title is the one asked for. Skipping that would show the
         # PREVIOUS page while the next one builds, or — after
         # `resetframe()` — an empty fullscreen page whose only control is
-        # Exit, which is `fullscreen_with_only_quit.md`.
+        # Exit, which is the fullscreen-with-only-quit (NBQ) item.
         #
         # NOT REUSED IF IT HAS QUIT. `exitFlag` is how every flow downstream
         # asks "did the user leave?", so handing back a window carrying a

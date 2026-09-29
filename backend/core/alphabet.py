@@ -12,8 +12,8 @@ from backend.core.sorting_engine import Sort
 def chart_example_rank(cls, glyph, keys):
     """Rank a candidate example word for `glyph` (class 'C' or 'V') from its
     verified segment keys (getcvverificationkeys actualkeys, e.g.
-    {'C1':'b','V1':'a','C1=C2':'g'}), per Kent's DECIDED rule (agenda
-    default_image_page_ordering, 2026-07-11):
+    {'C1':'b','V1':'a','C1=C2':'g'}), per Kent's DECIDED rule (the
+    default-image-page-ordering item, 2026-07-11):
       0 — the glyph is the ONLY distinct segment of its class in the word
           (all C slots == the glyph for a C-glyph; e.g. CVCV with C1=C2);
       1 — else the glyph is word-initial for its class (C1 / V1);
@@ -432,7 +432,7 @@ class Alphabet():
                 uri=s.illustrationURI(local_only=True) #images are data
                 if not (uri and file.exists(uri)):
                     continue
-                counts,keys=s.getcvverificationkeys(self.ftype)
+                counts,keys=s.getcvverificationkeys(self.program.params.ftype())
             except Exception:
                 continue
             ranked.append((chart_example_rank(cls,g,keys),i,s.id))
@@ -523,7 +523,7 @@ class Alphabet():
     def verificationcode(self,**kwargs):
         ps=kwargs.get('ps',self.program.slices.ps())
         profile=kwargs.get('profile',self.program.slices.profile())
-        ftype=kwargs.get('ftype',self.ftype)
+        ftype=kwargs.get('ftype',self.program.params.ftype())
         check=kwargs.get('check',self.program.params.check())
         group=kwargs.get('group',self.program.status.group())
         return '_'.join([ps,profile,ftype,check,group])
@@ -534,7 +534,7 @@ class Alphabet():
     def refresh_items(self):
         self.items_present=set()
         self.items_existing=set()
-        k={'ftype':self.ftype} #ftype may need to iterate some day
+        k={'ftype':self.program.params.ftype()} #ftype may need to iterate some day
         for _ in self.program.settings.reloadstatusdata():
             pass
         self.program.settings.reloadstatusdata_cleanup() # culled here
@@ -824,7 +824,6 @@ class Alphabet():
     def __init__(self, program):
         self.program=program
         self.program.alphabet=self
-        self.ftype=self.program.params.ftype()
         self.program.settings.settingsobjects() #should do this more; can be redone!
         # self.renew_items_tomacrosort() #if needed, run then, with cvt
         # Defense-in-depth (2026-07-11 data wipe): NEVER let the init-time
@@ -920,7 +919,7 @@ class AlphabetChartData:
                       if i not in ['NA']]
         log.info(f"Using this alphabetical order: {self.order}")
         log.info(f"Using these exids: {self.exids}")
-        # DEFAULTS (Kent 2026-07-11, agenda default_image_page_ordering): a
+        # DEFAULTS (Kent 2026-07-11, the default-image-page-ordering item): a
         # NEW chart opens with every glyph's example ALREADY SET to a pictured
         # word — fill ONLY empty slots; a user's saved choice is never
         # overwritten. Rule: glyph-is-the-only-C/V-in-the-word first, then
@@ -1054,7 +1053,7 @@ class AlphabetComparisonData:
         self.vowels = list(glyphdict['V'])
         self.consonants = list(glyphdict['C'])
         self.settings = self.load_settings()
-        # DEFAULTS (Kent 2026-07-11, agenda default_image_page_ordering): an
+        # DEFAULTS (Kent 2026-07-11, the default-image-page-ordering item): an
         # unsaved booklet opens with the page order proposed ('a' first, then
         # vowels in facing similar-pairs by frequency, then consonants) and
         # each page's THREE examples pre-picked by the same ranking as the

@@ -252,7 +252,7 @@ class CheckParameters(object):
         per slot (so each C-cluster / V-run is 1..1+percap long; default 1–3). The
         class skeleton = one C-cluster before the 1st V iff beg=C, one between each
         adjacent V-run pair (syls-1 interludes), one after the last V iff end=C.
-        See ADR 0003 / cv_group_creation_merging."""
+        See ADR 0003 / the CV-group creation-and-merging item."""
         try:
             N=int(syls)
         except (TypeError,ValueError):
@@ -437,7 +437,7 @@ class CheckParameters(object):
     #      (+ final C if C#=C, − initial C if #C=V) — guaranteed consistent, flagged
     #      so the caller logs it.
     # Returns a dict {profile, changed, fallback, valid}; the caller logs (deduped).
-    # See docs/sort_syllables_design.md.
+    # See the sort-syllables design.
     SEGMENT_BASES=set('NGSDCVʔ')|{'Ṽ'} # base segment chars; everything else (length
                                         # ː, tone, '.', '=', '<', combining marks)
                                         # is a MODIFIER that rides the prior segment
@@ -839,7 +839,19 @@ class CheckParameters(object):
         NAMED FOR A FORM, not for a syllable profile. `second_form_checks`
         names the same codes "Whole {field} Word Syllable Profile" because
         there they ARE profile checks on the syllable sort. On a collection
-        page that sentence describes nothing the page does."""
+        page that sentence describes nothing the page does.
+
+        `pl` AND `imp` DEPEND ON A TABLE THAT WAS NEVER POPULATED, and were
+        withheld here for a few hours on 2026-09-29 because of it. A sense's
+        `ftypes` was `{'lx': entry.lx, 'lc': entry.lc}` plus `'ph'` and
+        nothing else, so `textvaluebyftypelang('pl', …)` always returned
+        None — which is what `getlisttodo` reads to decide a word is done
+        and what `getword` puts in the entry box. A plural page showed every
+        word as uncollected forever. Writing worked, so the damage was a
+        page that silently re-collected.
+          `Sense.set_ftype` and `Settings.register_second_forms` fix that,
+        so the offer stands on `second_forms_available` again: the field
+        being named is once more the only condition."""
         rows=[('lc', _("citation forms")),
               ('lx', _("root forms"))]
         rows+= [(code, _("‘{field}’ forms ({ps})").format(field=field, ps=ps))

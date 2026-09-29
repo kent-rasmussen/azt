@@ -51,7 +51,7 @@ Four changes, and the first is the one that matters:
   code bears it out.
 
 **The general point is recorded rather than the fix alone**
-(`exit_flag_names_its_scope.md`): backend code asks this flag whether to
+(the exitFlag-names-its-scope item): backend code asks this flag whether to
 CONTINUE, everywhere and correctly. Nothing in the frontend asks whether to
 BEGIN. Scheduling a callback, starting a work chain and creating a window all
 still start during teardown.
@@ -2504,11 +2504,11 @@ test anyone can run.** Documentation and one manual test; **no application code 
   shipped without it because the `__getattr__` bridges let Tk's names keep working. Only
   `drive_work` was ever adopted. Now described accurately, with the finish-or-delete decision
   filed as an agenda item rather than left as a doc that misdescribes the seam.
-- **Three agenda items filed** out of this work: `ui_protocol_finish_or_kill`,
-  `lexicon_bare_after_nameerror` (verified: `backend/core/lexicon.py:2020-2022` calls a bare
+- **Three agenda items filed** out of this work: the ui_protocol finish-or-kill item,
+  the lexicon-bare-after-NameError item (verified: `backend/core/lexicon.py:2020-2022` calls a bare
   `after(10*100, callback=…)` inside a `while` — `after` is undefined in that module and not
   exported by `utilities/`, so it raises `NameError` if reached), and
-  `tstv_font_availability`.
+  the tstv font-availability item.
 
 # Version 1.15.16
 
@@ -3342,7 +3342,7 @@ Four field-diagnosed faults, all from OBT's nml project and Kent's own reproduct
     exists (saying plainly that it did NOT reset it to the published version), and
     otherwise refuses with a message naming the branch you are still on. Failing loudly
     beats lying about which code is running. Closes the live half of
-    `checkout_b_from_head_not_remote`.
+    the checkout-b-from-HEAD item.
 - **Sister repos clone shallow** (`--depth 1`, per-repo `depth` override in the table).
   Nothing reads their history — `update()` only ever `pull --ff-only`s the tip — and
   `images_CAWL` is a few hundred MB, so on a field connection this is the difference
@@ -3378,7 +3378,7 @@ Four field-diagnosed faults, all from OBT's nml project and Kent's own reproduct
 # Version 1.15.4
 
 - **A restart now holds a window and waits to be told the new copy is up.** Level 2 of
-  `restart_recovery_handshake`, verified live. `App.restart` used to withdraw both windows
+  the restart-recovery handshake item, verified live. `App.restart` used to withdraw both windows
   and then block on `while self.writing: time.sleep(1)` — every window hidden AND a dead
   main loop, so nothing could paint, run, or report. That pair *was* the "no window"
   failure. Both are gone: the write-wait is driven from `after(1000)`, and a
@@ -3541,7 +3541,7 @@ Four field-diagnosed faults, all from OBT's nml project and Kent's own reproduct
   NOT fixed here, and tracked with the scaling work instead: on that machine `availablexy`
   computed a viewport of 69px out of 1080 (siblings measured as 2936px of a 1080px
   screen), floored to 200px against 136px rows — that is
-  `ui_scaling_dpi_and_real_estate` + `buttons_excessive_ipadx`, and fixing it there
+  the UI-scaling (DPI and work-area) item + the buttons-excessive-ipadx item, and fixing it there
   touches this page's viewport too.
 
 # Version 1.15.1
@@ -4045,7 +4045,7 @@ Consolidates the 1.13.22 and 1.13.23 bumps, which carried no notes.
     reached `todo=set(todo)|…` with `todo` unbound for anything else. `'S'` primitives
     take their groups from the node, so `todo` now starts empty and the existing union
     returns exactly the current groups.
-  - Found en route, NOT fixed (filed as `cv_group_selection_dead.md`): the `'CV'` branch
+  - Found en route, NOT fixed (filed as the CV-group-selection-dead item): the `'CV'` branch
     omits `_getgroup`'s required `window`, reads `status.group()` before the user has
     picked, and `groups()` returns `None` for CV/VC/T while `groups_visible` iterates it.
 - **A primitive change now invalidates what it contradicts.** `escape_profile_class` wrote
@@ -5912,7 +5912,7 @@ blank-letter diagnostic.
 # Version 1.5.0
 - NEW — **three-stage ASR** (record → bulk transcribe → select), so transcription
   cost moves out of the per-word interaction into one unattended batch (ADR 0002,
-  docs/asr_bulk_transcription_design.md):
+  the ASR bulk-transcription design):
   - **Storage** (`lift.Form.persist_drafts`/`load_drafts`/`wipe_drafts`): ASR
     drafts are annotations on the `<analang>-x-audio` form — `{repo}`,
     `ipa-{repo}`, `tone-{repo}`, `md5`; md5 mismatch (re-record) wipes+redrafts;
@@ -5981,7 +5981,7 @@ blank-letter diagnostic.
   profiles, capped ~12); page 2 ("Other… set by hand") is a free-text field with a
   work-with-a-linguist warning and a Back button. Both validate against the class
   primitives (word-initial/final + syllable count) and sort the word into that
-  real, primitive-consistent profile. See ADR 0003 / cv_group_creation_merging.
+  real, primitive-consistent profile. See ADR 0003 / the CV-group creation-and-merging item.
 - Syllable-profile verification consolidated to the `…-x-cvprofile` form as the
   single source of truth. The profile-verify no longer *also* writes redundant
   `lc=<profile>` codes into the `<macrogroup> lc verification` field (that field is
@@ -6628,7 +6628,7 @@ blank-letter diagnostic.
 # Version 1.3.72
 - Design docs for the record → bulk-ASR → select rework: ADR 0002 (storage
   schema — ASR drafts as repo-keyed annotations on the -x-audio form, md5
-  staleness) and docs/asr_bulk_transcription_design.md (three-stage
+  staleness) and the ASR bulk-transcription design (three-stage
   architecture, two-pathway loop, CPU timing ~11 h/1700 files × 20 langs,
   phased plan). No code changes.
 
@@ -7433,8 +7433,7 @@ blank-letter diagnostic.
   verify-in-place change above stands regardless.
 
 # Version 1.3.0
-- syllable_sort_redesign STEPS 2 & 3 — syllable sorting split into two tasks
-  (docs/syllable_sort_redesign.md):
+- The syllable-sort redesign STEPS 2 & 3 — syllable sorting split into two tasks:
   - **Task 1 (PREP).** New `SyllableSliceDict` (`backend/core/analysis.py`,
     `MAX_SLICE=150`, override via `settings 'syllable_max_slice'`): each of the
     three primitive checks (#C word-initial, C# word-final, syls count) has its
@@ -7462,7 +7461,7 @@ blank-letter diagnostic.
     `SyllablePrep` first in its MRO.
 
 # Version 1.2.90
-- syllable_sort_redesign STEP 1 (revert to the clean, segmental-matching
+- The syllable-sort redesign STEP 1 (revert to the clean, segmental-matching
   baseline): removed verify-list PAGINATION (`frontend/sort_ui.py`
   `build_verify_layout` is now a single straight build — first screenful behind a
   wait, then the rest streams in; no pages, no `_render_page`/`_grid_nav`/
@@ -7487,12 +7486,12 @@ blank-letter diagnostic.
   runs between the release and the destroy, giving the compositor a beat to act.
 
 # Version 1.2.89
-- syllable_sort_redesign.md: made "revert pagination + the global Wayland hacks
+- The syllable-sort redesign: made "revert pagination + the global Wayland hacks
   back to the clean, segmental-matching baseline" the explicit STEP 1, so the
   rebuild starts from known-good code rather than the saga pile.
 
 # Version 1.2.88
-- Wrote docs/syllable_sort_redesign.md: the agreed two-task design (prep =
+- Wrote the syllable-sort redesign: the agreed two-task design (prep =
   3 checks × per-group stable slices ≤150, groups×slices board, dedicated
   `maybeverifysyllables`, misfit→last-slice; sort = macrogroup, gated, 2-D
   board) plus the plan to remove pagination, the cvt='S' branches, and the
@@ -7568,7 +7567,7 @@ blank-letter diagnostic.
   were added during the build).
 
 # Version 1.2.81
-- wayland_freeze_audit.md: recorded the decision to KEEP kiosk full-screen (it's
+- The Wayland freeze audit: recorded the decision to KEEP kiosk full-screen (it's
   for the Windows users' presentation; those users have no XWayland so they don't
   hit the freeze — it's a Linux/Wayland dev-environment issue). Recommendation:
   the dev develops/tests in an Xorg session (zero code, behaves like Windows);
@@ -7576,7 +7575,7 @@ blank-letter diagnostic.
   the synchronous-X calls as optional robustness, not an emergency.
 
 # Version 1.2.80
-- Added docs/wayland_freeze_audit.md: a full audit of the XWayland freeze (root
+- Added the Wayland freeze audit: a full audit of the XWayland freeze (root
   cause = a synchronous X round-trip — update/update_idletasks/wait_window/grab —
   during a window-state transition deadlocks with mutter) and a principled,
   phased solution, replacing the per-site whack-a-mole. No code changed.
@@ -7906,7 +7905,7 @@ blank-letter diagnostic.
 - SortSyllables cyclical redesign — engine data-model (first chunk of an
   all-or-nothing swap; **'S' is mid-migration and not runnable until the
   remaining chunks land** — see the build-status checklist in
-  `docs/sort_syllables_design.md`). Choice B + slice = Beg+count+End:
+  the sort-syllables design). Choice B + slice = Beg+count+End:
   - 'S' checks are now `[#C (word-initial C/V), C# (word-final C/V), syls
     (syllable count), <current ftype = the whole-word profile>]` in
     `renewchecks`/`updatechecksbycvt`. First three run on the whole wordlist and
@@ -7922,7 +7921,7 @@ blank-letter diagnostic.
   escape-hatch window + prose renderer.
 
 # Version 1.2.42
-- Docs: `docs/sort_syllables_design.md` now specs the agreed **cyclical /
+- Docs: the sort-syllables design now specs the agreed **cyclical /
   orthogonal** syllable sort that supersedes the single whole-profile check.
   Four checks — word-initial (C/V), word-final (C/V), #syllables, and
   profile-within-macrogroup — where the first three are closed/determined
@@ -8026,7 +8025,7 @@ blank-letter diagnostic.
 # Version 1.2.33
 - SortSyllables Phase 1: whole-word syllable-profile sorting, tone-modeled
   (relabel profile groups, never rewrite the surface form). Builds on 1.2.32.
-  See `docs/sort_syllables_design.md`. NOT yet end-to-end-verified — expect a
+  See the sort-syllables design. NOT yet end-to-end-verified — expect a
   test-iterate pass (esp. the sort/verify/join UI for cvt='S').
   - New `Syllables(Senses)` mixin (lexicon.py): group = the syllable-profile
     string, stored in the sense's cvprofile field; `getitemgroup`/`setitemgroup`
@@ -8054,7 +8053,7 @@ blank-letter diagnostic.
 
 # Version 1.2.32
 - Groundwork for syllable-profiles-as-data / `SortSyllables` (see
-  `docs/sort_syllables_design.md`). Additive, zero behavior change so far:
+  the sort-syllables design). Additive, zero behavior change so far:
   - `profilelang(analang, machine=True)` now appends the machine-transcription
     code (`_MT`), mirroring `tonelangname`/`phoneticlangname`; it previously
     ignored its `machine` flag. All existing callers pass the default.
@@ -8062,7 +8061,7 @@ blank-letter diagnostic.
     machine-analyzed profile in the `…-x-cvprofile_MT` form of the
     `cvprofile_<ftype>` field, alongside (never clobbering) the plain form that
     will hold the user-confirmed profile. No callers yet.
-- Design doc `docs/sort_syllables_design.md` records the locked decisions, the
+- Design doc: the sort-syllables design records the locked decisions, the
   storage model, the data-integrity LINCHPIN to review (machine→`_MT` write +
   confirmed-first slicing, same boot-overwrite class as the 1.2.14–1.2.20 saga),
   the tone-modeled sort flow, two pre-existing 'S' bugs found, and the Phase-2

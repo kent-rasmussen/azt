@@ -1,7 +1,7 @@
 # coding=UTF-8
 """chart_example_rank: default example-word selection for the alphabet chart.
 
-Kent's rule (agenda default_image_page_ordering, DECIDED 2026-07-11):
+Kent's rule (the default-image-page-ordering item, DECIDED 2026-07-11):
 prefer words where the glyph is the ONLY distinct segment of its class
 (CVCV with C1=C2 …), then word-initial (C1 over C2), among pictured words
 (picturedness is gated by the caller, not ranked here).

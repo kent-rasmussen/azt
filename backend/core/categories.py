@@ -37,9 +37,9 @@ class Categories:
         """
         added=None
         assert not add or check in add
-        values=sense.verificationtextvalue(profile,self.ftype) #always returns list
+        values=sense.verificationtextvalue(profile,self.program.params.ftype()) #always returns list
         if add and not values:
-            v=sense.verificationtextvalue(profile,self.ftype,value=[add])
+            v=sense.verificationtextvalue(profile,self.program.params.ftype(),value=[add])
             return #if more complex, continue
         # EXACT match on the check part, not a substring one. A verification
         # code is '<check>=<group>', split on the LAST '=' because checks are
@@ -66,7 +66,7 @@ class Categories:
         if add: #i.e., still, after switching out current values for changes
             values.append(add)
             added=add
-        v=sense.verificationtextvalue(profile,self.ftype,value=values)
+        v=sense.verificationtextvalue(profile,self.program.params.ftype(),value=values)
     def confirmverificationgroup(self,sense,profile,check):
         """This does the one field storing a list of verified values
         for all checks"""
@@ -75,7 +75,7 @@ class Categories:
         log.info(_("Confirming that current group and verification code match "
                     "before making changes."))
         annogroup=self.getitemgroup(sense,check) #Segment or Tone
-        vals=sense.verificationtextvalue(profile,self.ftype)
+        vals=sense.verificationtextvalue(profile,self.program.params.ftype())
         # EXACT check match, for the same reason as modverification above.
         # The old `if check in i` was justified by "V1 must match V1=V2, if
         # present" — which is exactly backwards: a code's check part is
@@ -86,7 +86,7 @@ class Categories:
         # showed, because an NA code's check part is compound whenever the check
         # is (Kent 2026-07-31: "x=y=NA is NECESSARILY a compound check").
         curvalues=[i.split('=')[-1]  #last (value), if multiple
-                    for i in sense.verificationtextvalue(profile,self.ftype)
+                    for i in sense.verificationtextvalue(profile,self.program.params.ftype())
                     if '='.join(i.split('=')[:-1])==check]
         nvals=len(set(curvalues))
         if nvals == 1:
@@ -163,10 +163,14 @@ class Categories:
                 log.error("Field addition failed! LIFT says {new}, not {old}.".format(
                                                     new=newgroup,old=group))
         if kwargs.get('updateforms'):
-            if self.ftype != self.program.params.ftype():
-                ErrorNotice(_("{ftype} differs from {pftype}; this is a problem!").format(
-                            ftype=self.ftype, pftype=self.program.params.ftype()),
-                            wait=True)
+            # THE DRIFT DETECTOR IS GONE BECAUSE THE DRIFT IS (2026-09-29).
+            # This raised "{ftype} differs from {pftype}; this is a problem!"
+            # when the task's own ftype copy disagreed with the global —
+            # a modal, mid-write, telling the user about an internal
+            # inconsistency they could do nothing about. It existed because
+            # ftype was stored twice. There is one owner now,
+            # `params.ftype()`, so there is no second value to differ from
+            # and the comparison could only ever be False.
             self.updateformtoannotations(sense,check)
         if not kwargs.get('not_sorting'): #default is sorting
             #This unverifies without updateverification=True. Coerce to a real
@@ -206,7 +210,7 @@ class Categories:
             return
         rm=self.verificationcode(check=check,group=group)
         profile=kwargs.get('profile',self.program.slices.profile())
-        item.rmverificationvalue(profile,self.ftype,rm)
+        item.rmverificationvalue(profile,self.program.params.ftype(),rm)
         self.program.status.last('sort',update=True)
         self.program.examples.clear_cache(**kwargs) #anything should still be in kwargs
         if write:

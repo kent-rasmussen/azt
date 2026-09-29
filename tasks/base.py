@@ -67,7 +67,41 @@ class TaskBase:
     # freeze the string in whatever language was live at import, the same
     # reason `tasktitle` is a bare string and translated at use.
     word_check_prefix="Working on"
+    # WHICH WORD FORM THIS TASK WORKS ON, declared rather than assigned
+    # (Kent, 2026-09-29). `Task.__init__` applies it, exactly as it applies
+    # `cvt` one line earlier — so declaring IS setting, and a task that wants
+    # something other than the citation form overrides this instead of
+    # writing `self.ftype=` in its own `__init__` where nobody can see it.
+    #   DEFAULTED HERE RATHER THAN DECLARED PER TASK, at Kent's call: "we
+    # could set works_on_ftype in tasks.Base, and override it where
+    # necessary, which fits current and expected usage." Nothing overrides it
+    # today — `WordCollectionLexeme` was the only `lx` task and it is gone —
+    # so every task opens on citation forms, which is also decision 4 of
+    # the ftype-as-a-setting item: the word check does NOT persist across opens, and
+    # Kent: "most of the time we're working in citation forms; even switching
+    # back to that on returning to the task is not weird."
+    #   What this REPLACED was a blind `if not hasattr(self,'ftype')` reset
+    # to 'lc' that fired for every task that had not set one first, which is
+    # the same effect with none of the visibility.
+    works_on_ftype='lc'
     show_buttoncolumnsline=False
+
+    # NO `ftype` ATTRIBUTE, AND NO PROPERTY STANDING IN FOR ONE. The word
+    # form has one owner, `program.params.ftype()`, and every reader asks it
+    # directly (Kent, 2026-09-29: "drop self.ftype and read params.ftype()
+    # everywhere"). It used to be a real attribute, set in six constructors
+    # and re-copied in four more, with an ErrorNotice in `categories.py` for
+    # when the two disagreed.
+    #   A PROPERTY WAS TRIED FIRST AND REJECTED, and the reason is the one
+    # that matters here: `lift.py`'s `ftype` is a DIFFERENT THING sharing the
+    # name — the LIFT node's `type` string, always a parameter, where `lc`
+    # and `lx` coincide with these codes and `pl`/`imp` do not exist at all.
+    # A task-side `self.ftype` keeps the app's setting looking like the value
+    # you hand to lift, which is exactly the resemblance that hid the
+    # `sense.ftypes` gap. Kent: "How will you manage the distinction between
+    # a task's attribute and the one we send to lift?" `params.ftype()` at
+    # the call site reads as the app's setting; `sense.ftypes[…]` reads as
+    # the node. That difference is the point, so it is spelled out.
 
     def __getattr__(self, name):
         """Delegate unknown attributes to self.ui (the TaskWindow).
@@ -264,7 +298,8 @@ class TaskBase:
         done elsewhere."""
         try:
             self.makecvtok()
-            self.ftype=self.program.params.ftype()
+            # A copy of the global into the task was refreshed here. Gone
+            # 2026-09-29: there is no copy, so there was nothing to refresh.
             self.program.slices.makepsok()
             self.program.slices.makeprofileok()
             self.program.status.makecheckok()
@@ -278,8 +313,11 @@ class Task(TaskBase):
         self.program = program
         if hasattr(self,'cvt'):
             self.program.params.cvt(self.cvt)
-        if not hasattr(self,'ftype'):
-            self.ftype=self.program.params.ftype('lc')
+        # THE DECLARED FORM, applied the same way `cvt` is. Unconditional,
+        # because `works_on_ftype` is always declared (TaskBase defaults it
+        # to 'lc') — where this used to be `if not hasattr(self,'ftype')`,
+        # which is now always False since `ftype` is a property.
+        self.program.params.ftype(self.works_on_ftype)
         # OWNER AND MODAL-ON ARE DIFFERENT RELATIONSHIPS, and this line
         # conflated them. A task window was parented to the CHOOSER'S
         # WINDOW, which meant the chooser had to have one before any task

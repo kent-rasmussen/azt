@@ -853,6 +853,54 @@ class Settings(SettingsUI):
         except AttributeError:
             _log.info(_('Looks like there is no Imperative field in the database'))
             self.imperativename=None
+    def register_second_forms(self):
+        """Point every sense's `pl`/`imp` at the fields the user named.
+
+        THE LAYER THAT KNOWS DOES THE TELLING. `lift.py` builds `lx` and
+        `lc` itself because they are LIFT's own tags; `pl` and `imp` mean
+        "whichever field this project keeps plurals in", which is a setting
+        and none of lift's business (Kent, 2026-09-29, on the alternative:
+        if lift knows nothing about why, "then there is no ftype population
+        on load"). So there is none — this runs once the names are settled
+        and lift is simply told.
+
+        ONE PASS FOR STORED AND GUESSED ALIKE. A pre-load read of the
+        project settings was considered and rejected: it is possible
+        (`secondformfield` is in the same domain as `analang`, which
+        `file_parser` already reads before loading), but it answers nothing
+        in the three cases that matter — a project with no stored name,
+        where `guess_*_secondformfield` can only run AFTER the database is
+        loaded because it walks the entries; a rename mid-session; and a
+        stored `<unset>`, which a raw domain read has no predicate to
+        refuse. Since this pass must exist for those, a second path
+        covering only the easy case would be duplication.
+
+        UNSET MEANS UNSET: gated on `secondformfieldset`, so the
+        `<unset>` placeholder never becomes a key, and re-pointing a
+        renamed field drops the old one (`Sense.set_ftype`).
+
+        Never raises: a settings change must not fail because a mapping
+        could not be refreshed."""
+        db=getattr(self.program,'db',None)
+        senses=getattr(db,'senses',None)
+        if not senses:
+            _log.info("no senses to register second forms on yet")
+            return
+        pairs=[(code, self.secondformfield.get(ps)
+                        if self.secondformfieldset(ps) else None)
+               for code, ps in (('pl',self.nominalps),('imp',self.verbalps))]
+        found={code:0 for code, name in pairs}
+        for sense in senses:
+            for code, name in pairs:
+                try:
+                    if sense.set_ftype(code,name):
+                        found[code]+=1
+                except Exception as e:
+                    _log.info("could not register %s on a sense (%r)",code,e)
+        _log.info("second forms registered: %s of %d senses (%s)",
+                  found, len(senses),
+                  {code:name for code, name in pairs})
+
     def secondformfields(self):
         if hasattr(self,'secondformfield') and self.secondformfield:
             if self.nominalps in self.secondformfield:
@@ -867,6 +915,10 @@ class Settings(SettingsUI):
             self.secondformfield={}
             self.guess_nominal_secondformfield()
             self.guess_verbal_secondformfield()
+        # OCCASION 1: the names are settled now, whether they came from the
+        # settings file or from a guess over the database. Both routes end
+        # here, which is why this is one call and not two.
+        self.register_second_forms()
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
@@ -1210,7 +1262,7 @@ class Settings(SettingsUI):
         if 'ftype' in self.attrschanged:
             # THE WORD CHECK CHANGED, so the page is looking at a different
             # set of words. The collection page's todo list is built from
-            # `self.ftype` (`getlisttodo`, lexicon.py), so it reloads — the
+            # the word form (`getlisttodo`, lexicon.py), so it reloads — the
             # gloss-language precedent two branches up, data refreshed into
             # the same widgets rather than a rebuilt page. Kent, 2026-09-17,
             # on switching to plurals mid-page: "this workflow shouldn't
@@ -1377,10 +1429,32 @@ class Settings(SettingsUI):
     def post_params_init(self):
         self.program.profiles.run()
     def get_ui_var(self, attr, value=None):
-        """Get or create a tkinter.StringVar for the given attribute."""
+        """Get or create a StringVar for the given attribute.
+
+        A SUPPLIED VALUE IS APPLIED, NOT DISCARDED — which is the fix, not
+        the design (2026-09-29). These vars are cached for the SESSION, and
+        every status label asks for one with the text it has just computed:
+
+            get_ui_var('cvt_label', self.cvtlabel())
+
+        On the second task of a session that computed text was thrown away
+        and the caller got the previous task's label back, so the settings
+        line froze at whatever wrote it first. Nothing repainted it on a
+        plain task open either, because `update_all_labels` runs on settings
+        CHANGES. Kent, 2026-09-29, having opened Sort Consonants and come
+        back: "just went to SortC and back, and it still said vowels" — on a
+        page whose cvt is unambiguously 'C'. The VALUE was right on every
+        page; the label was one task behind, session-wide, for
+        `cvt_label`, `cvcheck_label`, `ps_label`, `fields<ps>_label` and the
+        rest of the family.
+
+        Callers that pass nothing (the `trace_add` registrations) are
+        unaffected: they want the var, not a value."""
         if attr not in self.ui_vars:
             # Lazy import to avoid circular dependency and only use if UI is present
             from frontend import ui
             var = ui.StringVar(value=str(value) if value is not None else str(getattr(self, attr, "")))
             self.ui_vars[attr] = var
+        elif value is not None:
+            self.ui_vars[attr].set(str(value))
         return self.ui_vars[attr]

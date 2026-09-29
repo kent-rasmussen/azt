@@ -22,7 +22,7 @@ pywebview backend. Two things forced the question in September 2026.
 negative by construction), three XWayland deadlocks in one day, and a `ScrollingFrame` sizing
 rule that took a revert and a second attempt. Each is intermittent and several needed field
 round trips. And **the audit's zero-code escape hatch is gone**: GNOME removed its X11
-session, so "develop in an Xorg session" — the reason `wayland_freeze_audit`'s Phases 1–4
+session, so "develop in an Xorg session" — the reason the Wayland freeze audit's Phases 1–4
 were rated optional — no longer exists.
 
 **The gating unknown turned out not to gate.** WebView2 is part of Windows 11, present on
@@ -76,7 +76,7 @@ worked: a Tk host, a webview child, view model over a pipe, supervision with
 timeout-and-fall-back, the splash rendering and exiting cleanly (v1.15.22).
 It fails on cost, not on mechanism. A child that runs the app's real builder
 needs the project loaded, which was 53 s of boot when the question was asked
-(10.1 s after `rescan_instead_of_grouping.md`) — Kent: *"I dont' think I want
+(10.1 s after the rescan-instead-of-grouping item) — Kent: *"I dont' think I want
 to reparse lift each time I want to show a page."* The only variant avoiding
 that is one persistent child, which doubles the database in memory and needs
 a continuous write-ownership rule between two processes.
@@ -219,7 +219,7 @@ is the switch reference.
   keep their Tk builders and this ADR governs the rest.
 - **Tone features are a genuine veto for tone pages.** If `cv92` does not render in WebView2,
   those pages are not ported; the `Renderer` stays.
-- **`wayland_freeze_audit` Phase 2 must not be done for pages scheduled to be ported** — it
+- **The Wayland freeze audit's Phase 2 must not be done for pages scheduled to be ported** — it
   rewrites exactly the flush-then-measure code a ported page deletes.
 - **No trigger is recorded, deliberately.** Kent's rule is value versus cost in his own
   judgement, so the webview-when-to-finish item carries a **ledger** that is appended to

@@ -28,7 +28,7 @@ Pour exécuter : `python main.py` (ou `python3 main.py` , selon la version (3+)
 
 Voir [INSTALLER](INSTALL.md) pour plus d'aide sur l'installation ; voir [UTILISATION](USAGE.md) pour savoir comment utiliser cet outil.
 
-Voir [CHANGELOG](CHANGELOG.md) pour voir les fonctionnalités par version, et [ROADMAP](ROADMAP.md) pour voir ce sur quoi je travaille ensuite.
+Voir [CHANGELOG](CHANGELOG.md) pour voir les fonctionnalités par version ; la feuille de route de ce sur quoi je travaille ensuite est tenue dans mon agenda, en dehors de ce dépôt.
 
 ## bogues
 

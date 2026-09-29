@@ -301,7 +301,7 @@ class StatusWindow(ui.Window):
             # ("An empty / page was / skipped:") while others on the same window
             # wrapped near full width. Messages stack NEWEST ON TOP, so the bad
             # one was the FIRST — which picks the second of the two causes
-            # status_window_narrow_wrap.md offered: not accumulation of siblings
+            # the status-window narrow-wrap item offered: not accumulation of siblings
             # (that would make LATER messages worse), but TIMING. It is the
             # symptom _wraplength's own docstring describes: before the window
             # is mapped, a ScrollingFrame carries grid_propagate(0) and sits at

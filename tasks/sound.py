@@ -323,6 +323,13 @@ class Record(BackendRecord, Sound):
                             continue
                         else:
                             done.append(entry.guid)
+                        # pl and imp resolve now. They always appeared in
+                        # this list and always dropped out at `nodebyftype`,
+                        # because nothing had ever pointed a sense's `pl` at
+                        # the field the user named — so this page offered
+                        # recording buttons for citation forms only, and
+                        # said nothing about the other two. See
+                        # `Sense.set_ftype` (2026-09-29).
                         ftypes = ['lc', 'pl', 'imp']
                         for node in [entry.sense.nodebyftype(f) for f in ftypes
                                      if entry.sense.nodebyftype(f)]:

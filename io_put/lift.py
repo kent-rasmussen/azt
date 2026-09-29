@@ -1587,7 +1587,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
     def _log_save_cost(self,nbytes,t_indent,t_ser,t_submit,outcome,
                         t_replace=None):
         """One greppable line per save: where the time went, and how big the file
-        is. Phase 0 of desktop_save_cost_reduction.md — a one-line edit rewrites
+        is. Phase 0 of the azt-collab desktop save-cost item — a one-line edit rewrites
         the whole document, so the split between the full-tree reindent, the
         serialize+write, and the daemon submit is what decides whether per-entry
         submission (Phase 3) is worth a contract change or whether the cost is all
@@ -1612,7 +1612,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # log.info(f"{filename=} ({type(filename)=})")
         write=0
         nodes=self.nodes
-        # SAVE-COST INSTRUMENTATION (2026-07-30, desktop_save_cost_reduction.md
+        # SAVE-COST INSTRUMENTATION (2026-07-30, the azt-collab desktop save-cost item,
         # Phase 0). A one-line edit rewrites the WHOLE file — easily 16 MB — so
         # before changing anything we need the split: how much is the full-tree
         # reindent, how much the serialize+write, how much the daemon submit. These
@@ -3784,7 +3784,7 @@ class Sense(Node,FieldParent):
     def cvprofilemachinevalue(self,ftype='lc',value=None):
         """The machine-analyzed (computed) profile — the …-x-cvprofile_MT form,
         alongside (never clobbering) the plain user-confirmed form. Thin wrapper
-        over cvprofilevalue(machine=True). See docs/sort_syllables_design.md."""
+        over cvprofilevalue(machine=True). See the sort-syllables design."""
         return self.cvprofilevalue(ftype,value=value,machine=True)
     def uftonevalue(self,value=None,machine=False):
         """Underlying-form tone on the 'tone' field. machine=False → the human
@@ -3848,6 +3848,38 @@ class Sense(Node,FieldParent):
         except KeyError:
             # log.info("No {} type to pull ({})".format(ftype,self.ftypes))
             pass
+    def set_ftype(self,code,name):
+        """Point `code` at the entry field called `name`; unset it if gone.
+
+        TOLD, NEVER DERIVED. `lx` and `lc` are LIFT's own tags, so this class
+        can build those itself. `pl` and `imp` are the app's codes for
+        whichever fields a user decided hold plurals and imperatives, and
+        this module has no way to know that and no business knowing it — so
+        the caller that does supplies the mapping. `name` is the field's
+        LIFT type string ('Plural', 'Pluriel', whatever the project uses);
+        `code` is the app's shorthand for it.
+
+        WHY THIS EXISTS AT ALL: `ftypes` was `{'lx':…, 'lc':…}` plus `'ph'`
+        and nothing else, while a docstring below claimed pl and imp were
+        added at boot, on naming the field and on creating one. No code did
+        any of those, so every ftype-keyed read of a second form —
+        `textvaluebyftypelang`, `nodebyftype`, `formattedform` — returned
+        nothing, silently. Writing worked (`plvalue` takes the name), so the
+        data went in and could not be read back by code. Fixed 2026-09-29.
+
+        RE-POINTS RATHER THAN ACCUMULATES: renaming the field must not leave
+        `pl` resolving to the field the user abandoned, so a name that names
+        nothing here REMOVES the key rather than leaving the old one.
+
+        Returns True when the code now resolves to a field."""
+        if name and name in self.entry.fields:
+            self.ftypes[code]=self.entry.fields[name]
+            return True
+        # Absent is the honest answer for an entry that has no such field
+        # yet: `textvaluebyftypelang` then returns None and the collection
+        # page reads the word as not yet collected, which it is.
+        self.ftypes.pop(code,None)
+        return False
     def textvaluebyftypelang(self,ftype,lang,value=None):
         if ftype in self.ftypes:
             return self.ftypes[ftype].textvaluebylang(lang,value)
@@ -4259,12 +4291,23 @@ class Sense(Node,FieldParent):
         self.id=self.get('id')
         self.psvalue() #set if there
         self.pssubclassvalue() #set if there
-        """ftypes for pl and imp are set on three other occasions:
-        1. Boot, if found on setting (for all entries)
-        2. on setting/changing field name (for all entries)
+        """`lx` and `lc` only — LIFT's own tags, which this class can name
+        itself.
+
+        `pl` and `imp` are NOT built here and cannot be: they are the app's
+        codes for whichever fields a user decided hold plurals and
+        imperatives, and this module is not told that at load time. They
+        arrive later through `set_ftype`, from the layer that knows the
+        setting, on three occasions:
+        1. once the field names are settled — stored or guessed
+        2. on changing a field name (for all entries)
         3. on creating a new field (for that entry)
-        Otherwise, do not expect these to be there!
-        """
+
+        THIS DOCSTRING DESCRIBED THOSE THREE OCCASIONS FOR A LONG TIME AND
+        NOTHING PERFORMED THEM. Until 2026-09-29 `ftypes` was assigned here
+        and in one other place (`'ph'`), so every ftype-keyed read of a
+        second form returned nothing and the promise above was decoration.
+        Do not restore it as a promise; `set_ftype` is the mechanism."""
         self.ftypes={'lx': self.entry.lx,
                     'lc': self.entry.lc
                     }

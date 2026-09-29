@@ -509,7 +509,7 @@ class ASRtoText(object):
                               checkpoint_cb=None,checkpoint_every=100,prior=None,
                               keep_keys=None,usable_langs=None,dead_after=10,
                               plan_cb=None,unit_done_cb=None):
-        """Stage-2 MODEL-MAJOR, LANGUAGE-MAJOR sweep (asr_bulk_transcription_design.md).
+        """Stage-2 MODEL-MAJOR, LANGUAGE-MAJOR sweep (the ASR bulk-transcription design).
         Each model runs across ALL files before the next; for MMS (adapter)
         models each sister language's adapter loads ONCE then sweeps every file —
         collapsing the per-file adapter thrash of the file-major live path.

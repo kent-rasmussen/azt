@@ -279,7 +279,7 @@ def make(regex, **kwargs):
     else:
         flags=re.UNICODE
     if kwargs.get('compile'):
-        # DIAG presort_regex_compile_hang: the UI froze inside re.compile here —
+        # DIAG (the presort regex-compile hang item): the UI froze inside re.compile here —
         # COMPILATION, not matching, so it is pattern size/shape. Say how big and
         # how long, so the next occurrence names the profile instead of leaving us
         # to infer it from a faulthandler stack. Only speaks when it is actually

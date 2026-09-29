@@ -523,7 +523,7 @@ class SliceDict(dict):
         # For cvt='S' the slice is a Beg+count+End profile class, not a CV
         # profile. The 3 primitive checks (#C/C#/syls) run on the whole wordlist
         # (sentinel profile); the profile check runs within the current
-        # profile class. See docs/sort_syllables_design.md.
+        # profile class. See the sort-syllables design.
         params=self.program.params
         if params.cvt()=='S':
             sentinel=params.SYLLABLE_SLICE_SENTINEL
@@ -617,7 +617,7 @@ class SliceDict(dict):
     def senses(self,**kwargs): #ps=None,profile=None,
         # cvt='S': sentinel profile → the whole wordlist (the 3 primitive
         # checks); a profile-class profile → just the words in that Beg+count+End
-        # slice (the profile check). See sort_syllables_design.md.
+        # slice (the profile check). See the sort-syllables design.
         params=self.program.params
         if params.cvt()=='S':
             ps=kwargs.get('ps',self._ps)
@@ -762,7 +762,7 @@ class SliceDict(dict):
         self.renewsenses()
         self.program.settings.settingsobjects() #should do this more; can be redone!
 
-# Syllable PREP (Task 1) slicing — see docs/syllable_sort_redesign.md. Each group
+# Syllable PREP (Task 1) slicing — see the syllable-sort redesign. Each group
 # of the three primitive checks (#C/C#/syls) is cut into STABLE slices of at most
 # MAX_SLICE words, so each verify is one modest, image-bearing list that builds
 # like a normal segmental verify group (which works). Smaller = lighter build =
@@ -1853,7 +1853,7 @@ class StatusDict(dict):
             # the current word-form's ftype check. The three primitive checks
             # (#C/C#/syls) are owned by the dedicated Task-1 prep driver
             # (SyllablePrep.maybeverifysyllables) and never ride maybesort. See
-            # docs/syllable_sort_redesign.md.
+            # the syllable-sort redesign.
             self._checks=[self.program.params.ftype()]
         elif cvt == 'T':
             """This depends on ps and self.program.toneframes"""

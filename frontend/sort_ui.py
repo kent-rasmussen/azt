@@ -1122,7 +1122,7 @@ class SortPresenter(PresenterBase):
         is gone from here" means — the sort page destroys its sort item to advance,
         the verify page drops the row."""
         params=task.program.params
-        ftype=task.ftype
+        ftype=params.ftype()
         analang=task.program.db.analang
         av=sense.annotationvaluebyftypelang
         beg=av(ftype,analang,'#C')
@@ -1300,7 +1300,7 @@ class SortPresenter(PresenterBase):
         KEPT — the other re-annotates to it. Back cancels (no join). There's no
         lexicographic/isdigit default here (both sides are real CV profiles), so
         this is the only way the direction is chosen. See ADR 0003 /
-        cv_group_creation_merging."""
+        the CV-group creation-and-merging item."""
         w = ui.Window(runwindow, title=_("Which profile is correct?"), exit=False)
         f = w.frame
         ui.Label(f, text=_("We are joining these profiles; which is correct?"),

@@ -279,9 +279,9 @@ class Segments(Senses):
         # log.info("Looking for senses by regex {}".format(regex))
         self.output=[s for s in self.program.slices.senses(**kwargs)
                                                     # self.program.db.senses
-                        if s.ftypes[self.ftype].textvaluebylang(self.analang)
+                        if s.ftypes[self.program.params.ftype()].textvaluebylang(self.analang)
                         if regex.search(
-                        s.ftypes[self.ftype].textvaluebylang(self.analang)
+                        s.ftypes[self.program.params.ftype()].textvaluebylang(self.analang)
                                         )
                     ]
         # log.info("Found senses: {}".format(self.output))
@@ -326,7 +326,7 @@ class Segments(Senses):
         posgroups={} #position value (C1 guess) -> senses; only for positional checks
         if posrx is not None:
             for sense in unsortedids:
-                form=sense.ftypes[self.ftype].textvaluebylang(self.analang)
+                form=sense.ftypes[self.program.params.ftype()].textvaluebylang(self.analang)
                 m=posrx.search(form) if form else None
                 if m and m.groups():
                     posgroups.setdefault(m.groups()[-1],set()).add(sense)
@@ -407,7 +407,7 @@ class Segments(Senses):
         any slot verified into a still-unnamed (digit-placeholder or NA) group.
         Because it's assembled from verified segments, it can't corrupt — and it
         doesn't depend on profileofform reading the result correctly."""
-        ftype=ftype or self.ftype
+        ftype=ftype or self.program.params.ftype()
         if not sense.cvverificationdone(ftype):
             return None
         profile=sense.cvprofilevalue(ftype)
@@ -434,7 +434,7 @@ class Segments(Senses):
         return ''.join(out)
     def updateformtoannotations(self,sense,check=None,write=False):
         """This should take a sense and check, in normal usage.
-        provide self.ftype prior to this
+        set the word form (`params.ftype`) prior to this
         If we want to update forms to *all* annotations, don't give check.
         Iterate across a few or many senses.
         Iterate also across ftypes, to catch them all...
@@ -455,13 +455,13 @@ class Segments(Senses):
                                              for c in check.split('=')):
                 return True
             return value in ['NA',None] or (check and check.isdigit()) or value.isdigit()
-        form_ori=formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
+        form_ori=formvalue=sense.textvaluebyftypelang(self.program.params.ftype(),self.analang)
         if not formvalue:
             log.info(_("updateformtoannotations didn’t return a form value for "
-                    "{id}, {check}, {ftype}, {ana}").format(id=sense.id, check=check, ftype=self.ftype, ana=self.analang))
+                    "{id}, {check}, {ftype}, {ana}").format(id=sense.id, check=check, ftype=self.program.params.ftype(), ana=self.analang))
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
-        annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
+        annodict=sense.annotationvaluedictbyftypelang(self.program.params.ftype(),self.analang)
         conflict_text=_("Not updating ‘{form}’ (conflict in {anno}.").format(form=formvalue, anno=annodict)
         error_nb=_("Check the log for any further conflicts")
         error=False
@@ -475,19 +475,19 @@ class Segments(Senses):
             if built is not None:
                 if built!=form_ori:
                     key=max([int(i) for i in annodict.keys() if i.isdigit()]+[-1])+1
-                    sense.annotationvaluebyftypelang(self.ftype,self.analang,
+                    sense.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,
                                                      str(key),form_ori)
-                sense.textvaluebyftypelang(self.ftype,self.analang,built)
+                sense.textvaluebyftypelang(self.program.params.ftype(),self.analang,built)
                 log.info("DIAG-formconform RESULT %s BUILD %r→%r profile=%s "
                          "(from verified segments)", sense.id, form_ori, built,
-                         sense.cvprofilevalue(self.ftype))
+                         sense.cvprofilevalue(self.program.params.ftype()))
                 if write:
                     self.maybewrite()
                 return
         # DIAG-formconform (grep this): the confirmed cvprofile is the TARGET the
         # updated form must still read as. Log the starting picture per word so the
         # whole from>to + profile-conforming story is visible.
-        confirmed=sense.cvprofilevalue(self.ftype)
+        confirmed=sense.cvprofilevalue(self.program.params.ftype())
         ps=sense.psvalue()
         # PRIMITIVES CONSTRAIN the profile (item Model): if the word's verified
         # #C/C#/syls make the confirmed cvprofile inconsistent — e.g. 'tribe' has
@@ -496,8 +496,8 @@ class Segments(Senses):
         # never yields a syls-violating shape, so this is the authoritative target.
         target=confirmed
         av=sense.annotationvaluebyftypelang
-        beg=av(self.ftype,self.analang,'#C'); end=av(self.ftype,self.analang,'C#')
-        syls=av(self.ftype,self.analang,'syls')
+        beg=av(self.program.params.ftype(),self.analang,'#C'); end=av(self.program.params.ftype(),self.analang,'C#')
+        syls=av(self.program.params.ftype(),self.analang,'syls')
         if confirmed and confirmed!='Invalid' and beg and end and syls:
             r=self.program.params.constrain_profile(confirmed,beg,end,syls)
             if r.get('profile') and r['profile']!=confirmed:
@@ -608,10 +608,10 @@ class Segments(Senses):
                         #         _("Left unchanged — review by hand."),error_nb]))
                         #     self.updateconflictwarned=True
                         return
-            sense.textvaluebyftypelang(self.ftype,self.analang,formvalue)
+            sense.textvaluebyftypelang(self.program.params.ftype(),self.analang,formvalue)
             if form_ori != formvalue:
                 key=max([int(i) for i in annodict.keys() if i.isdigit()]+[-1])+1
-                sense.annotationvaluebyftypelang(self.ftype,self.analang,
+                sense.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,
                                                     str(key),form_ori)
                 log.info("DIAG-formconform RESULT %s COMMIT %r→%r target=%s segs=[%s] "
                          "(old form saved as anno %s)", sense.id, form_ori, formvalue,
@@ -672,7 +672,7 @@ class Segments(Senses):
         return newform, dropped, inserted
     def setitemgroup(self,item,check,group,**kwargs):
         # log.info(_("Setting segment sort group"))
-        item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
+        item.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check,group)
     def updateformsallchecks(self):
         """Generator: updates forms from annotations for every sense."""
         log.info(_("updateformsallchecks"))
@@ -816,7 +816,7 @@ class Segments(Senses):
     def getsensesincheck(self):
         return [
                 i for i in self.program.db.senses
-                if i.ftypes[self.ftype].annotationkeyinlang(self.check)
+                if i.ftypes[self.program.params.ftype()].annotationkeyinlang(self.check)
                 ]
     def getsensesingroup(self,check,group):
         ftype=self.program.params.ftype()
@@ -832,13 +832,17 @@ class Segments(Senses):
                 ]
     def getitemgroup(self,item,check):
         # ftype=self.program.params.ftype() #not helpful for Tone.getitemgroup
-        return item.annotationvaluebyftypelang(self.ftype,self.analang,check)
+        return item.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check)
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.updateconflictwarned=False
         self.dodone=True
         self.dodoneonly=False #don't give me other words
-        self.ftype=self.program.params.ftype()
+        # A COPY OF THE GLOBAL was taken here at construction, and went
+        # stale the moment anything else set it. Gone 2026-09-29: the word
+        # form has one owner, `program.params.ftype()`, and every read below
+        # asks it directly. Kent: "drop it and read params.ftype()
+        # everywhere."
         self.rxdict=self.program.profiles.rxdict
 class Consonants():
     cvt='C'
@@ -913,7 +917,7 @@ class WordCollection(Segments):
         # DIFFERENT words, and Add-and-Parse said "all done" falsely): one
         # line per build naming the basis this task's list keys on.
         log.info("DIAG-todo %s: ftype=%r dodone=%s dodoneonly=%s all=%d",
-                 type(self).__name__, self.ftype,
+                 type(self).__name__, self.program.params.ftype(),
                  getattr(self,'dodone',None), getattr(self,'dodoneonly',None),
                  len(all))
         # ABSENT MEANS FALSE, and absence is DELIBERATE. The Add-and-Parse
@@ -935,7 +939,7 @@ class WordCollection(Segments):
         if dodone and not dodoneonly: #i.e., all data
             return all
         done=[i for i in all
-                    if i.sense.textvaluebyftypelang(self.ftype,self.analang)]
+                    if i.sense.textvaluebyftypelang(self.program.params.ftype(),self.analang)]
         if dodone: #i.e., dodoneonly
             log.info("DIAG-todo %s: done-only=%d",type(self).__name__,len(done))
             return done
@@ -1005,7 +1009,7 @@ class WordCollection(Segments):
 
         THE RE-RUNNABLE HALF of `getwords`. Called on every page build, and
         again whenever the WORD CHECK changes — a different ftype is a
-        different set of words (`getlisttodo` filters on `self.ftype`), but
+        different set of words (`getlisttodo` filters on the word form), but
         the same widgets. Kent, 2026-09-17, on switching form mid-page:
         "this workflow shouldn't break us."
 
@@ -1320,21 +1324,40 @@ class WordCollection(Segments):
             log.info("Stripping typed diacritics for storage: {} > {}"
                         "".format(self.var.get(),value))
             self.var.set(value) #show what will be stored
-        log.info(_("WordCollection trying to store {value} ({type})").format(value=value,type=self.ftype))
+        log.info(_("WordCollection trying to store {value} ({type})").format(value=value,type=self.program.params.ftype()))
         try:
-            if self.ftype in ['lc','lx']:
-                self.sense.textvaluebyftypelang(self.ftype,
+            if self.program.params.ftype() in ['lc','lx']:
+                self.sense.textvaluebyftypelang(self.program.params.ftype(),
                                             self.analang,
                                             value)
-            elif self.ftype == 'pl':
-                self.entry.plvalue(
-                    self.program.settings.secondformfield[self.program.settings.nominalps],
-                    value)
-                # lift.prettyprint(self.entry.pl)
-            elif self.ftype == 'imp':
-                self.entry.fieldvalue(
-                        self.program.settings.secondformfield[self.program.settings.verbalps],
-                        value)
+            elif self.program.params.ftype() in ('pl','imp'):
+                # WRITE BY NAME, THEN REGISTER THE NODE. The write has
+                # always gone through the field NAME, because that is what
+                # LIFT knows; what never happened is pointing the sense's
+                # `pl`/`imp` at the field afterwards. So the form went in
+                # and no ftype-keyed read could ever find it again —
+                # `getlisttodo` went on calling the word uncollected and
+                # `getword` went on showing an empty box.
+                #   OCCASION 3 (`Sense.set_ftype`), and the only per-entry
+                # one: `fieldvalue` CREATES the field node when given a
+                # value and there was none, so this entry gains a field the
+                # boot-time pass could not have seen.
+                #   AND THE IMPERATIVE BRANCH WAS PASSING ITS VALUE AS A
+                # LANGUAGE. It read `entry.fieldvalue(name, value)`, but the
+                # signature is `fieldvalue(type, lang=None, value=None)` —
+                # so the form went in as `lang` and `value` stayed None,
+                # which is a read, not a write. The plural branch was right
+                # because `plvalue` supplies the lang itself. Unified here,
+                # with the lang named explicitly.
+                #   `self.analang` rather than `plvalue`'s `db.analang`:
+                # the same value, and the lc/lx branch above already uses
+                # the task's.
+                code=self.program.params.ftype()
+                ps=(self.program.settings.nominalps if code == 'pl'
+                    else self.program.settings.verbalps)
+                name=self.program.settings.secondformfield[ps]
+                self.entry.fieldvalue(name,self.analang,value)
+                self.sense.set_ftype(code,name)
             # self.entry.lc.textvaluebylang(self.analang,self.var.get())
             self.maybewrite() #only if above is successful
             # lift.prettyprint(self.entry)
@@ -1742,7 +1765,7 @@ class WordCollection(Segments):
         self.updatereturnbind()
         """I don't want this on every ImageFrame, just here"""
         self.wordframe.pic.bindchildren('<ButtonRelease-1>', self.selectimage)
-        default=self.sense.textvaluebyftypelang(self.ftype,self.analang)
+        default=self.sense.textvaluebyftypelang(self.program.params.ftype(),self.analang)
         if not default:
             default=''
         self.var.set(default)
@@ -1774,6 +1797,20 @@ class Parse(Segments):
     do_not_show_slices=True
     show_parser_ui=True
     uses_second_forms=True
+    # NO WORD-CHECK LINE: PARSE PINS THE CITATION FORM. It pairs the
+    # collected `lc` against both second forms per ps, so which form to work
+    # on is not the user's to choose here — Kent, 2026-09-17: "this is
+    # correct, and likely will remain so."
+    #   DECLARED BECAUSE THE COMBOS INHERIT IT. `WordsParse`,
+    # `WordCollectnParse` and `WordCollectnParsewRecordings` all take
+    # `WordCollection` as well, which sets this True, and `Parse` precedes
+    # it in every one of their MROs. Without this line all three drew a
+    # chooser offering a form the task would ignore — and on
+    # `WordsParse`, "Parse Already Collected Words", it read "Collecting
+    # citation forms" (Kent saw it, 2026-09-29).
+    #   The second-form FIELD line is unaffected: `makeui` draws that for
+    # `whole_word_checks` OR `uses_second_forms`, and Parse needs it.
+    whole_word_checks=False
     no_leaderboard=True
     def getgloss(self,ftype=None):
         return ', '.join([', '.join(self.parser.sense.formattedgloss(l,
@@ -2408,10 +2445,10 @@ class Parse(Segments):
             log.info("Stripping typed diacritics for storage: {} > {}"
                         "".format(self.var.get(),v))
             self.var.set(v) #show what will be stored
-        log.info(_("Parse trying to store {value} ({type})").format(value=v,type=self.ftype))
+        log.info(_("Parse trying to store {value} ({type})").format(value=v,type=self.program.params.ftype()))
         try:
             assert v
-            self.entry.fields[self.ftype].textvaluebylang(self.analang,v)
+            self.entry.fields[self.program.params.ftype()].textvaluebylang(self.analang,v)
             if not self.done():
                 self.parse_foreground(entry=self.entry)
             self.maybewrite() #only if above is successful
@@ -2477,8 +2514,15 @@ class Parse(Segments):
             #These should come from settings
         self.parser.autolevel(5) #no auto
         self.parser.asklevel(0)
-        self.ftype=self.program.params.ftype('lc') #Is this always correct?
-        # self.ftype=self.program.params.ftype('lx') #I think once we parse, we want this
+        # PARSE WORKS ON CITATION FORMS, and says so through
+        # `works_on_ftype='lc'` on the task class rather than writing the
+        # global from a mixin's `__init__` (2026-09-29). It inherits the
+        # TaskBase default, so there is nothing to declare.
+        #   The old line carried "Is this always correct?" and a commented
+        # `'lx'` alternative — "I think once we parse, we want this". Kent
+        # settled the first, 2026-09-17: "this is correct, and likely will
+        # remain so." The `lx` thought is not lost; it belongs to whatever
+        # runs AFTER a parse, not to the parse.
         # self.nodetag='citation'
         # dodone/dodoneonly are deliberately NOT set here: the Add-and-Parse
         # collection variants must present the SAME full wordlist as the plain
@@ -2585,7 +2629,7 @@ class Tone(Senses):
             # providing both ftype and frame isn't necessary, but allows check
             # that they align:
             assert check in item.examples
-            f=item.formattedform(self.analang,self.ftype,
+            f=item.formattedform(self.analang,self.program.params.ftype(),
                                 self.program.toneframes[ps][check])
             # log.info("Setting form to {}".format(f))
             item.examples[check].textvaluebylang(
@@ -2595,7 +2639,7 @@ class Tone(Senses):
             item.examples[check].tonevalue(group)
             for g in (set(self.glosslangs)& #selected
                         set(self.program.toneframes[ps][check])& #defined
-                        set(item.ftypes[self.ftype])): # form in lexicon
+                        set(item.ftypes[self.program.params.ftype()])): # form in lexicon
                 for f in item.formattedgloss(g,
                                         self.program.toneframes[ps][check])[:1]:
                     # log.info("Setting {} translation to {}".format(g,f))
@@ -2631,7 +2675,7 @@ class Tone(Senses):
         # if program is not None:
         #     self.program=program
 class Syllables(Senses):
-    """Cyclical syllable sort (see docs/sort_syllables_design.md). FOUR checks:
+    """Cyclical syllable sort (see the sort-syllables design). FOUR checks:
     three primitive sorts on the WHOLE wordlist — '#C' (word-initial C/V),
     'C#' (word-final C/V), 'syls' (syllable count) — whose outcomes compose into
     a Beg+count+End **profile class** (the 'S' slice, DERIVED from the three
@@ -2661,12 +2705,12 @@ class Syllables(Senses):
     # --- annotation channel (mirrors Segments; kept here so the 'S' routing in
     #     updatesortingstatus/getexamples stays pointed at Syllables) ---
     def getitemgroup(self,item,check):
-        return item.annotationvaluebyftypelang(self.ftype,self.analang,check)
+        return item.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check)
     def setitemgroup(self,item,check,group,**kwargs):
-        item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
+        item.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check,group)
     def getsensesingroup(self,check,group):
         return [i for i in self.program.db.senses
-                if i.annotationvaluebyftypelang(self.ftype,self.analang,check)
+                if i.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check)
                     ==str(group)] #str: see Segments variant
     # --- the three primitives: canonical impl is on params (also reached off-task
     #     by the board-render rebuild); these delegate so existing self._word_*/
@@ -2681,7 +2725,7 @@ class Syllables(Senses):
         """The 'S' slice = Beg+count+End profile class, composed on the fly from
         the three primitive annotations. Delegates to params (the single source of
         the profile-class format). Returns e.g. 'C2V', or None if not all set."""
-        return self.program.params.profile_class_of_sense(sense,ftype=self.ftype)
+        return self.program.params.profile_class_of_sense(sense,ftype=self.program.params.ftype())
     def presortgroups(self,**kwargs):
         """Seed each word's four attributes by orthography so the obvious
         bucketing is pre-done; the user then verifies each (by ear) and fixes

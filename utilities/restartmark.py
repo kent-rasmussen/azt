@@ -44,7 +44,7 @@ MARKER='restart_in_progress.json'
 def _path():
     """Marker location: the log directory. Already per-user writable, already
     where diagnostics live, and already what a diagnostics bundle would carry
-    (see log_to_server_button). `file` is imported lazily, as logsetup does, to
+    (see the log-to-server-button item). `file` is imported lazily, as logsetup does, to
     stay out of the circular import.
 
     FALLBACK, and it is the point rather than defensiveness: the venv relaunch

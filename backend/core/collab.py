@@ -1126,7 +1126,7 @@ def retry_connection(program):
     which is the whole fix for that case. A daemon that is WEDGED — up,
     holding the port, not answering — cannot accept the RPC by
     definition, so azt can only report it; recovering that one is the
-    daemon's job (agenda #1, daemon_wedges_before_serving.md)."""
+    daemon's job (the azt-collab daemon-wedges-before-serving item)."""
     wanted = getattr(program, 'collab_wanted', None) or {}
     langcode = wanted.get('langcode', '')
     if not AVAILABLE:

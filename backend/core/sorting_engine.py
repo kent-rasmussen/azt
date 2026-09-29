@@ -30,7 +30,7 @@ from backend.core.analysis import SyllableSliceDict
 
 
 class SyllablePrep(object):
-    """Task 1 (syllable PREP) driver — see docs/syllable_sort_redesign.md. Mixed
+    """Task 1 (syllable PREP) driver — see the syllable-sort redesign. Mixed
     into SortSyllables BEFORE Sort so runcheck routes the three primitive checks
     (#C/C#/syls) through a DEDICATED per-slice verify loop (maybeverifysyllables),
     NOT maybesort — prep never sorts/joins/macrosorts, only verifies one ≤MAX_SLICE
@@ -252,7 +252,7 @@ class Sort(Categories):
             # getrunwindow() has an EMPTY frame, and the Exit button lives in
             # outsideframe — so revealing it here produced a fullscreen page
             # whose only control was Quit, which is the sibling bug
-            # (fullscreen_with_only_quit). Caught by the new QuitOnlyGuard on
+            # (the fullscreen-with-only-quit (NBQ) item). Caught by the new QuitOnlyGuard on
             # its first live run, 2026-09-01, logging exactly this window: the
             # 2026-07-29 cure for "no window at all" was the cause of "nothing
             # but Quit". Both symptoms come off the same dependency, and a WAIT
@@ -816,7 +816,11 @@ class Sort(Categories):
         self.check=self.get_check()
         self.ps=self.get_ps()
         self.profile=self.get_profile()
-        self.ftype=self.get_ftype()
+        # A per-task ftype copy was refreshed here, re-reading the global on
+        # every pass to keep the task's copy from going stale. There is no
+        # copy any more (2026-09-29) — every reader asks `params.ftype()` —
+        # so there is nothing to refresh. `check`, `ps` and `profile` above
+        # are still real attributes and still need theirs.
         log.info("Maybe Sort")
         if self.checktosort(): # w/o parameters, tests current check
             if warnorcontinue(self.sort()):
@@ -1165,7 +1169,7 @@ class Sort(Categories):
     def present_sense(self,sense):
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
         frame=self.get_frame()
-        text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
+        text=sense.formatted(self.analang, self.glosslangs, self.program.params.ftype(), frame)
         return self.sort_ui.build_present_sense(
             self.ui.runwindow.frame, self.buttonframe, text, sense)
     def unverify_profile(self,sense,advance=True):
@@ -1492,7 +1496,7 @@ class Sort(Categories):
             self.buttonframe.reset_selected()
             return
         # Syllable 'Other {profile class} profile' picker resolved to a real,
-        # primitive-consistent profile P (ADR 0003 / cv_group_creation_merging).
+        # primitive-consistent profile P (ADR 0003 / the CV-group creation-and-merging item).
         # Mark the current word into P via the normal NEW-group path — NOT
         # add_int_group (which mints a meaningless integer). The picker advanced by
         # destroying the sort item, so this runs with no button selection.
@@ -1844,7 +1848,7 @@ class Sort(Categories):
             if items:
                 def _formkey(s):
                     try:
-                        return (s.formattedform(self.analang,self.ftype)
+                        return (s.formattedform(self.analang,self.program.params.ftype())
                                 or '').casefold()
                     except Exception:
                         return ''
@@ -2100,7 +2104,7 @@ class Sort(Categories):
         #This should be pulling from the example, as it is there already
         check=self.program.params.check()
         frame=self.get_frame()
-        text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
+        text=sense.formatted(self.analang, self.glosslangs, self.program.params.ftype(), frame)
         if self.program.settings.lowverticalspace:
             ipady=0
         else:

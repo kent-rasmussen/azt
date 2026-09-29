@@ -14,7 +14,7 @@ the Tk app runs through XWayland, where synchronous X round-trips
 dialog/popup, deiconify, -fullscreen toggle) can deadlock with mutter and
 freeze the app. The central UI.update/update_idletasks override checks
 USING_WAYLAND to skip those synchronous calls there (invisible on
-X11/Windows, where users run). See docs/wayland_freeze_audit.md.
+X11/Windows, where users run). See the Wayland freeze audit.
 
 The rest of this module was added 2026-09-14 to answer a question that flag
 cannot: WHICH stack each backend actually got. Kent, on my saying I did not

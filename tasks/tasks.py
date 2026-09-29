@@ -160,7 +160,7 @@ class WordCollectionwRecordings(WordCollection,Record):
         self.set_transcription_fields()
         self.set_transcription_frame(row=3,column=0,colspan=2) #instructions2
     def set_transcription_fields(self,**kwargs):
-        ftype=kwargs.pop('ftype',self.ftype)
+        ftype=kwargs.pop('ftype',self.program.params.ftype())
         self.transcription_var=ui.StringVar()
         self.transcription_ipa_var=ui.StringVar()
         self.transcription_tone_var=ui.StringVar()
@@ -175,7 +175,7 @@ class WordCollectionwRecordings(WordCollection,Record):
             else:
                 self.entry.fields[ftype]=lift.Field(self.entry,ftype=ftype)
     def set_transcription_frame(self,**kwargs):
-        ftype=kwargs.pop('ftype',self.ftype)
+        ftype=kwargs.pop('ftype',self.program.params.ftype())
         try:
             self.wordframe.recordFrame.destroy()#don't leave this around!
         except Exception:
@@ -422,12 +422,12 @@ class WordCollectionwRecordings(WordCollection,Record):
         log.info(self.program.soundsettings.asr_repo_tally())
     def store_phonetic(self,*args):
         #Need to fix this; format isn't correct
-        self.entry.fieldvalue(self.ftype,
+        self.entry.fieldvalue(self.program.params.ftype(),
                         self.program.db.phoneticlangname(machine=True),
                         value=self.transcription_ipa_var.get().split('\n')[0]
                         )
     def store_tone(self,*args):
-        self.entry.fieldvalue(self.ftype,
+        self.entry.fieldvalue(self.program.params.ftype(),
                         self.program.db.tonelangname(machine=True),
                         value=self.transcription_tone_var.get()
                         )
@@ -538,7 +538,11 @@ class WordCollectnParse(Parse,WordCollection,Task):
     tasktitle = "Add and Parse Words" # for Citation Forms
     def __init__(self, program, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
-        self.ftype=program.params.ftype('lc') #always correct?
+        # `self.ftype=program.params.ftype('lc')` was here, BEFORE super() so
+        # it would survive `Task.__init__`'s blind reset. Both are gone
+        # (2026-09-29): `works_on_ftype` on TaskBase already defaults to
+        # 'lc', and order no longer matters because there is nothing left to
+        # survive.
         # self.nodetag='citation'
         super().__init__(program=program, **kwargs)
         if self.hide_chooser():
@@ -591,7 +595,7 @@ class WordsParse(Parse,WordCollection,Task):
         pass
     def __init__(self, program, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
-        self.ftype=program.params.ftype('lc') #always correct?
+        # ftype: see `WordCollectnParse` above — the TaskBase default is 'lc'.
         # self.nodetag='citation'
         super().__init__(program=program, **kwargs)
         # A COMMENTED-OUT REFUSAL stood here — shut the task down unless both
@@ -1462,7 +1466,7 @@ class SortSyllables(backend.core.sorting_engine.SyllablePrep,
     # group/form overrides win (relabel profile groups, never rewrite the surface
     # form); Segments still supplies shared helpers. presortgroups + the
     # sort/verify/join cycle come from Syllables (lexicon.py). See
-    # docs/syllable_sort_redesign.md and docs/sort_syllables_design.md.
+    # the syllable-sort redesign and the sort-syllables design.
     taskicon = 'iconWord'
     tasktitle = "Sort Word Syllables" #Citation Form Sorting in Tone Frames
     cvt='S'
@@ -1819,7 +1823,9 @@ class Transcribe(Sound,Categories,Task):
     def __init__(self, program, **kwargs): #frame, filename=None
         super().__init__(program=program, **kwargs)
         self.makeeverythingok() #why?
-        self.ftype=self.program.params.ftype()
+        # A third copy of the global was taken here, after
+        # `Segments.__init__`'s and `makeeverythingok`'s. All three are gone
+        # (2026-09-29); readers ask `params.ftype()`.
         self.mistake=False #track when a user has made a mistake
         self.analang=self.program.params.analang()
         self.program.status.makecheckok()
@@ -2275,6 +2281,20 @@ class RecordCitation(Record,Segments,Task):
     tasktitle = "Record Words" #Citation Forms
     taskicon = 'iconWordRec'
     is_record_task=True
+    # A WORD-CHECK PAGE BY DEFINITION (Kent, 2026-09-29): you record a whole
+    # word FORM, never a segment within one. So it draws the word-check line
+    # and not the cvt one.
+    #   THE CVT LINE WAS DOING NO WORK HERE. It said "Checking Vowels,
+    # working on First Vowel" — which was one task behind as well
+    # (`status_labels_one_task_behind.md`), but even correct it described
+    # nothing this page does: `showentryformstorecordpage` reads
+    # `slices.ps()`, `slices.profile()`, `slices.count()` and
+    # `slices.senses(ps=,profile=)`, and iterates `slices.valid()`. It never
+    # reads `params.check()`. The SLICE line stays, because ps and profile
+    # are exactly what it does read.
+    do_not_show_cvt=True
+    whole_word_checks=True
+    word_check_prefix="Recording"
     def __init__(self, program, **kwargs): #frame, filename=None
         super().__init__(program=program, **kwargs)
 class RecordCitationT(Record,Tone,Task):
@@ -2346,7 +2366,10 @@ class ReportCitation(Report,Segments,Task):
         self.getresults()
     def __init__(self, program, **kwargs): #frame, filename=None
         super().__init__(program=program, **kwargs)
-        self.program.params.ftype('lc')
+        # `self.program.params.ftype('lc')` was here — a report pinning the
+        # global AFTER super(), which also meant it silently re-pinned for
+        # whatever ran next. `works_on_ftype` (TaskBase, default 'lc') says
+        # the same thing where it can be read off the class (2026-09-29).
         self.do=self.getresults
         self.program.status.group(None) #default to reports with all groups
 class ReportCitationBackground(Background,ReportCitation):

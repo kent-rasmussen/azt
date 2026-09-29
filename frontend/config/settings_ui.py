@@ -283,6 +283,11 @@ class SettingsUI(object):
         self.attrschanged.append('secondformfield')
         for entry in self.program.db.entries:
             entry.plvalue(self.pluralname) # get the right field!
+        # OCCASION 2: the name changed, so every sense's `pl` must be
+        # re-pointed — and the OLD key dropped, or senses go on resolving
+        # to the field the user just abandoned. The loop above only indexes
+        # the Field object under the entry; it does not touch `ftypes`.
+        self.register_second_forms()
         self.refreshattributechanges()
         if window:
             window.destroy()
@@ -297,6 +302,11 @@ class SettingsUI(object):
         for entry in self.program.db.entries:
             """Doesn't do anything??!?"""
             entry.fieldvalue(self.imperativename,self.program.params.analang) # get the right field!
+        # OCCASION 2, verbal half — see `setsecondformfieldN`. And this is
+        # part of the answer to the "Doesn't do anything??!?" above: the
+        # loop indexes the Field under the entry and stops there. Pointing
+        # `imp` at it is what makes the forms readable by code.
+        self.register_second_forms()
         self.refreshattributechanges()
         if window:
             window.destroy()
@@ -416,16 +426,14 @@ class SettingsUI(object):
         `lc` always exists and a collection page with no form to collect is
         worse than one collecting the wrong one.
 
-        BOTH COPIES MOVE TOGETHER. The task keeps its own `self.ftype`
-        alongside the global `params.ftype()`, and `categories.py:166` raises
-        an ErrorNotice when they disagree. Collapsing them to one owner is
-        `ftype_as_a_setting.md`; until then, whoever writes one writes both.
+        ONE PLACE TO WRITE. `params.ftype()` is the only home for the word
+        form as of 2026-09-29 — no task keeps a copy, so nothing else has to
+        be kept in step. This used to set `task.ftype` as well, because the
+        task's copy and the global drifted and `categories.py` raised an
+        ErrorNotice when they did.
         """
         choice=self.program.params.resolve_word_check(choice)
         self.program.params.ftype(choice)
-        task=getattr(self.program,'task',None)
-        if task is not None:
-            task.ftype=choice
         if self.statusisup():
             self.program.mainwindow.status.updatewordcheck()
         self.attrschanged.append('ftype')

@@ -304,7 +304,7 @@ def spawn_successor(reason=None):
     ALWAYS Popen, on every platform. `os.execl` cannot be used here by
     definition — it replaces the process image, so there would be no caller left
     to wait. That also retires the last reason Linux was on exec at all
-    (level 3 of restart_recovery_handshake), and it hands over
+    (level 3 of the restart-recovery handshake item), and it hands over
     AZT_PREDECESSOR_PIDS the way the Windows branch always has, which is what
     keeps the successor's duplicate gate from counting us.
     """
@@ -334,7 +334,7 @@ def sysrestart(event=None,reason=None):
     `spawn_successor` and `App._confirm_restart`), which is what a caller wants
     if a failure to come back would leave the user stranded.
 
-    ONE PATH FOR EVERY PLATFORM (level 3 of restart_recovery_handshake), by
+    ONE PATH FOR EVERY PLATFORM (level 3 of the restart-recovery handshake item), by
     delegating to `spawn_successor`, which is already that path. What this
     replaces:
       - `os.execl` on Linux. Unrecoverable by construction — the process image is

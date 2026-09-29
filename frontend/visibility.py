@@ -36,7 +36,7 @@ only "does the user have a window right now?" is indifferent to all of that.
 WHAT IT DELIBERATELY IS NOT: a cure for a wedged UI. It runs on `after()`, so
 it is dead whenever the main thread is blocked — `App.restart`'s
 `while self.writing: time.sleep(1)` being the known case. It reports WITHDRAWN
-windows, never WEDGED ones. That distinction is why `wayland_freeze_audit.md`
+windows, never WEDGED ones. That distinction is why the Wayland freeze audit
 exists as a separate item, and pretending otherwise would make the log lie.
 
 Everything here uses only `ui_interface` methods (`winfo_exists`,

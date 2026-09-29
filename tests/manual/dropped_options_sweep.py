@@ -43,7 +43,7 @@ Check with a grep before believing it.
 ## What it deliberately does not do
 
 It does not compare against `ui_interface.py`. That comparison is step 6(a)
-of `webview_when_to_finish.md` — the full audit of what the app CALLS
+of the webview when-to-finish item — the full audit of what the app CALLS
 against what each backend implements — and it needs the call sites, not just
 the backends. This is the cheap half, and the half that stops the class from
 coming back.
