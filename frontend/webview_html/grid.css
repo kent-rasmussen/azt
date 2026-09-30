@@ -937,6 +937,41 @@ html.wv-measuring body {
     max-height: none !important;
 }
 
+/* AND NOTHING STRETCHES TO ITS TRACK WHILE WE MEASURE.
+   The five releases above make the CONTAINERS content-sized; they do not
+   stop a grid ITEM from stretching to fill the track it sits in, which is
+   `align-self`'s default and applies in the BLOCK axis only. So a frame
+   went on reporting the window's height after everything above it had been
+   released, and the union of children — which is what the probe returns
+   when it exceeds the max-content answer — read the window back to us.
+
+   MEASURED, not reasoned: Kent's run of 2026-09-30, window 21's second fit.
+   `probe 970x742, client 1088x849`, measured 844, `tallest DIV.wv-widget
+   wv-frame[960x839 at 64,5]` — 5+839=844 in an 849 client, while that
+   frame's own children ended at 791. Fifty-three pixels of stretch, counted
+   as content.
+
+   THAT IS HALF OF A RATCHET, and the other half was `pad = max(guess,
+   learned)` keeping a 28px allowance the chrome did not need: measure the
+   window's height, add 28, resize, measure the new window's height, add 28.
+   Window 47, two double-clicks and NO rebuild: 1051 → 1079 → 1107 → 1135.
+   Either half alone is harmless; together they never converge. This is the
+   rule at the top of the sizing item — measure against something that
+   cannot change as a result of the measurement — and the block axis was
+   the one place still breaking it.
+
+   Block axis only, deliberately: `justify-self` is untouched, widths have
+   always been definite, and width already converged (+14, +7, +4 on that
+   same window) so there is nothing there to fix. One axis, one change.
+
+   IF A PAGE MEASURES SHORT because its real layout does depend on stretch,
+   the window comes out too short and `_grow_if_overflowing` corrects it
+   from the DISPLAYED page — the failure direction is the one that is
+   already verified rather than predicted. */
+html.wv-measuring .wv-widget {
+    align-self: start !important;
+}
+
 /* ── The caps, and why they are variables ───────────────────────────────
    A CAP ON WHAT A WIDGET MAY DEMAND has to answer two different questions,
    and one unit cannot do both:

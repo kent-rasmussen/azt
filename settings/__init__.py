@@ -496,6 +496,12 @@ class Settings(SettingsUI):
                     self.program.toneframes.source(d)
                 else:
                     self.maketoneframes(d)
+            elif s == 'secondformfield':
+                # NOT the generic dict-update below: a stored `<unset>` is a
+                # display placeholder that reads as a defined value to every
+                # guard testing presence, and the setter's refusal cannot
+                # reach a file written before it existed.
+                self.load_second_form_fields(v)
             elif (isinstance(v,dict) and
                 hasattr(o,s) and isinstance(getattr(o,s),dict)):
                 getattr(o,s).update(v)
@@ -804,6 +810,45 @@ class Settings(SettingsUI):
             return False
         return str(self.secondformfield[ps]).strip() not in (
                     '', self.UNSETFIELD)
+
+    def load_second_form_fields(self,stored):
+        """Apply the SETTERS' REFUSAL to what the settings file hands us.
+
+        `_refuse_unset_field` stops `<unset>` being stored from now on, but a
+        `project.json` written before it existed already holds
+        `"Verb": "<unset>"` (Kent, 2026-09-17: "is that going to get us into
+        trouble?"), and a refusal at the setter cannot reach a file. So the
+        same predicate runs on the way IN, and the entry never becomes a
+        live setting.
+
+        DROPPED, NOT BLANKED. The dict's KEYS are load-bearing —
+        `parser.pscheck` treats them as the set of legal parts of speech —
+        so a key whose value is the placeholder tells one consumer "this ps
+        is configured" while telling `secondformfieldset` "unset". That
+        split is exactly how the placeholder fooled three consumers at once.
+        Without the key, `secondformfields` falls through to
+        `guess_*_secondformfield`, which is what an unanswered field has
+        always done.
+
+        Nothing is lost by dropping it: the second-form gate
+        (`Segments.second_forms_ready`) already reads the placeholder as
+        unset, so a project carrying one was being asked for the field
+        anyway. What this stops is the placeholder reaching LIFT as a field
+        NAME — Parse indexes the dict directly, so it would have asked "what
+        is the `<unset>` of x?" and written the answer into a field called
+        `<unset>`.
+
+        The file keeps its copy until something next writes settings; the
+        live dict is what every reader uses, and `makesettingsdict` builds
+        the next write from that."""
+        if not isinstance(stored,dict):
+            return
+        clean={ps:v for ps,v in stored.items()
+               if not self._refuse_unset_field(ps,v)}
+        if not hasattr(self,'secondformfield') or not isinstance(
+                                    self.secondformfield,dict):
+            self.secondformfield={}
+        self.secondformfield.update(clean)
 
     def missing_second_form_pss(self):
         """Which parts of speech still have no second-form field, in order.
@@ -1126,7 +1171,27 @@ class Settings(SettingsUI):
     def reloadstatusdata(self):
         _log.info(_("Refreshing all status settings from LIFT"))
         self.storesettingsfile() #default, not status
-        self.program.db.load_ps_profiles(self.program.params.ftype())
+        ftype=self.program.params.ftype()
+        self.program.db.load_ps_profiles(ftype)
+        # CLEAR-THEN-REBUILD IS ONLY SAFE IF THERE IS SOMETHING TO REBUILD
+        # FROM. This became form-dependent on 2026-09-30, when the profile
+        # readers learnt to follow the chosen word form: run on a form nobody
+        # has profiled yet and the rebuild sources nothing, so the clear
+        # stands alone and the status file loses every group — for a form
+        # that was never the one the groups describe. Segmental status nodes
+        # carry no form in their key, so there is nothing here to tell them
+        # apart afterwards.
+        #   An empty picture on a form with no data is CORRECT (Kent,
+        # 2026-09-30: "near-emtpy: yes, that's what I expecte") — it is
+        # destroying the other form's record on the way past that is not. A
+        # genuinely empty project hits this too and loses nothing, since
+        # there was nothing to clear.
+        if not any(self.program.db.ps_profiles.values()):
+            _log.warning("Not refreshing status from LIFT: no word carries a "
+                    "CV profile for the %r form, so there is nothing to "
+                    "rebuild from and clearing would discard the status built "
+                    "under another form. Switch the form back first.",ftype)
+            return
         self.program.status.clear_all_groups()
         for i in itertools.chain(self.generate_status_by_annotations(end_at=50),
                                 self.generate_status_by_tone_groups(start_at=50)):

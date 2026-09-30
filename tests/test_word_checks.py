@@ -399,10 +399,16 @@ def test_changing_the_form_realigns_the_check():
     changed form invalidates the standing check and it picks the only valid
     one. It must run BEFORE the reload, or the page rebuilds against the
     old check; and it chains into `makegroupok`, so one call settles
-    ftype → check → group."""
-    import inspect
+    ftype → check → group.
+
+    ON THE COMMENT STRIPPING: the branch opens with a fifteen-line comment
+    that NAMES `reload_for_word_check` while explaining why the check has to
+    be settled first. Reading the raw source, this test found that mention
+    at offset 497 and the real `makecheckok()` call at 1702, and failed a
+    correctly-ordered branch."""
+    from sourcescan import code
     from settings import Settings
-    branch = inspect.getsource(Settings.refreshattributechanges).split(
+    branch = code(Settings.refreshattributechanges).split(
                         "'ftype' in self.attrschanged")[1]
     branch = branch.split("attrschanged.remove('ftype')")[0]
     assert 'makecheckok()' in branch

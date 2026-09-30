@@ -187,7 +187,7 @@ msgstr "(Rapport est également disponible sur {file}"
 #: /home/kentr/bin/raspy/azt/main.py:17505
 #, python-brace-format
 msgid "(Restart {name} to use this update)"
-msgstr "(Forteresse {name} pour utiliser cette mise à jour)"
+msgstr "(Redémarrer {name} pour utiliser cette mise à jour)"
 
 #: /home/kentr/bin/raspy/azt/sound_ui.py:738
 msgid "(This may require a large download)"

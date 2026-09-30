@@ -19,6 +19,230 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.46
+
+**The webview fit no longer grows by 28px every time you ask it.** Two
+independent faults that were harmless apart and a ratchet together.
+
+**The measurement, made legible first.** Plan 2 of the window-sizing item
+asked to "log every call with its trigger and make a second fit on the same
+content idempotent", and the first half had to come first: the trigger was
+logged when the fit was REQUESTED and the measurement three lines later,
+with other windows' lines in between, so on a real log nobody could say
+which trigger produced which number. Each fit now logs one line carrying the
+count, the trigger and a verdict against the previous measurement —
+`fit #3 by double-click measured 952x1107 — CHANGED from fit #2 (content
+built) 945x1079, by +7x+28`. The trigger is recorded on the window when the
+fit is asked for, and the page-load fit (which does not go through
+`_request_refit`, having nothing to coalesce) names itself rather than
+logging "unknown" — it is the one fit that runs before any resize, so it is
+the only one using the chrome GUESS.
+
+That immediately showed the fault, on Kent's run: window 47, two
+double-clicks with NO rebuild between them, 1051 → 1079 → 1107 → 1135.
+Width converged (+14, +7, +4); height grew by exactly `_FIT_PAD` every time.
+
+**Fault 1 — `pad = max(guess, learned)` (`ui_webview.py`).** The fit learns
+its real chrome from the last resize (`asked - client`) and logged *"window
+chrome measures 0x0 … using it instead of the 28px guess"* — while `max()`
+kept the guess, because the learned value is SMALLER. On client-side
+decorations it is always 0x0: the client area is exactly what we asked for.
+So the log asserted an action the code did not take, which is this port's
+recurring bug class. It now replaces the guess. The scrollbar half of the
+old allowance is given up deliberately: `_grow_if_overflowing` asks the
+DISPLAYED page whether it overflows and grows by the shortfall, so a page
+that needs one is corrected from what happened rather than from an allowance
+every other window carries.
+
+**Fault 2 — a grid item stretched to the window was measured as content
+(`grid.css`).** `html.wv-measuring` releases `#root`, `.wv-window`,
+`.wv-container`, `html` and `body` to `max-content`, but releasing a
+CONTAINER does not stop a grid ITEM stretching to fill its track —
+`align-self`'s default, and the block axis only. Window 21's second fit:
+`probe 970x742, client 1088x849`, measured 844, `tallest DIV.wv-widget
+wv-frame[960x839 at 64,5]` — 5+839=844 in an 849 client, while that frame's
+own children ended at 791. Fifty-three pixels of stretch counted as content.
+So the measurement read the window's height back to us, and adding any pad
+grew it forever. `html.wv-measuring .wv-widget { align-self: start }`.
+
+This is the rule at the top of that item — measure against something that
+cannot change as a result of the measurement — and the block axis was the
+last place breaking it. Width is untouched: it has always been definite and
+already converged.
+
+**CONFIRMED on the same page that failed** (Kent: *"pages look right"*):
+
+    fit #2 by content built  945x1079
+    fit #3 by double-click   938x1079   -7x+0
+    fit #4 by double-click   938x1079   SAME as fit #3
+
+and across four tab switches, `-27x+0`, `+196x+180`, `-118x+0`, `-32x+0` —
+height stable except where the tab really is taller, and width now SHRINKING
+toward content, which the fit advertised and could not do before. No
+`content overflows by …` anywhere in the run, so nothing measured short and
+needed rescuing — the one failure direction the `align-self` change could
+have caused.
+
+**Known and left:** the splash measures `0x0` on its first fit and `10x10`
+when re-shown after `usbcheck`; the `_FIT_MIN` floor catches both and
+declines to resize, and the same window read 1060x821 on an earlier run, so
+its first measurement is simply unstable. Noise in the log, not a sizing
+fault. Still unexplained in that item: the ~227x95 gap between
+`.wv-measuring` and the drawn page, which may or may not be a relative of
+this.
+
+# Version 1.15.45
+
+**The second-form flags audit is closed** (Kent: *"verify 5, 6 and 8, all is
+done"*). Eight plans, filed 2026-09-17 from the question "what is current
+usage, across all tasks? is the distinction warranted, and if so where?"
+
+Confirmed with this bump:
+
+- **Plan 5 — check names follow the field.** `pl`/`imp` checks are built only
+  when their field is named (no more literal "Whole None Word Syllable
+  Profile" offered as a choice), and naming or renaming a field rebuilds
+  `_checknames`, `_checkcodes_by_cvt` and `_cvchecknames` together. The CODE
+  never changes with a rename, which is what makes it safe — stored
+  verification codes key on the code.
+- **Plan 6 — the word check drives the form on the syllable sort.** Its shape
+  changed twice while building: ftype was moved out of the check slot and
+  back into it, ending where it started (`checks()` for cvt `S` is
+  `[params.ftype()]`), with `makecheckok` realigning the check when the form
+  changes and chaining into `makegroupok`. Kent settled it: *"ftype is fine
+  for this, since we're talking about whole word checks"* — and the stored
+  form is the evidence, `<annotation name="lc" value="CV"/>` with
+  `['lc=CV']` inside `<field type="C_1_V lc verification">`.
+- **Plan 8 — the stored `<unset>` is scrubbed on load.** `<unset>` is what the
+  status line SHOWS when a second-form field has no value, and the free-text
+  field committed it to `project.json` as `"Verb": "<unset>"` (Kent,
+  2026-09-17: *"is that going to get us into trouble?"*). The setter's
+  refusal could not reach a file already written, so `readsettingsdict` now
+  routes `secondformfield` through `Settings.load_second_form_fields`, which
+  applies the same predicate on the way in.
+
+  **Dropped, not blanked.** `parser.pscheck` treats the dict's KEYS as the
+  set of legal parts of speech, so an entry left behind with a blank value
+  tells it "this ps is configured" while telling `secondformfieldset`
+  "unset" — the split that fooled three consumers at once. Without the key,
+  `secondformfields` falls through to `guess_*_secondformfield`, which is
+  what an unanswered field has always done. Nothing is lost: the gate
+  already read the placeholder as unset, so such a project was being asked
+  for the field anyway. What it stops is the placeholder reaching LIFT as a
+  field NAME — Parse indexes the dict directly, so it would have asked "what
+  is the `<unset>` of x?" and written the answer into a field called
+  `<unset>`.
+
+  New: `tests/test_second_form_unset_scrub.py`.
+
+**What the audit changed overall.** `show_second_fields` on `Segments` drew
+the second-form line for eleven task families and was read by two; it is now
+`whole_word_checks` on `WordCollection` and `Syllables` alone, with
+`uses_second_forms` meaning the different thing it always should have ("this
+task dies without the field") and belonging to Parse. The `Sort.runcheck`
+gate — wired to the tasks that did not need it and absent from the ones that
+did, so it could not fire in either direction — is gone, replaced by three
+escalating cancellable asks on the Parse page. Four word-collection classes
+and their base collapsed into one task with a form chooser (Kent: *"I think
+that was the original intent, and still makes sense, for at least some
+users"*), and eight dead second-form dialogs went with them, closing the
+`lexicon_bare_after_nameerror` item on the way.
+
+**Left open, noted on the item and not in this bump:** segmental status nodes
+are keyed without a form while their membership is now form-dependent, so a
+second form that gets profiled would read the other form's progress as its
+own. See 1.15.44 for the half of that which already bit.
+
+# Version 1.15.44
+
+**The profile picture follows the chosen word form — and switching forms no
+longer destroys the status built under another one.**
+
+Two halves, the second caused by the first.
+
+**1. `load_ps_profiles` takes the form it is meant to read.** Every CV profile
+in the slice dicts comes off a `cvprofile_<ftype>` field, but three sites in
+`io_put/lift.py` had the form wired to `'lc'`: `slicebyps_profile` called
+`cvprofilevalue()` on its default, and `annotation_values_by_ps_profile`
+passed the literal `'lc'` twice. So the rebuild that a form change triggers
+rebuilt the citation picture whatever the user picked, which made
+`Sort.reload_for_word_check` a no-op BY CONSTRUCTION — the chooser moved and
+the board did not change. Kent: *"So the reload happens, but no idea what it
+did. looks like it returned the same data."*
+
+`slicebyps_profile`, `get_ps_profiles`, `load_ps_profiles` and
+`annotation_values_by_ps_profile` now take an `ftype`; `'lc'` survives only as
+the default, for LIFT load, before `params` exists. Callers that know the live
+form pass `params.ftype()`: `generate_status_by_annotations` (for both the
+annotation values and `verified_groups_by_ps_profile`), `reloadstatusdata`,
+`Sort.reload_for_word_check`, `SortSyllables.reload_for_word_check` and
+`ProfileAnalyzer.rebuild_slices`, which gained the same `ftype or
+params.ftype()` resolution every other method in that module already had.
+
+**Only `lc` has ever been profiled, so another form shows a near-empty board
+until it is profiled.** That is the intended answer, confirmed before
+building (Kent: *"near-emtpy: yes, that's what I expecte"* — and, on leaving
+the dead `verification_values_by_ps_profile` hardcoded for a later pass,
+*"truth is truth"*). Showing citation data under a Root heading is the
+alternative, and it is a lie.
+
+**2. AND THAT EXPOSED A DATA-INTEGRITY BUG, found by Kent on the first run:**
+*"the reload brought us to an empty status table, but returning to Citation
+didn't give us back our data. not sure if there was a wipe of actual data, or
+something else."*
+
+`reload_for_word_check` ends in `maybeboard()`, which calls
+`StatusDict.cull()`. Cull's membership sweep deletes a profile node when the
+profile is absent from `db.ps_profiles[ps]` — and an unprofiled form leaves
+every ps key present with an EMPTY set, so it read "no member words" for
+every profile and deleted all of them. Returning to Citation rebuilt the
+slices; the nodes were already gone.
+
+Segmental status nodes are keyed `(cvt, ps, profile, check)` — **the form is
+not in the key** — while their `profile` membership is now form-dependent.
+Two places read `ps_profiles` as ground truth and both now require POSITIVE
+evidence before destroying anything:
+
+- `cull()` skips the sweep when `ps_profiles[ps]` is empty. An empty set is no
+  information, not "no members" — the same reasoning as the `is not None`
+  test already beside it. A populated picture still culls a genuinely absent
+  profile, so the sweep keeps working.
+- `reloadstatusdata` refuses to run when no word carries a profile for the
+  live form, and logs why. It clears every group BEFORE rebuilding, so on a
+  form with nothing to rebuild from the clear would have stood alone. This
+  exposure was introduced by half 1 above, an hour earlier the same day.
+
+**No LIFT data was involved.** Nothing on that path writes LIFT —
+`scrub_sorts_to_primitives` reads the chosen form's node, finds no
+annotation, and skips every sense. Status is derived, and a project that lost
+nodes rebuilds them with *Remake Status file (All)* on the Citation form.
+
+**Confirmed by Kent** — *"I just moved to plural and back, with the table
+disappearing, then reappearing"* — which is the whole behaviour: empty under
+a form with no data, intact when you come back.
+
+**STILL OPEN, and now the real shape of it:** the hazard is no longer
+deletion but CONFLATION. Those nodes were built under Citation and the key
+records no form, so once a second form is actually profiled, its `CVC` row
+would read Citation's `CVC` node and present Citation's progress as its own —
+empty-and-honest today, wrong-and-plausible later. Noted on the second-form
+flags audit item. Related: `cull()`'s own docstring says *"Only do this when
+you're cleaning up, not about to start new work"*, yet `maybeboard()` calls it
+on every board draw; whether that call belongs there at all is the open
+question.
+
+**Tests.** `tests/test_profiles_follow_the_form.py` runs the real
+`load_ps_profiles` against a fake `self` (ask for `pl`, get the plural
+picture; ask for `lx`, get nothing) plus caller guards, and
+`tests/test_form_switch_does_not_wipe_status.py` covers all four cull cases
+and the reload's refusal. `tests/sourcescan.py` is new: ONE comment-stripper
+for the source-scanning guards, after two failed the same afternoon by
+matching the prose describing their own subject — including
+`test_changing_the_form_realigns_the_check`, which found
+`reload_for_word_check` in a comment fifteen lines above the call and so
+reported a correctly-ordered branch as wrong. CLAUDE.md states the rule;
+this is it in one place.
+
 # Version 1.15.43
 
 **The sort pages ask for a setting where the setting is, not in a window.**

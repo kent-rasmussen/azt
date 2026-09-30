@@ -26,9 +26,10 @@ forgets the argument silently gets 'lc' back.
 """
 import inspect
 import re
-from types import SimpleNamespace
 
 import pytest
+
+from sourcescan import code
 
 from io_put import lift
 
@@ -48,12 +49,19 @@ class FakeSense:
 
 
 def _fake_db(senses):
-    """A `self` for the unbound Lift slicing methods."""
-    db = SimpleNamespace(senses=senses,
-                         entries=[],
-                         pss=sorted({s.psvalue() for s in senses}),
-                         analang='xyz-x-py')
-    db.slicebyps = lambda: lift.LiftXML.slicebyps(db)
+    """A real `LiftXML` with no file behind it.
+
+    `__new__` and no `__init__`, the technique the suite already uses for
+    `SoundSettings` and the sound_ui handlers: the object has every real
+    method, and only the handful of attributes the slicing touches. A
+    `SimpleNamespace` with one method lambda'd on does NOT work — the first
+    version was that, and `load_ps_profiles` fell over on the SECOND method
+    it called."""
+    db = lift.LiftXML.__new__(lift.LiftXML)
+    db.senses = senses
+    db.entries = []
+    db.pss = sorted({s.psvalue() for s in senses})
+    db.analang = 'xyz-x-py'
     return db
 
 
@@ -63,11 +71,11 @@ def test_the_slices_are_built_for_the_form_asked_for():
               FakeSense('Noun', {'lc': 'CVC'})]  # no plural profiled
     db = _fake_db(senses)
 
-    lift.LiftXML.load_ps_profiles(db, 'lc')
+    db.load_ps_profiles('lc')
     assert db.ps_profiles['Noun'] == {'CVC'}
     assert len(db.sensesbyps_profile['Noun']['CVC']) == 2
 
-    lift.LiftXML.load_ps_profiles(db, 'pl')
+    db.load_ps_profiles('pl')
     assert db.ps_profiles['Noun'] == {'CVCV'}, \
         'the profiles must come off the form asked for, not off lc'
     assert len(db.sensesbyps_profile['Noun']['CVCV']) == 1, \
@@ -79,7 +87,7 @@ def test_an_unprofiled_form_gives_an_empty_picture_not_the_lc_one():
     ever written a `cvprofile_lx`, so Root shows nothing to sort — rather than
     silently showing citation data under a Root heading."""
     db = _fake_db([FakeSense('Verb', {'lc': 'CVCV'})])
-    lift.LiftXML.load_ps_profiles(db, 'lx')
+    db.load_ps_profiles('lx')
     assert db.ps_profiles['Verb'] == set()
     assert db.sensesbyps_profile['Verb'] == {}
 
@@ -98,11 +106,13 @@ def test_every_profile_reader_takes_a_form(name):
 def test_no_profile_reader_hardcodes_the_citation_form():
     """The literals that made the rebuild a no-op. `'lc'` as a DEFAULT is
     fine — it is what LIFT load uses, before params exist; `'lc'` passed to a
-    per-sense reader inside the body is the bug."""
+    per-sense reader inside the body is the bug.
+
+    `code()` first, then drop the def line: every one of these carries prose
+    about the citation form it stopped assuming."""
     for name in ('slicebyps_profile', 'get_ps_profiles',
                  'annotation_values_by_ps_profile'):
-        src = inspect.getsource(getattr(lift.LiftXML, name))
-        body = src.split('\n', 1)[1]  # drop the def line, where the default is
+        body = code(getattr(lift.LiftXML, name)).split('\n', 1)[1]
         assert "'lc'" not in body, \
             "{} must read the form it was given, not the citation form".format(
                                                                         name)
@@ -120,6 +130,5 @@ def test_the_rebuild_callers_name_a_form(mod, fn):
     obj = importlib.import_module(mod)
     for part in fn.split('.'):
         obj = getattr(obj, part)
-    src = inspect.getsource(obj)
-    assert re.search(r'load_ps_profiles\(\s*\w', src), \
+    assert re.search(r'load_ps_profiles\(\s*\w', code(obj)), \
         '{} must pass the live form to load_ps_profiles'.format(fn)

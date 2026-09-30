@@ -231,6 +231,13 @@ def _request_refit(window, trigger, delay=0.4):
             window._refit_timer = window.after(int(delay * 1000),
                                                lambda: run(tries + 1))
             return
+        # THE TRIGGER, KEPT, so the fit's own lines can name what asked for
+        # it. Until now the trigger was logged here and the measurement three
+        # log lines later, with any number of other windows' lines in
+        # between, so "which trigger produced which measurement" could not be
+        # read off a real log at all — and that pairing is what plan 2 of the
+        # window-sizing item needs.
+        window._refit_trigger = trigger
         log.info("window {}: fit requested by {}".format(
                     getattr(window, '_wid', 'root'), trigger))
         # BEFORE the fit, and not inside it: `fit_to_content` returns at its
@@ -5555,6 +5562,14 @@ class Toplevel(_WebviewWidget):
         # Flush deferred wv calls (title, hide/show, etc.)
         self._flush_wv_calls()
         # Widgets are in the page now, so its content has a size — fit to it.
+        # NAME IT, like every other fit. This path calls `fit_to_content`
+        # directly rather than going through `_request_refit` (there is
+        # nothing to coalesce: the page has just loaded, once), so it set no
+        # trigger and every first fit in the log read "by unknown" — on the
+        # one fit whose provenance matters most, since it is the only one
+        # that runs before any resize and therefore the only one that uses
+        # the 28px chrome GUESS rather than a measured value.
+        self._refit_trigger = 'page loaded'
         self.fit_to_content()
         # AND MAKE THE FIT REACHABLE BY HAND, from any window state. The
         # double-click was bound only by `takekioskscreen`, so it existed
@@ -5859,6 +5874,37 @@ class Toplevel(_WebviewWidget):
         # `_FIT_PAD` otherwise guesses at 28 for titlebar, borders and a
         # possible scrollbar. A GTK titlebar alone is about that. Logged so
         # the allowance can be measured instead of assumed.
+        # COUNT THE FITS, AND SAY WHETHER THIS ONE AGREES WITH THE LAST.
+        # Plan 2 of the window-sizing item: "log every call with its trigger
+        # and make a second fit on the same content idempotent." The thread
+        # is the 1028x749 → 991x728 pair — a fit that runs again on
+        # already-fitted content, measures the layout the previous fit
+        # squeezed, and keeps shrinking. Reading that off the old log meant
+        # collecting "fitted to content" lines per window by hand and
+        # subtracting; a fit that SHRANK on re-measure looked exactly like
+        # one that grew.
+        #   So the verdict is computed here, where both numbers are in hand,
+        # and it names the trigger of each fit — because "same content" is
+        # the premise of idempotence, and only the trigger says whether the
+        # content changed in between. CHANGED after a content build is
+        # expected; CHANGED after two double-clicks with no rebuild is the
+        # bug. SHRANK is the one to grep for.
+        self._fit_n = getattr(self, '_fit_n', 0) + 1
+        prev = getattr(self, '_fit_measured', None)
+        trigger = getattr(self, '_refit_trigger', 'unknown')
+        if prev is None:
+            verdict = 'first fit'
+        elif (cw, ch) == prev[:2]:
+            verdict = 'SAME as fit #{} ({})'.format(prev[2], prev[3])
+        else:
+            verdict = '{} from fit #{} ({}) {}x{}, by {:+d}x{:+d}'.format(
+                        'SHRANK' if (cw <= prev[0] and ch <= prev[1])
+                        else 'CHANGED',
+                        prev[2], prev[3], prev[0], prev[1],
+                        cw - prev[0], ch - prev[1])
+        self._fit_measured = (cw, ch, self._fit_n, trigger)
+        log.info("window {}: fit #{} by {} measured {}x{} — {}".format(
+                    self._wid, self._fit_n, trigger, cw, ch, verdict))
         log.info("window {}: fit measured {}x{} (probe {}x{}, client {}x{}, "
                  "{} image(s) still loading); widest {} | widest leaf {} | "
                  "tallest {}".format(self._wid, cw, ch, probew, probeh,
@@ -5962,8 +6008,29 @@ class Toplevel(_WebviewWidget):
             # a user-dragged window makes the difference meaningless.
             chrome_w, chrome_h = asked[0] - innerw, asked[1] - innerh
             if 0 <= chrome_w < 200 and 0 <= chrome_h < 200:
-                pad_w = max(pad_w, chrome_w)
-                pad_h = max(pad_h, chrome_h)
+                # REPLACE THE GUESS, DON'T max() AGAINST IT. This was
+                # `max(pad, chrome)`, so a learned value SMALLER than the 28px
+                # guess never took effect — and on client-side decorations the
+                # learned value is always 0x0, because the client area is
+                # exactly what we asked for. The log line below said "using it
+                # instead of the 28px guess" while the code kept the guess:
+                # an assertion in a log that the code did not carry out, which
+                # is the bug class this file keeps rediscovering.
+                #   Measured on this machine, for this window, beats one
+                # constant for three backends — which is what the comment
+                # above already argued. And 28 unearned is not free: with the
+                # measurement reading the window's own height (see the union
+                # note at the probe), adding a pad the chrome does not need
+                # grew every re-fit by exactly 28, forever. Kent's run,
+                # 2026-09-30, window 47, two double-clicks and no rebuild:
+                # 1051 → 1079 → 1107 → 1135.
+                #   The scrollbar half of the old guess is given up
+                # deliberately: `_grow_if_overflowing` asks the DISPLAYED page
+                # whether it overflows and grows by the shortfall, so a page
+                # that turns out to need a scrollbar is corrected from what
+                # happened rather than from an allowance carried by every
+                # window that does not need one.
+                pad_w, pad_h = chrome_w, chrome_h
                 if (chrome_w, chrome_h) != getattr(self, '_chrome_said', None):
                     self._chrome_said = (chrome_w, chrome_h)
                     log.info("window {}: window chrome measures {}x{} (asked "

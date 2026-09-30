@@ -1833,7 +1833,19 @@ class StatusDict(dict):
                     # profile dimension is the CV profile, tracked in db.ps_profiles);
                     # 'S' profile classes/sentinels and not-yet-computed ps are left alone.
                     members=getattr(self.program.db,'ps_profiles',None)
-                    if (t!='S' and members is not None and ps in members
+                    # AN EMPTY SET IS NO INFORMATION, NOT "no members".
+                    # `ps_profiles` is built for ONE WORD FORM, and segmental
+                    # status nodes carry no form in their key (cvt, ps,
+                    # profile, check) — so switching the slice line to a form
+                    # nobody has profiled yet leaves every ps key present with
+                    # an EMPTY set, and this sweep read that as "every profile
+                    # has no member words" and deleted all of them. Kent,
+                    # 2026-09-30, switching a segmental sort to Root and back:
+                    # "the reload brought us to an empty status table, but
+                    # returning to Citation didn't give us back our data."
+                    #   The same reasoning as the `is not None` test beside it:
+                    # cull only deletes what it can positively show is empty.
+                    if (t!='S' and members is not None and members.get(ps)
                             and profile not in members[ps]):
                         del self[t][ps][profile]
                         continue
