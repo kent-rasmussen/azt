@@ -620,16 +620,27 @@ class SliceDict(dict):
         # slice (the profile check). See the sort-syllables design.
         params=self.program.params
         if params.cvt()=='S':
-            ps=kwargs.get('ps',self._ps)
-            # 'S' works the WHOLE ps wordlist — NOT _profilesbysense/_sensesbyps,
-            # which hold only words with a CONFIRMED cvprofile (getprofileofsense
-            # adds a word only when `confirmed`). Syllable sorting's JOB is to give
-            # unprofiled words a profile, so they MUST appear here — as UNSORTED
-            # (no lc annotation → white border → presented to sort). Bucketing is
-            # by profile class (the confirmed primitives), independent of cvprofile.
-            # (This restores the documented intent; the old _sensesbyps read
-            # silently hid every unprofiled word from the board and maybesort.)
-            allps=self.program.db.sensesbyps.get(ps,[])
+            # 'S' works the WHOLE WORDLIST, and NOT
+            # _profilesbysense/_sensesbyps, which hold only words with a
+            # CONFIRMED cvprofile (getprofileofsense adds a word only when
+            # `confirmed`). Syllable sorting's JOB is to give unprofiled words
+            # a profile, so they MUST appear here — as UNSORTED (no lc
+            # annotation → white border → presented to sort). Bucketing is by
+            # profile class (the confirmed primitives), independent of
+            # cvprofile.
+            #   NO ps (2026-09-30). This read `db.sensesbyps.get(ps,[])` while
+            # its own comment said "the WHOLE ps wordlist" — so the same
+            # profile work was presented once per ps, and a word sorted under
+            # Noun stayed unsorted under Verb. Nothing here varies by ps: a
+            # cvprofile and a profile class are facts about the FORM, and two
+            # words with the same form have the same profile whatever their
+            # category. Kent, 2026-09-30: "NOTHING in SortSyllables does …
+            # we shouldn't be sorting by syllable profile for each ps."
+            #   The design already said so — `SYLLABLE_PREP_PS` is documented
+            # "ps re-enters only downstream as the (profile × ps) segmental
+            # slice", and prep honoured it while the profile sort did not.
+            # See the syllable-sort-is-not-per-ps item.
+            allps=self.program.db.senses
             profile=kwargs.get('profile',self.profile())
             if not profile or profile==params.SYLLABLE_SLICE_SENTINEL:
                 return allps
@@ -1275,6 +1286,12 @@ class StatusDict(dict):
             if idx != len(checks)-1: # i.e., not already last
                 nextcheck=checks[idx+1] #overwrite default in this one case
         self.program.params.check(nextcheck)
+        # The group belongs to the check, so advancing the check settles it.
+        # This path never reaches `setcheck` or `refreshattributechanges` —
+        # `Transcribe.nextcheck` (tasks.py) calls this directly and then
+        # rebuilds its window — so without this line it was the one route
+        # that could still carry a group across a check change (2026-09-30).
+        self.makegroupok(**kwargs)
         return nextcheck
     def nextgroup_visible(self, **kwargs):
         """Advance the current group within the VISIBLE list — NA never landed on.
@@ -1854,6 +1871,17 @@ class StatusDict(dict):
             # (#C/C#/syls) are owned by the dedicated Task-1 prep driver
             # (SyllablePrep.maybeverifysyllables) and never ride maybesort. See
             # the syllable-sort redesign.
+            #   ONE ENTRY, THE CURRENT FORM'S. Plan 6 briefly made this the
+            # list of all word checks so the check line could choose the
+            # form; that was reverted 2026-09-30 once the scope came out
+            # right. The form is chosen on the SLICE line, beside the
+            # profile class, because it is slice-scope — and the check
+            # follows it, so the direction is ftype → check.
+            #   The check CODE is the ftype, and that is not incidental:
+            # LIFT stores the verification as `<check>=<group>` with the
+            # ftype as the check — `<field type="C_1_V lc verification">`
+            # holding `['lc=CV']` (Kent, 2026-09-30, from the file). A
+            # separate stage-2 code would orphan every one of those.
             self._checks=[self.program.params.ftype()]
         elif cvt == 'T':
             """This depends on ps and self.program.toneframes"""
@@ -1892,8 +1920,10 @@ class StatusDict(dict):
                     self._checksdict[cvt][ps]=list(self.program.toneframes[ps])
         elif cvt == 'S':
             # Task 2 (shared engine) does only the profile-class profile check
-            # (ftype); the #C/C#/syls primitives are the Task-1 prep driver's.
-            # updatechecksbycvt computes this fresh; cached here for completeness.
+            # (the current form's whole-word profile check); the #C/C#/syls
+            # primitives are the Task-1 prep driver's. updatechecksbycvt
+            # computes this fresh; cached here for completeness, so the two
+            # must agree — both are back to the ftype alone (2026-09-30).
             ftype=self.program.params.ftype()
             for ps in self.program.slices.pss():
                 self._checksdict[cvt][ps]=[ftype]
@@ -2057,13 +2087,31 @@ class StatusDict(dict):
         if self.group() == j:
             self.group(k)
     def makegroupok(self,**kwargs):
+        """Make the current group one that belongs to the current slice.
+
+        The counterpart of `makecheckok`, and until 2026-09-30 it had NO
+        CALLERS — written for this and never wired up, so a group survived
+        every change of check, profile, ps and cvt. `refreshattributechanges`
+        calls it now, once, after those have settled.
+
+        AN EMPTY SLICE CLEARS THE GROUP rather than keeping the old one.
+        This used to leave `_group` alone when a slice had no groups yet,
+        which is how a stage-1 syllable answer (`C`, from `#C`/`C#`) stayed
+        on screen beside a stage-2 check whose groups are cvprofiles — Kent,
+        2026-09-30: "C is not a legal value in C3C … I assume we're mixing
+        checks and groups across the two stages?" None reads as "All
+        groups", which is what a slice with nothing sorted into it means."""
         kwargs=grouptype(**kwargs)
         groups=self.groups(**kwargs)
         if not hasattr(self,'_group'):
              self._group=None #define this attr, one way or another
-        if groups != []:
+        if groups:
             if self._group not in groups:
                 self.group(groups[0])
+        elif self._group is not None:
+            log.info("no groups in this slice; clearing the group (was %r)",
+                     self._group)
+            self.group(None)
     def makecheckok(self, **kwargs): #result None w/no checks
         check=self.program.params.check()
         checks=self.checks(**kwargs)
@@ -2072,6 +2120,13 @@ class StatusDict(dict):
                 self.program.params.check(checks[0])
             else:
                 self.program.params.check(unset=True)
+            # CHANGING THE CHECK INVALIDATES THE GROUP, so settle it here
+            # rather than leaving every caller to remember — which is the
+            # failure mode that produced the stale groups in the first
+            # place (2026-09-30). `setcvt` in particular calls this AFTER
+            # `refreshattributechanges` has already run, so nothing
+            # downstream would have caught it.
+            self.makegroupok(**kwargs)
     def toneframedefn(self):
         d=self.program.toneframes[self.program.slices.ps()][self.program.params.check()]
         return d

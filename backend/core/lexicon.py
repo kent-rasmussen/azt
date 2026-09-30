@@ -860,6 +860,11 @@ class WordCollection(Segments):
     # choice exist. Moved off `Segments` 2026-09-29, plan 1 of
     # the second-form flags audit.
     whole_word_checks=True
+    # ITS OWN CHOOSER, because this page has no check line to carry the
+    # choice: `do_not_show_slices` below means `makeui` never reaches
+    # `cvtline`. Contrast the syllable sort, whose check line IS the form
+    # chooser (plan 6).
+    offers_word_check_line=True
     # "Collecting citation forms" — the verb on the word-check line
     # (`StatusFrame.wordcheckline`). Translated at use, not here.
     word_check_prefix="Collecting"
@@ -1002,6 +1007,17 @@ class WordCollection(Segments):
         # user changing the word check, and re-opening the field editor
         # under their hands as they do it is not an ask, it is a fight.
         self.second_forms_ready()
+
+    def reload_for_word_check(self):
+        """The word check changed; show this form's words instead.
+
+        THE CAPABILITY THE LINE ASKS FOR. `StatusFrame.wordcheckline`
+        declines to draw on a task that cannot act on a change, and this is
+        what "can act" means. Two pages implement it and they do quite
+        different things — a collection page reloads a word list,
+        `SortSyllables` rebuilds slices and its board — so the name is the
+        contract and neither is the other's special case."""
+        return self.loadwords()
 
     def loadwords(self):
         """Rebuild the todo list and show its first word, into frames that

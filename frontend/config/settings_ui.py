@@ -377,7 +377,13 @@ class SettingsUI(object):
         if window:      # None when the value was set in place, not in a dialog
             window.destroy()
         self.program.restart()
-    def setgroup(self,choice,window):
+    def setgroup(self,choice,window=None):
+        # `window=None` FOR THE SAME REASON AS THE LANGUAGE SETTERS BELOW:
+        # the group is now set in place by a click-to-edit field, which
+        # calls its setter with one argument. Without the default that is a
+        # TypeError inside `on_commit`, which `ClickToEdit.commit` catches
+        # and logs — so the value would change on screen and nothing would
+        # be saved (2026-09-30).
         log.debug(_("setting group: {group}").format(group=choice))
         self.program.status.group(choice)
         if self.program.params.cvt() == 'T':
@@ -408,6 +414,12 @@ class SettingsUI(object):
             self.program.mainwindow.status.updatetoneframe()
         else:
             self.program.mainwindow.status.updatecvcheck()
+        # NO ftype WRITE HERE. Plan 6 briefly set the ftype from the check on
+        # cvt 'S'; reverted 2026-09-30. The form is slice-scope — it belongs
+        # beside the profile class, not in the check slot — so it is chosen
+        # on the slice line and the CHECK follows it, not the reverse.
+        # `makecheckok` is what realigns the check when the form changes,
+        # and `refreshattributechanges`' ftype branch is what calls it.
         self.attrschanged.append('check')
         self.refreshattributechanges()
         if window:
@@ -474,17 +486,22 @@ class SettingsUI(object):
         # per-sense codes (so verified words stay verified). Syllable prep only.
         if self.program.params.cvt()=='S':
             status.after(10,status.maybeboard)
-    def setmaxprofiles(self,choice,window):
+    # `window=None` on all three (2026-09-30): these lines are click-to-edit
+    # now, and a click-to-edit setter is called with ONE argument. Without
+    # the default that is a TypeError inside `on_commit`, which
+    # `ClickToEdit.commit` catches and logs — so the value would change on
+    # screen and nothing would be saved. Same trap as the language setters.
+    def setmaxprofiles(self,choice,window=None):
         self.maxprofiles=choice
         self.program.mainwindow.status.updatemaxprofiles()
         if window:      # None when the value was set in place, not in a dialog
             window.destroy()
-    def setmaxpss(self,choice,window):
+    def setmaxpss(self,choice,window=None):
         self.maxpss=choice
         self.program.mainwindow.status.updatemaxpss()
         if window:      # None when the value was set in place, not in a dialog
             window.destroy()
-    def setmulticheckscope(self,choice,window):
+    def setmulticheckscope(self,choice,window=None):
         self.cvtstodo=self.program.task.cvtstodo=choice
         self.program.mainwindow.status.updatemulticheckscope()
         if window:      # None when the value was set in place, not in a dialog

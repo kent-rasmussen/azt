@@ -19,6 +19,114 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.43
+
+**The sort pages ask for a setting where the setting is, not in a window.**
+(Kent: *"5 seems to be gone; don't know what happened, but mark it done"*.)
+
+The last five window-raising lines became click-to-edit values: check type,
+check, group, button columns, words per page. `setgroup` gained
+`window=None` with them — a click-to-edit setter is called with one
+argument, and without the default that is a TypeError inside `commit`,
+caught and logged, so the value would change on screen and save nothing.
+
+**One thing is resolved but not explained.** Clicking away from an open
+field left it in edit mode; it was reported, and then reported gone, and
+nothing changed in between touched `frontend/composites.py`. If it returns:
+the shape is a READONLY (pick-only) field, and the two questions that
+separate the causes are whether a SECOND click away closes it — which would
+make it the dropdown's grab swallowing the first — and whether the log
+carries `could not watch for a click away` or `could not close the open
+field`.
+
+Left as windows on purpose: `getgroup`'s CxV branch, which asks twice and is
+already tracked as dead; and the `maxes` / `multicheckscope` lines on report
+tasks.
+
+# Version 1.15.42
+
+**The settings line describes the page you are on. CONFIRMED** (Kent:
+*"which has been done"*).
+
+Every status label asks `get_ui_var` for its StringVar with the text it has
+just computed — `get_ui_var('cvt_label', self.cvtlabel())` — and the cached
+branch returned the existing var and dropped that text on the floor. The var
+is made once per SESSION, so from the second task onward the settings line
+froze at whatever wrote it first. Nothing repainted it on a plain task open
+either: `update_all_labels` runs from `refreshattributechanges`, i.e. on
+settings CHANGES.
+
+Kent proved it was the LABEL and not the value: he opened Sort Consonants
+and came back, and it still said "vowels" — on a page whose cvt is
+unambiguously `'C'`, applied by `Task.__init__` before the window exists.
+
+Second half, in `updatecvt`: it painted before it refreshed, so even an
+explicit update rendered one step stale — `cvtlabel()` reads `self.cvt`, and
+`makesliceattrs` is what re-reads it from `params`.
+
+The family this affected is every prose label — `cvt_label`,
+`cvcheck_label`, `ps_label`, `profile_label`, `fields<ps>_label` and the
+rest — so it is likely behind a class of "the settings line says the wrong
+thing" reports, not just this one.
+
+# Version 1.15.41
+
+**Syllable sorting is no longer done once per lexical category. CONFIRMED**
+(Kent: *"I'm seeing all ps in sortSyllables, and SortV is still constrained
+by ps, so let's call 1 done"*).
+
+A word's cvprofile (`CVC`) and its profile class (`C2V`) are facts about the
+FORM — two words that look the same have the same profile whatever their
+part of speech — so establishing one is wordlist-wide work. The code sliced
+and keyed it by ps anyway, so the same profile was presented and tracked once
+per category: a word sorted under Noun stayed unsorted under Verb, and the
+board said "Progress for Noun" over it.
+
+The design already said otherwise. `SYLLABLE_PREP_PS = '*'` is documented "ps
+re-enters only downstream as the (profile × ps) segmental slice", and the
+prep stage honoured it while the profile sort did not. Kent, on being shown
+the filter: *"NOTHING in SortSyllables does [vary by ps] … we shouldn't be
+sorting by syllable profile for each ps."*
+
+- `SliceDict.senses` for cvt `S` reads the whole wordlist, not
+  `sensesbyps.get(ps)` — its own comment already claimed "'S' works the WHOLE
+  ps wordlist".
+- `rebuild_syllable_profile_done` buckets by profile class alone and writes
+  one node under `SYLLABLE_PREP_PS`.
+- `syllable_slices`, `unused_profiles_for_class`, the board's cells and its
+  "has work" test all read that key, so the builder now agrees with
+  `syllable_prep_complete`, which was already reading the sentinel and
+  ignoring the ps it was handed.
+- The board title is "Syllable profile progress"; the slice line shows the
+  profile class with no category beside it.
+
+**No migration was needed, and that was checked before anything was planned:**
+`rebuild_syllable_profile_done` recomputes the `S` node entirely from LIFT —
+the `lc` annotation for membership, `cvprofilevalue` for verification — so
+the status node is a cache of that, not the record of it. Re-keying it loses
+nothing.
+
+One behaviour change rides along: the old rebuild skipped any sense with no
+ps (33 of them in the demo file), so those words were invisible on every
+board. They now count.
+
+**Also in this version, NOT yet verified** — all of it built the same day and
+none of it seen working except where noted:
+
+- Word checks: one collection task with a form chooser, replacing four
+  unreachable per-form classes; `sense.ftypes` now carries the named
+  second-form fields, so `pl`/`imp` are readable for the first time.
+- ftype has one owner (`params.ftype()`); no task keeps a copy.
+- Status labels no longer freeze one task behind (`get_ui_var` was
+  discarding the value it was handed on every call after the first).
+  **Since CONFIRMED — see 1.15.42 above.**
+- Five settings lines converted from windows to click-to-edit: check type,
+  check, group, button columns, words per page. **Clicking away still leaves
+  them in edit mode** — unresolved.
+- `python main.py --help` exists, listing the switches from
+  `utilities/switches.py`. It is a list, not a parser: an unknown switch is
+  still ignored rather than refused.
+
 # Version 1.15.40
 
 **Restarting into a different database no longer leaves a dead "Please Wait"

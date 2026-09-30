@@ -11,6 +11,14 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent  # azt/
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# …and tests/ itself, so the source-scanning tests can share `sourcescan`
+# rather than each carrying its own copy of the comment-stripper. pytest's
+# default import mode already prepends this directory, but only as a side
+# effect of there being no __init__.py here; say it outright instead.
+HERE = pathlib.Path(__file__).resolve().parent  # azt/tests/
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
 
 # ── UTF-8 for source reads, everywhere ─────────────────────────────────────
 # THE SUITE DOES NOT RUN ON WINDOWS WITHOUT THIS. Around thirty tests read the

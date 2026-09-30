@@ -652,42 +652,55 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                             }
     def get_senses_by_word_list_n(self):
         self.sensesbyword_list_n={s.word_list_n:s for s in self.senses}
-    def slicebyps_profile(self):
+    def slicebyps_profile(self,ftype='lc'):
         # Only REAL profiles: skip empty/Invalid. A word with no confirmed/affirmed
         # CV profile has no profile DATA yet, so it isn't sliced (and the segment
         # status board won't list an empty/no-data profile).
         self.sensesbyps_profile={ps:{profile:[i for i in self.sensesbyps[ps]
-                                            if i.cvprofilevalue() == profile]
-                                    for profile in {i.cvprofilevalue()
+                                            if i.cvprofilevalue(ftype) == profile]
+                                    for profile in {i.cvprofilevalue(ftype)
                                                     for i in self.sensesbyps[ps]}
                                     if profile and profile!='Invalid'
                                     }
                                 for ps in self.sensesbyps
                                 }
         # log.info(f"{self.sensesbyps_profile=}")
-    def get_ps_profiles(self):
+    def get_ps_profiles(self,ftype='lc'):
         """The set of REAL profiles per ps (empty/Invalid excluded — no data)."""
-        self.ps_profiles={k:{p for p in (i.cvprofilevalue() for i in v if i)
+        self.ps_profiles={k:{p for p in (i.cvprofilevalue(ftype) for i in v if i)
                             if p and p!='Invalid'}
                             for k,v in self.sensesbyps.items()
                             }
         # log.info(f"{self.ps_profiles=}")
-    def load_ps_profiles(self):
+    def load_ps_profiles(self,ftype='lc'):
+        """Rebuild the ps/profile slices FOR ONE WORD FORM. Every profile here
+        is read off the `cvprofile_<ftype>` field, so the whole picture — which
+        words have a profile, which profiles exist, what the boards count — is
+        relative to `ftype` and has to be rebuilt when the user picks another
+        form. It defaulted to 'lc' internally until 2026-09-30, which made
+        `Sort.reload_for_word_check` a no-op by construction: the form chooser
+        moved and the board never changed. Callers that know the live form pass
+        `params.ftype()`; the default is for LIFT load, before params exist.
+
+        Only 'lc' has ever been profiled in any project, so another form gives a
+        near-empty picture until it is profiled. That is the honest answer and
+        the intended one — better than showing citation data under a Root
+        heading."""
         self.slicebyps()
-        self.slicebyps_profile()
-        self.get_ps_profiles()
-    def annotation_values_by_ps_profile(self):
+        self.slicebyps_profile(ftype)
+        self.get_ps_profiles(ftype)
+    def annotation_values_by_ps_profile(self,ftype='lc'):
         # sort out cvt (e.g., V1 is 'V') later
         return {ps:{profile:{check:{v
                             for sense in self.sensesbyps_profile[ps][profile]
                             for c,v in sense.annotationvaluedictbyftypelang(
-                                            'lc',self.analang).items()
+                                            ftype,self.analang).items()
                             if v
                             if c==check
                                     }
                             for sense in self.sensesbyps_profile[ps][profile]
                             for check in sense.annotationkeysbyftypelang(
-                                                    'lc',self.analang)
+                                                    ftype,self.analang)
                             }
                     for profile in self.ps_profiles[ps]
                     if profile
@@ -747,6 +760,13 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 }
     def verification_values_by_ps_profile(self):
         # sort out cvt (e.g., V1 is 'V') later
+        # STILL HARDCODED TO 'lc', deliberately (2026-09-30). Its siblings above
+        # now take an ftype, because a per-form read under the wrong form is a
+        # silent wrong answer; this one has NO CALLERS, so it can't give one.
+        # Kept rather than deleted because more of this file has to learn about
+        # forms as analysis moves past lc, and this is one of the places that
+        # will need it. Clean it up — convert or delete — with that pass, not
+        # piecemeal now.
         return {ps:{profile:{check:{v for k,v
                                     in {i for j in [
                                     sense.getcvverificationkeys('lc')[1].items()

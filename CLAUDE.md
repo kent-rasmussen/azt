@@ -8,138 +8,17 @@ A-Z+T is a desktop GUI for linguistic fieldwork — sorting, transcribing, recor
 
 ## Running
 
-```bash
-# Activate the venv (Python 3.13, built from source at ~/IT/Python-3.13.7).
-# It is the SUITE venv one level up, not azt/env — there is no azt/env.
-source ../env/bin/activate
-
-# Run the app
-python main.py
-
-# Force a UI backend (default tkinter). --webview needs pywebview AND a host
-# toolkit visible to this venv; it refuses and falls back with a reason if not.
-python main.py --webview
-python main.py --tkinter
-python main.py --webview --engine=gtk    # or --engine=qt (Linux engine choice)
-
-# Run the dev checkout AS A USER WOULD: no dev settings, so error screens and
-# log zipping are on, no test lift or auto-opened task, and (under webview) no
-# devtools panel and no debug window badge. Dev settings are otherwise chosen
-# by the checkout's location (parent dir 'AZT'), with no other way to opt out.
-python main.py --user
-
-# Other webview switches (SWITCHES, not env vars — standing rule 2026-09-08):
-python main.py --webview --no-splash        # skip the splash (it can be in the way)
-python main.py --webview --no-kiosk        # DON'T make task windows fullscreen. Kiosk is
-                                           # the intended default (task windows fill the
-                                           # screen so users aren't distracted); this is
-                                           # for debugging layout.
-python main.py --webview --webview-hidden  # re-test creating windows hidden. STILL BROKEN
-                                           # on WebKitGTK, re-confirmed 2026-09-16 on
-                                           # this pywebview: the windows are created
-                                           # hidden as asked, every show() is requested,
-                                           # and NOTHING appears (Kent: "Nope."). Don't
-                                           # re-test without a pywebview upgrade to
-                                           # justify it — and note the log cannot answer
-                                           # this, since our `_wv_visible` records what
-                                           # we asked for, not what the compositor
-                                           # mapped. It takes eyes.
-
-# The devtools console: OFF unless asked for. Nothing else turns it on — not
-# dev settings, not the engine. Known to segfault on Qt (show_inspector GCs
-# inside resizeEvent); honoured there anyway, with a warning, since you asked.
-python main.py --webview --console
-
-# Force a toolkit's TRANSPORT, to separate "which toolkit" from "which display
-# server". Both webview engines default to native Wayland on a Wayland
-# session; these put them on XWayland, where tkinter always is. That is how
-# XWayland was ruled out as the cause of tkinter's slow pages (2026-09-14) —
-# both engines stayed ~0s on it. Every run logs which stack it actually got
-# ("display stack (...)"), so a switch that was ignored is visible.
-python main.py --webview --engine=gtk --gdk-backend=x11   # or =wayland
-python main.py --webview --engine=qt --qt-platform=xcb    # or =wayland
-
-# WebKitGTK's accelerated buffer handoff is OFF by default: a stride mismatch
-# in it draws the window in diagonal black bands (page fine, compositor
-# reading the buffer with the wrong pitch). It is intermittent, so a switch to
-# turn it off would be useless — by the time you saw it you would already be
-# restarting. --dmabuf turns it back ON, which is the only way to test it, and
-# the thing to re-measure once drag animation exists (the cost is per-frame,
-# and nothing yet draws frames continuously).
-python main.py --webview --dmabuf
-
-# WINDOW-SIZING DIAGNOSTICS (the webview window-sizing item). On Wayland a
-# task window loses the size the fit gave it when focus moves elsewhere; the
-# app no longer argues with that (the page scrolls), so these exist to
-# measure it, not to change it.
-python main.py --webview --keep-window-size   # put the size back, as it used to
-python main.py --webview --window-size=640x480  # create windows at some other
-                                              # size, to separate "reverts to
-                                              # what it was created at" from
-                                              # "clamps to a number of its own"
-# Report EVERY resize sample (the normal report is debounced, so it shows
-# where the window settled and nothing of how it got there), each with the
-# native window's FRAME and CLIENT boxes and the gap between them. That pair
-# is the point: the page can see only the client area, so a client box that
-# shrinks is equally consistent with the frame shrinking and with the
-# decorations growing into a frame that stayed put — and those have opposite
-# fixes. One line per frame of a drag, so it is a switch.
-python main.py --webview --log-resizes
-# That trace found it, 2026-09-16: a fitted window's frame fell to EXACTLY
-# the size the fit had asked for as its CLIENT area, leaving the page one
-# decoration (52x89 here) short. `resize()` is in client units; the default
-# size and the MIN_SIZE hint that make a size survive a configure are in
-# FRAME units, and were being given the client figure. Both pins now add the
-# inset, read from the toolkit per window (`_inset_of`). This switch pins in
-# client units again, to measure against.
-python main.py --webview --no-frame-inset
-
-# Report the ANCESTOR CHAIN of every scroller on a page: authored height,
-# max-height, grid-template-rows, align-content, client/scroll heights. A
-# scroller bounds itself only when every ancestor up to the viewport has a
-# definite height — a percentage of `auto` is not a constraint, and an `fr`
-# track with no free space is just `auto` — so the double scroll says the
-# chain broke without saying where. Read `client` from the top down: where it
-# stops matching the viewport, the height stopped propagating.
-python main.py --webview --log-heights
-
-# A fullscreen page shows its OWN "Please Wait" instead of raising the shared
-# wait dialog over itself: one surface that says what is happening and then
-# becomes the page. `--no-page-wait` restores the separate dialog, for
-# comparison. A cancellable wait always keeps the dialog — that is where the
-# Cancel button is.
-python main.py --webview --no-page-wait
-
-# Install dependencies (CPU-only torch)
-pip install -r requirements.txt
-```
+The user will manage running the program; switches are documented in --help.
 
 ## Testing
 
 A pytest suite lives in `tests/` (started 2026-06-06; see `tests/README.md`).
 
-```bash
-pip install -r requirements-dev.txt   # one-time: installs pytest
-pytest                                 # headless; no Tk display needed
-pytest -m "not integration"            # skip stubs awaiting fixtures
-```
+You write tests, the user runs them. If you want a test run, ask politely. You can find the most recent results 
+in pytest_results.txt in the repository root. That file has a timestamp on the top from when it ran, which can 
+be correlated with those found in logs.
 
-**Use A-Z+T's own python, and install the dev requirements first.** Both are
-easy to miss and fail in confusing ways: the app's packages live in its venv,
-so a bare `python` reports numpy/sounddevice missing on a machine where the
-app runs fine (seen on Windows and macOS, 2026-09-10), and `pytest` is in
-`requirements-dev.txt` — which the app's auto-install does NOT sync, since it
-reads `requirements.txt` only. So on a fresh install:
-
-```bash
-# Linux / macOS
-../env/bin/python -m pip install -r requirements-dev.txt
-../env/bin/python -m pytest -q
-
-# Windows (Git Bash / MINGW64)
-../env/Scripts/python.exe -m pip install -r requirements-dev.txt
-../env/Scripts/python.exe -m pytest -q
-```
+Careful, when writing tests, to not write scans that can't tell code from the prose describing it.
 
 The suite is headless by design — no display, no audio device, no files — so
 it runs on any of the three platforms. Tests that need something absent skip
@@ -157,11 +36,14 @@ root. `test.py` (at the project root) is a scratch file, **not** part of the sui
 
 ### UI Backend Abstraction
 
-Consumer code imports `from frontend import ui`, which resolves to either `ui_tkinter` or `ui_webview` based on the `AZT_UI_BACKEND` env var (see `frontend/__init__.py`). Key pieces:
+Consumer code imports `from frontend import ui`, which resolves to either `ui_tkinter` or `ui_webview` based on 
+the `AZT_UI_BACKEND` env var (see `frontend/__init__.py`). Key pieces:
 
-- **`frontend/ui_interface.py`** — Abstract interface (ABC) defining the contract both backends must fulfill: constants (`END`, `INSERT`, `N`, `S`, etc.), Variable classes, and widget APIs.
+- **`frontend/ui_interface.py`** — Abstract interface (ABC) defining the contract both backends must fulfill: 
+  constants (`END`, `INSERT`, `N`, `S`, etc.), Variable classes, and widget APIs.
 - **`frontend/ui_tkinter.py`** — tkinter backend implementation.
-- **`frontend/ui_webview.py`** — pywebview backend (Phase 2–3 complete: Root, Window, Frame, Label, Button, Theme, Image, Renderer; remaining widgets are stubs).
+- **`frontend/ui_webview.py`** — pywebview backend (Phase 2–3 complete: Root, Window, Frame, Label, Button, Theme, Image, Renderer; 
+  remaining widgets are stubs).
 - **`frontend/ui_variables.py`** — Standalone `Variable`/`StringVar`/`IntVar`/`BooleanVar` classes (tkinter-free) for the webview backend.
 
 ### Task System (frontend/backend split)
@@ -349,29 +231,6 @@ switch paths are checkouts, and neither asks for a common ancestor:
   is `checkout -f -B <b> origin/<b>`, which CREATES OR RESETS the branch to
   the start point. A reset needs no ancestry at all.
 
-And note the asymmetry that makes this section necessary: the procedure above
-fetches with `--depth 1`, while `fetch_tracking_branch()` fetches
-`<b>:refs/remotes/origin/<b>` with **no depth cap**. So it is the DOCUMENTED
-HAND PROCEDURE that manufactures the island, not the app. Keep that in mind
-before blaming the clone for something a shell session did.
-
-Two ways out:
-
-```bash
-git checkout <the branch you meant>   # then pull THAT branch: no crossing
-git fetch --deepen 50                 # or: make them genuinely related
-```
-
-`--deepen` extends the existing boundary; repeat with a larger number until
-the ancestor appears. **Not `--unshallow`**, which fetches the entire history
-and throws away what the shallow clone was for (~50 MB becomes ~2 GB).
-
-**`--ff-only` does not cause this and does not prevent it.** It is a merge
-POLICY, not a fetch size, and it changes only which refusal you get: with it,
-`Not possible to fast-forward`; without it, the unrelated-histories message
-above. Neither pulls extra history. Worth knowing because the app runs both
-policies in one update — `sister_repos.update()` passes `--ff-only`,
-`vcs.py::pull()` does not.
 
 ## Build Notes
 

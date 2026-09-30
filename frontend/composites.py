@@ -325,7 +325,13 @@ class ClickToEdit:
         # edits, and quoting it would put the quotes in the box being typed
         # into. Their own labels either side of the value's cell keep them
         # on screen, and out of the way, while the field is open.
-        if delimit:
+        # EACH SIDE ONLY IF THERE IS ONE. `delimit=('', ',')` — the cvt
+        # line, which needs a comma tight after the value and nothing
+        # before it — still built an EMPTY label and gave it a grid column,
+        # and an empty cell is not a zero-width one (Kent, 2026-09-30:
+        # "I'm still seeing extra space around the cvt label"). Quotes pass
+        # both sides and are unaffected.
+        if delimit and delimit[0]:
             ui.Label(parent, text=delimit[0], font=font, row=row,
                      column=col, sticky='e', **tight)
             col += 1
@@ -361,7 +367,7 @@ class ClickToEdit:
         self.box = ui.Frame(parent, row=row, column=col, sticky='w',
                             **tight, **gridkwargs)
         col += 1
-        if delimit:
+        if delimit and delimit[1]:
             ui.Label(parent, text=delimit[1], font=font, row=row,
                      column=col, sticky='w', **tight)
             col += 1

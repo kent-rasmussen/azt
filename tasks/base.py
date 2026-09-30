@@ -84,6 +84,13 @@ class TaskBase:
     # to 'lc' that fired for every task that had not set one first, which is
     # the same effect with none of the visibility.
     works_on_ftype='lc'
+    # AND DOES IT NEED ITS OWN CHOOSER FOR THAT FORM? A separate question
+    # from `whole_word_checks`, and all three word-check pages answer it
+    # differently (see `StatusFrame.wordcheckline`): word collection has no
+    # check line, so this is its only way to pick one; the syllable sort's
+    # CHECK line is the chooser as of plan 6; the record page offers a
+    # button per form and needs no mode. Only the first sets this.
+    offers_word_check_line=False
     show_buttoncolumnsline=False
 
     # NO `ftype` ATTRIBUTE, AND NO PROPERTY STANDING IN FOR ONE. The word
@@ -303,6 +310,16 @@ class TaskBase:
             self.program.slices.makepsok()
             self.program.slices.makeprofileok()
             self.program.status.makecheckok()
+            # AND THE GROUP, LAST, because it depends on all four above.
+            # This validated cvt, ps, profile and check and left the group
+            # alone, so opening a task kept whatever group the previous one
+            # had been on — Kent, 2026-09-30, opening Sort Vowels straight
+            # from the syllable sort: "I just saw group=CVCCCV on SortV".
+            # A cvprofile is not a vowel.
+            #   `refreshattributechanges` got the same call on the same day,
+            # but that runs on settings CHANGES; a task OPEN comes through
+            # here, which is why fixing one did not fix the other.
+            self.program.status.makegroupok()
         except AttributeError as e:
             log.info(_("Maybe status/slices aren’t set up yet."))
 

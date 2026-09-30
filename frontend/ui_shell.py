@@ -1059,20 +1059,28 @@ class StatusFrame(ui.Frame):
         heard of is not — there are exactly four, and two of them exist only
         when their field is named.
 
-        DECLINES WHERE THE CHANGE CANNOT BE HONOURED. `whole_word_checks` is
-        also True on `Syllables`, and the syllable sort genuinely wants this
-        line — but changing its form means rebuilding its `(ps, ftype)`
-        slices and its board, not reloading a word list, and that is plan 6,
-        still blocked on the ftype-as-a-setting item. Drawing a control there now
-        would change the ftype and leave the board showing the old form's
-        data, silently. So the line asks whether the task can act on it, and
-        says in the log when it cannot.
+        ONLY WHERE NOTHING ELSE ALREADY CHOOSES THE FORM — which is why
+        `whole_word_checks` is not the test. All three word-check pages
+        carry that flag and only one wants this line:
+
+        * **word collection** — no cvt line at all (`do_not_show_slices`),
+          so this is the only place to pick a form. Draws it.
+        * **the syllable sort** — its CHECK LINE is the form chooser as of
+          plan 6: `checks()` for cvt 'S' lists the word checks and
+          `setcheck` sets the ftype from the one picked. A second control
+          for the same setting would be two ways to say one thing.
+        * **the record page** — shows a record button per form it finds, so
+          there is nothing to choose first. Kent, 2026-09-29: "IF we're
+          presenting to record ALL word forms in an entry, then there is no
+          real point to displaying or offering a choice."
+
+        The flag says which. Acting on a change is a separate contract,
+        `reload_for_word_check`.
         """
-        if not hasattr(self.program.task,'loadwords'):
-            log.info("not drawing the word-check line for %s: it declares "
-                     "whole_word_checks but has no loadwords, so changing "
-                     "the form would leave the page showing the old one "
-                     "(plan 6)", type(self.program.task).__name__)
+        if not getattr(self.program.task,'offers_word_check_line',False):
+            log.info("no word-check line for %s: a word-check page, but not "
+                     "one that needs its own chooser",
+                     type(self.program.task).__name__)
             return
         self.newrow()
         self.prosefield('wordcheck',
@@ -1083,7 +1091,12 @@ class StatusFrame(ui.Frame):
                         self.wordcheckoptions,
                         self.program.settings.setwordcheck,
                         _("change which form of the word you are working on"),
-                        value_fn=self.wordcheckvalue)
+                        value_fn=self.wordcheckvalue,
+                        # The noun: `word_checks` names are adjectival now,
+                        # so this line reads "Collecting Citation forms"
+                        # and the slice line reads "Looking at Citation C1C
+                        # words" off the same list.
+                        suffix=_("forms"))
 
     def fieldsline(self):
         # log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
@@ -1257,9 +1270,22 @@ class StatusFrame(ui.Frame):
         the line was one clickable label. A click-to-edit field needs the
         VALUE by itself, with "Looking at" as its own prefix."""
         if self.program.params.cvt()=='S':
-            # 'S' sorts the whole ps across profiles; there is no single
-            # profile to show or to choose. See `profilelabel`.
-            return ''
+            # THE PROFILE CLASS, which is what 'S' slices by — `C2V`, not a
+            # cvprofile. This returned '' with the note "'S' sorts the whole
+            # ps across profiles; there is no single profile to show", which
+            # was wrong twice: the slice IS a single profile class once the
+            # three primitives compose one (`status.node(cvt='S', …,
+            # profile=profile_class, …)` has always keyed on it), and there
+            # is no ps in it at all.
+            #   Before that, during prep, there genuinely is no class yet —
+            # `SYLLABLE_SLICE_SENTINEL` stands in — and the honest word for
+            # the slice then is every word in the file. Every word, not
+            # every word of one category: see the
+            # syllable-sort-is-not-per-ps item.
+            profile=self.program.slices.profile()
+            if not profile or profile==self.program.params.SYLLABLE_SLICE_SENTINEL:
+                return _("all words")
+            return str(profile)
         return self.program.slices.profile() or _("<no syllable profile>")
 
     def profileoptions(self):
@@ -1330,21 +1356,67 @@ class StatusFrame(ui.Frame):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
+        # NO ps ON THE SYLLABLE SORT. A cvprofile and its profile class are
+        # facts about the FORM, so nothing on that page varies by category —
+        # Kent, 2026-09-30: "NOTHING in SortSyllables does", and "we
+        # shouldn't be sorting by syllable profile for each ps". The slice
+        # there is the profile class alone ("Looking at C2V words"), or
+        # every word in the file while the three primitives are still being
+        # established. See the syllable-sort-is-not-per-ps item.
+        #   `profilevalue` carries that: the profile class, or "all words"
+        # for the prep sentinel. It used to return '' here, which drew a
+        # prefix with nothing after it and a chooser offering profiles that
+        # did not apply (Kent: "'looking at {ps} words' has the editor for
+        # primitives when clicking on 'looking', but no label?") — and it
+        # LEAKED onto Record Words, which draws this line with whatever cvt
+        # it inherited.
+        syllables=self.program.params.cvt()=='S'
+        # THE FORM COMES FIRST, because it is the widest scope on the line.
+        # Kent, 2026-09-30: "looking at {ps} words is the higher scope (than
+        # checking {cvt}, working on {check}) and {ftype} is higher than ps,
+        # or at least on the same level … I think putting ftype before ps
+        # might be generalizable." So the line reads outside-in: which form,
+        # then which slice of it, then which category.
+        #   Only where the task can act on a change — `reload_for_word_check`
+        # is that contract. The record page has a slice line and no reload,
+        # and needs no chooser anyway (a button per form).
+        if hasattr(self.program.task,'reload_for_word_check'):
+            self.prosefield('sliceftype',
+                            _("Looking at"),
+                            self.program.settings.get_ui_var(
+                                'sliceftype_label', self.wordcheckvalue()),
+                            self.wordcheckoptions,
+                            self.program.settings.setwordcheck,
+                            _("change which form of the word you are "
+                              "working on"),
+                            parent=line,
+                            value_fn=self.wordcheckvalue)
         profile_var=self.program.settings.get_ui_var('profile_label',
                                                      self.profilevalue())
         self.prosefield('profile',
-                        _("Looking at"),
+                        # "Looking at" belongs to the form when there is
+                        # one; this field then just continues the sentence.
+                        None if hasattr(self.program.task,
+                                        'reload_for_word_check')
+                        else _("Looking at"),
                         profile_var,
                         self.profileoptions,
                         self.program.settings.setprofile,
-                        _("change this syllable profile"),
+                        _("change this syllable profile class") if syllables
+                        else _("change this syllable profile"),
                         parent=line,
-                        value_fn=self.profilevalue)
+                        value_fn=self.profilevalue,
+                        # "Looking at C2V words" — the noun the ps field
+                        # carries on every other page.
+                        suffix=_("words") if syllables else None)
         # THE TRACE STAYS. The board's current-cell marker follows this
         # variable (`update_active_cell`), and it fires on any write —
-        # including the one `_setlang` makes after the setter has run, which
-        # is what keeps the marker and the working slice from diverging.
+        # including the one `_setlang` makes after the setter has run,
+        # which is what keeps the marker and the working slice from
+        # diverging.
         profile_var.trace_add("write", self.update_active_cell)
+        if syllables:
+            return
         self.labels['ps_suffix']=ui.StringVar(value=self.pssuffix())
         self.prosefield('ps',
                         None,
@@ -1361,23 +1433,51 @@ class StatusFrame(ui.Frame):
             return
         # REFRESH, THEN RENDER. These two lines were the other way round, so
         # every explicit update painted the label from the PREVIOUS cvt:
-        # `cvtlabel()` reads `self.cvt`, and `makesliceattrs` is what
-        # re-reads it from `params`. One step stale, every time (2026-09-29).
+        # the value reads `self.cvt`, and `makesliceattrs` is what re-reads
+        # it from `params`. One step stale, every time (2026-09-29).
         self.makesliceattrs()
-        self.labels['cvt']['text'].set(self.cvtlabel())
-    def cvtlabel(self):
-        return (_("Checking {cvt},").format(cvt=self.program.params.cvtdict()[self.cvt]['pl']))
+        self.labels['cvt']['text'].set(self.cvtvalue())
+    def cvtvalue(self):
+        return self.program.params.cvtdict()[self.cvt]['pl']
+    def cvtoptions(self):
+        """The check types this task may switch to.
+
+        Same filter `getcvt` applied in the window this replaced: a sort
+        task is not offered CV or VC."""
+        tdict=self.program.params.cvtdict()
+        skip=(('CV','VC')
+              if getattr(self.program.task,'is_sort_task',False) else ())
+        return [{'code':c,'name':tdict[c]['pl']}
+                for c in tdict if c not in skip]
     def cvtline(self):
+        # CLICK THE VALUE, NOT THE SENTENCE. This was a label bound to
+        # `ui_settings.getcvt`, which raised a window ('Select Check Type')
+        # around one choice. Kent, 2026-09-29, on the new check chooser
+        # being hard to read: "it's hard to see with the extra settings
+        # dialogs. Convert the rest of sort word syllables into composite
+        # widgets." See the settings-prompts-in-one-window item.
+        #   THE COMMA IS A DELIMITER, not a suffix. The phrase continues
+        # into the check ("Checking Syllable Profiles, working on …") and a
+        # msgid may not end in a lone comma, so it has to be a widget — but
+        # `suffix` sits in its own cell with its own padding and rendered
+        # "Checking Vowels ," (Kent, 2026-09-30). `delimit` is the mechanism
+        # built for punctuation that must TOUCH the value: it draws its
+        # labels with `ipadx: 0`, which is why the field-name quotes come
+        # out as ‘Plural’ and not ‘ Plural ’. Empty opening delimiter,
+        # comma closing.
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
-        self.labels['cvt']={'text':self.program.settings.get_ui_var('cvt_label', self.cvtlabel()),
-                                'columnplus':1,
-                                'rowplus':1,
-                                'cmd':self.program.ui_settings.getcvt,
-                                'parent':line,
-                                'tt':_("change to other check types")}
-        self.proselabel(**self.labels['cvt'])
+        self.prosefield('cvt',
+                        _("Checking"),
+                        self.program.settings.get_ui_var('cvt_label',
+                                                         self.cvtvalue()),
+                        self.cvtoptions,
+                        self.program.settings.setcvt,
+                        _("change to other check types"),
+                        parent=line,
+                        value_fn=self.cvtvalue,
+                        delimit=('',','))
         #this continues on the same line:
         if self.cvt == 'T':
             self.toneframe(line)
@@ -1450,134 +1550,269 @@ class StatusFrame(ui.Frame):
     def updatecvcheck(self):
         if 'cvcheck' not in self.labels:
             return
-        self.labels['cvcheck']['text'].set(self.cvchecklabel())
-    def cvchecklabel(self):
-        return (_("working on {check}").format(check=self.program.params.cvcheckname()))
+        self.labels['cvcheck']['text'].set(self.cvcheckvalue())
+    def cvcheckvalue(self):
+        return self.program.params.cvcheckname()
+    def cvcheckoptions(self):
+        """The checks available in this slice, named.
+
+        ON THE SYLLABLE SORT THESE ARE THE WORD CHECKS — the forms — as of
+        plan 6 of the second-form flags audit, which is what makes this
+        line a chooser rather than a statement. `cvcheckname(c)` names each
+        one; it used to ignore its argument for cvt 'S' and name them all
+        after the current form, so a two-entry list read the same twice
+        (Kent, 2026-09-29: "I see whole citation twice?")."""
+        checks=self.program.status.checks() or []
+        return [{'code':c,'name':self.program.params.cvcheckname(c) or c}
+                for c in checks]
     def cvcheck(self,line):
-        self.labels['cvcheck']={'text':self.program.settings.get_ui_var('cvcheck_label', self.cvchecklabel()),
-                                'columnplus':1,
-                                'cmd':self.program.task.getcheck,
-                                'parent':line,
-                                'tt':_("change this check")}
-        self.proselabel(**self.labels['cvcheck'])
-        self.program.settings.get_ui_var('cvcheck_label').trace_add("write", self.update_active_cell)
+        # Was a label bound to `task.getcheck`, which raised a window
+        # ('What check do you want to do?') around one choice.
+        cvcheck_var=self.program.settings.get_ui_var('cvcheck_label',
+                                                     self.cvcheckvalue())
+        self.prosefield('cvcheck',
+                        _("working on"),
+                        cvcheck_var,
+                        self.cvcheckoptions,
+                        self.program.settings.setcheck,
+                        _("change this check"),
+                        parent=line,
+                        value_fn=self.cvcheckvalue)
+        # THE TRACE STAYS, for the reason it stays on the profile field: the
+        # board's current-cell marker follows this variable, and it fires on
+        # any write — including the one `_setlang` makes after the setter has
+        # run, which keeps the marker and the working slice together.
+        cvcheck_var.trace_add("write", self.update_active_cell)
     def updatecvgroup(self):
         if 'cvgroup' not in self.labels:
             return
-        self.labels['cvgroup']['text'].set(self.cvgrouplabel())
-    def cvgrouplabel(self):
-        check=self.program.params.check()
-        if not check or 'x' in check:
-            # Return '' not a bare None: updatecvgroup() does StringVar.set(this),
-            # and set(None) renders the literal "None" in the status frame (seen as
-            # "working on First Vowel None" when the label went stale from an
-            # x-check phase). Blank is the right "no group applies here" display.
-            return ''
+        self.labels['cvgroup']['text'].set(self.cvgroupvalue())
+        prefix=self.labels['cvgroup'].get('prefix')
+        if prefix is not None:
+            prefix.set(self.cvgroupprefix())
+    def cvgroupprefix(self):
+        # "= C" when there is one, nothing in front of "All groups".
+        return '=' if self.program.status.group() else ''
+    def cvgroupvalue(self):
         group=self.program.status.group()
         if not group:
-            return (_("(All groups)"))
+            return _("All groups")
         # For syllable prep the bare code ('C'/'V'/'2') is cryptic; show the
         # human group name (e.g. 'consonant initial', '2 syllables').
         if self.program.params.cvt()=='S' and \
                 self.program.params.is_syllable_primitive_check():
-            return f"= {self.program.params.syllable_group_name(check,group)}"
-        return (f"= {group}")
+            return str(self.program.params.syllable_group_name(
+                            self.program.params.check(),group))
+        return str(group)
+    def cvgroupnames(self,g):
+        if self.program.params.cvt()=='S' and \
+                self.program.params.is_syllable_primitive_check():
+            return str(self.program.params.syllable_group_name(
+                            self.program.params.check(),g))
+        return str(g)
+    def cvgroupoptions(self):
+        """The groups this slice offers, plus "All groups".
+
+        `groups_visible` is the same list the window used (`_getgroup`), and
+        it is the one that drops NA — which is never a selectable group."""
+        try:
+            groups=self.program.status.groups_visible() or []
+        except Exception as e:
+            log.info("no groups to offer: %s",e)
+            groups=[]
+        return ([{'code':None,'name':_("All groups")}]
+                +[{'code':g,'name':self.cvgroupnames(g)} for g in groups])
     def cvgroup(self,line):
-        self.labels['cvgroup']={'text':self.program.settings.get_ui_var('cvgroup_label', self.cvgrouplabel()),
-                                'columnplus':2,
-                                'cmd':self.program.task.getgroup,
-                                'parent':line,
-                                'tt':_("change this group")
-                                if self.program.status.group()
-                                else _("specify one group")
-                                }
-        self.proselabel(**self.labels['cvgroup'])
+        # Was a label bound to `task.getgroup`, which raised a window per
+        # cvt — 'Select Vowel', 'Select Consonant', 'Select Framed Tone
+        # Group'. Kent, 2026-09-30: "getgroups should be composite. any
+        # given page is asking for one set, right? what's the problem?"
+        # Right: `_getgroup` builds ONE list, `groups_visible(cvt=…)`, and
+        # the per-cvt branching is only the window's title.
+        #   THE EXCEPTION IS THE CxV PATH, which asks twice ("for
+        # kwargs['cvt'] in ['C','V']") and is not converted — it is already
+        # tracked as dead (`cv_group_selection_dead.md`) and `getcvt` hides
+        # CV/VC from sort tasks, so no live page reaches it. `getgroup`
+        # stays for whatever still calls it.
+        #   NO FIELD AT ALL ON AN x-CHECK: no group applies to a
+        # correspondence check, and the old label returned '' for it —
+        # which left a clickable empty string. Drawing nothing is the
+        # honest version.
+        check=self.program.params.check()
+        if not check or 'x' in check:
+            return
+        self.prosefield('cvgroup',
+                        self.cvgroupprefix(),
+                        self.program.settings.get_ui_var(
+                            'cvgroup_label', self.cvgroupvalue()),
+                        self.cvgroupoptions,
+                        self.program.settings.setgroup,
+                        _("change this group")
+                        if self.program.status.group()
+                        else _("specify one group"),
+                        parent=line,
+                        value_fn=self.cvgroupvalue,
+                        prefix_fn=self.cvgroupprefix)
     def updatebuttoncolumns(self):
         if 'buttoncolumns' not in self.labels:
             return
-        self.labels['buttoncolumns']['text'].set(self.buttoncolumnslabel())
-    def buttoncolumnslabel(self):
-        b=self.program.settings.buttoncolumns
-        if b:
-            return (_("Using {n} button columns").format(n=b))
-        else:
-            return (_("Not using multiple button columns"))
+        self.labels['buttoncolumns']['text'].set(self.buttoncolumnsvalue())
+    def buttoncolumnsname(self,n):
+        # TWO WHOLE MSGIDS, not a number plus an 's'. Singular and plural
+        # are different sentences in most languages, and assembling one from
+        # pieces is what the 2026-07-10 sweep found breaks catalogues.
+        try:
+            one=int(n) == 1
+        except (TypeError,ValueError):
+            one=True
+        return _("1 column") if one else _("{n} columns").format(n=n)
+    def buttoncolumnsvalue(self):
+        return self.buttoncolumnsname(self.program.settings.buttoncolumns or 1)
+    def buttoncolumnsoptions(self):
+        return [{'code':n,'name':self.buttoncolumnsname(n)} for n in (1,2,3)]
     def buttoncolumnsline(self):
-        # log.info(t)
-        tt=_("Click here to change the number of columns used for sort buttons")
+        # Was a label bound to `ui_settings.getbuttoncolumns` ('Select
+        # Button Columns'). The sentence is now "Using 2 columns", with the
+        # count as the clickable value — so the singular/plural lives in the
+        # option NAMES and "Not using multiple button columns" becomes the
+        # honest "Using 1 column".
         self.newrow()
-        self.labels['buttoncolumns']={'text':self.program.settings.get_ui_var('buttoncolumns_label', self.buttoncolumnslabel()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getbuttoncolumns,
-                                'tt':tt}
-        self.proselabel(**self.labels['buttoncolumns'])
+        self.prosefield('buttoncolumns',
+                        _("Using"),
+                        self.program.settings.get_ui_var(
+                            'buttoncolumns_label', self.buttoncolumnsvalue()),
+                        self.buttoncolumnsoptions,
+                        self.program.settings.setbuttoncolumns,
+                        _("change the number of columns used for sort "
+                          "buttons"),
+                        value_fn=self.buttoncolumnsvalue)
     def updatemaxslice(self):
         if 'maxslice' not in self.labels:
             return
-        self.labels['maxslice']['text'].set(self.maxslicelabel())
-    def maxslicelabel(self):
+        self.labels['maxslice']['text'].set(self.maxslicevalue())
+    def maxslicevalue(self):
         # default 50 mirrors backend.core.analysis.MAX_SLICE (kept in sync by hand
         # to avoid the UI importing a backend constant)
-        n=getattr(self.program.settings,'syllable_max_slice',None) or 50
-        return _("Showing {n} words per page").format(n=n)
+        return str(getattr(self.program.settings,'syllable_max_slice',None)
+                   or 50)
+    def maxsliceoptions(self):
+        # The same ladder the window offered.
+        return [{'code':n,'name':str(n)}
+                for n in (15,30,50,75,100,150,200,300)]
     def maxsliceline(self):
-        tt=_("Click to change how many words appear per page when sorting "
-             "syllables (fewer = faster pages, but more of them; tune per machine)")
+        # Was a label bound to `ui_settings.getmaxslice` ('Select Words Per
+        # Page'). The explanation the window carried in its body has nowhere
+        # to go on a prose line, so it is the tooltip.
         self.newrow()
-        self.labels['maxslice']={'text':self.program.settings.get_ui_var('maxslice_label', self.maxslicelabel()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getmaxslice,
-                                'tt':tt}
-        self.proselabel(**self.labels['maxslice'])
+        self.prosefield('maxslice',
+                        _("Showing"),
+                        self.program.settings.get_ui_var(
+                            'maxslice_label', self.maxslicevalue()),
+                        self.maxsliceoptions,
+                        self.program.settings.setmaxslice,
+                        _("change how many words appear per page when "
+                          "sorting syllables — fewer means each page "
+                          "appears faster but there are more of them; tune "
+                          "to this machine"),
+                        value_fn=self.maxslicevalue,
+                        suffix=_("words per page"))
+    # THREE DEAD UPDATERS, FIXED WITH THE CONVERSION (2026-09-30). Both
+    # `maxes` updaters guarded on `'maxes' in self.labels` and wrote
+    # `labels['maxes']` — a key `maxes()` never creates; it makes
+    # `maxprofiles` and `maxpss`. So both returned early, always.
+    # `updatemulticheckscope` guarded on and wrote `labels['cvgroup']`,
+    # a different line's key, so it would have overwritten the GROUP with
+    # the scope text had it ever run. Same class as the `get_ui_var` freeze:
+    # a label that nothing can repaint.
     def updatemaxprofiles(self):
-        if 'maxes' not in self.labels:
+        if 'maxprofiles' not in self.labels:
             return
-        self.labels['maxes']['text'].set(self.maxprofileslabel())
-    def maxprofileslabel(self):
-        return (_("Max profiles: {max_profiles}; ").format(max_profiles=self.program.settings.maxprofiles))
+        self.labels['maxprofiles']['text'].set(self.maxprofilesvalue())
+    def maxprofilesvalue(self):
+        return str(self.program.settings.maxprofiles)
     def updatemaxpss(self):
-        if 'maxes' not in self.labels:
+        if 'maxpss' not in self.labels:
             return
-        self.labels['maxes']['text'].set(self.maxpsslabel())
-    def maxpsslabel(self):
-        return (_("Max lexical categories: {max_pss}").format(max_pss=self.program.settings.maxpss))
+        self.labels['maxpss']['text'].set(self.maxpssvalue())
+    def maxpssvalue(self):
+        return str(self.program.settings.maxpss)
+    def maxoptions(self):
+        """1–9, as both windows offered."""
+        return [{'code':n,'name':str(n)} for n in range(1,10)]
     def maxes(self):
+        # Was two labels, each raising a window ('Select Maximum Number of
+        # Syllable Profiles', '…of Lexical Categories'). The semicolon is a
+        # delimiter rather than a suffix, for the reason the cvt line's
+        # comma is: a suffix sits in its own padded cell and renders
+        # "Max profiles: 5 ;".
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
-        self.labels['maxprofiles']={
-                        'text':self.program.settings.get_ui_var('maxprofiles_label', self.maxprofileslabel()),
-                        'columnplus':1,
-                        'cmd':self.program.ui_settings.getmaxprofiles,
-                        'parent':line,
-                        'tt':_("change this max")}
-        self.proselabel(**self.labels['maxprofiles'])
-        self.opts['columnplus']=1
-        self.labels['maxpss']={'text':self.program.settings.get_ui_var('maxpss_label', self.maxpsslabel()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getmaxpss,
-                                'parent':line,
-                                'tt':_("change this check")}
-        self.proselabel(**self.labels['maxpss'])
+        self.prosefield('maxprofiles',
+                        _("Max profiles:"),
+                        self.program.settings.get_ui_var(
+                            'maxprofiles_label', self.maxprofilesvalue()),
+                        self.maxoptions,
+                        self.program.settings.setmaxprofiles,
+                        _("change how many syllable profiles to report"),
+                        parent=line,
+                        value_fn=self.maxprofilesvalue,
+                        delimit=('',';'))
+        self.prosefield('maxpss',
+                        _("Max lexical categories:"),
+                        self.program.settings.get_ui_var(
+                            'maxpss_label', self.maxpssvalue()),
+                        self.maxoptions,
+                        self.program.settings.setmaxpss,
+                        _("change how many lexical categories to report "
+                          "(2 = Noun and Verb)"),
+                        parent=line,
+                        value_fn=self.maxpssvalue)
     def updatemulticheckscope(self):
-        if 'cvgroup' not in self.labels:
+        if 'multicheckscope' not in self.labels:
             return
-        self.labels['cvgroup']['text'].set(self.multicheckscopelabel())
-    def multicheckscopelabel(self):
-        return (_("Run all checks for {checks}").format(checks=unlist(self.program.ui_settings.cvtstodoprose())))
+        self.labels['multicheckscope']['text'].set(
+                                            self.multicheckscopevalue())
+    def multicheckscopevalue(self):
+        return str(unlist(self.program.ui_settings.cvtstodoprose()))
+    def multicheckscopeoptions(self):
+        """Every combination of check types, each ONE pick.
+
+        NOT a multi-select, which is why this converts at all: the window
+        this replaces already enumerated the combinations and offered them
+        as single choices, with `code` a LIST of cvts — exactly the shape
+        `_setlang` maps back for the setter. Tone is excluded, as it was
+        there: it is not a segmental check."""
+        cvts=[[i] for i in self.program.params.cvts()]
+        if ['T'] in cvts:
+            cvts.remove(['T'])
+        done=cvts[:]
+        for j in cvts[:2]+[[i[0] for i in cvts[:2]]]:
+            done+=[j+i for i in cvts
+                   if i[0] not in j
+                   if set(j+i) not in [set(k) for k in done]]
+        done+=[[i[0] for i in cvts]]
+        options=[]
+        for opt in done:
+            name=unlist([self.program.params.cvtdict()[i]['pl'] for i in opt])
+            if len(opt) == 1:
+                name+=' '+_("(only)")
+            options.append({'code':opt,'name':name})
+        return options
     def multicheckscope(self):
+        # Was a label raising 'Select Scope of Checks'.
         if not hasattr(self.program.task,'cvtstodo'):
             self.program.task.cvtstodo=['V']
         self.newrow()
-        line=ui.Frame(self.proseframe,row=self.irow,column=0,
-                        columnspan=3,sticky='w')
-        self.labels['multicheckscope']={
-                        'text':self.program.settings.get_ui_var('multicheckscope_label', self.multicheckscopelabel()),
-                        'columnplus':1,
-                        'cmd':self.program.ui_settings.getmulticheckscope,
-                        'parent':line,
-                        'tt':_("change this check")}
-        self.proselabel(**self.labels['multicheckscope'])
+        self.prosefield('multicheckscope',
+                        _("Run all checks for"),
+                        self.program.settings.get_ui_var(
+                            'multicheckscope_label',
+                            self.multicheckscopevalue()),
+                        self.multicheckscopeoptions,
+                        self.program.settings.setmulticheckscope,
+                        _("change which kinds of check to run"),
+                        value_fn=self.multicheckscopevalue)
     def updateparserasklevel(self):
         if 'parserasklevel' not in self.labels:
             return
@@ -1833,6 +2068,15 @@ class StatusFrame(ui.Frame):
         titleframe=ui.Frame(self.leaderboard)
         titleframe.grid(row=0,column=0,sticky='n')
         cvtdict=self.program.params.cvtdict()
+        # NO ps IN THE SYLLABLE TITLE. "Progress for Noun" over a syllable
+        # board said the work was per-category, which it is not — a
+        # cvprofile is a fact about the form (2026-09-30, the
+        # syllable-sort-is-not-per-ps item). The segmental boards keep it:
+        # there the slice genuinely IS (profile × ps).
+        if self.program.params.cvt()=='S':
+            ui.Label(titleframe, text=_('Syllable profile progress'),
+                     font='title', row=0,column=1,sticky='nwe',padx=10)
+            return
         ui.Label(titleframe, text=_('Progress for'), font='title',
                 row=0,column=1,sticky='nwe',padx=10)
         if not self.mainrelief:
@@ -2099,6 +2343,16 @@ class StatusFrame(ui.Frame):
         params=self.program.params
         status=self.program.status
         ps=self.program.slices.ps()
+        # THE SYLLABLE STATE CARRIES NO ps (2026-09-30). A cvprofile and its
+        # profile class are facts about the FORM, so their sorted/verified
+        # state is one wordlist-wide record, read here under
+        # `SYLLABLE_PREP_PS` — the key prep has always used. Reading it under
+        # the live ps showed a class as unfinished because the work had been
+        # recorded under a different category. See the
+        # syllable-sort-is-not-per-ps item.
+        #   `ps` above is still read, for `_syllable_primitives_verified`
+        # and the title; the CELLS no longer key on it.
+        prep_ps=params.SYLLABLE_PREP_PS
         ftype=params.ftype()
         sentinel=params.SYLLABLE_SLICE_SENTINEL
         if not self._syllable_primitives_verified(ps):
@@ -2188,7 +2442,9 @@ class StatusFrame(ui.Frame):
                 #   • per-profile '+' = that profile group is VERIFIED, read from the
                 #     node's membership-keyed 'done'; its absence = to-verify.
                 try:
-                    done=set(status.node(cvt='S',ps=ps,profile=pc,
+                    # ps-free: see `_has_work` below and the
+                    # syllable-sort-is-not-per-ps item.
+                    done=set(status.node(cvt='S',ps=prep_ps,profile=pc,
                                         check=ftype).get('done',[]))
                 except Exception:
                     done=set()
@@ -2240,7 +2496,12 @@ class StatusFrame(ui.Frame):
             if pc_unsorted.get(pc,0):
                 return True  # unsorted words
             try:
-                n=status.node(cvt='S',ps=ps,profile=pc,check=ftype)
+                # `SYLLABLE_PREP_PS`, not the live ps. A cvprofile is a fact
+                # about the FORM, so its sorted/verified state carries no
+                # category — reading it under one ps showed a class as
+                # unfinished because the work had been recorded under
+                # another (2026-09-30, the syllable-sort-is-not-per-ps item).
+                n=status.node(cvt='S',ps=prep_ps,profile=pc,check=ftype)
                 g=set(n.get('groups',[])); d=set(n.get('done',[]))
                 return bool(g) and not (g<=d)  # unverified groups
             except Exception:

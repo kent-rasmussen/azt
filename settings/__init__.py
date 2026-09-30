@@ -919,6 +919,21 @@ class Settings(SettingsUI):
         # settings file or from a guess over the database. Both routes end
         # here, which is why this is one call and not two.
         self.register_second_forms()
+        # AND THE CHECK NAMES, for the same reason and at the same moment.
+        # `build_checknames` runs in `CheckParameters.__init__`, BEFORE any
+        # of this is known, so `second_form_checks` found no field and the
+        # `pl`/`imp` entries were never built — and `_cvchecknames` had no
+        # name to give them. The syllable sort's chooser then fell back to
+        # the bare code and offered "pl" as an option (Kent, 2026-09-30:
+        # "working on {ftype} should list label, not 'pl'").
+        #   Plan 5 made RENAMING rebuild these (`_checknames_follow_the_
+        # field`); discovering the name at boot never did, which is the
+        # same gap `register_second_forms` above exists to close.
+        try:
+            self.program.params.rebuild_checknames()
+        except Exception as e:
+            _log.info("could not rebuild check names after the second form "
+                      "fields settled (%r)", e)
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
@@ -1019,11 +1034,15 @@ class Settings(SettingsUI):
         self.scrub_foreign_status()
         start_at=kwargs.get('startat',0)
         end_at=kwargs.get('endat',100)
-        d=self.program.db.annotation_values_by_ps_profile()
+        # Both of these read annotations off ONE word form's node, so they have
+        # to be asked for the form the session is actually working on — the
+        # default 'lc' silently reported citation data under any other form.
+        ftype=self.program.params.ftype()
+        d=self.program.db.annotation_values_by_ps_profile(ftype)
         # LIFT-derived 'done' (group verified as a whole = every member carries
         # its <check>=<group> code). Recomputed here so verified state can't go
         # stale in the status file — a join no longer drops sibling groups.
-        verified=self.program.db.verified_groups_by_ps_profile()
+        verified=self.program.db.verified_groups_by_ps_profile(ftype)
         k={}
         for k['ps'],profile_dict in d.items():
             for k['profile'],check_dict in profile_dict.items():
@@ -1107,7 +1126,7 @@ class Settings(SettingsUI):
     def reloadstatusdata(self):
         _log.info(_("Refreshing all status settings from LIFT"))
         self.storesettingsfile() #default, not status
-        self.program.db.load_ps_profiles()
+        self.program.db.load_ps_profiles(self.program.params.ftype())
         self.program.status.clear_all_groups()
         for i in itertools.chain(self.generate_status_by_annotations(end_at=50),
                                 self.generate_status_by_tone_groups(start_at=50)):
@@ -1267,16 +1286,34 @@ class Settings(SettingsUI):
             # the same widgets rather than a rebuilt page. Kent, 2026-09-17,
             # on switching to plurals mid-page: "this workflow shouldn't
             # break us."
-            #   `loadwords`, not `getwords`: the latter builds the frames and
-            # grids a SECOND `wordsframe` if called twice. Plan 2 of
-            # the second-form flags audit.
+            #   `reload_for_word_check`, not `loadwords`: two page types
+            # answer to a form change and they do different things. A
+            # collection page reloads its word list (and must use
+            # `loadwords`, since `getwords` would grid a SECOND
+            # `wordsframe`); `SortSyllables` rebuilds its `(ps, ftype)`
+            # slices and its board, because everything it shows is keyed on
+            # the form. Plan 2 and plan 6 of the second-form flags audit.
+            # THE CHECK FOLLOWS THE FORM, and must be settled BEFORE the
+            # page reloads or the page rebuilds against the old one. For
+            # cvt 'S' the check list is `[ftype()]`, so a changed form makes
+            # the standing check invalid and `makecheckok` picks the only
+            # valid one — no new mechanism, just the call that was missing
+            # (Kent, 2026-09-30: "this means we'll need a makecheckOK, since
+            # the check will need to align with the ftype, should it ever
+            # change").
+            #   And it chains: `makecheckok` settles the group in turn, so
+            # one call takes ftype → check → group.
+            try:
+                self.program.status.makecheckok()
+            except Exception as e:
+                _log.info("could not realign the check with the form (%r)",e)
             task=getattr(self.program,'task',None)
-            if hasattr(task,'loadwords'):
+            if hasattr(task,'reload_for_word_check'):
                 try:
-                    task.loadwords()
+                    task.reload_for_word_check()
                 except Exception as e:
-                    _log.info(_("Could not reload the word list after the "
-                                "word check changed: {error}").format(error=e))
+                    _log.info(_("Could not reload after the word check "
+                                "changed: {error}").format(error=e))
             self.attrschanged.remove('ftype')
         if 'showdetails' in self.attrschanged:
             # Display-only pref: persist it now (defaults→ui domain) so the choice
@@ -1284,6 +1321,26 @@ class Settings(SettingsUI):
             # through to the "Remaining changed attribute!" error / accumulate.
             self.storesettingsfile()
             self.attrschanged.remove('showdetails')
+        # THE GROUP MUST BELONG TO THE CHECK, and until 2026-09-30 nothing
+        # ever said so: `StatusDict.makegroupok` was written for exactly this
+        # and had NO CALLERS anywhere in the app. A group belongs to a
+        # (cvt, ps, profile, check) slice, so any of the branches above can
+        # invalidate it — which is why this is one call at the end rather
+        # than a line in each.
+        #   The symptom Kent brought: the syllable sort's line read
+        # "Checking Syllable Profiles, working on Whole Citation Word
+        # Syllable Profile = C". `C` is a stage-1 answer to `#C`/`C#`; the
+        # check was stage 2, whose groups are cvprofiles. The display was
+        # honest and the STATE was mixed across the two stages.
+        #   An older patch treated the same class at the label:
+        # `cvgrouplabel` still carries a comment about the frame showing
+        # "working on First Vowel None" after an x-check phase.
+        #   Never raises: a settings refresh must not fail over this.
+        try:
+            self.program.status.makegroupok()
+        except Exception as e:
+            _log.info("could not settle the group against the current "
+                      "check (%r)", e)
         soundattrs=self.settings['soundsettings']['attributes']
         soundattrschanged=set(soundattrs) & set(self.attrschanged)
         for a in soundattrschanged:
@@ -1435,7 +1492,7 @@ class Settings(SettingsUI):
         the design (2026-09-29). These vars are cached for the SESSION, and
         every status label asks for one with the text it has just computed:
 
-            get_ui_var('cvt_label', self.cvtlabel())
+            get_ui_var('cvt_label', self.cvtvalue())
 
         On the second task of a session that computed text was thrown away
         and the caller got the previous task's label back, so the settings

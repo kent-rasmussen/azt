@@ -538,7 +538,7 @@ class ProfileAnalyzer:
         if n and write: # see affirm_machine_profiles on write=False
             self.program.maybewrite(definitely=True)
         if n and rebuild:
-            self.rebuild_slices()
+            self.rebuild_slices(ftype)
         return n
 
     def _set_trusted_profile(self, sense, ftype, profile):
@@ -555,15 +555,18 @@ class ProfileAnalyzer:
                                          ftype, profile)
         self.trust_primitives_from_profile(sense, ftype, profile)
 
-    def rebuild_slices(self):
+    def rebuild_slices(self, ftype=None):
         """FULL post-trust rebuild: refresh the db-level ps/profile
         dicts, then re-run the analyzer — run() re-aggregates
         _profilesbysense from the (newly) confirmed cvprofile forms and
         ends by constructing a fresh SliceDict, which registers itself
         as program.slices with real ps/profile priorities.
         db.load_ps_profiles alone leaves the session's SliceDict stale,
-        so a trust looked like a no-op until restart (2026-07-24)."""
-        self.program.db.load_ps_profiles()
+        so a trust looked like a no-op until restart (2026-07-24).
+
+        `ftype` says WHICH FORM's profiles to rebuild from; it defaults to
+        the live one, like every other method here."""
+        self.program.db.load_ps_profiles(ftype or self.program.params.ftype())
         self.run()
     def affirm_machine_profiles(self, ftype=None, rebuild=True, write=True):
         """Accept the straight machine CV analysis as the (confirmed) profile DATA:
@@ -603,7 +606,7 @@ class ProfileAnalyzer:
             # file without them and the "set up profiles?" trigger fires again.
             self.program.maybewrite(definitely=True)
         if rebuild and n:
-            self.rebuild_slices()
+            self.rebuild_slices(ftype)
         return n
 
     def reconcile_profiles_to_primitives(self, ftype=None, rebuild=True,
@@ -637,7 +640,7 @@ class ProfileAnalyzer:
         if n and write: # see affirm_machine_profiles on write=False
             self.program.maybewrite(definitely=True)
         if rebuild and n:
-            self.rebuild_slices()
+            self.rebuild_slices(ftype)
         return n
 
     def scrub_sorts_to_primitives(self, ftype=None):

@@ -8,7 +8,7 @@ before the window exists — so the VALUE was never wrong. The label was.
 `get_ui_var` caches one StringVar per attribute for the SESSION, and every
 status label asks for one with the text it has just computed:
 
-    get_ui_var('cvt_label', self.cvtlabel())
+    get_ui_var('cvt_label', self.cvtvalue())
 
 The cached branch returned the existing var and dropped that text on the
 floor, so the settings line froze at whatever wrote it first. Nothing
@@ -79,7 +79,7 @@ def test_the_value_is_stringified(_ns):
 
 
 def test_updatecvt_refreshes_before_it_renders():
-    """The second half of the same bug: `cvtlabel()` reads `self.cvt`, and
+    """The second half of the same bug: the value reads `self.cvt`, and
     `makesliceattrs` is what re-reads that from `params` — so painting
     first rendered the PREVIOUS cvt on every explicit update."""
     import inspect

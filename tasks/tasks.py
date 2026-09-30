@@ -1475,28 +1475,47 @@ class SortSyllables(backend.core.sorting_engine.SyllablePrep,
                 "word syllable profiles.")
     # dobuttonkwargs inherited from Sort: image=self.cvt ('S' → the syllable
     # photo, renamed from 'CV').
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Opened mid-session (e.g. 'Not {profile}' → 'sort syllables') we inherit
-        # the previous task's in-memory picture, and the single profile/status
-        # rebuild the defer path skipped (no per-click load_ps_profiles) never ran.
-        # Do it now so the board lands on the correct STAGE (prep vs profile) and
-        # Task-2 verification reflects reality — instead of only self-correcting
-        # after a redundant 'Sort!'. maybeboard keys the board on
-        # syllable_prep_complete, which reads the 'S' prep status node that
-        # syllable_slices resyncs.
+    def reload_for_word_check(self):
+        """Rebuild this form's slices and redraw the board.
+
+        TWO CALLERS, ONE BODY (plan 6, 2026-09-29). It has always run on
+        open, for the reason below; it now also runs when the user picks a
+        different word check, because everything it refreshes is keyed on
+        the form. `syllable_slices` is `(ps, ftype)`, the primitives are
+        read off the chosen form's node (`profile_class_of_sense(ftype)`),
+        and `rebuild_syllable_profile_done` reads that form's
+        `…-x-cvprofile`. So changing the form invalidates exactly what this
+        already knows how to rebuild — which is why plan 6 needed no new
+        machinery, only this made callable.
+
+        ON OPEN: opened mid-session (e.g. 'Not {profile}' → 'sort
+        syllables') we inherit the previous task's in-memory picture, and
+        the single profile/status rebuild the defer path skipped (no
+        per-click load_ps_profiles) never ran. Do it now so the board lands
+        on the correct STAGE (prep vs profile) and Task-2 verification
+        reflects reality — instead of only self-correcting after a redundant
+        'Sort!'. maybeboard keys the board on syllable_prep_complete, which
+        reads the 'S' prep status node that syllable_slices resyncs.
+
+        Never raises: it is a refresh, and a page that fails to refresh must
+        still be a page."""
         try:
             # Enforce the cvprofile↔annotation invariant HERE (scrub otherwise only
             # runs at boot) so a mid-session divergence is cleared → that word drops
             # out → it becomes affirmable → the trigger can fix it, instead of a
             # stuck 'unverified but no trigger' group.
             self.program.profiles.scrub_sorts_to_primitives()
-            self.program.db.load_ps_profiles()    # refresh profile slices
+            # For the CHOSEN form: every profile comes off cvprofile_<ftype>.
+            self.program.db.load_ps_profiles(self.program.params.ftype())
             self.syllable_slices(rebuild=True)     # resync the 'S' prep status node
             self.rebuild_syllable_profile_done()   # profile 'done' from …-x-cvprofile
             self.status.maybeboard()               # redraw with the true stage
         except Exception as e:
-            log.info("SortSyllables open refresh failed: %s", e)
+            log.info("SortSyllables refresh failed: %s", e)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.reload_for_word_check()
 class SortCV(Sort,Segments,Task):
     """docstring for SortCV."""
     def __init__(self, **kwargs):

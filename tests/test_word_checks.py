@@ -313,12 +313,158 @@ def test_recording_is_a_word_check_page_and_not_a_cvt_one():
     assert tasks.RecordCitationT.do_not_show_cvt is False
 
 
-def test_the_syllable_sort_declares_the_flag_but_cannot_reload_yet():
-    """`Syllables` wants the line too, and plan 6 will give it one — but
-    changing its form means rebuilding `(ps, ftype)` slices and the board,
-    not reloading a word list. Until then `wordcheckline` declines rather
-    than offer a control that changes the ftype and leaves the board stale.
-    Delete this test when plan 6 lands."""
+def test_only_word_collection_draws_its_own_chooser():
+    """THREE WORD-CHECK PAGES, ONE CHOOSER — the flag says which.
+
+    Word collection has no slice line and no check line
+    (`do_not_show_slices`), so the word-check line is its only way to pick
+    a form. The syllable sort picks it on the SLICE line, beside the
+    profile class — its check line states the check and does not offer one
+    (the check IS the form). The record page shows a button per form and
+    needs no mode (Kent, 2026-09-29)."""
     from backend.core import lexicon
-    assert lexicon.Syllables.whole_word_checks is True
-    assert not hasattr(lexicon.Syllables, 'loadwords')
+    from tasks import tasks
+    assert lexicon.WordCollection.offers_word_check_line is True
+    # Through the concrete tasks for these two: `Syllables` is a backend
+    # mixin and never sees TaskBase's defaults on its own.
+    assert tasks.SortSyllables.offers_word_check_line is False
+    assert tasks.RecordCitation.offers_word_check_line is False
+    # All three are still word-check pages.
+    for cls in (lexicon.WordCollection, tasks.SortSyllables,
+                tasks.RecordCitation):
+        assert cls.whole_word_checks is True, cls
+
+
+def test_the_reloading_pages_answer_to_one_name():
+    """A form change reaches the page through `reload_for_word_check`, and
+    the implementations differ — a word list; profile slices and a board;
+    `(ps, ftype)` slices, prep state and a board.
+
+    EVERY SORT HAS ONE, not just the syllable sort: the vowels of a
+    citation form are not the vowels of a plural, and the profile slices
+    are ftype-derived. Kent, 2026-09-30, when I offered a choice between
+    giving segmental sorts a reload and showing them no form: "that's a
+    false choice, but let's give SortV a reload"."""
+    from backend.core import lexicon, sorting_engine
+    from tasks import tasks
+    assert hasattr(lexicon.WordCollection, 'reload_for_word_check')
+    assert hasattr(sorting_engine.Sort, 'reload_for_word_check')
+    for name in ('SortV', 'SortC', 'SortSyllables'):
+        assert hasattr(getattr(tasks, name), 'reload_for_word_check'), name
+    # The syllable sort keeps its own, larger version.
+    assert (tasks.SortSyllables.reload_for_word_check
+            is not sorting_engine.Sort.reload_for_word_check)
+    # The record page has no reload, which is consistent with offering no
+    # choice to act on.
+    assert not hasattr(tasks.RecordCitation, 'reload_for_word_check')
+
+
+def test_an_empty_delimiter_builds_no_widget():
+    """`delimit=('', ',')` — a comma tight after the value and nothing
+    before it — used to build an EMPTY label and give it a grid column,
+    and an empty cell is not a zero-width one (Kent, 2026-09-30: "I'm
+    still seeing extra space around the cvt label")."""
+    import inspect
+    from frontend import composites
+    src = inspect.getsource(composites.ClickToEdit.__init__)
+    assert 'if delimit and delimit[0]:' in src
+    assert 'if delimit and delimit[1]:' in src
+
+
+def test_the_syllable_check_is_the_current_form():
+    """DIRECTION IS ftype → check, and the check CODE is the ftype.
+
+    Plan 6 briefly inverted this so the check line could choose the form.
+    Reverted 2026-09-30, once the scope came out right: the form is
+    slice-scope and is chosen beside the profile class, and the check
+    follows it.
+
+    The code must STAY the ftype. LIFT stores the verification as
+    `<check>=<group>` with the ftype as the check —
+    `<field type="C_1_V lc verification">` holding `['lc=CV']`, from Kent's
+    own file — so a separate stage-2 code would orphan every existing
+    one."""
+    import inspect
+    from backend.core import analysis
+    src = inspect.getsource(analysis.StatusDict.updatechecksbycvt)
+    assert '[self.program.params.ftype()]' in src
+    assert 'word_checks()' not in src
+
+
+def test_changing_the_form_realigns_the_check():
+    """Kent, 2026-09-30: "this means we'll need a makecheckOK, since the
+    check will need to align with the ftype, should it ever change."
+
+    `makecheckok` already is that — `checks()` for 'S' is `[ftype()]`, so a
+    changed form invalidates the standing check and it picks the only valid
+    one. It must run BEFORE the reload, or the page rebuilds against the
+    old check; and it chains into `makegroupok`, so one call settles
+    ftype → check → group."""
+    import inspect
+    from settings import Settings
+    branch = inspect.getsource(Settings.refreshattributechanges).split(
+                        "'ftype' in self.attrschanged")[1]
+    branch = branch.split("attrschanged.remove('ftype')")[0]
+    assert 'makecheckok()' in branch
+    assert branch.index('makecheckok()') < branch.index('reload_for_word_check')
+
+
+def test_the_form_names_are_adjectival():
+    """Two lines show them and each supplies its own noun: "Collecting
+    Citation forms", "Looking at Citation C1C words"."""
+    names = dict(_params().word_checks())
+    assert names['lc'] == 'Citation'
+    assert names['lx'] == 'Root'
+
+
+def test_each_syllable_check_is_named_for_itself():
+    """Kent, 2026-09-29, on the new chooser: "I see whole citation twice?"
+
+    `cvcheckname` overwrote its `code` argument with `ftype()` for cvt 'S',
+    so the option list — built as `[(c, cvcheckname(c)) for c in checks]`
+    (`ui_shell.py:3222`) — named every option after the CURRENT form. One
+    entry in the list hid it; a chooser does not."""
+    names = {}
+    p = _params({'Noun': 'Plural'}, ftype='lc')
+    p.cvt = lambda: 'S'
+    for attr in ('cvcheckname', 'is_syllable_primitive_check',
+                 'syllable_check_name', 'check'):
+        setattr(p, attr,
+                getattr(analysis_inputs.CheckParameters, attr).__get__(p))
+    p._check = 'lc'
+    p._cvchecknames = {'lc': 'Whole Citation Word Syllable Profile',
+                       'lx': 'Whole Root Syllable Profile',
+                       'pl': 'Whole Plural Word Syllable Profile'}
+    for code in ('lc', 'lx', 'pl'):
+        names[code] = p.cvcheckname(code)
+    assert len(set(names.values())) == 3, names
+    assert names['lx'] == 'Whole Root Syllable Profile'
+    # No code given still means "the current form", which is what the
+    # status line asks for.
+    assert p.cvcheckname() == 'Whole Citation Word Syllable Profile'
+
+
+def test_a_prep_primitive_is_still_named_for_itself():
+    """The other half of the same method: #C/C#/syls share one ftype, so
+    they are named by the primitive rather than the form."""
+    p = _params(ftype='lc')
+    p.cvt = lambda: 'S'
+    for attr in ('cvcheckname', 'is_syllable_primitive_check',
+                 'syllable_check_name', 'check'):
+        setattr(p, attr,
+                getattr(analysis_inputs.CheckParameters, attr).__get__(p))
+    p._check = '#C'
+    p._cvchecknames = {}
+    assert p.cvcheckname('#C') == 'word-initial sounds'
+    assert p.cvcheckname('syls') == 'syllable counts'
+
+
+def test_the_prep_handoff_aligns_the_check_with_the_form():
+    """Unconditional, and that IS the direction: for cvt 'S' the check is
+    the current form, so aligning them on the way out of prep honours the
+    choice made on the slice line rather than overwriting one."""
+    import inspect
+    from backend.core import sorting_engine
+    src = inspect.getsource(sorting_engine.SyllablePrep.runcheck)
+    assert 'params.check(self.program.params.ftype())' in src
+    assert 'is_word_check()' not in src

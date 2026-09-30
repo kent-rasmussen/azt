@@ -291,7 +291,11 @@ class CheckParameters(object):
         generator (callers that 'just want an example' don't pay the exclusion)."""
         cls=self.compose_profile_class(beg,syls,end)
         try:
-            node=self.program.status.node(cvt='S',ps=self.program.slices.ps(),
+            # `SYLLABLE_PREP_PS`, not the live ps: syllable state carries no ps
+            # (2026-09-30, the syllable-sort-is-not-per-ps item), so reading it
+            # under one would find an empty node and offer profiles already in
+            # use under another category.
+            node=self.program.status.node(cvt='S',ps=self.SYLLABLE_PREP_PS,
                                           profile=cls,check=self.ftype())
             inuse=set(node.get('groups',[]))
         except Exception:
@@ -851,12 +855,29 @@ class CheckParameters(object):
         page that silently re-collected.
           `Sense.set_ftype` and `Settings.register_second_forms` fix that,
         so the offer stands on `second_forms_available` again: the field
-        being named is once more the only condition."""
-        rows=[('lc', _("citation forms")),
-              ('lx', _("root forms"))]
-        rows+= [(code, _("‘{field}’ forms ({ps})").format(field=field, ps=ps))
+        being named is once more the only condition.
+
+        ADJECTIVAL, so each line can supply its own noun (2026-09-30). Two
+        lines show these now and they need different grammar — "Collecting
+        Citation forms" on a collection page, "Looking at Citation C1C
+        words" on a sort page — so the name is the modifier and the noun
+        belongs to the sentence. It used to be "citation forms", which
+        reads only in the first."""
+        rows=[('lc', _("Citation")),
+              ('lx', _("Root"))]
+        rows+= [(code, _("‘{field}’ ({ps})").format(field=field, ps=ps))
                 for code, ps, field in self.second_forms_available()]
         return rows
+
+    def is_word_check(self, check=None):
+        """Is this a WORD check (which form) rather than a cvt check?
+
+        The cvt-`S` check list holds word checks and nothing else — the
+        three prep primitives (`#C`/`C#`/`syls`) belong to the Task-1 driver
+        and have never been in it — so this is how the `S` paths tell a
+        user's form choice from a primitive still in play during prep."""
+        code=check if check is not None else self.check()
+        return code in [c for c, name in self.word_checks()]
 
     def resolve_word_check(self, code=None):
         """An AVAILABLE word check, whatever was asked for.
@@ -1069,9 +1090,20 @@ class CheckParameters(object):
             # keying the name by ftype made them all read identically. Name them
             # by the actual primitive instead; fall back to ftype for Task-2
             # (profile) sorting.
-            if self.is_syllable_primitive_check():
-                return self.syllable_check_name()
-            code=self.ftype()
+            #   NAME THE CODE ASKED ABOUT, and only fall back to the current
+            # form when none was given. `code=self.ftype()` used to run
+            # unconditionally, which was invisible while the 'S' check list
+            # held exactly one entry and wrong the moment plan 6 made it a
+            # chooser: `ui_shell.py:3222` builds the options as
+            # `[(c, cvcheckname(c)) for c in checks]`, so every option came
+            # back named for the CURRENT form. Two options, one name — Kent,
+            # 2026-09-29: "I see whole citation twice?"
+            #   The primitive test and its namer take the code for the same
+            # reason; both fall back to `check()` when it is None.
+            if self.is_syllable_primitive_check(code):
+                return self.syllable_check_name(code)
+            if code is None:
+                code=self.ftype()
         if not code:
             code=self.check()
         try:

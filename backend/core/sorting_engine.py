@@ -40,8 +40,16 @@ class SyllablePrep(object):
     profile sort) via the inherited Sort.runcheck/maybesort."""
 
     def syllable_slices(self,rebuild=False):
-        """The current ps's prep-slice object (built/assigned + status synced)."""
-        ps=self.program.slices.ps()
+        """The prep-slice object (built/assigned + status synced).
+
+        NOT "the current ps's" — this took `slices.ps()` and rebuilt whenever
+        it changed, which made one wordlist-wide job into one job per
+        category. `SYLLABLE_PREP_PS` is where this state already belonged:
+        `syllable_prep_complete` reads the node there and ignores the ps it
+        is handed, "kept only for caller compatibility". Now the builder
+        agrees with the reader (2026-09-30; the syllable-sort-is-not-per-ps
+        item)."""
+        ps=self.program.params.SYLLABLE_PREP_PS
         ftype=self.program.params.ftype()
         sl=getattr(self.program,'syllable_slices',None)
         if sl is None or rebuild or sl.ps!=ps or sl.ftype!=ftype:
@@ -53,7 +61,14 @@ class SyllablePrep(object):
         ps=self.program.slices.ps()
         if self.program.params.syllable_prep_complete(ps):
             # Task 1 done → Task 2 (profile-class profile sort) on the shared engine.
-            # Point the engine at the profile (ftype) check, not a stale primitive.
+            # Point the engine at the profile (word) check, not a stale primitive.
+            #   UNCONDITIONAL, and that is the direction: ftype → check.
+            # Plan 6 briefly guarded this so a user's check choice would
+            # survive, because the check line was then the form chooser;
+            # reverted 2026-09-30, since the form is chosen on the slice
+            # line instead. For cvt 'S' the check IS the current form — the
+            # check list is `[ftype()]` — so aligning them here is not
+            # overwriting a choice, it is honouring the one made upstairs.
             self.program.params.check(self.program.params.ftype())
             return super().runcheck()
         # Task 1: seed the per-word primitives by orthography (Syllables.
@@ -230,6 +245,36 @@ class Sort(Categories):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
     show_buttoncolumnsline=True #does this belong here?
+
+    def reload_for_word_check(self):
+        """The form changed; rebuild what was derived from the old one.
+
+        EVERY SORT CARES WHICH FORM IT IS SORTING, not just the syllable
+        one — the vowels of a citation form are not the vowels of a plural.
+        I first offered Kent a choice between giving segmental sorts a
+        reload and showing them no form at all; he: *"that's a false
+        choice, but let's give SortV a reload."* It was: the third option
+        was simply to write this.
+
+        THE PROFILE SLICES ARE ftype-DERIVED, which is what makes this more
+        than a repaint: `profilesbysense` records the ftype it was built
+        for (`profiles.py`), and `profile_class_of_sense` reads the
+        primitives off the chosen form's node. So the slices must be rebuilt
+        before the board is redrawn from them.
+
+        The check and the group are already settled by the caller —
+        `refreshattributechanges` runs `makecheckok`, which chains into
+        `makegroupok` — so this is only the data and the picture.
+
+        `SortSyllables` overrides this with a larger version: its slices are
+        keyed `(ps, ftype)` and it has prep state to resync as well.
+
+        Never raises: a refresh that fails must not take the page with it."""
+        try:
+            self.program.db.load_ps_profiles(self.program.params.ftype())
+            self.status.maybeboard()
+        except Exception as e:
+            log.info("sort refresh after the word check changed failed: %s",e)
 
     def _get_safe_window(self):
         """Return runwindow if it exists and is viewable, else tk_root."""
@@ -1372,11 +1417,21 @@ class Sort(Categories):
         board + maybesort read."""
         ftype=self.program.params.ftype()
         analang=self.program.db.analang
-        by={}  # {ps: {profile_class: {annotation group: every-member-verified bool}}}
+        # NO ps DIMENSION (2026-09-30). This bucketed `by[ps][pc]` and wrote a
+        # node per ps, so the identical profile work was tracked once per
+        # category and a word sorted under Noun stayed unsorted under Verb —
+        # though a cvprofile is a fact about the FORM and cannot differ
+        # between two words that look the same. One bucket per profile class
+        # now, under `SYLLABLE_PREP_PS`, which is where prep already keeps its
+        # state for the same reason. See the syllable-sort-is-not-per-ps item.
+        #   A SENSE WITH NO ps STILL COUNTS, where it used to be skipped by
+        # the `if not (ps and pc)` guard below — 33 of them in the demo file
+        # per the boot log ("Computed CV profiles for 33 part-of-speech-less
+        # word(s)"), silently absent from every board.
+        by={}  # {profile_class: {annotation group: every-member-verified bool}}
         for s in self.program.db.senses:
-            ps=s.psvalue()
             pc=self.program.params.profile_class_of_sense(s, ftype=ftype)
-            if not (ps and pc):
+            if not pc:
                 continue
             ann=s.annotationvaluebyftypelang(ftype, analang, ftype)
             if not ann or ann in ('NA','Invalid'):
@@ -1384,21 +1439,22 @@ class Sort(Categories):
             # Verified iff the confirmed …-x-cvprofile matches the sort annotation;
             # a group is done only if EVERY member is verified that way.
             verified=(s.cvprofilevalue(ftype)==ann)
-            grps=by.setdefault(ps,{}).setdefault(pc,{})
+            grps=by.setdefault(pc,{})
             grps[ann]=grps.get(ann,True) and verified
-        for ps,pcs in by.items():
-            for pc,grps in pcs.items():
-                node=self.program.status.node(cvt='S',ps=ps,profile=pc,check=ftype)
-                done=sorted(g for g,ok in grps.items() if ok)
-                node['groups']=sorted(grps)
-                node['done']=done
-                # Trust the DISTINCTIONS too (status.json only, not LIFT): verified
-                # profiles are distinct cvprofile strings that never meaningfully
-                # merge, so mark every verified pair distinguished. Otherwise
-                # maybesort's join step — which distinguishes pairs of VERIFIED
-                # groups (group_pairs_to_distinguish) — re-fires and 'Sort!' jumps
-                # to a spurious join instead of moving on to the unprofiled words.
-                node['distinguished']=set(itertools.combinations(done,2))
+        prep_ps=self.program.params.SYLLABLE_PREP_PS
+        for pc,grps in by.items():
+            node=self.program.status.node(cvt='S',ps=prep_ps,profile=pc,
+                                          check=ftype)
+            done=sorted(g for g,ok in grps.items() if ok)
+            node['groups']=sorted(grps)
+            node['done']=done
+            # Trust the DISTINCTIONS too (status.json only, not LIFT): verified
+            # profiles are distinct cvprofile strings that never meaningfully
+            # merge, so mark every verified pair distinguished. Otherwise
+            # maybesort's join step — which distinguishes pairs of VERIFIED
+            # groups (group_pairs_to_distinguish) — re-fires and 'Sort!' jumps
+            # to a spurious join instead of moving on to the unprofiled words.
+            node['distinguished']=set(itertools.combinations(done,2))
         self.program.status.store()
     def present_group(self,item):
         log.info("presenting group {item}".format(item=item))
