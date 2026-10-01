@@ -5729,7 +5729,31 @@ class Toplevel(_WebviewWidget):
                 'var nb=r.getBoundingClientRect();'
                 'nw=Math.max(nw,Math.ceil(nb.width));'
                 'nh=Math.max(nh,Math.ceil(nb.height));'
-                'document.documentElement.classList.remove("wv-measuring");'
+                # THE CLASS USED TO COME OFF HERE, three lines before the
+                # union below was computed — so the two numbers this function
+                # returns were measured in TWO DIFFERENT LAYOUTS: the probe
+                # with the chain released to max-content, the union with the
+                # page laid out for READING, where a frame legitimately fills
+                # the window it is in. `cw,ch` is the larger of the two, so
+                # the union won and handed the window its own size back as
+                # the size its content "needs" — a measurement that can never
+                # shrink, because it is reading the thing being computed.
+                #   THAT IS THE 227x95 DISCREPANCY this item recorded as
+                # unexplained on 2026-09-15 ("`.wv-measuring` produces a
+                # layout ~227x95 smaller than the one the user gets, and
+                # reading the CSS has not said why"). The CSS was right; the
+                # class was off.
+                #   Kent's Update (Git) notice, 2026-09-30, window 174:
+                # `probe 510x496` while `tallest wv-frame[510x600 at 145,0]`
+                # in an 800x600 client, then `[510x628 at 87,0]` once the
+                # window was 628 — the frame tracking the viewport exactly,
+                # both times, while the content wanted 496. A window three
+                # quarters full of nothing, and unable to shrink.
+                # The union is now taken under the same release as the probe.
+                # The displacement check below moves with it, deliberately:
+                # a report about where a widget is DRAWN should describe one
+                # layout, and the boxes `describe()` prints then match the
+                # numbers being returned.
                 # The children's union as a floor, for a page whose root
                 # does not shrink-wrap (an absolutely positioned child, a
                 # stray 100% width) and would otherwise measure as nothing.
@@ -5824,6 +5848,12 @@ class Toplevel(_WebviewWidget):
                 ' if(kb.top<pb.top-8||kb.left<pb.left-8){'
                 '  displaced=describe(k)+" drawn outside "+describe(p);'
                 '  break;}}'
+                # NOW the page goes back to being laid out for reading —
+                # after the union, the widest/tallest/leaf picks and the
+                # displacement check, all of which describe the released
+                # layout the probe measured. The catch below removes it too,
+                # and removing a class twice is free.
+                'document.documentElement.classList.remove("wv-measuring");'
                 'return [Math.ceil(Math.max(w,nw)),Math.ceil(Math.max(h,nh)),'
                 'screen.availWidth,screen.availHeight,'
                 'window.innerWidth,window.innerHeight,'
@@ -5892,7 +5922,22 @@ class Toplevel(_WebviewWidget):
         self._fit_n = getattr(self, '_fit_n', 0) + 1
         prev = getattr(self, '_fit_measured', None)
         trigger = getattr(self, '_refit_trigger', 'unknown')
-        if prev is None:
+        # A MEASUREMENT OF NOTHING IS NOT A MEASUREMENT, and it was costing
+        # three log lines and poisoning the next fit's verdict. The splash
+        # reads 0x0 on its first fit and 10x10 when it is re-shown after
+        # `usbcheck` — the page has nothing in it at that moment — and each
+        # one printed a count line, a detail line and the floor's own "not
+        # resizing" line, then made the NEXT fit report a spurious
+        # "CHANGED … by +970x+742" against it.
+        #   One line, and it is not remembered: the floor below already
+        # declines to resize and says so, which is the part that matters.
+        # The threshold is deliberately tiny — 251x77 is a real window on
+        # this app and must still be measured and compared.
+        if cw <= 10 or ch <= 10:
+            log.info("window {}: fit #{} by {} measured nothing ({}x{}) — the "
+                     "page has no content to measure yet".format(
+                        self._wid, self._fit_n, trigger, cw, ch))
+        elif prev is None:
             verdict = 'first fit'
         elif (cw, ch) == prev[:2]:
             verdict = 'SAME as fit #{} ({})'.format(prev[2], prev[3])
@@ -5902,14 +5947,16 @@ class Toplevel(_WebviewWidget):
                         else 'CHANGED',
                         prev[2], prev[3], prev[0], prev[1],
                         cw - prev[0], ch - prev[1])
-        self._fit_measured = (cw, ch, self._fit_n, trigger)
-        log.info("window {}: fit #{} by {} measured {}x{} — {}".format(
-                    self._wid, self._fit_n, trigger, cw, ch, verdict))
-        log.info("window {}: fit measured {}x{} (probe {}x{}, client {}x{}, "
-                 "{} image(s) still loading); widest {} | widest leaf {} | "
-                 "tallest {}".format(self._wid, cw, ch, probew, probeh,
-                                     innerw, innerh, pending,
-                                     widest, wleaf, tallest))
+        if cw > 10 and ch > 10:
+            self._fit_measured = (cw, ch, self._fit_n, trigger)
+            log.info("window {}: fit #{} by {} measured {}x{} — {}".format(
+                        self._wid, self._fit_n, trigger, cw, ch, verdict))
+            log.info("window {}: fit measured {}x{} (probe {}x{}, client "
+                     "{}x{}, {} image(s) still loading); widest {} | widest "
+                     "leaf {} | tallest {}".format(
+                                        self._wid, cw, ch, probew, probeh,
+                                        innerw, innerh, pending,
+                                        widest, wleaf, tallest))
         if displaced and displaced != '-':
             log.error("window {}: fit found a widget DRAWN OUTSIDE ITS "
                       "PARENT — {}. Its DOM parent is right, so it is being "

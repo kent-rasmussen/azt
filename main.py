@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.46' #This is a string...
+__version__='1.15.49' #This is a string...
 # `--help` BEFORE ANYTHING ELSE, and that position is the point: asking a
 # program what its switches are must not build a venv, install packages or
 # trip the duplicate gate, and must work on a machine where the dependencies

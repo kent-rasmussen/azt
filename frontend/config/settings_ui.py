@@ -456,6 +456,55 @@ class SettingsUI(object):
         self.buttoncolumns=choice
         if self.statusisup():
             self.program.mainwindow.status.updatebuttoncolumns()
+        # AND TELL THE PAGE. This stored the value, relabelled the line, and
+        # stopped — no `attrschanged`, no `refreshattributechanges`, so unlike
+        # `ftype` or the gloss languages there was no path from this setting to
+        # anything on screen. `SortButtonFrame.__init__` takes a SNAPSHOT
+        # (`self.buttoncolumns=self.task.buttoncolumns`), so a frame is right
+        # for whatever the setting was when it was built and can never change
+        # afterwards.
+        #   That is the whole of the two-month-old "the buttoncolumns setting
+        # doesn't work" report: it worked, on the NEXT open, which from the
+        # user's chair is indistinguishable from not working. Kent, 2026-09-30:
+        # "buttoncolumns doesn't apply until you leave the task and return, so
+        # this was not obvious to test" — and, on where the buttons are,
+        # "both on Sort!, not before, since the settings is meaningless
+        # before", which is why 0 frames is a normal answer here and not a
+        # failure.
+        #   AND THE WINDOW'S COPY FIRST, which is the one that actually
+        # decides. `TaskDressing.inherittaskattrs` (ui_shell.py:3227) copies
+        # `buttoncolumns` off `program.settings` onto the task window — "Make
+        # these directly available" — and that copy is taken when the TASK
+        # WINDOW is built. `SortButtonFrame` reads `self.task.buttoncolumns`,
+        # which resolves through the task→window bridge to that copy, not to
+        # the setting; so does `Sort`'s own `self.buttoncolumns`
+        # (sorting_engine.py:208, :2028).
+        #   That is the whole of "it needs a task restart". The run window and
+        # its button frame are rebuilt constantly — Kent's log of 2026-10-01
+        # shows run window 163 destroyed and rebuilt, then 272, then 375 —
+        # and every rebuild re-read the STALE WINDOW COPY. Only building a new
+        # task window refreshes it.
+        #   Two sources of truth for one setting, with nothing keeping them in
+        # step. Fixed here at the setter rather than by deleting the copy,
+        # because `glosslangs` is copied in the same loop and the readers have
+        # not been audited; see the duplicated-settings item.
+        for holder in (getattr(getattr(self.program,'task',None),'ui',None),
+                       getattr(self.program,'mainwindow',None)):
+            if holder is not None and hasattr(holder,'buttoncolumns'):
+                try:
+                    holder.buttoncolumns=choice
+                except Exception as e:
+                    log.info("could not update the window's buttoncolumns "
+                             "copy on %r: %r",holder,e)
+        # Then the frames already on screen, which hold their own snapshot
+        # taken at BUILD time and would otherwise wait for the next rebuild.
+        try:
+            n=self.program.sort_ui.relayout_group_buttons(choice)
+            log.info("button columns set to %r; re-laid %d sort button "
+                     "frame(s)",choice,n)
+        except Exception as e:
+            log.info("could not re-lay the sort buttons for %r columns: %r",
+                     choice,e)
         if window:
             window.destroy()
     def setmaxslice(self,choice,window=None):

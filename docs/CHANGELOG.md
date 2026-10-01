@@ -19,6 +19,145 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.49
+
+**`buttoncolumns` worked all along — on the next task open.** Reported
+2026-07-31 as "the buttons parameter doesn't work, the one that puts buttons
+in 1, 2, or 3 columns", open for two months, and the reason it stayed open
+is that the report and the code disagreed about what "doesn't work" meant.
+Kent's test, 2026-09-30: no change on the open page, correct after leaving
+the task and coming back. *"buttoncolumns doesn't apply until you leave the
+task and return, so this was not obvious to test."* From the user's chair
+that is indistinguishable from a dead setting — worse, because the effect
+turns up later attached to no cause.
+
+**The cause is a copy nobody can see at the call site.**
+`TaskDressing.inherittaskattrs` (`ui_shell.py:3227`) copies `buttoncolumns`
+off `program.settings` onto the task window — "Make these directly
+available" — when the WINDOW is built. `SortButtonFrame.__init__` reads
+`self.task.buttoncolumns`, which resolves through the task→window bridge to
+that copy, not to the setting; so does `Sort`'s own `self.buttoncolumns`
+(`sorting_engine.py:208`, `:2028`). Nothing about the spelling
+`self.buttoncolumns` suggests a snapshot on a window two bridges away.
+
+That also explains the part that looked contradictory: the run window and
+its button frame are rebuilt on every sort cycle — Kent's log shows run
+window 163 destroyed and rebuilt, then 272, then 375 — and **every rebuild
+re-read the stale copy**. Only building a new task window refreshed it.
+
+Two changes, for the two cases:
+
+- `setbuttoncolumns` refreshes the window's copy as well as the setting, so
+  every later reader — each rebuilt frame included — sees the new value.
+- `SortButtonFrame` keeps a registry of live frames and re-lays them in
+  place, for buttons already on screen. The sweep is
+  `regrid_group_buttons`, extracted unchanged from `removegroupbutton`,
+  which needed the identical operation; macrosort and verify frames are
+  pinned at one column deliberately and are skipped, which
+  `_columns_from_setting` records at build time rather than re-deriving.
+
+**STATE OF THIS, PLAINLY.** The first change was proven NOT to fix it: the
+log read `button columns set to 1; re-laid 0 sort button frame(s)`, because
+at that moment the run window had already died and the frame built
+afterwards read the stale copy again. The second change was never run.
+Closed on Kent's call (*"4 is done, then"*) — **"done" here means closed,
+not seen working**, and the item says so too.
+
+**The structural cause is open as its own item:** settings copied onto
+windows with nothing keeping them in step. `glosslangs` is copied by the same
+line, onto pages that stay open while settings change, and the decision —
+delete the copies, or define what refreshes them — has not been made.
+
+`tests/test_buttoncolumns_reaches_the_page.py`: the row/column maths, the
+already-in-place skip, zero and junk column counts, the macrosort pin, dead
+frames pruned from the registry, and a guard that fails if
+`inherittaskattrs` ever stops copying `buttoncolumns` — at which point the
+setter's refresh becomes dead code and should go with it.
+
+# Version 1.15.48
+
+**A fit that measured nothing cost three log lines and poisoned the next
+one.** The splash reads `0x0` on its first fit and `10x10` when it is
+re-shown after `usbcheck` — the page genuinely has nothing in it at that
+moment — and each printed a count line, a detail line and the floor's own
+"not resizing" line, and was then REMEMBERED, so the next real fit reported
+a spurious `CHANGED … by +970x+742` against it.
+
+A measurement of nothing now prints one line saying so and is not kept, so
+the following fit compares against the last real measurement. The floor
+already declines to resize and says why, which is the part worth logging.
+The threshold is deliberately tiny (10px): 251x77 is a real window in this
+app and must still be measured, compared and reported.
+
+**Not yet seen in a run** — it is a logging change, so the next webview log
+confirms it.
+
+**Also closed with this bump: the webview window-sizing item**, on Kent's
+check of the last thing outstanding in it (*"tabs look fine"*) — the task
+chooser's tab strip, looked at after the content-measurement fix had made
+every window smaller, which is the condition most likely to expose the
+clipping that was seen on macOS. Not proven on macOS itself.
+
+# Version 1.15.47
+
+**The fit measured its two numbers in two different layouts — which is the
+227x95 discrepancy, unexplained since 2026-09-15.**
+
+The probe returns the larger of two measurements: `#root`'s own
+scroll/bounding size, and the union of its children's boxes (a floor, for a
+page whose root does not shrink-wrap). The `wv-measuring` class — which
+releases the container chain to `max-content` so the content can state its
+own size — was added before the first and **removed three lines later,
+before the second**. So the probe measured released content while the union
+measured the page laid out for READING, where a frame legitimately fills the
+window it is in. `max()` then took the union, and the fit handed the window
+its own height back as the size its content "needed": a measurement that can
+never shrink, because it is reading the thing being computed.
+
+The item recorded the symptom and could not find it: *"`.wv-measuring`
+produces a layout ~227x95 smaller than the one the user gets, and reading
+the CSS has not said why."* The CSS was right. The class was off.
+
+**Found from Kent's screenshot of the Update (Git) output window** — text in
+the top third, the rest empty. Window 174 in the log: `probe 510x496` beside
+`tallest wv-frame[510x600 at 145,0]` in an 800x600 client, then
+`[510x628 at 87,0]` once the window was 628. The frame tracked the viewport
+exactly, both times, while the content wanted 496.
+
+The class now comes off after the union, the widest/tallest/leaf picks and
+the displacement check, so every number and every box the log prints
+describes one layout.
+
+**CONFIRMED, and the windows are markedly smaller** (Kent: *"I think this is
+done"*):
+
+| window | before | after |
+|---|---|---|
+| LiftChooser | 951x600 → 965x628 | 951x514, SAME on refit |
+| task window | 931x1051 → 945x1079 → 938x1079 | 931x713, SAME across three fits |
+| Update (Git) notice | 510x496 → 597x628 | 510x256, grown to 510x286 |
+
+Every window reports `SAME` on re-fit. The one `content overflows by 0x30;
+growing to 510x286 (1 of 3)` is `_grow_if_overflowing` working as designed:
+a released layout does not wrap and a displayed one does, so the measurement
+was 30 short and the DISPLAYED page corrected it in a single bounded pass.
+That is the right way round — the prediction is checked against what
+happened.
+
+**Also in this bump:** the French update notice said `(Forteresse {name}
+pour utiliser cette mise à jour)` — "Restart" translated as *fortress*. Kent
+asked whether it was an old report; it was live at
+`translations/fr_FR/LC_MESSAGES/azt.po:190`, and it was the only bad one —
+every other `Restart` in that file was already `redémarrer`. Now
+`(Redémarrer {name} …)`, matching the infinitive of the `Redémarrer
+maintenant` button beside it. **The `.mo` still needs compiling** for it to
+reach a user (`msgfmt` — the workflow's compile step is commented out, so
+those are committed by hand), and if Crowdin owns these strings it wants
+fixing there too.
+
+**Unchanged and known:** the splash measures `0x0` on its first fit and
+`10x10` when re-shown after `usbcheck`; the `_FIT_MIN` floor declines both.
+
 # Version 1.15.46
 
 **The webview fit no longer grows by 28px every time you ask it.** Two

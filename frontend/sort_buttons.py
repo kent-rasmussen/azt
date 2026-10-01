@@ -48,6 +48,84 @@ def promote_button_gridkwargs(**kwargs):
 
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
+
+    #: EVERY LIVE FRAME, so a settings change can reach the page the user is
+    #: looking at. Nothing else holds one: `sort_ui` builds them into LOCAL
+    #: variables (`:466`, `:699`) and returns one from `make_button_frame`,
+    #: so `buttoncolumns` had no way of finding the layout it governs — which
+    #: is half of why that setting read as dead for two months.
+    #: Entries are dropped lazily in `relayout_all`: a frame dies with its
+    #: window and gets no say in it, so the list is pruned when it is walked
+    #: rather than by anything hooking destruction.
+    _live = []
+
+    def regrid_group_buttons(self):
+        """Re-grid every group button from its position in the list.
+
+        `index == row` (or row/column, in a multi-column layout) is the
+        invariant the whole frame rests on: `addgroupbutton` grids the next
+        group at `len(groupbuttonlist)`, so anything that changes positions
+        without re-gridding leaves the next addition landing on an occupied
+        row — two joins once put "Other V1" two rows back, on top of the
+        penultimate group (Kent 2026-08-25).
+
+        Extracted from `removegroupbutton` 2026-09-30, unchanged, because a
+        COLUMN-COUNT change needs exactly the same sweep: same list, same
+        formula, same skip-if-already-there. One implementation, two callers.
+
+        `max(…,1)` because a zero would be a ZeroDivisionError inside a
+        layout refresh, and the setting arrives from a chooser."""
+        cols = max(getattr(self, 'buttoncolumns', 1) or 1, 1)
+        for i, b in enumerate(self.groupbuttonlist):
+            r, c = i//cols, i % cols
+            try:
+                if (getattr(b, 'row', None), getattr(b, 'column', None)) == (r, c):
+                    continue
+                b.row, b.column = r, c
+                b.grid(row=r, column=c)
+            except Exception as e:
+                log.info("group button re-grid failed for %s: %s",
+                         getattr(b, 'group', b), e)
+
+    @classmethod
+    def relayout_all(cls, columns):
+        """Apply a new column count to every live frame that takes it.
+
+        MACROSORT FRAMES ARE PINNED AT 1 and must stay that way: two of the
+        three branches in `__init__` set `buttoncolumns=1` deliberately (the
+        gather and verify pages), and only the ordinary sort branch reads the
+        user's setting. So this refreshes the frames that took their value
+        from the setting and leaves the others alone — `_columns_from_setting`
+        records which, at build time, rather than this having to re-derive
+        the branch.
+
+        Returns how many frames were re-laid, so the caller can log whether
+        the change reached anything. Before `Sort!` there is no frame and the
+        answer is 0, which is correct and not a failure: the next frame built
+        reads the setting itself."""
+        try:
+            columns = max(int(columns), 1)
+        except (TypeError, ValueError):
+            log.info("not relaying out group buttons: %r is not a column "
+                     "count", columns)
+            return 0
+        done = 0
+        for f in list(cls._live):
+            try:
+                alive = f.winfo_exists()
+            except Exception:
+                alive = False
+            if not alive:
+                cls._live.remove(f)
+                continue
+            if not getattr(f, '_columns_from_setting', False):
+                continue        # macrosort/verify: pinned at 1 on purpose
+            if f.buttoncolumns == columns:
+                continue
+            f.buttoncolumns = columns
+            f.regrid_group_buttons()
+            done += 1
+        return done
     def _profile_class_name(self):
         """The current syllable PROFILE CLASS for display in button labels, e.g.
         'C2V' (the stored key is already delimiter-free — see
@@ -374,17 +452,9 @@ class SortButtonFrame(ui.ScrollingFrame):
         # rows stop matching list positions — and addgroupbutton grids the next
         # group at len(groupbuttonlist), which would then land on an occupied
         # row. Re-grid what's left, in order, so index == row again (and the
-        # hole doesn't show).
-        for i,b in enumerate(self.groupbuttonlist):
-            r,c=i//self.buttoncolumns,i%self.buttoncolumns
-            try:
-                if (getattr(b,'row',None),getattr(b,'column',None))==(r,c):
-                    continue
-                b.row,b.column=r,c
-                b.grid(row=r,column=c)
-            except Exception as e:
-                log.info("removegroupbutton re-grid failed for %s: %s",
-                            getattr(b,'group',b),e)
+        # hole doesn't show). The sweep itself is `regrid_group_buttons`, which
+        # a column-count change needs identically.
+        self.regrid_group_buttons()
     def addgroupbutton(self,group):
         # log.info("SortButtonFrame addgroupbutton for {group}".format(group=group))
         if self.exitFlag.istrue():
@@ -506,19 +576,31 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.check=self.program.params.check()
         self.cvt=self.program.params.cvt()
         self.maybewrite=self.program.taskchooser.maybewrite
+        # `_columns_from_setting` RECORDS WHICH BRANCH ANSWERED, so a later
+        # settings change can refresh the frames that took the user's value
+        # and leave the two that are pinned at 1 on purpose. Deriving it
+        # afterwards would mean re-testing `macrosort`/`remove_on_click`
+        # somewhere else and keeping the two tests in step. See
+        # `relayout_all`.
         if self.macrosort and not self.remove_on_click:
             msg=[_("Gathering groups"),
                 _("On the next screen, you will sort groups of words into letter groups")]
             self.buttoncolumns=1
+            self._columns_from_setting=False
         elif self.macrosort:
             msg=[_("Verifying groups"),
                 _("On the next screen, you will verify groups of words as belonging together")]
             self.buttoncolumns=1
+            self._columns_from_setting=False
         else:
             msg=[_("Sorting words"),
                 _("On the next screen, you will sort words into groups "
                 "by {cvt}").format(cvt=self.program.params.cvcheckname())]
             self.buttoncolumns=self.task.buttoncolumns
+            self._columns_from_setting=True
+        # REGISTERED ONCE THE COLUMN COUNT IS SETTLED, so a refresh arriving
+        # mid-build cannot find a frame whose `buttoncolumns` is not there yet.
+        SortButtonFrame._live.append(self)
         with task.waiting('\n'.join(msg)):
             # Prefetch examples for all groups at once to avoid O(N^2) lookup
             self.program.examples.prefetch_examples(self.groups, **kwargs)

@@ -310,6 +310,16 @@ class SortPresenter(PresenterBase):
     def sort_button_frame(self, parent, sort_obj, groups, **kwargs):
         return SortButtonFrame(parent, sort_obj, groups, **kwargs)
 
+    def relayout_group_buttons(self, columns):
+        """Re-lay the live sort button frames for a new column count.
+
+        The seam the `buttoncolumns` setter reaches the page through, so the
+        settings layer asks a presenter rather than importing a widget class
+        — the same arrangement as every other backend→frontend call here.
+        Returns the number of frames re-laid; 0 before `Sort!`, when there
+        is no frame yet and the next one built will read the setting itself."""
+        return SortButtonFrame.relayout_all(columns)
+
     def sort_group_button_frame(self, parent, sort_obj, **kwargs):
         return SortGroupButtonFrame(parent, sort_obj, **kwargs)
 
