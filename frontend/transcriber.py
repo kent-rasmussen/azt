@@ -28,6 +28,29 @@ class Transcriber(ui.Frame):
             self.namehash.set('')
             self.formfieldplay.grid_remove()
         self.labelcompiled=False
+    def attach_sound(self,soundsettings):
+        """Take sound settings, at construction or LATER.
+
+        Later is the webview case: a Sound task's device probe (~7s) runs
+        beside the UI there, so a glyph window opened in those first seconds
+        has nothing to hand us yet. Making the click wait for the probe put a
+        seven-second "please wait" on a rename window (Kent, 2026-09-22: "I
+        thought the wait page was broken"); instead the window opens without
+        beeps and `tasks.transcribe_glyph.sound_settings_when_ready` calls
+        this when the probe is done. The play button follows automatically:
+        `updatelabels` shows it on the next keystroke if `beeps` exists.
+        Attribute assignment only — safe from the thread that calls it, and
+        no widget is touched here."""
+        if soundsettings is None or soundsettings is self.soundsettings:
+            return
+        self.soundsettings=soundsettings
+        self.audio=getattr(soundsettings,'audio',None)
+        if self.audio is not None:
+            try:
+                self.beeps=sound.BeepGenerator(audio=self.audio,
+                                            settings=self.soundsettings)
+            except Exception as e:
+                log.info("No tone beeps in this transcriber: {}".format(e))
     def playbeeps(self,pitches):
         if self.beeps is None:
             log.info("No audio on this machine; can't play tone beeps.")
@@ -38,41 +61,58 @@ class Transcriber(ui.Frame):
     def configurebeeps(self,event=None):
         if self.beeps is None: # only reachable via the play button, which stays
             return             # hidden without beeps — but it's event-bound
-        def higher():
-            self.beeps.higher()
-            self.labelcompiled=False
-        def lower():
-            self.beeps.lower()
-            self.labelcompiled=False
-        def wider():
-            self.beeps.wider()
-            self.labelcompiled=False
-        def narrower():
-            self.beeps.narrower()
-            self.labelcompiled=False
-        def shorter():
-            self.beeps.shorter()
-            self.labelcompiled=False
-        def longer():
-            self.beeps.longer()
-            self.labelcompiled=False
+        def adjust(change):
+            """One setting: change it, HEAR it, and stay. Kent, 2026-09-22:
+            "clicking on a setting should change the setting, play at the
+            new settings, and leave the user able to continue modifying
+            settings." The staying is the menu's (`sticky=True`)."""
+            def run():
+                change()
+                self.labelcompiled=False        # the melody is recompiled
+                self.playbeeps(self.newname.get())
+            return run
+        # A PANEL AT THE POINTER, NOT A WINDOW AND NOT A MENU. Six actions on
+        # one button were a whole "Configure Tone Beeps" window — six buttons
+        # in the corner of an otherwise empty page, plus Quit (Kent,
+        # 2026-09-22: "this should be a context menu"); as six menu entries
+        # they were "a bit weird to have six one line options" for what is
+        # three binary settings. So: three rows, `-|pitch|+`, `-|L↔H|+`,
+        # `-|speed|+`, in a `ui.Popup` that stays through clicks on its own
+        # buttons and goes away on a click anywhere else, like a context
+        # menu. Each click changes the setting and plays the melody as it
+        # now sounds (`adjust`). Both backends provide `Popup`; the
+        # standalone run of this module (below, `__main__`) keeps working
+        # because nothing here needs an app: the parent is whatever window
+        # holds the transcriber.
         p=self.parent
-        while not (isinstance(p,ui.Window) or isinstance(p,ui.Root)): # windows need window parents
-            p=p.parent
-        w=ui.Window(p, title=_("Configure Tone Beeps"))
-        w.attributes("-topmost", True)
-        ui.Button(w.frame,text=_("pitch up"),cmd=higher,
-                        row=0,column=0)
-        ui.Button(w.frame,text=_("pitch down"),cmd=lower,
-                        row=1,column=0)
-        ui.Button(w.frame,text=_("more H-L difference"),cmd=wider,
-                        row=0,column=1)
-        ui.Button(w.frame,text=_("less H-L difference"),cmd=narrower,
-                        row=1,column=1)
-        ui.Button(w.frame,text=_("slower"),cmd=longer,
-                        row=2,column=0)
-        ui.Button(w.frame,text=_("faster"),cmd=shorter,
-                        row=2,column=1)
+        while not (isinstance(p,ui.Window) or isinstance(p,ui.Root)):
+            p=p.parent                # popups want a window parent
+        # tkinter's event carries screen coordinates (`x_root`); the webview
+        # one carries page coordinates as `x`/`y`, which is what its
+        # positioned element wants — the same resolution
+        # ui_webview.ContextMenu does.
+        x=getattr(event,'x_root',None) or getattr(event,'x',0) or 0
+        y=getattr(event,'y_root',None) or getattr(event,'y',0) or 0
+        pop=ui.Popup(p, x, y)
+        # A title row: an undecorated panel has no title bar, and this one
+        # is meant to be understood at a glance (Kent, 2026-09-22: "let's
+        # title the popup 'configure tone playback'").
+        ui.Label(pop,text=_("Tone Playback"),font='read',
+                 row=0,column=0,columnspan=3,sticky='ew',pady=4)
+        # "L↔H": U+2194 LEFT RIGHT ARROW, from the arrows block Charis covers
+        # in part (the app already shows ← from it). Confirm on a machine
+        # with `fc-list ':charset=2194' family | grep -i charis`; if Charis
+        # lacks it there, "L-H" is the one-character fallback.
+        rows=((_("pitch"), self.beeps.lower,    self.beeps.higher),
+              (_("L↔H"),   self.beeps.narrower, self.beeps.wider),
+              (_("speed"), self.beeps.longer,   self.beeps.shorter))
+        for r,(label,less,more) in enumerate(rows,start=1):
+            ui.Button(pop,text='-',cmd=adjust(less),font='read',
+                      row=r,column=0,sticky='ew')
+            ui.Label(pop,text=label,font='read',
+                     row=r,column=1,sticky='ew',padx=8)
+            ui.Button(pop,text='+',cmd=adjust(more),font='read',
+                      row=r,column=2,sticky='ew')
     def set_value(self,x):
         if str(x).isdigit():
             log.info(f"Not setting transcriber default value to '{x}' (was '{self.newname.get()}')")
@@ -85,27 +125,22 @@ class Transcriber(ui.Frame):
         self.namehash=ui.StringVar()
         self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
         # AUDIO HERE IS THE PROGRAM'S, NOT THIS WIDGET'S. SoundSettings owns the
-        # PyAudio handle (its confirm_pyaudio reuses program.pyaudio), so the
+        # audio handle (its confirm_audio reuses program.audio), so the
         # caller's settings object already carries the one to use. What was here
         # built a fresh AudioInterface for every Transcriber — a second handle
         # racing any stream an open Sound task already had (AUDIT_FINDINGS.md:354)
-        # — and its no-settings fallback, `SoundSettings(self.pyaudio)`, passed a
-        # PyAudio where the constructor wants `program`. That doesn't raise
+        # — and its no-settings fallback, `SoundSettings(self.audio)`, passed an
+        # audio handle where the constructor wants `program`. That doesn't raise
         # (`program` is only dereferenced in load/store_to_file), it silently
         # yields a THIRD handle and a second, never-persisted settings object
         # divergent from program.soundsettings. Callers hand us the singleton
         # (tasks/transcribe_glyph.py gets it from SoundSettings.ensure); with no
         # audio on this machine we simply have no beeps, which is a hidden play
         # button, not a traceback.
-        self.soundsettings=soundsettings
-        self.pyaudio=getattr(soundsettings,'pyaudio',None)
+        self.soundsettings=None
+        self.audio=None
         self.beeps=None
-        if self.pyaudio is not None:
-            try:
-                self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
-                                            settings=self.soundsettings)
-            except Exception as e:
-                log.info("No tone beeps in this transcriber: {}".format(e))
+        self.attach_sound(soundsettings)
         if 'chars' in kwargs and kwargs['chars'] and type(kwargs['chars']) is list:
             chars=kwargs.pop('chars')
             if len(chars)> 50:
@@ -195,6 +230,16 @@ class Transcriber(ui.Frame):
                                 row=1,column=0,sticky='new'
                                 )
         # fieldframe.grid_columnconfigure(0, weight=1)
+        # AND THE VARIABLE, not only the key. A character button inserts
+        # through the PAGE under webview (EntryField.insert at the caret), so
+        # the variable is written when the page reports back — after
+        # `addchar` has already called updatelabels() on the old text. Following
+        # the variable keeps the play button and the hash label current
+        # whichever way the text arrived; under tkinter it merely repeats the
+        # KeyRelease call, which is idempotent. `*a`: a tkinter trace passes
+        # (name, index, mode). Added HERE, after every widget updatelabels
+        # touches exists.
+        self.newname.trace_add('write', lambda *a: self.updatelabels())
         self.updatelabels()
 if __name__ == "__main__":
     try:
@@ -202,8 +247,45 @@ if __name__ == "__main__":
     except:
         def _(x):
             return x
-    r=ui.Root()
-    r.title(_('Transcriber'))
-    Transcriber(r,initval='˥˥ ˩˩ ˧˧',column=1,row=1)
-    r.deiconify()# soundsettings=sound.SoundSettings()
+    # REAL SETTINGS IF WE CAN GET THEM. Passing none left `soundsettings=None`
+    # → `self.beeps is None` → every audio path silently skipped, so running
+    # this alone could never have caught a beeps regression (2026-09-09). It
+    # stays optional: without settings you still get layout and typing, and
+    # the log says which you got.
+    # ONE dummy program, shared. Root makes its own when passed none, and then
+    # SoundSettings' handle would hang off a different object than the widgets'
+    # — harmless for a poke-at-it run, but confusing in the log.
+    from dummy import App
+    program=App()
+    soundsettings=None
+    try:
+        # `Languages(program)` and `SoundSettings(program, ...)` both need it:
+        # Languages assigns `program.languages=self`, and SoundSettings reaches
+        # for `program.audio`. My first version of this block passed neither
+        # and failed twice over (2026-09-09).
+        from backend import langtags
+        soundsettings=sound.SoundSettings(program,
+                    analang_obj=langtags.Languages(program).get_obj('tbt'))
+        log.info("standalone Transcriber: real sound settings, so the beeps "
+                 "should play (audio handle: {})".format(
+                                        getattr(soundsettings,'audio',None)))
+    except Exception as e:
+        log.info("standalone Transcriber: no sound settings ({}: {}), so no "
+                 "beeps; layout and typing still work.".format(
+                                                    type(e).__name__,e))
+    r=ui.Root(program)
+    # THE TRANSCRIBER GOES IN A WINDOW, NOT ON THE ROOT. Every backend
+    # withdraws its root for the whole session — tkinter always has, and
+    # ui_webview creates it `hidden=True` on purpose ("the root is never
+    # seen"), which on WebKitGTK is unmappable for good: show() never maps a
+    # window created hidden. So `--engine=gtk` gave NO WINDOW AT ALL, while
+    # `--engine=qt` worked, Qt being the engine that can show one (Kent
+    # 2026-09-09; the difference is measured in
+    # tests/manual/webview_multiwindow/platform_probe.py).
+    #   Root.deiconify() even warns about this — "root window was created
+    # hidden, so show() will probably not map it" appeared in both webview
+    # logs. It was right, and this is the caller it was talking about.
+    w=ui.Window(r,title=_('Transcriber'))
+    Transcriber(w.frame,initval='˥˥ ˩˩ ˧˧',soundsettings=soundsettings,column=1,row=1)
+    w.deiconify()   # the window, not the root
     r.mainloop()

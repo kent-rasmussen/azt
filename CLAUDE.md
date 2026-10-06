@@ -8,26 +8,21 @@ A-Z+T is a desktop GUI for linguistic fieldwork — sorting, transcribing, recor
 
 ## Running
 
-```bash
-# Activate the venv (Python 3.13, built from source at ~/IT/Python-3.13.7)
-source env/bin/activate
-
-# Run the app
-python main.py
-
-# Install dependencies (CPU-only torch)
-pip install -r requirements.txt
-```
+The user will manage running the program; switches are documented in --help.
 
 ## Testing
 
 A pytest suite lives in `tests/` (started 2026-06-06; see `tests/README.md`).
 
-```bash
-pip install -r requirements-dev.txt   # one-time: installs pytest
-pytest                                 # headless; no Tk display needed
-pytest -m "not integration"            # skip stubs awaiting fixtures
-```
+You write tests, the user runs them. If you want a test run, ask politely. You can find the most recent results 
+in pytest_results.txt in the repository root. That file has a timestamp on the top from when it ran, which can 
+be correlated with those found in logs.
+
+Careful, when writing tests, to not write scans that can't tell code from the prose describing it.
+
+The suite is headless by design — no display, no audio device, no files — so
+it runs on any of the three platforms. Tests that need something absent skip
+rather than fail.
 
 Coverage so far is guardrails + units: an **import smoke test** (every module
 must import; missing optional deps skip, real errors fail), a **`waiting()`
@@ -41,11 +36,14 @@ root. `test.py` (at the project root) is a scratch file, **not** part of the sui
 
 ### UI Backend Abstraction
 
-Consumer code imports `from frontend import ui`, which resolves to either `ui_tkinter` or `ui_webview` based on the `AZT_UI_BACKEND` env var (see `frontend/__init__.py`). Key pieces:
+Consumer code imports `from frontend import ui`, which resolves to either `ui_tkinter` or `ui_webview` based on 
+the `AZT_UI_BACKEND` env var (see `frontend/__init__.py`). Key pieces:
 
-- **`frontend/ui_interface.py`** — Abstract interface (ABC) defining the contract both backends must fulfill: constants (`END`, `INSERT`, `N`, `S`, etc.), Variable classes, and widget APIs.
+- **`frontend/ui_interface.py`** — Abstract interface (ABC) defining the contract both backends must fulfill: 
+  constants (`END`, `INSERT`, `N`, `S`, etc.), Variable classes, and widget APIs.
 - **`frontend/ui_tkinter.py`** — tkinter backend implementation.
-- **`frontend/ui_webview.py`** — pywebview backend (Phase 2–3 complete: Root, Window, Frame, Label, Button, Theme, Image, Renderer; remaining widgets are stubs).
+- **`frontend/ui_webview.py`** — pywebview backend (Phase 2–3 complete: Root, Window, Frame, Label, Button, Theme, Image, Renderer; 
+  remaining widgets are stubs).
 - **`frontend/ui_variables.py`** — Standalone `Variable`/`StringVar`/`IntVar`/`BooleanVar` classes (tkinter-free) for the webview backend.
 
 ### Task System (frontend/backend split)
@@ -90,7 +88,7 @@ Bidirectional `__getattr__` links them:
 - `TaskBase.__getattr__` delegates unknown attrs to `self.ui`
 - `TaskWindow.__getattr__` delegates unknown attrs to `self.task` (via `object.__getattribute__` to prevent recursion)
 
-The `tasks/ui_protocol.py` module defines `TaskUI`, the abstract interface that backend mixins use for UI operations (`show_run_window`, `hide`, `show`, `wait_for_window`, etc.).
+The `tasks/ui_protocol.py` module defines `TaskUI`, a semantic interface that backend mixins were *intended* to use for UI operations (`show_run_window`, `hide`, `show`, `wait_for_window`, etc.). **It is not adopted: nothing imports it.** Backend/tasks code instead calls the TaskWindow's Tk-shaped API through the `__getattr__` bridges above (`getrunwindow`, `withdraw`, `deiconify`, `wait_window`, `waitdone`, `runwindow.…`) — `drive_work` is the one member the two agree on. Finish-or-delete is an open decision, tracked on the agenda as the protocol's finish-or-kill item.
 
 Sound tasks use a mixin split: `backend/core/sound.py` (headless audio logic) and `tasks/sound.py` (UI task mixin inheriting from it + `frontend/sound_ui.py`).
 
@@ -150,7 +148,7 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
   - `sound.py` — Sound task UI mixin (bridges `backend/core/sound.py` + `frontend/sound_ui.py`).
   - `chooser.py` — `TaskChooser`: task selection logic, category lists. UI lives in TaskDressing.
   - `transcribe_glyph.py` — `GlyphTranscribeHelper`: shared glyph transcription UI for Transcribe and `name_new_glyphs`.
-  - `ui_protocol.py` — `TaskUI` abstract interface for task window operations.
+  - `ui_protocol.py` — `TaskUI`, a semantic task↔window interface. **Unadopted — imported by nothing**; see the protocol's finish-or-kill agenda item.
 - **`backend/core/`** — Domain logic (zero frontend imports):
   - `lexicon.py` — `Senses`, `Segments`, `WordCollection`, `Parse`, `Tone`.
   - `categories.py` — `Categories` mixin: group creation, renaming, reassignment, verification node manipulation. Inherited by both Sort and Transcribe.
@@ -159,7 +157,7 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
   - `analysis_inputs.py` — Analysis input data structures.
   - `alphabet.py` — `Alphabet`, `AlphabetChartData`, `AlphabetComparisonData`.
   - `vcs.py` — `Repository`, `Mercurial`, `Git`, `GitReadOnly`.
-  - `sound.py` — `Sound` headless mixin: PyAudio streams, audio card config.
+  - `sound.py` — `Sound` headless mixin: sounddevice streams, audio card config.
   - `profiles.py` — `ProfileAnalyzer`: syllable CV profile analysis (extracted from settings).
   - `templates.py` — `WordListTemplate`: CAWL wordlist template handling.
   - `report_mixins.py` — `Multislice` and report-related backend mixins.
@@ -172,10 +170,89 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
 ### Key Patterns
 
 - **`program` dict**: Created at `main.py:9`, threaded through most classes as `self.program`. Contains runtime config, flags, and references to major objects.
-- **Sound is optional**: `pyaudio`/sound imports are wrapped in try/except; `program['nosound']` gates audio features.
+- **Sound is optional**: `sounddevice`/sound imports are wrapped in try/except; `program['nosound']` gates audio features. (`sounddevice` replaced PyAudio 2026-09-09 — the PyAudio-to-sounddevice item.)
+
+## Shallow clones: widen the refspec before checking out a branch
+
+Clones are `--depth 1` by design (the install-procedure rework item). That
+implies `--single-branch`, so the clone's refspec covers ONLY the default
+branch and `git checkout testing` fails with "did not match any file(s) known
+to git" — no ref for it can ever arrive. The clone looks normal; it isn't.
+
+Whenever you need another branch in a shallow clone:
+
+```bash
+git remote set-branches --add origin <branch>   # config edit; downloads nothing
+git fetch --depth 1                             # branch TIPS only, still shallow
+git checkout <branch>
+```
+
+**Name the branches; don't use `'*'`.** For an installed copy the only two a
+user can reach are `main` and `program['testversionname']` (`'testing'`,
+`main.py:30`) — `vcs.py:1126` toggles between exactly those and nothing else.
+A `'*'` refspec would also pull every work branch on the remote, which no
+install has any use for. The macOS installer sets this up at clone time and
+reads the test-branch name out of `main.py` rather than hardcoding it.
+
+**In-app branch switching is already handled** and needs none of this:
+`backend/core/vcs.py::fetch_tracking_branch()` fetches
+`<branch>:refs/remotes/origin/<branch>` with an explicit refspec for exactly
+this reason (its docstring says so) — don't "fix" that by widening refspecs.
+
+### The branches you add are ISLANDS: never merge across them while shallow
+
+Both fetches above are `--depth 1`, so each branch arrives as a **lone tip
+with no parents**. `main` and `testing` share a root in the real repository;
+nothing in the clone proves it. Git cannot see a common ancestor it was never
+sent.
+
+So anything that MERGES across two of those branches fails with:
+
+```
+fatal: refusing to merge unrelated histories
+```
+
+and the message is misleading — the histories are perfectly related, they are
+just not both present. Suspected cause of a Windows `git pull` failure,
+2026-09-28 (Kent: *"I think it was on the wrong branch"*); the mechanism is
+certain, that this was the instance is not.
+
+**Checking a branch out is fine. Merging between them is not.** The usual way
+in is a plain `git pull` while standing on a branch other than the one being
+pulled, which is a merge whether or not it looks like one.
+
+**THE APP NEVER DOES THIS — the trap is for hand-git only.** Both of its
+switch paths are checkouts, and neither asks for a common ancestor:
+
+- `switchbranches()` (the developer publish loop) is a plain `checkout`. Git
+  refuses if uncommitted work would be clobbered, which is the honest answer
+  on a maintainer's machine.
+- `hard_checkout()` (the user-facing "Try testing version" / "Revert to main")
+  is `checkout -f -B <b> origin/<b>`, which CREATES OR RESETS the branch to
+  the start point. A reset needs no ancestry at all.
+
 
 ## Build Notes
 
-- Python 3.13 from a custom build (`~/IT/Python-3.13.7`), used via the `env/` virtualenv.
+- Python 3.13 from a custom build (`~/IT/Python-3.13.7`), used via the **suite** virtualenv
+  at `AZT/env/` — shared with the rest of the suite. There is **no `azt/env/`**; this file
+  said there was until 2026-09-04, which makes every `source env/bin/activate` line copied
+  out of it fail.
+- The venv has `include-system-site-packages = true` (set 2026-09-05 in
+  `AZT/env/pyvenv.cfg`) so it can import apt-installed bindings — specifically `gi`, which
+  pip cannot supply and which pywebview's GTK backend needs. Before that, `gi` was
+  invisible no matter how many `gir1.2-*` packages were installed, and the webview backend
+  fell back to Qt.
+  - Consequence worth knowing: system site-packages are a **fallback**, not an override —
+    the venv's own packages still win — but a module that is absent from the venv will now
+    resolve to the system copy instead of failing. If a suite app starts importing
+    something nobody pinned, this is why.
+  - pywebview's GTK backend wants **Gtk 3.0** and **WebKit2 4.1** (`gi.require_version` in
+    `webview/platforms/gtk.py`): `gir1.2-gtk-3.0`, `gir1.2-webkit2-4.1`, `gir1.2-soup-3.0`.
+    `gir1.2-gtk-4.0` does nothing for it.
 - PyTorch is CPU-only (`torch==2.7.1+cpu` via `--extra-index-url`).
-- PyAudio requires system `portaudio` headers (`sudo apt install portaudio19-dev`).
+- Sound needs the PortAudio **runtime** library only: `sudo apt install libportaudio2`.
+  No compiler and no headers — `sounddevice` binds it at runtime via cffi. This said
+  `PyAudio requires system portaudio headers (portaudio19-dev)` until 2026-09-11; that
+  was true of PyAudio, which is gone (the PyAudio-to-sounddevice item). `-dev` still
+  works, since it depends on `libportaudio2`, so machines set up the old way are fine.

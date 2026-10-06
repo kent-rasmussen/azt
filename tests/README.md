@@ -49,6 +49,18 @@ create a Tk root. (Tests that would need a live display should be marked
 - **For UI logic**, prefer testing the real method with a fake `self` (as
   `test_waiting_contract.py` does) over standing up a Tk root.
 
+## Manual tests — `tests/manual/`
+
+Things a **human** runs and judges, which no assertion can decide. Not collected
+by pytest (no `test_` prefix), no dependencies, and they ship in the repo so a
+machine that has only done `git pull` can run them.
+
+| Folder | Run it | Answers |
+|---|---|---|
+| `manual/keyman_input_check/` | double-click `run_edge.cmd` (nothing to install), or `python run_pywebview.py` | Does **Keyman** type *consistently* into a browser engine, as it already does into tkinter? Type your own orthography, record a line, type it again — identical typing must give identical codepoints. See its `README.md`; it is the first gate of the webview-when-to-finish item. **Run 2026-09-04: passed on Windows** (verbal, no report; the `textarea` box records on Shift+Enter and is still untested). |
+| `manual/webview_multiwindow/` | `python platform_probe.py` (also `two_windows.py`, `hide_show.py`) | Does this platform's webview support the windows A-Z+T needs — created-hidden then `show()`, hide/show round trips, `resize()`, and `destroy()` without taking the process with it? Drives each step from Python and draws a PASS/FAIL table **in the page**, so a machine that can't paste text still reports by photograph. Known: Linux/GTK fails created-hidden; Qt segfaults on destroy; **EdgeChromium (Windows) untested** — see the webview-when-to-finish item. |
+| `manual/tone_feature_check/` | double-click `run_edge.cmd`, or `python run_pywebview.py`; baseline via `python render_pil_baseline.py` | Can a browser render **tone letters** as the app must — joined into contours, and staveless where wanted (`cv92`)? The second gate of the webview-when-to-finish item, and the one with a **real kill condition**: if adjacent tone letters don't join, `cv92` doesn't hide staves, and a dropped `-tstv` file doesn't either, tone pages cannot be ported. Also carries a mm/inch ruler and `devicePixelRatio`, which answers the DPI question in the same pass. |
+
 ## Conventions
 
 - `conftest.py` puts `azt/` on `sys.path` so `import backend…` works from anywhere.

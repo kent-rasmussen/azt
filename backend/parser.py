@@ -52,7 +52,11 @@ class AffixCollector(object):
                 self.catalog.addparsed(sensenode.get('id'))
             rtodo=len(results)
             for nr,r in enumerate(results):
-                self.catalog.addaffixset((ps,ofromstr(r.get('value'))))
+                # affixset_from_str, not ofromstr: reads BOTH the new JSON and the
+                # older str(tuple) values still in field lexicons, and returns
+                # tuples either way — the Catalog uses this as a Counter key.
+                self.catalog.addaffixset((ps,
+                                    affixset_from_str(r.get('value'))))
                 # log.info("ps progress: {} ({}/{})".format(100*n/pstodo,n,pstodo))
                 # log.info("results progress: {} ({}/{})"
                 #         "".format(100*nr/rtodo/pstodo,nr,rtodo))
@@ -66,8 +70,24 @@ class AffixCollector(object):
         self.catalog=catalog
         log.info("Looking in LIFT file for data")
         if kwargs.get('loadfromlift'):
+            # A `print()` PER YIELD WAS THE COST HERE. `getfromlift` yields a
+            # percentage for every inflection-class trait in the file — one
+            # per sense per part of speech — and each one was printed to
+            # stdout. Under `python -u`, which is how this gets run while
+            # testing, stdout is UNBUFFERED: that is one write syscall per
+            # yield, thousands of them, and the terminal has to render each.
+            # Nothing consumed the output; it was a debug print left in a hot
+            # loop, and it is the only obvious cost in that loop (Kent,
+            # 2026-09-16: "perhaps we also want to understand why the parser
+            # takes so long to load").
+            #   The progress is worth HAVING, though — this is what the
+            # "Loading Affixes" wait dialog is waiting on — so a caller can
+            # pass `progress=` and get it, which is what a progress bar
+            # wants. No callback, no cost.
+            progress = kwargs.get('progress')
             for i in self.getfromlift():
-                print(i)
+                if progress is not None:
+                    progress(i)
         self.catalog.report()
         # self.do()
 class Catalog(object):
@@ -244,7 +264,10 @@ class Engine(object):
                 "".format(root,ps,afxtuple))
         self.entry.lx.textvaluebylang(self.analang,root)
         self.sense.psvalue(ps)
-        self.sense.pssubclassvalue(afxtuple)
+        # SERIALISE HERE, don't hand a Python object to the LIFT layer: this call
+        # used to pass the tuple straight through to maketraitnode's str(), which
+        # is how a repr — quotes and all — became lexicon data (Kent 2026-08-26).
+        self.sense.pssubclassvalue(affixset_to_str(afxtuple))
         self.addaffixset(ps,afxtuple)
         self.catalog.affixesbyform()
     def getfields(self):

@@ -5,14 +5,15 @@ from utilities import logsetup,file
 log=logsetup.getlog(__name__)
 
 from utilities.error_handler import notify_error as ErrorNotice
+from utilities.error_handler import notify_user as NotifyUser
 
 from backend.core.sorting_engine import Sort
 
 def chart_example_rank(cls, glyph, keys):
     """Rank a candidate example word for `glyph` (class 'C' or 'V') from its
     verified segment keys (getcvverificationkeys actualkeys, e.g.
-    {'C1':'b','V1':'a','C1=C2':'g'}), per Kent's DECIDED rule (agenda
-    default_image_page_ordering, 2026-07-11):
+    {'C1':'b','V1':'a','C1=C2':'g'}), per Kent's DECIDED rule (the
+    default-image-page-ordering item, 2026-07-11):
       0 — the glyph is the ONLY distinct segment of its class in the word
           (all C slots == the glyph for a C-glyph; e.g. CVCV with C1=C2);
       1 — else the glyph is word-initial for its class (C1 / V1);
@@ -431,7 +432,7 @@ class Alphabet():
                 uri=s.illustrationURI(local_only=True) #images are data
                 if not (uri and file.exists(uri)):
                     continue
-                counts,keys=s.getcvverificationkeys(self.ftype)
+                counts,keys=s.getcvverificationkeys(self.program.params.ftype())
             except Exception:
                 continue
             ranked.append((chart_example_rank(cls,g,keys),i,s.id))
@@ -522,7 +523,7 @@ class Alphabet():
     def verificationcode(self,**kwargs):
         ps=kwargs.get('ps',self.program.slices.ps())
         profile=kwargs.get('profile',self.program.slices.profile())
-        ftype=kwargs.get('ftype',self.ftype)
+        ftype=kwargs.get('ftype',self.program.params.ftype())
         check=kwargs.get('check',self.program.params.check())
         group=kwargs.get('group',self.program.status.group())
         return '_'.join([ps,profile,ftype,check,group])
@@ -533,7 +534,7 @@ class Alphabet():
     def refresh_items(self):
         self.items_present=set()
         self.items_existing=set()
-        k={'ftype':self.ftype} #ftype may need to iterate some day
+        k={'ftype':self.program.params.ftype()} #ftype may need to iterate some day
         for _ in self.program.settings.reloadstatusdata():
             pass
         self.program.settings.reloadstatusdata_cleanup() # culled here
@@ -661,8 +662,16 @@ class Alphabet():
         self.refresh_items()
         self.prune_empty_glyph_members()  # drop groups emptied by profile-unsort
         self.kick_conflicting_glyph_members()  # un-glyph same-slice conflicts (→ re-sort)
+        # ONE SET, BUILT ONCE. This flattened every glyph's members into a
+        # fresh LIST inside the loop — so `glyph_members()` was called and
+        # the whole structure rebuilt for every item present, and then
+        # scanned linearly to answer one membership question. Same shape as
+        # `getcawlmissing` and the two comprehensions fixed with it
+        # (the rescan-instead-of-grouping item); nothing in the loop body
+        # changes glyph_members, so hoisting it is behaviour-preserving.
+        glyphed={i for j in self.glyph_members().values() for i in j}
         for item in self.items_present_in_cvt(cvt):
-            if item in [i for j in self.glyph_members().values() for i in j]:
+            if item in glyphed:
                 self._itemsmacrosorted.add(item)
             else:
                 self._itemstomacrosort.add(item)
@@ -730,9 +739,14 @@ class Alphabet():
                 "so I’m going to ask you to consider joining them now.")
             else:
                 text=''
-            ErrorNotice(_("Removing {items} from ‘{glyph}’ to make room for {new}{text}"
-                        ).format(items=conflicts,glyph=glyph,new=item,text=text),
-                                wait=True)
+            # NotifyUser, not ErrorNotice: this REPORTS what was done — the
+            # removal happens either way, three lines below — so there is nothing
+            # for the user to decide and no reason to block them mid-macrosort
+            # (missed in the 2026-08-01 ErrorNotice→NotifyUser pass; Kent
+            # 2026-08-24). The recurring-conflict sentence still earns its place,
+            # it just doesn't need a modal to carry it.
+            NotifyUser(_("Removing {items} from ‘{glyph}’ to make room for {new}{text}"
+                        ).format(items=conflicts,glyph=glyph,new=item,text=text))
         for i in conflicts:
             self.remove_item_from_glyph(i)
         return recurring_conflicts
@@ -810,7 +824,6 @@ class Alphabet():
     def __init__(self, program):
         self.program=program
         self.program.alphabet=self
-        self.ftype=self.program.params.ftype()
         self.program.settings.settingsobjects() #should do this more; can be redone!
         # self.renew_items_tomacrosort() #if needed, run then, with cvt
         # Defense-in-depth (2026-07-11 data wipe): NEVER let the init-time
@@ -824,6 +837,18 @@ class Alphabet():
                      "(protects any on-disk alphabet data)")
         self.conflicts={} #keep track of what has been kicked out of a group before
         self.unsorted={}
+
+class NoAlphabetData(Exception):
+    """No glyphs recorded for this language yet, so there is no chart to make.
+
+    A TYPED REFUSAL, NOT A KeyError. The caller needs to tell the user
+    something useful and go back, and it cannot do that from a bare subscript
+    failing three frames down. Carries the language so the message can name
+    it."""
+    def __init__(self, analang):
+        self.analang = analang
+        super().__init__("no alphabet data for {!r}".format(analang))
+
 
 class AlphabetChartData:
     """Backend data/logic mixin for alphabet chart. No UI imports."""
@@ -875,7 +900,17 @@ class AlphabetChartData:
         log.info(f"using {self.imgdir=}")
         if not self.order:
             log.info(f"No alphabetical order found; using all known glyphs")
-            self.order = [str(i) for j in self.db.s[self.db.analang].values() for i in j]
+            # A LANGUAGE WITH NO DATA IS NOT A CRASH. `db.s` is keyed by
+            # analang and has no entry until something has been entered for
+            # it, so this was `KeyError: 'nm1'` out of a bare subscript —
+            # a traceback on the way into the Alphabet Chart, on a new
+            # project, on Windows (Kim, 2026-09-24). The key being absent and
+            # the key being empty mean the same thing here, so both take the
+            # same road.
+            glyphs = self.db.s.get(self.db.analang) or {}
+            if not glyphs:
+                raise NoAlphabetData(self.db.analang)
+            self.order = [str(i) for j in glyphs.values() for i in j]
             self.order.sort()
         if hasattr(self.program, 'alphabet'):
             gd = {str(i) for j in self.program.alphabet.glyphdict().values() for i in j}
@@ -884,7 +919,7 @@ class AlphabetChartData:
                       if i not in ['NA']]
         log.info(f"Using this alphabetical order: {self.order}")
         log.info(f"Using these exids: {self.exids}")
-        # DEFAULTS (Kent 2026-07-11, agenda default_image_page_ordering): a
+        # DEFAULTS (Kent 2026-07-11, the default-image-page-ordering item): a
         # NEW chart opens with every glyph's example ALREADY SET to a pictured
         # word — fill ONLY empty slots; a user's saved choice is never
         # overwritten. Rule: glyph-is-the-only-C/V-in-the-word first, then
@@ -1018,7 +1053,7 @@ class AlphabetComparisonData:
         self.vowels = list(glyphdict['V'])
         self.consonants = list(glyphdict['C'])
         self.settings = self.load_settings()
-        # DEFAULTS (Kent 2026-07-11, agenda default_image_page_ordering): an
+        # DEFAULTS (Kent 2026-07-11, the default-image-page-ordering item): an
         # unsaved booklet opens with the page order proposed ('a' first, then
         # vowels in facing similar-pairs by frequency, then consonants) and
         # each page's THREE examples pre-picked by the same ranking as the

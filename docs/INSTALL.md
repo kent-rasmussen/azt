@@ -23,20 +23,24 @@ If you download an archive (e.g., zip file), extract it so you have a folder of 
 
 ### Installation on Ubuntu Linux
 This should get you all the necessary packages: `sudo apt-get install python3-tk python3-pip portaudio19-dev` (add optional texlive-xetex below)
-Then this will get you the needed python modules: `python3 -m pip install pyaudio tkinter lxml Pillow` The last two are not necessary, but helpful, and not much extra to do at this point.
+You do not need to install python modules by hand. A-Z+T builds its own environment on first run and installs everything from `requirements.txt` into it. (This line used to read `python3 -m pip install pyaudio tkinter lxml Pillow`, which no longer works: PyAudio was replaced by `sounddevice`, and `tkinter` is not a pip package at all — it comes with Python, or on Ubuntu from `sudo apt install python3-tk`.)
 
 ### Installation on Microsoft Windows
 - **Be sure to check "add to PATH"** (or whatever options are appropriate), so Windows knows where Python is installed. If you miss this step, [A-Z+T] will not work:
 
 ![Add Python to Path](images/Python_path.png "Add Python to Path")
 
-For some reason, I have had trouble getting pyaudio installed on Windows machines with certain versions of Python. You may have better mileage than I. In any case, I have found that it works smoothly to download and install Python 3.12.4 (e.g., from [here](https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe)).
+Install Python **3.13** from [here](https://www.python.org/downloads/latest/python3.13/), which always offers the current 3.13 release; take the "Windows installer (64-bit)" download. A-Z+T needs 3.10 or newer, and **not 3.14**, which one of its components has no build for yet.
+
+> This paragraph used to recommend one exact version, 3.12.4, because of trouble installing PyAudio on Windows. Both halves are gone: PyAudio was replaced by `sounddevice` in 2026, which needs no compiler on any platform, and that fixed download link stopped working, which left people stuck at the very first step.
 
 ## Dependencies
 - Depending on how Python is installed on your system, you may also need
     - `tkinter`. On Ubuntu, `sudo apt-get install python3-tk` is sufficient to do this.
     - `pip`. On Ubuntu, `sudo apt-get install python3-pip` is sufficient to do this.
-- [PyAudio](https://pypi.org/project/PyAudio/): to install, run `python -m pip install pyaudio` in a terminal (e.g., `⊞ win`+`R` then type 'cmd' in Windows).
+- **Sound.** A-Z+T installs what it needs itself, from `requirements.txt`; there is nothing to install by hand. On **Linux only**, one system package is required because the wheel does not bundle it: `sudo apt install libportaudio2` (the runtime library, *not* `portaudio19-dev`, and no compiler). Windows and macOS need nothing.
+
+  > PyAudio used to be listed here, with `python -m pip install pyaudio`. It was replaced by `sounddevice` in 2026 and that instruction no longer works: PyAudio published Windows wheels only, so Linux and macOS had to build it from source, which is why this page once told people to install compilers and pick particular Python versions.
     - On Windows, if the above gives you problems, it may work to do the following:
         - `python -m pip install pipwin`
         - `pipwin install pyaudio`

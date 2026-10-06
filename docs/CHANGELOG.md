@@ -19,6 +19,4535 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.49
+
+**`buttoncolumns` worked all along — on the next task open.** Reported
+2026-07-31 as "the buttons parameter doesn't work, the one that puts buttons
+in 1, 2, or 3 columns", open for two months, and the reason it stayed open
+is that the report and the code disagreed about what "doesn't work" meant.
+Kent's test, 2026-09-30: no change on the open page, correct after leaving
+the task and coming back. *"buttoncolumns doesn't apply until you leave the
+task and return, so this was not obvious to test."* From the user's chair
+that is indistinguishable from a dead setting — worse, because the effect
+turns up later attached to no cause.
+
+**The cause is a copy nobody can see at the call site.**
+`TaskDressing.inherittaskattrs` (`ui_shell.py:3227`) copies `buttoncolumns`
+off `program.settings` onto the task window — "Make these directly
+available" — when the WINDOW is built. `SortButtonFrame.__init__` reads
+`self.task.buttoncolumns`, which resolves through the task→window bridge to
+that copy, not to the setting; so does `Sort`'s own `self.buttoncolumns`
+(`sorting_engine.py:208`, `:2028`). Nothing about the spelling
+`self.buttoncolumns` suggests a snapshot on a window two bridges away.
+
+That also explains the part that looked contradictory: the run window and
+its button frame are rebuilt on every sort cycle — Kent's log shows run
+window 163 destroyed and rebuilt, then 272, then 375 — and **every rebuild
+re-read the stale copy**. Only building a new task window refreshed it.
+
+Two changes, for the two cases:
+
+- `setbuttoncolumns` refreshes the window's copy as well as the setting, so
+  every later reader — each rebuilt frame included — sees the new value.
+- `SortButtonFrame` keeps a registry of live frames and re-lays them in
+  place, for buttons already on screen. The sweep is
+  `regrid_group_buttons`, extracted unchanged from `removegroupbutton`,
+  which needed the identical operation; macrosort and verify frames are
+  pinned at one column deliberately and are skipped, which
+  `_columns_from_setting` records at build time rather than re-deriving.
+
+**STATE OF THIS, PLAINLY.** The first change was proven NOT to fix it: the
+log read `button columns set to 1; re-laid 0 sort button frame(s)`, because
+at that moment the run window had already died and the frame built
+afterwards read the stale copy again. The second change was never run.
+Closed on Kent's call (*"4 is done, then"*) — **"done" here means closed,
+not seen working**, and the item says so too.
+
+**The structural cause is open as its own item:** settings copied onto
+windows with nothing keeping them in step. `glosslangs` is copied by the same
+line, onto pages that stay open while settings change, and the decision —
+delete the copies, or define what refreshes them — has not been made.
+
+`tests/test_buttoncolumns_reaches_the_page.py`: the row/column maths, the
+already-in-place skip, zero and junk column counts, the macrosort pin, dead
+frames pruned from the registry, and a guard that fails if
+`inherittaskattrs` ever stops copying `buttoncolumns` — at which point the
+setter's refresh becomes dead code and should go with it.
+
+# Version 1.15.48
+
+**A fit that measured nothing cost three log lines and poisoned the next
+one.** The splash reads `0x0` on its first fit and `10x10` when it is
+re-shown after `usbcheck` — the page genuinely has nothing in it at that
+moment — and each printed a count line, a detail line and the floor's own
+"not resizing" line, and was then REMEMBERED, so the next real fit reported
+a spurious `CHANGED … by +970x+742` against it.
+
+A measurement of nothing now prints one line saying so and is not kept, so
+the following fit compares against the last real measurement. The floor
+already declines to resize and says why, which is the part worth logging.
+The threshold is deliberately tiny (10px): 251x77 is a real window in this
+app and must still be measured, compared and reported.
+
+**Not yet seen in a run** — it is a logging change, so the next webview log
+confirms it.
+
+**Also closed with this bump: the webview window-sizing item**, on Kent's
+check of the last thing outstanding in it (*"tabs look fine"*) — the task
+chooser's tab strip, looked at after the content-measurement fix had made
+every window smaller, which is the condition most likely to expose the
+clipping that was seen on macOS. Not proven on macOS itself.
+
+# Version 1.15.47
+
+**The fit measured its two numbers in two different layouts — which is the
+227x95 discrepancy, unexplained since 2026-09-15.**
+
+The probe returns the larger of two measurements: `#root`'s own
+scroll/bounding size, and the union of its children's boxes (a floor, for a
+page whose root does not shrink-wrap). The `wv-measuring` class — which
+releases the container chain to `max-content` so the content can state its
+own size — was added before the first and **removed three lines later,
+before the second**. So the probe measured released content while the union
+measured the page laid out for READING, where a frame legitimately fills the
+window it is in. `max()` then took the union, and the fit handed the window
+its own height back as the size its content "needed": a measurement that can
+never shrink, because it is reading the thing being computed.
+
+The item recorded the symptom and could not find it: *"`.wv-measuring`
+produces a layout ~227x95 smaller than the one the user gets, and reading
+the CSS has not said why."* The CSS was right. The class was off.
+
+**Found from Kent's screenshot of the Update (Git) output window** — text in
+the top third, the rest empty. Window 174 in the log: `probe 510x496` beside
+`tallest wv-frame[510x600 at 145,0]` in an 800x600 client, then
+`[510x628 at 87,0]` once the window was 628. The frame tracked the viewport
+exactly, both times, while the content wanted 496.
+
+The class now comes off after the union, the widest/tallest/leaf picks and
+the displacement check, so every number and every box the log prints
+describes one layout.
+
+**CONFIRMED, and the windows are markedly smaller** (Kent: *"I think this is
+done"*):
+
+| window | before | after |
+|---|---|---|
+| LiftChooser | 951x600 → 965x628 | 951x514, SAME on refit |
+| task window | 931x1051 → 945x1079 → 938x1079 | 931x713, SAME across three fits |
+| Update (Git) notice | 510x496 → 597x628 | 510x256, grown to 510x286 |
+
+Every window reports `SAME` on re-fit. The one `content overflows by 0x30;
+growing to 510x286 (1 of 3)` is `_grow_if_overflowing` working as designed:
+a released layout does not wrap and a displayed one does, so the measurement
+was 30 short and the DISPLAYED page corrected it in a single bounded pass.
+That is the right way round — the prediction is checked against what
+happened.
+
+**Also in this bump:** the French update notice said `(Forteresse {name}
+pour utiliser cette mise à jour)` — "Restart" translated as *fortress*. Kent
+asked whether it was an old report; it was live at
+`translations/fr_FR/LC_MESSAGES/azt.po:190`, and it was the only bad one —
+every other `Restart` in that file was already `redémarrer`. Now
+`(Redémarrer {name} …)`, matching the infinitive of the `Redémarrer
+maintenant` button beside it. **The `.mo` still needs compiling** for it to
+reach a user (`msgfmt` — the workflow's compile step is commented out, so
+those are committed by hand), and if Crowdin owns these strings it wants
+fixing there too.
+
+**Unchanged and known:** the splash measures `0x0` on its first fit and
+`10x10` when re-shown after `usbcheck`; the `_FIT_MIN` floor declines both.
+
+# Version 1.15.46
+
+**The webview fit no longer grows by 28px every time you ask it.** Two
+independent faults that were harmless apart and a ratchet together.
+
+**The measurement, made legible first.** Plan 2 of the window-sizing item
+asked to "log every call with its trigger and make a second fit on the same
+content idempotent", and the first half had to come first: the trigger was
+logged when the fit was REQUESTED and the measurement three lines later,
+with other windows' lines in between, so on a real log nobody could say
+which trigger produced which number. Each fit now logs one line carrying the
+count, the trigger and a verdict against the previous measurement —
+`fit #3 by double-click measured 952x1107 — CHANGED from fit #2 (content
+built) 945x1079, by +7x+28`. The trigger is recorded on the window when the
+fit is asked for, and the page-load fit (which does not go through
+`_request_refit`, having nothing to coalesce) names itself rather than
+logging "unknown" — it is the one fit that runs before any resize, so it is
+the only one using the chrome GUESS.
+
+That immediately showed the fault, on Kent's run: window 47, two
+double-clicks with NO rebuild between them, 1051 → 1079 → 1107 → 1135.
+Width converged (+14, +7, +4); height grew by exactly `_FIT_PAD` every time.
+
+**Fault 1 — `pad = max(guess, learned)` (`ui_webview.py`).** The fit learns
+its real chrome from the last resize (`asked - client`) and logged *"window
+chrome measures 0x0 … using it instead of the 28px guess"* — while `max()`
+kept the guess, because the learned value is SMALLER. On client-side
+decorations it is always 0x0: the client area is exactly what we asked for.
+So the log asserted an action the code did not take, which is this port's
+recurring bug class. It now replaces the guess. The scrollbar half of the
+old allowance is given up deliberately: `_grow_if_overflowing` asks the
+DISPLAYED page whether it overflows and grows by the shortfall, so a page
+that needs one is corrected from what happened rather than from an allowance
+every other window carries.
+
+**Fault 2 — a grid item stretched to the window was measured as content
+(`grid.css`).** `html.wv-measuring` releases `#root`, `.wv-window`,
+`.wv-container`, `html` and `body` to `max-content`, but releasing a
+CONTAINER does not stop a grid ITEM stretching to fill its track —
+`align-self`'s default, and the block axis only. Window 21's second fit:
+`probe 970x742, client 1088x849`, measured 844, `tallest DIV.wv-widget
+wv-frame[960x839 at 64,5]` — 5+839=844 in an 849 client, while that frame's
+own children ended at 791. Fifty-three pixels of stretch counted as content.
+So the measurement read the window's height back to us, and adding any pad
+grew it forever. `html.wv-measuring .wv-widget { align-self: start }`.
+
+This is the rule at the top of that item — measure against something that
+cannot change as a result of the measurement — and the block axis was the
+last place breaking it. Width is untouched: it has always been definite and
+already converged.
+
+**CONFIRMED on the same page that failed** (Kent: *"pages look right"*):
+
+    fit #2 by content built  945x1079
+    fit #3 by double-click   938x1079   -7x+0
+    fit #4 by double-click   938x1079   SAME as fit #3
+
+and across four tab switches, `-27x+0`, `+196x+180`, `-118x+0`, `-32x+0` —
+height stable except where the tab really is taller, and width now SHRINKING
+toward content, which the fit advertised and could not do before. No
+`content overflows by …` anywhere in the run, so nothing measured short and
+needed rescuing — the one failure direction the `align-self` change could
+have caused.
+
+**Known and left:** the splash measures `0x0` on its first fit and `10x10`
+when re-shown after `usbcheck`; the `_FIT_MIN` floor catches both and
+declines to resize, and the same window read 1060x821 on an earlier run, so
+its first measurement is simply unstable. Noise in the log, not a sizing
+fault. Still unexplained in that item: the ~227x95 gap between
+`.wv-measuring` and the drawn page, which may or may not be a relative of
+this.
+
+# Version 1.15.45
+
+**The second-form flags audit is closed** (Kent: *"verify 5, 6 and 8, all is
+done"*). Eight plans, filed 2026-09-17 from the question "what is current
+usage, across all tasks? is the distinction warranted, and if so where?"
+
+Confirmed with this bump:
+
+- **Plan 5 — check names follow the field.** `pl`/`imp` checks are built only
+  when their field is named (no more literal "Whole None Word Syllable
+  Profile" offered as a choice), and naming or renaming a field rebuilds
+  `_checknames`, `_checkcodes_by_cvt` and `_cvchecknames` together. The CODE
+  never changes with a rename, which is what makes it safe — stored
+  verification codes key on the code.
+- **Plan 6 — the word check drives the form on the syllable sort.** Its shape
+  changed twice while building: ftype was moved out of the check slot and
+  back into it, ending where it started (`checks()` for cvt `S` is
+  `[params.ftype()]`), with `makecheckok` realigning the check when the form
+  changes and chaining into `makegroupok`. Kent settled it: *"ftype is fine
+  for this, since we're talking about whole word checks"* — and the stored
+  form is the evidence, `<annotation name="lc" value="CV"/>` with
+  `['lc=CV']` inside `<field type="C_1_V lc verification">`.
+- **Plan 8 — the stored `<unset>` is scrubbed on load.** `<unset>` is what the
+  status line SHOWS when a second-form field has no value, and the free-text
+  field committed it to `project.json` as `"Verb": "<unset>"` (Kent,
+  2026-09-17: *"is that going to get us into trouble?"*). The setter's
+  refusal could not reach a file already written, so `readsettingsdict` now
+  routes `secondformfield` through `Settings.load_second_form_fields`, which
+  applies the same predicate on the way in.
+
+  **Dropped, not blanked.** `parser.pscheck` treats the dict's KEYS as the
+  set of legal parts of speech, so an entry left behind with a blank value
+  tells it "this ps is configured" while telling `secondformfieldset`
+  "unset" — the split that fooled three consumers at once. Without the key,
+  `secondformfields` falls through to `guess_*_secondformfield`, which is
+  what an unanswered field has always done. Nothing is lost: the gate
+  already read the placeholder as unset, so such a project was being asked
+  for the field anyway. What it stops is the placeholder reaching LIFT as a
+  field NAME — Parse indexes the dict directly, so it would have asked "what
+  is the `<unset>` of x?" and written the answer into a field called
+  `<unset>`.
+
+  New: `tests/test_second_form_unset_scrub.py`.
+
+**What the audit changed overall.** `show_second_fields` on `Segments` drew
+the second-form line for eleven task families and was read by two; it is now
+`whole_word_checks` on `WordCollection` and `Syllables` alone, with
+`uses_second_forms` meaning the different thing it always should have ("this
+task dies without the field") and belonging to Parse. The `Sort.runcheck`
+gate — wired to the tasks that did not need it and absent from the ones that
+did, so it could not fire in either direction — is gone, replaced by three
+escalating cancellable asks on the Parse page. Four word-collection classes
+and their base collapsed into one task with a form chooser (Kent: *"I think
+that was the original intent, and still makes sense, for at least some
+users"*), and eight dead second-form dialogs went with them, closing the
+`lexicon_bare_after_nameerror` item on the way.
+
+**Left open, noted on the item and not in this bump:** segmental status nodes
+are keyed without a form while their membership is now form-dependent, so a
+second form that gets profiled would read the other form's progress as its
+own. See 1.15.44 for the half of that which already bit.
+
+# Version 1.15.44
+
+**The profile picture follows the chosen word form — and switching forms no
+longer destroys the status built under another one.**
+
+Two halves, the second caused by the first.
+
+**1. `load_ps_profiles` takes the form it is meant to read.** Every CV profile
+in the slice dicts comes off a `cvprofile_<ftype>` field, but three sites in
+`io_put/lift.py` had the form wired to `'lc'`: `slicebyps_profile` called
+`cvprofilevalue()` on its default, and `annotation_values_by_ps_profile`
+passed the literal `'lc'` twice. So the rebuild that a form change triggers
+rebuilt the citation picture whatever the user picked, which made
+`Sort.reload_for_word_check` a no-op BY CONSTRUCTION — the chooser moved and
+the board did not change. Kent: *"So the reload happens, but no idea what it
+did. looks like it returned the same data."*
+
+`slicebyps_profile`, `get_ps_profiles`, `load_ps_profiles` and
+`annotation_values_by_ps_profile` now take an `ftype`; `'lc'` survives only as
+the default, for LIFT load, before `params` exists. Callers that know the live
+form pass `params.ftype()`: `generate_status_by_annotations` (for both the
+annotation values and `verified_groups_by_ps_profile`), `reloadstatusdata`,
+`Sort.reload_for_word_check`, `SortSyllables.reload_for_word_check` and
+`ProfileAnalyzer.rebuild_slices`, which gained the same `ftype or
+params.ftype()` resolution every other method in that module already had.
+
+**Only `lc` has ever been profiled, so another form shows a near-empty board
+until it is profiled.** That is the intended answer, confirmed before
+building (Kent: *"near-emtpy: yes, that's what I expecte"* — and, on leaving
+the dead `verification_values_by_ps_profile` hardcoded for a later pass,
+*"truth is truth"*). Showing citation data under a Root heading is the
+alternative, and it is a lie.
+
+**2. AND THAT EXPOSED A DATA-INTEGRITY BUG, found by Kent on the first run:**
+*"the reload brought us to an empty status table, but returning to Citation
+didn't give us back our data. not sure if there was a wipe of actual data, or
+something else."*
+
+`reload_for_word_check` ends in `maybeboard()`, which calls
+`StatusDict.cull()`. Cull's membership sweep deletes a profile node when the
+profile is absent from `db.ps_profiles[ps]` — and an unprofiled form leaves
+every ps key present with an EMPTY set, so it read "no member words" for
+every profile and deleted all of them. Returning to Citation rebuilt the
+slices; the nodes were already gone.
+
+Segmental status nodes are keyed `(cvt, ps, profile, check)` — **the form is
+not in the key** — while their `profile` membership is now form-dependent.
+Two places read `ps_profiles` as ground truth and both now require POSITIVE
+evidence before destroying anything:
+
+- `cull()` skips the sweep when `ps_profiles[ps]` is empty. An empty set is no
+  information, not "no members" — the same reasoning as the `is not None`
+  test already beside it. A populated picture still culls a genuinely absent
+  profile, so the sweep keeps working.
+- `reloadstatusdata` refuses to run when no word carries a profile for the
+  live form, and logs why. It clears every group BEFORE rebuilding, so on a
+  form with nothing to rebuild from the clear would have stood alone. This
+  exposure was introduced by half 1 above, an hour earlier the same day.
+
+**No LIFT data was involved.** Nothing on that path writes LIFT —
+`scrub_sorts_to_primitives` reads the chosen form's node, finds no
+annotation, and skips every sense. Status is derived, and a project that lost
+nodes rebuilds them with *Remake Status file (All)* on the Citation form.
+
+**Confirmed by Kent** — *"I just moved to plural and back, with the table
+disappearing, then reappearing"* — which is the whole behaviour: empty under
+a form with no data, intact when you come back.
+
+**STILL OPEN, and now the real shape of it:** the hazard is no longer
+deletion but CONFLATION. Those nodes were built under Citation and the key
+records no form, so once a second form is actually profiled, its `CVC` row
+would read Citation's `CVC` node and present Citation's progress as its own —
+empty-and-honest today, wrong-and-plausible later. Noted on the second-form
+flags audit item. Related: `cull()`'s own docstring says *"Only do this when
+you're cleaning up, not about to start new work"*, yet `maybeboard()` calls it
+on every board draw; whether that call belongs there at all is the open
+question.
+
+**Tests.** `tests/test_profiles_follow_the_form.py` runs the real
+`load_ps_profiles` against a fake `self` (ask for `pl`, get the plural
+picture; ask for `lx`, get nothing) plus caller guards, and
+`tests/test_form_switch_does_not_wipe_status.py` covers all four cull cases
+and the reload's refusal. `tests/sourcescan.py` is new: ONE comment-stripper
+for the source-scanning guards, after two failed the same afternoon by
+matching the prose describing their own subject — including
+`test_changing_the_form_realigns_the_check`, which found
+`reload_for_word_check` in a comment fifteen lines above the call and so
+reported a correctly-ordered branch as wrong. CLAUDE.md states the rule;
+this is it in one place.
+
+# Version 1.15.43
+
+**The sort pages ask for a setting where the setting is, not in a window.**
+(Kent: *"5 seems to be gone; don't know what happened, but mark it done"*.)
+
+The last five window-raising lines became click-to-edit values: check type,
+check, group, button columns, words per page. `setgroup` gained
+`window=None` with them — a click-to-edit setter is called with one
+argument, and without the default that is a TypeError inside `commit`,
+caught and logged, so the value would change on screen and save nothing.
+
+**One thing is resolved but not explained.** Clicking away from an open
+field left it in edit mode; it was reported, and then reported gone, and
+nothing changed in between touched `frontend/composites.py`. If it returns:
+the shape is a READONLY (pick-only) field, and the two questions that
+separate the causes are whether a SECOND click away closes it — which would
+make it the dropdown's grab swallowing the first — and whether the log
+carries `could not watch for a click away` or `could not close the open
+field`.
+
+Left as windows on purpose: `getgroup`'s CxV branch, which asks twice and is
+already tracked as dead; and the `maxes` / `multicheckscope` lines on report
+tasks.
+
+# Version 1.15.42
+
+**The settings line describes the page you are on. CONFIRMED** (Kent:
+*"which has been done"*).
+
+Every status label asks `get_ui_var` for its StringVar with the text it has
+just computed — `get_ui_var('cvt_label', self.cvtlabel())` — and the cached
+branch returned the existing var and dropped that text on the floor. The var
+is made once per SESSION, so from the second task onward the settings line
+froze at whatever wrote it first. Nothing repainted it on a plain task open
+either: `update_all_labels` runs from `refreshattributechanges`, i.e. on
+settings CHANGES.
+
+Kent proved it was the LABEL and not the value: he opened Sort Consonants
+and came back, and it still said "vowels" — on a page whose cvt is
+unambiguously `'C'`, applied by `Task.__init__` before the window exists.
+
+Second half, in `updatecvt`: it painted before it refreshed, so even an
+explicit update rendered one step stale — `cvtlabel()` reads `self.cvt`, and
+`makesliceattrs` is what re-reads it from `params`.
+
+The family this affected is every prose label — `cvt_label`,
+`cvcheck_label`, `ps_label`, `profile_label`, `fields<ps>_label` and the
+rest — so it is likely behind a class of "the settings line says the wrong
+thing" reports, not just this one.
+
+# Version 1.15.41
+
+**Syllable sorting is no longer done once per lexical category. CONFIRMED**
+(Kent: *"I'm seeing all ps in sortSyllables, and SortV is still constrained
+by ps, so let's call 1 done"*).
+
+A word's cvprofile (`CVC`) and its profile class (`C2V`) are facts about the
+FORM — two words that look the same have the same profile whatever their
+part of speech — so establishing one is wordlist-wide work. The code sliced
+and keyed it by ps anyway, so the same profile was presented and tracked once
+per category: a word sorted under Noun stayed unsorted under Verb, and the
+board said "Progress for Noun" over it.
+
+The design already said otherwise. `SYLLABLE_PREP_PS = '*'` is documented "ps
+re-enters only downstream as the (profile × ps) segmental slice", and the
+prep stage honoured it while the profile sort did not. Kent, on being shown
+the filter: *"NOTHING in SortSyllables does [vary by ps] … we shouldn't be
+sorting by syllable profile for each ps."*
+
+- `SliceDict.senses` for cvt `S` reads the whole wordlist, not
+  `sensesbyps.get(ps)` — its own comment already claimed "'S' works the WHOLE
+  ps wordlist".
+- `rebuild_syllable_profile_done` buckets by profile class alone and writes
+  one node under `SYLLABLE_PREP_PS`.
+- `syllable_slices`, `unused_profiles_for_class`, the board's cells and its
+  "has work" test all read that key, so the builder now agrees with
+  `syllable_prep_complete`, which was already reading the sentinel and
+  ignoring the ps it was handed.
+- The board title is "Syllable profile progress"; the slice line shows the
+  profile class with no category beside it.
+
+**No migration was needed, and that was checked before anything was planned:**
+`rebuild_syllable_profile_done` recomputes the `S` node entirely from LIFT —
+the `lc` annotation for membership, `cvprofilevalue` for verification — so
+the status node is a cache of that, not the record of it. Re-keying it loses
+nothing.
+
+One behaviour change rides along: the old rebuild skipped any sense with no
+ps (33 of them in the demo file), so those words were invisible on every
+board. They now count.
+
+**Also in this version, NOT yet verified** — all of it built the same day and
+none of it seen working except where noted:
+
+- Word checks: one collection task with a form chooser, replacing four
+  unreachable per-form classes; `sense.ftypes` now carries the named
+  second-form fields, so `pl`/`imp` are readable for the first time.
+- ftype has one owner (`params.ftype()`); no task keeps a copy.
+- Status labels no longer freeze one task behind (`get_ui_var` was
+  discarding the value it was handed on every call after the first).
+  **Since CONFIRMED — see 1.15.42 above.**
+- Five settings lines converted from windows to click-to-edit: check type,
+  check, group, button columns, words per page. **Clicking away still leaves
+  them in edit mode** — unresolved.
+- `python main.py --help` exists, listing the switches from
+  `utilities/switches.py`. It is a list, not a parser: an unknown switch is
+  still ignored rather than refused.
+
+# Version 1.15.40
+
+**Restarting into a different database no longer leaves a dead "Please Wait"
+on screen. CONFIRMED** (Kent: *"hang gone"*).
+
+The predecessor handed over correctly and then, on its way out, built a new
+window it could not drive. Ending the loop on this backend means destroying
+windows — pywebview has no stop-the-loop call — and every destroy runs close
+handling. The last window to close has nothing behind it BY DEFINITION, so
+the handler for that case did what it is for and opened the task list, whose
+wait then blocked on the loop that was shutting down. The log ended
+mid-restart on "Getting your task list…".
+
+Four changes, and the first is the one that matters:
+
+- **Quitting says so before it closes anything.** Kent: the point is *"letting
+  the program know that we're _going_ to close things, so backend logic (and
+  new wait windows) can stop more cleanly."* The flag existed and is widely
+  read — backend work gates on it all over — but it was never raised by this
+  path, and nothing in the frontend consulted it anyway.
+- **No new wait window while leaving.** Raising a wait means blocking on it,
+  which is the worst thing to start during teardown.
+- **Nothing is revealed on close while leaving.** A window closing because the
+  app is going away is not a user finishing a task.
+- **Our own window wrappers are marked closed.** Destroying pywebview's
+  windows bypasses the handler that normally records it, so a wrapper kept
+  reporting itself alive after its native side was gone — and the single
+  reused wait window was then handed back dead, which is why the stale
+  "Restarting A-Z+T" title stayed on screen. Kent's reading, and the reuse
+  code bears it out.
+
+**The general point is recorded rather than the fix alone**
+(the exitFlag-names-its-scope item): backend code asks this flag whether to
+CONTINUE, everywhere and correctly. Nothing in the frontend asks whether to
+BEGIN. Scheduling a callback, starting a work chain and creating a window all
+still start during teardown.
+
+**Also: a dead dialog cluster removed.** Eight functions for choosing a
+second-form field — three windows deep for one value — with no caller
+anywhere: they only called each other. Two carried the docstring "Not called
+anywhere?" and were right. This also retires a `NameError` waiting to happen,
+since one of them called an `after()` that this module neither defines nor
+imports; nothing but itself ever called it, so it never fired.
+
+# Version 1.15.39
+
+**The sound-card sweep now happens where it is needed, and not where it was
+not.** 1.15.38 cut it from 6.83s to about 1 by skipping ALSA's `dmix`. This
+moves what remains off the path that never wanted it.
+
+It used to run in `SoundSettings.__init__`, which happens BEFORE the settings
+file is read — so it could not know which device was stored, and had to
+measure every device on the machine to be sure of covering it. Now the object
+is built without probing, the file is loaded, and only then is the probe run,
+narrowed to the stored device and the system defaults.
+
+**The settings page sweeps instead, on every open that needs it.** That page
+is the only thing that genuinely needs the whole table, because it is the
+only place where the user chooses among devices rather than using one already
+chosen. It carries a wait while it works, shown however the page was reached
+— a failed validation DROPS people there, and those are the ones least able
+to explain a page that has gone quiet.
+
+**Which fixes something separate: a microphone plugged in while A-Z+T is
+running is now offered.** It never was. The table was built once at startup
+and never rebuilt, so the settings page listed whatever existed when the app
+launched. It now compares the device list by name against the one last
+probed, and re-sweeps only when that differs — enumeration is free where the
+sweep is not, and the page rebuilds on every setting change.
+
+**One trap found and avoided in the process.** A remembered device is
+followed by NAME, and the lookup only accepts an index already present in the
+probed table. Probing narrowly would therefore have made every stored
+microphone look absent, and `resolve_cards` would have dutifully deleted the
+setting on every start. The narrow path now builds the free, unprobed table
+first, so names resolve before anything is narrowed.
+
+**A floor worth knowing about:** the first real device open of a session costs
+roughly a second whatever is asked of it — the same device measured 0.53s in
+the first pass and 0.22s in the second. The cost is bringing up the sound
+server connection, not the number of devices, so probing even fewer would buy
+nothing. That also reconciles the two honest-looking measurements that
+started this, since the timing harness averages three passes and diluted its
+own warm-up.
+
+# Version 1.15.38
+
+**Opening a Parse task took over eight seconds, and almost all of it was one
+ALSA plugin. CONFIRMED FIXED** (Kent: *"much better"*).
+
+The wait was blamed on the affix parser for two reasons: it is the last thing
+that writes to the log before the silence, and its wait screen is the only one
+that ever appears. Measurement disagreed with both of us. A screencast put a
+6.47 second gap AFTER the page had painted and BEFORE the affix load, and
+timing the phases apportioned it:
+
+| phase | time |
+|---|---|
+| task window built | 0.01s |
+| **sound card probe** | **6.83s** |
+| affix catalog | 0.38s |
+| parser engine | 0.0000s |
+| word page, including scanning 1699 entries | 0.19s |
+
+Then per device: **ALSA's `dmix` output alone was 5.42s**, with every healthy
+device under 0.26s. It is a software-mixing plugin sitting on hardware the
+sound server already holds, so each open waits and then gives up.
+
+Two changes, because they answer different questions:
+
+- **`dmix`, `dsnoop` and `null` are no longer probed.** They are ALSA plugins
+  rather than hardware, and `default` reaches the same card in 0.18s.
+- **A time budget per device**, so one pathological PCM cannot own startup on
+  a machine nobody has seen, where no list would have named it.
+
+A list learned BY probing was considered and rejected, since it is circular
+and useless on the next machine. These three names are ALSA's own vocabulary.
+
+Two things this leaves open, both recorded: the probe still runs on the first
+sound task rather than at startup behind the splash, which is where it was
+decided to go and why the wait has no indicator; and the remaining second of
+`SoundSettings.ensure` is loading the settings file and has never been looked
+at.
+
+**Parsing tasks now ask for the second-form fields, three times, and only the
+third withholds anything.** Parsing indexes that setting directly by part of
+speech, so a project whose database has none of the default field names
+reached a KeyError. Nothing had asked for the value since the settings pane
+stopped defining it as a side effect of drawing itself.
+
+The field opens when the page loads, again on the first click into the word
+entry, and again on Next. Only Next refuses, and what it refuses is the
+advance rather than the page. The word can be typed either way, and the parse
+rides on Next, so gating Next gates the parse — which is the thing that
+actually needs the value. Kent: *"If a user wants to see the whole page first,
+or not fill out that field yet, fine."*
+
+This replaced a written design that held the first word back until both fields
+were set. That design spent most of its length on what to do when the user
+walks away; escalation dissolves the question instead of answering it.
+
+**Clicking away from a settings field now closes it, and commits nothing.**
+Two faults, one from the other. Nothing was bound to a click outside an open
+editor at all, so only its OK button or opening a different field could close
+one. And when it did close, it COMMITTED — which is how the display
+placeholder `<unset>` was once handed to a setter and written to the project
+file. Every field here has an explicit OK, so leaving one is abandonment, not
+agreement. The placeholder refusal stays as a second line of defence for
+project files that already carry it.
+
+# Version 1.15.37
+
+**MOST OF THIS IS AWAITING VERIFICATION, not fixed.** Two app changes and two
+installer changes below have never been run: the installers need a fresh
+machine, and the app changes need a Windows boot. Steps 7–9 of the new
+non-regression check exist to settle them, and are queued in
+the cross-platform-checks item §7. Only the documentation changes are
+confirmed, because reading them is the whole test.
+
+**"Add and parse words with audio" had no audio button under `--webview`, and
+the cause was three removes from the symptom. Awaiting verification.** The
+word page calls `updatereturnbind()` to decide whether Return should move to
+the next word, and that asks the window `state()`. tkinter windows have
+`state()` from `tkinter.Wm`; the webview ones never did, so it raised:
+
+    AttributeError: 'WordCollectnParsewRecordings' object has no attribute
+    'state'
+
+`getword()` builds the record button eight lines after that call, so the page
+came up complete except for the one control the task exists for, with no error
+in front of the user. Kent: *"Add and parse words with audio has no audio
+button?"* Nothing was wrong with the recording code, the sound settings or the
+LIFT entry, all of which were searched first.
+
+`Toplevel.state()` and `Root.state()` now answer in Tk's vocabulary, 'normal'
+or 'withdrawn', from the visibility the backend already tracks.
+
+**This is the SECOND missing Tk method found today**, after `Root.quit()`
+crashed the restart handover, and they share a shape worth naming: a method
+the app calls freely, present on tkinter by INHERITANCE rather than by
+decision, absent on webview, and reached only on a path nobody had run there.
+Both are now declared in `ui_interface.py`, and
+`tests/test_root_surface_is_shared.py` asserts that every abstract name on
+those interfaces exists on both backends. Inheriting a method is not the same
+as promising one, and only the promise can be tested.
+
+**And a sweep for the rest of them**, at Kent's suggestion: *"perhaps we should
+be watching for other tkinter-specific methods in disguise."* In disguise is
+exact — `self.state()` inside a backend mixin looks like the task's own
+method, and nothing in `backend/` or `tasks/` mentions tkinter anywhere.
+`tests/test_tkinter_methods_in_disguise.py` finds every call through the three
+bridge receivers whose name tkinter defines and the webview backend does not,
+deriving both name sets at run time so neither can drift.
+
+Its first run flagged three. Two are permanent collisions with our own
+vocabulary and are now exempted with reasons: `command`, which is the menu
+helper here and a window-manager property in tkinter, and `group`, which is
+this app's sort-group accessor and tkinter's window-group leader. The third
+was real but quiet: `grab_current`, asked by the status window while logging
+why a window may not have surfaced. The call is wrapped in try/except, so it
+never crashed — it logged "unaskable" and the diagnostic was dead on the
+backend whose surfacing is actually in question. It now answers None, which is
+true, since a browser has no grabs.
+
+**The language code now appears once you have typed something, not before. A
+CHANGE, not a fix.** On the page that starts a new language, the "code: " line
+sat above the entry box from the moment the page opened, with nothing after
+the colon. That was deliberate and nothing about it was broken; Kent: *"it was
+there intentionally, but I find it distracting."* It is now hidden until there
+is something to show, and hidden again if the box is emptied — which the code
+already intended (`_show_possibles` calls the updater with the comment "remove
+code and button") but never did. Reverting is one deleted line, marked as
+such. Unverified: nobody has opened the page since.
+
+**The language list on that page now shows up to five matches, not four.**
+Asked for as "max at 5 languages, not three" — and the gap between "three"
+seen and four asked for is worth noting rather than papering over. On the
+webview backend the row count is turned into a CSS `max-height` of
+`rows × 1.5em`, so a row taller than 1.5em yields fewer visible rows than
+requested. If five now shows as four, that conversion is why, and the number
+to change is in `widgets.js`, not here. The territory list below it still caps
+at four; it was not asked about.
+
+**Every Windows install was warned that its own links were broken. Awaiting
+verification.** `sister_repos.ensure_detail` asked `os.path.islink`, which
+returns False for a Windows JUNCTION — and junctions are exactly what
+`_make_link` creates there, since a real symlink on Windows needs Developer
+Mode. So the app warned that images and lift templates were "a real directory,
+not a link to a managed clone" and "can never be updated" about links it had
+just made itself. Kent: *"the boot is still complaining that images and
+templates can't be updated, which I understand to be false."* It was false.
+The check now uses `_is_link`, which knows about junctions, and also accepts a
+directory that is its own clone — updatable, just not by us. What still warns
+is the case the message was written for: a real directory, no link, no `.git`,
+which is the `cp -r` copy that dereferenced a symlink into real files.
+
+**"Try testing version" now says WHY it could not. Awaiting verification.** It
+could only ever say *"there is no published origin/testing to take it from"*,
+which reads as permanent and is usually not. `fetch_tracking_branch` discarded
+the fetch's output entirely and returned a bare boolean, so three quite
+different situations arrived identically. They are now distinguished, because
+they need different responses:
+
+- **Could not reach the repository** — offline, a proxy, refused credentials.
+  Says so, and invites a retry when online. Kent: this one *"will happen, and
+  should be recoverable"*.
+- **The published repository has no such branch** — which is what a RENAMED
+  test branch looks like, and calling that a network fault would send the
+  reader hunting in the wrong place.
+- **Nothing was even tried**, because no known remote looked like an internet
+  address. Rarer now: it falls back to `remote.origin.url`, the address the
+  clone came from, which every clone has and which needs no settings.
+
+**torch is pinned on both sides of python 3.14, so it cannot break there.**
+`torch==2.7.1` predates 3.14 and has no wheel for it, so on 3.14 the pin would
+resolve to nothing, fail the whole requirements install, withhold the
+requirements stamp, and re-resolve on every boot thereafter. Four lines now
+carry a `python_version` marker beside the existing platform and chip ones.
+**The new lines are inert** — their marker excludes every python in use — so
+nothing about any current install changes. The 2.14.0 figure is the top of a
+measurement sweep rather than a known-good environment, and is expected to be
+re-checked before anyone moves.
+
+**The Linux installer now fills the virtual environment before it says it is
+done. Awaiting verification; it has never been run.** Previously only the
+macOS script did this; Linux left everything to first run, which meant
+"installed" was not true when it was said. It now creates `env/`, installs
+`requirements.txt` into it, and writes the requirements stamp — without which
+the app re-resolves the whole file on first run anyway and the upfront install
+buys nothing. The stamp is deliberately withheld when anything failed, so a
+partial install still lets the app finish the job. `--no-deps` skips it. The
+section runs LAST, so a failure leaves a complete, launchable install behind.
+
+**Installers resolve their downloads instead of naming a version.** A pinned
+download URL is a link that works until it does not, in a file nobody
+revisits. The macOS script asked for one exact python; it now pins only the
+MINOR and finds the newest patch of it that actually has a macOS installer,
+walking backwards when the newest does not. It asks python.org nothing when a
+usable python is already present. Three user-facing documents that handed out
+a `python-3.12.4-amd64.exe` link now point at the per-minor latest page
+instead. The reasoning is recorded as **ADR 0006**, along with the lookup
+endpoints for every program the installers fetch, and the rule that matters
+most in practice: read the asset name from the answer, because three of the
+four GitHub projects involved do not name their files after their tags.
+
+While in those documents, instructions that would simply fail if followed were
+corrected: `pip install pyaudio`, gone since the 2026 move to `sounddevice`,
+and `pip install tkinter`, which is not a package at all.
+
+**ADR 0005 amended: python 3.14 is not reachable, and the reason is kivy, not
+torch.** A sweep found kivy source-only on 3.14 across all four platforms, so
+it is a wait on upstream rather than a decision anyone here can take. That
+matters more than it sounds: kivy is checked at boot in the mandatory block,
+so a 3.14 machine would attempt to COMPILE it twice on every start, forever.
+The install target is therefore 3.13.15. A separate kivy virtual environment
+was considered and rejected, because it would require users to have two
+pythons installed to be worth anything.
+
+**Tests.** `test_markers_are_passed_through_verbatim` asserted that
+`requirements.txt` yields exactly two torch lines, so a correct change failed
+it with `4 == 2`. The count is now derived from the file and compared by
+value, so losing a line still fails while adding a platform or a python range
+does not. Two guards were added for the split itself, which is otherwise
+invisible until someone reaches 3.14.
+
+**Also recorded:** `CLAUDE.md` now explains why branches added to a shallow
+clone are islands, and that merging across them reports "refusing to merge
+unrelated histories" although the histories are perfectly related. The app
+never does this — both of its switch paths are checkouts, which need no common
+ancestor — so the trap belongs to hand-git, and the documented hand procedure
+is what creates it.
+
+# Version 1.15.36
+
+**Three modules that could not be imported at all now can.** Nothing
+user-facing: `praatfns.py`, `setdefaults.py` and `utilities/openclipart.py`
+each carried a bare `import logsetup` or `import urls` dating from before
+those moved into `utilities/`, so they failed from any directory they would
+be run from. `praatfns.py` had two such lines, and the second only surfaced
+once the first was fixed.
+
+The reason nothing noticed is the interesting part. All three sat in the
+import smoke test's `EXPECTED_NOT_IMPORTABLE` list, described as "standalone
+scripts" — an exemption from the one test that would have complained, with a
+reason that was not true. `praatfns.py` is not even unused: `requirements.txt`
+pins `praat-parselmouth` and `tgt` with comments naming it as their consumer,
+so its dependencies have been installed on every machine while the module
+itself would not load. That list now carries a note that an entry in it needs
+a reason which will still be true later, since anything added there stops
+being checked.
+
+Suite: 757 passed, 6 skipped, up from 754 and 9.
+
+# Version 1.15.35
+
+**The webview now uses the toolkit your desktop is built on.** Confirmed on
+Linux/GNOME, 2026-09-24: `--webview` with no engine named repaired the virtual
+environment, restarted, and chose GTK because that is this desktop's own
+toolkit. Before, the engine was whichever host happened to be importable
+first, always trying GTK — so A-Z+T looked like a visitor on every KDE or LXQt
+machine, and looked wrong on a GNOME one that happened to have Qt installed.
+The desktop is read from the session's own environment, availability still
+wins, and the log says which reason applied.
+
+**And a recoverable GTK is no longer masked by an installed Qt.** The venv
+repair fired only when NO host was available, so on a machine with Qt present,
+`--engine=gtk` quietly got Qt while GTK sat one line of `pyvenv.cfg` away.
+Naming an engine is asking for that engine; an installed alternative is not a
+reason to stop trying to honour it. The repair now runs when GTK is wanted —
+asked for by name, or nothing named on a GTK-native desktop, or nothing named
+on an unrecognised desktop where Qt cannot run either. An explicit
+`--engine=qt`, and an unrecognised desktop where Qt already works, are left
+alone, because flipping that flag has a real cost and nothing there needs it.
+
+**One decision, one log line, again.** "No engine specified; using gtk"
+appeared twice per boot: the choice was derived, and announced, once per
+caller across the five places that ask for it. Cached, like the backend
+refusal two versions ago — the same fault one module over.
+
+# Version 1.15.34
+
+**Asking for the webview now GETS you the webview.** Confirmed on Linux/GTK,
+2026-09-24: one command repaired the virtual environment, restarted itself,
+installed pywebview and came up on GTK. Until now, asking for a backend that
+was one pip install away produced a polite refusal and a tkinter session —
+which is an opt-in, and as Kent put it when asked whether users would take it
+one machine at a time, "which they WON'T, is the point." So the app now gets
+what was asked for, when it can, and the whole question is whether it can.
+
+Three things had to be knowable first, and two of them were not. Whether
+`gi` imports was already answerable; whether the venv is even ALLOWED to see
+system packages was too. Whether the GObject TYPELIBS are installed was not —
+and `python3-gi` alone gives an importable `gi` that cannot render a web page,
+because the WebKit typelib is a separate apt package and is the one usually
+missing. Qt had the identical hole one layer up: `qtpy` is only a shim over
+PyQt/PySide, so it can import with nothing behind it, and pywebview needs
+QtWebEngine besides. Both are now tested the way pywebview itself tests them,
+and a leftover empty directory from `pip uninstall` no longer counts as an
+installed package.
+
+With that known, the response fits the cause. A missing python package that
+pip can supply is installed, in-process, with no restart — the backend is
+decided before the frontend is imported, so the same run continues into it.
+`--engine=qt` on a machine without Qt installs `pywebview[qt]`, which is pure
+wheels. `--engine=gtk` never installs anything, because PyGObject is apt's
+and pip would either fail to build it or shadow the system copy. And if the
+only thing hiding a host is this venv's own `include-system-site-packages`,
+that is corrected and the app restarts itself.
+
+**That venv setting is repaired on demand, never set globally**, and the
+reason is worth keeping: the flag's cost is that the venv stops being a
+guarantee, since a package missing from it silently resolves to the system's
+at whatever version the distribution ships. That is how apt's pywebview 5.0.5
+stood in for the pinned 6.2.1. A Qt user gets nothing for that cost, and nor
+does Windows or macOS. So it is paid only by someone about to use GTK, only
+when it is the one thing in their way, and only when the base interpreter
+demonstrably has PyGObject — which is checked by asking it, rather than
+guessed.
+
+Along the way: A-Z+T has never created a venv that can see system packages.
+No installer and no code path passes `--system-site-packages`, so GTK could
+never have worked on a fresh Linux install; the developer machine worked only
+because of a hand edit in September. Fixing that at the source belongs to
+the non-Windows install item.
+
+Both engines confirmed the same day, with the page seen rendering in each
+case. `--engine=gtk` repaired the venv, restarted and came up on GTK;
+`--engine=qt` installed `pywebview[qt]` and came up on Qt. The Qt run did NOT
+touch the venv, which is the design working: Qt needs nothing from the system,
+so a Qt user never pays the cost of making system packages visible.
+
+Not yet verified: every non-Linux platform.
+
+# Version 1.15.33
+
+**The tone playback panel goes away again, and the grab it relied on is
+gone.** CONFIRMED by Kent, 2026-09-22 ("tkinter translation menu is good";
+the panel belongs to the Transcriber). Under tkinter the panel never dismissed
+at all (Kent, 2026-09-22, with a screenshot of two of them stacked: "the
+tone playback configuration window doesn't go away (ever?)"), while the
+webview one was fine: "not in gtk". The panel was built on the claim that a
+local grab delivers outside presses to it, the way a Tk menu dismisses under
+the grab `tk_popup` takes. That claim was wrong, and the screenshot is the
+proof: opening the second panel takes a right-click, which is a press
+outside the first panel, and the first panel was still there. What unposts a
+Tk menu is Tk's own menu implementation running under that grab; a plain
+toplevel calling `grab_set` inherits the grab's effect on delivery and none
+of its dismissal, so the grab could only ever keep the press from reaching
+anything that would act on it. With no title bar and no key binding there
+was nothing else, so the panel was permanent. The grab is now gone, and two
+independent ways out replace it: a press anywhere on the owning window,
+through one binding on that toplevel that every widget in it carries in its
+bindtags, and Escape. Panels are tracked, so opening one takes down any
+other, which is why they used to stack. The bindings arm at idle rather than
+at creation, because the press that opens a panel is still being dispatched
+while the panel is built and the owning window's bindtags come after the
+clicked widget's own, so a binding live immediately would dismiss the panel
+on the very press that created it. The webview backend is untouched.
+What is given up: a click on another application no longer dismisses the
+panel, which a real context menu would. That is the trade for a panel that
+goes away at all.
+
+**Asking for a backend that cannot run now says so on the screen, not only
+in the log.** CONFIRMED by Kent, 2026-09-22, on a machine with pywebview
+removed from both the venv and apt ("the guard against no pywebviews seems
+to work"); the wording change below is awaiting verification. `main.py
+--webview` on a machine
+without pywebview started a perfectly normal tkinter session and wrote one
+line about it, which scrolled past among a hundred others (Kent, 2026-09-11:
+"at some point, we're going to want to complain more loudly if someone asks
+for webview and it isn't installed"). A whole session could be spent
+believing the webview was under test while looking at tkinter — which under
+ADR 0004's amendment, where the way back to tkinter is the entire safety
+net, is exactly the confusion that must not happen. The refusal is now kept
+and raised as a notice once there is a window to put it in, beside the
+degraded-sound and unfinished-setup notices. It is the first of a third
+tier: worth saying, not worth stopping for. Sound and bootstrap problems
+block because a fieldworker must not record silence or trust a half-built
+install; this one does not, because the app is completely usable and only
+the toolkit drawing the windows is different. The message keeps what was
+already good about it — it names the interpreter, which is the thing people
+get wrong, and the exact pip line — and now names the request the way it was
+actually made, `--webview` or `AZT_UI_BACKEND=webview`, since blaming a
+switch the user never typed is the same fault in the other direction.
+An engine asked for by name and quietly swapped (`--engine=qt` on a machine
+with only GTK) is reported the same way, for the same reason: the point of
+naming an engine is to measure that engine.
+The notice now also NAMES WHAT IS RUNNING. The first version said what had
+failed and then only that "the screen toolkit" was different, never which one
+(Kent, 2026-09-22: "the UserNotice doesn't mention using tkinter … I think it
+would be better to be more explicit"). A notice about a substitution that
+does not name the substitute sends the reader to the log for the one fact it
+exists to deliver. It now says plainly that tkinter is running, or, when an
+engine rather than the backend was swapped, that the webview is running with
+the substitute named above.
+
+**The refusal was printed twice, and it was never two decisions.** Fix
+awaiting verification. The duplicate looked like two places deciding one
+thing, which is the shape of several real faults here, so it was worth
+chasing; it was not that. `logsetup` attaches a `StreamHandler` on the real
+stderr to the ROOT logger at import, formatted as the bare message, so
+`log.warning` had already put the text on stderr by the time the following
+`sys.stderr.write` put it there again. The comment claiming the log and
+stderr were separate audiences was simply wrong about this program. The
+second write is gone, a test asserts nothing is written to stderr there, and
+the decision itself was always made exactly once.
+
+# Version 1.15.32
+
+**Renaming a tone group under webview no longer leaves no window at all.**
+Fix awaiting verification. Kent clicked a group in Sort Tone within seven
+seconds of opening the task and every window vanished, with the process
+healthy. Two faults, read from the log. First, every run window's "please
+wait" cover had been failing silently for six days: the code still named a
+class attribute that had been turned into a method, the failure was caught
+and logged, and under webview that cover is what reveals the run window,
+so run windows were only ever shown by whatever came after. Second, what
+came after died: the tone rename window read the task's sound settings
+directly, and under webview the audio probe runs beside the UI and had not
+finished, whereas tkinter blocks on it. The segmental glyph window already
+tolerated a missing probe result; the tone one now does the same, through
+one shared function, and the cover names the method. The general lesson,
+recorded in the page walk: an except-and-log around something that must
+happen is how a fault hides for a week.
+The first version of that fix built the sound settings inside the click,
+which ran the whole seven-second probe under the wait page (Kent: "Wow;
+that took forever … I thought the wait page was broken") and, since the
+task's own probe was still running, built a second object and ran a second
+probe, 17.7 seconds under contention. Now: the click takes what is already
+published or nothing; the tone beeps arrive when the probe finishes,
+through a thread that shares the task's probe rather than starting another
+(concurrent callers of `SoundSettings.ensure` now get one object); and the
+Transcriber accepts its sound settings after construction, showing the play
+button on the next keystroke.
+
+**Configuring tone beeps is a small panel at the pointer.** Fix awaiting
+verification. Right-clicking the transcriber's play button opened a whole
+window titled "Configure Tone Beeps" holding six small buttons in one
+corner and a Quit button in the other (Kent: "this should be a context
+menu"). Six menu entries for what are three binary settings read as odd
+too, so it is now a three-row panel, minus / setting / plus for pitch,
+low-high spread and speed, at the pointer, on both backends. Each click
+changes the setting and plays the melody as it now sounds; the panel
+stays for the next adjustment and goes away on a click anywhere else,
+like a context menu. Under tkinter that is an undecorated toplevel holding
+a local grab, logged on acquire and release and released on destroy; under
+webview an element inside the page, since a window there cannot be
+placed. `ui.Popup` is available to any other page that has a handful of
+controls belonging to one gesture. The transcriber still runs on its own
+as a module. (Both backends' menus also gained a `sticky` option along the
+way, kept for a menu that wants it.)
+
+**No more `<unk>` in the French and Arabic interface.** Fix awaiting a
+recompile (`translations/compile.py`) and a look. The tone rename page's
+hint read "comme '[<unk> <unk> <unk> <unk> <unk> ]'" (Kent: "it's bad"). Not a
+font or a page fault: the machine translation that produced those two
+catalogues wrote `<unk>` for every character it did not know — the tone
+letters in both example melodies, the glottal stop, two kinds of quotes,
+`≠`, `←`, and the `|` of a menu path — sixteen entries in all. Each now has
+the character its English original has, and a test fails if `<unk>` ever
+returns. Two French entries that were not French at all ("Distinguish
+glottal arrêter mot enfin") are translated while there.
+
+**Character buttons insert at the caret under webview.** Fix awaiting
+verification. On the tone transcribe page the buttons appended, wherever
+the caret was (Kent: "only append, not input where the cursor is").
+Python cannot know the caret; the page can. tkinter's `INSERT` is now
+honoured by the page splicing at its own selection and reporting the new
+value the way typing does, so the variable has one writer. A field the user
+has never been in still appends, since a fresh field's caret is not a
+choice anyone made.
+
+**The new-language page's two lists are as tall as they ask to be.** Fix
+awaiting verification (webview). The page builds its language list and its
+territory list one row tall and resizes each to up to four rows once it
+knows how many entries there are. tkinter did that natively; the webview
+page had no handler for a listbox's `height` on reconfigure — it had one
+for `width`, and for its own `max_height_em` — so the request went to a
+console-only warning and both lists stayed at one row with a scrollbar in
+it (Kent: "very difficult to use"). One rule now sets the row count at
+creation and on configure. A `height` on any other kind of widget still
+falls through to the warning rather than borrowing the list's rule.
+That alone changed nothing on screen ("not fixed"): the page asks the list
+for all its rows with `get(0, 'end')` before resizing, and the webview list
+did not accept `'end'` as an index, so the resize was never reached. It
+does now, and answers a tuple as Tk does.
+
+**Three webview finds from one look around.** The third is FIXED (Kent,
+2026-09-22: "staveless is working"); the first two await verification.
+Opening any glyph or transcribe window died with `'App' object has no
+attribute 'screenw'`: tkinter publishes the screen size at start-up and two
+task builders size a frame against it, and the webview root never did. It
+does now, from pywebview's screen list. Add-a-Word died on its first prompt
+because the webview entry field had dropped tkinter's `rendered` label along
+with the bitmap mechanism behind it, and the prompt grids that label itself;
+the label is back, empty, gridded only when the page asks. And tone letters
+showed their staves on every page because nothing ever asked the font to
+hide them: the stylesheet had the classes and no page used one. The feature
+is now asked for on every element, not only inherited from the root,
+because the browser's own rules for entry fields and buttons reset it, and
+those are where tone letters are typed and shown. So tone text is staveless
+wherever the installed Charis can do it, which is what tkinter shows on a
+machine with a `-tstv` file. Tone-number and Chinantec variants ask for
+their own feature alone. Seeing it work also closed the tone gate's one
+open question: the Charis this machine resolves for the browser does carry
+cv92.
+
+**A window grows when a page reveals something it had hidden.** Fix
+awaiting verification (webview). The new-language page shows its dialect
+and territory frame only once a language is chosen; it was built at the
+start and hidden, so showing it created nothing, and a window refit is
+asked for when widgets are created. The window kept its earlier size and
+the new frame sat below the bottom edge, unreachable. Showing a hidden
+widget now asks for the refit, on the same short fuse as switching a
+notebook tab. Hiding one does not: shrinking a window under the user is
+the flicker removed last week. Also observed on that page, and recorded
+rather than fixed: content beyond the window that is not inside a scroller
+does not scroll, the case the window-sizing item had marked as not yet
+seen.
+
+**The same page under tkinter had no title, no code, and a list that did
+nothing when clicked.** Fix awaiting verification. Two faults, neither
+new. The title and code frames were created with `gridwait` inherited
+from a shared defaults dict, and nothing ever placed them; the title is
+placed outright now and the code frame when a code exists. And the
+tkinter ListBox kept its list of values only from the constructor's
+option list, so a list filled afterwards with `insert()` — this page, the
+alphabet comparison, the sound settings — raised IndexError inside Tk's
+callback on every click, leaving the row highlighted and nothing else
+done. `insert`/`delete` now keep values and rows in step, as the webview
+list already did, and a selection falls back to the row's text if they
+ever disagree.
+
+**Changing database hides the page that asked.** Fix awaiting
+verification. The change-database action hid the current task, which is
+None when the request comes from the task chooser itself — so the LIFT
+chooser opened over a visible task list, and on return the code tried to
+re-show None. It hides the chooser in that case, and shows it again if no
+new database was chosen.
+
+**The record button stops when your finger comes off it, either way.** Fix
+awaiting verification. Under the webview backend a mouse release is `click`
+(needed so one click on the second-form combo stopped also activating the
+label it uncovered), and `click` needs press and release on the same
+element — so pressing Record, drifting off the button and releasing never
+ran the stop, and the recording did not end. Kent: the metaphor is "finger
+off the button", which includes off=up and off=sideways. Press-and-hold is
+now one shared idiom, `composites.hold`, which binds press, release AND
+leave, and runs the stop exactly once and only after a start (tkinter's
+grab still delivers the release after a slide-off; two stops would have
+built two play/delete pairs). Found in passing: the tkinter tooltip bound
+`<Leave>` on its widget with a bare `bind`, and re-bound it wholesale
+whenever the tip showed, wiping any `<Leave>` binding the widget's owner
+had made. It binds additively now. Headless tests in
+`tests/test_hold_binding.py`.
+
+# Version 1.15.31
+
+**The progress board shows which slice you are on again.** Fixed (Kent:
+"current cell operation looks good"). The board marks the current
+profile × check cell with the theme's active background, and has done all
+along — `StatusFrame.activate_cell` is backend-neutral code that reads the
+cell's colour and writes it back:
+
+    cell.inactive_background = cell['background']
+    cell.configure(background=cell['activebackground'])
+
+Under tkinter that works because Tk keeps a value for every option of every
+widget, from its own defaults and the theme. The webview backend knew only
+what a caller had passed, so both reads answered `''` — and writing `''`
+back CLEARS the inline style rather than setting one. The marker was
+therefore doing nothing, silently, on a page where three different markers
+are supposed to be distinguishable.
+
+Three fixes in the option layer, leaving the board's own code alone:
+
+- an option read falls back to the THEME for the options a theme defines,
+  so asking a widget for a colour it was never given answers what tkinter
+  would answer;
+- `command` is readable, because `activate_cell` stores it and
+  `deactivate_cell` puts it back — answering `''` there would have made the
+  restore install nothing and left the cell permanently unclickable;
+- `configure(command=…)` rebinds instead of being discarded for not being
+  serialisable, and REPLACES the handler rather than adding a second one.
+  So the current cell is inert while it is current, and clickable again when
+  it is not.
+
+**Windows know what they cover, separately from what owns them.** Fix
+awaiting verification. A window's parent was carrying two unrelated jobs:
+supplying its theme and root, and being the thing it covers — what closing
+returns to. Those are now separate facts, which matters because the second
+is the only window relationship a Wayland compositor will accept
+(`xdg_toplevel.set_parent`), and the first belongs to the root.
+
+A window closing with nothing underneath it now shows the task list. That
+case previously left the screen empty and was noticed afterwards by two
+safety nets, at 15 and 25 seconds; giving the close path an answer removes
+the case rather than watching for it. The run window also declares itself
+modal on its task, completing chooser ← task ← run window.
+
+The immediate benefit is that a task no longer REQUIRES the chooser to have
+a window in order to exist, which was the one thing preventing the chooser's
+selection logic — none of which touches a widget — from running without its
+UI. See the modal-window-stack item.
+
+# Version 1.15.30
+
+**One surface says what is happening, instead of screens flashing past.**
+A 20fps recording of opening one sort task counted six distinct states
+before the page appeared — an empty fullscreen window, an unthemed grey
+flash, a dimmed window, a small wait dialog, and **two intervals with
+nothing on screen at all**, the longer of them 3.6 seconds. Kent: "much
+more than the presence of the bar, I'm concerned with the flashing of
+screens."
+
+Four changes, from the outside in:
+
+- **A run window is reused, not destroyed and rebuilt.** Every page load
+  built one fullscreen window for the flow that needed somewhere to work,
+  then built a second and threw the first away unused. Fixed; the rule
+  already existed one class up for the slice loop ("never destroy+recreate
+  the kiosk-fullscreen window per slice") and is now applied where the churn
+  came from.
+- **The wait lives ON the page** under the webview backend, instead of
+  raising a separate dialog over it. It covers the content area, carries the
+  message and a progress bar, shows the app's card image, and is cleared
+  when the wait ends, when the page is rebuilt, or when the window quits —
+  with a timeout that removes it and says so, because a cover nobody clears
+  is indistinguishable from a hung app. tkinter keeps the dialog: it has no
+  cheap overlay, and painting during a build is where its known deadlocks
+  live. The two backends now differ in form and agree in intent.
+- **The wait is raised BEFORE the outgoing page is hidden.** Both blank
+  intervals were the same ordering fault — the task window was withdrawn
+  while the run window was still hidden, so nothing was on screen until
+  something later revealed it. That also makes the long-standing
+  "reveal something, anything" safety net unnecessary on this path rather
+  than merely load-bearing.
+- **One window, a stack of claims.** Two flows can want the shared wait at
+  once (see below), so it records who raised it: a flow releasing a claim
+  that is not the top one leaves the window up for whoever is using it,
+  releasing the top one hands back to whoever is still waiting, and each
+  flow reveals only the page it asked to reveal. A handover is logged as a
+  fault to chase, not as normal operation.
+
+**Work stops when its task closes.** The guard that was supposed to stop a
+long build after the user navigates away asked whether its WINDOW still
+existed — reliable under tkinter, where closing a window destroys it, and
+wrong here, where windows are hidden and reused. Worse, it assumed the
+click that closed the task was serviced *inside* the loop that was asking,
+which is true of tkinter's single event loop and false of pywebview, where
+every page event arrives on its own thread: two task flows simply run side
+by side. So the affix catalogue went on loading while an unrelated task
+started, and announced itself over it.
+
+Being finished is now a fact a task records rather than something deduced
+from a window, and the loops ask the task. Kent's report — "the parser work
+shouldn't be continuing AFTER another unrelated task is already started" —
+is what this is, and the guard now fires: *"affix catalog: the window closed
+part way through loading (at 93%)"*.
+
+The concurrency itself is filed as its own item
+(the concurrent-webview-flows item), since it produced the JS-queue
+overtaking and the two-concurrent-audio-streams faults earlier in the day
+and was fixed as a one-off both times.
+
+**Also**
+
+- Progress bars appeared on neither wait surface after the first one built:
+  `activate` hides the bar so a wait that never reports has none, and
+  `progress()` only re-showed it the first time the bar was created. Both
+  implementations had the same one-line omission.
+- The default wait message was resolved at import time, where `_()` runs
+  before the live translator is installed — it would have been English for
+  the session whatever interface language was chosen.
+
+# Version 1.15.29
+
+**Windows keep the size they are given.** Under the webview backend on
+Wayland, a window fitted to its content shrank the moment focus moved
+elsewhere — losing exactly 52x89 pixels every time, cropping the page and
+flashing as it went. Fixed (Kent: "window flashing resize looks fixed").
+
+It was ours, and it was a units error. `resize()` asks in CLIENT pixels and
+works. The two calls that make a size survive the next configure event — the
+window's default size and its minimum-size hint — are answered in FRAME
+pixels under client-side decorations, and were being handed the client
+figure. So the window settled on that number as a frame, and the page came
+out one window-decoration short. The minimum is now asked for in frame
+units, measured per window from the toolkit rather than assumed.
+
+Three earlier readings of this are worth recording as wrong, because all
+three came from measuring the page and never the frame: that the compositor
+was answering with the window's created size; that something below the app
+clamped to 800x600; and that the decorations were growing into a frame that
+stayed put. The app's own note had the arithmetic in it for three days — "a
+window with a 998x770 request was configured to 946x681" — without anyone
+doing the subtraction. 998-946 is 52; 770-681 is 89.
+
+Two diagnostics came out of it and are staying:
+
+- `--log-resizes` reports every resize sample, with the native frame and
+  client boxes and the gap between them. The ordinary report is debounced,
+  so it shows where a window settled and nothing of how it got there; four
+  such samples are what produced the third wrong reading.
+- `--no-frame-inset` asks in client units again, to measure against.
+
+**Switching a notebook tab asks the window to re-fit.** Every refit in the
+webview backend is triggered by a widget being created, and a tab switch
+creates nothing — so the chooser's tabs were all measured against whichever
+one happened to be showing, and selecting a fuller tab left its content
+cropped off the right and bottom edges with no way to reach it. Fixed
+(Kent: "notebook tag = size change fixed").
+
+Both paths ask, and the second is the one that hides: the page reports a tab
+change only for a USER click, while a programmatic `select()` deliberately
+does not notify — and selecting the starting tab programmatically is exactly
+what the chooser does, so a fix on the click path alone would have left the
+startup case cropped.
+
+**Exit on a run window no longer hangs the app** — it returns to the task,
+as it does under tkinter. Fixed (Kent: "it's now coming back to task"). It
+looked like the app closing, and was reported as exactly that; the log said
+otherwise, since no quit was ever requested. Two faults on one path, both
+webview-only.
+
+The first is a **hang**. Around thirty places in the app wait on a *canary
+widget* inside a window rather than on the window, because that widget's
+destruction is the signal that a page has finished. Destroying a widget
+released those waits correctly; quitting a window did not — it released only
+the waits on the window itself and then hid it, and hiding is not
+destroying. So the sort flow stayed blocked on a canary inside the closed
+window, forever. tkinter never had this, because destroying a window
+destroys everything in it. `wait_window` now also refuses to park inside a
+window that has already quit, so a flow arriving late cannot re-create the
+same hang.
+
+The second is that **nothing took the screen**. tkinter's window-close
+reveals the parent window; the webview backend had only the other half of
+that method, so closing a child hid it and showed nothing. Since a run
+window is handed over with its task window already withdrawn, that left an
+empty screen. Revealed now with tkinter's three guards rather than a bare
+reveal — a wait already covering the screen is left to do it, an empty
+parent is reported and stays hidden, and only a parent with content is
+shown — because revealing unconditionally produces the empty page whose
+only control is Exit.
+
+Found from a faulthandler dump.
+
+**Simplified, not fixed:** the decoration measurement no longer calls
+`gdk_window_get_frame_extents()`, whose rectangle is a caller-allocated
+out-parameter in C, and reads the same number off the GdkWindow directly
+instead. The only thing given up is the window's on-screen position, which
+Wayland does not report anyway. This was briefly believed to explain a
+segfault when the app is asked for a stack dump; it does not — that remains
+unexplained and is tracked in the webview window-sizing item.
+
+**Pages fit the window again: the double scroll is gone.** Fixed (Kent:
+"now it's on page"). The sort page had two scrollbars — one for the page and
+another for the word list inside it — plus an empty band below the list and
+an Exit button about 1150px below the bottom of the screen. One fault, four
+parts, all in the webview backend's translation of tkinter's grid.
+
+- **`grid_rowconfigure`/`grid_columnconfigure` were bare `pass`**, with the
+  comment "CSS Grid handles this automatically". They don't: `weight=1`
+  means "this track takes the space left over", and a CSS Grid track is
+  content-sized by default. Every weight in the app was accepted and
+  discarded. They now emit real tracks.
+- **A weighted row must be able to SHRINK.** Stating the track as
+  `minmax(auto, Nfr)` looks equivalent to `Nfr` and is not: an `auto` floor
+  means the row can never go below its content, so the weight has nothing
+  to give away. `minmax(0, Nfr)` is both correct and the faithful reading of
+  tkinter, whose grid shrinks its rows when the master is too small — where
+  CSS Grid overflows instead. That difference is why the page grew rather
+  than squeezing, and it is worth remembering generally.
+- **The document needs a definite height** for any of it to resolve: a
+  percentage of `auto` is not a constraint, so the whole chain from `html`
+  down was indefinite. Released again while a window measures itself.
+- **Two rows nobody weighted**, and these were the actual break: a page's
+  content sits at row 1 of the window's outer frame, inside row 1 of the
+  window, and neither was ever weighted. So every page overflowed its window
+  before any of its own layout was consulted. tkinter weights one of the two
+  and gets away with the other because Tk shrinks.
+
+**Kiosk pages are born fullscreen** instead of being created at 800x600 and
+fullscreened afterwards. Fixed (Kent: "better"). A 20fps recording of one
+page load showed the cost: the run window appeared decorated at its creation
+size, was resized four times as content arrived, and only then went
+fullscreen — about 1.4 seconds of watching a window become correct. The
+fullscreen request could not arrive any sooner, because pywebview defers it
+until the page has loaded (visible in the log as `replaying deferred [...,
+'toggle_fullscreen']`). A window created at the size it is going to be has
+nothing to defer and nothing to change.
+
+`getrunwindow` says `kiosk=True` and both backends honour it — under webview
+as `create_window(fullscreen=True)`, under tkinter as the `-fullscreen`
+attribute at the end of construction. The later `takekioskscreen()` call
+stays: it is the fallback for a pywebview without `fullscreen=`, and it is
+what binds Escape as the way out.
+
+**And kiosk pages are centred again** (Kent: "centered now"). A page sat
+hard against the left of a fullscreen window with the spare width beside it.
+tkinter centres by weighting the empty spacer columns either side of the
+content — not the content column itself — and only the latter would stretch
+a page, so skipping the whole axis was one confusion too many. The spacers
+carry the weight now, which leaves every page its own width.
+
+Rows 0 and 2 stay unweighted, deliberately parting from tkinter: weighting
+them would centre vertically too, and a kiosk page wants its list to use the
+full height rather than sit in a band in the middle. tkinter can centre both
+ways because Tk shrinks its tracks under pressure; CSS Grid overflows.
+Neither change costs anything on a window fitted to its content — with no
+leftover space, a spacer track resolves to zero.
+
+Found with a new `--log-heights` switch, which reports the ancestor chain of
+every scroller on a page — authored and computed height, max-height,
+`grid-template-rows`, `align-content` — because a page with a double scroll
+says the chain broke without saying where.
+
+**Also:** `grid_size()` now counts spans instead of reporting `max(row) + 1`,
+so a frame holding one widget with `rowspan=4` no longer reports a one-row
+grid. `nrows()` is the consumer that matters — it is how the app finds the
+row after everything, and too small a number puts the next widget on top of
+existing content. `.grid()` as a method also normalises `colspan`/`r`/`c`
+now, as the constructor always did.
+
+# Version 1.15.28
+
+**Nine windows gone from the status lines and the sound page.** Every value
+on a task page's prose lines is now edited where it stands. Clicking
+"Studying Kent's English" opens a chooser on the word itself instead of
+raising a window; the same for the interface language, both gloss languages,
+both second-form fields, the two parse levels and the sense being parsed.
+
+Two of those replaced more than one window each:
+
+- **the second form field** replaced THREE — pick from the database's
+  fields, "other" for the defaults, "custom" to type a name. An editable
+  combo is all three at once.
+- **the sense picker** replaced TWO, and removed a workaround with them.
+  Picking a sense asked "What letter does your sense start with?" over
+  first-letter buckets and then listed that bucket's senses; the buckets
+  were never the user's question, they existed because a flat list of every
+  sense is too long to show as buttons. A field you can type into narrows
+  the list directly, which is what the letters were approximating.
+
+Along the way, three distinctions that the one-window-per-value shape had
+been hiding:
+
+- **Typing and choosing are different events.** The page reported both as
+  `select`, so a field that closes when you pick a value closed on the first
+  KEYSTROKE — you could not type a second character. Typing reports as
+  `typed` now: the variable still tracks the text and the list still
+  narrows, but only a pick runs the command.
+- **Typing and inventing are different permissions.** The sense field is
+  editable so it can be SEARCHED, but its codes are sense objects: a typed
+  string matching nothing is a search that found nothing, not a new sense.
+  The second form field is the opposite — its code IS the name. `editable`
+  and `allow_new` are separate.
+- **Prose and columns want opposite layout.** A settings page shares grid
+  columns so names line up across rows; a sentence must not, or "Using" sits
+  an inch from the language it names. Same composite, two modes — container,
+  anchor and reserved width all differ.
+
+**A caught exception is as invisible as a dropped option.** Every setter a
+line can now drive took `(choice, window)` and closed that window as its
+last act, so calling one with a single argument raised `TypeError` inside
+`on_commit`, which is caught and logged. The value changed on screen and
+nothing was saved — the second gloss language went on reading "just use
+Kent's English" because `setglosslang2` had never run. They all take
+`window=None` now.
+
+**Windows on Wayland: we stop fighting the compositor.** A window does not
+keep the size the fit gives it — the compositor re-configures a toplevel on
+almost any focus change. Four mechanisms were tried and all are declined:
+`move()` (forbidden by xdg-shell, and the attempt costs the window its
+size), the default size, a widget minimum, and geometry hints with
+`MIN_SIZE` (the call a compositor is obliged to respect). Correcting it
+afterwards works and flickers on every click.
+
+So the size is no longer put back: the window ends up a little smaller than
+asked, the page scrolls, and everything stays reachable — step 3 of the
+app's own layout order. `--keep-window-size` restores the correction.
+Research found a candidate cause that is NOT ours — a GTK theme whose
+`:backdrop` rules change window geometry, which would make this GTK's own
+recalculation rather than the compositor's refusal — and `--gtk-theme=` is
+the test for it. See the webview window-sizing item.
+
+**The parser's load was a debug `print()`.** `getfromlift` yields a
+percentage for every inflection-class trait in the file, and each one was
+printed to stdout. Under `python -u` that is one unbuffered write syscall
+per yield, thousands of them, each rendered by the terminal, with nothing
+consuming the output. A caller can now pass `progress=` and drive the
+"Loading Affixes" bar with it instead.
+
+**Also fixed**
+
+- A readonly combo box was a `<select>`, and a `<select>` fires `change`
+  only when the value DIFFERS — so picking the option already selected
+  reported nothing at all, and a field that closes on selection could not be
+  closed by choosing what it already had. There is no native event meaning
+  "the user chose this". Our own dropdown reports every click, so both
+  states use it; `readOnly` is the only difference. It also needed a
+  dropdown arrow drawn, since a readonly text box without one reads as
+  somewhere to type.
+- The two backends hand a combo box's command different things: webview the
+  picked string, tkinter a `<<ComboboxSelected>>` Event. Trusting the
+  argument put "<Event …>" in the field; reading the textvariable instead
+  was one selection BEHIND, because ttk fires the event before that write
+  lands. The widget's own `get()` is the only thing current at event time.
+- `width` was dropped for every widget type but three. `case 'label'` in
+  widgets.js never read it, so a label asked to reserve a width silently
+  didn't — which is why two attempts at stopping a settings column resizing
+  changed nothing.
+- Two concurrent PortAudio streams on one device: changing the microphone
+  records ~2s synchronously and the clicks arriving during it queue rather
+  than being dropped. Guarded at both doors and, now, at the audio layer's
+  own entry points (`check`, `resolve_cards`, `verify_fs` hold a re-entrant
+  lock — re-entrant because they call each other).
+- The settings window's dedup could not see a window still being BUILT:
+  `self.soundsettingswindow` is assigned once the constructor returns, and
+  the constructor runs a rate check first. Hence "flash open, then open it
+  again", which was also producing the double rate check.
+
+# Version 1.15.27
+
+**Settings values are edited where they are, not in a window each.** Four
+windows are gone from Sound Card Settings — Select Input Sound Card, Select
+Output Sound Card, Select Audio Format, Select Sampling Frequency — each of
+which was a title bar, a prompt and a list of buttons wrapped around a single
+value. A row now reads `Rate: 192khz`, and clicking the value turns it into a
+chooser in place. First delivery on the settings-prompts-in-one-window item,
+which Kent moved to the top of the agenda for this.
+
+The idiom behind it is now `frontend/composites.py` rather than a sixth copy
+of itself. The alphabet chart and the comparison booklet had written
+click-to-edit out five times with their own `edit_x`/`save_x` pairs, and
+`gallery.py` had a sixth to have something to test; the gallery now calls the
+shared one, so the harness exercises what the app runs. It is built around
+the three kinds of field Kent named, because getting the kind wrong is how a
+prompt ends up unable to express the answer:
+
+| Kind | Control | Example |
+|---|---|---|
+| An absolute list | readonly combo (`choice_field`) | the sound card; typing would offer a rate the hardware refuses |
+| Entry with typing | `entry_field` | the analysis language name |
+| Previous values, but a new one allowed | editable combo (`history_field`) | **replaces two windows**: a readonly list cannot say "something else", so the app asks twice |
+
+- **Picking is answering.** A list has nothing to confirm, so the pick-only
+  fields commit on selection and carry no OK button; only the kinds that
+  accept typing keep one.
+- **One field open at a time.** Opening a field commits whatever else was
+  open, so a page cannot accumulate editors — it was ending up as a column of
+  open combo boxes with no labels left to read.
+- **A readonly combobox is our own dropdown now, not a `<select>`.** A
+  `<select>` fires `change` only when the value DIFFERS: picking the option
+  already selected fires nothing at all, so a field that closes on selection
+  could not be closed by picking the value it already had. There is no native
+  event meaning "the user chose this".
+
+**A fit that measured the window it was computing.** Every display cap in
+`grid.css` was in `vw`/`vh` — the viewport, which for these windows is the
+thing being sized to the content. So the measured content size was a function
+of the window size, and `fit_to_content` computed a window from a number that
+changed as a result: the Add-and-Parse page walked 654x605 → 1043 → 1282x707
+over three fits and was cropped at every step, and a double-click re-fit of
+the SAME page with no rebuild moved its right edge 966 → 1132. Each cap is now
+a variable that is viewport-relative while the page is READ (so prose wraps
+into whatever window it got, and nothing is cropped) and screen-relative for
+the duration of a fit (so the measurement holds still). Two fits of the same
+page now report the same numbers.
+
+- `.wv-scrolling-frame` capped at `60vh`, which in a window sized to its own
+  content threw away 40% of that window and scrolled anyway — the Sound Card
+  Settings page cut its record button at ~450 of a 700px content area with
+  240px of empty field below it. Bounded by its own box now.
+- The fit log names the widest LEAF, not the outermost frame. `>` meant a
+  parent and the child pushing it out tied and the parent won on document
+  order, so four rounds of this item read `widest DIV.wv-widget wv-frame` and
+  learned nothing.
+
+**Two context menus that would not go away, one bug each.**
+
+- tkinter's released the grab immediately after `tk_popup` ("don't do Tk
+  redundant grab") — and that grab IS what dismisses the menu, so it sat there
+  after the user had chosen and they clicked again. Already found and fixed
+  once in the OTHER context menu: `sort_ui.py:179` carries the whole
+  explanation and names this implementation as the one still doing it.
+- webview's dismissed on `click`, and **a right-click never fires `click`** —
+  it fires `contextmenu` — so a second menu appeared on top of the first with
+  both left on screen. Dismisses on `mousedown`/`contextmenu` now, and
+  `tk_popup` removes any previous element rather than orphaning it in the DOM.
+
+**Two concurrent PortAudio streams on one device.** Changing the microphone
+records ~2s synchronously, and the clicks that arrive during it queue rather
+than being dropped — so under webview, where they arrive on the JS bridge's
+thread, a second measurement could start while the first still held the
+device. It became reachable because the UI got quicker, not because the audio
+changed: switching cards used to cost a window open and close, and is now two
+clicks. Guarded process-wide, and a click arriving mid-measurement is skipped
+rather than queued.
+
+The settings window's own dedup had the same door open from the other side:
+`self.soundsettingswindow` is only assigned once the constructor RETURNS, so
+for the whole of a build a second click saw no window to reuse — and each
+click runs a rate check before building. `_configure_sound` now refuses
+re-entry.
+
+**Also fixed**
+
+- `updateProp('text')` used `textContent`, which replaces every child — so
+  setting the text on a widget carrying a picture DELETED the picture. The two
+  cycle buttons on the sort page differed only in that one has its text
+  reassigned after construction; that is why the same image drew on one and
+  not the other.
+- A `Button` built with `text=<Variable>` resolved it once and never tracked
+  it, so the sort page's member count was whatever it happened to be at build
+  time. `Label` has traced it for a while.
+- `compound` arriving after `image` re-read the class it had just written and
+  kept the default, stacking every sort row's picture above its word.
+- `_applyGrid` tested `if (opts.ipadx)`, so **0 was read as "not asked"** and
+  a caller asking for no padding got the stylesheet's. Python now sends those
+  keys only when a caller asks, and `updateProp` handles them at all — it had
+  no case for `padx`/`pady`/`ipadx`/`ipady`/`borderwidth` and no `default:`,
+  so they were accepted and dropped. There is a `default:` now, which warns
+  once per unknown option name.
+- A widget could be evaluated in the page BEFORE its own parent: `_wv_loaded`
+  and `_started` were set before their queues were drained, so anything built
+  in the gap overtook the backlog and landed with nothing to attach to. That
+  is the orphaned sort group that laid itself out against the page.
+- A disabled control ignores its `bind()` handlers too, not just its command.
+  `state='disabled'` stops a button's command but not a binding, in Tk as in
+  the browser, so the greyed-out cycle button went on cycling on right-click.
+- Tooltips: one per page rather than one per widget (several could be on
+  screen at once), `position: fixed` so they sit on their widget on a scrolled
+  page, and state-aware text — a disabled control no longer advertises what it
+  refuses to do.
+
+**Not fixed, and recorded as such**: a window on native Wayland does not keep
+the size the fit gives it — the compositor re-configures a toplevel on almost
+any click and GTK answers from the size the window was CREATED with, because
+`resize()` is one-shot. Putting the size back afterwards works but flickers;
+`set_default_size` was tried and does not hold; `move()` cannot work there at
+all (xdg-shell has no toplevel positioning, by design) and is no longer
+attempted. See the webview window-sizing item. Relatedly, the app has died
+silently several times with no traceback, no signal and no shell message; two
+concurrent-stream doors are now shut, but the cause is not established.
+
+# Version 1.15.26
+
+**The sort and macrosort pages work under webview, and one wrong keyword was
+most of what was wrong.** `presenttosort` calls
+`wait_window(window=self.sortitem)`; tkinter's parameter is `window`, this
+backend's was `widget`, so the call raised, the loop caught it as "sort item
+gone", and ran through every word without ever waiting. Three separate
+symptoms, chased for most of a session, were all that:
+
+* **no presented word** — the sort finished instantly, so the page you were
+  left looking at was the FINISHED sort with nothing to present;
+* **two presenters at once** — one sortitem built per word, all in the same
+  cell;
+* **a group's select button drawn full-width across the top of the page**,
+  with the row it belonged to left showing a count and tag and no word.
+
+A signature that differs only by a parameter NAME is the hardest port gap to
+see: the call site reads correctly, the method exists, and the failure
+surfaces as a caught exception three frames away. Both names are accepted
+now.
+
+Six more of the same family, each found in one log line and each previously
+swallowed by its caller's `try/except` — so the page built WITHOUT the thing
+and said so in a line naming the symptom rather than the cause:
+
+| missing | what it cost |
+|---|---|
+| `drive_work` on Toplevel (it was on Root only) | `sorting_engine.py:666` calls it on the safe window, which is never the root — a sort check raised "PORT GAP" and stopped |
+| `wrap_to_container(targets_parent=…)` | the sort page raised mid-build; a no-op that cannot be CALLED is not a no-op. `**kwargs` now, so a signature tkinter grows later is accepted rather than fatal |
+| `master` on any widget | the scroll re-arm failed |
+| `_root()` on any widget | the right-click menu was skipped |
+| `_configure_interior` / `_do_configure_interior` | `SortButtonFrame.reflow` failed; needed on the BASE widget, since the caller holds a plain Frame as often as a scroller |
+| `tk.call('tk','windowingsystem')` | the Aqua probe raised, so on macOS the context menu had no binding at all. Shimmed to answer that one question and to RAISE for any other Tcl call, rather than return None and make every future Tcl-shaped question silently wrong |
+
+Also on those pages: the member count now draws INSIDE the cycle icon
+(`compound='center'` is a stack, not a direction, and was the one compound
+value flex could not express); the profile tag marks the checked position
+again (`theme.css` had a class for every tkinter font except `bold` and
+`boldunderline` — the two that exist only to mark part of a string); glyph
+buttons take the full row height; an `image=…, text=''` widget is drawn as
+an image rather than wrapped in a compound container it has no use for; and
+the wait window builds its text in the CENTRED frame with the card image
+tkinter has always shown, with its progress bar under the content instead of
+in the outer left column.
+
+New diagnostics, because four of the above were found by measurement after
+being mis-read from screenshots: the fit probe reports the widest and
+tallest elements by name, how many images have yet to decode, and any widget
+drawn ABOVE OR LEFT of its own parent; a widget that asks for an image and
+gets nothing says so; and `createWidget`'s orphan fallback reports to the
+log rather than to a console nobody has open.
+
+# Version 1.15.25
+
+**Kiosk is for run windows only — and giving task windows their dressing
+back uncovered a crash.** A task's FRONT page (its title, status lines and
+start button) was taking the whole display to show half a dozen widgets in
+the top-left corner. `TaskDressing.__init__` kiosked every task window, with
+one exception carved out for the chooser last week; the rule is about which
+KIND of window, not which task, so the run window `getrunwindow()` creates
+still kiosks itself and nothing else does. Kiosk pages also centre their
+content now, which tkinter has always done (`Window.post_tk_init` weights
+rows and columns 0 and 2) and webview did not.
+
+Three things that had been unreachable while those windows had no close box:
+
+* **Closing a window SEGFAULTED the app** (`apport … -s11`). Every window's
+  close box went to pywebview's own close, which DESTROYS the window, and
+  destroying one mid-teardown is the crash documented in
+  `_close_native_window`. tkinter has wired `WM_DELETE_WINDOW → on_quit` in
+  one line since forever; this backend wired it only at three call sites.
+* **`on_quit` never escalated for the main window.** tkinter:
+  `if (to_root or getattr(self,'ismainwindow',False))`. Webview checked only
+  `to_root`, so quitting the main window closed one window and left the app
+  running with nothing visible.
+* **`protocol()` added handlers instead of replacing them**, so a page
+  setting its own close behaviour (the alphabet chart hands it to `gettask`)
+  would have left both running.
+
+**Windows fit their content, and nothing is clipped.** The fit computation
+was broadly right and essentially unreachable — it ran at page load, before
+any page has content, and on release-from-fullscreen. It now also runs when
+content is built or rebuilt (asked for by the base widget, so no page can
+forget), on reveal, and on a double-click from any window state. Four
+distinct faults were in the way, each found from one log line after four
+rounds of inferring from screenshots:
+
+| fault | effect |
+|---|---|
+| `_FIT_MIN` clamped UP to | a fit on a bare page resized the window to the 420x260 floor — the chooser was left there holding a notebook of task buttons |
+| hidden windows measured | `gettask` rebuilds the chooser while it is withdrawn, so every refit landed where nothing could be measured |
+| undecoded images count as nothing | an `<img>` with no intrinsic size yet contributes no height, so a page with a card image measured short and grew past its window afterwards |
+| a JS exception in the probe | `evaluate_js` waits for a result that never comes, so the fit's thread parked and the log showed "fit requested" with no outcome |
+
+The measurement STILL under-reports by 227x95 on one page, so the clipping
+is fixed by not trusting it: `_grow_if_overflowing` asks the DISPLAYED page
+whether `scrollWidth > clientWidth` and grows by the shortfall, at most
+three times, capped at the screen. The fit predicts; that verifies. The
+discrepancy is recorded in the item rather than papered over.
+
+Also: windows are born in the theme's colour and (where the compositor
+allows positioning) off-screen rather than visible, so the startup no longer
+flashes a grey window over the splash; the document starts transparent so
+the window's own colour shows until the theme arrives; the debug window
+badge moved to the bottom-left, out from under the Tasks button; and
+`frontend/gallery.py` gained a Composites tab for the app's click-to-edit
+idiom — label ↔ entry, ↔ list box, ↔ editable combobox — which is written
+out five times in the alphabet pages and is a class nowhere.
+
+# Version 1.15.24
+
+**The LIFT load, 4.2 s → ~2.3 s, and the biggest piece of it was not a
+comprehension.** Measured on Kent's Demo_en (1700 entries), same machine
+throughout, by the boot profile plus new per-step timing in
+`init_post_analang`:
+
+| where | was | what it was doing |
+|---|---|---|
+| `Sense.getglosses` → `file.getfilesofdirectory` | **~2.2 s** | looked for a matching picture for EVERY sense, and `Path(dir).glob()` re-reads the directory each call — so `images/toselect/` was read once per sense and all ~1705 names fnmatched each time (2.9 M fnmatch calls) |
+| `slicebylx`, `slicebylc`, `slicebypl` | ~1 s | keyed on one text per ENTRY rather than per distinct text, so every entry was rescanned once per entry: n² calls of `textvaluebylang` |
+| `slicebyerror` | — | built the key set, then rescanned all senses once per key, re-evaluating two working properties each time |
+| `fill_db_images`, `Exporter.report` | — | `.index()` to report progress — a full scan to find the item the loop had just handed over, and wrong on duplicates besides (`.index` returns the first match, so equal senses reported the same percentage and the bar stalled) |
+
+The picture lookup took two rounds, and the first felt like the whole
+answer: caching the directory listing removed the syscalls and left the
+SCAN, which was the cost. Both patterns are anchored (`"{n}_{glosses}*"` is
+a prefix, `"*_{glosses}"` a suffix), so a sorted index and a bisect replace
+the scan. `getfilesofdirectory_cached` is deliberately separate from the
+shared helper: other callers glob directories the app is writing to while it
+runs, and a cache would hand them a stale answer.
+
+New: **`tests/manual/rescan_sweep.py`**, which finds this shape by AST
+rather than by reading — five rules, and its own first version printed 207
+candidates (a broken tool, not a broken codebase) before the rules were
+tightened to 77. And **`--profile-load`**, which profiles the LIFT load and
+named the picture lookup in one run after per-step timing had narrowed it to
+one function.
+
+`io_put/lift.py::init_post_analang` carries temporary per-step timing
+(`DIAG-liftload`), as `langtags.Languages.__init__` does; both come out when
+the rescan-instead-of-grouping item closes.
+
+**Nine webview faults, found by building one page that both backends draw.**
+`frontend/gallery.py` (`python -m frontend.gallery [--webview]`) builds every
+widget the five `ui_tkinter` testapps build, through `from frontend import
+ui`, so running it twice makes any difference a backend difference rather
+than a test difference. Roughly a third of what it surfaced was wrong in the
+*gallery*, each time caught by the tkinter control disagreeing.
+
+**Fixed and confirmed** (Kent, GTK, 2026-09-14):
+
+| what | was |
+|---|---|
+| anchor, all nine positions | every cell was exactly as big as its text, so nothing could move in it — twice, first from `ipady` (which is padding, outside the content box) and then from a `"\n\n\n"` spacer (four lines in tkinter, nothing in a page: HTML collapses whitespace) |
+| `sticky`, all four | same flaw, plus the border was on the cell and not on the label, so a stretched label and an unstretched one were both invisible boxes |
+| drop events reaching the program | the gallery wired no drop handler at all and reported "(no drop yet)" from a label nothing could change |
+| drag feedback under Qt | the ghost was the *engine's*: WebKitGTK drags a translucent snapshot, QtWebEngine draws nothing, so the same page looked alive on one engine and dead on the other. Feedback is now the stylesheet's — dashed outline on what is being dragged, solid on what it is over |
+| an editable combobox — pick from the list OR type something that is not on it | `state` was ignored entirely, so there was no such control. Built on a `<datalist>` first, which **filters its suggestions by what is already in the field** — a combobox holding "choice 1" offered exactly one choice — so the dropdown is now ours: everything on open, narrowed as you type. Two things had to be fixed underneath it: `Combobox` never tracked its textvariable (read once at construction), and `focus_set` called `.focus()` on the widget element, which for a wrapper is not focusable — so the field never focused and its list never opened |
+
+**Also fixed, and checked on the gallery's Controls and Text tabs the same
+day:**
+
+* **A list box's selection never reached Python.** `ListBox.insert` filled the
+  display list and never `choices`, and `_on_select` guards on
+  `0 <= idx < len(self.choices)` — so every pick was rejected, for the life of
+  every list. The page highlighted the rows locally, which is exactly what a
+  working list looks like.
+* **`selectmode='extended'` behaved as `multiple`.** The page was told only
+  "is this multiple?", so a plain click toggled instead of replacing and a
+  selection could never be narrowed back down. All four tkinter modes now
+  reach the page: plain click replaces, shift extends a run, ctrl/cmd toggles.
+* **Option descriptions dropped from list rows** — tkinter folds them into the
+  text (`"Name (12)"`, usually an item count); the webview copy of
+  `regularize_choice` stopped one step short, so the same options read
+  differently in a list than in a button frame on the same page.
+* **The list callback got the last-clicked row** where tkinter passes the
+  first selected (`choices[sel[0]]`).
+* **`RadioButtonFrame` built nothing at all** — `optionlist` and `variable`
+  popped and discarded, leaving an empty Frame. `ui_shell.py:4252` builds one.
+* **`SearchableComboBox` was `pass`**, i.e. a plain combobox wearing the name
+  of a searchable one. It raises now, as tkinter's does.
+* **`Combobox(state=…)` was ignored.** ttk's `normal` (its default) is
+  typeable — a value that is not in the list — and `readonly` is not. Asking
+  for `state='normal'` now builds an `<input>` with a `<datalist>`, which also
+  filters as you type; `readonly`/`disabled`/absent keep the `<select>`.
+  Keeping `<select>` as the default diverges from ttk deliberately: it is the
+  better control for the app's one call site (`tasks.py:1119`), and
+  `<datalist>` support in WebKitGTK cannot be relied on.
+* **The drag source's `dnd_end` was never called** under webview — the page's
+  `dragend` was answered inline, so any override was dead code there. The
+  target it landed on is now passed, as tkinter passes it.
+
+Gallery itself: drop reporting, radio rows for `selectmode` and combobox
+`state` that rebuild the widget, click reporting on the scrolling button
+frame and list box, and a progress sweep that announces its reset and prints
+the *commanded* value (the old one commanded 0 while the bars rested at 33
+and 66, under a CSS transition four times longer than its step — so it drew a
+slow fall that reversed, and never showed the sweep it claimed to).
+
+# Version 1.15.23
+
+**Boot to the task chooser: 53 seconds → 10.1.** Forty-two of those seconds
+were three functions rescanning a list where a set or a grouping was wanted;
+all three are now one pass. The LIFT XML parse they surround takes 0.1 s.
+
+Measured on Kent's logs, same machine and project throughout: **53.0 s →
+20.6 s → 10.1 s** as the three landed.
+
+| where | was | shape |
+|---|---|---|
+| `LiftXML.getsensefieldnames` | **32.6 s** → 6 ms | grouping by rescanning |
+| `langtags.dict_by` | **5.05 s**, called twice ≈ 8.9 s | grouping by rescanning |
+| `TaskChooser.getcawlmissing` | **4.6 s** | `not in` against a list |
+
+None of them raised, none logged, and all three were *correct* — so every
+test passed and the slowness got attributed to the LIFT parse, to Tk, or to
+the machine. They were found by timing, and two attempts to find the third
+by reading guessed wrong before per-step timing named it in one run. Pattern
+and the remaining sweep: the rescan-instead-of-grouping item.
+
+`langtags.dict_by` grouped `iso.list` by running its outer loop over each of
+~9582 distinct codes and rescanning all ~9582 entries for each — about 92
+million iterations. `getcawlmissing` did 1700 lookups against a list of
+~1700 (guarded on `str`, because if that value is ever a single string then
+`in` means substring and a set would silently change which CAWL slots count
+as missing).
+
+## The first and largest: `getsensefieldnames`
+
+`LiftXML.getsensefieldnames` builds the inventory of which field names carry
+data in which language. Its dict comprehension had the loops inside out: the
+**outer** loops ran over every `(sense, field, language)` triple — thousands
+of them — and for each one the inner set rescanned every sense and every
+field. Each triple sharing a language recomputed the identical set and
+overwrote it, and the whole thing produced five keys. `getfieldnames`
+immediately above has the right shape by accident: its outer loop is the ~11
+languages, not the data.
+
+Measured on Kent's log (2026-09-14), 1700 senses: **32.6 s**, ~19 ms per
+sense — against **0.1 s** for the LIFT XML parse that precedes it. Now one
+pass, 6 ms.
+
+This is the cost that made every architectural option look bad: a webview
+child that loads the project was unthinkable at 53 s a page. It is also,
+almost certainly, a good part of why the app has felt slow generally — it is
+on the load path for every project, in every mode, on every platform.
+
+One behaviour preserved deliberately: the old outer loop did not test `if k`,
+so a language reached only through a field with a falsy name still got a key,
+with an empty set. `setdefault` keeps that rather than quietly changing what
+callers see.
+
+`tests/test_lift_field_inventory.py` pins the output, but the test that
+matters measures **scaling** — 20 senses against 40, requiring the work to
+roughly double. Every output test passes against the old code, because it was
+correct, merely quadratic; only a pass count catches that. A first version of
+that test asserted exactly one read per sense and failed at three, because
+`sense.fields` is a property the loop re-read per field; the loop now binds
+it once, and the test measures the shape rather than the detail.
+
+### What is left of the 10.1 s
+
+| | |
+|---|---|
+| LIFT load → field inventory (the `pylangs` conversion is ~4 s of it) | 4.3 s |
+| settings | 2.0 s |
+| served splash child, start to ready | 1.4 s |
+| chooser build | 1.0 s |
+| start → Tk root | 0.6 s |
+| settings tail + CAWL (was 4.6 s) | 0.8 s |
+
+The next candidate is inside the LIFT block, between `Using analang=en from
+settings` and `looking to convert pylangs` — about 4 seconds with nothing
+logged in between.
+
+# Version 1.15.22
+
+**Mixed mode is now the default: a tkinter host serving webview pages, one
+page at a time.** The splash is the first, and it works — Kent, after the
+first render: *"ugly, but there"*, then with sizing and the progress bar:
+verified.
+
+    python main.py              # Tk host + webview children for SERVED_PAGES
+    python main.py --tkinter    # tkinter only. Serves nothing.
+    python main.py --webview    # webview only, in-process. Serves nothing.
+
+This is ADR 0004 **D7**, which has been written down since 2026-09-04 and
+unbuilt: `webview.start()` and Tk's `mainloop()` both need the main thread, so
+a mixed page runs as a child — **view model in, result out** — and the parent
+keeps the mainloop, therefore keeps `VisibilityWatchdog`/`QuitOnlyGuard`, and
+can time out, kill, and re-render the page in Tk.
+
+**Nothing existing changes.** `SERVED_PAGES` holds one name; a page not in it
+renders in Tk in every mode. `ServedSplash` wears `Splash`'s surface — the
+`_NoSplash` null-object trick with a process behind it — so **no call site was
+touched**, and `main.py` is three-way in fallback order: `--no-splash`,
+served child, Tk `Splash`. Every refusal returns None and says why.
+
+## The splash's view model is why it went first
+
+Six strings, an image name and an integer, with no live objects at all, and
+`progress()` the only update — so this exercises parent→child streaming and
+the whole supervise/timeout/fall-back path with **no action protocol**. Kent:
+*"How about we learn from the last experience, and just serve the splash
+first"* — the last experience being that starting the in-process port at the
+splash rather than the chooser separated visibility from layout.
+
+`frontend/served_splash.py` is **runnable by hand** off one `echo | python -m`
+line (in its docstring), which is what separates "the webview splash does not
+render" from "the machinery does not work".
+
+## Answers to three risks the ADR listed rather than hand-waved
+
+- **Child startup latency: ~1.4 s.** Measured (`served splash: ready in
+  1.4s`). That is added to every boot in the default mode, where the Tk
+  splash was instant. Not yet judged worth it or not.
+- **Where the child's log lines land: the parent's log**, relayed over
+  stderr. The child explicitly DETACHES itself from the log file, because
+  `logsetup`'s runid comes from an inherited environment variable — so a file
+  handler in the child would open the parent's own part files and roll
+  against them, corrupting the log the watchdogs are read from.
+- **Transport, per process, in the log.** The host reports XWayland and the
+  child reports `GdkWaylandDisplay` in the same run, so a mixed-transport app
+  is now legible rather than inferred.
+
+## Three faults found by running it
+
+- **Readiness must be waited for SYNCHRONOUSLY.** `main.py` calls
+  `splash.draw()` then runs all of boot without returning to the mainloop, so
+  an `after()`-based readiness check would resolve after the thing it gates —
+  the 400 ms wait-dialog delay's exact mistake.
+- **`ui_backend.requested()` cannot answer "did anyone ask?"** It defaults to
+  `'tkinter'`, so a bare `python -m main` read as `--tkinter` and refused to
+  serve, blaming a switch that had not been typed. New `explicit()` returns
+  None when nothing was asked for; `requested()` keeps its default for
+  `chosen()`.
+- **The child would not exit.** Webview's `Toplevel.destroy()` deliberately
+  only hides ("freeing a pywebview window at the wrong moment is what crashes
+  Qt"), so nothing ended the event loop and the parent killed the child two
+  seconds later on every boot. It now hides, tears down pywebview's windows,
+  and `os._exit(0)`s — the right brutality for a process that renders one
+  page and holds no state.
+
+`tests/test_served_pages.py` is weighted at the property that protects
+everything else: a child that cannot start, never reports ready, dies, or
+breaks its pipe must yield None — never an exception, never a hang. Those
+tests are also what caught a four-specifier/three-argument log call in the
+timeout path, which no ordinary run would ever have executed.
+
+# Version 1.15.21
+
+**Leaving a task page while it is still loading now works.** Clicking Tasks
+during a slow page build used to crash, and then — once the crash was fixed —
+left the screen with nothing on it at all. Both are fixed and **verified on
+tkinter** (Kent: *"early exit to task manager is now working on tk"*).
+Webview is unverified.
+
+Two separate faults, which is why the first fix looked like it had made things
+worse.
+
+## Fault 1: work carried on into a window that was gone
+
+The affix catalog kept loading after the user had left, then tried to build a
+page into a destroyed window, and tkinter refused the parent:
+
+    _tkinter.TclError: bad window path name
+        ".!taskwindow.!taskwindow.!frame.!frame"
+
+Kent's diagnosis and his rule for this class of bug: *"if there is backend
+logic that relies on the frontend, it should test that it is there before
+continuing. I used to have lots of code that would diesel on long after
+tkinter had shut down, until I started asking about that… the answer here may
+be more of a check the catalog to not return to a window that just isn't
+there."*
+
+`Senses._window_is_there()` (`backend/core/lexicon.py`) is that test, asked at
+three points: **per iteration of the affix-loading loop** (the one that
+diesels — `waitprogress` was tolerating a dead wait window *silently*, so
+nothing stopped and the catalog ran to completion before anything noticed),
+`getwords()`, and `Parse.showwhenready()`.
+
+It asks about the **window**, not `ui.frame` and not `exitFlag`. The frame is
+absent during construction as well as after teardown — the same observation,
+and only one of them is a reason to stop. The window is created by
+`Task.__init__` before any slow work and destroyed by `on_quit`'s final
+`destroy()`, so `winfo_exists()` is false exactly when the work has nowhere to
+go, and never merely early. It only stops on positive evidence: a missing or
+unaskable window counts as present, because a page that never appears is a
+worse failure than one that raises.
+
+## Fault 2: the click was never honoured
+
+With the crash gone, the app was left showing nothing. Clicking Tasks runs
+`gettask()` *nested inside* the task's still-running `__init__` — the affix
+load drains the event loop, so the click is serviced there. `gettask` quits
+the task, rebuilds the chooser and reveals it. Then the stack unwound back
+into `__init__`, whose next statement was `self.program.taskchooser.withdraw()`
+— hiding the chooser the user had just asked for, with the task window already
+destroyed.
+
+`TaskBase.hide_chooser()` replaces that unconditional withdraw. `gettask`
+clears `program.task` (`chooser.py:163`), so that is the test: if this is no
+longer the live task, the chooser is where the user asked to be. It returns
+False, which is also the caller's signal to stop building a page nobody is
+waiting for. Four sites converted — `tasks.py` ×3 and `lexicon.py::getword`,
+whose copy carried the comment `# not sure why necessary`.
+
+## Also fixed in `Parse.showwhenready()`
+
+Found while reading the same log. One `try` wrapped both the readiness test
+AND the `deiconify`, so a *failed show* was misreported as "self.status not
+found" and retried; the reason was never logged, so the line named the wrong
+thing. Its 100 × 100 ms retry is correct and unchanged — that loop exists
+because the status window is not ready yet — but only the first wait now logs
+at info, instead of up to a hundred identical lines.
+
+## `--console`: the webview devtools console is now OFF unless asked for
+
+It followed the app's dev-settings flag, so it was on in a dev checkout
+always, and `--user` was the only way off — which also drops the test lift,
+the auto-opened task, the debug badge and the dev theme. Kent: *"rather than
+calling it --no-i-really-do-want-the-console-this-time, let's just use
+--console."*
+
+One switch, one name. The two names that briefly existed on the way here
+(`--webview-devtools`, `--no-webview-devtools`) are gone, and
+`tests/test_webview_console_switch.py` asserts they do nothing — a default
+that has moved twice is worth pinning, and half-working aliases are the
+`mainwindow`/`ismainwindow` trap.
+
+The console is no longer suppressed on Qt either. It is known to segfault
+there (`show_inspector` garbage-collects inside a `resizeEvent`), but now
+that it has to be asked for, asking is answered — with a warning in the log
+rather than a silent refusal.
+
+## Timing for the 37-second scroller passes
+
+Kent, building the alphabet chart on tkinter: two passes of **37s and 42s**,
+the second of which reads on screen as a nothing-but-Quit page. Both webview
+engines build the same page in ~0s.
+
+**And the cause is settled: it is not XWayland.** `utilities/display.py` now
+logs which display stack each backend actually got, read from the toolkit —
+tkinter is on XWayland, and both webview engines came up *native Wayland*, so
+the fast/slow comparison was confounded. The new `--gdk-backend=x11` switch
+broke the tie by putting GTK on XWayland with everything else unchanged: it
+still built in ~0s. So Tk's 37-42s is Tk's own volume of synchronous geometry
+calls, not the transport.
+
+That kills the *slowness* half of the case for the blanket no-`update()` rule
+in layout code. It does **not** touch the *deadlock* half, which rests on
+faulthandler dumps of `update()` wedged mid-transition — a fast client says
+nothing about whether a round-trip issued during a window-state change can
+deadlock with mutter. `USING_WAYLAND` is a deadlock guard, not a performance
+guard.
+
+`ScrollingFrame.windowsize` now reports any pass over 2 seconds at `warning`,
+splitting the time between `availablexy()` (which does a `grid_info()` per
+sibling per grid level) and `content.update_idletasks()` (which runs every
+pending idle callback, including other scrollers' `<Configure>` handlers), and
+counting **how many sizing passes ran inside the slow one, across how many
+distinct scrollers**. That last pair is the point: the `_sizing` guard stops a
+scroller re-entering itself, so if the cascade hops between instances the
+guard is the wrong shape, and the existing log lines are deduped on content
+size so they could never show the count. See
+the Wayland freeze audit, which also records that the webview
+comparison does NOT by itself exonerate XWayland — GTK3 probably runs as a
+native Wayland client, so the discriminating question is whether Qt is on
+`xcb`.
+
+## Notes for the record
+
+- **`exitFlag` is per-window, and it takes three classes to see that.**
+  `Childof.__init__` copies the parent's via `inherit()`
+  (`ui_tkinter.py:916`), then `Exitable.__init__` replaces it with a fresh
+  one (`:1529`). Child widgets — `Childof` but not `Waitable` — keep the
+  copied reference and so share their toplevel's flag, which is what
+  `inherit()` is for. The comment at `:3694` saying it "overwrites inherited
+  exitFlag" means *class*-inherited; read as widget-inherited it produces a
+  wrong diagnosis, as it did here. What has no name is the program-level
+  flag, currently spelled `program.tk_root.exitFlag` —
+  the exit-flag-names-its-scope item.
+- The 400 ms wait-dialog delay from 1.15.20 was **reverted**: `after()` is not
+  serviced while the main thread is held, so the dialog arrived last or never
+  while the page stayed hidden — a 35-second blank screen.
+  the wait-dialog-flicker item records it as attempted, not fixed.
+- `tests/test_work_outliving_its_window.py` (28 tests) covers both faults,
+  including which signals must NOT be used, and asserts that the three
+  short-lived predicates written on the way to this one stay retired.
+
+# Version 1.15.20
+
+**The PyAudio→sounddevice port is finished: recording and playback are CONFIRMED on
+Linux, Windows and macOS.** That was the port's own gate, and it is the thing that
+matters — sound now installs from a wheel on all three platforms, with no compiler
+anywhere. The rest of this release is the packaging and cleanup that the gate was
+blocking, plus four faults found in the macOS screenshots taken while confirming it.
+
+## Verified by running it (Kent, three machines)
+
+- **Sound records and plays on all three platforms.** macOS was the whole point of the
+  port: PyAudio could not be installed there at all without a compiler.
+- **The Sound Card Settings window opens on macOS**, where it used to die on
+  `'SoundSettings' object has no attribute 'asr_kwargs'`.
+- Test suite green: **393 passed, 8 skipped**.
+
+## Fixed — the macOS installer was sabotaging itself with dead PyAudio code
+
+Three faults in one block, and the third is the one users felt:
+
+1. It filtered `PyAudio` out of `requirements.txt` before installing — a no-op, since
+   PyAudio left that file on 2026-09-09.
+2. It then ran `pip install PyAudio` on its own, trying to BUILD from source on a Mac —
+   exactly the failure the port was done to remove — and told the user
+   **"A-Z+T will run WITHOUT sound"** on a machine where sound works.
+3. **The requirements stamp was gated on that install succeeding.** So the guaranteed
+   PyAudio failure withheld the stamp, and A-Z+T re-ran pip on EVERY startup. Kent
+   asked why the install didn't stick ("should finish the install and no rerun pip on
+   each open?"); this was the answer. The stamp now depends only on the requirements
+   actually installing.
+
+The separate PyAudio wheel-check in the `--check-wheels` section went with it, and the
+summary line now names sounddevice.
+
+## Fixed — installer and docs still described PyAudio as current
+
+- `RunMetoInstall_Linux.sh` installed **`portaudio19-dev`**; it now installs
+  **`libportaudio2`**. `-dev` supplies headers, which only PyAudio needed to compile
+  against; sounddevice binds the runtime library through cffi. Machines set up the old
+  way are unaffected — `-dev` depends on `libportaudio2`. The commented-out
+  build-PortAudio-from-source lines are gone, and `pyaudio` is out of the script's
+  system-python bootstrap, where a build failure would have stopped it before the clone.
+- `CLAUDE.md` said sound needed `portaudio19-dev` and described the sound mixin as
+  "PyAudio streams"; `main.py` logged "Problem importing Sound/pyaudio".
+
+## Fixed — a new AudioInterface was being built on every record button
+
+`sound_ui.py` tested the audio handle by calling `task.audio.get_format_from_width(1)`
+inside a `try` — a PyAudio call chosen for its side effect, because PyAudio offered no
+way to ask. `AudioInterface.usable()` was written to replace it and says so in its
+docstring, but the call site was never changed, and the new class has no
+`get_format_from_width`. So it raised **every time**, and the `except` branch replaced
+`task.audio` with a brand-new interface on **every record button built** — the "new
+AudioInterface conflicts with a Sound task that already opened a stream" hazard from
+AUDIT_FINDINGS, firing always rather than occasionally.
+
+It survived the port because of how it was written: nothing reads as broken when the
+whole point of a line is that it might throw.
+
+**One owner for the handle**, while there: `sort_buttons._playback` looked for it in
+three places (`ss.audio or task.audio or program.audio`) under a comment recording the
+attribute being missed three times in one evening. Both sites now ask
+`SoundSettings.confirm_audio()`, which owns `program.audio` and is covered by tests.
+
+## Fixed — the Sound Card Settings window, eight faults
+
+The window Kent opened to check a microphone was unusable under webview. Each fault
+hid the next, so they are listed with what each one actually did:
+
+| fault | cause |
+|---|---|
+| nothing rendered at all (Qt) | a window created hidden never loads its page, so its JS queue never flushed and every widget sat in it unread |
+| the four setting rows were blank | `Label` read a Variable once at build time; these are built empty and filled afterwards |
+| the caveat ran off the window edge | `wrap()` sets an inline `maxWidth`, and an inline style beat the `92vw` stylesheet cap |
+| the record button did nothing | `<ButtonPress-1>` was not in the event map, so `_start` was never bound |
+| `'SoundFileRecorder' has no attribute 'file_write_OK'` | set in `start()`, so a stop-without-a-start raised instead of reporting nothing recorded |
+| no icons | the webview image list was a short hand copy — 35 of 81 names missing, `record` among them |
+| the wrong theme | the webview theme dict was a four-entry copy of a fifteen-entry one; `Kim` was absent and fell back to greygreen **in silence** |
+| the wait dialog returned the user to the task | `wait()` withdraws and `waitdone()` reveals the window it is called on, and it was called on the task |
+
+**Created-hidden is now off everywhere.** The capability probe measured whether `show()`
+could MAP such a window and Qt said yes; the question that matters is whether it LOADS
+ITS PAGE, and it does not. A window that appears blank is worse than one that never
+appears — it reads as a bug in whatever was supposed to be inside it, which is how it
+misled a whole afternoon's diagnosis through labels, Variables and images that were all
+working. `--webview-hidden` still forces it for re-testing.
+
+**`<Button-1>` now maps to `mousedown`, not `click`.** It and `<ButtonPress-1>` are
+synonyms in tkinter, both meaning press; `click` fires after `mouseup`, so the two ran in
+the wrong order relative to each other.
+
+## Fixed — themes and images had two copies, and both were short (theme VERIFIED)
+
+Kent, 2026-09-11: the theme now applies under both GTK and Qt. It took **two** fixes,
+and the first alone changed nothing — see the `program.theme` note below.
+
+
+`ui_webview.Theme` carried hand-copied subsets of `ui_tkinter.Theme`'s image list and
+theme dict. Both now live in a new `frontend/theme_data.py` that **imports nothing** —
+which is what lets `ui_webview` read it without dragging tkinter in, the constraint that
+made copying look like the only option.
+
+Missing from the image copy, all failing silently (`photo.get(name)` returns None, and
+`image=None` draws nothing and logs nothing): `record`, every sort-board verb image
+(`sort`, `join`, `join_same`, `verify`, `joinglyphs`…), the numbered C/V images, the
+full-size comprehensive reports, and both alphabet-task icons. Missing from the theme
+copy: eleven themes including the one in use.
+
+An unknown theme name now logs a warning instead of falling back in silence.
+
+**And the dictionary was only half of it.** `App.check_for_theme` stores the chosen
+theme's NAME as a string at `program.theme`; `ui_webview.Theme` read
+`program.theme_name` — an attribute nothing in the codebase sets, appearing twice, both
+in that file. So the webview backend never learned the theme at all, and the fallback
+could not warn, because the default is a valid theme name. `ui_tkinter.Theme` gets this
+right (`:689-699`): read the string, *then* overwrite it with the Theme object.
+
+Two faults in one line, which is why fixing the missing themes changed nothing on its
+own. The theme now also LOGS itself — `theme in use: 'Kim' (asked for 'Kim')` — so a
+mismatch is readable rather than something a user has to see.
+
+13 tests, including the one that would have caught the first fault (every `taskicon` the
+app asks for must exist, read from `tasks/` by AST) and two for the second.
+
+## Fixed — Qt crashed at startup, and it was the devtools
+
+`--webview --engine=qt` segfaulted during boot, reproducibly. `-X faulthandler` caught
+the main thread mid-slot:
+
+```
+Garbage-collecting
+qt.py:639 in resizeEvent
+qt.py:208 in show_inspector          <-- only reached when debug=True
+qt.py:737 in on_load_finished
+```
+
+`show_inspector` opens the Web Inspector as each page loads, its resize runs a Python GC
+inside a Qt `resizeEvent`, and the collection frees something Qt still holds. That is the
+same fault `_close_native_window` documented on 2026-09-07 ("garbage collected inside a
+loadFinished slot"), now located exactly: it lives in the inspector path, so it only
+happens with devtools on — which is why `--user` runs were fine.
+
+Devtools are now off for Qt, with a log line saying so; `--webview-devtools` forces them
+back for re-testing.
+
+## New — a noise floor, without asking anyone to be quiet
+
+Reported in both places it comes free: on every take (from the frames already kept for
+ASR, bounded to ~5 s) and on every card switch (the rate check's own captures are silence
+in an ordinary room). No prompt, no button — the floor is by definition the quietest part
+of a capture, so an ordinary take supplies one.
+
+It is an upper bound, which is the safe direction: a speaker who never pauses makes it
+pessimistic, understating signal-to-noise rather than flattering the microphone. Digital
+silence reports nothing rather than −inf dB, since all-zeros is a gate or a dropout and
+`zero_runs` is the detector for that.
+
+## Fixed — the diagnostic script contradicted the program it diagnoses
+
+`probe_real_capability.py` called upsampled paths REAL where the app, `pw-metadata` and
+the hardware all said otherwise. Its own `spectral_ceiling` estimates a noise floor from
+the top octave — inside the very hole it looks for — so residue 120 dB below the signal
+read as energy reaching Nyquist.
+
+**This is the script we hand to other machines**, where no app measurement exists to
+notice the disagreement, so anyone running it on a stock PipeWire desktop would have
+concluded their 192 kHz was genuine. It now imports the app's own `rate_is_fake`, so the
+two agree by construction.
+
+Three further corrections followed from Kent reading the output:
+
+- **No real-rate figure.** It was `ceiling × 2`, and produced "96000 Hz … really
+  ~96000 Hz" under a heading saying the setting lies.
+- **Every figure now comes from the detector that decided** — new `top_of_band_db()`
+  returns the margin `rate_is_fake` had only logged, so no number sits beside a verdict it
+  contradicts.
+- **Two new verdicts.** `NOT PROVED` (nothing disproved it, too little to judge on) and
+  `NOT TESTED` (the band test cannot address rates below 10 kHz — its mid band does not
+  exist there). NO SIGNAL is about the room, NOT PROVED about the evidence, NOT TESTED
+  about the test.
+
+And the script no longer asks for noise: a quiet-room run produced peaks of 0.1–0.7% and
+every verdict still formed. What proves a high rate is the converter's own noise reaching
+Nyquist, which nothing in the room can supply.
+
+## New — an audit that finds port gaps by reading source, not by waiting for a user
+
+Ten gaps in the webview backend have been found by someone hitting them. `ContextMenu`
+was the tenth, and it showed that the check this was going to use — each backend against
+`ui_interface.py` — **would have passed it**: the stub implemented exactly the three
+members its ABC declares and none of the three that make a menu work. The ABC does not
+describe tkinter either.
+
+So the reference is the backend that runs the app. `tests/test_backend_surface_parity.py`
+compares the two modules' sources and asks two questions: what does `ui_tkinter` declare
+that `ui_webview` does not, and which of tkinter's own API does the app call that
+`ui_webview` has nowhere to land. Both filtered by whether the app actually names them,
+because the unfiltered lists are 53 and 17 and mostly kwarg tables. Runs in 1.5 s,
+imports nothing, and works without a display or pytest
+(`../env/bin/python -um tests.test_backend_surface_parity`).
+
+It found, and this release fixes:
+
+- `winfo_ismapped` and `geometry` — both logging failures on every run
+- `columnconfigure` / `rowconfigure` — the short spellings tkinter also accepts, used by
+  the app, present only in the long form here, so those calls raised inside callbacks
+  that swallow it
+- `grid_forget`, `lower` (the pair of `lift`), `winfo_pointerxy`, `workarea`
+- `cancel_drive_work`, `wait_and_drive_work` — webview had `drive_work` alone, so a
+  caller cancelling a long build got an AttributeError instead of a stop
+- `Image.prepare` — called on every card image in `sort_ui`
+- `Theme.setfonts` — so `fonttheme='smaller'` did nothing under webview
+- `grab_release`, `ScrollingFrame.suspend_configure` / `resume_configure` / `hwinfo` —
+  implemented as **accepted-and-ignored with the reason stated**, not as stubs
+- `WAIT_DELAY_MS` spelled two ways across the backends, which is exactly the kind of
+  meaningless difference the audit exists to catch
+
+Two fixes were NOT adding a method:
+
+- `promotegridbkwargs` — `sort_buttons` reached into `ui_tkinter` for a pure dict
+  transform and passed `True` as `self`. Adding it to webview too would propagate the
+  dependency; it moved to the app code that uses the convention.
+- the status window asked its scroller for a `canvas` to theme. tkinter scrolls on a
+  Canvas, a browser scrolls a div — a third kind of gap, where the CALLER is written to
+  one backend's mechanism, which no audit can see.
+
+## Fixed — the wait dialog appeared for work that had already finished (VERIFIED)
+
+Opening a task page hid the page, showed "Loading Affixes", and put the page back —
+four window state changes for an operation the user could not perceive. Two faults:
+`wait()` withdraws the window it is called on (right under tkinter, where it covers a
+slow render; wrong under webview, where the page is already drawn), and the operation
+was too short to deserve a dialog at all.
+
+`wait()` now schedules the dialog 400 ms out and `waitdone()` cancels it if it has not
+fired, so fast work shows nothing — no dialog, no hide, no restore. The withdraw moved
+inside the timer, and webview does not withdraw at all.
+
+Kent: *"even though it showed, it gave me a second to see the page, rather than just a
+bunch of flashing."* Worth noting the dialog still appeared — the delay deferred it
+rather than suppressing it, and the gain was seeing the page before being told to wait
+for it.
+
+Found in passing: `ui_webview` has two `wait()` definitions that mirror each other, and
+they had drifted to `bool(x) or bool(y)` and `x | y` for the same intent — enough for a
+search-and-replace to fix one and leave the other. A test now asserts there are exactly
+two and that both schedule.
+
+## Changed — the Sound Card Settings screen says what each row is
+
+Speakers and Microphone first, then a "Recording settings" heading over Rate and Detail.
+The rate and format rows used to show a bare value (`44.1khz`, `32 bit integer`) with
+nothing naming them — the two settings this item exists to make honest.
+
+That completes plan step 6 of the honest-sound-settings item, and with it the item's
+plan. Layout and wording are Kent's; a first draft carried an explanatory line under each
+row and he cut them.
+
+## New — the rate list says what has been measured, and withholds nothing
+
+The sound settings screen listed the rates a card *accepts* and said nothing about
+what recording at them produced, so a rate disproved by the user's own last take was
+offered again, unmarked, beside one that recorded cleanly. It now annotates:
+
+- `48000 Hz — checked: records cleanly`
+- `192000 Hz — checked: stretched from 48000 Hz`
+- `96000 Hz` — unchanged, because nothing has been measured
+
+**Every rate the card will open stays selectable.** That is the DETECT AND TELL, NEVER
+SWITCH policy, which this screen had never inherited — the plan said to hide unverified
+rates, and Kent caught it: *"we had problems with this proof, IIRC, so we were going to
+let people continue without changing. Can we show users what we believe is true without
+actually limiting options?"* A detector that was wrong four times in one day has earned
+the right to say what it saw, not to remove an option.
+
+One list, not two: there are three states and the common one is *never measured*, so a
+verified/unverified split would put nearly everything in a column that reads as a wall
+of rejects. Grouping also reorders, moving the option under the pointer between visits
+to the same screen. And no explanatory line above the list (Kent: "leave this off") — if
+a note needs a legend, the note is written wrong. Nothing is carried by colour.
+
+Notes state the evidence, never a verdict, and they come **only from real takes** — not
+from `measured_fs`'s probe, which sweeps rates back to back with no settle pause. That
+is exactly the condition that produced a false "resampled" accusation in the manual
+prober (finding 2b in the agenda item). Good enough to choose conservatively with; not
+good enough to tell a user their device is lying.
+
+## New — switching the microphone re-derives and measures it
+
+Previously `choose_card` forgot the old card's rate checks — correctly, since they
+described the old path — and then nothing re-measured, so switching cards could only
+ever *lose* information. The rate and format were also left as the previous card's,
+re-derived only if the new card couldn't do them at all.
+
+Now, on an input-card change: take the new card's best rate and format, measure what it
+really delivers, adopt that, and relabel everything. Kent's call on both halves — *"any
+card switch legitimately implies other settings change; let's offer the best the newly
+selected card has"* and *"running that on switching input cards would be preferable to
+another button users have to hit"*, which replaces the planned "Check this microphone"
+button.
+
+Four details that make it safe:
+
+- **Quieter than a button would be.** `verify_fs()` returns "couldn't tell — the room was
+  too quiet" when it can't judge. On a button that answers a question the user asked; on
+  every card switch it's a nag about something they didn't ask and can't act on. So it
+  speaks only when there's news and logs the rest.
+- **Not inside `choose_card`** — a low-level setter documented as the only safe way to
+  set a card, where a second of audio recording would be silently acquired by any future
+  caller on a startup path.
+- **Input only.** Nothing about the speakers affects what gets recorded.
+- **Wrapped in the wait dialog,** since it records on the click handler's own thread.
+
+13 new tests in `tests/test_sound_ui_handlers.py`, including that an output-card switch
+does *not* measure, that a can't-tell result doesn't interrupt, and that a partial
+settings object turns a card click into a log line rather than a traceback.
+
+## Fixed — the webview right-click context menu never existed (VERIFIED on GTK)
+
+Kent, 2026-09-11: *"context works in gtk"* — so the route to Sound Settings is back
+under GTK. WebKit and Qt are still unverified.
+
+
+`ui_webview.ContextMenu` was a four-method stub whose methods all returned None.
+Because nothing raised, every `setcontext()` in the app ran to completion against a
+menu that was not there — and the cost was a route the user could not take: **Sound
+Settings is reached by right-clicking a task window and has no other way in**
+(`tasks/sound.py:33`).
+
+`Menu` was never the problem — `add_command` and `tk_popup` (a positioned `.wv-menu`
+div, dismissed on an outside click) have worked all along. Three things were missing
+around it:
+
+- **`parent.context = self` was never set.** `ui_tkinter.ContextMenu` does it
+  (`:3714`), and both call sites depend on it: `ui_shell.py:2979` and `:3733` construct
+  `ui.ContextMenu(self)` and discard the result, so everything afterwards reaches the
+  object as `window.context`.
+- **No `menuitem`** — the method every `setcontext()` calls to add its entries.
+- **Nothing bound to right-click, and no `do_popup`** for a binding to reach.
+
+Also mapped `<<ContextMenu>>` in `widgets.js`. That is the tkinter *virtual* event the
+Tk version binds on the window, and unmapped names fall through to
+`addEventListener('<<ContextMenu>>')` — a listener for an event nothing fires, the same
+silent death `<Button-3>` had until 2026-09-09. (macOS needs nothing extra: browsers
+fire `contextmenu` for Control-click, which is what Tk re-points the virtual event at
+on Aqua.)
+
+**Why nothing caught it:** `ui_interface.ContextMenuInterface` declares exactly
+`menuinit`, `updatebindings` and `undo_popup` — the three the stub implemented. The two
+methods that do the work, `menuitem` and `do_popup`, are absent from the contract, so
+the stub was complete by the only standard it was checked against. The ABC does not
+match the tkinter implementation either, which has no `updatebindings` at all.
+13 tests in `tests/test_webview_context_menu.py`.
+
+## Fixed — webview UI faults from the macOS run
+
+- **`NameError: '_wv_window_for' is not defined`** — called at three places in
+  `ui_webview.py` and defined nowhere; every other widget reads
+  `getattr(self,'_wv_window',None)`. It killed `focus_set`, so the interface-language
+  dialog could not put the caret in its field.
+- **Newlines in messages were being thrown away.** The webview label set
+  `white-space: normal`, which does only half of tkinter's Label contract: it wraps long
+  lines but collapses the author's own line breaks. The transcription notice — a lead
+  line, a bulleted list of what is missing, then a closing paragraph — arrived as one run
+  of prose. Now `pre-wrap`, on every label rather than only ones with a `wraplength`,
+  because tkinter honours `\n` unconditionally too.
+
+## Filed, not fixed
+
+- **macOS clicks land off the control** (the macOS clicks-land-below-the-pointer item)
+  — seen on pages with a SINGLE button, which rules out every row/index explanation and
+  makes it a displacement. The same session logged two screen heights, `1680x968` and
+  `1680x1025`; that 57px is a menu bar, and it would read as "one row off" in a settings
+  list and "aim off the button" on a one-button page. Deliberately NOT changed yet: Kent
+  is testing whether the touchpad is at fault, and a code change now would muddy that.
+- **The webview splash renders four of its seven parts** — the bottom three, including
+  the progress bar, which is the only thing that moves during boot
+  (the webview splash missing-parts item).
+- **The webview image list is a short hand copy of tkinter's** — 35 names missing,
+  including every sort-board verb image and the numbered C/V images, all failing silently
+  (the stale image-list copy item).
+- Card images on a lighter rectangle (the webview card-image-backing item); the Sound
+  Card Settings caveat label wider than its window, added to
+  the scroller-sizes-from-layout item.
+- The language chooser's dicts are now **proved** to come from the call site, not the
+  widget: the app logs `asking with these options: [{'code': 'ar', 'name': 'Arabic'}, …]`
+  before any widget is involved (the language-options-show-objects item).
+
+## Awaiting verification
+
+Everything above marked Fixed is code-changed and unverified on Kent's machines, with one
+exception worth stating plainly: **the macOS installer changes have not been run on a
+clean Mac.** The stamp fix in particular can only be confirmed by installing fresh and
+watching the second startup skip pip.
+
+# Version 1.15.19
+
+**A recording that is wrong now says so, to the user and not only to the log — and the
+macOS install stops asking for a torch build that has never existed.** Sound diagnostics
+were measured all day on three machines; the measuring code held up, and nearly every
+fault was in what was done with its answers.
+
+## Verified by running it
+
+- **Per-take diagnostics reach the user.** `_report_take` collected its findings into the
+  log and nothing else, so the app "detected" bad recordings while the linguist found out
+  weeks later with the speaker gone. Problems now arrive as ONE `notify_user` message per
+  take, each naming the problem and what to do: silent take, very quiet, wrong rate
+  delivered, dropped samples, gated audio, and a file larger than its content.
+- **A muted microphone finally reports itself.** Every test was guarded by `if frames`,
+  and a muted input delivers none — so the single most likely reason a user gets nothing
+  was the one case that said nothing. Distinguished from a quiet room, which needs a
+  different action.
+- **Exactly-zero runs are counted per take** (`sound.zero_runs`, carried across callback
+  blocks). Analogue audio does not land on exactly zero repeatedly, so a long run is a
+  gate, a mute or a dropout on any hardware — the one detector here with no threshold
+  fitted to any machine. Measured on this hardware: a USB mic through `default` delivered
+  13–100% of a quiet capture as exact zeros. That is PipeWire noise suppression, and it
+  removes quiet speech first — breathy release, final devoicing, weak fricatives — while
+  the waveform still looks clean.
+- **The upsampling check had never run once**: `spectral_ceiling` was not imported into
+  `io_put/sound.py`, and a broad `except` logged the `NameError` at `info` level, so its
+  absence was indistinguishable from success. Now imported, and that class of error logs
+  loudly.
+- **Choosing a microphone sticks.** Identify-by-name was added so a renumbered index
+  cannot silently point at a different device — then the settings window assigned the
+  index directly, leaving the stored name stale, so `resolve_cards()` followed the old
+  name and REDRAWING THE LABEL reverted the choice. All three sites now go through
+  `SoundSettings.choose_card()`.
+- **Rate findings inform, never act.** Detection stays; the automatic switch is gone. It
+  produced a real-rate figure from a contaminated estimate, a self-contradicting notice,
+  a mislabelled file, and a step-down walking 192000 → 96000 → 44100 toward 8000 Hz —
+  past the 48000 the graph actually runs, because it stepped the rate and never the
+  format. And "upsampled" is not "bad": a 44100 take resampled from a 48000 graph loses
+  nothing a linguist needs.
+- **PortAudio's ALSA spew is suppressed** where it comes from — `query_devices()`, which
+  opens each PCM to discover its capabilities — not just at the per-combination checks.
+  It writes to file descriptor 2 from C, so `redirect_stderr` cannot reach it.
+- **`--extra-index-url` is additive, and was never the macOS problem** (an extra index
+  finding nothing is a non-event). The failure was the explicit `+cpu` pin, which names a
+  local version with no macOS build.
+
+## Fixed, awaiting verification
+
+- **macOS install.** `py_modules.py` held a hand-written package list beside
+  `requirements.txt`, and a python list cannot carry a PEP 508 marker — so macOS was asked
+  for `torch==2.7.1+cpu` (twice per pass, offline then online) while requirements.txt held
+  the correct `torch==2.7.1; sys_platform == "darwin"` all along. **The list is deleted.**
+  `requirements_one_at_a_time()` reads the file and hands each line to pip verbatim,
+  keeping the one-package-per-invocation behaviour that makes the fallback useful —
+  `pip install -r` is all-or-nothing, so one unavailable package otherwise costs the user
+  numpy and sound as well. `drop_what_cannot_build()` keeps the one decision a marker
+  cannot express: a source-only package on a Mac with no developer tools.
+- **`pyautogui` dropped.** Installed on every fresh machine and imported nowhere — the
+  only references are commented-out lines for an unfinished screenshot feature.
+- **Device names persist.** They were added to the `soundsettings` attribute list but not
+  to `DOMAIN_MAPPING`, which is what `storesettingsfile` filters against — so they were
+  silently dropped on every save and identify-by-name worked only within a session.
+- **The task chooser no longer takes the whole screen.** Kiosk is for work pages;
+  `takefullscreen()` was tried first and falls back to kiosk on `TclError`, which
+  XWayland raises.
+- **`default_fs` no longer guesses.** Highest rate the input offers, minus any a real take
+  proved upsampled. A 48000 fallback was added and rejected: a guessed default is a guess
+  whichever number it picks.
+- Windows: `test_path_encodes_to_string` asserted POSIX separators, so it failed where
+  `Path("/tmp/x")` stringifies to `\tmp\x`. The encoder was right.
+- macOS: seven `test_asr_draft_selection` tests failed for want of torch, where the app
+  correctly degrades — they now skip.
+
+## Sound diagnostics, measured on three machines
+
+`tests/manual/sound_check/` — see its README for which to trust and what generalises.
+
+- **`where_am_i.py`** (new) — standard library only, no venv, no packages, no `-um`. Every
+  other script needed numpy and sounddevice, which is exactly what is missing when things
+  will not start, so the diagnostics were unavailable precisely when they were needed.
+- **`collect_audio_facts.py`** (new) — unattended, ~20 s, reports numbers and **judges
+  nothing**, for running on other people's machines. A verdict would propagate the guess
+  it exists to test.
+- **`mic_check.py`**, **`mic_compare.py`** (new) — measure a microphone, and compare
+  several by playing one generated signal so they are actually comparable.
+- **`rate_is_fake()`** replaces `rate_is_real()` and **never returns False**. Genuine
+  192 kHz hardware measured −25 dB at the top of the band; cheap linear interpolation
+  −35 dB. Ten dB apart from two different sources is an overlap, not a separation, so no
+  "this rate is real" verdict is available from level at all. What survives is
+  one-directional: a hole 100+ dB down cannot be an ADC's broadband noise. **It is blind
+  in int16** (quantisation noise fills the hole) — asserted in the tests so it cannot be
+  forgotten.
+- A mirror/imaging detector was attempted four ways and **abandoned**; the failure record
+  is kept in `_mirror_test_abandoned_2026_09_10()` so it is not rebuilt from scratch.
+
+## Tests
+
+381 passing, 8 skipped, headless — no display, no audio device, no files, so they run on
+all three platforms. New: `test_sound_settings_contracts.py`, `test_sound_ui_handlers.py`,
+`test_take_diagnostics.py`, `test_sound_plumbing.py`, `test_dependency_specs.py`, plus
+`zero_runs`/`rate_is_fake` units.
+
+Every fault that reached the user today was in the **seam** between a UI handler and the
+state it changes, or in **two lists holding one fact** — `DOMAIN_MAPPING` versus the
+settings attributes, `requirements.txt` versus the backstop, and four filename setters
+kept in sync by hand. None of it needed a display to catch, which is what the new tests
+do.
+
+# Version 1.15.18
+
+**The webview backend puts pixels on the screen for the first time: the splash and the
+task chooser both render.** Verified live on Linux/WebKitGTK — the chooser shows three
+notebook tabs that switch, eight task buttons with their icons, and labels that wrap to
+their cells; the splash shows its logo, version, progress bar and blurb. **The tkinter
+backend is unaffected** except for one guarded line in `main.py` (splash construction).
+
+Four faults kept every webview screen blank, and none of them was in the gap list the
+port was planning from:
+
+- **FIX (widgets were built and silently discarded).** `createWidget` resolved a widget's
+  parent through the JS widget registry, but **a window is not a DOM widget** —
+  `Toplevel`/`Root` create a pywebview window, never an element. So every widget parented
+  directly to a task window failed the `if (parentEl)` guard and **was never appended**,
+  taking its children with it: no error, empty console, blank themed window. An
+  unresolved parent now falls back to the page root (in a window, the window *is* the
+  page) and warns, so a genuinely missing parent can't hide the same way again.
+- **FIX (window reveals were lost).** `_wv_call` deferred only on the *global*
+  "webview has started" flag, never on the window's own page having loaded — unlike
+  `_js()`, which has had a per-window queue all along. `show()` aimed at a window that
+  existed but hadn't loaded evaporated, so a window that had been hidden stayed hidden
+  forever. Now queued per window and replayed in order, with queued show/hide **collapsed
+  to the net state** so the user never sees a window blink through states it was never
+  meant to show.
+- **FIX (`Toplevel.destroy()` left the window on screen).** It inherited the widget
+  destroy, which removes DOM nodes and nothing else — so `tasks/chooser.py`'s
+  `splash.destroy()` emptied the splash and left its window standing, still visible after
+  Quit. It now retires the window too (by hiding: destroying a pywebview window crashes
+  QtWebEngine, and A-Z+T reuses windows anyway).
+- **FIX (root window flash).** The root is withdrawn immediately and never shown again,
+  so it is now created hidden instead of appearing and vanishing at every startup.
+
+Also filled in, all previously stubs or absent: **`ui.Style`** (ttk style names → CSS
+selectors, `map()` states → pseudo-classes; it was a hard `AttributeError` and the reason
+the chooser could not be built at all), **`Notebook`** add/select/index/tabs plus a `bind`
+that translates `<<NotebookTabChanged>>` instead of swallowing every binding,
+**`ToolTip`**, **`wait()`/`waiting()`/`waitdone()` on task windows** (they existed only on
+the root, and the chooser calls them — `AttributeError` mid-boot), **`after_idle`**,
+**`cget`**, **`bind_all`/`unbind_all`/`_root()`**, **`takekioskscreen`** and friends, and
+**icons on `Label`/`Button`** (the `image=` kwarg was being discarded, and `Image` keeps
+its data URI in `.scaled`, not `.img`).
+
+- **FIX (theme images never loaded).** `Theme._load_images` looked in `../images/`, one
+  level above the app. All 45 failed silently at DEBUG; there is now one WARNING, because
+  all of them failing is a broken path rather than 45 missing files.
+- **FIX (`title()` is a getter).** Called with no argument it returned `None`, so the
+  ambient collab status (`main.py`, `w.title().split(SEP)`) raised on every 10-second poll
+  for every visible window.
+- **FIX (Variables rendered as their repr).** A `StringVar` passed as `text=`, or a
+  `textvariable=`, reached the page as `<frontend.ui_variables.StringVar object at 0x…>`.
+  It now resolves to the value. (It does not yet *track* changes — a real remaining gap.)
+- **FIX (per-widget IPC).** Queued JS is sent in batches of 100 rather than one
+  `evaluate_js` per statement; the first sort page queued 408, i.e. 408 synchronous round
+  trips before it could paint. Each statement keeps its own try/catch in the page so one
+  failure can't take its batch down.
+- **FIX (backend selection had two deciders).** `main.py` read `AZT_UI_BACKEND` itself
+  while `frontend/__init__` read it separately; that agreed only while neither could
+  refuse. Now `utilities/ui_backend.py` decides once — and it *can* refuse, checking for
+  pywebview **and** a GTK/Qt host on Linux, falling back to tkinter with the reason on
+  both the log and stderr. Previously `AZT_UI_BACKEND=webview` without a host toolkit
+  started the app with a backend that could never open a window, and with no watchdog
+  running to notice.
+- **NEW: `--webview` / `--tkinter` and `--engine=gtk|qt`.** The env var was the only way
+  in; the engine flag matters because Qt segfaults on this stack while GTK is solid
+  (upstream: pywebview 6.2.1 + Qt 6.11.0 — a refcount dealloc of pywebview's own Qt window
+  wrapper inside a `loadFinished` slot; `tests/manual/webview_multiwindow/` holds the
+  reproduction attempts). `webview.start(debug=…)` is now gated on `program.testing`
+  rather than unconditionally opening a devtools port.
+
+Known and deliberate: a debug badge naming each window is drawn in the corner of every
+webview page, kiosk/fullscreen is off unless `AZT_WEBVIEW_KIOSK=1`, and hidden windows are
+never freed (a leak, preferred over the QtWebEngine crash). `AZT_WEBVIEW_NO_SPLASH=1`
+suppresses the splash.
+
+Then the same day, the pages that follow: the **splash**, the **LIFT chooser** (on
+**both** Linux engines) and a **sort board** render, and boot walks from the LIFT chooser
+through settings to a task. What that took:
+
+- **FIX (windows sized themselves wrongly).** `fit_to_content` measured `scrollWidth` of
+  a box that fills the window — which reports the WINDOW's size, so it could only ever
+  say "grow". It now measures the union of the children's bounding boxes, the real
+  content extent, and **shrinks as well as grows** (clamped by a minimum and by the
+  display, ignoring sub-8px differences). That surplus theme-coloured space below a short
+  page was this.
+- **FIX (headings wrapped with the window half empty).** A page's outermost grid columns
+  are implicit, so they defaulted to sharing the available width; tkinter widens a column
+  to its widest child. Top-level columns now size to `max-content`, with a 60em cap so no
+  single string can demand a column wider than the display.
+- **FIX (pictures clipped at the window edge).** `max-width: 100%` cannot help when the
+  percentage is of a column sized to the image; images are now capped in viewport units
+  with `object-fit: contain`, so a page looks right in whatever window it is given rather
+  than depending on a resize.
+- **FIX (`wait_window` deadlocked boot).** It ignored its argument and waited on an event
+  only `on_quit` set, so the LIFT chooser — retired by `destroy()` — never released it.
+  There is now a waiter registry keyed by widget id, on the base widget class where
+  tkinter puts it, so both idioms work: waiting on a window, and the ~30 sites that wait
+  on a **canary widget** because that widget's destruction is the signal.
+- **FIX (`waiting()`/`wait()`/`waitdone()` on task windows)** — they existed only on the
+  root, and the chooser calls them; plus **`cget`**, missing entirely.
+- **FIX (list options showed object reprs).** `ListBox` JSON-encoded raw items, so
+  language options arrived as `<... object at 0x...>`. tkinter renders these correctly, so
+  this was a port defect.
+- **The splash is centred** and its prose measured for reading, scoped by a new
+  `data-page` attribute so each window can be styled for what it is — a title card and a
+  dense board want opposite treatment.
+- **The dock icon and application identity** are set (`GLib.set_prgname`, plus the icon
+  file passed to `webview.start`); tkinter gets these from `Tk(className='azt')` and an
+  explicit `iconphoto`, and webview set neither, so the dock showed "python3".
+
+And the task pages, which needed four more fixes of the same family — a lookup that can
+legitimately fail, answered with silence:
+
+- **FIX (window-level bindings were all silently dropped).** `bindEvent` looked the target
+  up in the JS widget registry and gave up if absent — and a window is not a DOM widget.
+  So EVERY binding made on a window did nothing, including the Escape and double-click
+  that leave kiosk mode: a fullscreen undecorated task window had **no exit**. Window
+  bindings now attach to the document, where child events bubble to, as tkinter's
+  window-level binds behave.
+- **FIX (named keys never fired).** `<Escape>`, `<Return>`, `<Tab>`, the arrows, `<space>`,
+  `<Delete>`, `<F11>` were passed to `addEventListener` as literal strings, which can
+  never fire. They now map to `keydown` with a key filter, so any tkinter code binding a
+  named key works.
+- **FIX (kiosk and fit-to-content fought each other).** A task window went fullscreen and
+  was then resized to its content, leaving it undecorated, not filling the screen and not
+  resizable. Fullscreen now wins; leaving fullscreen refits the window, so Escape returns
+  a window sized to its page.
+- **FIX (content was clipped instead of scrollable).** `body { overflow: hidden }` threw
+  away anything past the window edge — a `next` button and the last profile row of a sort
+  board, reachable only by dragging the window bigger. A wrong window size is a bug;
+  unreachable content is a trap, and they should not be the same failure.
+- **FIX (`ListBox` showed values instead of labels).** Options arrive as strings, ints,
+  dicts with `code`/`name`, or 2/3/4-tuples; they are now normalised through
+  `regularize_choice` into parallel value and display lists, so the interface-language
+  list reads `Spanish` rather than `{'code': 'es', 'name': 'Spanish'}`. Selection fires
+  `command(code)` — with `window=` **only** when a window was given, matching
+  `ui_tkinter.ListBox._on_select` exactly, because several call sites take one positional
+  and read `curselection()` themselves.
+
+**Engine selection is now decided here rather than inherited.** Unspecified means GTK if
+its host is importable, else Qt (Linux), and `edgechromium` on Windows — because
+pywebview's own order depends on what is installed, so the same command could run a
+different engine on a different machine, and the engines are **not** equivalent. A named
+engine that cannot run is **reported and then substituted**, never silently swapped and
+never grounds for dropping all the way to tkinter; the engine actually in use is logged
+from its own userAgent on every run. MSHTML is called out by name, since it has no CSS
+Grid and would render these pages as rubbish rather than failing.
+
+**Switches, not environment variables** (`--no-splash`, `--no-kiosk`, `--webview-hidden`,
+`--engine=`), and **`--user`** runs a dev checkout as a user sees it: no devtools, no
+debug badge, no test lift, no auto-opened task. Kiosk (fullscreen task windows) is **on**
+by default, as under tkinter — it is the intended behaviour, not an accident of a stub.
+
+**NEW `tests/manual/webview_multiwindow/`** — `platform_probe.py` walks every window
+primitive the port needs and draws a PASS/FAIL table **in the page**, so a machine that
+cannot paste text still reports by photograph. It found the one hard engine difference: a
+window created hidden **never appears on GTK** and **does appear on Qt**. Nothing is
+identified by colour.
+
+**NEW `tests/manual/tone_feature_check/`** — the tone-rendering gate, and it **passed on
+both engines**: adjacent tone letters join into contours with no feature at all,
+`"cv92" 1` hides the staves and `"cv92" 0` restores them, `"cv91" 1` gives tone numbers,
+and a `-tstv` build loaded from disk renders staveless. `render_pil_baseline.py` reports
+every font file on the machine with its name records, Graphite/OpenType tables and
+cv90/91/92 — which found two files both claiming the family "Charis SIL" with different
+capabilities, and that the tuned builds carry their own family names (`Charis SIL tstv`),
+so they can be asked for by name rather than only opened by path.
+
+**FIX AWAITING VERIFICATION (the webview progress bar was red).** `grid.css` painted the
+bar with `var(--highlight)`, and `highlight` is `'red'` in every theme in both backends —
+the one theme entry **nothing else in the program reads** (`ui_tkinter.py:309` and on; the
+only other reader was `ui_webview.py:1235`, which supplies the same default). tkinter
+styles the real bar from `TProgressbar` (`ui_tkinter.py:300`): bar = theme `background`,
+trough = `activebackground`. The webview bar now does the same, and carries a line at its
+leading edge so how far along it is reads by **shape**, not by telling two greens apart.
+
+**NEW `installfiles/RunMetoInstall_Mac.command`** — a first macOS install path,
+**drafted, not yet run on a Mac**. macOS became a live target when the platform probe
+passed every step there (WKWebView, pywebview 6.2.1, Darwin 22.6), leaving installation
+as the only untested part. Built around what the tested machine showed: the Xcode
+prompts it hit were **stub shims**, not compilation — macOS keeps stubs at
+`/usr/bin/{git,clang,python3}` and merely running one pops the developer-tools dialog, so
+the script never touches them while the tools are absent. git and python are installed
+without Xcode (git-scm.com's binary installer; python.org's `.pkg`, checked for tkinter
+rather than assumed — Homebrew can't help, since brew needs the tools itself), git is
+symlinked into `/usr/local/bin` because `backend/core/vcs.py` runs it by bare name, and
+PATH lines go into **both** `~/.zprofile` and `~/.bash_profile` — the Mac tested runs
+zsh, so the bash-only advice in circulation would have done nothing. The clone is
+shallow, per the standing decision. Both download URLs were checked by hand: python.org's
+pattern is confirmed (and `python-3.13.15-macos11.pkg` confirms 3.13.15 is real, so it
+replaces the 3.13.7 default copied from the Linux source build), while the git installer
+still downloads but its project is marked **abandoned** and serves **git 2.6.2, from
+2015** — it stays because Homebrew and MacPorts both need the Xcode tools. Checked against
+what `vcs.py` actually invokes, and nearly all of it predates 2015; the exception is
+`git init --initial-branch=main` (git 2.28), which `init()` already survives by retrying
+as plain `git init` — but that creates `master` where the program says `main`, so a repo
+**A-Z+T creates** on such a Mac lands on the wrong branch name. The installer detects git
+&lt; 2.28 and says so. Untestable from here: whether a 2015 git can still negotiate TLS with
+GitHub; the clone is itself that test, and its failure message now names TLS rather than
+saying only "clone failed".
+`--check-wheels` answers the real macOS question —
+whether every requirement has a wheel, given no compiler — with a pip dry run that
+installs nothing; the two known trouble spots are `torch==2.7.1+cpu` (that `+cpu` build
+exists only for Linux/Windows) and `PyAudio`. Switches throughout, no environment
+variables, and `--dry-run` for the first attempt. Details and open items in
+the install-procedure rework.
+
+**FOUND ON macOS, WORKED AROUND (not fixed): the venv relaunch dies under a terminal
+launcher.** First real run on the Mac installed fine, printed `Relaunching inside the
+virtual environment: …`, and then stopped — no window, no traceback. `ensure_venv()`
+starts the venv python with `subprocess.Popen(...)` and immediately `sys.exit(0)`
+(`py_modules.py:461-466`), never waiting; under a `.command` launcher that exiting process
+**is** the launcher, so Terminal's appended `; exit;` ends the session and the orphaned
+grandchild is SIGHUPed before it can print. Linux and Windows never showed it because
+neither launches through a terminal that closes. The macOS installer now builds `env/`
+itself and its launchers start `env/bin/python` **directly**, so `ensure_venv()` returns
+at `py_modules.py:318` and never forks — which removes the need for the hop on that
+platform but leaves the fragility in place. The real fix, deliberately not made in this
+version, is `os.execv` on POSIX: it keeps the controlling terminal and the exit status and
+cannot be orphaned. It is the shared bootstrap path with a history of hard-won Windows
+fixes, so it wants its own change and a three-platform retest.
+
+**macOS installs the python packages, and writes the stamp** — the first part of the
+"installer, not first run" item below, done early because the relaunch bug forced building
+`env/` anyway. Requirements go in with `--only-binary :all:` (no compiler, so anything
+needing a build must fail and say so), `PyAudio` is attempted separately since sound is
+optional, and `<venv>/azt_requirements.stamp` gets the sha256 of `requirements.txt` — the
+stamp `sync_requirements()` checks at `py_modules.py:491` — but **only** when everything
+installed cleanly, so a partial install still gets finished by the app on startup.
+
+**The Desktop item now has an icon.** A `.command` is a shell script and Finder always
+draws it with the generic script icon, whatever is done to the file — so macOS gets a real
+`A-Z+T.app` bundle (a plain folder: `Info.plist`, a shell script, an `.icns`, no developer
+tools involved). The `.icns` is built with `sips`, which is base-system, rather than
+`iconutil`, which is not. The `.command` stays in the A-Z+T folder as the diagnostic
+launcher, since Terminal showing the program's output is what made the relaunch failure
+diagnosable at all. Both set `PATH` themselves — essential for the `.app`, because launchd
+hands a GUI app a bare `PATH` and never reads `~/.zprofile`, so `which git` inside A-Z+T
+would otherwise find the `/usr/bin` stub.
+
+**No ASR engine is a no-brainer any more.** Three changes, all found on the Mac and all
+about one engine's absence taking out more than itself:
+
+- **`openai_whisper` is now marker-excluded on Intel macOS only** —
+  `sys_platform != "darwin" or platform_machine != "x86_64"`. It publishes no wheel at all
+  (sdist only, for years) and its `numba` dependency had no python-3.13 Intel-macOS wheel
+  either, so on a Mac without a compiler it cannot be installed — and that one failure was
+  failing the whole `-r requirements.txt`, so no requirements stamp was written and every
+  boot re-resolved the lot. Deliberately **not** the blanket `allosaurus` treatment:
+  Apple Silicon may have the wheels it needs, and that stays worth testing. Rosetta reports
+  `x86_64` and is excluded, which is right — the wheels that matter follow the
+  interpreter's architecture.
+
+- **FIX (a missing engine disabled all eight).** `backend/asr.py` imported `whisper` at
+  module scope, so openai-whisper's absence made the whole module unimportable — and
+  openai-whisper simply cannot be installed on a Mac without a compiler: it publishes no
+  wheel at all, and its own `numba` dependency had no python-3.13 Intel-macOS wheel
+  either. Meanwhile `faster_whisper` installs there fine. The import now lives inside
+  `load_whisper()`, matching `load_faster_whisper` and `load_allosaurus`, which already
+  import their engines in the loader for exactly this reason (allosaurus is linux-only).
+  Whisper is one engine of eight.
+- **FIX (a failed load was recorded as a success).** `load_models_by_kwarg` called each
+  loader bare, so the first failure — unbuildable package, dead model download, corrupt
+  cache, unreachable hub — aborted the whole batch, skipping every engine after it; and
+  the flag was then still set to enabled, so the app believed in a model it never loaded
+  and hit `KeyError` on `self.models[repo]` later. Each load is now guarded: the engine is
+  marked **off**, the reason is recorded in the new `ASR_PROBLEMS` (same shape as
+  `SOUND_PROBLEMS`, kept in `asr.py` because `sound.py` imports it), and the other engines
+  still load.
+
+**macOS downloads the Charis fonts too**, rather than asking the user for a zip — the
+first draft only asked because I had no verified URL, which was equally true of the python
+and git downloads it was happily making. It tries candidate URLs, verifies each download
+actually contains `.ttf` files before installing anything to `~/Library/Fonts`, and keeps
+`--fonts=<zip>`, the new `--font-url=<URL>`, and a `~/Downloads` scan as fallbacks. **The
+current release is looked up, not pinned:**
+`api.github.com/repos/silnrsi/font-charis/releases/latest` names the release's assets, so
+nothing needs editing when SIL publishes 7.001. That endpoint is anonymous for a public
+repo — no account or token — and its only limit, 60 requests/hour per IP, is unreachable
+for an installer. curl fetches and python only parses, deliberately: the python.org
+installer leaves certificate installation to a separate step the user may never have run,
+so a python-side HTTPS fetch can fail on an otherwise working machine. A
+`releases/latest/download/<asset>` URL was tried first and does **not** work, because that
+form redirects to a *fixed* asset name while this project's asset names embed the version —
+asking the API what the names are is the way round it. One verified `software.sil.org` URL
+stays as an availability net for GitHub being unreachable, **not** as version tracking
+(pattern `downloads/r/<family>/<Family>-<version>.zip`, filename **case-sensitive** —
+`Charis-7.000.zip` serves, `charis-7.000.zip` does not); the older `CharisSIL-6.101.zip`
+was dropped as redundant, since it could only be reached in that same situation and brings
+a different family name. Either family name is fine: the missing-font check accepts both.
+This is not cosmetic: the tested Mac fell back to
+`.AppleSystemUIFont`, whose metrics differ from every other machine — which is what the
+odd wrapping and wrong-sized buttons in the first macOS screenshots actually were.
+
+**A shallow clone can't check out another branch, and now says so.** `--depth 1` implies
+`--single-branch`, so the clone's refspec covers only the default branch and
+`git checkout testing` fails with "did not match any file(s) known to git" — no ref for it
+can ever arrive. The fix is two commands that cost nothing (`git remote set-branches --add
+origin <branch>`, then `git fetch --depth 1` for the branch tips), and the macOS installer
+now runs them right after cloning — for **named** branches, not `'*'`: an install can only
+ever reach `main` and `program['testversionname']` (`vcs.py:1126` toggles between exactly
+those two), so `'*'` would drag in every work branch on the remote for nothing. The
+installer reads that branch name out of `main.py` rather than hardcoding `'testing'`, and
+re-adds the branch it actually cloned, since `set-branches` replaces the list rather than
+appending. The protocol is written into `azt/CLAUDE.md` for hand work,
+and the Linux/Windows installers and `sister_repos.py::ensure()` need the same line when
+they go shallow. This settles the open question in the shallow-clone decision — something
+downstream *did* need other branches. **In-app branch switching was never affected**:
+`vcs.py::fetch_tracking_branch()` already fetches
+`<branch>:refs/remotes/origin/<branch>` explicitly, and its docstring names this exact
+case, which is why it surfaced as a hand-editing problem rather than a bug.
+
+**AGENDA (decided, not yet done): the first dependency install belongs in the
+installer** for Linux and Windows too. Every installer stops at `git clone` today, so the first double-click spends
+minutes downloading dependencies — after the user was told the install had finished.
+`sync_requirements`' stamp check stays on the startup path (it is the rollout mechanism);
+the installers should do the first expensive pass so the stamp already matches.
+
+# Version 1.15.17
+
+**The webview question is answered on paper, and the first thing that could sink it is now a
+test anyone can run.** Documentation and one manual test; **no application code changed**.
+
+- **NEW `tests/manual/keyman_input_check/`** — a self-contained page (plus `run_edge.cmd`
+  and `run_pywebview.py`) that asks whether **Keyman types consistently into a browser
+  engine**, the way it already does into tkinter. It ships in the repo, so a machine that has
+  done `git pull` has it; tier 1 is a double-click and installs nothing. No target string:
+  you type your own orthography, record a line, type it again, and the page diffs the
+  codepoints — the failure mode in the one unresolved SIL report is *sporadic*, so a
+  single-character check would only give false confidence. `tests/README.md` gains a
+  **Manual tests** section. Not collected by pytest (`tests` is already in the import
+  smoke test's `EXCLUDE_DIRS` and absent from its `PACKAGES`).
+- **NEW `docs/adr/0004-ui-backend-direction.md`** — eight decisions (D1–D8) that were
+  previously implicit and mutually contradictory across `Electron_Conversion.md`,
+  `UIvTasks.md`, `CLAUDE.md` and the code. The load-bearing ones: tkinter keeps shipping and
+  the selector must **fall back**, not start windowless; the second backend is **view-model
+  pages**, not a widget-parity port; a mixed-backend page runs in a **subprocess** because
+  `webview.start()` and Tk's `mainloop()` both demand the main thread; fonts stay
+  installed-only with tone behaviour driven by the **`cv92`** font feature; and nothing
+  enters `requirements.txt` until a page has replaced its Tk counterpart in the field.
+- **NEW `requirements-webview.txt`** — opt-in, deliberately *not* `requirements.txt`, which
+  is the rollout mechanism. Records that pywebview 6.2.1 is pure-Python and that pythonnet
+  ships cp313 Windows wheels, so the `allosaurus` failure mode (a missing Windows py3.13
+  wheel taking down the whole `-r`) does not repeat here.
+- **the webview-when-to-finish item rewritten** with the research it asked for. The item's
+  own gating unknown — WebView2 on Windows — is **answered: not a blocker** (in-box on
+  Win11, on "the vast majority" of Win10 devices per Microsoft, per-user installable without
+  admin from a 2 MB bootstrapper, one registry read to detect, Fixed Version as a floor). The
+  "trigger" it asked for is replaced by a **value:cost ledger**, per Kent: *"The trigger …
+  is its value outweighing its cost, in my opinion."*
+- **Corrected, on the record, why the tone `Renderer` exists**: **font features** — tone
+  letters with ligatures and without staves — **not** combining-mark stacking. Tk can only
+  name a font *family*, so it can never reach a tuned build; PIL opens a *path*, which is
+  why `utilities/fonts.py` lists the `-tstv` files first. SIL exposes the same behaviour as
+  OpenType `cv92` (hide tone contour staves), `cv91`, `cv90` — which CSS can request
+  directly and Tk cannot express at all. The `-tstv` preference is **not** to be removed:
+  machines that have such a file get stave-free output, and removing it would take that away
+  from everyone who has it.
+- **FIX `CLAUDE.md`** stated that `TaskDressing` implements `tasks/ui_protocol.py::TaskUI`.
+  It does not — **nothing imports `TaskUI`**. It is Phase 0 of the TaskBase/TaskWindow split
+  (`UIvTasks.md:105-155`, *"Risk: Zero — no existing code changes"*), and the later phases
+  shipped without it because the `__getattr__` bridges let Tk's names keep working. Only
+  `drive_work` was ever adopted. Now described accurately, with the finish-or-delete decision
+  filed as an agenda item rather than left as a doc that misdescribes the seam.
+- **Three agenda items filed** out of this work: the ui_protocol finish-or-kill item,
+  the lexicon-bare-after-NameError item (verified: `backend/core/lexicon.py:2020-2022` calls a bare
+  `after(10*100, callback=…)` inside a `while` — `after` is undefined in that module and not
+  exported by `utilities/`, so it raises `NameError` if reached), and
+  the tstv font-availability item.
+
+# Version 1.15.16
+
+**Scroller sizing and row wrapping now answer to ONE number.** Kent, on the sort-into-groups
+page: *"everything seems to be working correctly."* Rows hug when short, grow into the page's
+margins when long, and wrap at the viewport edge instead of being clipped mid-word.
+
+Three faults, all of them the same fault — two parts of the layout sizing themselves from
+different measurements:
+
+- **The box never followed the canvas.** `_do_configure_interior` set the canvas's *requested*
+  width, but the canvas is gridded `sticky='nsew'` in a weighted column, so its actual width
+  is the box's inner width and the request is ignored. The log said so plainly once it was
+  asked to: `canvas 1133→957` three passes running with the live width stuck at 1133, because
+  the box stayed at 1150 and stretched the canvas to fill it. Cycling to a shorter word
+  therefore never hugged. `_do_configure_interior` now calls `windowsize()` in the same pass,
+  so box and canvas come from one `_caps()` result and cannot drift.
+- **The wrap budget came from the window, not the viewport.** `wrap_to_container` measured
+  `container`, which on this page is the entire 1920px task window, and granted a row at
+  x=545 `1920-545-120 = 1255px` of text — inside a 1034px viewport with no horizontal
+  scrollbar. That 220px is exactly the clipped `rɛgim 'regime (of bananas)'` row. Each target's
+  budget is now additionally capped at `capw - scrollbar - (its offset inside the scroller)`.
+  A cap only, never a widening, so it cannot bring back the over-wrapping it replaced.
+- **It had to be `capw`, not the live viewport.** Budgeting from the current canvas width
+  closes the loop content→box→viewport→wrap→content, and that loop is visible as a 1440↔1034
+  oscillation (`cellw` 1040↔837) down the tail of the same log. `capw` is what the scroller
+  *may* grow to — pinned at 1479 across every pass — so the wrap settles in one pass instead
+  of chasing its own output. It is also Kent's rule in the correct order: expand into the
+  available space first, then wrap against it.
+
+Also: the `windowsize()` failure path inside `_do_configure_interior` was logging at level 2,
+below INFO. A failing box re-size was therefore indistinguishable from one that never ran —
+identical symptoms, no evidence either way. Now WARNING. A diagnostic that can fail invisibly
+costs more than it saves.
+
+Known and harmless: `box=` trails `content=` by one pass, so a shorter row can briefly sit in
+a viewport slightly wider than it needs — blank space to the right, never a clip.
+
+Still open, in `azt/the scroller-sizes-from-layout item`: the per-site `reserve` values
+are still picked rather than derived, and `availablexy` still walks up through scrolling
+ancestors, counting scrollable content as consumed screen space.
+
+# Version 1.15.15
+
+**Row wrapping confirmed fixed by Kent on the sort-into-groups page, the verify page and
+`midrib`** — the original complaint from 2026-09-02. Rows that fit stay on one line, long
+ones wrap inside the viewport, and every row keeps its profile tag on screen.
+
+- **`wrap_to_container` now HUGS BEFORE IT WRAPS**, which is what made it finally work.
+  Kent's rule: *"most scrollingframes should hug short, unwrapped content, and expand to
+  available window/screen size as possible, before forcing wrapping. then they should wrap
+  nicely on that most available space."* The helper had been imposing the cell width on
+  every target unconditionally — so a label that already fitted got wrapped anyway, which is
+  how one-word-per-line survived several rounds of "fixes". Now it sets `wraplength=0`, reads
+  `winfo_reqwidth()` (computed by Tk without any flush, so no synchronous X round-trip), and
+  leaves the target alone if it fits; only an over-long one gets the full budget and wraps
+  to that.
+- **It also never ran at all before that.** `_apply()` was called once at bind time, when the
+  container is still 1px wide, so it bailed on `width<=1`; the container then reached its
+  final size without emitting another `<Configure>`, so nothing re-fired. Added a settled-
+  geometry pass via `after_idle`. The symptom was not a wrong width but the OLD behaviour
+  persisting, which is why two boxes on one page wrapped at two different widths.
+- **Container chosen by measurement rather than a fourth guess.** New `DIAG-verify-wrap`
+  printed the chain: `content=615 canvas=1 scrollframe=1 runwindow.frame=1489 toplevel=1920`.
+  The canvas and the ScrollingFrame never get a width at all — so binding to either could
+  not have worked in any timing, which also corrects my earlier claim that a
+  content↔canvas feedback loop was to blame. `content` has a width but it derives from its
+  children, so sizing children from it is circular. `runwindow.frame` is the shallowest
+  widget whose width comes from the layout, and a new `targets_parent` argument separates
+  what is measured from what is wrapped.
+- **The sort-into-groups page was never wired.** `build_sort_layout` is a separate builder
+  from `build_verify_layout`, so `midrib` still ran off the edge there while the verify page
+  was fixed. Wired to `groupsFrame` (grid column 1, weight 1) with `maxdepth=5`, since those
+  rows nest deeper. `reserve=400` was an explicit guess and has landed about right.
+- **Status window, first message: two remaining causes.** `_wraplength()` asked
+  `self.scroll` BEFORE `self`, i.e. the one widget carrying `grid_propagate(0)` and therefore
+  sitting at a small default, and accepted anything over **120px** as reality — ~140 passes,
+  returns 100, one word per line. Window first now, floor raised to 400. And `_rewrap()` ran
+  only from `_on_resize`, which bails when the size hasn't changed, so a window that reached
+  its size and stayed there never repaired its first message; `add()` now schedules a rewrap
+  after idle, debounced through the same job.
+- **`Progressbar.current()`'s throttle removed.** It was making the wait dialog arrive late —
+  *"showing half painted, then fully painting just before closing, making it not really do
+  what it's there for"*. A late wait is worse than none: the user sees exactly the half-built
+  page it exists to hide, and it now matters structurally because the empty-page guards
+  depend on a live wait. Only the `update_idletasks()` → `update()` swap is kept.
+- **`runcheck`'s preparation wait no longer asks to reveal.** Named by the guard's own new
+  stack line — `EMPTY PAGE (waitdone) | the wait said 'Getting ready to sort…' | called
+  from: … ← sorting_engine.py:651:runcheck`. That wait covers the presort and hands off to
+  `maybesort`, which raises its own wait and builds; asking to reveal on completion asked to
+  reveal a page it never fills. `thenshow=False`.
+- **The empty-page report says something useful now.** `'Run Window'` is every run window's
+  title, so the first version identified nothing (*"Wow; that's not very informative"*).
+  Every occurrence logs at INFO with the **wait's own message** and the task; once per
+  distinct **call path** a WARNING adds the azt-only caller trail. The task is found by
+  walking up to four hops, since a run window is `ui.Window(task_window)` and the task hangs
+  off its parent.
+- **`availablexy`'s flooring message rewritten** after a full run showed the sibling total
+  climbing monotonically, +126px per sort-group button, `1033 → 2671` against a 1170px
+  screen, with maxheight following it through zero (`137 → 11 → −115 → … → −1501`). One
+  condition, not two — an earlier same-day version of this line split on the sign and claimed
+  a small positive value meant the page was genuinely full. It doesn't: eleven buttons at
+  126px exceed the screen **because they are in a scroller**, where that is normal.
+  `_measure_siblings` is subtracting scrollable CONTENT from the screen as though it were
+  consumed real estate; its guard skips siblings whose immediate parent is a
+  Canvas/ScrollingFrame, but the walk goes UP, so enclosing levels are still summed.
+- **Tried and reverted the same session: capping `ScrollingFrame` from its parent's width.**
+  It clipped the status board's progress table to ~110px. "Ask the parent" moves the
+  content-drives-box circularity up one level rather than breaking it — a parent that is
+  itself content-sized hands down a small number — and a `MIN_PLAUSIBLE=300` floor let a bad
+  number through while looking like caution. Filed as
+  `azt/the scroller-sizes-from-layout item`, whose first task is now establishing, by
+  measurement per page, which widget has a layout-derived width all the way up.
+- Logging: `PART_BYTES` back to **10MB** (settled by measurement — 3.5MB of parts compress
+  22:1, so part size never governed emailability, only how big one file is to read);
+  `restartmark.mark()` stamps **`'test': True`** via a now-public `logsetup.under_pytest()`,
+  so a marker says it came from a test instead of leaving that to be inferred from a missing
+  version.
+
+# Version 1.15.14
+
+`pytest` green. **Four NBQ pages were avoided in one of Kent's runs** — the first hard
+evidence the guards catch real events rather than hypothetical ones. Everything here follows
+from what that log then failed to tell him.
+
+- **`Label.wrap()` no longer overrides a caller that measured its own width.** It took
+  `min(asked, maxwidth)`, and `availablexy`'s maxwidth is screen-minus-siblings — the right
+  question ONLY for a fullscreen kiosk page. Everywhere else the caller knows the box it is
+  in, and `min()` discarded that knowledge whenever the screen-derived figure was smaller.
+  **One line, three bugs in two days:**
+  - the status window computed its own width in `_wraplength()` precisely to avoid the screen
+    figure, set it, called `wrap()`, and had it overridden — with a comment asserting `min()`
+    would "bound it to the window", which is not what `min()` does. Its `_rewrap()`, whose
+    entire purpose is repairing the first message once the window is mapped, re-clobbered its
+    own good value every time, which is why that repair never worked.
+  - chooser labels wrapping at 3–4 letters inside full-width cells.
+  - frames clamped to 200px boxes — the "unreachable buttons" half of the same warning.
+  - Two call sites had hand-worked around it and a third documented the wrong model of it;
+    that's the signal the DEFAULT was backwards, not that three callers were careless. Now an
+    explicit `wraplength` wins outright and `maxwidth` is the fallback for callers with no
+    better number. A label wider than its box is a visible, reportable bug; a label silently
+    narrowed to a few characters looks like a font problem and has cost days.
+- **Status window: the bad wrap was the FIRST message, not the last.** Kent corrected my
+  reading — messages stack newest-on-top — which picks the *timing* cause over the
+  sibling-accumulation one: before the window is mapped a `ScrollingFrame` sits at a small
+  default, exactly as `_wraplength`'s own docstring warns. `add()` and `_rewrap()` both now
+  set `wraplength` directly instead of via `wrap()`. Note this was NOT covered by the
+  `maxwidth_measured` guard added the day before: that rescues a measurement below
+  `MIN_AVAILABLE=200`, and an unmapped ScrollingFrame's default is wrong but plausible, so
+  the floor never engages.
+- **`wrap_to_container` was measuring the wrong widget on the verify page.** I bound it to
+  `buttonframe.content` — the frame that scrolls *inside* the viewport. It carries
+  `grid_propagate(0)` and is sized BY its children, so measuring it to size those same
+  children is circular and settles small: rows collapsed to ~2 characters
+  (`be/gg/a/—/'be/gg/ar'`). New `targets_parent` argument separates what is measured from
+  what is wrapped; the verify page now measures `buttonframe.canvas`, the fixed viewport.
+- **The empty-page report said nothing useful, twice over.** `'Run Window'` is every run
+  window's title, and the site lines named the widget path
+  (`.!taskwindow.!taskwindow.!window3`) — so four avoided pages produced four lines that
+  identified none of them, and a single deduped report line. Kent: *"Wow; that's not very
+  informative."* Rebuilt around what the caller is actually hunting:
+  - Every occurrence now logs at INFO with the **wait's own message** and the task —
+    `EMPTY PAGE (waitdone) | not revealed | the wait said 'Gathering groups' | task SortV,
+    window 'Run Window'`. The wait message names the operation that finished with nothing to
+    show, and it was already in `ww.l1['text']`.
+  - Once per **distinct call path**, a WARNING adds the azt-only caller trail
+    (`… ← sorting_engine.py:768:maybesort ← …`), which is what distinguishes one bug hit four
+    times from four bugs. Dedupe was keyed on the site alone, which collapsed Kent's four
+    events into one line and threw away three quarters of the evidence.
+  - The user notice stays once per site: four notices for four pages in one run teaches the
+    user to ignore it.
+  - The sites' own log lines are deleted as duplicates. `NOTHING BUT QUIT` is kept — it is an
+    established grep token in the docs and the agenda.
+  - Own-module frames are dropped by FILENAME, not by a frame count, so the trail can't be
+    silently shifted by an edit to the reporter.
+
+# Version 1.15.13
+
+`pytest` green. The logging build Kent is about to run one test against — the venv-part fix
+and the 1MB cap are what that test is for.
+
+- **The venv relaunch no longer starts a new log part.** Every run was leaving a ~370-byte
+  `_001` holding exactly two lines — "Relaunching inside the virtual environment" and the
+  restart marker — with the real run in `_002` (Kent 2026-09-03). The per-process rule is
+  paid for by the CONFIRMED restart, where the predecessor deliberately stays alive until the
+  successor signals and both log throughout; the venv relaunch is not that, since the parent
+  writes those two lines and exits. So a new part bought nothing and cost noise in the
+  directory plus an extra member in every pack. Gated on `AZT_VENV_RELAUNCHED`
+  specifically — NOT `launched_by_restart()`, which is true for both kinds of continuation
+  and only one of them is safe to share a file with. Safe because the handler opens
+  `mode='a'`, so it appends after those two lines. Worst case is a two-line interleave in
+  the moment between the parent's last write and its exit.
+- **`PART_BYTES` temporarily 1MB** (was 10MB), so a rollover is observable in a normal
+  session — at 10MB it needs a very long or very chatty run, which is why the rolling
+  machinery had never actually been watched work. What 1MB proves is `_nextpart` allocating
+  FORWARD and `sweep` keeping `RUNS_KEPT` runs, neither of which depends on the threshold,
+  so this is a test convenience and not yet a policy decision. Kent to decide after the run;
+  the trade is recorded in `azt/the modernize-logging-rotation item` (10MB = few large
+  parts; 1MB = more parts per run, numbered forward, so a long day can reach `_020`).
+- **An empty page now says so on screen**, not only in the log. New
+  `visibility.report_empty_page(where, window, outcome)` logs `EMPTY PAGE` (the grep token)
+  and posts one status-window notice per site per session, from all three detection points:
+  `deiconify` (which still reveals), `waitdone` and `on_quit` (which now decline).
+  - Kent's framing, and the reason this is worth more than another log line: NBQ ("nothing
+    but Quit") and NWAA ("no window at all") are the same finding — an empty page — differing
+    only in what the guard did about it. The useful distinction is whether **we noticed**:
+    noticed means "go to the log and report the line", unnoticed means "find the stack trace
+    and start from cold". A notice turns every remaining instance into the first kind.
+  - It also accepts that the REMEDY is caller-specific — rebuild, skip, or reveal later
+    depends on what the caller was attempting, and a guard cannot know that. Detection and
+    notification are the guard's whole job.
+  - Goes to the STATUS WINDOW, never into the page's `frame`: a notice gridded into `frame`
+    would make `has_content()` read the page as built and hand the other two guards a
+    legitimate-looking reveal target. Same reason `QuitOnlyGuard` raises a wait rather than
+    gridding a message. User-facing text says the page was skipped, the data is fine, and to
+    send the log.
+
+# Version 1.15.12
+
+- **Stopped predicting widths: one `<Configure>`-driven wrapper for both pages.** New
+  `ui.wrap_to_container(container, cols, reserve)` binds on a container and, on each real
+  width change, sets every descendant's `wraplength` to `width/cols − reserve`. The premise
+  is that **a width predicted from anything other than the box the widget is actually in is
+  a guess** — and both pages that needed it were guessing wrong in opposite directions:
+  - the chooser asked `tk_root.winfo_width()`, the HIDDEN root, permanently 200×200 →
+    53px wraps, breaking words mid-syllable. Substituting the window's own width then
+    *overshot*, because the buttons live in a notebook narrower than the window (~763px of
+    ~1140px in Kent's capture) — 304px of wrap in a 254px cell.
+  - the verify page passed **no wraplength at all**, so each row was as wide as its string.
+    A form plus two glosses ran ~1350px, off the right edge, taking its profile tag with
+    it; and since that frame does not scroll horizontally (Kent), the text was simply
+    unreachable. Kent's `midrib` row.
+  - Reads each widget's own `columnspan` from `grid_info`, so the chooser's row-filling last
+    button gets its full span without the caller tracking it. Subtracts an image's width
+    only when `compound` is `left`/`right` — the verify page's row illustration costs text
+    width, the chooser's `compound='top'` icon doesn't.
+  - Three hazards handled, each of which would have made it useless or harmful: **8px
+    hysteresis**, because setting `wraplength` relayouts and re-fires `<Configure>`;
+    **target-count tracking**, because verify rows are STREAMED in by `drive_work` after the
+    bind, so a width-only guard would wrap the first rows and none of the rest; and
+    **`add='+'`** on the bind, so it can't displace `ScrollingFrame`'s own `<Configure>`
+    handler. No `update()`/`update_idletasks()` inside it, per
+    `azt/the Wayland freeze audit`.
+  - No-op mirror added to `ui_webview`, which would otherwise `AttributeError` on the
+    chooser: a browser wraps text in its containing box already, which is what the tkinter
+    helper is emulating by hand.
+  - Build-time `wraplength` values are kept as starting points, so a page that never gets a
+    `<Configure>` still has something. `reserve=96` on the verify page is the one number
+    picked rather than derived — it's the dial if `midrib` still clips or wraps early.
+  - **Not changed:** verify row frames stay `sticky='w'`, so rows remain content-sized
+    rather than uniform full-width. Wrapping alone should return `midrib` and its tag to the
+    page; making rows uniform is a separate look-and-feel call.
+
+# Version 1.15.11
+
+`pytest` green.
+
+- **THE CHOOSER WRAP IS SOLVED — from a screenshot, not the field log.** Kent's Zoom capture
+  of OBT's screen showed the labels breaking **mid-word**: `Ajou/ter`, `Enre/gistr/er`,
+  `sylla/bes`. A mid-word break means `wraplength` is narrower than one word — ~4-5
+  characters, ~50px — and working back through `int(avail*.8/bpr)` puts `avail` at about
+  **200**. 200 is **Tk's default root geometry**: `avail` was reading
+  `self.program.tk_root.winfo_width()`, and since every real window in this app is a
+  Toplevel, the Root has no children, never grows past 200×200, and reports 200 for the life
+  of the process. The `if avail < 100` guard only ever caught the *unmapped* root (which
+  reports 1).
+  - Now reads `self.winfo_width()` — the chooser window the buttons actually live in — with
+    the fallback threshold raised to 400px (no real chooser window is narrower, so anything
+    smaller is Tk's default or a stale read from the withdrawn rebuild in `gettask`), and
+    the fallback is the work area rather than the raw screen.
+  - This is the cause `azt/the chooser wrap/xpad item` listed as the open question and
+    `DIAG-chooser-xpad` was added to answer, so **the field round-trip is no longer needed
+    for it** — though the DIAG stays, since it will now confirm the fix in one line
+    (`avail` should come back as the window width, not 200).
+  - Not yet done, and the remaining imprecision: the wraplength is still computed once at
+    build time from a window width, so a resized window keeps the old wrap. Recomputing on
+    `<Configure>` is the complete answer.
+
+**This is the version going to the field**, so the number is here to be the one in OBT's
+banner — the other fixes are described under 1.15.10, which never shipped; nothing is
+duplicated here.
+
+What the returning log should be read for, in order of what it settles:
+
+- **`DIAG-chooser-xpad`** — one line per tab. The whole reason for the trip. `avail` small
+  ⇒ the `avail < 100` threshold is the wrap bug; `maxwidth (unset — wrap() never ran)` ⇒
+  `availablexy` was never involved for those buttons and the asked-for wraplength is the
+  whole story. See `azt/the chooser wrap/xpad item` for the full reading table.
+- **`Profile scrub: … is not a profile … clearing the sort and the confirmed profile`** —
+  the `NAV` repair firing. Expect it for their 9 words, once each. Its absence means the
+  scrub didn't run, not that the data was clean.
+- **`waitdone: NOT revealing … nothing was built in its frame`** and
+  **`not revealing … on the way out of …`** — the two NBQ guards declining. Each one is a
+  page that would previously have been a fullscreen Exit-only screen.
+- **`waitdone: revealed … without draining`** — Wayland only, so NOT expected from a
+  Windows machine. If it appears there, display detection is wrong.
+- **`Not a check, so not going into the status`** — now once per distinct name, and it no
+  longer blames the collab daemon for azt's own `#C-slice`.
+- **`availablexy floored …`** — still warns, but the floored value is no longer used as a
+  layout number.
+- One pack per run, named `azt_log_<runid>.tar.xz`, sharing the timestamp with
+  `log_<runid>_00N.txt`.
+
+# Version 1.15.10
+
+- **BLACK SCREEN / HANG: `waitdone` now maps before draining on every display server.** Kent
+  hit a completely black screen with the main thread wedged inside Tk's `update()` at the
+  `else` branch of `waitdone` — and with **no Python frame above it**, so it was stuck in
+  Tk's C code, not waiting on any of the app's own threads. That branch drains into a window
+  that is still WITHDRAWN, which is exactly the shape the Wayland branch was written to
+  avoid (faulthandler-confirmed once before, 2026-07-13, wedged revealing a verify page).
+  - **CORRECTION, same day: the branch removal is NOT the fix for that hang.** I first read
+    the `Display server: ? (USING_WAYLAND=False; …)` boot line as evidence and concluded the
+    unsafe branch had been taken by fallback — but that line is from OBT's WINDOWS machine,
+    while the traceback is from Kent's Linux box (`/usr/lib/python3.13`, `/home/kentr/…`).
+    Reasoning across two machines, for the second time in one day. In the build where
+    `waitdone` line 1600 was executable, 1600 is the `parent.update()` INSIDE
+    `if USING_WAYLAND:` — i.e. after `deiconify()`, the map-first order. So that machine had
+    `USING_WAYLAND=True`, already took the safe order, and `update()` deadlocked regardless.
+    Kent then confirmed it directly: `Display server: wayland (USING_WAYLAND=True; Wayland
+    update guard OFF)`.
+    **`update()` can wedge in Tk's C code with the window already mapped**, which is what
+    `WAYLAND_UPDATE_GUARD` exists for — and that toggle defaults OFF, so `UI.update` called
+    straight through (visible as `ui_tkinter.py:1320 update` in the stack).
+  - The branch removal is kept on its own merits — one order is simpler than two and
+    map-first is safe everywhere — but it closes a hazard for machines whose display server
+    is UNKNOWN, not the hang actually observed. Map-first is ordinary
+    X11 practice — and the only argument for the other order was cosmetic (paint while
+    hidden so no unpainted window shows), which doesn't apply: the wait dialog is still up
+    and covering the screen, as the function's own header says. Nothing was left to weigh
+    against a hang.
+  - **On Wayland, `waitdone` no longer drains at all** — it reveals and lets Tk repaint from
+    its own event loop, logging that it skipped the drain. Done at this call site rather
+    than by flipping the `WAYLAND_UPDATE_GUARD` default, because a global rendering change
+    deserves its own decision; but note the guard being OFF on Wayland is now implicated in
+    two separate wedges (this one, and the `_configure_canvas → update_idletasks` freeze
+    recorded at `ui_tkinter.py:1411-1415`), so that default is the standing hazard. Cost of
+    the skip: a heavy page can show unpainted for a frame after the dialog goes, instead of
+    being painted behind it. Not in the same category as a hung app.
+  - Not the cause, but visible in the same traceback: two worker threads waiting in
+    `socket.create_connection` for the collab daemon. The timeout IS passed
+    (`urlopen(req, timeout=timeout)`), so they were not hung — but `rpc.call` defaults to
+    300s, and for a **loopback** connect that is the wrong ceiling: `127.0.0.1` connects in
+    microseconds or fails. Meanwhile the blocked thread is a LIFT write, so `self.writing`
+    stays true for up to five minutes and the app's own write/restart paths wait on it. A
+    short connect timeout with the long timeout kept for the response belongs in
+    `azt_collab_client` (canonical, shared with the recorder and viewer) — not changed here.
+- **NBQ producer #2: `waitdone` revealed a page before anyone knew there was anything in
+  it.** From Kent's log — `waitdone: update+reveal 1.1s` revealed the sort window, and only
+  THEN did `maybesort` find `'groups': []` for (Noun, CCVCVC, V1) and return without
+  building anything and without withdrawing. `waitdone` now applies the same rule as
+  `on_quit`'s parent reveal: no window is revealed whose `frame` is empty, and the skip is
+  logged so a missing page is named rather than guessed at. The wait still deactivates
+  either way — this changes WHICH window is left up, not whether the wait closes.
+  - **That input is normal, not an anomaly** (Kent): a slice-check with `tosort=True` and no
+    groups yet is how EVERY slice-check begins — groups come into existence as the user
+    sorts. So the empty reveal was reachable in ordinary first-time use of any unsorted
+    slice, not in some corner case. Both of Kent's sightings were the same slice reaching
+    that state.
+  - Fixed at the reveal rather than in `maybesort` because the ordering is the general
+    shape: raise a wait, do the work, and only afterwards learn whether there was anything
+    to show. Many callers have that shape; the reveal is the one place they all pass
+    through.
+- **A log line of mine named a cause it hadn't established.** The new
+  "not a check" warning explained every rejected annotation as a collab merge marker — and
+  the first one it actually reported was `#C-slice`, azt's own bookkeeping annotation
+  (Kent saw it). Same fault as announcing an action before its gate: it points the reader
+  the wrong way and costs a round trip. Now it reports the fact, adds the daemon note only
+  when the name really is one of theirs, and speaks once per distinct NAME rather than once
+  per run.
+- **The log pack is named for the RUN, not for the moment it was made.** It used the current
+  time, so a run whose parts were `log_2026-09-02T154319_001/_002.txt` produced
+  `azt_log_2026-09-02T154553Z.tar.xz` — three different timestamps in one directory for one
+  run, costing a moment each time to see they belong together (Kent 2026-09-02). Now
+  `azt_log_<runid>.tar.xz`, sharing the id with its parts. Safe because **a later pack is a
+  strict superset of an earlier one**: the bundle is `runfiles()` (every part of the run)
+  plus any restart marker, so a second pack holds the same parts with more appended to the
+  tail one. Nothing is lost by keeping one per run, and the newest is always the most
+  complete — hence `tarfile` mode `'w'` instead of `'x'`, which would otherwise refuse the
+  second pack and hand the caller the path of the older, smaller one.
+- **`NAV`: root cause found, and it was laundering, not corruption.** Kent found it in this
+  function's own log line — *"Syllable presort: NA → NAV to fit confirmed primitives
+  (#C=C C#=V syls=1)"* — and reproduced it end to end on the word `to`. The chain: a user
+  skips a word, which parks it in the `NA` group; `scrub_sorts_to_primitives` (a load-time
+  pass) reads that sort annotation and hands it to `constrain_presort_profile` as the word's
+  profile; the conformer makes it fit the confirmed primitives by appending the `V` that
+  `C#=V` demands; and the result **passes validation**, because `_segment_type` reads
+  anything that isn't `V`/`Ṽ` as a consonant — so `NAV` is C-initial, V-final, one vowel
+  run, exactly the confirmed class. It was then written back as both the legal sort and the
+  confirmed `…-x-cvprofile`, while `whole-word lc verification` still said `lc=CV`.
+  - **The general lesson, worth more than the fix:** conforming an input that isn't of the
+    expected KIND doesn't fail, it launders. The output satisfies every constraint we
+    thought to check and is still nonsense — and it looks enough like a profile to survive
+    review, which a crash would not have.
+  - `constrain_presort_profile` now refuses by VOCABULARY at the door
+    (`illegal_profile_symbols`, the same `profilelegit` test the machine path and the
+    by-hand entry page apply), returning the input UNCHANGED rather than `Invalid`, because
+    `NA` is a meaningful parking value and a skipped word must stay skipped.
+  - `scrub_sorts_to_primitives` now skips `('NA','Invalid')` — the pair every other reader
+    of a sort annotation uses (`sorting_engine.py:1337`). It had only `Invalid`, which is
+    the whole bug at the caller: `NA` is not a profile to repair, it is a decision to leave
+    alone.
+  - **Repaired in this build, per Kent** ("ship the repair with this build"), so a field
+    file self-heals on open rather than needing a second round trip.
+    `scrub_sorts_to_primitives` gained a case (1b): a sort annotation that is not made of
+    profile symbols has BOTH the annotation and the confirmed profile cleared, and the sense
+    is named in the log. Necessary as a separate case because the new door guard returns
+    such an input unchanged, so case (2) sees `legal == anno` and does nothing. The remedy
+    is the one this pass already applies at (3) — the word loses its trusted profile, drops
+    out of segmental slicing, and the profile-setup trigger asks the user — which is the
+    honest state, since nothing ever legitimately sorted these words. The
+    `'<profile> lc verification'` fields are left alone, as at (3).
+  - **A silent no-op caught while writing that repair**, worth recording because it would
+    have passed review: clearing the annotation with `False` does nothing.
+    `Annotation.myvalue` clears only on `''` (`elif value == '':`), and `False == ''` is
+    False in Python, so `False` falls through both branches and returns the unchanged value
+    — while the log line above it claimed a repair. `cvprofilevalue(…, False)` IS the clear
+    idiom on its own path, which is what makes the mistake easy. Two neighbouring APIs, two
+    different sentinels.
+
+**Ships to a field machine for a log — the DIAG line added in 1.15.9 is the point of this
+build.** Two independent causes of early wrapping are fixed and one measurement is
+deliberately left alone; the log says which was actually biting.
+
+- **An unmeasurable `availablexy` result is no longer used as a layout number.** The floor
+  (`MIN_AVAILABLE=200`) stopped absurd values reaching layout, but 200 then *became* the
+  layout number — and nobody measured 200. `availablexy` now records
+  `maxwidth_measured` / `maxheight_measured`, and the two places that laid out against the
+  floored value stop doing so:
+  - `Label.wrap()` — `min(asked, 200)` wraps text after 3–4 letters at the button font size
+    while the button stays full width, leaving the label in a narrow strip with a large gap
+    to the cell edge. When the measurement failed it now uses what the caller asked for
+    (computed from the window or screen), falling back to the work area.
+  - `Frame` auto-sizing — `min(200, content)` shrinks a frame to a 200px box whatever it
+    holds, which is the *unreachable buttons* half of what that warning has been predicting
+    since 2026-08-31. When unmeasured, the content decides; a frame bigger than the screen
+    is a visible problem rather than a silent one.
+  - **The measurement itself is untouched, on purpose.** `_measure_siblings` subtracts
+    siblings from the SCREEN, so any page whose content is legitimately larger than the
+    display (worst observed: 4689px of siblings against 1080) goes negative *by
+    construction*. Budgeting against the parent's allocation instead is a real change to how
+    every page sizes itself, and not something to do in the same build as a field
+    diagnostic. Until then the honest thing is to know when the answer is unusable, which is
+    what these flags provide. Raised by Kent after it came up three times in one day:
+    *"can we not address those more directly?"*
+- **The chooser's last button wrapped at a third of its own width.** `columnspan` is correct
+  — item `n` sits at column `n%bpr`, so `bpr - n%bpr` columns remain — but `wraplength` was
+  `screen_wrap/bpr` regardless, one cell's worth. On the Reports tab (13 items, `n=12`,
+  column 0) that is a button spanning all three columns with text wrapped at ~512px of
+  ~1900px. Now `screen_wrap*columnspan/bpr`; unchanged for every other button, whose span
+  is 1.
+- Removed a dead branch in `_populate_chooser_tab`: `elif optionlist_maxi > 9: bpr=3` set
+  `bpr` to the value it already had, while reading as though 11+ items were a special case.
+  Collapsed to one expression with the off-by-one stated — `optionlist_maxi` is the last
+  INDEX, so `== 3` means FOUR items → a 2×2 grid.
+- **Still unfixed, and the DIAG's main question:** `avail = tk_root.winfo_width()` with
+  `if avail < 100` falling back to the screen. That threshold catches only an *unmapped*
+  root (which reports 1). A root mapped at, say, 300px passes it and yields
+  `int(300*.8/3) = 80px` — 3–4 letters, in a cell still a third of the screen wide. This is
+  the closest match to the reported symptom, but changing the threshold on a guess would
+  mask the evidence, so it waits for the log. `maxwidth` showing
+  `(unset — wrap() never ran)` will mean `availablexy` was never involved for these buttons
+  and the asked-for wraplength is the whole story.
+
+# Version 1.15.9
+
+Four field-diagnosed faults, all from OBT's nml project and Kent's own reproduction.
+
+- **DIAG-chooser-xpad** (diagnostic, no behaviour change): chooser labels wrap after 3–4
+  letters with a large gap to the cell edge on a field machine. Reading the code yields two
+  candidate mechanisms it cannot separate — the wraplength `_populate_chooser_tab` asks for
+  (`avail*.8/bpr`), versus what `Label.wrap()` reduces it to (`min(wraplength,maxwidth)`,
+  where `availablexy` floors `maxwidth` at `MIN_AVAILABLE=200` after `_measure_siblings`
+  counts the OTHER columns' buttons as consumers of this button's width). One line per tab
+  now prints asked-vs-live wraplength, `avail`, the root width, `maxwidth` (or "wrap() never
+  ran"), padx/ipadx, font size and requested width. An earlier guess that
+  `uniform=category+str(c)` caused this is **withdrawn** — putting each column in its own
+  uniform group of one does defeat the intended equal thirds, but that produces uneven
+  columns, not a 3-letter wrap.
+
+- **NBQ: found the producer, and closed the class.** A task on its way out re-reveals its
+  parent — `ui_tkinter.py:1378`, `if not self.parent.iswaiting(): self.parent.deiconify()` —
+  and `chooser.gettask` withdraws the chooser one line *before* calling the outgoing task's
+  `on_quit`, so the chooser came straight back up with no notebook built and sat there for
+  the whole `whatsdone()` + tab build (~2.8 s on a field machine) showing nothing but the
+  `outsideframe` Exit button. Traced from a log where all three tab lists built
+  successfully, which is what ruled out the build and pointed at the reveal; the
+  `set TNotebook.Tab.background` lines identify it as the FIRST build, reached from
+  `chooser.py:99`.
+  - Fixed at the call site: the rebuild now runs inside `self.ui.waiting(…)`, so
+    `iswaiting()` is true when `on_quit` gets there and the premature reveal is suppressed —
+    the wait is load-bearing, not decoration, and the user gets a named wait instead of a
+    blank page.
+  - Fixed as a **class**, per Kent: *"we shouldn't be making pages visible, counting on them
+    having meaning later."* That deiconify now also requires `has_content(parent)`, so no
+    window is ever revealed with an empty `frame`. Reuses `visibility.has_content` — the
+    same predicate `QuitOnlyGuard` uses for this exact question, and it tests `w.frame`
+    because Exit lives in `outsideframe`; a second copy would drift the way `_is_syl_prep`
+    already has between `ui_shell` and `alphabet_chart`. Imported in-function, since
+    `visibility` does `from frontend import ui`. **The skip is logged**: a page that should
+    have appeared and now doesn't is named in the log rather than becoming a silent
+    no-window for the watchdog to describe vaguely. The webview backend needs no parallel
+    change — its `on_quit` never deiconifies a parent.
+- **The collab daemon's merge marker was showing up as a CHECK in the status field.** azt's
+  checks are internally defined (`Analysis.renewchecks`), but the STATUS set is
+  file-derived: `generate_status_by_annotations` reads annotation NAMES, and that name space
+  is shared with `azt_collabd`, which stamps
+  `<annotation name="azt-lift-conflict" value="ours|theirs"/>` on the parent of a merge
+  conflict. Nothing reserved a namespace, so it arrived as a check with groups
+  `ours`/`theirs` — and since no sense carries an `azt-lift-conflict=ours` code, as a slice
+  that can NEVER verify: permanent outstanding work. Worse, `cvt_of_check` returns None for
+  it and `checkslicetypecurrent` (`analysis.py:2062-2065`) DELETES None kwargs and
+  substitutes the CURRENT value, so it was filed under whichever cvt happened to be selected
+  — a real branch, participating in that cvt's `tosort`/`done` bookkeeping. Three layers,
+  each doing something the others can't:
+  - **Admission gate** — `generate_status_by_annotations` now refuses any name
+    `cvt_of_check` can't place. That IS the allow-list Kent asked for; `_checkcodes_by_cvt`
+    is the registry and needs no second list, and it fails CLOSED. Tone is unaffected
+    (`generate_status_by_tone_groups` is separate and hardcodes `cvt='T'`). NB this also now
+    excludes the `#C-slice`/`C#-slice`/`syls-slice` annotations, consistent with
+    `_is_syl_prep` already stripping them from the board.
+  - **Scrub** — `scrub_foreign_status` clears what is already stored, because the cycle
+    cannot self-heal: `StatusDict.__init__` copies the stored dict in verbatim,
+    `dictcheck`/`build` only ADD, and `storesettingsfile` dumps the whole object back over
+    the JSON, so a bad node loaded at boot is written straight back out for ever.
+    Deliberately NARROWER than the gate — it removes only names affirmatively known not to
+    be ours (`is_foreign_annotation`), since a check code from an older build fails the gate
+    too and may hold real work. **Fail closed on writes, conservative on deletes.**
+  - **Read filter** — `allcheckswdata`/`allcheckswCVdata` filter at the two file-derived
+    getters, covering the board, task check lists and reports in one edit, and keeping a
+    stale board clean in the window before a refresh runs.
+  - Reserved prefix `azt-` for tooling-written annotations (already the daemon's own
+    practice), so the next marker it adds is ignored without another edit. Not `x-`: `-x-` is
+    the private-use subtag in every lang tag here.
+- **A hand-typed profile could be any letters at all** — the `NAV` hunt. Page 2 of the
+  phase-2 profile picker validated SHAPE only, and `_segment_type` reads anything that isn't
+  `V`/`Ṽ` as a consonant, so `profile_fits_class('NAV','C','1','V')` returns True: `NAV`
+  reads as C-initial, V-final, one syllable. With `submit()`'s `.upper()`, a typed `nav`
+  became a real sort group that 9 words were then sorted into (annotation `lc=NAV`, machine
+  profile `CV`, nothing verified, and no `NA` anywhere in the file — so not a skip). New
+  `params.illegal_profile_symbols` applies the SAME `profilelegit` test the machine path
+  already applies (`profiles.py:336` clamps to `Invalid`), checked BEFORE the shape test,
+  naming the offending characters: *"‘A’ is not C or V."* Ruled out along the way: skip
+  (`setitemgroup` writes the group verbatim, and `:137-140` asserts the round-trip — Kent
+  confirmed by deliberate skip, which wrote `lc="NA"`), and `_default_profile` (builds
+  `'CV'*s` literally, only TESTS the edges).
+  - **Still open**: `sorting_engine.py:326` writes a group name into `…-x-cvprofile` with no
+    legality check. The entry page is now guarded, but that writer trusts whatever group
+    exists — it is what turned a typo into stored profile data. And OBT's 9 words still
+    carry `lc="NAV"`; this stops new ones and repairs nothing.
+- **Skip did essentially nothing.** It wrote the parking group `NA` into the sort annotation
+  and left the CONFIRMED `…-x-cvprofile` in place — and that is what slicing and
+  verification read, so the word stayed a verified member of the profile it had just been
+  skipped out of. The only observable effect was the Task-2 board drawing the cell unsorted
+  (`sorting_engine.py:1337` reads the annotation): a visible contradiction with no
+  substance. `NA` is documented as parking — *"NA parks unsortable words"*
+  (`alphabet.py:333`), *"not this one now… so it comes back"* (`sorting_engine.py:1489`) —
+  and neither held, because nothing thought the word had left. `marksortgroup` now clears
+  the confirmed profile when parking a word in `NA` on the profile sort, the same write the
+  verify path makes for an unverified group. Per Kent, the leftover `lc=<profile>` codes in
+  the whole-word / profile-class fields are left alone: indistinguishable from the leftover
+  verification any re-profiled word carries, which the design already acknowledges.
+
+# Version 1.15.8
+
+- **"No email program" still said nothing, watched live by Kent** (a user clicked send-log:
+  folder opened, no mail client appeared, no message). Two independent faults, either
+  sufficient:
+  - **The detection was inferred from the dispatch, and on Linux that inference is wrong.**
+    `xdg-open` does document exit 3 as "no application found", but in a desktop session it
+    delegates to `gio open`/kde-open, which exit **0** whether or not anything handled the
+    scheme — so we concluded "a client took it" and stayed quiet by design. New
+    `utilities.mailto_configured()` ASKS instead: `xdg-mime query default
+    x-scheme-handler/mailto` (the registration itself) on Linux, the
+    `HKCR\mailto\shell\open\command` key on Windows (no subprocess), None on macOS where
+    there is no cheap query and `open`'s exit code remains the only test. Exit 0 from
+    xdg-open now reports *unknown*, not success. Asked BEFORE dispatching, so the answer
+    also arrives before the click has had time to look ignored, rather than after a
+    30-second wait on a desktop portal.
+  - **The notice was built on the worker thread.** `open_mailto` runs off-thread (xdg-open
+    can block for a long time) and its `on_result` therefore runs there too — and the
+    handler called `NotifyUser` directly, which constructs a Toplevel and calls
+    `winfo_exists`/`after_idle`. Tk is main-thread-only, so the window silently never
+    appeared. Now the synchronous check reports on the calling thread, and the macOS
+    fallback path marshals through `root.after(0, …)`. The docstring says so in capitals,
+    because this is invisible in code review and produces no error.
+
+- **FIX to 1.15.6: `fetch_tracking_branch` called a helper with UI side effects.** It used
+  `findpresentremotes()`, which is not a read-only lookup — it offers the user a USB drive
+  and does `self.program.taskchooser.withdraw()` — so a git primitive was reaching into UI
+  that need not exist yet, and it raised `'App' object has no attribute 'taskchooser'`
+  (Kent 2026-09-02). It failed SAFELY (logged, returned False, and the existing
+  `origin/testing` carried the checkout) but silently skipped the refresh, which is the
+  entire reason the call is there: on an install older than its clone, `origin/testing` is
+  stale and you would be reset to old code with no sign of it. Now reads `remoteurls()` —
+  the stored dict, no side effects — plus git's own remote NAMES, which are equally valid
+  fetch targets and which `isinternet()` resolves to URLs.
+
+- **`writelzma()` made two archives and returned the wrong one**, so every caller named a
+  file holding a fraction of the evidence — spotted by Kent, seeing the email name
+  `log_…Z.xz`. It wrote a plain-lzma copy of the CURRENT PART only (the original one-file
+  assumption) *and* a tar of every part, the latter named `<already .xz> + '.tar.xz'`, hence
+  the doubled extension. The return value was never updated when the tar was added. Now one
+  archive, `azt_log_<timestamp>.tar.xz`, containing the run's parts and any restart marker,
+  and that is what is returned and named. The single-file copy is deleted rather than fixed:
+  its contents are a strict subset of the tar, nothing in azt ever opened it, and neither
+  format opens natively in Windows Explorer, so there was no convenience argument for it
+  either. NB anything globbing `log_*.xz` should look for `azt_log_*.tar.xz` now.
+- Tightened with it: the tar is opened inside a `try`, and a file that fails to be added is
+  logged WITH ITS NAME, so a locked or vanished part says which one instead of leaving an
+  anonymous exception.
+- **`IndentationError` at startup, same change, caught on testing by Kent.** Removing the
+  single-file branch left three of its lines stranded after the `return`, which is a SYNTAX
+  error, so `logsetup` could not be imported and the app could not start at all — the
+  import happens in `py_modules`, before anything is on screen. `tests/test_imports.py`
+  would have failed on it; run `pytest` before pushing to testing, always, because this
+  class of error is invisible to reading and total in effect.
+- Dropped the now-unused module-level `import lzma` from `logsetup` while there: on a
+  hand-built CPython lacking `_lzma` (missing `liblzma-dev` at configure time) that import
+  would likewise have killed startup, for the sake of a feature used only when bundling
+  logs. `tarfile` pulls lzma in on demand, inside the `try` that already reports failure.
+
+# Version 1.15.7
+
+- **Creating a git data repo from scratch crashed startup** with `'App' object has no
+  attribute 'liftfilename'`. That name belongs to `SettingsManager` (set FROM
+  `program.filename`) and has never existed on `App`, so the line raised every time it was
+  reached — it just wasn't reached often: only when a project has no git data repo yet AND
+  git is installed. Collab projects let the daemon own the repo, so it took a fresh legacy
+  project to hit it. Now `self.filename`, which `get_lift_file()` has already set;
+  `self.settings.liftfilename` would not have worked either, since `repocheck()` runs
+  before `Settings(self)` exists.
+- **"Email my log to support" in the Help menu — you no longer have to crash first.** The
+  only way to package a log was the error page, so a machine that merely MISBEHAVED (wrong
+  page, dead button, a page with nothing but Quit) had no way to hand one over at all — and
+  every field-diagnosis item on the agenda stalls on precisely that. Placed after Update and
+  try/revert: those are what you try first, and this is what you do when they didn't help.
+  Deliberately NOT gated on `source_repo` like its neighbours: it needs no repo, no internet
+  and no daemon, and the moment you most need it is the moment something else is broken.
+  Shared with the error page as `App.email_log()`.
+- **The error page's mailto: link was malformed and reportedly did nothing.** Three faults,
+  any one sufficient: **nothing was encoded**, while 50 raw log lines went into the query
+  string — `&` ends the `body` parameter, `#` starts a fragment and drops the rest, a bare
+  `%` is an invalid escape that makes handlers reject the whole URI, and spaces and newlines
+  are illegal outright; it was **far too long**, 5–10 kB against the ~2 kB `ShellExecute` and
+  browsers accept; and the lines were joined with `%0d%0a` when `readlines()` had already
+  left a real newline on each. Subject and body are now `urllib.parse.quote`d and the log is
+  out of the URL entirely — it cannot usefully go there, since **`mailto:` cannot attach a
+  file**: RFC 6068 lists the headers a handler may honour and says attachment parameters
+  must not be, because otherwise any web page could make a mail client exfiltrate a local
+  file.
+  - Kent: the 50-line excerpt "has been useful in the past", so the single most identifying
+    line now goes in the **subject**, where it costs nothing and is better placed — the
+    failure is visible in the inbox, so a report can be triaged and duplicates spotted
+    without opening anything. The error page still displays all 50; the attachment has the
+    whole run.
+  - **The file is now revealed, not merely named.** New `utilities.reveal_file()` opens the
+    containing folder with the file HIGHLIGHTED (`explorer /select,` on Windows, `open -R` on
+    macOS, the freedesktop `FileManager1.ShowItems` interface on Linux with a folder-open
+    fallback), so attaching is one drag with no searching. Naming a path in the body is not
+    enough for a field user — Kent: "I can't count on people finding it on their own." The
+    reveal happens BEFORE the mail dispatch, so the file is in front of the user whether or
+    not a client exists.
+  - **A missing mail client is now reported instead of doing nothing.**
+    `webbrowser.open_new` can't tell us — it reports whether a browser launched, not whether
+    anything handled the scheme — so on a machine with no mail client the click was silent
+    and indistinguishable from the app ignoring it (Kent: "I've seen that silent error
+    before"). New `utilities.open_mailto()` asks properly: `os.startfile` raises `OSError`
+    (WinError 1155) on Windows, `open` exits nonzero on macOS, and `xdg-open` documents exit
+    **3** as "no application found", distinct from 4 ("action failed"), so a missing client
+    is separable from a broken one. Runs off the calling thread, because `xdg-open` can sit
+    on a desktop portal. Reports only a DEFINITE failure — an ambiguous exit says nothing,
+    since a false alarm here is worse than silence — and when it does, it names the two facts
+    the user needs: where the file is and who to send it to.
+- **FIX, same session: `availablexy`'s new burst summary crashed the app.** It scheduled
+  its `after_idle` on THE WIDGET BEING MEASURED — page content, destroyed on every rebuild
+  — and tkinter deletes an `after()` command AFTER running it, while `Misc.destroy()` sets
+  `_tclCommands` to None. So a pending summary on a destroyed Label raised
+  `AttributeError: 'NoneType' object has no attribute 'remove'` from inside
+  `tkinter.callit`, which `tkintermod` re-raised straight out of `mainloop`, killing a live
+  sort. Now scheduled on the ROOT, which outlives every page — the warning `guardvisible`
+  already carried, in the likeliest possible place to ignore it. The same exposure in the
+  tone frame page's new reflow retry (scheduled on the drafter window, which closes) was
+  fixed with it.
+- **The nothing-but-Quit guard now raises a WAIT instead of writing a notice into the
+  page**, per Kent's ordering (2026-09-01): *"a full screen of nothing but theme color —
+  nothing would be better than that, and a wait window would be better than nothing, if it
+  is over ~3s."* So: blank themed page < no window < a wait window. A wait is the app's own
+  sanctioned cover for a page that is not ready — it withdraws the window, so the blank
+  page and its lone Exit leave the screen, and says something is happening. It also means
+  the guard no longer puts anything in `frame`, which retires the hazard that made
+  `has_content()` have to exclude it. Closed on real content via `waitdone()`, which also
+  reveals the page — not optional: a wait nobody closes is the `tryNAgain` hole, and the
+  guard uncovers only on CONTENT, never on "no longer looks quit-only", which is true the
+  instant it covers something.
+- **Recorded, because it explains a report we could not otherwise account for: neither
+  guard can see a blank page during boot.** `after()` callbacks do not fire until
+  `mainloop()` is entered, and all of `App._run_setup` — including `TaskChooser`'s own
+  construction — runs before that. So a page blank during startup is invisible to
+  `QuitOnlyGuard`, `VisibilityWatchdog` AND `guardvisible` regardless of when they are
+  started, because no timer runs yet. Kent saw NBQ with nothing in the log and the tail
+  showing the chooser being built; that is this. The remedy for boot-time blankness is a
+  wait opened by the BUILDER, not a guard — the same conclusion `App.restart`'s
+  `time.sleep` loop forced, for the same reason. Also worth knowing when reading a report:
+  `ui.Window.deiconify()`'s `NOTHING BUT QUIT` line only fires for windows that actually
+  have an `exitButton` (i.e. `exit=True`), so a window showing Exit by another route is
+  invisible to it.
+- **One log per RUN, five runs kept — because a cut field log is an undiagnosable one.**
+  A log arrived from a field machine already rotated past its startup banner, so the
+  version could not be established and the page under investigation was gone. Rotation
+  stopped being a tidiness item at that point. Old scheme:
+  `RotatingFileHandler(mode='w', maxBytes=500k, backupCount=5)` on a DATE-stamped name
+  with an unconditional `doRollover()` at import — so rotation was driven by PROCESS
+  STARTS, and six launches in a day pushed the first off the end. New scheme, per Kent's
+  spec ("one log per run, not counting restarts for updates or venv; then keep five of
+  those"):
+  - `log_<YYYY-MM-DD>T<HHMMSS>_<NNN>.txt`. The run id is the fresh start's UTC time (no
+    colons — illegal on Windows, and the old ISO-slicing existed only to strip them), and
+    it sorts chronologically. Parts are numbered FORWARD and **never renamed**, which is
+    the point: `RotatingFileHandler` shifts `.1→.2` so the newest is always the base name
+    and the START of a run ends up wherever the shuffle left it. `_001` is immutable and
+    always holds the banner.
+  - **A restart inherits the run id** (`AZT_LOG_RUN`), gated on
+    `restartmark.launched_by_restart()` — the same `--restart`/`AZT_VENV_RELAUNCHED`
+    signal the restart marker uses, so "is this a new run?" has one definition in the app.
+  - **One part per process**, not per run: since spawn-and-confirm, predecessor and
+    successor are briefly alive together, and two processes appending to one file
+    interleaves and risks a Windows lock. The boundary also marks where the restart was.
+  - Retention keeps the newest five runs ENTIRE, then drops whole runs oldest-first above
+    ~200 MB. Whole runs only — a run whose `_001` was deleted is worthless, and a test
+    guards that invariant. The current run is never dropped.
+  - A 10 MB per-part cap rolls FORWARD to a new part rather than truncating, so a runaway
+    log is bounded into parts without overwriting its own beginning. Kent, correcting my
+    first proposal: the tail is not the part he needs — the head is, to establish the
+    version.
+  - `logsetup.runfiles()` is new: one run is now several files, and callers that want the
+    run rather than the current part should use it. **`writelzma()` now does**, which it
+    had to: its old `glob(<current name>*)` worked when rollovers were siblings of one base
+    name, but with per-run parts it would have bundled only the part being written and lost
+    `_001` — the banner. A bundle without that is the exact failure that made the field log
+    undiagnosable.
+  - **`writelzma()` also includes any `restart_in_progress*.json`** (Kent 2026-09-02). A
+    marker still present IS the evidence that a restart was attempted and never landed —
+    it carries the reason, version, argv and time — and it is the only artefact that says
+    so, because the process that would have logged it is gone. It sits in the same
+    directory, so a bundle omitting it discards the one file that explains why the logs
+    stop where they do.
+- **The `lan_peer_sync` probe says its piece once, and stops.** That failure was an
+  `AttributeError` — this install's `azt_collab_client` has no such function — which is a
+  PERMANENT capability gap, not a transient. It shared one handler with genuine RPC
+  failures, so both read identically in the log, and the 60 s cache kept re-asking a
+  question whose answer cannot change in-process: the same INFO line over and over, which
+  reads as something intermittent and worth waiting out. `AttributeError` is now caught
+  separately, sets a flag that stops the probing, and logs ONCE at warning — naming which
+  copy of the client is loaded (it is resolved at runtime by `_ensure_client_importable`
+  from a symlink, an env var, or a sibling clone, so "which copy" is the whole question)
+  and stating the consequence, which was otherwise silent: `_peers_known` keeps its
+  initial `False`, so `ambient_status` renders `LAN:—`, whose meaning is "no paired peer
+  shares this project". A user who HAS a paired peer was being told they do not — a
+  definite claim made from a failed measurement. Genuine transients still keep the last
+  answer and retry on the next tick, which is what the cache is for.
+  NB `check_server_compat` already guards the DAEMON's version this way; nothing guarded
+  client-side attribute availability, and that is the real gap this exposes.
+- **A dedupe filter on the log — this is what actually ate the field log.** `availablexy`
+  logged at INFO once per widget, dozens of byte-identical lines per page; so do
+  `update_active_cell` and the `lan_peer_sync` probe. 500 kB was being spent on
+  diagnostics nobody reads. A record identical to the one before it is now suppressed, and
+  when the message finally changes the tally rides that line: `[previous line repeated
+  86×] …`. Chosen over demoting those call sites because it needs no judgement about what
+  matters, covers every present and future flood, and loses nothing — and 86 as a count is
+  easier to read than 86 lines. Deliberately compares the FORMATTED message, so two calls
+  with different arguments stay distinct. The tally is attached to the next line rather
+  than flushed on a timer, so it cannot be stranded behind a crash — exactly when the log
+  matters most.
+- **`availablexy` now reports the burst, not each hit.** One line per page build:
+  `availablexy floored maxheight on 12 widget(s); worst -3566 of 1080 (siblings measured
+  100/3960)`. Strictly better evidence than a dozen near-identical lines, which say the
+  same thing twelve times and bury the thirteenth, different one. Raised INFO→WARNING: a
+  measurement claiming there is no room is a defect, and it has to survive a field
+  installation's log level. Aggregated to the next idle, which is one page's worth of
+  measuring.
+
+# Version 1.15.6
+
+- **"Cannot delete branch main" — caught in the act, both halves.** `try_pull_main` read
+  `old_branch=self.branch` AFTER its pull returned; `pull()` calls `try_pull_main()` for
+  every remote, and `try_pull_main` calls `pull()` — mutual recursion. The inner call
+  checks out `main`, so the outer frame then read `self.branch` as `main` and asked to
+  delete the branch it was standing on. That is the recursion AND the impossible delete
+  from the 2026-08-31 field report, in one stack. It was the `remove_branch` guard added
+  that same day — "THIS CALL SHOULD NOT HAPPEN", with a stack dump — that finally produced
+  the evidence, on Kent's fresh copy. Fixed twice over: the branch is captured BEFORE the
+  pull, and never deleted when it equals `main`; and `pull(..., _main_attempted=True)`
+  stops the nested call from starting the dance again, since one attempt to get onto main
+  is the entire point and repeating it per remote per recursion level is how it ran away.
+- **`git pull u main`, `git pull s main`, `git pull s main`… — a URL was being iterated one
+  character at a time.** `pull()` handed `try_pull_main` a single remote as a `str`, and
+  `try_pull_main` handed that same string straight back to `pull(remotes=…)`, whose
+  `for remote in remotes` then walked the URL letter by letter — one `fatal: 'u' does not
+  appear to be a git repository` per character of `kent-rasmussen/azt`. Long-standing, and
+  only visible when `self.branch != self.main`, since `try_pull_main` returns early on
+  main. Fixed at the choke point with `_remotelist()` rather than at the one call site:
+  `pull`, `push`, `fetch` and `share` all share that `for remote in remotes` shape, so any
+  of them could be handed a single remote and none would complain — they would simply do
+  something absurd.
+- **…and it refreshes `origin/<branch>` EVERY time, not only when the ref is missing.**
+  `hard_checkout` resets the working tree to `origin/<branch>`, and nothing else in the app
+  ever updates a remote-tracking ref — `pull()` and `fetch()` are called with a URL, which
+  writes `FETCH_HEAD` and leaves `origin/*` exactly as the original clone left it. So on any
+  install more than a few days old, "try the testing version" would have reset you to a
+  months-old `origin/testing` and reported success: the branch name is right and the switch
+  works, so nothing looks wrong. Found because Kent asked "didn't pull?" on seeing testing
+  come up as 1.13.21, five weeks old — which there was honest (that IS what is published),
+  but only because the clone was hours old.
+- **"Try the testing version" fetches the branch instead of inventing one.** Kent:
+  *"knowing that trap is there isn't as good as fixing it proactively"* — and it is safe to
+  fetch precisely because the name is OURS (`program.testversionname` / `main`), not a guess
+  at a user's branch. `hard_checkout` now calls `fetch_tracking_branch()` when
+  `origin/<branch>` is missing, with an explicit refspec
+  (`<b>:refs/remotes/origin/<b>`, internet remotes only), and only then decides.
+  - Found while writing it, and it is why this mattered more than it looked: **the app
+    pulls and fetches BY URL** (`pull <url> <branch>`), which updates `FETCH_HEAD` and
+    never a remote-tracking ref. So `origin/<branch>` was only ever as fresh as the
+    original `git clone` — stale on any long-lived install, and absent entirely on a
+    shallow one. A bare `fetch <url> <b>` would not have fixed it either: on a
+    single-branch clone that writes no tracking ref, which is the hole itself.
+  - **The fallback no longer invents a branch.** With no local branch, `checkout()` took
+    its `-b` path and created it AT HEAD with no upstream, so "try testing" reported
+    success — the caller only checks that the branch NAME matches — while running exactly
+    the code it was already running. It now switches to a local branch of that name if one
+    exists (saying plainly that it did NOT reset it to the published version), and
+    otherwise refuses with a message naming the branch you are still on. Failing loudly
+    beats lying about which code is running. Closes the live half of
+    the checkout-b-from-HEAD item.
+- **Sister repos clone shallow** (`--depth 1`, per-repo `depth` override in the table).
+  Nothing reads their history — `update()` only ever `pull --ff-only`s the tip — and
+  `images_CAWL` is a few hundred MB, so on a field connection this is the difference
+  between a usable first run and a long one. Recorded at the clone site, because
+  `--depth` implies `--single-branch` and that WOULD matter for the azt source clone:
+  `hard_checkout` names `origin/<branch>` explicitly, so a single-branch source clone has
+  no `origin/testing` and "try the testing version" silently runs main's code instead. The
+  installer owns that clone, and the constraint is now written into its agenda item.
+  `vcs.py`'s `clonetoUSB`/`clonefromUSB` stay FULL clones, with a docstring saying why:
+  they serve data repos, where history is the user's own record and the base the collab
+  three-way merge needs, and `clonetoUSB` makes a bare clone it then adds as a remote —
+  depth on a two-way sync channel is a footgun, not an optimisation.
+# Version 1.15.5
+
+- **FIX to 1.15.4's confirmed restart: the predecessor never exited.** `sys.exit()` inside
+  a Tk `after()` callback does not end the process — tkinter catches exceptions raised in a
+  callback, and this app installs its own catcher (`frontend/tkintermod.py`) — so the
+  `SystemExit` was swallowed and the callback merely returned. BOTH exit paths of
+  `_confirm_restart` were affected, the confirmed one and the 300s backstop, so the old copy
+  sat there indefinitely: the duplicate-process gate found two live copies, 1934s and 1216s
+  old, on one project. That is the exact outcome the confirm loop was written to prevent,
+  which made the handshake worse than none. All three hand-over points now go through
+  `_leave_to_successor()`, which calls `tk_root.quit()` — ending the main loop so `App.run()`
+  falls through to `sysshutdown()` at top level, where `sys.exit()` means something — and
+  falls back to `os._exit(0)` if even that fails, since a wedged Tk must not be able to keep
+  a superseded copy alive.
+  - Related and worth knowing when testing this: **Ctrl-C does not kill either copy.** A Tk
+    app parked in Tcl's event loop never acts on SIGINT (Python can only raise
+    `KeyboardInterrupt` between bytecodes in the main thread), so an interrupted restart
+    leaves both processes running and the next launch is correctly refused by the duplicate
+    gate. `kill` them by pid.
+
+# Version 1.15.4
+
+- **A restart now holds a window and waits to be told the new copy is up.** Level 2 of
+  the restart-recovery handshake item, verified live. `App.restart` used to withdraw both windows
+  and then block on `while self.writing: time.sleep(1)` — every window hidden AND a dead
+  main loop, so nothing could paint, run, or report. That pair *was* the "no window"
+  failure. Both are gone: the write-wait is driven from `after(1000)`, and a
+  **"Restarting A‑Z+T…" wait dialog** covers the handover — which does the same job
+  honestly, since it blocks input, says what is happening, and is the one thing both
+  visibility guards accept as evidence. `utilities.spawn_successor()` launches the
+  successor and RETURNS (always `Popen`; a caller that has `exec`ed is gone by definition,
+  which retires the last reason Linux was on `exec` for this path).
+  - The signal is the restart marker from 1.15.1: the successor deletes it once a real
+    work surface is on screen, so its disappearance means "I am up" — no second channel,
+    and we wait on a usable window rather than on a process merely existing. Consequence
+    Kent saw and accepted: the wait lasts until the task chooser paints, not until the
+    successor's splash appears, because the splash is precisely the window in which the
+    rest of boot can still fail.
+  - Failure is detected with `poll()`, not a clock — a timeout would cry failure on a slow
+    boot with a big lexicon. An exit only counts after a 15s grace period, because a
+    successor may legitimately re-exec once (the venv relaunch `Popen`s and exits,
+    orphaning a grandchild we cannot see).
+  - The UI is handed back ONLY if the successor is dead. Alive but unconfirmed after the
+    300s backstop, we exit anyway: two live copies on one project is worse than a long
+    wait, and the successor owns the project from that point. Relatedly `_restarting` now
+    gates `collab_poll`, since this process stays alive while the successor attaches to the
+    same project — rescheduled rather than abandoned, so a failed restart leaves a live app
+    that is still polling.
+  - `restartmark.mark()` returns None when the write failed, because a confirmed restart
+    waits for the marker to DISAPPEAR and an absent one would read as instant confirmation
+    of a successor that has not started.
+- **The update path left the screen empty for 25 s, and the new watchdog is how we know.**
+  `updateazt`'s poll closes the update's wait BEFORE `updateaztdone` runs, and that tail
+  bounces the collab daemon when `azt-collab` was updated — network work that can take tens
+  of seconds, with every window withdrawn and nothing on screen. Caught on a fresh clone:
+  `found no viewable window in 5 polls (25.0s)`, and the dump showed the Wait itself
+  withdrawn with two task windows sitting there `content=True`, unrevealed. The daemon
+  bounce now runs inside its own wait (`thenshow=True`, so closing it also puts a window
+  back — the half that was missing), in a `try/finally` so a failing bounce cannot leave
+  the dialog up. This is precisely the class the no-window item defined and the watchdog was
+  built to name: nobody would have found it by reading, and it produced no evidence before.
+- The update page's "Restart Now" passes `reason='after update'`. A restart after an update
+  is the one whose failure to come back strands the user on a half-updated install, so it is
+  the most worth naming; its marker previously said `unspecified`.
+- `__version__` moved to the top of `main.py`, above the duplicate gate and the
+  `utilities.py_modules` import. It is a bare string with no imports behind it, so nothing
+  was gained by defining it later and something was lost: `ensure_venv()` runs DURING that
+  import and writes a restart marker, which reads the version off `__main__` — so the
+  first-run venv relaunch, the producer whose failures are hardest to diagnose, recorded
+  `'version': None`. Observed on a fresh clone, 2026-09-01.
+- **The venv relaunch leaves a breadcrumb too — and would have cried wolf without a second
+  signal.** `py_modules.ensure_venv` is the other restart producer, and the earliest: a
+  relaunch that failed to come back was completely silent. It now writes a marker with
+  `reason='venv relaunch'`, which needed two supports. `restartmark._path()` gained a
+  pathlib-only fallback, because that hop runs at import time in a process whose whole job
+  is to obtain the dependencies `utilities.file` needs, so on a first boot that import can
+  legitimately fail — the earliest producer should not be the one unable to leave a note.
+  And `launched_by_restart()` now also accepts `AZT_VENV_RELAUNCHED`: this hop relaunches
+  with `sys.argv` UNCHANGED, so keying only on `--restart` would have reported every
+  successful venv relaunch as a restart that never landed. (`AZT_BOOTSTRAP_PARENT_PID`
+  would be the more precise signal, but `duplicates.running_file` pops it at import time,
+  long before this is asked.)
+- The two branch-switch restarts — "revert to main" and "try testing" (`main.py`
+  `run_problem`) — now use the CONFIRMED path (`App.restart`) rather than fire-and-forget.
+  They change the source branch and then restart, which makes them the likeliest of all
+  restart callers to fail to come back, so they are the ones that want a held window and
+  an explanation. NB `App.restart` returns where `sysrestart` never did, so the
+  `destroy()` after each call now actually runs — which is what it was always meant to do.
+- **`os.execl` is gone: one restart path for every platform.** Level 3, and it turned out
+  to be a deletion rather than a port — `spawn_successor` already IS the unified path, so
+  `sysrestart` now delegates to it. What went away: `os.execl` on Linux (unrecoverable by
+  construction, and it preserved the pid, so predecessor and successor were
+  indistinguishable); a Windows-ONLY Popen branch, whose `AZT_PREDECESSOR_PIDS` handover
+  was therefore also Windows-only — and that handover is now REQUIRED on Linux, because
+  with Popen the predecessor lingers and the successor's duplicate gate would otherwise
+  count it (it was never needed under exec, since no predecessor survived); and **a silent
+  no-op on macOS**, where `platform.system()` matched neither branch, so a restart fell
+  through to `sys.exit()` and the app simply quit without coming back. Also: if the launch
+  fails, `sysrestart` no longer exits — an app that still works beats an app that quit into
+  nothing, which is this item's whole lesson.
+- **The three visibility guards now have a written contract, because two of them collided.**
+  `frontend/visibility.py`'s docstring records which guard asks what and which may act:
+  the scoped `guardvisible` reveals (it knows which run window belongs to the call in
+  flight), `VisibilityWatchdog` only reports (its signal cannot separate "the user has
+  nothing" from "I failed to find what they are looking at"), and `QuitOnlyGuard` acts on a
+  signal whose innocent readings are excluded by `iswaiting()` and by strikes. Three rules
+  keep them from fighting, and the first one is now enforced rather than incidental:
+  **nothing a guard adds is content** — `has_content()` ignores QuitOnlyGuard's placeholder,
+  so a filled-in empty page can never read to the other two as a legitimate page to reveal.
+  It could not bite yet only because placeholders go on viewable windows while
+  `has_content` is asked of withdrawn ones; guards must not depend on each other's timing.
+- **First producer the new guard caught, and it was one of our own fixes.**
+  `Sort._get_safe_window()` creates a run window and then deiconifies it, on the reasoning
+  (2026-07-29) that "we are about to drive work in this window, so it has to be visible" —
+  which cured "no window at all". But a window straight out of `getrunwindow()` has an
+  EMPTY frame, and the Exit button lives in `outsideframe`, so what it actually revealed
+  was a fullscreen page whose only control was Quit. One item's cure was the other item's
+  cause; `QuitOnlyGuard` named it by window title on its first live run. It now opens a
+  WAIT instead of revealing the bare window — visible, says what is happening, and the one
+  thing both visibility guards accept as evidence. Safe to leave open because both callers
+  `drive_work()` immediately, and `drive_work` closes the wait on `StopIteration` and on a
+  `None` generator; a wait nobody closes is the `tryNAgain` hole, so that guarantee is the
+  precondition for doing this here rather than a detail.
+
+# Version 1.15.3
+
+- **Global guard against the nothing-but-Quit page.** A fullscreen block of theme colour
+  whose only control is Exit solicits the most destructive action available, at the moment
+  the user is most confused, and it is the only thing they can do — Kent watched a user on
+  a Zoom call come close to pressing it for exactly that reason. Hunting producers one at
+  a time cannot finish (the shape is reachable by any page that reveals before it builds),
+  so `QuitOnlyGuard` in `frontend/visibility.py` asks about the SCREEN instead, the way
+  the visibility watchdog does: poll for a mapped window that has an Exit button, an empty
+  content frame, and no wait dialog covering it.
+  - **Why this one is allowed to act, where the watchdog is not.** The watchdog's signal
+    conflates "the user has nothing" with "I failed to find what they are looking at", and
+    acting on the second wrecked a live page in 1.14.3. This signal has two innocent
+    readings — a page still building, and a page just torn down — and neither needs to be
+    distinguished, because the remedy is the same and neither survives the filters:
+    `iswaiting()` (a wait dialog is the sanctioned way to have an empty frame, and both
+    innocent cases are supposed to use one) and three strikes at 1s (a teardown heading
+    for a withdraw, or a rebuild that lands promptly, is over in milliseconds; three
+    seconds of an empty page is the ~10s page that was actually reported).
+  - **What it does is the safe action.** Not withdrawing the window, which would trade
+    this symptom for its worse sibling, no window at all. Not disabling Exit, which leaves
+    a blank page with no way out. It puts a sentence in the frame: Exit stops being the
+    only thing on screen, the user is told this is a fault in the program rather than
+    something they did, and nothing that was going to happen is prevented. The placeholder
+    removes itself as soon as real content arrives.
+- `ui.Window.deiconify()` now logs `NOTHING BUT QUIT` when it reveals a window whose frame
+  is empty and which has an Exit button, with the window's title. It LOGS and does not
+  refuse: refusing would trade this symptom for no-window wherever the caller has no
+  retry, and this codebase has been wrong four separate times about when to reveal.
+  `guardvisible` already declines to reveal an empty window, but an explicit `deiconify()`
+  from a page builder had never said anything at all — so the producer was unnameable.
+- **One producer found and fixed** by auditing `resetframe`'s callers against its own
+  documented invariant ("never call this on a VIEWABLE window outside a `waiting()`
+  block"): in the Record Dictionary Words task, the multi-group path wired its "Next
+  Group" button straight to `resetframe`, so clicking it blanked the visible page and left
+  Exit alone until the next group's page finished building. It now opens the wait first,
+  and the next page's own wait reuses it — the handover already documented at
+  `showentryformstorecordpage`'s head. The other four callers were already correct:
+  two are inside waits, one runs pre-map in `__init__`, and the sound-settings window is
+  built with `exit=False`, so it has no Quit button and an empty frame there is not this
+  symptom.
+
+# Version 1.15.2
+
+- **Macrosort verify page: the OK button was outside the scrollregion, so the page could
+  only be quit, never finished.** Field report from OBT's Windows machine (1.14.3, nml,
+  SortC): on letter 'f' the group rows were there, no OK button, and the scrollbar was
+  ALREADY AT ITS END — nothing to scroll to. The button was built and alive the whole
+  time; it was simply outside the scrollable area. Nothing reflowed after the OK row was
+  gridded into the scroll content: the only reflow armed for that page is scheduled at the
+  END of `SortButtonFrame.__init__`, i.e. BEFORE the canary exists, so the FIFO idle queue
+  could run `_do_configure_interior` on a stale `reqheight` and clamp the scrollregion to
+  the last group button. Letter 'h' minutes earlier worked, which is what pointed at
+  idle-queue ordering rather than anything about the letter — and removing one group row
+  made the button appear, because that mutated the content and re-fired `<Configure>`.
+  Now `buttonframe.reflow()` runs after the window's `update_idletasks()`, which is what
+  makes `reqheight` true — `grid()` only queues that recompute as an idle task, exactly
+  the trap `ScrollingFrame.reflow`'s own docstring documents. The non-macrosort branch has
+  always done the equivalent via `resume_configure()` at the end of its word list.
+  NOT fixed here, and tracked with the scaling work instead: on that machine `availablexy`
+  computed a viewport of 69px out of 1080 (siblings measured as 2936px of a 1080px
+  screen), floored to 200px against 136px rows — that is
+  the UI-scaling (DPI and work-area) item + the buttons-excessive-ipadx item, and fixing it there
+  touches this page's viewport too.
+
+# Version 1.15.1
+
+- **A restart that never lands now says so.** AZT restarts itself — after an update,
+  after an `ensure_venv` re-exec, after a collab reconnect — and until now a restart
+  that did not come back produced NO EVIDENCE AT ALL. That is the 2026-07-29 field
+  report: console only, closing it lost everything, the machine had to be restarted,
+  and nothing in the log named what had been attempted. Nothing could: `sysrestart` is
+  `os.execl` on Linux, which REPLACES the process image, so Python, Tk, the event loop
+  and every pending `after()` cease to exist inside that call; on Windows it is `Popen`
+  then `sys.exit()`, where the predecessor leaves as soon as the successor is *launched*
+  and never checks that it *started*. No in-process mechanism can observe that gap —
+  the new visibility watchdog least of all — so the evidence has to outlive both
+  processes. `utilities/restartmark.py` writes a marker (pid, UTC time, version, argv,
+  and the REASON, which is the field that earns its keep: an update failing to come
+  back is a different diagnosis from a branch switch failing) immediately before the
+  restart, and the successor clears it once its UI is genuinely up. Level 1 of
+  `azt/the restart-recovery-handshake item`; it makes the failure NAMEABLE, not yet
+  survivable.
+- Two things it took live testing to get right, both about *when* a marker means
+  something:
+  - **A marker is present in the successor too**, because the predecessor wrote it
+    moments earlier and only a UI that comes up clears it — so a marker on its own means
+    "a restart is in flight", not "a restart failed". The first version warned there,
+    crying wolf on every successful restart. The question is whether THIS process is the
+    one the restart launched: `--restart` in argv, the same signal
+    `duplicates.running_file` already uses. If it is, nothing to report. If it is not,
+    the user started this copy by hand while a marker was outstanding — which is exactly
+    the field symptom.
+  - **"The UI is up" is not "setup finished."** Clearing at the end of `_run_setup` was
+    wrong twice: that method returns BEFORE `mainloop()` is entered, so it would claim
+    success while the app could still wedge before ever painting; and if anything above
+    it blocks — the chooser opening its own window — the line is never reached at all,
+    so a restart that plainly worked kept its marker. The clear is now driven by the
+    watchdog, which already computes "a window is viewable" from the event loop in order
+    to arm itself. `first_viewable()` therefore returns the WINDOW rather than a bool,
+    because one walk now answers two different questions.
+  - Relatedly, `Splash` carries a new `boot_only` flag. It still counts for the
+    visibility alarm (a visible splash *is* "something is happening") but not as "the
+    app came up", because the whole of boot runs after it and that is the failure window
+    the marker exists to describe. Distinct from `guard_ambient`, which means "never a
+    work surface"; `boot_only` means "not usable yet". The clear waits for the chooser
+    or a task window, and stays pending across polls rather than being spent on the
+    splash.
+- `report()` deliberately never clears, on either path: if this boot also fails, the
+  next one must still find the marker. Guarded by `tests/test_restartmark.py`, along
+  with the rule that nothing here may raise — a corrupt or unwritable marker must cost
+  a log line, never a restart or a startup.
+- **`--restart` no longer accumulates on Linux.** The de-duplication added in 1.3-era
+  (2026-07-16) was only ever applied to `sysrestart`'s Windows branch; the `os.execl`
+  branch appended the flag unconditionally, so a two-hop restart ran with
+  `['main.py','--restart','--restart']` (visible in the new marker's own argv field,
+  which is how it was spotted). Harmless to the duplicate gate, which does a membership
+  test, but argv grew without bound across a restart chain and anything that COUNTED the
+  flag would have been silently wrong. Deduped once, for both platforms.
+- Fixed en route: `utilities/utilities.py` defines `log` only inside its `__main__`
+  block, so the obvious `log.info` in `sysrestart`'s new handler would have raised
+  `NameError` in the one place that must never raise.
+- Noted for the next level of this work: `os.execl` PRESERVES the pid, so on Linux the
+  predecessor and successor are the same process — a handshake cannot use pid identity to
+  distinguish them, which is why the marker's discriminator is argv.
+
+# Version 1.15.0
+
+- **The tone frame definition page edits in place. Its four modal child windows are
+  gone.** The frame name, each language's before/after text, and the field-type
+  chooser each used to open a toplevel — and `promptwindow` created one and then
+  **withdrew its own parent** ("Don't show status when asking for a value"), leaving a
+  mapped window whose ancestor was hidden. That is not just confusing to users (Kent's
+  words) but the state in which "which window is the user in?" has no answer, and it is
+  what made the new global visibility watchdog reveal the task window on top of the page
+  he was working in. `editable()` now builds a button AND a hidden entry in the same grid
+  cell and swaps them with `grid()`/`grid_remove()` — the alphabet chart's idiom
+  (`edit_title`/`_set_chart_title`), copied as behaviour rather than code, since TFDP is
+  flat and has no counterpart to that page's levels. `self.active` holds the one open
+  field and `edit()` closes whatever was open first, so one-field-at-a-time is structural
+  rather than a convention. **This page no longer withdraws or deiconifies anything.**
+  Return, Tab and OK all commit; Escape abandons and writes nothing, which is safe
+  because `commit()` is now the only writer even in memory.
+- **The page opens straight to the full form.** The name prompt demanded a name before
+  showing anything — you had to name a thing before seeing what it was, and abandoning
+  the prompt quit the whole drafter. Deleting it cost nothing, because the rule that
+  matters was already enforced in the right place: `exemplified()` refuses an empty name,
+  and the "Use this tone frame" button is built inside it, after that check. Two rules had
+  been collapsed into one and only the wrong one was enforced up front. The surviving
+  check now also rejects whitespace-only, which previously passed `in ['',None]` and would
+  have stored a frame indistinguishable from another.
+- **Word-break checkbox on the before/after fields.** Whether a frame form is separated
+  from the neighbouring word by a space was invisible — leading, trailing and absent
+  spaces all look identical — so it was acquired by accident and could not be audited.
+  The box is now the authority: the stored value is composed from the typed text AND the
+  box, and the form is separated by a space if and only if the box is checked, whatever
+  was typed. The box is derived from the stored form on open, so it always describes the
+  definition; a set break shows as `·` on the button (display only, never stored). Only
+  the word-boundary edge is touched — `before` on its right, `after` on its left — and the
+  far edge is left as typed. NB unchecking therefore REMOVES a space: that is what makes
+  the box an authority rather than a hint, bounded by the fact that nothing is normalised
+  until you open that field and commit, so existing frames are not rewritten behind you.
+  Covered by `tests/test_tone_frame_wordbreak.py`, since it writes to the definition.
+- Rebuild policy: `status()` rebuilds only for structural changes — the field type (it
+  re-keys every analysis-language row through `analangftypecode()`) and add/skip language.
+  A text commit updates the button in place, drops the examples and reflows. The examples
+  must go on any change, deliberately: they illustrate the frame as defined, so examples
+  outliving their frame are worse than none.
+- Layout fixes on that page, each from a field screenshot:
+  - Field-type chooser is a **dropdown**, not a row of buttons whose combined width ran
+    off the scrolling frame. A dropdown is bounded by its widest label instead of by their
+    sum. Labels map back to codes, so `'lc'` never becomes display text.
+  - `ui_tkinter.CheckButton` now scales `selectimage` by `image_pixels` too. It never did,
+    so asking for a smaller box produced a small unchecked box and a full-size checked one
+    — a control that changed size when you clicked it. The word-break box uses this.
+  - Editors are **sized to their content** (as the alphabet page does), with bounds that
+    differ by kind: a frame name is a phrase and gets room, while a before/after fragment
+    sits inline between a label and the `<word>` marker, where every character of width
+    shoves the rest of the row — at the name's floor it pushed the 'after' button off the
+    edge. The params row is `sticky='w'` so an editor grows into empty space instead of
+    re-centring the row and sliding its own label sideways.
+  - **The page was mis-laid-out until you typed a character.** Not reflow timing — it was
+    `field.rendered`, the rendered-text preview: empty it reserves a default height, and
+    the first keystroke makes the renderer draw and the label shrink to fit. It is no
+    longer gridded. If a preview is wanted back for a non-Latin analysis orthography it
+    needs a home whose height does not depend on whether it has rendered yet.
+  - 'Get Example' output is built below the fold, so all three exits from `exemplified()`
+    reflow and THEN scroll to the bottom (that order: `reflow()` is what sets the
+    scrollregion). Its labels call `.wrap()`, which they never did, so long text was
+    clipped at the canvas edge instead of wrapping.
+- Deleted with the child windows, each recorded in a comment at its old site: the
+  `'<no content>'` placeholder that swapped in and out on focus and could silently become
+  the stored value; stashing a `StringVar` into `self.forms` for a missing key (which is
+  why `status()` had to ask `isinstance(...,ui.StringVar)` to tell whether the user had
+  actually answered); `status()`'s trailing `self.parent.withdraw()`, which ran on every
+  rebuild and was already a no-op; and `promptstrings`'s hidden `self.glosslangs.append()`,
+  which is now called once per language per rebuild for a tooltip and would have grown
+  without bound (nothing reads it — the only reader is a different class's attribute,
+  marked "unused; leads to broken lift fn").
+- **Add Morpheme's OK button worked at last.** `command=self.submitform` passed no
+  argument to `submitform(self,lang)`, so every click raised `TypeError` and the only way
+  through the form was the `<Return>` binding, which does pass the language. Found while
+  auditing the no-window holes on that page; a page whose OK button does nothing is close
+  kin to a page you cannot see.
+- **The global visibility watchdog reports but no longer reveals.** Shipped revealing in
+  1.14.3 and immediately interrupted a live page: it could not find the tone frame drafter
+  and deiconified the drafter's own parent over it. A global watchdog knows one thing — "I
+  found no viewable window" — and cannot tell "the user has nothing" from "I failed to
+  find what the user is looking at"; acting on the second destroys work the first would
+  only stall. Its message now says *found no viewable window*, not *there is no window*,
+  and it dumps the state of every window its walk reached, not just its reveal candidates
+  — which is what the 1.14.3 occurrence lacked. The scoped `guardvisible` still reveals,
+  because it knows which run window belongs to the call in flight.
+
+# Version 1.14.3
+
+- **GLOBAL no-window watchdog (`frontend/visibility.py`), the mechanism answer to
+  the whole "app running with nothing on screen" class.** Enumerating producers
+  cannot finish this job: `getrunwindow` has 16 call sites and a name, but the real
+  class is *any* `withdraw()` whose matching `deiconify()` is not in a `finally`,
+  and the ones that bite are the abandon/exception paths nobody exercises. So
+  `VisibilityWatchdog` asks only "does the user have a window right now?", every 5 s,
+  for the life of the app, and is indifferent to who hid what. Five deliberate
+  choices, each paid for by an earlier attempt: it POLLS rather than firing once, so
+  a second occurrence later in a session is still reported; it needs 5 consecutive
+  misses (≈25 s), because a page legitimately withdraws one window before revealing
+  the next, and because that is strictly LATER than the scoped guard's 15 s, which
+  knows which run window belongs to the call in flight and must get first refusal (a
+  test guards that ordering); it ARMS ON FIRST SIGHTING, since boot has no window on
+  purpose; it reports ONCE PER EPISODE, so a stuck app cannot bury the first and most
+  useful line; and it never reveals an empty window, but — unlike the scoped guard —
+  does not get to decline, falling back to the task chooser, because after 25 s the
+  user is owed a target. It logs the state of every candidate window before revealing
+  anything: a user with no window cannot file a useful report, so the log must.
+  What it is NOT: a cure for a wedged UI. It runs on `after()`, so it is dead
+  whenever the main thread is blocked (`App.restart`'s `time.sleep` loop being the
+  known case). It reports WITHDRAWN windows, never WEDGED ones.
+- The "what counts as viewable" rule now lives in ONE place (`visibility.py`), shared
+  by both guards. The `guard_ambient` discovery — that the always-open message window
+  silently disabled the scoped guard for the whole 2026-08 hunt — was expensive to
+  make once and must not be re-derived differently by two callers. Fixed en route: the
+  shared check walks the toplevel TREE, where the old one looked at `root.winfo_children()`
+  only. A run window is a child of its TASK window, so one level down cannot see it —
+  the scoped guard escaped that only because it passes its own run window in by hand,
+  and a global guard built the same way would have reported NO WINDOW with a run window
+  on screen. The walk descends through toplevels only, never into frames, so page
+  content does not make it expensive.
+
+- **`getrunwindow` audit finished: four pages could leave the app with no usable
+  window, all the same defect.** `getrunwindow()` builds the run window WITHDRAWN
+  and withdraws the task window too, revealing something only if it opened a
+  `thenshow` wait — which needs BOTH a `msg` AND a mature repo. Every caller that
+  passes no msg therefore has to reveal for itself, and four did not. All four now
+  use the idiom already documented at the join and glyph-rename pages: `waitdone()`
+  (in case a wait covered the build), then a `deiconify()` + `update_idletasks()`
+  guarded on `exitFlag`.
+  - **Ad hoc sort group page** (`Categories.addmodadhocsort`): `runwindow.wait()`
+    without `thenshow` sets `showafterwait = winfo_viewable()|thenshow`, which is
+    False on a window just created withdrawn — so the `finally: waitdone()`
+    revealed nothing and `wait_window(scroll)` blocked on a window the user could
+    neither see nor dismiss. Byte-for-byte the defect the 1.3-era changelog records
+    as fixed in `generator.getresults`; this copy was missed. The wait also showed
+    "No Particular Reason" (no msg was passed) and now names what it is doing. The
+    over-70-senses warning branch had the same hole one step earlier — its
+    `waitdone()` ran before any wait existed, then it blocked on `wait_window(w)`.
+  - **Add-morpheme prompt** (`Segments.promptwindow`): `lift()` cannot map an
+    unmapped window and the `waitdone()` beside it was a no-op, so the form blocked
+    invisibly — once per gloss language.
+  - **Segment Interpretation page** (`setSdistinctions`): built the whole page and
+    ended on a no-op `waitdone()`. It is an Advanced-menu command, so it returns
+    straight to the event loop and nothing downstream reveals anything: this is a
+    plain "no window at all" until `guardvisible` fires. Its
+    language-not-in-segment-dictionary early return also left both windows hidden
+    behind the notice, and now hands the screen back via `on_quit()`.
+  - **`tryNAgain`'s no-check error branch**: builds an error page and returns. On a
+    mature repo `getrunwindow(msg=…)` opened a wait that nobody ever closed — and a
+    viewable wait window suppresses `guardvisible` by design, so the user sat on
+    "Resetting unSorted items" forever, over a message they never saw. This was the
+    one hole the watchdog could not have caught.
+
+- **The same bug outside `getrunwindow`: a `withdraw()` whose `deiconify()` is not in
+  a `finally`.** Kent's point, and correct — `getrunwindow` is the producer with a
+  name, not the class. Two more found and fixed:
+  - **`Tone.addframe`**: hid the task window for `ToneFrameDrafter`'s sake, and only
+    the drafter's `submit` put it back. Abandon the drafter instead of submitting and
+    both windows stayed hidden with nothing coming — reachable in two clicks from the
+    ‘Add Tone frame’ menu item, needing no sort state at all.
+  - **`Segments.parse_foreground`**: withdraw → parse → reveal was straight-line, so
+    any exception out of the parse skipped the reveal: traceback to the log, blank
+    screen to the user.
+  Both now `try/finally`. NOT fixed, recorded in the agenda item as a decision:
+  `App.restart` withdraws both windows and then waits on the write with
+  `while self.writing: time.sleep(1)` on the Tk main thread — no window by design, and
+  `guardvisible` (an `after()` callback) cannot fire at all while that loop sleeps, so
+  a failed restart reproduces the original field report exactly, watchdog included.
+
+# Version 1.14.2
+
+- **UI scale is now the screen's DPI, not a ratio against one developer's laptop.**
+  `Theme.setscale` computed `this screen ÷ Kent's 1920x1080 (286x508mm)` across four
+  ratios — two pixel, two millimetre — and kept whichever deviated MOST from 1. Three
+  things were wrong, and every previous fix here was a guard bolted onto the third: the
+  reference was a MACHINE rather than a physical quantity; ONE number answered two
+  independent questions (how big a glyph should be, and how much content fits — a 4K 15"
+  laptop and a 4K 40" TV have identical pixel counts and opposite needs, which is why a
+  big screen produced huge text instead of more text); and the rule MAXIMIZED, so any
+  single bad reading dominated the whole UI. It is now `winfo_fpixels('1i')/96`, i.e. the
+  platform's own DPI — which on Windows the user has already declared via display scaling,
+  and which every other app on their desktop already obeys. Correct either way Tk is
+  built: DPI-aware reports 192 at 200% and we scale by 2.0; DPI-unaware reports 96, we
+  scale by 1.0, and Windows magnifies the window itself. The mm reading, the four-ratio
+  min/max and the plausibility test are gone (nothing left to guard); a 48–480 dpi band,
+  the 1% no-op and a 0.5–3.0 corruption clamp remain. The old computation is retained
+  unreachable for one release. NB 2.0 is now a LEGITIMATE scale, so the ceiling went back
+  up from the 1.5 that briefly guarded the old rule.
+- **`availablexy` — the real-estate question — got a sound basis.** New `workarea()`
+  prefers `wm_maxsize()` (on Windows the screen MINUS the taskbar) when it is a plausible
+  reduction of the screen: a window cannot be dragged above the top edge there, so
+  anything overflowing the bottom is unreachable rather than merely awkward. The 50/50/100
+  chrome allowances now scale with the UI (a title bar really is ~100px at 200%). And
+  there is a FLOOR: this subtracts `_measure_siblings`' total from the screen, which on a
+  busy page can approach or exceed it and yield a tiny or negative `maxwidth` — and
+  `Label.wrap()` takes `min(self.wraplength, self.maxwidth)`, so a tiny value wraps text
+  at a few pixels, which is exactly the one-character-per-line button labels seen in the
+  field. It now floors at 200px and logs the measurement instead of laying out against it.
+- **FIX (update loop): two unbounded recursions in `vcs.py`.** `checkout` recursed with
+  another `_` appended on every failed delete, forever, minting `work_from_x`,
+  `work_from_x_`, `work_from_x__`… (now 3 attempts, then a log); `pull` called itself
+  unconditionally on "Automatic merge failed", invoking `checkout` each pass (now one
+  retry). Together these are the "recursive `cannot delete branch main`" a field machine
+  reported — a one-line git failure turned into an unrecoverable spin.
+- **FIX (update): branch deletion is scoped to the branch we generate.** `checkout`
+  deleted ANY existing branch a caller named and let git's DWIM re-create it from
+  `origin/` — an implicit `reset --hard` nobody asked for. Only the defaulted
+  `work_from_<username>` is ours to recycle now. `remove_branch` additionally refuses
+  `main` and the currently-checked-out branch, logging the caller with a stack, since both
+  call sites already guarded `main` and yet the field saw it attempted.
+- **`Try testing version` / `Revert to main` now reset properly** via new `hard_checkout`:
+  `checkout -f -B <branch> origin/<branch>`. Deliberately destructive — this UI is used by
+  people who don't use git, so local mess SHOULD be overwritten — and it retires the
+  standing `need to also / git reset --hard origin/main` TODO. It works while standing on
+  the branch (unlike delete), names the source explicitly (no DWIM), and discards
+  working-tree changes, which delete-and-recreate never did: `branch -d` is the SAFE
+  delete and refuses unmerged branches, so the old path destroyed nothing but also reset
+  nothing. `switchbranches` (the maintainer's publish loop) deliberately does NOT use it —
+  resetting there would discard the very commits it is about to push.
+- **`share()` no longer churns branches with nowhere to push.** Under `program.me` both
+  push loops iterate `localremotes()`, so with none present they do nothing — yet
+  `switchbranches()` still ran twice, rewriting the working tree to the other branch and
+  back. That was the entire observed effect of an update whose own log said `remotes: []`.
+  Also removed ~17 lines of unreachable code after that method's `return`.
+- **Right-click a word on the segmental/tone sort page → "Not {profile}"**, matching the
+  verify page and the syllable pages' class escape. The sort page's button stays; same
+  wording, same action (`itemstosort` → `unverify_profile` → advance).
+- **The two profile pickers scroll.** `ask_group_rename` and `pick_syllable_profile`
+  gridded up to twelve options plus "Other…" and "Cancel" flat into the window, so on a
+  short or scaled screen the rows that fell off were the two ESCAPES — and both windows
+  are `exit=False`, leaving no button at all. Options now scroll; the nav stays outside.
+- FIX (`setprofile` never accepted the argument every caller passed): `SettingsUI.setprofile`
+  lacked the `**kwargs` its sibling `setcheck` has, so `setprofile(toverify=True)` raised
+  TypeError out of `drive_work`'s `on_done` and took the mainloop down on a field machine.
+
+# Version 1.14.1
+
+- **A LIFT that won't parse is now diagnosed, and repaired where it can be.** The load
+  path was doing `except Exception: raise BadParseError(...)`, throwing the real error
+  away — message, line and column with it — so an unopenable lexicon said nothing about
+  why. It now logs the exception, the file's size / mtime / sha256, the failing line and
+  column with its neighbours, the tail, and the **committed HEAD copy's** size, sha256 and
+  last five lines. That last part is what separates "the corruption is in history" from
+  "something broke the file since it was committed" — a distinction that had to be made by
+  hand, and wrongly, before it existed.
+  - Where the damage is a shape we recognise — an attribute value carrying unescaped
+    quotes — `_repair_unparseable` fixes it in place, verifies by re-parsing BEFORE
+    writing anything, keeps the original as `<name>.unparseable-<stamp>`, and says what it
+    did. Repair beats the rollback originally planned for this: it discards nothing, and
+    it works even when the bad bytes are also the committed ones.
+  - Deliberately narrow. It only runs on a file that already failed to parse, aimed at the
+    reported line; the pattern is anchored so the damaged attribute must be the LAST on
+    its line with every earlier one well-formed. A line with several damaged attributes is
+    refused rather than greedily rewritten — that could produce something that parses but
+    MEANS something else, which is worse than failing to load. Bare `&` is escaped; an
+    existing `&amp;` is left alone.
+- **A failed `fsync` now fails the save.** It used to log a warning and carry on, which
+  was worse than not trying: if the fsync fails with ENOSPC the tail may never reach the
+  disk, but the save-time validation reads the file back through the PAGE CACHE, sees it
+  complete, and replaces a good lexicon with one that is short after the next reboot.
+  It now propagates, so `write_OK` is false and the existing notice tells the user —
+  no silent "saved".
+- **Inflection-class affix sets are stored as JSON**, not `str(tuple)`. `_tuplize` turns
+  JSON's lists back into tuples, because the parser's `Catalog` uses the affix set as a
+  `Counter` key and a list would silently miss every lookup. The reader takes both
+  formats and always will: nothing migrates anything — a trait is only rewritten as JSON
+  when its sense is re-parsed, so a lexicon holds both indefinitely. Verified on real
+  data: `(('', ''), ('', 'z'))` and `[["", ""], ["'", "'"]]` in one file, both read, and a
+  restart-plus-parse collapsed two identical JSON traits into ONE catalog option — which
+  only holds if the reader returns hashable tuples.
+- **Non-string values can no longer reach a LIFT attribute.** This is the root cause of
+  the corruption above, and it is subtle: ElementTree's `_escape_attrib` is written as
+  `if "&" in text: ...` inside a `try` that catches `TypeError`. Hand it a TUPLE and
+  `"&" in text` is a MEMBERSHIP test — it returns False and raises nothing, so every
+  escape is skipped, the tuple is returned untouched, and the serializer then writes
+  `" %s=\"%s\"" % (name, value)`, i.e. `str(tuple)` — Python's repr, with Python's own
+  quote-switching. A tuple whose member contains `'` therefore lands as a raw `"` inside a
+  `"`-delimited attribute. Silently, at set time and at write time. Guarded at both doors
+  into ET's attrib dict — `Node.__init__` and a new `Node.set` — refusing containers and
+  coercing scalars with a log line. `ValueNode.myvalue` alone was the wrong altitude:
+  `annotationvalue` builds an `Annotation` directly when none exists, and
+  `annotationsupdate` calls `.set()` and the `Node` constructor straight from a dict.
+- The status window's first message wrapped to about a fifth of the window. `_wraplength`
+  was measuring `winfo_width()` before the window was mapped, and a `ScrollingFrame`
+  carries `grid_propagate(0)`, so it reported some small default instead of the geometry
+  we asked for. It now measures only when mapped, falls back to the requested width, and
+  re-wraps shortly after the window appears — previously only a manual resize fixed it.
+- Diagnostics kept, not behaviour: `rx.make` times every pattern compile and logs
+  `SLOW REGEX COMPILE: …s for N chars [profile]` above 0.5s, with the profile named. The
+  presort hang that prompted it did not reproduce (`CVCVCV`/`V1=V2=V3`, 32 vowel groups),
+  and nothing in `rx.py` changed — so this stays as a tripwire rather than a fix.
+
+# Version 1.14.0
+
+- **Flipping a primitive on the class escape now records it as VERIFIED** — a deliberate,
+  documented exception to the rule that verification is an independent step. Earlier in
+  this release the flip merely DROPPED the contradicted code, leaving the primitive
+  unconfirmed; that left a hole, because `profile_class_of_sense` reads the ANNOTATIONS,
+  so the word moves to its new class immediately, while `syllable_prep_complete` — the
+  single gate for the Task-1 board, the Task-2 board and `runcheck` — is only
+  re-evaluated at a task boundary. A word could therefore be profile-sorted inside a
+  class whose defining primitive nobody had confirmed. Admissible for PRIMITIVES ONLY
+  (`#C`/`C#`/`syls`) because the user is stating the primitive's VALUE rather than placing
+  a word — the one statement the prep verify page exists to collect — and the option set
+  is too small to mean anything else: `#C`/`C#` are binary, so "not C" fully determines
+  V, and `syls` comes from an explicit chooser. Commented at length in
+  `escape_profile_class` as NOT to be copied: everywhere else, placing a word actively
+  un-verifies it (`marksortgroup` calls `rmverification` unless told otherwise), and
+  writing "verified" at the moment of the edit is exactly the conflation the rest of the
+  codebase is built to avoid.
+- **Single-item groups no longer auto-verify under an `=` check.** `verify` marked any
+  group of one verified and moved on, so *nephew*, alone in `V1=V2=e`, was confirmed
+  without ever being looked at. The shortcut is right that a group of one has no "do these
+  belong together?" to ask — but under an `=` check the unasked question is whether
+  `V1=V2` holds for that word *at all*, and the right answer may be to skip it as not
+  applying. (AZT categorises before it describes: the group's VALUE is set later, which is
+  why a new group can be born with an integer name and `V1=V2=1` is fine.) Gated with
+  `_na_is_a_result`, the predicate that already decides NA's treatment in the same
+  function, so there is one definition of "equality check"; every other check keeps the
+  shortcut, and macrosort keeps it too, since verifying sort GROUPS against a letter is a
+  different question.
+- **Flagging the second-to-last member of a group no longer clears the group.** At two or
+  fewer remaining, one "not this" used to remove every other member too, on the reasoning
+  that a group this broken is best restarted. Easier joining makes that much less
+  valuable, and it took the choice away from the user — so removing the penultimate
+  member now removes only that word, leaving a group of one the user may keep or clear as
+  they like. Verified live. The close-and-move-on half is KEPT, and only for the LAST
+  member: with nothing left there is no group to verify, so the page ends — WITHOUT
+  confirming it verified, since the OK button is what confirms. Gated rather than deleted
+  (`Sort.REMOVE_REMAINDER_AT_PENULTIMATE = False`) in case it earns its way back; on
+  `Sort`, so SortS/SortV/SortT share it. The old loop also mutated the list it iterated —
+  the gated branch now iterates a copy.
+- **The status window keeps the session's messages.** It always appended (newest first,
+  one Label each) but `ScrollingFrame` sets `grid_propagate(0)`, so with no geometry the
+  window shrank to about a line: the older messages were there, clipped, with nowhere to
+  scroll. Now sized to 55%×60% of screen — deliberately not fullscreen, since it pulses
+  `-topmost` on each message and must never cover the work. The Close button is restored
+  and is now load-bearing: closing is the only thing that clears the list (the next
+  message opens a fresh window), and `exit=False` means there is no Exit button.
+- **The by-hand syllable-profile page fits on screen.** Its "already in play here" column
+  was a plain Frame spanning the rows, so a class with many groups in play stretched the
+  layout, pushed the buttons to the bottom of the page, and ran the list off it. Now a
+  `ScrollingFrame`, which takes the size the grid gives it and scrolls its own content, so
+  the buttons sit under the entry field where they belong.
+- **Drag one group button onto another to join them**, on the sort page (macrosort or
+  not). Verified live. The drop names only the pair and which side survives — dropping A
+  on B keeps B, because the segmental tiebreak existed only for want of knowing the
+  user's intent, and a deliberate drop *is* that intent. Syllable profiles still open
+  `choose_join_direction`: there one direction corrupts real data, so the drop asks
+  rather than answers. Afterwards the page repairs itself in place — A's button is
+  removed, B refreshes — instead of closing.
+  - `join()`'s `join_pair`/`_do_join` were closures over the join PAGE (its `buttons`,
+    `check`, `buttonclass`, `current_pair`), so nothing else could join a pair. Lifted to
+    `Sort.join_groups(pair, macrosort=False, keep=None, on_done=None)`; the join page
+    still routes through it and behaves as before (verified separately before the drag
+    layer went on top).
+  - `ui_tkinter` gained an opt-in `dragthreshold`: `draggable_bindings` started the drag
+    on `<ButtonPress-1>`, which eats the click of any *clickable* widget. With a
+    threshold the press only arms, and the drag starts on the first motion past N pixels,
+    so a click still sorts and a right-click menu still posts.
+  - Two Tk details that made this fail silently in both the UI and the log:
+    `tkinter.dnd.dnd_start` reads `event.num` to build its release binding, and a
+    `<B1-Motion>` event carries `'??'`; and `DndHandler` binds `<Motion>` on the same
+    widget whose `<B1-Motion>` we bind — the more specific pattern wins, so dnd's own
+    motion handler never ran and no drop target was ever recorded.
+  - `removegroupbutton` delists as well as destroys: `groupbuttonlist` feeds
+    `updatecounts` and `groupvars` feeds `get_selected`. The repair also clears the
+    example cache for BOTH groups, since a join moves membership through
+    `updatebygroupsense`, which is not one of the paths that invalidates it.
+- **Rename a misnamed syllable profile group.** A group can be internally consistent but
+  wrongly named, and join can't fix it when the correct profile doesn't exist yet — which
+  is the common case, the legal-profile space being far larger than the attested one.
+  `Sort.rename_profile_group` renames through `Categories.rename_group`, and the chooser
+  is `pick_syllable_profile`'s two pages with the verb changed. Offered by right-click on
+  the verify page's **title, instructions and OK button** — every surface that shows the
+  profile name. Afterwards it calls `reverify_group(new)`, so the page returns to the
+  same group under its real name rather than moving on.
+- **The check label reads on one line.** `CVCC` stacked over `V1` needed the user to
+  combine the two; it now shows the profile with the check's own segment(s) in bold.
+  `params.check_segments` maps a check to SEGMENT indices (via `_profile_segments`, so
+  `Vː` stays one unit) and handles multi-position checks — `C1=C2` marks both. A Tk Label
+  carries one font for its whole string, so each segment is its own Label. Checks that
+  aren't positional keep the old two-line form rather than showing an unmarked profile.
+  The marked segment is bold AND underlined — bold alone didn't carry at that size — and
+  the letters sit flush: `Gridded.__init__` pops `padx`/`pady` into GRID padding before
+  the Tk widget sees them, so the Label's own padding (1px a side, 2px between adjacent
+  letters) is only reachable after construction.
+- The group-button count no longer drifts low. `ExampleDict.prefetch` fills
+  `nodes_by_code` once per boot and `clear_cache` had a single caller —
+  `removeitemfromgroup`. Adding a word to a group never invalidated it, so buttons
+  under-counted by however many words had been sorted in since boot (76 where a recompute
+  said 84). `marksortgroup` now clears the entry it just changed.
+- "Removing {items} from '{glyph}' to make room for {new}" was still an `ErrorNotice`
+  with `wait=True`, blocking mid-macrosort to report a removal that happens regardless.
+  Now a status-window notice (missed in the 2026-08-01 conversion pass).
+- The no-window guard no longer fires on a slow build. It waited 2 s — less than a sort
+  page takes — and revealed the bare run window: a fullscreen block of theme colour whose
+  only content was its own exit button. Now 15 s, and it reveals only a window that has
+  children, since a window offering nothing but "quit" is worse than none.
+
+# Version 1.13.24
+
+Consolidates the 1.13.22 and 1.13.23 bumps, which carried no notes.
+
+- **The UI no longer freezes when the daemon stops answering.** `collab_poll` was calling
+  `session.status()` on the Tk main thread, so a daemon that listened without answering
+  blocked the whole app for `rpc.call`'s 300 s default — and because the poll can fire
+  inside `wait_window`'s nested loop, the freeze could land mid-sort (Kent's faulthandler
+  dump, 2026-08-21). Both daemon calls now run on a worker thread, `poll_remote_change`
+  included: its own docstring says the `since_sha` enrichment is a *second* call once HEAD
+  has moved, so leaving it behind would have kept half the hang. New `_collab_poll_done`
+  does the widget work back on the UI loop, re-checking `self.collab is session` in case
+  the project was disconnected while the RPC was in flight. `_collab_poll_busy` makes a
+  tick skip while one is outstanding (one thread on a wedged daemon, not one per 10 s),
+  and rescheduling moved into the tail's `finally`, so the cadence is 10 s after
+  *completion* and the loop can't die. Interim visibility: the outage is now announced
+  once to the status window, with a recovery line and elapsed minutes, since threading it
+  otherwise made an unreachable daemon completely silent. Deliberately does not claim
+  saves are unaffected — a wedged daemon may block those too.
+- **`getrunwindow` can no longer return with every window hidden.** It reveals the run
+  window only when a wait was started, and that needs a msg AND a mature repo, so any
+  caller without a msg — and *every* caller on a new repo — depended on something later
+  deiconifying. The 2026-07-29 field bug was a path where nothing did: console only, and
+  closing it lost the app. New `guardvisible()` schedules a check 2 s out; if nothing is
+  viewable (`self`, the run window, the root and its children, so an active wait or any
+  open dialog counts) it reveals the run window and logs `NO WINDOW: nothing viewable …`
+  at warning. Deferred rather than revealing unconditionally, to leave the fast path and
+  XWayland's expensive deiconify alone. Uses only `ui_interface` methods, so it holds for
+  the webview backend.
+- **Three `UnboundLocalError`s of one shape: a branch chain with no `else`.**
+  - `ui_shell.getgroup` had branches for `'V'/'C'/'CV'/'T'` only, so selecting a syllable
+    profile to sort ("Sort Word profiles", cvt `'S'`) fell through to `return w` with `w`
+    never assigned. `'S'` now has its own branch, titled from `syllable_check_name`
+    ("Which word-initial sounds?"), and a residual `else` opens a generic picker while
+    logging the cvt — a caller landing there may want a different picker.
+  - `analysis.groups`'s theoretical-possibilities branch is documented "C or V only" and
+    reached `todo=set(todo)|…` with `todo` unbound for anything else. `'S'` primitives
+    take their groups from the node, so `todo` now starts empty and the existing union
+    returns exactly the current groups.
+  - Found en route, NOT fixed (filed as the CV-group-selection-dead item): the `'CV'` branch
+    omits `_getgroup`'s required `window`, reads `status.group()` before the user has
+    picked, and `groups()` returns `None` for CV/VC/T while `groups_visible` iterates it.
+- **A primitive change now invalidates what it contradicts.** `escape_profile_class` wrote
+  the annotation and nothing else, so marking `C#=False` left the sense's own
+  `lc primitive verification` asserting `C#=C` while the annotation read `V` — and stored
+  check values are authoritative, so every reader was right to trust the stale code and
+  the word kept coming back in later tests (Kent 2026-08-21). It now drops that sense's
+  code for the changed check (same rule as `analysis._set_confirmed`: check is everything
+  before the first `=`), and the `lc` code under `SYLLABLE_SLICE_SENTINEL`, whose
+  pseudo-profile is a constant a word cannot leave. Verification keyed by a profile or
+  class the word HAS left is harmless residue and is left alone. (**Superseded within
+  1.14.0** — see the primitive-flip entry above: it now REPLACES that code with the new
+  value rather than dropping it.) Root cause worth
+  keeping: `_set_confirmed` is only ever called from `mark_slice`, which iterates
+  `members_in_slice` — the slice, not the mover — and `mark_for_reverify` deliberately
+  preserves member confirmations, so a sense moving between groups never had its own code
+  invalidated. Other move paths may need the same two calls.
+- **The syllable class escape is a context menu on the word, on both pages.** It was a
+  window reached from a button at the bottom of the sort page, and from a verify-page
+  menu entry whose only job was to open it. `ask_class_escape` became
+  `class_escape_items(task, sense, on_applied)`, returning `(label, cmd)` pairs for
+  `attach_context_menu`; the verify page extends its menu with the moves themselves, and
+  `build_present_sense` hangs them on the word Label with the sort page's gate and
+  advance behaviour carried over. En route the labels stopped restating the whole
+  destination class four times — each names only the axis it moves (`consonant initial`,
+  `vowel final`, `Shorter`, `Longer`, three of them at one syllable), reusing the
+  `profile_class_initial_name`/`_final_name` renderers that already existed.
+- `profile_class_count_name` said "1 syllables". Now two whole msgids (`1 syllable` /
+  `{n} syllables`), not a fragment plus an `s`, which fixes it everywhere the renderer is
+  used.
+
 # Version 1.13.21
 
 - FIX the chosen chart word losing its picture, root cause found. The word
@@ -137,7 +4666,7 @@
   not in tone" — which turned out to mean the `buttoncolumns` SETTING (1/2/3
   columns), not the button widgets. So this change fixes nothing that was
   reported. Kept because it only widens fallbacks and cannot break a path that
-  worked. The actual report is `azt/agenda/sort_group_buttons_dead.md`, and it
+  worked. The actual report is `azt/the dead-sort-group-buttons item`, and it
   is untouched.
 
 # Version 1.13.12
@@ -323,7 +4852,7 @@ were working whole sessions off the server with no way to tell.
   FUNCTION, not a module constant — a module-level `_()` would freeze the
   untranslated string at import, before `set_translator()` runs.
 
-Still open (in `azt/agenda/boot_without_server_access.md`): no ⇅ title-bar state
+Still open (in `azt/the boot-without-server-access item`): no ⇅ title-bar state
 for the outage, and no re-attach without a restart. Neither is needed to SEE the
 problem, which is what this version is for.
 
@@ -418,7 +4947,7 @@ tell is that the probe failed, the session never had a base, or the work is ours
   the prompt) and un-latches when every human commit since our base is ours. A
   `MERGED_WITH_LOCAL` latch deliberately survives it: the team commits our save was
   merged with are inside base..HEAD, so that range is not ours-only.
-- NA AUDIT (`agenda/na_audit.md`), and the three defects it found. The audit's
+- NA AUDIT (the NA audit), and the three defects it found. The audit's
   product is that "groups" was doing three jobs with a different NA rule in each,
   which is why two implementations could both look right and disagree:
   **A membership/tracking** (NA always kept, every check), **B verify offer** (NA
@@ -557,7 +5086,7 @@ tell is that the probe failed, the session never had a base, or the work is ours
     for verification. That full re-read is the occasion to remove anything added in
     error (Kent) — presenting only the uncoded words would lose it.
   - An audit of every other NA site is filed for 2026-07-31
-    (`azt/agenda/na_audit.md`): this fix was found by reading four files, and the
+    (`azt/the NA audit`): this fix was found by reading four files, and the
     rest were spot-checked, which isn't the same thing.
 
 # Version 1.13.1
@@ -1047,7 +5576,7 @@ blank-letter diagnostic.
   one-line `if`, so restoring it is deleting that line. The defensive macrosort
   branch in `sortselected` stays too, in case anything else ever sets
   `vardict['skip']`. Revisit 2026-08-16 —
-  `azt/agenda/macrosort_skip_affordance.md` records the question: in sort, skip
+  `azt/the macrosort skip-affordance item` records the question: in sort, skip
   is a durable judgement about a WORD (→ NA, returning only via `tryNAgain`),
   whereas a macrosort item is a verified sort GROUP that must land in SOME
   letter or the alphabet is incomplete, so there is no equivalent judgement to
@@ -1806,7 +6335,7 @@ blank-letter diagnostic.
   restart the app themselves once the notice is closed (the seams re-branch
   only at startup). Not yet wired: mid-session reload on peer
   changes (Phase 3 — merged peer content appears on next open; plan in
-  agenda/azt_run_with_server.md).
+  the run-with-server item).
 - FIX — **draft selector no longer collapses to zero buttons.** When the
   'top models only' window was unanimous (top-5 all emitting the same form),
   dedup left one value and the selector showed nothing — reading as "ASR didn't
@@ -1854,7 +6383,7 @@ blank-letter diagnostic.
 # Version 1.5.0
 - NEW — **three-stage ASR** (record → bulk transcribe → select), so transcription
   cost moves out of the per-word interaction into one unattended batch (ADR 0002,
-  docs/asr_bulk_transcription_design.md):
+  the ASR bulk-transcription design):
   - **Storage** (`lift.Form.persist_drafts`/`load_drafts`/`wipe_drafts`): ASR
     drafts are annotations on the `<analang>-x-audio` form — `{repo}`,
     `ipa-{repo}`, `tone-{repo}`, `md5`; md5 mismatch (re-record) wipes+redrafts;
@@ -1923,7 +6452,7 @@ blank-letter diagnostic.
   profiles, capped ~12); page 2 ("Other… set by hand") is a free-text field with a
   work-with-a-linguist warning and a Back button. Both validate against the class
   primitives (word-initial/final + syllable count) and sort the word into that
-  real, primitive-consistent profile. See ADR 0003 / cv_group_creation_merging.
+  real, primitive-consistent profile. See ADR 0003 / the CV-group creation-and-merging item.
 - Syllable-profile verification consolidated to the `…-x-cvprofile` form as the
   single source of truth. The profile-verify no longer *also* writes redundant
   `lc=<profile>` codes into the `<macrogroup> lc verification` field (that field is
@@ -2006,7 +6535,7 @@ blank-letter diagnostic.
   is resolved in practice). Not bug-free — remaining issues are tracked separately
   (glyph-rename conflict when a default group collides with an existing glyph
   member; the conflict dialog's Retry leaving no UI) — but the redesign itself is
-  done. See azt/agenda/syllable_sort_redesign.md.
+  done. See azt/the syllable-sort redesign item.
 - FIX (Alphabet word-selection window — chart AND booklet): showed words by
   ORTHOGRAPHY (every word whose spelling contained the glyph), including words not
   actually verified into the group. Now resolves a glyph's VERIFIED members only:
@@ -2570,7 +7099,7 @@ blank-letter diagnostic.
 # Version 1.3.72
 - Design docs for the record → bulk-ASR → select rework: ADR 0002 (storage
   schema — ASR drafts as repo-keyed annotations on the -x-audio form, md5
-  staleness) and docs/asr_bulk_transcription_design.md (three-stage
+  staleness) and the ASR bulk-transcription design (three-stage
   architecture, two-pathway loop, CPU timing ~11 h/1700 files × 20 langs,
   phased plan). No code changes.
 
@@ -3375,8 +7904,7 @@ blank-letter diagnostic.
   verify-in-place change above stands regardless.
 
 # Version 1.3.0
-- syllable_sort_redesign STEPS 2 & 3 — syllable sorting split into two tasks
-  (docs/syllable_sort_redesign.md):
+- The syllable-sort redesign STEPS 2 & 3 — syllable sorting split into two tasks:
   - **Task 1 (PREP).** New `SyllableSliceDict` (`backend/core/analysis.py`,
     `MAX_SLICE=150`, override via `settings 'syllable_max_slice'`): each of the
     three primitive checks (#C word-initial, C# word-final, syls count) has its
@@ -3404,7 +7932,7 @@ blank-letter diagnostic.
     `SyllablePrep` first in its MRO.
 
 # Version 1.2.90
-- syllable_sort_redesign STEP 1 (revert to the clean, segmental-matching
+- The syllable-sort redesign STEP 1 (revert to the clean, segmental-matching
   baseline): removed verify-list PAGINATION (`frontend/sort_ui.py`
   `build_verify_layout` is now a single straight build — first screenful behind a
   wait, then the rest streams in; no pages, no `_render_page`/`_grid_nav`/
@@ -3429,12 +7957,12 @@ blank-letter diagnostic.
   runs between the release and the destroy, giving the compositor a beat to act.
 
 # Version 1.2.89
-- syllable_sort_redesign.md: made "revert pagination + the global Wayland hacks
+- The syllable-sort redesign: made "revert pagination + the global Wayland hacks
   back to the clean, segmental-matching baseline" the explicit STEP 1, so the
   rebuild starts from known-good code rather than the saga pile.
 
 # Version 1.2.88
-- Wrote docs/syllable_sort_redesign.md: the agreed two-task design (prep =
+- Wrote the syllable-sort redesign: the agreed two-task design (prep =
   3 checks × per-group stable slices ≤150, groups×slices board, dedicated
   `maybeverifysyllables`, misfit→last-slice; sort = macrogroup, gated, 2-D
   board) plus the plan to remove pagination, the cvt='S' branches, and the
@@ -3510,7 +8038,7 @@ blank-letter diagnostic.
   were added during the build).
 
 # Version 1.2.81
-- wayland_freeze_audit.md: recorded the decision to KEEP kiosk full-screen (it's
+- The Wayland freeze audit: recorded the decision to KEEP kiosk full-screen (it's
   for the Windows users' presentation; those users have no XWayland so they don't
   hit the freeze — it's a Linux/Wayland dev-environment issue). Recommendation:
   the dev develops/tests in an Xorg session (zero code, behaves like Windows);
@@ -3518,7 +8046,7 @@ blank-letter diagnostic.
   the synchronous-X calls as optional robustness, not an emergency.
 
 # Version 1.2.80
-- Added docs/wayland_freeze_audit.md: a full audit of the XWayland freeze (root
+- Added the Wayland freeze audit: a full audit of the XWayland freeze (root
   cause = a synchronous X round-trip — update/update_idletasks/wait_window/grab —
   during a window-state transition deadlocks with mutter) and a principled,
   phased solution, replacing the per-site whack-a-mole. No code changed.
@@ -3848,7 +8376,7 @@ blank-letter diagnostic.
 - SortSyllables cyclical redesign — engine data-model (first chunk of an
   all-or-nothing swap; **'S' is mid-migration and not runnable until the
   remaining chunks land** — see the build-status checklist in
-  `docs/sort_syllables_design.md`). Choice B + slice = Beg+count+End:
+  the sort-syllables design). Choice B + slice = Beg+count+End:
   - 'S' checks are now `[#C (word-initial C/V), C# (word-final C/V), syls
     (syllable count), <current ftype = the whole-word profile>]` in
     `renewchecks`/`updatechecksbycvt`. First three run on the whole wordlist and
@@ -3864,7 +8392,7 @@ blank-letter diagnostic.
   escape-hatch window + prose renderer.
 
 # Version 1.2.42
-- Docs: `docs/sort_syllables_design.md` now specs the agreed **cyclical /
+- Docs: the sort-syllables design now specs the agreed **cyclical /
   orthogonal** syllable sort that supersedes the single whole-profile check.
   Four checks — word-initial (C/V), word-final (C/V), #syllables, and
   profile-within-macrogroup — where the first three are closed/determined
@@ -3968,7 +8496,7 @@ blank-letter diagnostic.
 # Version 1.2.33
 - SortSyllables Phase 1: whole-word syllable-profile sorting, tone-modeled
   (relabel profile groups, never rewrite the surface form). Builds on 1.2.32.
-  See `docs/sort_syllables_design.md`. NOT yet end-to-end-verified — expect a
+  See the sort-syllables design. NOT yet end-to-end-verified — expect a
   test-iterate pass (esp. the sort/verify/join UI for cvt='S').
   - New `Syllables(Senses)` mixin (lexicon.py): group = the syllable-profile
     string, stored in the sense's cvprofile field; `getitemgroup`/`setitemgroup`
@@ -3996,7 +8524,7 @@ blank-letter diagnostic.
 
 # Version 1.2.32
 - Groundwork for syllable-profiles-as-data / `SortSyllables` (see
-  `docs/sort_syllables_design.md`). Additive, zero behavior change so far:
+  the sort-syllables design). Additive, zero behavior change so far:
   - `profilelang(analang, machine=True)` now appends the machine-transcription
     code (`_MT`), mirroring `tonelangname`/`phoneticlangname`; it previously
     ignored its `machine` flag. All existing callers pass the default.
@@ -4004,7 +8532,7 @@ blank-letter diagnostic.
     machine-analyzed profile in the `…-x-cvprofile_MT` form of the
     `cvprofile_<ftype>` field, alongside (never clobbering) the plain form that
     will hold the user-confirmed profile. No callers yet.
-- Design doc `docs/sort_syllables_design.md` records the locked decisions, the
+- Design doc: the sort-syllables design records the locked decisions, the
   storage model, the data-integrity LINCHPIN to review (machine→`_MT` write +
   confirmed-first slicing, same boot-overwrite class as the 1.2.14–1.2.20 saga),
   the tone-modeled sort flow, two pre-existing 'S' bugs found, and the Phase-2

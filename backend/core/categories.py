@@ -37,9 +37,9 @@ class Categories:
         """
         added=None
         assert not add or check in add
-        values=sense.verificationtextvalue(profile,self.ftype) #always returns list
+        values=sense.verificationtextvalue(profile,self.program.params.ftype()) #always returns list
         if add and not values:
-            v=sense.verificationtextvalue(profile,self.ftype,value=[add])
+            v=sense.verificationtextvalue(profile,self.program.params.ftype(),value=[add])
             return #if more complex, continue
         # EXACT match on the check part, not a substring one. A verification
         # code is '<check>=<group>', split on the LAST '=' because checks are
@@ -66,7 +66,7 @@ class Categories:
         if add: #i.e., still, after switching out current values for changes
             values.append(add)
             added=add
-        v=sense.verificationtextvalue(profile,self.ftype,value=values)
+        v=sense.verificationtextvalue(profile,self.program.params.ftype(),value=values)
     def confirmverificationgroup(self,sense,profile,check):
         """This does the one field storing a list of verified values
         for all checks"""
@@ -75,7 +75,7 @@ class Categories:
         log.info(_("Confirming that current group and verification code match "
                     "before making changes."))
         annogroup=self.getitemgroup(sense,check) #Segment or Tone
-        vals=sense.verificationtextvalue(profile,self.ftype)
+        vals=sense.verificationtextvalue(profile,self.program.params.ftype())
         # EXACT check match, for the same reason as modverification above.
         # The old `if check in i` was justified by "V1 must match V1=V2, if
         # present" — which is exactly backwards: a code's check part is
@@ -86,7 +86,7 @@ class Categories:
         # showed, because an NA code's check part is compound whenever the check
         # is (Kent 2026-07-31: "x=y=NA is NECESSARILY a compound check").
         curvalues=[i.split('=')[-1]  #last (value), if multiple
-                    for i in sense.verificationtextvalue(profile,self.ftype)
+                    for i in sense.verificationtextvalue(profile,self.program.params.ftype())
                     if '='.join(i.split('=')[:-1])==check]
         nvals=len(set(curvalues))
         if nvals == 1:
@@ -123,16 +123,54 @@ class Categories:
         else: #unless specifically doing otherwise, marking should unverify:
             self.rmverification(sense,profile,check)
         self.setitemgroup(sense,check,group)
+        # A SKIP HAS TO ACTUALLY UN-SORT THE WORD. Skip wrote the parking group
+        # 'NA' into the sort annotation and nothing else, which left the word
+        # still carrying its CONFIRMED …-x-cvprofile — and that is what slicing
+        # and verification read, so the word remained a verified member of the
+        # profile it had just been skipped out of. The only observable effect
+        # was the Task-2 board drawing the cell unsorted (sorting_engine.py:1337
+        # reads this annotation), i.e. a visible contradiction with no
+        # substance: "essentially did nothing" (Kent 2026-09-02, from a
+        # deliberate skip on a CV word that stayed lc=CV verified). NA is
+        # documented as PARKING — "NA parks unsortable words" (alphabet.py:333),
+        # "not this one now… so it comes back" (sorting_engine.py:1489) — and
+        # neither held, because nothing thought the word had left.
+        #   Only the confirmed profile is cleared. The leftover 'lc=<profile>'
+        # codes in the whole-word / profile-class verification fields are
+        # DELIBERATELY left alone (Kent's call): they are indistinguishable from
+        # the leftover verification any re-profiled word carries, which the
+        # design already acknowledges, and clearing them means hunting every
+        # field that records the same code.
+        #   Same write the verify path uses for an unverified group
+        # (sorting_engine.py:326, `group if verified else False`).
+        if group=='NA' and getattr(self,'cvt',None)=='S':
+            ftype=self.program.params.ftype()
+            if check==ftype:
+                sense.cvprofilevalue(ftype,False)
+        # This group's membership just changed, so the cached example nodes for
+        # it are stale. removeitemfromgroup has always cleared the cache; ADDING
+        # never did, so ExampleDict.getexample kept serving the prefetched
+        # node list and every group's button under-counted by however many words
+        # had been sorted into it since boot — 76 where a recompute said 84,
+        # 3 where it said 4 (Kent's DIAG, 2026-08-24). `group` is positional
+        # here, so put it in the kwargs the code is built from, exactly as
+        # getexample does.
+        self.program.examples.clear_cache(**{**kwargs,'group':group,
+                                            'check':check})
         if not nocheck:
             newgroup=self.getitemgroup(sense,check)
             if newgroup != group:
                 log.error("Field addition failed! LIFT says {new}, not {old}.".format(
                                                     new=newgroup,old=group))
         if kwargs.get('updateforms'):
-            if self.ftype != self.program.params.ftype():
-                ErrorNotice(_("{ftype} differs from {pftype}; this is a problem!").format(
-                            ftype=self.ftype, pftype=self.program.params.ftype()),
-                            wait=True)
+            # THE DRIFT DETECTOR IS GONE BECAUSE THE DRIFT IS (2026-09-29).
+            # This raised "{ftype} differs from {pftype}; this is a problem!"
+            # when the task's own ftype copy disagreed with the global —
+            # a modal, mid-write, telling the user about an internal
+            # inconsistency they could do nothing about. It existed because
+            # ftype was stored twice. There is one owner now,
+            # `params.ftype()`, so there is no second value to differ from
+            # and the comparison could only ever be False.
             self.updateformtoannotations(sense,check)
         if not kwargs.get('not_sorting'): #default is sorting
             #This unverifies without updateverification=True. Coerce to a real
@@ -172,7 +210,7 @@ class Categories:
             return
         rm=self.verificationcode(check=check,group=group)
         profile=kwargs.get('profile',self.program.slices.profile())
-        item.rmverificationvalue(profile,self.ftype,rm)
+        item.rmverificationvalue(profile,self.program.params.ftype(),rm)
         self.program.status.last('sort',update=True)
         self.program.examples.clear_cache(**kwargs) #anything should still be in kwargs
         if write:

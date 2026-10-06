@@ -2,7 +2,7 @@
 # coding=UTF-8
 
 class App(object):
-    def __init__(self,program_dict=None):
+    def __init__(self,program_dict={}):
         super().__init__()
         self.dummy=True #lets ui.Root distinguish this from the real App
         self.name='tkinter UI module'

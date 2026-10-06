@@ -233,6 +233,18 @@ class Settings(SettingsUI):
                                             'fs',
                                             'audio_card_in',
                                             'audio_card_out',
+                                            # The NAMES the indices above were
+                                            # chosen as. PortAudio renumbers
+                                            # devices between runs, so an
+                                            # index alone can validate cleanly
+                                            # and point at a different
+                                            # microphone; SoundSettings
+                                            # .resolve_cards() re-points the
+                                            # index by name at load, or drops
+                                            # the setting when the device is
+                                            # gone. (2026-09-10)
+                                            'audio_card_in_name',
+                                            'audio_card_out_name',
                                             'asr_kwargs',
                                             'asr_repos',
                                             'asr_in_process'
@@ -332,7 +344,7 @@ class Settings(SettingsUI):
         _log.info(_("Settings file {legacy} converted to {savefile}, with each value verified.")
                 .format(legacy=legacy,savefile=savefile))
         if setting == 'soundsettings':
-            self.soundsettings.pyaudio.stop() # when done here
+            self.soundsettings.audio.stop() # when done here
     def settingsfilecheck(self):
         """We need the namebase variable to make filenames for files
         that will be imported as python modules. To do that, they need
@@ -484,6 +496,12 @@ class Settings(SettingsUI):
                     self.program.toneframes.source(d)
                 else:
                     self.maketoneframes(d)
+            elif s == 'secondformfield':
+                # NOT the generic dict-update below: a stored `<unset>` is a
+                # display placeholder that reads as a defined value to every
+                # guard testing presence, and the setter's refusal cannot
+                # reach a file written before it existed.
+                self.load_second_form_fields(v)
             elif (isinstance(v,dict) and
                 hasattr(o,s) and isinstance(getattr(o,s),dict)):
                 getattr(o,s).update(v)
@@ -764,15 +782,92 @@ class Settings(SettingsUI):
             _log.info(_("Problem with finding a nominal and verbal lexical "
             "category (looked in first two of [{pss}])")
             .format(pss=self.program.db.pss))
-    def makesecondformfieldsOK(self):
-        if self.nominalps not in self.secondformfield:
-            self.program.mainwindow.getsecondformfieldN()
-        if self.verbalps not in self.secondformfield:
-            self.program.mainwindow.getsecondformfieldV()
-    def secondformfieldsOK(self):
-        if (self.nominalps in self.secondformfield and
-            self.verbalps in self.secondformfield):
-            return True
+    # `makesecondformfieldsOK` DELETED 2026-09-29 with the rest of the
+    # second-form dialog cluster (plan 7 of
+    # the second-form flags audit). It called
+    # `mainwindow.getsecondformfieldN/V`, which are gone; its only remaining
+    # mention was already commented out in `Parse.__init__`. What replaced it
+    # is `StatusFrame.assure_second_forms`, which opens the field in place
+    # instead of raising a chooser window.
+    #: What the status line SHOWS when a second-form field has no value.
+    #: It is a display string and must never be stored — but it was, and
+    #: reached `project.json` (Kent, 2026-09-17: `"Verb": "<unset>"`, with
+    #: "is that going to get us into trouble?"). It is defined HERE, in the
+    #: layer that must refuse it, so the display and the guard cannot drift
+    #: apart; `ui_shell.fieldsvalue` shows it and `setsecondformfield*`
+    #: rejects it.
+    UNSETFIELD='<unset>'
+
+    def secondformfieldset(self,ps):
+        """Has `ps` a real second-form field? Presence is not enough.
+
+        The placeholder counts as UNSET wherever the question is asked.
+        Three separate consumers were fooled by the stored placeholder —
+        this predicate, `assure_second_forms`, and anything reading the
+        value in order to find a LIFT field of that name (which would have
+        gone looking for a field literally called `<unset>`)."""
+        if not ps or ps not in self.secondformfield:
+            return False
+        return str(self.secondformfield[ps]).strip() not in (
+                    '', self.UNSETFIELD)
+
+    def load_second_form_fields(self,stored):
+        """Apply the SETTERS' REFUSAL to what the settings file hands us.
+
+        `_refuse_unset_field` stops `<unset>` being stored from now on, but a
+        `project.json` written before it existed already holds
+        `"Verb": "<unset>"` (Kent, 2026-09-17: "is that going to get us into
+        trouble?"), and a refusal at the setter cannot reach a file. So the
+        same predicate runs on the way IN, and the entry never becomes a
+        live setting.
+
+        DROPPED, NOT BLANKED. The dict's KEYS are load-bearing —
+        `parser.pscheck` treats them as the set of legal parts of speech —
+        so a key whose value is the placeholder tells one consumer "this ps
+        is configured" while telling `secondformfieldset` "unset". That
+        split is exactly how the placeholder fooled three consumers at once.
+        Without the key, `secondformfields` falls through to
+        `guess_*_secondformfield`, which is what an unanswered field has
+        always done.
+
+        Nothing is lost by dropping it: the second-form gate
+        (`Segments.second_forms_ready`) already reads the placeholder as
+        unset, so a project carrying one was being asked for the field
+        anyway. What this stops is the placeholder reaching LIFT as a field
+        NAME — Parse indexes the dict directly, so it would have asked "what
+        is the `<unset>` of x?" and written the answer into a field called
+        `<unset>`.
+
+        The file keeps its copy until something next writes settings; the
+        live dict is what every reader uses, and `makesettingsdict` builds
+        the next write from that."""
+        if not isinstance(stored,dict):
+            return
+        clean={ps:v for ps,v in stored.items()
+               if not self._refuse_unset_field(ps,v)}
+        if not hasattr(self,'secondformfield') or not isinstance(
+                                    self.secondformfield,dict):
+            self.secondformfield={}
+        self.secondformfield.update(clean)
+
+    def missing_second_form_pss(self):
+        """Which parts of speech still have no second-form field, in order.
+
+        ONE PREDICATE, THREE CALLERS. `assure_second_forms` opens the first of
+        these, and the Parse page gate names them in the notice it shows while
+        it waits — both were about to build this list themselves, and a second
+        copy of "what counts as set" is exactly how the stored `<unset>`
+        fooled three consumers at once (see `secondformfieldset`)."""
+        return [ps for ps in (self.nominalps, self.verbalps)
+                if ps and not self.secondformfieldset(ps)]
+
+    # `secondformfieldsOK` DELETED 2026-09-29 with `_WordCollectionSecondForm`,
+    # its last caller (plan 2). It asked "are BOTH fields set?", which was the
+    # right question only for a task that refused to start without them —
+    # and that refusal was a dead end, since the window that refused offered
+    # no way to set one. `missing_second_form_pss` above answers the same
+    # question usefully (WHICH are missing, so the page can open that one),
+    # and `secondformfieldset` answers it per ps.
     def fields(self):
         try:
             self.fieldnames=self.program.db.fieldnames[self.analang]
@@ -803,6 +898,54 @@ class Settings(SettingsUI):
         except AttributeError:
             _log.info(_('Looks like there is no Imperative field in the database'))
             self.imperativename=None
+    def register_second_forms(self):
+        """Point every sense's `pl`/`imp` at the fields the user named.
+
+        THE LAYER THAT KNOWS DOES THE TELLING. `lift.py` builds `lx` and
+        `lc` itself because they are LIFT's own tags; `pl` and `imp` mean
+        "whichever field this project keeps plurals in", which is a setting
+        and none of lift's business (Kent, 2026-09-29, on the alternative:
+        if lift knows nothing about why, "then there is no ftype population
+        on load"). So there is none — this runs once the names are settled
+        and lift is simply told.
+
+        ONE PASS FOR STORED AND GUESSED ALIKE. A pre-load read of the
+        project settings was considered and rejected: it is possible
+        (`secondformfield` is in the same domain as `analang`, which
+        `file_parser` already reads before loading), but it answers nothing
+        in the three cases that matter — a project with no stored name,
+        where `guess_*_secondformfield` can only run AFTER the database is
+        loaded because it walks the entries; a rename mid-session; and a
+        stored `<unset>`, which a raw domain read has no predicate to
+        refuse. Since this pass must exist for those, a second path
+        covering only the easy case would be duplication.
+
+        UNSET MEANS UNSET: gated on `secondformfieldset`, so the
+        `<unset>` placeholder never becomes a key, and re-pointing a
+        renamed field drops the old one (`Sense.set_ftype`).
+
+        Never raises: a settings change must not fail because a mapping
+        could not be refreshed."""
+        db=getattr(self.program,'db',None)
+        senses=getattr(db,'senses',None)
+        if not senses:
+            _log.info("no senses to register second forms on yet")
+            return
+        pairs=[(code, self.secondformfield.get(ps)
+                        if self.secondformfieldset(ps) else None)
+               for code, ps in (('pl',self.nominalps),('imp',self.verbalps))]
+        found={code:0 for code, name in pairs}
+        for sense in senses:
+            for code, name in pairs:
+                try:
+                    if sense.set_ftype(code,name):
+                        found[code]+=1
+                except Exception as e:
+                    _log.info("could not register %s on a sense (%r)",code,e)
+        _log.info("second forms registered: %s of %d senses (%s)",
+                  found, len(senses),
+                  {code:name for code, name in pairs})
+
     def secondformfields(self):
         if hasattr(self,'secondformfield') and self.secondformfield:
             if self.nominalps in self.secondformfield:
@@ -817,6 +960,25 @@ class Settings(SettingsUI):
             self.secondformfield={}
             self.guess_nominal_secondformfield()
             self.guess_verbal_secondformfield()
+        # OCCASION 1: the names are settled now, whether they came from the
+        # settings file or from a guess over the database. Both routes end
+        # here, which is why this is one call and not two.
+        self.register_second_forms()
+        # AND THE CHECK NAMES, for the same reason and at the same moment.
+        # `build_checknames` runs in `CheckParameters.__init__`, BEFORE any
+        # of this is known, so `second_form_checks` found no field and the
+        # `pl`/`imp` entries were never built — and `_cvchecknames` had no
+        # name to give them. The syllable sort's chooser then fell back to
+        # the bare code and offered "pl" as an option (Kent, 2026-09-30:
+        # "working on {ftype} should list label, not 'pl'").
+        #   Plan 5 made RENAMING rebuild these (`_checknames_follow_the_
+        # field`); discovering the name at boot never did, which is the
+        # same gap `register_second_forms` above exists to close.
+        try:
+            self.program.params.rebuild_checknames()
+        except Exception as e:
+            _log.info("could not rebuild check names after the second form "
+                      "fields settled (%r)", e)
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
@@ -871,15 +1033,61 @@ class Settings(SettingsUI):
                 if isinstance(x[k],dict) and isinstance(y[k],dict):
                     report(x[k],y[k],k)
         report(x,y)
+    def scrub_foreign_status(self):
+        """Remove check nodes that were never checks from program.status.
+
+        NEEDED because the status cycle cannot self-heal: StatusDict.__init__
+        copies the stored dict in verbatim, dictcheck/build only ADD branches,
+        and storesettingsfile dumps the whole object back over the JSON — so a
+        bad node loaded at boot is written straight back out, every run, for
+        ever. It also survived the LIFT data that produced it, the status file
+        being independent of the lexicon.
+
+        DELIBERATELY NARROWER THAN THE WRITE GATE. The gate in
+        generate_status_by_annotations refuses anything cvt_of_check can't
+        place (fail closed — right for what we ADD). Deleting on that test
+        would be wrong: a check code from an older build, or an older '-slice'
+        spelling, also fails it, and those may hold real verification work the
+        user did. So removal is limited to names we affirmatively know are not
+        ours (is_foreign_annotation — the collab daemon's merge markers), and
+        every removal is named in the log. Fail closed on writes, conservative
+        on deletes."""
+        status=getattr(self.program,'status',None)
+        if not status:
+            return
+        foreign=self.program.params.is_foreign_annotation
+        gone=[]
+        for cvt in list(status):
+            for ps in list(status.get(cvt) or {}):
+                for profile in list(status[cvt].get(ps) or {}):
+                    node=status[cvt][ps].get(profile) or {}
+                    if not hasattr(node,'items'):
+                        continue
+                    for check in [c for c in list(node) if foreign(c)]:
+                        del node[check]
+                        gone.append((cvt,ps,profile,check))
+        if gone:
+            _log.warning("Removed %s status node(s) for names that are not "
+                    "checks: %s. These were written into the status file "
+                    "before the write gate existed, under whichever cvt was "
+                    "selected at the time, and could not clear on their own.",
+                    len(gone),gone[:20])
+            self.storesettingsfile(setting='status')
     def generate_status_by_annotations(self,**kwargs):
         _log.info(_("Refreshing annotations from LIFT"))
+        # Clear anything an earlier build let in, before adding to it.
+        self.scrub_foreign_status()
         start_at=kwargs.get('startat',0)
         end_at=kwargs.get('endat',100)
-        d=self.program.db.annotation_values_by_ps_profile()
+        # Both of these read annotations off ONE word form's node, so they have
+        # to be asked for the form the session is actually working on — the
+        # default 'lc' silently reported citation data under any other form.
+        ftype=self.program.params.ftype()
+        d=self.program.db.annotation_values_by_ps_profile(ftype)
         # LIFT-derived 'done' (group verified as a whole = every member carries
         # its <check>=<group> code). Recomputed here so verified state can't go
         # stale in the status file — a join no longer drops sibling groups.
-        verified=self.program.db.verified_groups_by_ps_profile()
+        verified=self.program.db.verified_groups_by_ps_profile(ftype)
         k={}
         for k['ps'],profile_dict in d.items():
             for k['profile'],check_dict in profile_dict.items():
@@ -887,6 +1095,57 @@ class Settings(SettingsUI):
                     if k['check'].isdigit():
                         continue
                     k['cvt']=self.program.params.cvt_of_check(k['check'])
+                    if k['cvt'] is None:
+                        # NOT ONE OF OUR CHECKS — don't put it in the status
+                        # tree. azt's checks are internally defined
+                        # (Analysis.renewchecks), and _checkcodes_by_cvt is that
+                        # registry, so cvt_of_check returning None IS the
+                        # allow-list test; it needs no separate list, and it
+                        # fails CLOSED. Tone is unaffected: frame names aren't
+                        # check codes, which is why generate_status_by_tone_groups
+                        # is a separate generator that hardcodes cvt='T'.
+                        #   Without this, a name that isn't a check did NOT get
+                        # parked harmlessly under a None key: node() →
+                        # checkslicetypecurrent (analysis.py:2062-2065) DELETES
+                        # None kwargs and substitutes the CURRENT value, so the
+                        # foreign name was filed under whichever cvt happened to
+                        # be selected when the refresh ran — a real branch, and a
+                        # different one from run to run. That is why it shows up
+                        # in the status field's check list. It was then PERSISTED
+                        # to the data domain and reloaded at every boot
+                        # (loadsettingsfile loads status once, from JSON), so it
+                        # outlived the LIFT data that produced it. The live case
+                        # is the collab daemon's
+                        # <annotation name="azt-lift-conflict" value="ours|theirs"/>
+                        # merge marker (azt_collabd/lift_merge.py:45), which shares
+                        # this name space and reached the status field as a check
+                        # with groups 'ours'/'theirs' that can never verify
+                        # (Kent 2026-09-02).
+                        # Say only what is established. The first version of
+                        # this line explained every rejected name as a collab
+                        # merge marker, and the first one it actually reported
+                        # was '#C-slice' — azt's OWN bookkeeping annotation,
+                        # nothing to do with the daemon (Kent saw it,
+                        # 2026-09-02). Naming a cause the code has not
+                        # established is the same fault as announcing an action
+                        # before its gate: it sends the reader in the wrong
+                        # direction, and costs a round trip. So report the fact,
+                        # and add the daemon note ONLY for a name that really is
+                        # one of theirs.
+                        if not getattr(self,'_said_notacheck',set()):
+                            self._said_notacheck=set()
+                        if k['check'] not in self._said_notacheck:
+                            self._said_notacheck.add(k['check'])
+                            extra=''
+                            if self.program.params.is_foreign_annotation(
+                                                            k['check']):
+                                extra=(" This one is written by the collab "
+                                    "daemon, not by a sort: a conflict marker "
+                                    "means the merge kept BOTH sides of an "
+                                    "entry, and the DATA wants a look.")
+                            _log.warning("Not a check, so not going into the "
+                                    "status: %r.%s", k['check'], extra)
+                        continue
                     groups=[i for i in groups if i]
                     self.program.status.groups(groups, wsorted=True, **k)
                     # Segmental only: 'S' (syllable-prep) done is per-slice, not
@@ -912,7 +1171,27 @@ class Settings(SettingsUI):
     def reloadstatusdata(self):
         _log.info(_("Refreshing all status settings from LIFT"))
         self.storesettingsfile() #default, not status
-        self.program.db.load_ps_profiles()
+        ftype=self.program.params.ftype()
+        self.program.db.load_ps_profiles(ftype)
+        # CLEAR-THEN-REBUILD IS ONLY SAFE IF THERE IS SOMETHING TO REBUILD
+        # FROM. This became form-dependent on 2026-09-30, when the profile
+        # readers learnt to follow the chosen word form: run on a form nobody
+        # has profiled yet and the rebuild sources nothing, so the clear
+        # stands alone and the status file loses every group — for a form
+        # that was never the one the groups describe. Segmental status nodes
+        # carry no form in their key, so there is nothing here to tell them
+        # apart afterwards.
+        #   An empty picture on a form with no data is CORRECT (Kent,
+        # 2026-09-30: "near-emtpy: yes, that's what I expecte") — it is
+        # destroying the other form's record on the way past that is not. A
+        # genuinely empty project hits this too and loses nothing, since
+        # there was nothing to clear.
+        if not any(self.program.db.ps_profiles.values()):
+            _log.warning("Not refreshing status from LIFT: no word carries a "
+                    "CV profile for the %r form, so there is nothing to "
+                    "rebuild from and clearing would discard the status built "
+                    "under another form. Switch the form back first.",ftype)
+            return
         self.program.status.clear_all_groups()
         for i in itertools.chain(self.generate_status_by_annotations(end_at=50),
                                 self.generate_status_by_tone_groups(start_at=50)):
@@ -1047,13 +1326,86 @@ class Settings(SettingsUI):
             if isinstance(self.program.task,WordCollection):
                 self.program.task.getword() #update UI for glosses
         if 'secondformfield' in self.attrschanged:
+            # NAMING THE FIELD CHANGES WHICH CHECKS EXIST. `pl` exists only
+            # once the nominal field is named and `imp` only once the verbal
+            # one is (see `CheckParameters.second_form_checks`), so this
+            # branch used to drop the flag and refresh NOTHING — the new
+            # check was built but never offered, and a renamed field left
+            # the old name on screen. Plan 5 of
+            # the second-form flags audit.
+            #   Only for cvt 'S': the second-form checks are whole-word
+            #   syllable-profile checks and appear nowhere else.
+            if t == 'S':
+                try:
+                    self.program.status.updatechecksbycvt()
+                    self.program.status.makecheckok()
+                except Exception as e:
+                    _log.info(_("Could not refresh checks after the second "
+                                "form field changed: {error}").format(error=e))
             self.attrschanged.remove('secondformfield')
+        if 'ftype' in self.attrschanged:
+            # THE WORD CHECK CHANGED, so the page is looking at a different
+            # set of words. The collection page's todo list is built from
+            # the word form (`getlisttodo`, lexicon.py), so it reloads — the
+            # gloss-language precedent two branches up, data refreshed into
+            # the same widgets rather than a rebuilt page. Kent, 2026-09-17,
+            # on switching to plurals mid-page: "this workflow shouldn't
+            # break us."
+            #   `reload_for_word_check`, not `loadwords`: two page types
+            # answer to a form change and they do different things. A
+            # collection page reloads its word list (and must use
+            # `loadwords`, since `getwords` would grid a SECOND
+            # `wordsframe`); `SortSyllables` rebuilds its `(ps, ftype)`
+            # slices and its board, because everything it shows is keyed on
+            # the form. Plan 2 and plan 6 of the second-form flags audit.
+            # THE CHECK FOLLOWS THE FORM, and must be settled BEFORE the
+            # page reloads or the page rebuilds against the old one. For
+            # cvt 'S' the check list is `[ftype()]`, so a changed form makes
+            # the standing check invalid and `makecheckok` picks the only
+            # valid one — no new mechanism, just the call that was missing
+            # (Kent, 2026-09-30: "this means we'll need a makecheckOK, since
+            # the check will need to align with the ftype, should it ever
+            # change").
+            #   And it chains: `makecheckok` settles the group in turn, so
+            # one call takes ftype → check → group.
+            try:
+                self.program.status.makecheckok()
+            except Exception as e:
+                _log.info("could not realign the check with the form (%r)",e)
+            task=getattr(self.program,'task',None)
+            if hasattr(task,'reload_for_word_check'):
+                try:
+                    task.reload_for_word_check()
+                except Exception as e:
+                    _log.info(_("Could not reload after the word check "
+                                "changed: {error}").format(error=e))
+            self.attrschanged.remove('ftype')
         if 'showdetails' in self.attrschanged:
             # Display-only pref: persist it now (defaults→ui domain) so the choice
             # survives a restart, and clear it from attrschanged so it doesn't fall
             # through to the "Remaining changed attribute!" error / accumulate.
             self.storesettingsfile()
             self.attrschanged.remove('showdetails')
+        # THE GROUP MUST BELONG TO THE CHECK, and until 2026-09-30 nothing
+        # ever said so: `StatusDict.makegroupok` was written for exactly this
+        # and had NO CALLERS anywhere in the app. A group belongs to a
+        # (cvt, ps, profile, check) slice, so any of the branches above can
+        # invalidate it — which is why this is one call at the end rather
+        # than a line in each.
+        #   The symptom Kent brought: the syllable sort's line read
+        # "Checking Syllable Profiles, working on Whole Citation Word
+        # Syllable Profile = C". `C` is a stage-1 answer to `#C`/`C#`; the
+        # check was stage 2, whose groups are cvprofiles. The display was
+        # honest and the STATE was mixed across the two stages.
+        #   An older patch treated the same class at the label:
+        # `cvgrouplabel` still carries a comment about the frame showing
+        # "working on First Vowel None" after an x-check phase.
+        #   Never raises: a settings refresh must not fail over this.
+        try:
+            self.program.status.makegroupok()
+        except Exception as e:
+            _log.info("could not settle the group against the current "
+                      "check (%r)", e)
         soundattrs=self.settings['soundsettings']['attributes']
         soundattrschanged=set(soundattrs) & set(self.attrschanged)
         for a in soundattrschanged:
@@ -1199,10 +1551,32 @@ class Settings(SettingsUI):
     def post_params_init(self):
         self.program.profiles.run()
     def get_ui_var(self, attr, value=None):
-        """Get or create a tkinter.StringVar for the given attribute."""
+        """Get or create a StringVar for the given attribute.
+
+        A SUPPLIED VALUE IS APPLIED, NOT DISCARDED — which is the fix, not
+        the design (2026-09-29). These vars are cached for the SESSION, and
+        every status label asks for one with the text it has just computed:
+
+            get_ui_var('cvt_label', self.cvtvalue())
+
+        On the second task of a session that computed text was thrown away
+        and the caller got the previous task's label back, so the settings
+        line froze at whatever wrote it first. Nothing repainted it on a
+        plain task open either, because `update_all_labels` runs on settings
+        CHANGES. Kent, 2026-09-29, having opened Sort Consonants and come
+        back: "just went to SortC and back, and it still said vowels" — on a
+        page whose cvt is unambiguously 'C'. The VALUE was right on every
+        page; the label was one task behind, session-wide, for
+        `cvt_label`, `cvcheck_label`, `ps_label`, `fields<ps>_label` and the
+        rest of the family.
+
+        Callers that pass nothing (the `trace_add` registrations) are
+        unaffected: they want the var, not a value."""
         if attr not in self.ui_vars:
             # Lazy import to avoid circular dependency and only use if UI is present
             from frontend import ui
             var = ui.StringVar(value=str(value) if value is not None else str(getattr(self, attr, "")))
             self.ui_vars[attr] = var
+        elif value is not None:
+            self.ui_vars[attr].set(str(value))
         return self.ui_vars[attr]

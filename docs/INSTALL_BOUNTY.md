@@ -18,10 +18,11 @@ A−Z+T installation would be greatly helped by having a simpler install process
 3. Confirm the presence of (or install) Python.
   - Automate adding python to the system path, as in this image: ![Add Python to Path](images/Python_path.png "Add Python to Path")
   - Trigger the "remove path limitation" option in the Python install.
-  - Currently between 3.9 and 3.12!!
-  ~~At least version 3.6.8~~, though this is negotiable. Some install problems have been minimized in the past by using this version, rather than a newer version. If other solutions (e.g., pipwin) resolve these problems, any recent version may be OK.
-    - https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe
-    - https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe
+  - **Install target 3.13; runtime floor 3.10; NOT 3.14** (kivy has no 3.14 wheel). The authority is `docs/adr/0005-python-version-floor-and-ceiling.md` — read the number there, don't copy one here.
+  - **Resolve the download, never pin it** (`docs/adr/0006-installers-resolve-downloads-never-pin-urls.md`). Ask for the newest patch of the named minor and walk backwards if that patch has no Windows installer:
+    - https://www.python.org/downloads/latest/python3.13/
+    - fallback pattern: `https://www.python.org/ftp/python/<version>/python-<version>-amd64.exe`
+  - ~~Currently between 3.9 and 3.12!!~~ ~~At least version 3.6.8~~ — and the two pinned download links that used to be here (3.12.4 and 3.9.13) are exactly what ADR 0006 forbids. A pinned installer URL is a link that works until it does not, in a document nobody revisits.
 
   - This can happen concurrently with Git install, as they shouldn't depend on each other.
 

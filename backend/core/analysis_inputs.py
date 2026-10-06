@@ -5,7 +5,7 @@ log=logsetup.getlog(__name__)
 
 import sys
 import collections
-# import re
+import re
 # import datetime
 # import tkinter as tk
 from utilities.utilities import *
@@ -180,6 +180,27 @@ class CheckParameters(object):
         if not (beg and syls and end):
             return None
         return self.compose_profile_class(beg,syls,end)
+    def illegal_profile_symbols(self,profile):
+        """The characters in `profile` that are not profile symbols at all.
+
+        profile_fits_class answers SHAPE (which edges, how many syllables) and
+        cannot answer VOCABULARY: _segment_type reads anything that isn't
+        V/Ṽ as a consonant, so every stray letter is a legal-looking C and a
+        hand-typed 'NAV' satisfies C-initial/V-final/1-syllable perfectly.
+        Field repro 2026-09-02 (OBT's nml): a group 'NAV' with 9 words in it,
+        annotation lc=NAV on each, machine profile 'CV', nothing verified — and
+        no 'NA' anywhere in the file, so it was typed on the by-hand page, not
+        derived. The uppercase in submit() means a typed 'nav' arrives as 'NAV'.
+
+        Same test the machine path already applies (profiles.getprofileofsense
+        clamps a non-profilelegit result to 'Invalid'), so the two agree on what
+        a profile may contain. Returns [] when it can't find the vocabulary,
+        rather than guessing — refusing on an unknown inventory would block
+        legitimate entry."""
+        legit=getattr(getattr(self.program,'profiles',None),'profilelegit',None)
+        if not legit:
+            return []
+        return sorted({c for c in str(profile or '') if c not in set(legit)})
     def profile_fits_class(self,profile,beg,syls,end):
         """Is `profile` (a CV string) COMPATIBLE with a class's primitives?
 
@@ -231,7 +252,7 @@ class CheckParameters(object):
         per slot (so each C-cluster / V-run is 1..1+percap long; default 1–3). The
         class skeleton = one C-cluster before the 1st V iff beg=C, one between each
         adjacent V-run pair (syls-1 interludes), one after the last V iff end=C.
-        See ADR 0003 / cv_group_creation_merging."""
+        See ADR 0003 / the CV-group creation-and-merging item."""
         try:
             N=int(syls)
         except (TypeError,ValueError):
@@ -270,7 +291,11 @@ class CheckParameters(object):
         generator (callers that 'just want an example' don't pay the exclusion)."""
         cls=self.compose_profile_class(beg,syls,end)
         try:
-            node=self.program.status.node(cvt='S',ps=self.program.slices.ps(),
+            # `SYLLABLE_PREP_PS`, not the live ps: syllable state carries no ps
+            # (2026-09-30, the syllable-sort-is-not-per-ps item), so reading it
+            # under one would find an empty node and offer profiles already in
+            # use under another category.
+            node=self.program.status.node(cvt='S',ps=self.SYLLABLE_PREP_PS,
                                           profile=cls,check=self.ftype())
             inuse=set(node.get('groups',[]))
         except Exception:
@@ -346,37 +371,58 @@ class CheckParameters(object):
                         last-resort bucket, syls left unset
           'syls'      — backfilled a missing syls on an already-bucketed, now-
                         analyzable word (the bug that stranded words like 'always')
-          None        — already complete / nothing to do."""
+          'backfilled'— filled some other missing primitive on a bucketed word
+          None        — already complete / nothing to do.
+
+        EACH PRIMITIVE IS INDEPENDENT. This used to branch on `not #C`, treating
+        "#C absent" as "not yet bucketed" and seeding all three together — so any
+        word holding SOME of the three could never acquire the rest. syls got a
+        special-case backfill when that stranded 'always'; C# never did, which
+        stranded 'mʌchete' (#C=C, syls=3, no C#) — unsortable, and invisible to
+        next_unverified_slice() because a word in no group is in no slice, so prep
+        reported complete with it outstanding (Kent 2026-08-28). Adding a second
+        special case would just move the seam, so the gate is gone: work out what
+        is MISSING, then fill exactly that, whatever the combination."""
         av=sense.annotationvaluebyftypelang
         if av(ftype,analang,'syls')=='0':       # normalise a nonsensical 0
             av(ftype,analang,'syls','1')
         profile=sense.cvprofilevalue(ftype) or sense.cvprofilemachinevalue(ftype)
         valid=bool(profile) and profile!='Invalid'
-        if not av(ftype,analang,'#C'):          # not yet bucketed
-            if valid:
-                av(ftype,analang,'#C',self.word_initial(profile))
-                av(ftype,analang,'C#',self.word_final(profile))
-                av(ftype,analang,'syls',str(self.syllable_count(profile)))
-                av(ftype,analang,ftype,profile)
-                return 'seeded'
-            # Un-analyzable (capitalised, multi-word, out-of-alphabet …). The edges
-            # are still facts about the first/last SEGMENT, so READ THEM OFF THE
-            # FORM rather than calling both consonant: the old blanket default
-            # parked vowel-final words in C#=C for no reason visible to the user,
-            # and #C/C# are closed binaries with no sort page, so nothing ever
-            # offered them for correction (Kent 2026-07-29). syls stays unset —
-            # that IS the judgement a missing profile deprives us of, and the syls
-            # sort will ask for it.
-            beg,end=self.orthographic_edges(sense,ftype,analang)
-            av(ftype,analang,'#C',beg or 'C')
-            av(ftype,analang,'C#',end or 'C')
-            return 'defaulted' if (beg is None or end is None) else 'edges'
-        if not av(ftype,analang,'syls') and valid: # backfill a missing syls
-            av(ftype,analang,'syls',str(self.syllable_count(profile)))
+        missing=[k for k in ('#C','C#','syls') if not av(ftype,analang,k)]
+        if not missing:
+            return None
+        first_bucketing=len(missing)==3 # nothing known yet: the old 'seeded' case
+        if valid:
+            derive={'#C':   lambda:self.word_initial(profile),
+                    'C#':   lambda:self.word_final(profile),
+                    'syls': lambda:str(self.syllable_count(profile))}
+            for k in missing:
+                av(ftype,analang,k,derive[k]())
             if not av(ftype,analang,ftype):
                 av(ftype,analang,ftype,profile)
-            return 'syls'
-        return None
+            if first_bucketing:
+                return 'seeded'
+            return 'syls' if 'syls' in missing else 'backfilled'
+        # Un-analyzable (capitalised, multi-word, out-of-alphabet …). The edges
+        # are still facts about the first/last SEGMENT, so READ THEM OFF THE
+        # FORM rather than calling both consonant: the old blanket default
+        # parked vowel-final words in C#=C for no reason visible to the user,
+        # and #C/C# are closed binaries with no sort page, so nothing ever
+        # offered them for correction (Kent 2026-07-29). syls stays unset —
+        # that IS the judgement a missing profile deprives us of, and the syls
+        # sort will ask for it. Only the edges that are actually missing get
+        # written, so a confirmed edge is never overwritten by a guess.
+        edges=[k for k in missing if k in ('#C','C#')]
+        if not edges:
+            return None # only syls missing, and no profile to count it from
+        beg,end=self.orthographic_edges(sense,ftype,analang)
+        for k,e in (('#C',beg),('C#',end)):
+            if k in edges:
+                av(ftype,analang,k,e or 'C')
+        guessed=[e for k,e in (('#C',beg),('C#',end)) if k in edges and e is None]
+        if guessed:
+            return 'defaulted'
+        return 'edges' if first_bucketing else 'backfilled'
     # --- reconciling a machine CV profile with the user's CONFIRMED primitives.
     # A machine analysis can contradict what the user verified — e.g. 'CVCV' for a
     # word confirmed C_1_C. constrain_profile reconciles it SYLLABLES-FIRST, then
@@ -395,7 +441,7 @@ class CheckParameters(object):
     #      (+ final C if C#=C, − initial C if #C=V) — guaranteed consistent, flagged
     #      so the caller logs it.
     # Returns a dict {profile, changed, fallback, valid}; the caller logs (deduped).
-    # See docs/sort_syllables_design.md.
+    # See the sort-syllables design.
     SEGMENT_BASES=set('NGSDCVʔ')|{'Ṽ'} # base segment chars; everything else (length
                                         # ː, tone, '.', '=', '<', combining marks)
                                         # is a MODIFIER that rides the prior segment
@@ -439,6 +485,44 @@ class CheckParameters(object):
         return len(self._vowel_runs(self._profile_segments(profile)))
     def _individual_vowels(self,segs):
         return sum(1 for s in segs if self._segment_type(s)=='V')
+    def check_segments(self,check,profile):
+        """(segments, hits) for showing WHICH part of `profile` a check is about:
+        the profile split into segments, and the indices the check names.
+
+        So 'V1' on 'CVCC' → (['C','V','C','C'], {1}) and 'C1=C2' on 'CVCV' →
+        ({0,2}), which a caller renders as C**V**CC / **C**V**C**V instead of
+        stacking 'CVCC' over 'V1' and making the user combine them (Kent
+        2026-08-24).
+
+        Indices are into SEGMENTS, not characters — 'Vː' is one segment, so
+        string indexing would highlight the wrong thing.
+
+        Understands the positional vocabulary: a token '<C|V><n>' anywhere in a
+        check joined by '=' or 'x' (C1, V1, C1=C2, C1=C2=C3, C2xC3). Returns
+        hits=None — NOT an empty set — for anything it can't map, so a caller can
+        tell 'nothing to highlight' from 'this check isn't positional' and fall
+        back rather than silently showing an unmarked profile."""
+        segs=self._profile_segments(profile)
+        if not segs or not check:
+            return segs,None
+        hits=set()
+        found=False
+        for token in re.split(r'[=x]',str(check)):
+            m=re.fullmatch(r'([CV])(\d+)',token.strip())
+            if not m:
+                continue
+            want,n=m.group(1),int(m.group(2))
+            if n<1:
+                continue
+            found=True
+            seen=0
+            for i,s in enumerate(segs):
+                if self._segment_type(s)==want:
+                    seen+=1
+                    if seen==n:
+                        hits.add(i)
+                        break
+        return segs,(hits if found else None)
     def profile_satisfies(self,profile,beg=None,end=None,syls=None):
         """True iff `profile` is consistent with the confirmed primitives: first
         segment is beg's type, last is end's type, and `syls` lies in the profile's
@@ -541,6 +625,40 @@ class CheckParameters(object):
         # the three sorts that establish the profile class (run on the whole
         # wordlist); none of them join.
         return (check or self.check()) in ('#C','C#','syls')
+    # Annotation names that are NOT checks, however they got into the file.
+    #
+    # azt's checks are INTERNALLY defined (Analysis.renewchecks: _checknames per
+    # cvt for segmental, ftype for 'S', program.toneframes for 'T'); nothing
+    # about them comes from the lexicon. But the STATUS set is file-derived —
+    # status[cvt][ps][profile] is populated from annotation NAMES
+    # (lift.annotation_values_by_ps_profile), and that name space is shared with
+    # the collab daemon, which stamps
+    # <annotation name="azt-lift-conflict" value="ours|theirs"/> on the parent of
+    # a merge conflict (azt_collabd/lift_merge.py:45). So the marker arrived as a
+    # check with groups 'ours'/'theirs' — and since no sense carries an
+    # 'azt-lift-conflict=ours' verification code, as a slice that can NEVER
+    # verify: permanent outstanding work in the status field, offering itself for
+    # verification (Kent 2026-09-02, seeing it there).
+    #
+    # NOT added to is_syllable_primitive_check: that tuple is a semantic claim
+    # about the three prep sorts — is_syllable_boolean_check and
+    # syllable_prep_complete read the same concept — so listing a merge marker
+    # there would gate Task-1 completion on verifying it.
+    #
+    # The PREFIX carries the general case: 'azt-' is reserved for annotations
+    # written by the TOOLING rather than by the linguist, which is already the
+    # daemon's own practice ('azt-lift-conflict', 'azt-lift-conflict-fields'), so
+    # a marker added there later is ignored without a change here. A user check
+    # can't collide: check codes are generated ('V1', 'C1=C2'), ftypes come from
+    # the lexicon's field types ('lc', 'lx', 'Plural'), and tone frames are named
+    # in settings. The explicit name stays for greppability.
+    FOREIGN_ANNOTATIONS=('azt-lift-conflict',)
+    FOREIGN_ANNOTATION_PREFIX='azt-'
+    def is_foreign_annotation(self,name=None):
+        """True for an annotation name that must never be treated as a check."""
+        name=str(name if name is not None else self.check() or '')
+        return (name in self.FOREIGN_ANNOTATIONS
+                or name.startswith(self.FOREIGN_ANNOTATION_PREFIX))
     def is_syllable_boolean_check(self,check=None):
         # the CLOSED binary checks: no new-group ("Other"), no sort page (the
         # presort defaults every word). syls is NOT here — it's a small but OPEN
@@ -568,6 +686,52 @@ class CheckParameters(object):
             g=set(n.get('groups',[])); d=set(n.get('done',[]))
             if not g or not (g<=d):
                 return False
+        # …AND nothing still unsorted in the check (Kent 2026-08-28). The loop
+        # above only asks whether the groups that EXIST are verified. A word with
+        # no annotation for a check is in no group, so it is in no slice either,
+        # and it is invisible to both that test and next_unverified_slice(). Prep
+        # therefore read complete while words were still unclassified — the app
+        # moved to stage 2, the vowels were never distinguished, and the machine
+        # profile stayed all-C. C# is where this shows up first: #C and syls
+        # yield a value for any form, so C# is the check most likely to leave
+        # words ungrouped.
+        #   Uses the LIVE slice dict if there is one (analysis.py sets
+        # program.syllable_slices on construction) — building one here would be
+        # expensive and re-entrant. With no slice dict we fall through to the old
+        # answer rather than block the gate on a missing cache: fail-open keeps
+        # this from becoming a way to make the app unusable.
+        sl=getattr(self.program,'syllable_slices',None)
+        if sl is not None and hasattr(sl,'unsorted'):
+            for chk in ('#C','C#','syls'):
+                try:
+                    stuck=sl.unsorted(chk)
+                    n_unsorted=len(stuck)
+                    if stuck: # name them: 2 of 1700 is a data question, not a
+                              # statistic, and the forms say why presort skipped
+                        log.warning("prep unsorted in %s: %s", chk,
+                            [ (s.formattedform(sl.analang,sl.ftype) or '?')
+                              for s in stuck[:10] ])
+                except Exception as e:
+                    log.info("prep-complete unsorted probe failed for %s: %s",
+                             chk, e)
+                    continue
+                if n_unsorted:
+                    # WARN, DO NOT BLOCK — yet. Blocking here livelocked the app
+                    # (Kent 2026-08-28): maybeverifysyllables asks
+                    # next_unverified_slice(), which has the SAME blind spot, so
+                    # it still reported Task 1 done, closed the run window and
+                    # notified — while this gate said "not complete", so the task
+                    # restarted prep, and round it went, a blank page each pass.
+                    # Presort doesn't rescue them either ('seeded=0
+                    # defaulted→#C=C=0'), so there is currently NO path that can
+                    # give these words a C#. A gate must not block on a condition
+                    # nothing can clear. Restore `return False` only once unsorted
+                    # words are actually presented for sorting — that is the real
+                    # fix, and this line is the evidence for it.
+                    log.warning("syllable prep INCOMPLETE (not blocking): %d "
+                                "word(s) unsorted in %s — no path assigns them, "
+                                "so stage 2 proceeds. See the prep-gate item.",
+                                n_unsorted, chk)
         return True
     # --- profile class → prose (the configurable renderer; tune to user feedback) ---
     def profile_class_begend_name(self,beg,end):
@@ -596,6 +760,14 @@ class CheckParameters(object):
                 'C#':_("word-final sounds"),
                 'syls':_("syllable counts")}.get(check or self.check())
     def profile_class_count_name(self,syls):
+        # Two whole msgids, not a fragment + an 's' — assembling a sentence from
+        # pieces is what the 2026-07-10 sweep found breaks catalogs.
+        try:
+            one=int(syls)==1
+        except (TypeError,ValueError):
+            one=False
+        if one:
+            return _("1 syllable")
         return _("{n} syllables").format(n=syls)
     def profile_class_prose(self,beg,syls,end):
         return _("{begend} ({count})").format(
@@ -611,6 +783,145 @@ class CheckParameters(object):
             self._check=None
         # log.info(_("Returning check {check}").format(check=self._check))
         return self._check
+    def second_form_checks(self):
+        """The `pl`/`imp` whole-word checks — ONLY where the field exists.
+
+        A CHECK NAME MUST FOLLOW THE FIELD NAME, and a check for a field
+        nobody has named is not a check. These two were listed
+        unconditionally and their names formatted with the field, so an
+        unset one produced the literal string **"Whole None Word Syllable
+        Profile"** — offered as a choice, and describing nothing.
+
+        THE CODE STAYS `pl`/`imp` WHATEVER THE FIELD IS CALLED. Only the
+        NAME follows the field, so renaming 'Plural' to 'Pluriel' relabels
+        the check and leaves every stored verification code untouched. That
+        distinction is the whole reason this is safe to do.
+
+        Never raises: check building runs early and a settings object that
+        is not ready yet must cost the two conditional checks, not all of
+        them."""
+        return [(code, _("Whole {field} Word Syllable Profile"
+                         "").format(field=field))
+                for code, ps, field in self.second_forms_available()]
+
+    def second_forms_available(self):
+        """`(code, ps, fieldname)` for each second form whose field is named.
+
+        THE AVAILABILITY TEST, factored out, because two different lines ask
+        it and they must never disagree: the syllable sort's check list
+        (`second_form_checks`) and the word-check line on whole-word tasks
+        (`word_checks`). One offers a check the other does not and the user
+        gets a choice that does nothing.
+
+        Never raises — see `second_form_checks`."""
+        rows=[]
+        try:
+            s=self.program.settings
+            for code, ps in (('pl', s.nominalps), ('imp', s.verbalps)):
+                if not s.secondformfieldset(ps):
+                    continue
+                rows.append((code, ps, self.secondfield(ps)))
+        except Exception as e:
+            log.info("no second forms available this time (%r)", e)
+        return rows
+
+    def word_checks(self):
+        """The WORD checks: which FORM of the word a task works on.
+
+        A WORD CHECK IS NOT A CVT CHECK, and the app had a line only for the
+        second (Kent, 2026-09-29: "these are **word** checks, not cvt
+        checks"). A cvt check picks segments WITHIN a form — `V1`, `C2`,
+        `V1xV2`, the tone frame. A word check picks the form: the citation
+        form, the root, or a second form. They are independent: you sort the
+        first vowel OF the citation form.
+
+        Returned as `(code, name)`, the codes being the ftype codes, so
+        picking a word check is picking an ftype. `lc` and `lx` are always
+        available; `pl` and `imp` only where their field is named, because a
+        check for a field nobody has named is not a check.
+
+        NAMED FOR A FORM, not for a syllable profile. `second_form_checks`
+        names the same codes "Whole {field} Word Syllable Profile" because
+        there they ARE profile checks on the syllable sort. On a collection
+        page that sentence describes nothing the page does.
+
+        `pl` AND `imp` DEPEND ON A TABLE THAT WAS NEVER POPULATED, and were
+        withheld here for a few hours on 2026-09-29 because of it. A sense's
+        `ftypes` was `{'lx': entry.lx, 'lc': entry.lc}` plus `'ph'` and
+        nothing else, so `textvaluebyftypelang('pl', …)` always returned
+        None — which is what `getlisttodo` reads to decide a word is done
+        and what `getword` puts in the entry box. A plural page showed every
+        word as uncollected forever. Writing worked, so the damage was a
+        page that silently re-collected.
+          `Sense.set_ftype` and `Settings.register_second_forms` fix that,
+        so the offer stands on `second_forms_available` again: the field
+        being named is once more the only condition.
+
+        ADJECTIVAL, so each line can supply its own noun (2026-09-30). Two
+        lines show these now and they need different grammar — "Collecting
+        Citation forms" on a collection page, "Looking at Citation C1C
+        words" on a sort page — so the name is the modifier and the noun
+        belongs to the sentence. It used to be "citation forms", which
+        reads only in the first."""
+        rows=[('lc', _("Citation")),
+              ('lx', _("Root"))]
+        rows+= [(code, _("‘{field}’ ({ps})").format(field=field, ps=ps))
+                for code, ps, field in self.second_forms_available()]
+        return rows
+
+    def is_word_check(self, check=None):
+        """Is this a WORD check (which form) rather than a cvt check?
+
+        The cvt-`S` check list holds word checks and nothing else — the
+        three prep primitives (`#C`/`C#`/`syls`) belong to the Task-1 driver
+        and have never been in it — so this is how the `S` paths tell a
+        user's form choice from a primitive still in play during prep."""
+        code=check if check is not None else self.check()
+        return code in [c for c, name in self.word_checks()]
+
+    def resolve_word_check(self, code=None):
+        """An AVAILABLE word check, whatever was asked for.
+
+        THIS GUARDS THE FTYPE, NOT THE CHECK LIST. A check that is not real
+        is never built — plan 5's rule, and `word_checks` above honours it:
+        `pl` and `imp` appear only while their field is named. But the ftype
+        is a different thing from a check, and it is written by callers that
+        never consult the list — `sort_on_group_by_item` takes it from a
+        stored verification code. So the ftype in hand can name a form the
+        user has no field for, and Kent, 2026-09-29: **"we cannot collect
+        without a field name."**
+
+        An unresolvable code therefore becomes `lc`, which always exists, and
+        the fallback is logged. Naming and setting both come through here, so
+        a page can never say it is working on a form it cannot reach.
+
+        Belt and braces, deliberately: the setter resolves, the field setters
+        refuse to unset a field, and the four classes that hard-coded an
+        ftype are gone (plan 2, 2026-09-29). Kept because the LABEL reads
+        `ftype()` directly, and a wrong word there is silent."""
+        if code is None:
+            code=self.ftype()
+        available=[c for c, name in self.word_checks()]
+        if code in available:
+            return code
+        log.info("word check %r is not available (%s): there is no field for "
+                 "it, so falling back to citation forms", code, available)
+        return 'lc'
+
+    def word_check_name(self, code=None):
+        """The name of one word check; the current ftype's, by default.
+
+        Resolves first, so an unavailable code is named for what the page
+        will actually do rather than echoed back as a bare code."""
+        code=self.resolve_word_check(code)
+        for c, name in self.word_checks():
+            if c == code:
+                return name
+        # Only reachable if `lc` itself went missing, which `word_checks`
+        # does not allow. Say something rather than raise inside a label.
+        log.error("no word check named %r", code)
+        return code
+
     def build_checknames(self):
         self._checknames={
             'S':{ 1:[
@@ -619,11 +930,7 @@ class CheckParameters(object):
                 ('syls',_("Syllable Count")),
                 ('lc', _("Whole Citation Word Syllable Profile")),
                 ('lx', _("Whole Root Syllable Profile")),
-                ('pl', _("Whole {field} Word Syllable Profile"
-                        "").format(field=self.nominalps_secondfield())),
-                ('imp', _("Whole {field} Word Syllable Profile"
-                        "").format(field=self.verbalps_secondfield())),
-                ]},
+                ]+self.second_form_checks()},
             'T':{
                 1:[('T', _("Tone Melody"))]},
             'V':{
@@ -740,6 +1047,27 @@ class CheckParameters(object):
     def assure_checknames(self):
         if not hasattr(self,'_checknames'):
             self.build_checknames()
+
+    def rebuild_checknames(self):
+        """Rebuild the check names and everything derived from them.
+
+        BUILT ONCE AT STARTUP WAS THE BUG. `assure_checknames` builds on
+        first use and never again, so naming a second-form field after that
+        — which is most of the time, since the field is asked for when the
+        work needs it — left the checks describing the world as it was at
+        boot. The `pl`/`imp` checks did not appear, and a RENAMED field left
+        its check advertising the old name.
+        Three things go stale together, so they are refreshed together:
+        `_checknames` itself, `_checkcodes_by_cvt` (which decides what counts
+        as a valid check for a cvt) and `_cvchecknames` (the code→name
+        lookup the labels read). Plan 5 of
+        the second-form flags audit."""
+        self.build_checknames()
+        try:
+            self.checkcodes_by_cvt()
+            self.cvchecknamesdict()
+        except Exception as e:
+            log.info("check names rebuilt, derived tables not (%r)", e)
     def checkcodes_by_cvt(self):
         self.assure_checknames()
         self._checkcodes_by_cvt={cvt:{code_tuple[0]
@@ -762,9 +1090,20 @@ class CheckParameters(object):
             # keying the name by ftype made them all read identically. Name them
             # by the actual primitive instead; fall back to ftype for Task-2
             # (profile) sorting.
-            if self.is_syllable_primitive_check():
-                return self.syllable_check_name()
-            code=self.ftype()
+            #   NAME THE CODE ASKED ABOUT, and only fall back to the current
+            # form when none was given. `code=self.ftype()` used to run
+            # unconditionally, which was invisible while the 'S' check list
+            # held exactly one entry and wrong the moment plan 6 made it a
+            # chooser: `ui_shell.py:3222` builds the options as
+            # `[(c, cvcheckname(c)) for c in checks]`, so every option came
+            # back named for the CURRENT form. Two options, one name — Kent,
+            # 2026-09-29: "I see whole citation twice?"
+            #   The primitive test and its namer take the code for the same
+            # reason; both fall back to `check()` when it is None.
+            if self.is_syllable_primitive_check(code):
+                return self.syllable_check_name(code)
+            if code is None:
+                code=self.ftype()
         if not code:
             code=self.check()
         try:

@@ -234,30 +234,92 @@ class SettingsUI(object):
                 self.refreshattributechanges()
         else:
             log.debug(_("No change: {attr} == {val}").format(attr=attribute,val=choice))
+    def _refuse_unset_field(self,ps,choice):
+        """True if `choice` is the display placeholder, not an answer.
+
+        THE FIELD THAT OFFERS FREE TEXT WILL HAND YOU ANYTHING. The second
+        form line is `editable=True, allow_new=True` — deliberately, since a
+        field name the database has never seen is a perfectly good answer —
+        and committing it without choosing (clicking away commits it) passes
+        the placeholder `fieldsvalue` was SHOWING. That reached
+        `project.json` as `"Verb": "<unset>"`, where it read as a defined
+        value to every guard that tested presence. Refused at the setter, so
+        no caller can store it however it got there."""
+        if str(choice).strip() in ('', self.UNSETFIELD):
+            log.info("declining to store %r as the %s second form field: "
+                     "that is the placeholder shown when there is none",
+                     choice, ps)
+            return True
+        return False
+
+    def _checknames_follow_the_field(self):
+        """A check named after a field must be rebuilt when the field is.
+
+        THE RULE, not a plan item (the second-form flags audit):
+        built once at startup is nonsense the moment a user renames the
+        field. Naming the nominal field is what MAKES the `pl` check exist,
+        and renaming it should relabel that check rather than leave it
+        advertising a field nobody has.
+
+        The check CODE is untouched either way — `pl` stays `pl` — so no
+        stored verification code is affected by a rename. Only the name the
+        user reads follows.
+
+        Never raises: a settings change must not fail because a label could
+        not be rebuilt."""
+        try:
+            self.program.params.rebuild_checknames()
+        except Exception as e:
+            log.info("could not rebuild check names after the field "
+                     "changed (%r)", e)
+
     def setsecondformfieldN(self,choice,window=None):
+        if self._refuse_unset_field(self.nominalps,choice):
+            return
         self.secondformfield[self.nominalps]=self.pluralname=choice
+        self._checknames_follow_the_field()
         if self.statusisup():
             self.program.mainwindow.status.updatefields()
         self.attrschanged.append('secondformfield')
         for entry in self.program.db.entries:
             entry.plvalue(self.pluralname) # get the right field!
+        # OCCASION 2: the name changed, so every sense's `pl` must be
+        # re-pointed — and the OLD key dropped, or senses go on resolving
+        # to the field the user just abandoned. The loop above only indexes
+        # the Field object under the entry; it does not touch `ftypes`.
+        self.register_second_forms()
         self.refreshattributechanges()
         if window:
             window.destroy()
     def setsecondformfieldV(self,choice,window=None):
+        if self._refuse_unset_field(self.verbalps,choice):
+            return
         self.secondformfield[self.verbalps]=self.imperativename=choice
+        self._checknames_follow_the_field()
         if self.statusisup():
             self.program.mainwindow.status.updatefields()
         self.attrschanged.append('secondformfield')
         for entry in self.program.db.entries:
             """Doesn't do anything??!?"""
             entry.fieldvalue(self.imperativename,self.program.params.analang) # get the right field!
+        # OCCASION 2, verbal half — see `setsecondformfieldN`. And this is
+        # part of the answer to the "Doesn't do anything??!?" above: the
+        # loop indexes the Field under the entry and stops there. Pointing
+        # `imp` at it is what makes the forms readable by code.
+        self.register_second_forms()
         self.refreshattributechanges()
         if window:
             window.destroy()
-    def setprofile(self,choice=None,window=None):
+    def setprofile(self,choice=None,window=None,**kwargs):
+        # **kwargs mirrors setcheck below, and for the same reason: the caller
+        # says WHICH next one it wants (toverify=True, wsorted=True …) and only
+        # nextprofile can act on that. Without it, setprofile(toverify=True)
+        # raised TypeError — the interface every call site was already written
+        # against (sorting_engine.nprofile), and nextprofile has taken **kwargs
+        # all along. Crashed a field machine out of the mainloop, since it fires
+        # from drive_work's on_done where nothing catches it.
         if not choice:
-            choice=self.program.status.nextprofile()
+            choice=self.program.status.nextprofile(**kwargs)
         self.program.slices.profile(choice)
         self.program.mainwindow.status.updateprofile()
         if self.program.params.cvt() != 'T': #profiles don't determine tone checks
@@ -297,16 +359,31 @@ class SettingsUI(object):
             self.program.mainwindow.status.maybeboard()
         if window:
             window.destroy()
-    def setanalang(self,choice,window):
+    # `window=None` ON EVERY SETTER THAT A LINE CAN NOW SET IN PLACE. These
+    # were written when each value was chosen in its own window, so each one
+    # closed that window as its last act — and calling them with one argument
+    # raised TypeError inside `on_commit`, which `ClickToEdit.commit` catches
+    # and logs. So the value changed on screen and nothing was saved: the
+    # second gloss language went on reading "just use Kent's English" because
+    # `setglosslang2` had never run (Kent, 2026-09-15). A caught exception is
+    # exactly as invisible as a dropped option.
+    def setanalang(self,choice,window=None):
         """This is only used when more than one analang exists in the database"""
         log.info(_("Setting Analysis Language to {lang}").format(lang=choice))
         self.program.params.analang(choice)
         self.program.mainwindow.status.updateanalang()
         self.attrschanged.append('analang')
         self.refreshattributechanges()
-        window.destroy()
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
         self.program.restart()
-    def setgroup(self,choice,window):
+    def setgroup(self,choice,window=None):
+        # `window=None` FOR THE SAME REASON AS THE LANGUAGE SETTERS BELOW:
+        # the group is now set in place by a click-to-edit field, which
+        # calls its setter with one argument. Without the default that is a
+        # TypeError inside `on_commit`, which `ClickToEdit.commit` catches
+        # and logs — so the value would change on screen and nothing would
+        # be saved (2026-09-30).
         log.debug(_("setting group: {group}").format(group=choice))
         self.program.status.group(choice)
         if self.program.params.cvt() == 'T':
@@ -317,7 +394,8 @@ class SettingsUI(object):
                 hasattr(self.program.task,'menu') and
                         self.program.task.menu):
             self.program.task.menubar.redoadvanced()
-        window.destroy()
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
         log.debug(_("group {group} set: {val}").format(group=choice, val=self.program.status.group()))
     def setgroup_comparison(self,choice,window):
         """This doesn't show up on the status window"""
@@ -336,7 +414,41 @@ class SettingsUI(object):
             self.program.mainwindow.status.updatetoneframe()
         else:
             self.program.mainwindow.status.updatecvcheck()
+        # NO ftype WRITE HERE. Plan 6 briefly set the ftype from the check on
+        # cvt 'S'; reverted 2026-09-30. The form is slice-scope — it belongs
+        # beside the profile class, not in the check slot — so it is chosen
+        # on the slice line and the CHECK follows it, not the reverse.
+        # `makecheckok` is what realigns the check when the form changes,
+        # and `refreshattributechanges`' ftype branch is what calls it.
         self.attrschanged.append('check')
+        self.refreshattributechanges()
+        if window:
+            window.destroy()
+    def setwordcheck(self,choice=None,window=None):
+        """Pick WHICH FORM of the word a whole-word task works on.
+
+        A WORD CHECK, NOT A CVT CHECK (Kent, 2026-09-29: "these are **word**
+        checks, not cvt checks"). `setcheck` above picks segments WITHIN a
+        form; this picks the form. They are independent, so this does not go
+        near `params.check()` or `updatechecksbycvt` — see §9 of
+        the second-form flags audit.
+
+        NOT A GATE. An unavailable choice — a `pl` whose field was cleared
+        while the page was open — falls back to `lc` and says so, because
+        `lc` always exists and a collection page with no form to collect is
+        worse than one collecting the wrong one.
+
+        ONE PLACE TO WRITE. `params.ftype()` is the only home for the word
+        form as of 2026-09-29 — no task keeps a copy, so nothing else has to
+        be kept in step. This used to set `task.ftype` as well, because the
+        task's copy and the global drifted and `categories.py` raised an
+        ErrorNotice when they did.
+        """
+        choice=self.program.params.resolve_word_check(choice)
+        self.program.params.ftype(choice)
+        if self.statusisup():
+            self.program.mainwindow.status.updatewordcheck()
+        self.attrschanged.append('ftype')
         self.refreshattributechanges()
         if window:
             window.destroy()
@@ -344,6 +456,55 @@ class SettingsUI(object):
         self.buttoncolumns=choice
         if self.statusisup():
             self.program.mainwindow.status.updatebuttoncolumns()
+        # AND TELL THE PAGE. This stored the value, relabelled the line, and
+        # stopped — no `attrschanged`, no `refreshattributechanges`, so unlike
+        # `ftype` or the gloss languages there was no path from this setting to
+        # anything on screen. `SortButtonFrame.__init__` takes a SNAPSHOT
+        # (`self.buttoncolumns=self.task.buttoncolumns`), so a frame is right
+        # for whatever the setting was when it was built and can never change
+        # afterwards.
+        #   That is the whole of the two-month-old "the buttoncolumns setting
+        # doesn't work" report: it worked, on the NEXT open, which from the
+        # user's chair is indistinguishable from not working. Kent, 2026-09-30:
+        # "buttoncolumns doesn't apply until you leave the task and return, so
+        # this was not obvious to test" — and, on where the buttons are,
+        # "both on Sort!, not before, since the settings is meaningless
+        # before", which is why 0 frames is a normal answer here and not a
+        # failure.
+        #   AND THE WINDOW'S COPY FIRST, which is the one that actually
+        # decides. `TaskDressing.inherittaskattrs` (ui_shell.py:3227) copies
+        # `buttoncolumns` off `program.settings` onto the task window — "Make
+        # these directly available" — and that copy is taken when the TASK
+        # WINDOW is built. `SortButtonFrame` reads `self.task.buttoncolumns`,
+        # which resolves through the task→window bridge to that copy, not to
+        # the setting; so does `Sort`'s own `self.buttoncolumns`
+        # (sorting_engine.py:208, :2028).
+        #   That is the whole of "it needs a task restart". The run window and
+        # its button frame are rebuilt constantly — Kent's log of 2026-10-01
+        # shows run window 163 destroyed and rebuilt, then 272, then 375 —
+        # and every rebuild re-read the STALE WINDOW COPY. Only building a new
+        # task window refreshes it.
+        #   Two sources of truth for one setting, with nothing keeping them in
+        # step. Fixed here at the setter rather than by deleting the copy,
+        # because `glosslangs` is copied in the same loop and the readers have
+        # not been audited; see the duplicated-settings item.
+        for holder in (getattr(getattr(self.program,'task',None),'ui',None),
+                       getattr(self.program,'mainwindow',None)):
+            if holder is not None and hasattr(holder,'buttoncolumns'):
+                try:
+                    holder.buttoncolumns=choice
+                except Exception as e:
+                    log.info("could not update the window's buttoncolumns "
+                             "copy on %r: %r",holder,e)
+        # Then the frames already on screen, which hold their own snapshot
+        # taken at BUILD time and would otherwise wait for the next rebuild.
+        try:
+            n=self.program.sort_ui.relayout_group_buttons(choice)
+            log.info("button columns set to %r; re-laid %d sort button "
+                     "frame(s)",choice,n)
+        except Exception as e:
+            log.info("could not re-lay the sort buttons for %r columns: %r",
+                     choice,e)
         if window:
             window.destroy()
     def setmaxslice(self,choice,window=None):
@@ -374,25 +535,34 @@ class SettingsUI(object):
         # per-sense codes (so verified words stay verified). Syllable prep only.
         if self.program.params.cvt()=='S':
             status.after(10,status.maybeboard)
-    def setmaxprofiles(self,choice,window):
+    # `window=None` on all three (2026-09-30): these lines are click-to-edit
+    # now, and a click-to-edit setter is called with ONE argument. Without
+    # the default that is a TypeError inside `on_commit`, which
+    # `ClickToEdit.commit` catches and logs — so the value would change on
+    # screen and nothing would be saved. Same trap as the language setters.
+    def setmaxprofiles(self,choice,window=None):
         self.maxprofiles=choice
         self.program.mainwindow.status.updatemaxprofiles()
-        window.destroy()
-    def setmaxpss(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setmaxpss(self,choice,window=None):
         self.maxpss=choice
         self.program.mainwindow.status.updatemaxpss()
-        window.destroy()
-    def setmulticheckscope(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setmulticheckscope(self,choice,window=None):
         self.cvtstodo=self.program.task.cvtstodo=choice
         self.program.mainwindow.status.updatemulticheckscope()
-        window.destroy()
-    def setglosslang(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setglosslang(self,choice,window=None):    # see setanalang
         self.glosslangs.lang1(choice)
         self.program.mainwindow.status.updateglosslangs()
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
-        window.destroy()
-    def setglosslang2(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setglosslang2(self,choice,window=None):   # see setanalang
         if choice:
             self.glosslangs.lang2(choice)
         elif len(self.glosslangs)>1:
@@ -400,22 +570,26 @@ class SettingsUI(object):
         self.program.mainwindow.status.updateglosslangs()
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
-        window.destroy()
-    def setparserasklevel(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setparserasklevel(self,choice,window=None):   # see setanalang
         self.program.taskchooser.parser.asklevel(choice)
         self.program.mainwindow.status.updateparserasklevel()
-        window.destroy()
-    def setparserautolevel(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setparserautolevel(self,choice,window=None):  # see setanalang
         self.program.taskchooser.parser.autolevel(choice)
         self.program.mainwindow.status.updateparserautolevel()
-        window.destroy()
-    def setps(self,choice,window):
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
+    def setps(self,choice,window=None):               # see setanalang
         self.program.slices.ps(choice)
         self.program.mainwindow.status.updateps()
         self.attrschanged.append('ps')
         self.refreshattributechanges()
         self.program.mainwindow.status.maybeboard()
-        window.destroy()
+        if window:      # None when the value was set in place, not in a dialog
+            window.destroy()
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
 

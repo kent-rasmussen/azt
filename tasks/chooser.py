@@ -12,7 +12,7 @@ from tasks.tasks import (Sound, SortV,
     ReportCitationMultisliceTBackground, ReportCitationMultisliceTLBackground,
     ReportCitationByUFBackground, ReportCitationByUFMulticheckBackground,
     ReportCitationByUFMultichecksliceBackground,
-    WordCollectionCitation, WordCollectionCitationwRecordings,
+    WordCollectionCitationwRecordings,
     WordCollectnParse, WordCollectnParsewRecordings, RecordCitation,
     SortSyllables, SortC, SortT, RecordCitationT,
     WordsParse, TranscribeV, TranscribeC, TranscribeT,
@@ -90,24 +90,40 @@ class TaskChooser(Task):
     def gettask(self,event=None):
         """This function pulls user out of a task, to select from any
         of tasks whose prerequisites are minimally satisfied."""
-        self.ui.withdraw()
-        self.i_am_mainwindow()
-        if self.program.task and self.task.ui.winfo_exists():
-            self.program.task.ui.on_quit()
-        self.whatsdone()
-        if not hasattr(self.ui,'notebook'):
-            self.ui._build_chooser_tabs(self.makeoptions_for,self.maketask)
-        else:
-            self.ui._populate_chooser_tabs()
-        # Select the right tab
-        if self.showreports:
-            self.ui._select_chooser_tab('reports')
-            self.showreports=False
-            self.showingreports=True
-        elif self.showingreports:
-            self.showingreports=False
-        else:
-            self.ui._select_chooser_tab('datacollection')
+        # THE WAIT IS LOAD-BEARING, not decoration — it is what keeps this from
+        # being a full screen of nothing but Quit (NBQ, seen repeatedly in the
+        # field; Kent 2026-09-02, "I saw NBQ here" with all three tab lists
+        # built in the same log). The withdraw() below does NOT hold: the
+        # outgoing task's on_quit RE-DEICONIFIES its parent —
+        #     if not self.parent.iswaiting():
+        #         self.parent.deiconify()          # ui_tkinter.py:1378
+        # — so the chooser came back up EMPTY (first call: no notebook at all)
+        # and stayed visible through whatsdone() plus the tab build, ~2.8s on a
+        # field machine, with the outsideframe Exit button as the only control.
+        # A live wait is precisely the condition that suppresses that reveal, so
+        # wrapping the rebuild fixes the cause rather than covering it, and the
+        # user gets a named wait instead of a blank page.
+        #   thenshow=True: waitdone() reveals the chooser, which is what the
+        # trailing deiconify() did.
+        with self.ui.waiting(_("Getting your task list…"),thenshow=True):
+            self.ui.withdraw()
+            self.i_am_mainwindow()
+            if self.program.task and self.task.ui.winfo_exists():
+                self.program.task.ui.on_quit()
+            self.whatsdone()
+            if not hasattr(self.ui,'notebook'):
+                self.ui._build_chooser_tabs(self.makeoptions_for,self.maketask)
+            else:
+                self.ui._populate_chooser_tabs()
+            # Select the right tab
+            if self.showreports:
+                self.ui._select_chooser_tab('reports')
+                self.showreports=False
+                self.showingreports=True
+            elif self.showingreports:
+                self.showingreports=False
+            else:
+                self.ui._select_chooser_tab('datacollection')
         self.ui.deiconify()
         # Post-PDF blank-chooser freezes (3× by 2026-07-13, always after the
         # chart PDF opened a viewer over us): the chooser deiconifies while
@@ -130,6 +146,9 @@ class TaskChooser(Task):
         # log.info("getting default from option list {}".format(
         #                                             [i[1] for i in optionlist]))
         if self.program.testing and hasattr(self.program,'testtask'):
+            if self.program.testtask is None:
+                self.gettask()
+                return
             self.maketask(self.program.testtask)
         else: #we need better logic here
             if SortV in [i[0] for i in optionlist]:
@@ -174,8 +193,12 @@ class TaskChooser(Task):
                 tasks.append(ReportCitationByUFMulticheckBackground)
                 tasks.append(ReportCitationByUFMultichecksliceBackground)
         elif category == 'datacollection':
+            # TWO COLLECTION TASKS, with and without Parse. The commented
+            # `WordCollectionCitation` here was the no-recordings twin of the
+            # first, and it is gone (plan 2, 2026-09-29) along with the three
+            # other classes that existed only to hard-code an ftype — the
+            # form is now a WORD CHECK on the page, not a class.
             tasks=[
-                    # WordCollectionCitation,
                     WordCollectionCitationwRecordings,
                     # WordCollectnParse,
                     WordCollectnParsewRecordings,
@@ -295,11 +318,24 @@ class TaskChooser(Task):
             l.wrap()
         return w
     def getcawlmissing(self):
+        """Which of the 1700 CAWL slots have no entry yet.
+
+        **4.6 seconds of a 19.5-second boot** (Kent's log, 2026-09-14), for
+        the same reason `LiftXML.getsensefieldnames` cost 32.6: `cawls` is a
+        LIST, so `not in` scanned it linearly — 1700 lookups × ~1700 entries
+        ≈ 2.9 million string comparisons. A set makes each lookup O(1).
+
+        GUARDED ON `str`, deliberately: if `.get('text')` ever returns a
+        single string rather than a collection, `in` means SUBSTRING there,
+        and converting to a set would silently change which slots count as
+        missing. Same membership semantics either way.
+        """
         cawls=self.program.db.get('cawlfield/form/text').get('text')
         # log.info("CAWL ({}): {}".format(len(cawls),cawls))
+        haystack=cawls if isinstance(cawls,str) else set(cawls)
         self.cawlmissing=[]
         for i in range(1700):
-            if '{:04}'.format(i+1) not in cawls:
+            if '{:04}'.format(i+1) not in haystack:
                 self.cawlmissing.append(i+1)
         if len(self.cawlmissing) < 10:
             log.info(_("CAWL missing ({count}): {missing}").format(count=len(self.cawlmissing),
@@ -438,10 +474,19 @@ class TaskChooser(Task):
         BulkASR(self.program).run()
     def changedatabase(self):
         log.debug("Preparing to change database name.")
+        # WHATEVER OPENED THE CHOOSER IS HIDDEN UNTIL IT RETURNS. This hid
+        # `program.task`, which is None when the user is AT the task chooser
+        # — the usual case, since this is a chooser menu item — so the
+        # LiftChooser opened over a still-visible task list, and on the way
+        # back `None.deiconify()` below raised (Kent, 2026-09-22: "left with
+        # two pages: the liftchooser and the task chooser. whichever page lead
+        # to the liftchooser should not be visible until it exits").
+        opener=self.program.task if self.program.task is not None else self
         try:
-            self.program.task.withdraw() #so users don't do stuff while waiting
-        except (AttributeError, Exception):
-            log.info(_("There doesn’t seem to be a task to hide; moving on."))
+            opener.withdraw() #so users don't do stuff while waiting
+        except Exception as e:
+            log.info(_("Couldn’t hide {opener}; moving on ({e})").format(
+                                            opener=type(opener).__name__, e=e))
         curname = self.program.filename
         log.info(_("Current database: {name}").format(name=curname))
         # window=LiftChooser(self,file.getfilenames())
@@ -471,7 +516,7 @@ class TaskChooser(Task):
             self.program.restart()
         else:
             log.info(_("User didn’t select a new database; continuing."))
-            self.program.task.deiconify()
+            opener.deiconify()
         # self.restart(self.filename)
     def usbcheck(self):
         if self.program.splash.exitFlag.istrue():
@@ -532,6 +577,10 @@ class TaskChooser(Task):
         self.program.splash.progress(100)
         if self.program.splash.exitFlag.istrue():
             sysshutdown()
+        if (self.program.testing and hasattr(self.program,'testtask') 
+                and self.program.testtask == "NoChooser"):
+            # self.gettask()
+            return
         self.program.splash.destroy()
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories

@@ -1,9 +1,64 @@
 /* Grid layout — maps tkinter grid() to CSS Grid */
 
+/* THE DOCUMENT STARTS TRANSPARENT, so the window's own themed colour shows
+   through until the theme variables arrive.
+   The window is created in the theme's background colour now, which killed
+   the grey flash BEFORE the page — but the document then paints its own
+   default over it, so Kent saw "themed, then grey, then built"
+   (2026-09-15). `setThemeVars` runs after load, so between first paint and
+   that call there is no `--background` to use; a transparent document has
+   nothing of its own to paint and the native window colour stands in.
+   The fallback in the var() is what makes it work in both phases: absent
+   the variable it is transparent, and the moment the variable exists it is
+   the theme. */
+html, body {
+    background: var(--background, transparent);
+    margin: 0;
+    /* A DEFINITE HEIGHT, OR NOTHING BELOW CAN HAVE ONE. Percentage heights
+       resolve against the parent's COMPUTED height, and `auto` is not a
+       value to take a percentage of — so with `html`/`body` unsized,
+       `.wv-window`'s `height: 100%` was `auto`, `#root`'s child rows were
+       content-sized, and a scroller's `max-height: 100%` was no constraint
+       at all. That chain is what made `grid_rowconfigure(weight=…)` and the
+       `100%` term of `--scrollcap` unable to do anything, however correctly
+       either was written (2026-09-16, the sort page's double scroll).
+       Released while measuring, below: a fit asks "how big would this like
+       to be", and a page pinned to the window cannot answer. */
+    height: 100%;
+}
+
+#root {
+    height: 100%;
+}
+
 .wv-container {
     display: grid;
     width: 100%;
     height: 100%;
+}
+
+/* CONTENT-SIZED ROWS MUST NOT STRETCH, now that containers have a definite
+   height. CSS Grid's `align-content: normal` behaves as `stretch`, which
+   hands leftover space to AUTO tracks — so a definite-height page would
+   inflate its title row to fill the window, which is not what tkinter does
+   with `weight=0`. `start` keeps an unweighted row at its content size and
+   leaves the leftover to `fr` rows, which is tkinter's rule exactly (and its
+   `grid_anchor` default, 'nw'). `fr` is unaffected: fr tracks consume free
+   space during track sizing, before alignment has anything to distribute.
+
+   THE ROW AXIS ONLY. `justify-content` would be the same argument for
+   columns, and it is NOT made here: widths were already definite (`body` has
+   always had one), so nothing about column distribution changes with this
+   commit, and changing it anyway would put an untested second alteration
+   inside one measurement. If a page turns out to spread its columns where
+   tkinter would bunch them, that is its own finding.
+
+   The splash overrides this with `align-content: center` and wins on
+   specificity — see `body[data-page="splash"]` below. */
+#root,
+.wv-frame,
+.wv-container {
+    align-content: start;
 }
 
 /* Widget base */
@@ -68,6 +123,54 @@
     user-select: none;
 }
 
+/* A checkbox whose SIZE was asked for. tkinter draws this control from a
+   theme image pair, so a page sizes it with image_pixels/large_images (e.g.
+   tasks.py:1171-1175 asks for 12px) — and a native <input> ignores
+   width/height in WebKit unless its default appearance is off. Turning that
+   off removes the engine's check mark, so the mark is drawn here.
+
+   FILL PLUS A TICK, not colour: a filled box with a mark reads as checked
+   without depending on hue, so it still says "checked" to a colourblind
+   user. The tick is a rotated border rather than a glyph, so it needs no
+   font and scales with the box.
+
+   The width/height themselves are set inline by _setBoxSize, because they
+   are a per-widget number rather than a rule. */
+.wv-sized-box {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    flex: none;
+    box-sizing: border-box;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    background: var(--white);
+    position: relative;
+    cursor: pointer;
+}
+/* A TICK IN AN EMPTY BOX, not a filled block. The first version filled the
+   whole box with `currentColor` and drew the tick in the background colour;
+   it was unambiguous and, as Kent put it, "not very attractive" — a row of
+   solid dark squares. An outlined box with a tick is the conventional look
+   and still says "checked" by SHAPE rather than by hue, which is what
+   matters (~/.claude-sil/CLAUDE.md: never make colour the carrier of
+   meaning). */
+.wv-sized-box:checked::after {
+    content: '';
+    position: absolute;
+    left: 22%;
+    top: 10%;
+    width: 44%;
+    height: 66%;
+    border: solid currentColor;
+    border-width: 0 2px 2px 0;
+    transform: rotate(40deg);
+}
+.wv-sized-box:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
 /* RadioButton */
 .wv-radiobutton {
     display: flex;
@@ -85,13 +188,49 @@
     list-style: none;
     padding: 0;
 }
+/* A SELECTED ROW IS MARKED BY A SHAPE AS WELL AS A COLOUR. The highlight
+   alone carried the whole meaning, and colour may accompany meaning but
+   never be the thing that bears it (~/.claude-sil/CLAUDE.md). It matters
+   more here than on most controls: a MULTIPLE list is read by scanning for
+   which rows are picked, so if the highlight is hard to tell from the
+   background the list cannot be read at all.
+   The gutter is reserved on every row, selected or not, so the text does
+   not shift sideways when a row is picked. */
 .wv-listbox .wv-listbox-item {
-    padding: 2px 4px;
+    padding: 2px 4px 2px 1.4em;
     cursor: pointer;
+    position: relative;
 }
 .wv-listbox .wv-listbox-item.selected {
     background: var(--highlight);
-    color: white;
+    color: var(--white);
+    font-weight: bold;
+}
+.wv-listbox .wv-listbox-item.selected::before {
+    content: '\2713';           /* a tick, not a bullet: this is a choice */
+    position: absolute;
+    left: 0.3em;
+}
+
+/* Drag and drop feedback — DRAWN BY THE STYLESHEET, not by the engine.
+   WebKitGTK drags a translucent snapshot of the element; QtWebEngine drags
+   nothing at all, so a working drag looked dead under Qt (Kent,
+   2026-09-14). These two classes are set by makeDraggable/makeDroppable, so
+   both engines show the same thing.
+   Told apart by OUTLINE STYLE — dashed = "this is what you are dragging",
+   solid and thicker = "this is where it would land" — because colour may
+   accompany meaning but must never be the thing carrying it. `outline`
+   rather than `border`: it is drawn outside the box and reflows nothing. */
+.wv-dragging {
+    opacity: 0.5;
+    outline: 3px dashed #555;
+    outline-offset: -3px;
+    cursor: grabbing;
+}
+.wv-drop-target {
+    outline: 4px solid #555;
+    outline-offset: -4px;
+    background: var(--activebackground);
 }
 
 /* Combobox */
@@ -100,25 +239,164 @@
     border: 1px solid #999;
     padding: 2px 4px;
 }
+/* The editable form (state='normal'): an <input> plus a dropdown we draw
+   ourselves, because a <datalist> only ever suggests what matches the text
+   already in the field — see the comment in widgets.js. The wrapper carries
+   the widget's grid placement, so it must not add a box of its own, and it
+   is the positioning context for the list. */
+.wv-combobox-wrap {
+    display: inline-block;
+    position: relative;
+    background: none;
+    border: 0;
+    padding: 0;
+}
+/* A LIST MUST LOOK LIKE A LIST. Switching the readonly form from <select>
+   to our own input (widgets.js — a <select> only reports a CHANGE, so
+   picking the value already selected reported nothing) took the native
+   dropdown arrow with it, and a readonly text box with no arrow reads as
+   somewhere to type: Kent, 2026-09-16, "parse levels are entry fields?
+   those should be lists, right?" They were lists; they just did not say so.
+     Drawn as a TRIANGLE — a shape, not a colour, so it carries the same
+   meaning for a colourblind reader (~/.claude-sil/CLAUDE.md). `currentColor`
+   so it follows the theme's text colour without a second variable to keep
+   in step. */
+.wv-combobox-wrap::after {
+    content: '';
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    margin-top: -2px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+    pointer-events: none;     /* the input underneath still takes the click */
+}
+/* Room for the arrow, so the value never runs under it. */
+.wv-combobox-wrap > .wv-combobox {
+    padding-right: 18px;
+}
+.wv-combobox-list {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    z-index: 30;
+    min-width: 100%;
+    max-height: 12em;
+    overflow-y: auto;
+    background: var(--white);
+    border: 1px solid #999;
+    /* It floats over the page, so it needs to read as a layer above it —
+       the shadow is the only thing separating it from the text beneath. */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+.wv-combobox-option {
+    padding: 2px 6px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.wv-combobox-option:hover {
+    background: var(--activebackground);
+}
 
-/* Progressbar */
+/* Progressbar — mirrors the tkinter TProgressbar style set in
+   ui_tkinter.py:300: bar = theme background, trough = activebackground.
+   NOT --highlight: that theme entry is 'red' in every theme and is read by
+   nothing else in the program, so using it here painted the bar red (fixed
+   2026-09-08). The fill's leading edge carries a border so how far along the
+   bar is stays readable by SHAPE, not by telling two greens apart. */
+/* A BAR NEEDS A LENGTH OF ITS OWN. This had a height and no width, so a
+   horizontal bar collapsed to nothing wherever its container did not happen
+   to stretch it — and it looked correct for as long as every container did
+   (Kent, 2026-09-14: "progress bars are worse", after a container changed
+   from stretching to hugging). ttk's Progressbar carries a default length
+   for the same reason; a bar whose extent depends on who holds it cannot
+   show a proportion.
+   min-width, not width, so it still stretches where there IS room — the
+   splash bar is `min(80%, 40em)` and must stay that. */
 .wv-progressbar {
-    background: #e0e0e0;
+    background: var(--activebackground);
     border: 1px solid #999;
     height: 20px;
+    min-width: 10em;
     position: relative;
     overflow: hidden;
 }
 .wv-progressbar-fill {
-    background: var(--highlight);
+    background: var(--background);
+    border-right: 2px solid #555;
+    box-sizing: border-box;
     height: 100%;
     width: 0%;
-    transition: width 0.2s;
+    /* SHORTER THAN THE INTERVAL BETWEEN COMMANDS, or the bar never arrives
+       where it was told: at 0.2s against a value every 30ms the drawn fill
+       lagged six steps behind and the whole sweep read as a slow drift that
+       reversed direction (Kent's gallery, 2026-09-14). Linear rather than
+       the default ease, so a steady climb looks steady. */
+    transition: width 0.1s linear;
+}
+/* At 0% and 100% the edge line would sit on the trough border; hide it so it
+   doesn't read as a stray tick. */
+.wv-progressbar-fill[style*="width: 0%"],
+.wv-progressbar-fill[style*="width: 100%"] {
+    border-right: 0;
 }
 
-/* ScrollingFrame */
+/* A vertical bar: tall, narrow, and filling from the BOTTOM — the shape
+   tkinter draws for orient='vertical', and the one a reader expects of a
+   column. `orient` was being dropped in ui_webview, so both orientations
+   came out as the same horizontal bar (Kent's gallery, 2026-09-14).
+   justify-content:flex-end is what anchors the fill low; without it a
+   partial bar would hang from the top and read as draining rather than
+   filling. */
+.wv-progressbar-vertical {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: 20px;
+    min-width: 20px;        /* undo the horizontal bar's length */
+    height: 6em;
+}
+.wv-progressbar-vertical .wv-progressbar-fill {
+    width: 100%;
+    height: 0%;
+    border-right: 0;
+    border-top: 2px solid #555;
+    transition: height 0.1s linear;   /* see the horizontal fill above */
+}
+.wv-progressbar-vertical .wv-progressbar-fill[style*="height: 0%"],
+.wv-progressbar-vertical .wv-progressbar-fill[style*="height: 100%"] {
+    border-top: 0;
+}
+
+/* ScrollingFrame
+   `overflow: auto` ALONE NEVER SCROLLS. It says "scroll if the content
+   overflows", and with no height constraint the box simply grows to fit, so
+   it never overflows and never scrolls: twenty rows rendered as twenty rows
+   and the WINDOW scrolled instead (Kent's gallery, 2026-09-14 — "This is one
+   long scrolling frame, not three independent ones").
+
+   This falsifies a documented assumption. `windowsize`/`reflow` are no-ops in
+   ui_webview, filed under "correct as no-ops — the browser sizes and lays out
+   its own boxes" (the webview-when-to-finish item, PILE 1). For WIDTH that
+   holds. For HEIGHT it does not: a browser will not cap a box's height by
+   itself, and capping the viewport is most of what a scroller IS. tkinter's
+   ScrollingFrame computes that cap in `_caps`/`windowsize`.
+
+   max-height rather than height, so a short list still hugs its content
+   instead of leaving an empty well below it — which is the behaviour the
+   tkinter one has. An explicit `height=` from the caller is set inline by
+   the widget and wins over this. */
 .wv-scrolling-frame {
     overflow: auto;
+    /* `--scrollcap`: 60vh while drawing (a scroller should be 60% of the
+       window it is in), 60% of the SCREEN while measuring — a cap that
+       rises as the window rises cannot bound the window. See "The caps, and
+       why they are variables". */
+    max-height: var(--scrollcap, 60vh);
+    min-height: 0;
 }
 
 /* Menu */
@@ -138,24 +416,663 @@
 .wv-menu-item:hover {
     background: var(--activebackground);
 }
+/* THE MENU BAR (ui_webview._set_menubar). Same chrome as the popup menu, so
+   the two read as one kind of thing, and laid across the top of the page
+   because a Wayland client may not place a native menu and pywebview's own is
+   set once at start() while this app rebuilds its menus per task.
+   Submenus open on click rather than hover: a hover-only menu cannot be
+   opened at all on a touch screen, and field machines have them. */
+.wv-menubar {
+    display: flex;
+    background: var(--menubackground);
+    border-bottom: 1px solid #999;
+    font: inherit;
+    user-select: none;
+}
+.wv-menubar-top {
+    padding: 4px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    position: relative;
+}
+.wv-menubar-top:hover {
+    background: var(--activebackground);
+}
+.wv-menubar-drop,
+.wv-menu-sub {
+    display: none;
+    position: absolute;
+    background: var(--menubackground);
+    border: 1px solid #999;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    z-index: 1001;
+    min-width: 160px;
+}
+.wv-menubar-drop { top: 100%; left: 0; }
+.wv-menu-sub    { top: 0; left: 100%; }
+/* `wv-menu-open` — the class `_buildMenuRows` actually sets. It was
+   `wv-menubar-open` here while the JS set `wv-menu-open`, so no dropdown
+   could ever display: the bar drew, and nothing on it opened (Kent,
+   2026-09-24: "menus showed, but nothing was clickable"). Renaming in one
+   file and not the other is the whole fault. */
+.wv-menu-open > .wv-menubar-drop,
+.wv-menu-open > .wv-menu-sub {
+    display: block;
+}
+/* A cascade row needs somewhere for its submenu to hang from, and a marker
+   saying there is more — a submenu that only appears on click is invisible
+   without one. */
+.wv-menu-cascade {
+    position: relative;
+}
+.wv-menu-cascade::after {
+    content: " \25B8";      /* small right-pointing triangle */
+}
+.wv-menubar-top.wv-menu-cascade::after {
+    content: "";            /* top-level items drop DOWN; no arrow wanted */
+}
+/* A rule between groups of entries (Menu.add_separator). */
+.wv-menu-sep {
+    height: 0;
+    border-top: 1px solid #999;
+    margin: 3px 0;
+}
+/* A cascade we could not serialise: shown, and shown as unavailable, rather
+   than dropped — an absent entry is indistinguishable from a bug. */
+.wv-menu-disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* A popup panel (ui_webview.Popup): a menu-shaped box holding a grid of
+   ordinary widgets, positioned by the page at the pointer. Same chrome as
+   the menu so the two read as one kind of thing. */
+.wv-popup {
+    position: fixed;
+    display: grid;
+    background: var(--menubackground);
+    border: 1px solid #999;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    z-index: 1000;
+    padding: 4px;
+}
 
 /* ToolTip */
+/* FIXED, NOT ABSOLUTE. It is positioned from `getBoundingClientRect()`,
+   which is in VIEWPORT coordinates, while `absolute` here resolves against
+   the document — the two agree only while the page is scrolled to the top,
+   and this page scrolls (body `overflow:auto`). So a tooltip on a scrolled
+   page was placed by as much as the scroll offset away from the widget it
+   belonged to, which is a tooltip floating in empty space (Kent, 2026-09-15).
+   `fixed` makes the stylesheet agree with the arithmetic.
+     Wraps rather than running off the edge, matching the tkinter helper's
+   180px `wraplength`: a long tip is the one most worth reading. */
 .wv-tooltip {
-    position: absolute;
+    position: fixed;
     background: #ffffe0;
     border: 1px solid #000;
     padding: 2px 6px;
     font-size: calc(10px * var(--scale));
     z-index: 2000;
     pointer-events: none;
+    max-width: min(24em, 90vw);
+}
+
+/* TOP-LEVEL COLUMNS SIZE TO THEIR CONTENT, like tkinter's grid.
+   A page's outermost columns are created implicitly (widgets.js sets
+   display:grid; nothing declares grid-template-columns), so they defaulted to
+   `auto` — which shares out the available width and made a heading wrap with
+   half the window empty beside it ("What do you want to / work on?" next to a
+   picture). tkinter widens a column to its widest child instead, which is why
+   the same page does not wrap there.
+
+   Scoped to #root ON PURPOSE, not to every .wv-frame: nested frames are where
+   the sort board's alignment problem lives, and changing their sizing while
+   that is unresolved would tangle two issues. The max-width is the safety
+   valve — without it one long unbroken string could demand a column wider
+   than the display. */
+#root {
+    grid-auto-columns: max-content;
+}
+
+/* NO TEXT MAY DEMAND MORE WIDTH THAN THE WINDOW HAS — the same principle as
+   the image rule below, and for the same reason.
+
+   `max-content` columns let a paragraph ask for its FULL UNWRAPPED width,
+   and then the window fits itself to that: the sound-problems notice came
+   out 1680px wide (the whole screen) with one line of text across the top
+   and the rest empty (macOS, 2026-09-11). Kent put the fault in the right
+   place — "the biggest problem here is that the window sizes to the
+   paragraph in this case, which is wider than the screen. the window should
+   be bound by the screen (at least on initial draw), and the text should
+   wrap within that."
+
+   So the bound is VIEWPORT-RELATIVE and applies at ANY DEPTH. It replaces a
+   `60em` version of the same safety valve that was scoped to labels one or
+   two levels under #root, and therefore missed every notice, dialog and
+   nested page — the places where prose actually lives.
+
+   `em` was the wrong unit for this job as well as the wrong scope: it caps
+   LINE LENGTH, which is a typographic choice that belongs to the caller (and
+   which `availablexy` already measures per box). `vw` caps what the widget
+   can DEMAND OF THE WINDOW, which is a layout invariant nobody should be
+   able to opt out of. A caller wanting narrower text still sets
+   `wraplength`; this only stops anything exceeding the display. */
+.wv-label {
+    /* TWO CAPS, AND THE COLUMN ONE IS THE LOAD-BEARING HALF. 92vw stops a
+       label demanding more than the DISPLAY; `100%` stops it demanding more
+       than the CELL IT SITS IN, and only the second prevents clipping: a
+       label 520px across a 1050px window may be 92vw = 966px wide and still
+       be inside its screen budget while running 436px past the window edge.
+       That is the right-hand crop on the Add-and-Parse page — text cut
+       mid-word at the frame edge while the fit reported the page as 1022
+       wide, because a cap is not a width and the label measured narrower
+       than it later drew (Kent, 2026-09-15).
+       `min-width: 0` is what lets it happen at all: a grid item's automatic
+       minimum is its min-content size, so without this a long word keeps
+       the column wide no matter what the max-width says. */
+       `--demandcap` rather than `92vw` directly: it IS 92vw while the page
+       is being read, and 92% of the SCREEN while the page is being measured.
+       See "The caps, and why they are variables" above — using the window's
+       own width during a fit made the fit ratchet the window wider on every
+       measurement. */
+    max-width: 92vw;
+    max-width: min(var(--demandcap, 92vw), 100%);
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+/* NEWLINES IN A MESSAGE ARE THE AUTHOR'S, AND HTML THROWS THEM AWAY.
+   A tkinter Label breaks a line wherever the string says `\n` and wraps the
+   rest at `wraplength`; the default CSS `white-space: normal` does only the
+   wrapping, so every `\n` in the app's prose became a space. The
+   transcription notice — a lead line, a bulleted list of what is missing,
+   then a closing paragraph — arrived as one undifferentiated run (macOS,
+   2026-09-11).
+
+   `pre-wrap` is the pair of tkinter's behaviour: honour explicit breaks, wrap
+   what is too long. It applies to EVERY label, not just ones with a
+   wraplength, because tkinter honours `\n` unconditionally too.
+
+   The cost is that runs of spaces and leading indentation now show. That is
+   also what tkinter does with them, so a string that looks wrong here looked
+   wrong there — fix the string, not this rule. */
+.wv-label {
+    white-space: pre-wrap;
+}
+
+/* AN IMAGE MUST NEVER DEMAND MORE WIDTH THAN THE WINDOW HAS.
+   `max-content` columns size to their widest child, so a large picture makes
+   its column as wide as the picture — and if the window is not resized to
+   match, the picture is CLIPPED at the window edge (seen under Qt, which
+   appears to ignore resize()). `max-width: 100%` does not help: the
+   percentage is of the column, and the column is as wide as the image.
+   Viewport units are the constraint that actually binds, so the image can
+   shrink instead of overflowing.
+
+   THE POINT IS NOT TO DEPEND ON resize(): the page should look right in
+   whatever window it is given. Growing the window to fit is then an
+   improvement rather than a requirement — which matters because resize
+   support varies by backend and we have three. */
+   VIEWPORT-RELATIVE WHILE DRAWING, screen-relative while measuring — see
+   "The caps, and why they are variables". `45vw` is what makes the picture
+   shrink into whatever window it gets instead of being clipped; `45vw`
+   DURING A FIT grew the picture every time the window chasing it grew,
+   which is the Add-a-Word illustration being enormous and cut off at once,
+   through three successive fits (Kent, 2026-09-15). */
+#root .wv-img {
+    max-width: var(--imgcapw, 45vw);
+    max-height: var(--imgcaph, 60vh);
+    object-fit: contain;
+}
+
+/* AN EMPTY LABEL IS NOT A GAP. `proselabel` pads every label after the
+   first in a line, so two widgets gridded side by side read as one sentence
+   with a space between them ("Looking at CVCV" + "Noun words (51)", which
+   without it ran together as "CVCVNoun"). But a prose field can COLLAPSE:
+   the gloss-language line replaces both the 'and' and the second language
+   with a single "only", and two empty-but-padded widgets then put two
+   spaces in front of it — Kent, 2026-09-17: "if you leave both spaces, then
+   you get two spaces before 'only'."
+
+   The emptiness is dynamic — the text comes from a variable that changes —
+   so the padding cannot be decided when the label is built. `:empty` is
+   decided by the browser on every change, which is exactly the right
+   granularity.
+
+   NOTE it matches only a TRULY empty element: a label set to ' ' keeps its
+   margin. The durable cross-backend fix is for a collapsing field to
+   `grid_remove()` rather than blank itself, which costs nothing in either
+   backend; this handles it without every such caller having to know. */
+.wv-label:empty {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* The in-page "Please Wait" cover (ui_webview.Toplevel._show_page_wait).
+
+   IT HAS TO ACTUALLY COVER. The first version put it in `frame`'s own grid
+   cell and relied on being a later sibling, which is neither opaque enough
+   nor big enough to depend on: Kent's window 389 showed the sort board's
+   group-count labels reading straight through "Please Wait…" (2026-09-16).
+   Content building behind the cover is the point of it; seeing that content
+   is the fault.
+
+   `position: FIXED`, not absolute, and that is the second half of the same
+   fault. Absolute against `outsideframe` made it opaque but not STILL:
+   `outsideframe` sits in the window's centred cell (columns 0 and 2 are
+   weighted — see `Window.__init__`), so as the board builds behind the
+   cover the content grows, the spacers rebalance, and the cover slides with
+   it. Kent asked the right question of the first fix — "opaque, but will it
+   move around, as it was doing?" — and the answer was yes. Fixed to the
+   VIEWPORT, nothing behind it can move it, because the page's own layout is
+   no longer its containing block.
+
+   The z-index is above page content and below `.wv-menu` (1000): a context
+   menu raised over a waiting page should still be reachable. `.wv-exit`
+   below is raised above it deliberately — see there.
+
+   CENTRED, both ways (Kent: "it would be nice to cnter the message"). A
+   wait screen has one thing on it, so there is nothing for a top-left
+   anchor to line up with — the text just sat in the corner of a 1920x1200
+   field. `place-content: center` puts the block in the middle of the
+   window; `justify-items: center` centres each line within it, and
+   `text-align` does the same for a line that wraps. The message is prose,
+   so it also gets a reading width rather than the full 1920 (the same
+   reason the splash caps its own text at 40em). */
+.wv-page-wait {
+    position: fixed;
+    inset: 0;
+    background: var(--background);
+    z-index: 100;
+    padding: var(--pady) var(--padx);
+    place-content: center;
+    justify-items: center;
+    text-align: center;
+}
+/* `justify-content`, NOT just `text-align`. `.wv-label` is a flex
+   container, so its text is an anonymous flex item sized to its content and
+   parked at flex-start — `text-align: center` then centres the LINES WITHIN
+   that item and cannot move the item itself. That is why the two-line
+   message looked centred (its short line centring inside a wide item) while
+   the "Please Wait…" title sat left of everything. */
+.wv-page-wait .wv-label {
+    max-width: min(48em, 90vw);
+    justify-content: center;
+}
+/* AND THE IMAGE, belt as well as braces. The label holding it is centred in
+   its column by `sticky=''` (see `_show_page_wait`), which is the load-
+   bearing half; this covers the case where the label ends up wider than the
+   picture anyway — `.wv-image-only` and the `#root .wv-img` caps both apply
+   here and neither says anything about horizontal placement. */
+.wv-page-wait .wv-img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* THE BAR MATCHES THE TEXT BLOCK. It had an arbitrary `min(32em, 70vw)`,
+   which is a width unrelated to anything else on the screen — Kent:
+   "this bar and the line above it should be the same length, one way or the
+   other." Letting `sticky='ew'` stretch it to the grid column instead means
+   the column is sized by the longest line and the bar is exactly that wide,
+   so the two agree by construction rather than by a number that happens to
+   look close. `.wv-progressbar`'s own `min-width: 10em` still keeps a very
+   short message from producing a stub. */
+
+/* THE DOCUMENT SCROLLBAR CANNOT BE COVERED — it is painted by the engine
+   outside the layout viewport, so no z-index reaches it (Kent, 2026-09-16:
+   "the scrollbar shows through, as well"). It is there because the page
+   behind the cover is taller than the window WHILE it builds, so the fix is
+   to stop the document scrolling for as long as the cover is up.
+   `setPageWaitCover` in widgets.js toggles this class. */
+html.wv-waiting,
+html.wv-waiting body {
+    overflow: hidden;
+}
+
+/* EXIT IS HIDDEN UNDER A WAIT, and that is Kent's call against my first
+   answer. I raised it above the cover on the grounds that a 21-second wait
+   with no way out is the mirror of the nothing-but-Quit page. But the
+   button lives in `outsideframe`, which sits in the window's CENTRED cell —
+   so as the page builds behind the cover the spacers rebalance and the
+   button wanders around an otherwise still screen. Kent, 2026-09-16: "the
+   exit button is still moving around; rather it be invisible."
+     Nobody is stranded: `takekioskscreen` binds Escape to
+   `releasefullscreen`, which brings the window's own decorations and close
+   box back. So the choice is between a button that jitters and a keystroke
+   that does not, and the quiet screen wins.
+     Stated as `visibility`, not left to paint order: the cover is `fixed`
+   and the button `relative`, and relying on which wins is how it came to be
+   visible in the first place. */
+.wv-exit {
+    position: relative;
+}
+html.wv-waiting .wv-exit {
+    visibility: hidden;
+}
+
+/* Notebook — tab strip above, one panel at a time below.
+   The tab strip wraps rather than clipping: the chooser's three tab labels
+   are translated, so their width is not knowable in advance. */
+.wv-notebook {
+    min-width: 0;
+    min-height: 0;
+}
+.wv-tabstrip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    align-items: flex-end;
+}
+.wv-tab {
+    padding: var(--ipady) calc(var(--ipadx) * 4);
+    background: var(--background);
+    border: 1px solid rgba(0, 0, 0, .25);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    user-select: none;
     white-space: nowrap;
 }
+.wv-tab:hover {
+    background: var(--activebackground);
+}
+.wv-tab-selected {
+    background: var(--offwhite);
+    font-weight: bold;
+}
+.wv-tabpanels {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    background: var(--offwhite);
+    border: 1px solid rgba(0, 0, 0, .25);
+    padding: var(--pady) var(--padx);
+    overflow: auto;
+}
+.wv-tabpanel {
+    width: 100%;
+}
+
+/* Image + text on a label or button (tkinter's `compound`).
+   The image is capped rather than fixed: a chooser icon must not force its
+   cell wider than the layout allows - the case that produced 3-letter word
+   wraps under Tk. */
+.wv-compound {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--ipady) * 2);
+    min-width: 0;
+}
+.wv-compound-top, .wv-compound-bottom { flex-direction: column; }
+.wv-compound-left, .wv-compound-right  { flex-direction: row; }
+/* compound='center' PUTS THE TEXT ON THE IMAGE, which is a stack and not a
+   direction — so it is the one compound value that flex cannot express, and
+   it fell through to side-by-side. The sort page's refresh button is exactly
+   this: `sort_buttons.py:958` draws the member count INSIDE the circular
+   arrow (`image=…, text=self._n, compound='center'`), and webview put the
+   number next to the icon instead (Kent, 2026-09-15: "tk has those numbers
+   inside the refresh loop; is that possible?").
+   A one-cell grid with both children in the same area centres one over the
+   other without absolute positioning, so the box still sizes to the image
+   and the text still centres if it grows. */
+.wv-compound-center {
+    display: inline-grid;
+    place-items: center;
+}
+.wv-compound-center > .wv-img,
+.wv-compound-center > .wv-img-text {
+    grid-area: 1 / 1;
+}
+.wv-compound-center > .wv-img-text {
+    /* Over a line-drawing icon, plain text can land on a black stroke. The
+       halo is legibility only — the number carries the meaning, and it is
+       readable with or without colour. */
+    text-shadow: 0 0 3px var(--white), 0 0 2px var(--white);
+    z-index: 1;
+}
+.wv-img {
+    max-width: 100%;
+    height: auto;
+    flex: 0 0 auto;
+}
+/* An IMAGE-ONLY widget: no text, so no arrangement. The image states its
+   own size and the widget takes it, rather than being a flex container
+   whose single item can end up with no height at all. */
+.wv-image-only {
+    display: inline-block;
+    line-height: 0;         /* no text, so no room for a text line */
+}
+.wv-image-only > .wv-img {
+    max-width: none;
+    display: block;
+}
+.wv-img-text {
+    min-width: 0;
+    overflow-wrap: break-word;
+    text-align: center;
+}
+
+/* ── Splash ─────────────────────────────────────────────────────────────
+   Centred, because it is a title card rather than a work surface — Kent,
+   2026-09-08: "I would prefer better alignment and wrapping… centering more".
+
+   Under tkinter the splash's parts carry their own padx/pady, which arrives
+   here as a per-widget margin and leaves a ragged left edge (the title at one
+   inset, the loading line at another, the blurb at a third). Centring removes
+   the problem rather than reconciling three insets, and it is what a title
+   card wants anyway.
+
+   Scoped by data-page so nothing else is affected: a sort board wants the
+   opposite treatment. */
+body[data-page="splash"] #root,
+body[data-page="splash"] .wv-frame {
+    justify-items: center;
+    align-content: center;
+    text-align: center;
+}
+body[data-page="splash"] #root {
+    padding: var(--pady) var(--padx);
+}
+/* TWO REASONS the first attempt centred only the title:
+   1. the splash's parts sit inside frames (outsideframe > frame), so
+      `#root > *` never reached them — hence `.wv-frame` above and below;
+   2. tkinter's `sticky` is translated to an INLINE `justify-self`, and an
+      inline style beats a container's `justify-items`. So any widget with a
+      sticky kept hugging its own edge, and `text-align: center` inside a
+      left-hugging box does nothing you can see. It has to be overridden. */
+body[data-page="splash"] #root > *,
+body[data-page="splash"] .wv-frame > * {
+    justify-self: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+/* Measure text for READING, not for the window: prose set to the full width
+   of a 1000px window wraps at a length nobody reads comfortably, and it is
+   what makes the last line look orphaned. */
+body[data-page="splash"] .wv-label {
+    max-width: 40em;
+}
+body[data-page="splash"] .wv-img {
+    max-height: var(--splashimgcap, 55vh);            /* see #root .wv-img */
+    object-fit: contain;
+}
+body[data-page="splash"] .wv-progressbar {
+    width: min(80%, 40em);
+}
+
+/* MEASURING STATE — set for the duration of one fit and removed again.
+   `fit_to_content` asks "how big would this like to be", and it cannot be
+   answered while the layout is pinned to the window: `#root` holds
+   `.wv-window`, which is `width:100%;height:100%`, so sizing #root to
+   max-content while its child demands 100% OF #root is circular and the
+   child goes on reporting the size it already had. That is why two fits in
+   a row disagreed by a few pixels instead of agreeing exactly — 1050x592
+   then 1305x716 on the same page, with the content still clipped at both
+   (Kent's log, 2026-09-15).
+   Releasing both, plus anything else that stretches to the window, lets the
+   content state its own width and height once. `!important` because
+   `sticky` arrives as an inline style and would otherwise win. */
+html.wv-measuring #root,
+html.wv-measuring .wv-window,
+html.wv-measuring .wv-container {
+    width: max-content !important;
+    height: max-content !important;
+    max-width: none !important;
+    max-height: none !important;
+    place-content: start !important;
+}
+/* AND THE DOCUMENT ITSELF, since 2026-09-16. `html`/`body` now carry
+   `height: 100%` — that is what finally gives the page a definite height for
+   `grid_rowconfigure(weight=…)` and the `100%` term of `--scrollcap` to
+   resolve against — and a page pinned to the window is exactly what cannot
+   answer "how big would you like to be". Same release, same reason as the
+   three above; it has to name `html` and `body` separately because the
+   measuring class sits ON `html`. */
+html.wv-measuring,
+html.wv-measuring body {
+    height: max-content !important;
+    max-height: none !important;
+}
+
+/* AND NOTHING STRETCHES TO ITS TRACK WHILE WE MEASURE.
+   The five releases above make the CONTAINERS content-sized; they do not
+   stop a grid ITEM from stretching to fill the track it sits in, which is
+   `align-self`'s default and applies in the BLOCK axis only. So a frame
+   went on reporting the window's height after everything above it had been
+   released, and the union of children — which is what the probe returns
+   when it exceeds the max-content answer — read the window back to us.
+
+   MEASURED, not reasoned: Kent's run of 2026-09-30, window 21's second fit.
+   `probe 970x742, client 1088x849`, measured 844, `tallest DIV.wv-widget
+   wv-frame[960x839 at 64,5]` — 5+839=844 in an 849 client, while that
+   frame's own children ended at 791. Fifty-three pixels of stretch, counted
+   as content.
+
+   THAT IS HALF OF A RATCHET, and the other half was `pad = max(guess,
+   learned)` keeping a 28px allowance the chrome did not need: measure the
+   window's height, add 28, resize, measure the new window's height, add 28.
+   Window 47, two double-clicks and NO rebuild: 1051 → 1079 → 1107 → 1135.
+   Either half alone is harmless; together they never converge. This is the
+   rule at the top of the sizing item — measure against something that
+   cannot change as a result of the measurement — and the block axis was
+   the one place still breaking it.
+
+   Block axis only, deliberately: `justify-self` is untouched, widths have
+   always been definite, and width already converged (+14, +7, +4 on that
+   same window) so there is nothing there to fix. One axis, one change.
+
+   IF A PAGE MEASURES SHORT because its real layout does depend on stretch,
+   the window comes out too short and `_grow_if_overflowing` corrects it
+   from the DISPLAYED page — the failure direction is the one that is
+   already verified rather than predicted. */
+html.wv-measuring .wv-widget {
+    align-self: start !important;
+}
+
+/* ── The caps, and why they are variables ───────────────────────────────
+   A CAP ON WHAT A WIDGET MAY DEMAND has to answer two different questions,
+   and one unit cannot do both:
+
+     DISPLAYING — "how wide may you draw?" The answer is relative to THIS
+     WINDOW. That is what stops a paragraph running off the edge of whatever
+     window it ended up in, so prose wraps instead of needing a horizontal
+     scroll to read one sentence. Kent, 2026-09-15: "I frankly don't care if
+     that user facing message were wrapped or grew the window, but it should
+     do one of those, rather than cropping."
+
+     MEASURING — "how wide would you LIKE to be?" The answer must not
+     mention the window, because the window is what we are computing. With
+     `vw` here the measured content size was a function of the window size,
+     so `fit_to_content` sized the window from a number that then changed
+     because of it: the Add-and-Parse page walked 654x605 → 1043 → 1282x707
+     over three fits and was cropped at every step, and a double-click
+     re-fit of the SAME page with no rebuild moved its right edge 966 → 1132
+     (Kent's logs, 2026-09-15). How far it ran depended on how many refits a
+     build happened to fire, which is what made it look intermittent.
+
+   So each cap is a variable: viewport-relative by default, redefined
+   against the DISPLAY for the duration of a fit. Every widget rule below
+   reads the variable, and the inline `max-width` that `wraplength` sets
+   reads it too — so both states are handled in one place instead of each
+   rule having to know about measuring. The `vw`/`vh` fallbacks mean an
+   unset variable degrades to the old behaviour, never to no cap. */
+:root {
+    --demandcap: 92vw;          /* .wv-label, and wraplength's second term */
+    --imgcapw: 45vw;            /* #root .wv-img */
+    --imgcaph: 60vh;
+    /* A SCROLLER IS BOUNDED BY ITS BOX, NOT BY A FRACTION OF THE SCREEN.
+       `60vh` was a stand-in for "don't let a scroller eat the window", and
+       as a stand-in it is wrong in both directions: in a window sized to its
+       own content it throws away 40% of that window and scrolls anyway (the
+       Sound Card Settings page cut its record button at ~450 of a 700px
+       content area, with 240px of empty field below it — Kent, 2026-09-15:
+       "No idea what that space below is doing, but it shouldn't trigger a
+       scroll yet"), and in a page where the scroller is one element among
+       many it is unrelated to how much room that element actually has.
+         `100%` is the box it was given. When the row has a definite height
+       the scroller fills it and scrolls only past that; when the row is
+       content-sized the percentage is indefinite, the cap does not apply,
+       and the content states its full height — which is what the fit wants
+       to hear, and leaves scrolling as the last resort it is meant to be.
+       The screen-relative term is the backstop, so a thousand-row list asks
+       for a window and not a mile. */
+    --scrollcap: min(100%, calc(var(--screenh, 100vh) * 0.9));
+    --splashimgcap: 55vh;
+}
+html.wv-measuring {
+    --demandcap: calc(var(--screenw, 100vw) * 0.92);
+    --imgcapw: calc(var(--screenw, 100vw) * 0.45);
+    --imgcaph: calc(var(--screenh, 100vh) * 0.6);
+    --scrollcap: calc(var(--screenh, 100vh) * 0.6);
+    --splashimgcap: calc(var(--screenh, 100vh) * 0.55);
+}
+/* THE LABEL CAP STAYS, deliberately. Releasing `max-width` here was tried
+   and is wrong: a label with no `wraplength` would then measure as ONE
+   UNWRAPPED LINE, so a paragraph would demand thousands of pixels and every
+   page with prose in it would ask for the whole screen. The cap is what
+   makes a label's measured width mean "as wide as I would wrap at".
+   A label capped at 92vw that starts halfway across the page does then
+   demand more width than the window has — and that is the RIGHT answer for
+   the fit to hear: it asks for a wider window (there is room, 1305 of 1920
+   was in use) instead of clipping the text. */
 
 /* Window (toplevel) */
 .wv-window {
     display: grid;
     width: 100%;
     height: 100%;
+    /* CONTENT CENTRED IN THE WINDOW, which is what tkinter already does and
+       this did not. `ui_tkinter.Window.post_tk_init` gives rows and columns
+       0 and 2 `weight=3` and leaves row/column 1 unweighted, so the content
+       frame sits in the middle of whatever space the window has; here the
+       tracks were packed at the top-left, so a page with room to spare left
+       everything huddled in one corner of it — the fault in Kent's kiosk
+       screenshot (2026-09-15: "kiosk screens should have their content
+       centered in the kiosk").
+       `place-content` centres the TRACKS, not each item inside its own
+       cell, so a page's internal alignment is untouched: the grid keeps its
+       shape and is placed in the middle of the surplus.
+       TWO DECLARATIONS, and the second is the important one: plain `center`
+       centres an OVERFLOWING grid too, which pushes its top-left off the
+       window where no scrollbar can reach it — the clipping fault this item
+       is about, reintroduced by the fix for the other half of it. `safe
+       center` falls back to `start` exactly when the content does not fit.
+       An engine that does not know `safe` keeps the first declaration, so
+       nothing is lost where it is not understood. */
+    /* PER AXIS, because `safe` is per axis and these pages overflow in one
+       of them. A sort page is taller than the window (its rows scroll) and
+       narrower than it — but `place-content: safe center` applied the
+       overflow fallback to BOTH axes, so a vertically-overflowing page also
+       stopped centring horizontally and sat against the left edge (Kent,
+       2026-09-15: "page content is left, not centered", then "and page
+       centering"). Splitting them centres the axis that fits and leaves the
+       axis that does not alone, which is what `safe` is for. */
+    place-content: center;
+    align-content: safe center;
+    justify-content: safe center;
 }
 
 /* Hidden state */

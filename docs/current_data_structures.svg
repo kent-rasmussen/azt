@@ -17,7 +17,7 @@
 
   <!-- Title -->
   <text class="h1" x="32" y="40">AZT sort data structures — CURRENT (as-is)</text>
-  <text class="sub" x="32" y="62">Companion to unified_sort_model.md (v0.4.0). One shared engine, parameterized by `cvt`, with per-tier divergence in storage. (B&amp;W: text is black; box tints/bars only group columns.)</text>
+  <text class="sub" x="32" y="62">Companion to the unified sort model proposal (v0.4.0). One shared engine, parameterized by `cvt`, with per-tier divergence in storage. (B&amp;W: text is black; box tints/bars only group columns.)</text>
 
   <!-- ===================== BAND A: SHARED ===================== -->
   <text class="band" x="32" y="86">SHARED — cvt-parameterized (one engine for every tier)</text>

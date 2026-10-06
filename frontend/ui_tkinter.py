@@ -11,6 +11,22 @@ logsetup.setlevel('INFO',log) #for this file
 # logsetup.setlevel('DEBUG',log) #for this file
 log.info("Importing ui_tkinter.py")
 import unicodedata
+# DIAG scroller timing — the Wayland freeze audit. Kent, 2026-09-14:
+# 37s and 42s inside single scroller passes building the alphabet chart, while
+# **GTK builds the same page in ~0s** — so the cost is Tk's synchronous
+# geometry round-trips on this display, not the content or the layout maths.
+#
+# MODULE level, not instance, and that is the point: a pass needs to count the
+# passes that ran INSIDE its own `update_idletasks()`, which is the one number
+# separating "one slow call" from "an unbounded cascade". The `_sizing` guard
+# on `windowsize` stops a scroller re-entering ITSELF; it cannot see a cascade
+# that hops between scroller instances, and neither could the log.
+SLOW_SCROLLER_PASS_S=2.0    # below this, say nothing; a settled page is quiet
+_scroller_passes=0          # every _windowsize entry, program-wide
+_scroller_depth=0           # how many are on the stack right now
+_scroller_ids=set()         # distinct scrollers in the current outermost pass
+_sibling_probes=0           # grid_info() round-trips in _measure_siblings
+_said_display_stack=False   # X11 vs Wayland, reported once per run
 import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
@@ -18,6 +34,7 @@ import tkinter.ttk
 import tkinter.dnd
 from utilities import file #for image pathnames
 from utilities import fonts as fontlib #family aliases + font-file search
+from frontend import theme_data #themes + imagelist, shared with ui_webview
 from random import randint #for theme selection
 import datetime
 try: #PIL
@@ -37,7 +54,7 @@ from utilities.display import USING_WAYLAND
 # XWayland update guard — ONE-LINE TOGGLE. Set True to make UI.update/
 # update_idletasks skip the synchronous X round-trip on Wayland (the old guard);
 # False = always call through (current default — pulling it correlated with the
-# window transition working). See docs/wayland_freeze_audit.md.
+# window transition working). See the Wayland freeze audit.
 WAYLAND_UPDATE_GUARD=False
 log.info("Display server: %s (USING_WAYLAND=%s; Wayland update guard %s)",
          os.environ.get('XDG_SESSION_TYPE','?'), USING_WAYLAND,
@@ -61,7 +78,11 @@ BooleanVar=tkinter.BooleanVar
 """These classes have no dependencies"""
 class Theme(object):
     """docstring for Theme."""
-    imagelist=[ ('transparent','AZT stacks6.png'),
+    # ONE definition, in frontend/theme_data.py — see setthemes() below for
+    # what hand-copying this into ui_webview cost (35 of 81 images missing
+    # there, all failing silently).
+    imagelist=theme_data.IMAGELIST
+    _imagelist_was_here=[ ('transparent','AZT stacks6.png'),
                         ('tall','AZT clear stacks tall.png'),
                         ('small','AZT stacks6_sm.png'),
                         ('icon','AZT stacks6_icon.png'),
@@ -302,7 +323,16 @@ class Theme(object):
                                 background=self.background,
                                 )
     def setthemes(self):
-        self.themes={'lightgreen':{
+        """ONE definition, in frontend/theme_data.py. The dict used to be
+        written out here and hand-copied into ui_webview.Theme, where the copy
+        was four entries long — so Kent's own theme (`Kim`) did not exist under
+        webview and was silently replaced by greygreen (2026-09-11)."""
+        self.themes=dict(theme_data.THEMES)
+
+    def _setthemes_was_here(self):
+        """The former literal, kept for one release so a reviewer can diff it
+        against theme_data.THEMES rather than trust a move. Delete after."""
+        return {'lightgreen':{
                             'background':'#c6ffb3',
                             'activebackground':'#c6ffb3',
                             'offwhite':None,
@@ -495,6 +525,15 @@ class Theme(object):
                 'tiny':tkinter.font.Font(family=charis, size=tiny),
                 'default':tkinter.font.Font(family=charis, size=default),
                 'italic':tkinter.font.Font(family=charis, size=default, slant='italic'),
+                # For marking PART of a short string — a Tk Label carries one
+                # font for its whole text, so a highlighted segment has to be its
+                # own Label in the same size (see make_check_button).
+                'bold':tkinter.font.Font(family=charis, size=default,
+                                            weight='bold'),
+                # Bold ALONE didn't carry at this size against a raised button
+                # (Kent 2026-08-24), so the marked segment gets both.
+                'boldunderline':tkinter.font.Font(family=charis, size=default,
+                                            weight='bold', underline=True),
                 'fixed':tkinter.font.Font(family='Courier', size=small)
                     }
         """additional keyword options (ignored if font is specified):
@@ -505,24 +544,89 @@ class Theme(object):
         underline - font underlining (0 - none, 1 - underline)
         overstrike - font strikeout (0 - none, 1 - strikeout)
         """
+    BASELINE_DPI=96.0   # what every hard-coded pixel size in this app assumes
     def setscale(self):
+        """UI scale = how big a glyph should be PHYSICALLY, and nothing else.
+
+        THE PRINCIPLE (Kent 2026-08-31, "I'd like to not keep looking over my
+        shoulder for it"): ask the one authority that actually knows, instead of
+        inferring a physical quantity from numbers that don't carry one.
+
+        This used to compute `this screen as a ratio of Kent's 1920x1080
+        (286x508mm)` over four ratios — two pixel, two millimetre — and keep
+        whichever deviated MOST from 1. Three things were wrong with that, and
+        every past fix here was a guard bolted onto the third:
+          1. the reference was a MACHINE, not a physical quantity, so `scale`
+             meant "bigger than Kent's old laptop" — meaningless elsewhere;
+          2. ONE number answered TWO independent questions — how big a glyph
+             should be (physical/DPI) and how much content fits (real estate).
+             A 4K 15" laptop and a 4K 40" TV have identical pixel counts and
+             opposite needs, which is why a big screen produced huge text
+             instead of more text;
+          3. the rule MAXIMIZED — it deliberately selected the most extreme
+             input, so any single bad reading dominated the whole UI. Hence the
+             mm plausibility test, the no-op band and the clamp: each one
+             narrowing the blast radius of a structurally fragile rule.
+
+        DPI is the right quantity, and on Windows the USER HAS ALREADY DECLARED
+        IT via display scaling — that setting is literally them answering "how
+        big should UI be on this machine", and every other app on their desktop
+        already obeys it. So we obey it too, and stop having our own opinion.
+
+        Correct whichever way Tk is built, which is the property the old rule
+        lacked:
+          * DPI-aware process  → fpixels reports 192 at 200%, we scale by 2.0;
+          * DPI-UNAWARE process → Windows reports 96, we scale by 1.0, and
+            WINDOWS magnifies the window itself.
+        Both land on the right physical size; only the sharpness differs. The
+        old rule, given bad input, produced a wrong size confidently.
+
+        NOT answered here, deliberately: whether the content FITS. That is the
+        real-estate question and it belongs to availablexy() and to layout
+        (columns, wrapping, scrolling). Conflating the two is what produced
+        years of this."""
         root=self.program.tk_root #tkinter.Tk() #just to get these values
-        modifier=1 #2 seemed necessary in the transition to xwayland; no idea why
-        h = self.program.screenh = root.winfo_screenheight()/modifier
-        w = self.program.screenw = root.winfo_screenwidth()/modifier
-        log.debug(f'{root.winfo_screenmmwidth()=}')
-        log.debug(f'{root.winfo_screenmmheight()=}')
-        log.debug(f'{root.winfo_screenheight()=}')
-        log.debug(f'{root.winfo_screenwidth()=}')
-        wmm = root.winfo_screenmmwidth()/modifier
-        hmm = root.winfo_screenmmheight()/modifier
+        h = self.program.screenh = root.winfo_screenheight()
+        w = self.program.screenw = root.winfo_screenwidth()
+        # winfo_fpixels('1i') = pixels per inch, straight from the platform.
+        dpi=0
+        try:
+            dpi=float(root.winfo_fpixels('1i'))
+        except Exception as e:
+            log.info("Could not read screen dpi (%s); assuming %.0f",
+                    e,self.BASELINE_DPI)
+        # A plausibility band, not a computation: anything outside it means the
+        # platform returned nonsense, and 1.0 is the safe reading.
+        if 48.0 <= dpi <= 480.0:
+            self.scale=dpi/self.BASELINE_DPI
+        else:
+            if dpi:
+                log.error("Implausible screen dpi %.1f; using %.0f dpi (scale "
+                        "1.0) rather than trusting it.",dpi,self.BASELINE_DPI)
+            self.scale=1.0
+        if 0.98 < self.scale < 1.02: #don't rescale the whole UI for 1%
+            self.scale=1.0
+        # Corruption backstop only. 2.0 is a LEGITIMATE reading now (a 200%
+        # Windows display), so this is deliberately not tight — unlike the 1.5
+        # cap that briefly guarded the old rule, where a 2.0 meant a misread.
+        clamped=min(max(self.scale,0.5),3.0)
+        if clamped!=self.scale:
+            log.error("UI scale %.2f out of range; clamping to %.2f.",
+                    self.scale,clamped)
+            self.scale=clamped
+        log.info("Screen %dx%d at %.1f dpi → UI scale %.2f (baseline %.0f dpi)",
+                w,h,dpi,self.scale,self.BASELINE_DPI)
+        return
+        # ---- superseded ratio-of-Kent's-screen computation, kept unreachable
+        # for one release in case a field machine reports a dpi we haven't seen;
+        # delete once 1.15 has run in the field. ----
+        wmm = root.winfo_screenmmwidth()
+        hmm = root.winfo_screenmmheight()
         #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
         hx=h/1080
         wx=w/1920
         hmmx=hmm/286
         wmmx=wmm/508
-        log.debug("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
-        log.debug("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
         # PIXELS ARE THE TRUSTWORTHY SIGNAL; mm are ADVISORY (Kent 2026-07-29,
         # "worst on windows machines"). This used to take min/max over all four
         # ratios and keep whichever deviated MOST from 1 — so a single bad number
@@ -560,7 +664,18 @@ class Theme(object):
         # Last-resort clamp: whatever the readings, no machine wants a UI at a
         # quarter size or triple size, and an unbounded scale multiplies every
         # font and every image.
-        clamped=min(max(self.scale,0.5),3.0)
+        #   UPPER BOUND TIGHTENED 3.0 → 1.5 (Kent 2026-08-31). The rule above is
+        # "keep whichever ratio deviates MOST from 1", and the ratios are this
+        # screen against a 1920x1080 reference — so a screen Tk reports as 4K
+        # yields 2.0 and EVERYTHING doubles: fonts, images, and every dimension
+        # derived from them. On Windows that is a live risk rather than a
+        # theoretical one, because whether Tk reports native or OS-scaled pixels
+        # depends on the process's DPI awareness, and when it reports native
+        # pixels on a display the OS is ALREADY magnifying, we magnify on top.
+        # 3.0 was never a bound anyone wanted to reach; 1.5 still allows a
+        # genuinely large screen a bigger UI while keeping a misread from
+        # tripling a field machine's text. Below 1.5 nothing changes.
+        clamped=min(max(self.scale,0.5),1.5)
         if clamped!=self.scale:
             log.error("Computed UI scale %.2f is out of range; clamping to %.2f. "
                     "Screen %dx%d (%sx%smm).",self.scale,clamped,int(w),int(h),
@@ -822,7 +937,7 @@ class Gridded():
                         'column','columnspan','colspan',
                         'r','c','col',
                         'padx','pady','ipadx','ipady',
-                        'gridwait','draggable','droppable'
+                        'gridwait','draggable','droppable','dragthreshold'
                     }
     gridkwargs_for_child_buttons={'b'+i for i in gridkwargs}
     def pre_tk_init(self,**kwargs):
@@ -863,9 +978,51 @@ class Gridded():
                 pass
     """The following are for draggable widgets"""
     def draggable_bindings(self):
-        self.bind("<ButtonPress-1>", self.on_drag_start)
+        if self.dragthreshold:
+            # A widget that is ALSO clickable can't start its drag on the press —
+            # dnd_start grabs the pointer and the click never lands. So defer to
+            # the first motion past `dragthreshold` pixels: press and release stay
+            # the widget's own, so a click still clicks and a right-click menu
+            # still posts, while a deliberate drag still drags. Opt-in, so the
+            # alphabet chart's draggable Labels (no click action) are untouched.
+            self.bind("<ButtonPress-1>", self._arm_drag, add='+')
+            self.bind("<B1-Motion>", self._maybe_drag, add='+')
+            self.bind("<ButtonRelease-1>", self._disarm_drag, add='+')
+        else:
+            self.bind("<ButtonPress-1>", self.on_drag_start)
         self.bind("<Enter>", self.dnd_focus_on)
         self.bind("<Leave>", self.dnd_focus_off)
+    def _arm_drag(self,event):
+        self._drag_origin=(event.x_root,event.y_root)
+    def _disarm_drag(self,event=None):
+        self._drag_origin=None
+    def _maybe_drag(self,event):
+        # Once a drag is running, FORWARD motion to it. DndHandler binds
+        # "<Motion>" on this same widget, but our "<B1-Motion>" is the more
+        # specific pattern, so Tk dispatches ours and dnd's never runs — no
+        # target is ever found and the release has nothing to commit. This is
+        # the cost of starting the drag from motion instead of from the press.
+        h=getattr(self._root(),'_DndHandler__dnd',None)
+        if h is not None:
+            h.on_motion(event)
+            self._autoscroll(event)
+            return
+        o=getattr(self,'_drag_origin',None)
+        if not o:
+            return
+        if (abs(event.x_root-o[0])<self.dragthreshold
+                and abs(event.y_root-o[1])<self.dragthreshold):
+            return #still a click, as far as we know
+        self._drag_origin=None
+        # dnd_start reads event.num to know which button is dragging: it rejects
+        # `num > 5` and builds its release binding as
+        # "<B%d-ButtonRelease-%d>" % (num, num). A <B1-Motion> event carries
+        # num='??', so starting a drag from motion either dies comparing str to
+        # int or binds "<B??-ButtonRelease-??>" — and tkintermod swallows both,
+        # which is why this failed silently in the UI *and* the log. Say which
+        # button we are on; it's a press-and-move, so it is button 1.
+        event.num=1
+        self.on_drag_start(event)
     def dnd_bindings(self):
         self.initial_widget=False
     def on_drag_start(self,event):
@@ -889,7 +1046,65 @@ class Gridded():
             lines=[i['text'].split('\n')[0] for i in (widget,event.widget)]
             log.info(f"{e}: {lines}")
         event.widget._root()._DndHandler__dnd.initial_widget.on_motion(event)
+    AUTOSCROLL_MS=60      # between notches while parked at an edge
+    AUTOSCROLL_MARGIN=24  # px from the edge that counts as "past it"
+    def _scrollable_ancestor(self):
+        """The nearest ancestor that can scroll — the ScrollingFrame's Canvas,
+        for a group button. Cached: the widget tree doesn't move mid-drag."""
+        w=self
+        while w is not None:
+            if hasattr(w,'yview_scroll'):
+                return w
+            w=getattr(w,'master',None)
+        return None
+    def _autoscroll(self,event):
+        """Scroll the enclosing scroller while a drag is held near its edge, so a
+        drop target that is off-screen is reachable at all. Without this, a group
+        can only be dropped on one that happens to be visible."""
+        if not hasattr(self,'_autoscroll_canvas'):
+            self._autoscroll_canvas=self._scrollable_ancestor()
+        c=self._autoscroll_canvas
+        if c is None:
+            return
+        try:
+            top=c.winfo_rooty(); height=c.winfo_height()
+        except Exception:
+            return
+        m=self.AUTOSCROLL_MARGIN
+        if event.y_root < top+m:
+            d=-1
+        elif event.y_root > top+height-m:
+            d=1
+        else:
+            d=0
+        self._autoscroll_dir=d
+        if d and not getattr(self,'_autoscroll_job',None):
+            self._autoscroll_tick(c)
+        elif not d:
+            self._autoscroll_stop()
+    def _autoscroll_tick(self,c):
+        if not getattr(self,'_autoscroll_dir',0):
+            self._autoscroll_job=None
+            return
+        try:
+            c.yview_scroll(self._autoscroll_dir,'units')
+        except Exception as e:
+            log.info("drag autoscroll stopped: %s",e)
+            self._autoscroll_job=None
+            return
+        self._autoscroll_job=self.after(self.AUTOSCROLL_MS,
+                    lambda: self._autoscroll_tick(c))
+    def _autoscroll_stop(self):
+        j=getattr(self,'_autoscroll_job',None)
+        if j:
+            try:
+                self.after_cancel(j)
+            except Exception:
+                pass
+        self._autoscroll_job=None
+        self._autoscroll_dir=0
     def dnd_end(self, target, event):
+        self._autoscroll_stop() #never leave it scrolling after the drop
         self.initial_widget=False
         if target and hasattr(target,'dnd_focus_off'):
             target.dnd_focus_off()
@@ -944,6 +1159,7 @@ class Gridded():
     @staticmethod
     def _measure_siblings(w):
         """Walk up grid tree, return total (width, height) of non-overlapping siblings."""
+        global _sibling_probes  # counted, not used: see SLOW_SCROLLER_PASS_S
         parentclasses=['Toplevel','Tk','Wait','Window','Root',
                         'Canvas','ScrollingFrame']
         otherwidth=0
@@ -971,6 +1187,7 @@ class Gridded():
                     # crash (no grid_info). Seen on the syllable Task-1 → Task-2
                     # board transition, where the "all checked!" notice is a child.
                     continue
+                _sibling_probes+=1  # one X round-trip; see SLOW_SCROLLER_PASS_S
                 sib_grid_info=sib.grid_info()
                 if 'row' not in sib_grid_info:
                     continue
@@ -996,15 +1213,86 @@ class Gridded():
                 w=w.parent
             else:
                 return otherwidth, otherheight
+    MIN_AVAILABLE=200 # px floor; below this a measurement is wrong, not tight
+    def workarea(self):
+        """The USABLE screen, not the raw screen.
+
+        winfo_screenheight() is the whole display, taskbar/panel included — and
+        on Windows a window cannot be dragged above the top edge, so anything
+        that overflows the bottom is unreachable RATHER than merely awkward
+        (Kent 2026-08-31). wm_maxsize() is what the window manager will actually
+        allow a window to be, which on Windows is the work area (screen minus
+        taskbar) and on X11 is normally the screen — so it is never worse than
+        what we had, and better exactly where it needs to be.
+
+        Trusted only when it is a plausible REDUCTION of the screen: some WMs
+        report enormous sentinel values, and a multi-monitor X setup can report
+        the whole virtual desktop."""
+        try:
+            root=self._root()
+            sw,sh=root.winfo_screenwidth(),root.winfo_screenheight()
+            mw,mh=root.wm_maxsize()
+            if 0.5*sw <= mw <= sw and 0.5*sh <= mh <= sh:
+                return mw,mh
+            return sw,sh
+        except Exception as e:
+            log.info("work area unavailable (%s); using the raw screen",e)
+            try:
+                return self.winfo_screenwidth(),self.winfo_screenheight()
+            except Exception:
+                return 1024,768
     def availablexy(self):
-        """Compute self.maxwidth/self.maxheight from available screen space."""
+        """Compute self.maxwidth/self.maxheight — the REAL-ESTATE question.
+
+        Deliberately separate from theme.scale, which answers "how big should a
+        glyph be" (see Theme.setscale). Conflating the two is what made a large
+        screen produce large text instead of more text.
+
+        Two fixes, 2026-08-31:
+        * THE CHROME ALLOWANCES SCALE. 50/50/100 were raw pixels, so on a 200%
+          display they under-counted by half — a title bar really is ~100px
+          there. They are chrome, and chrome scales with the UI.
+        * THERE IS A FLOOR. This subtracts _measure_siblings' total from the
+          screen, and on a busy page that sum can approach or exceed it,
+          yielding a tiny or NEGATIVE maxwidth. Label.wrap() takes
+          min(self.wraplength, self.maxwidth), so a tiny maxwidth wraps text at
+          a few pixels — which is precisely the "one character per line" button
+          text in the field screenshots. A measurement that says there is no
+          room is wrong; treat it as wrong, and say so, rather than laying out
+          against it."""
         otherwidth, otherheight = self._measure_siblings(self)
-        titlebarHeight=50
-        borderSize=50
+        s=getattr(getattr(self,'theme',None),'scale',1) or 1
+        titlebarHeight=int(50*s)
+        borderSize=int(50*s)
         otherwidth+=borderSize*2
-        otherheight+=titlebarHeight+100
-        self.maxheight=self.winfo_screenheight()-otherheight
-        self.maxwidth=self.winfo_screenwidth()-otherwidth
+        otherheight+=titlebarHeight+int(100*s)
+        w,h=self.workarea()
+        self.maxwidth=w-otherwidth
+        self.maxheight=h-otherheight
+        # RECORD THAT A MEASUREMENT IS WRONG — don't just clamp it and carry on
+        # (Kent 2026-09-02: "can we not address those more directly?", after this
+        # came up three times in one day). The floor stopped the absurd values
+        # from reaching layout, but 200 is then STILL a layout number, and it is
+        # a number nobody measured: text wrapped at 200px is 3-4 letters at the
+        # button font's size, which is exactly the "one-character lines" this
+        # warning has been predicting all along. The docstring above already
+        # says a measurement claiming there is no room must be treated as WRONG
+        # rather than laid out against; these flags are what let callers do that.
+        #   The measurement itself is left alone deliberately: _measure_siblings
+        # subtracts siblings from the SCREEN, so any page whose content is
+        # legitimately taller or wider than the display (worst seen: 4689 of
+        # 1080) goes negative by construction. Fixing that means budgeting
+        # against the PARENT's allocation instead, which is a real change to how
+        # every page sizes itself. Until then, the honest thing is to know when
+        # the answer is unusable.
+        self.maxwidth_measured=True
+        self.maxheight_measured=True
+        for attr,total in (('maxwidth',w),('maxheight',h)):
+            if getattr(self,attr) < self.MIN_AVAILABLE:
+                _floored(attr,getattr(self,attr),total,self,
+                        otherwidth,otherheight,self.MIN_AVAILABLE)
+                setattr(self,attr,self.MIN_AVAILABLE)
+                setattr(self,attr+'_measured',False)
     def __init__(self, *args, **kwargs):
         """this removes gridding kwargs from the widget calls"""
         self._grid=False
@@ -1022,6 +1310,10 @@ class Gridded():
             self.gridwait=kwargs.pop('gridwait',False)
         self.draggable=kwargs.pop('draggable',False)
         self.droppable=kwargs.pop('droppable',False)
+        # px of movement before a draggable that is ALSO clickable commits to a
+        # drag; 0/False = the old start-on-press behaviour.
+        self.dragthreshold=kwargs.pop('dragthreshold',0)
+        self._drag_origin=None
         self.super_kwargs=kwargs #whenever we make a change
         super().__init__(*args, **kwargs)
 class GridinGridded(Gridded):
@@ -1084,6 +1376,15 @@ class UI():
                 pass
         self.withdrawn=kwargs.pop("withdrawn",True if isinstance(self,Root)
                                                     else False)
+        # KIOSK AT CREATION, as a kwarg, because that is what the webview
+        # backend needs and a call site may not say different things to the
+        # two backends. There it becomes `create_window(fullscreen=True)`,
+        # so the window is never seen at another size; here `-fullscreen` is
+        # an attribute that can be set whenever, so the kwarg is simply
+        # honoured at the end of construction and means the same thing.
+        #   Popped before tkinter sees kwargs either way: an unknown option
+        # reaches Tk as `-kiosk` and raises TclError, i.e. no window.
+        self.kiosk=kwargs.pop("kiosk",False)
         kwargs=self.pre_tk_init(**kwargs)
         if hasattr(self,'parent') and self.parent:
             super().__init__(self.parent, *args, **kwargs)
@@ -1091,6 +1392,12 @@ class UI():
             super().__init__(*args, **kwargs)
         if self.withdrawn:
             self.withdraw()  # withdraw immediately, before post_tk_init work
+        if self.kiosk:
+            try:
+                self.takekioskscreen()
+            except Exception as e:
+                log.info("kiosk=True at creation failed for %s: %s",
+                            type(self).__name__, e)
         # self.post_tk_init()
         self.waitcancelled=False
 class Exitable():
@@ -1134,8 +1441,121 @@ class Exitable():
             if (self.parent and
                 self.parent.winfo_exists() and
                 not isinstance(self.parent,Root)):
-                if not self.parent.iswaiting():
+                # NEVER REVEAL AN EMPTY PAGE. This deiconify was a confirmed
+                # producer of the nothing-but-Quit screen: a task on its way out
+                # re-revealed its parent, and if the parent's frame had just
+                # been emptied (or never built), the user got a fullscreen
+                # kiosk page whose only control was the outsideframe Exit
+                # button — which a field user came close to pressing, "the very
+                # reason to NEVER have that kind of page visible". Traced from
+                # OBT's log 2026-09-02: chooser withdrawn, outgoing task's
+                # on_quit put it straight back up, then ~2.8s of building.
+                #   Kent's rule, and the reason this is a guard rather than a
+                # fix at the one call site: "we shouldn't be making pages
+                # visible, counting on them having meaning later." Either it has
+                # content, or it does not take the screen.
+                #   has_content, not a local reimplementation: it tests
+                # w.frame (Exit lives in outsideframe, so testing the window
+                # would count a bare page as built) and it is the SAME predicate
+                # QuitOnlyGuard uses to decide this exact question — two copies
+                # of it would drift. Imported in-function: visibility does
+                # `from frontend import ui`, so a module-level import here is
+                # circular.
+                #   The trade, accepted deliberately: a flow that relied on
+                # being revealed while momentarily empty now stays hidden, which
+                # the visibility watchdog reports as NO WINDOW. That is why the
+                # skip is logged — a page that should have appeared is then
+                # named here, not left to be guessed at.
+                from frontend.visibility import has_content
+                #   LOG THE DECISION, ALL THREE WAYS (2026-09-09). The watchdog
+                # reports state 25s later, which cannot say what was decided
+                # here: its `content=` is this very `has_content` (see
+                # visibility.py:312), so comparing the two tells us nothing —
+                # the open question is a SEQUENCE, not a predicate. On the
+                # 2026-09-09 NWAA (Add and Parse Words with Audio → pick a
+                # sense letter → nothing) has_content was true, which means
+                # this fell to the deiconify below and the window was withdrawn
+                # again by something else — OR iswaiting() was true here and
+                # the wait never revealed it. These lines distinguish those.
+                # See the fullscreen-with-only-Quit item.
+                #   Never let a diagnostic break teardown: same rule as the
+                # resetframe guard.
+                try:
+                    log.info("on_quit reveal decision for {}: has_content={} "
+                             "iswaiting={} state={} (closing {})".format(
+                                self.parent,
+                                has_content(self.parent),
+                                self.parent.iswaiting(),
+                                self.parent.state(),
+                                type(getattr(self,'task',self)).__name__))
+                except Exception as e:
+                    log.info("on_quit reveal decision: couldn't report ({})"
+                             "".format(e))
+                if self.parent.iswaiting():
+                    #a wait is already covering the screen; it will reveal.
+                    # If a NO WINDOW follows this line, that assumption is what
+                    # failed, and the wait is the thing to chase — not this guard.
+                    log.info("on_quit: leaving {} to the wait that covers it"
+                             "".format(self.parent))
+                elif not has_content(self.parent):
+                    from frontend.visibility import report_empty_page
+                    report_empty_page('on_quit',self.parent,'not revealed',
+                            'closing {}'.format(
+                                type(getattr(self,'task',self)).__name__))
+                else:
+                    # If a NO WINDOW follows THIS line, the reveal happened and
+                    # something withdrew the window again afterwards — look for
+                    # the later withdraw, not for a missing deiconify.
+                    log.info("on_quit: revealing {}".format(self.parent))
                     self.parent.deiconify()
+                    # REVERTED 2026-09-03, minutes after being added: scheduling
+                    # the commit with after_idle DEADLOCKED — faulthandler
+                    # showed `callit → UI.update → tkinter update` wedged, i.e.
+                    # the deferred callback itself. Worse than the symptom it
+                    # targeted: mapped-but-blank leaves mainloop IDLE with only
+                    # a dead surface, whereas this stopped the event loop.
+                    #   THE LESSON, which generalises past this call site: one
+                    # idle turn is NOT outside the transition's flight window.
+                    # Deferring does not make a synchronous X round-trip safe
+                    # near a window-state change; it only makes it later. So
+                    # there is no placement of update() that fixes this, which
+                    # is the audit's own conclusion arrived at from the other
+                    # direction — the fix has to REMOVE the round-trip (inline
+                    # progress, no second window to paint), not reposition it.
+                    # See the Wayland freeze audit.
+                    #
+                    # ORIGINAL RATIONALE, kept because the diagnosis stands and
+                    # only the remedy failed:
+                    # COMMIT THE SURFACE, ON A LATER TURN. This reveal has
+                    # never drained, and on Wayland a deiconify that is not
+                    # followed by a commit can leave the window MAPPED BUT
+                    # BLANK AND INPUT-DEAF — "nothing but theme", less even the
+                    # Exit button, because nothing paints at all. Kent hit it
+                    # 2026-09-03 (and the same shape is the parked 2026-07-13
+                    # incident in the Wayland freeze audit).
+                    #   The evidence for this path specifically: the blank
+                    #   window appears right after "Shutting down runwindow",
+                    #   i.e. it is the PARENT revealed here; there is no
+                    #   EMPTY PAGE (on_quit) line, so has_content was true and
+                    #   the page did have content that never reached the
+                    #   screen; and the faulthandler shows mainloop IDLE, so
+                    #   the app is healthy and only the surface is dead.
+                    #   after_idle, NOT an inline update(): a synchronous
+                    # round-trip inside a deiconify's flight window is
+                    # precisely the XWayland deadlock (both ingredients at
+                    # once), which is what a bare drain here would reintroduce
+                    # and what removing the drain in waitdone was trying to
+                    # avoid. Deferring gets the commit without putting the
+                    # round-trip inside the transition — the audit's principle
+                    # 2, "geometry that needs a settled layout runs in the
+                    # loop, not synchronously".
+                    #   NB this reveal races the status window's own
+                    # deiconify + -topmost + synchronous reflow when a
+                    # NotifyUser fires at the same moment (as it did: "Not
+                    # Done!"). If blanking survives this change, that collision
+                    # is the next suspect — see the wait-below-status-window item.
+                    # (the after_idle(update) that stood here is gone — see
+                    # REVERTED above)
         self.cleanup()
         self.destroy() #do this for everything
     def __init__(self, *args, **kwargs):
@@ -1173,6 +1593,16 @@ class Waitable(Exitable):
             ww=Wait(root)
             root.ww=ww
         return ww
+    # How long an operation must run before it is worth a dialog. Below this
+    # the work finishes and nobody sees anything; above it the dialog appears
+    # as it always did. Short enough that a slow operation still feels
+    # answered, long enough that ordinary work passes in silence.
+    # Same value and same name as ui_webview's module-level constant. They
+    # were `WAIT_DELAY_MS` here and `_WAIT_DELAY_MS` there for an hour, which
+    # the backend-parity audit duly reported as a gap — correctly, since a
+    # difference with no meaning is exactly what it exists to catch.
+    WAIT_DELAY_MS = 400
+
     def wait(self,msg=None,cancellable=False,thenshow=False):
         ww=self._waitwindow()
         if ww is None:
@@ -1192,6 +1622,25 @@ class Waitable(Exitable):
         log.info(f"updating wait: {self.winfo_viewable()|thenshow=} "
                 f"{self.winfo_viewable()=} {thenshow=} ")
         self.showafterwait=self.winfo_viewable()|thenshow
+        # IMMEDIATELY. A 400ms delay was tried on 2026-09-11 and REVERTED the
+        # same day: it cannot work for this app's slow operations, and it
+        # failed in the worst possible direction.
+        #
+        # `after()` runs on the event loop. The work that follows a wait()
+        # here is SYNCHRONOUS — a task window build, a LIFT parse, a verify
+        # list — so the loop does not run until that work is finished, so the
+        # scheduled dialog appears only after it is no longer needed. The
+        # indicator was therefore guaranteed ABSENT during exactly the
+        # operations it exists for. Kent, on a scroller pass that took 35s:
+        # "35s with no window. almost reported NWAA, but it eventually
+        # showed."
+        #
+        # That is not a tuning problem. A delay needs the work to yield, and
+        # this app's does not. The flicker the delay was meant to fix —
+        # "the page opens (almost?) complete, then goes away to build the wait
+        # dialog, which returns almost immediately" — is fixed in the webview
+        # backend by not withdrawing the page at all, which was the other half
+        # of that change and stands on its own.
         if self.showafterwait:
             _w=time.perf_counter()
             self.withdraw() # DIAG (1.3.16): kiosk withdraw — a state transition that
@@ -1290,31 +1739,109 @@ class Waitable(Exitable):
         ww=self._waitwindow(create=False)
         if ww is None or not ww.active:
             return
+        # In-function: visibility does `from frontend import ui`, so importing
+        # it at module scope here is circular.
+        from frontend.visibility import has_content
         parent=ww.reveal_parent
-        if ww.do_reveal and parent is not None and parent.winfo_exists() \
+        # SAME RULE AS on_quit's parent reveal: never make an empty page
+        # visible. Confirmed producer, from Kent's log 2026-09-02 — the wait
+        # closed and revealed the sort window ("waitdone: update+reveal 1.1s"),
+        # and only THEN did maybesort discover `'groups': []` for
+        # (Noun, CCVCVC, V1) and return without building anything and without
+        # withdrawing. The user was left on a fullscreen kiosk page whose only
+        # control was the outsideframe Exit button.
+        #   AND THAT INPUT IS NORMAL, not an anomaly: a slice-check with
+        # tosort=True and no groups yet is how EVERY slice-check begins (Kent
+        # 2026-09-02) — groups come into existence as the user sorts. So the
+        # empty reveal was reachable in ordinary first-time use of any unsorted
+        # slice, which is why this guard belongs here and not in a special case
+        # for a suspect node.
+        #   Fixing it here rather than in maybesort because the ordering is the
+        # general shape — a wait is raised, the wait ends, and only afterwards
+        # is it known whether there was anything to show. Every caller with that
+        # shape is a candidate, and there are many; the reveal is the one place
+        # they all pass through. Kent's rule: "we shouldn't be making pages
+        # visible, counting on them having meaning later."
+        #   The wait dialog is still deactivated below, so the screen is handed
+        # back either way — this changes WHICH window is left up, not whether
+        # the wait closes. A page that stays hidden is then the visibility
+        # watchdog's business, and the skip is logged so it is named rather than
+        # guessed at.
+        if (ww.do_reveal and parent is not None and parent.winfo_exists()
+                and not parent.exitFlag.istrue()
+                and parent is not parent._root()
+                and not has_content(parent)):
+            # No line of its own: report_empty_page now logs every occurrence
+            # (naming the wait's message and the task) plus one stack per
+            # distinct caller. The line that used to be here named the widget
+            # path — ".!taskwindow.!taskwindow.!window3" — which identified
+            # nothing.
+            from frontend.visibility import report_empty_page
+            # The wait's own message names the operation that finished with
+            # nothing to show ("Gathering groups", "Setting up the sort page…"),
+            # which is the single most useful fact available here.
+            try:
+                said=ww.l1['text']
+            except Exception:
+                said=''
+            report_empty_page('waitdone',parent,'not revealed',
+                            'the wait said {!r}'.format(said) if said else '')
+        elif ww.do_reveal and parent is not None and parent.winfo_exists() \
                 and not parent.exitFlag.istrue() and parent is not parent._root():
             _u=time.perf_counter()
+            # MAP FIRST, DRAIN SECOND — ONE ORDER, on every display server.
+            #
+            # XWayland DEADLOCKS draining a big render backlog into a WITHDRAWN
+            # window (faulthandler-confirmed twice: 2026-07-13 revealing a
+            # verify page, and 2026-09-02 — a black screen with the main thread
+            # wedged inside Tk's update() at this line, with NO Python frame
+            # above it, i.e. stuck in Tk's C code and not waiting on any of the
+            # app's own threads).
+            #
+            # The 2026-09-02 one happened WITH USING_WAYLAND TRUE — "Display
+            # server: wayland (USING_WAYLAND=True; Wayland update guard OFF)" —
+            # so it was already on the map-first path and the drain hung with
+            # the window MAPPED. (I first read it the other way, off a boot line
+            # that turned out to be from a different machine. The ordering here
+            # is not what saved or sank that run; see the Wayland skip below,
+            # which is the actual remedy.)
+            #
+            # The branch is nonetheless gone rather than made smarter, on its
+            # own merits: one order is simpler than two, mapping before draining
+            # is ordinary X11 practice, and the only argument for the other
+            # order was cosmetic (paint while hidden so no unpainted window
+            # shows) — which does not apply, since the wait dialog is still up
+            # and covering the screen, as this function's own header says. It
+            # also removes the risk for a machine whose display server is
+            # UNKNOWN, where USING_WAYLAND falls back to False and would
+            # otherwise get the drain-into-withdrawn order.
+            try:
+                parent.deiconify()
+            except tkinter.TclError:
+                pass
+            # AND ON WAYLAND, DON'T DRAIN AT ALL. Kent's black screen
+            # (2026-09-02) was the main thread wedged inside Tk's update() at
+            # this call with USING_WAYLAND TRUE — i.e. the map-first order was
+            # already in force and the drain hung anyway, window mapped. So the
+            # ordering above is not sufficient; the drain itself is the hazard,
+            # which is what WAYLAND_UPDATE_GUARD was built for (it defaults OFF,
+            # so UI.update called straight through — the ui_tkinter:1320 frame
+            # in the traceback).
+            #   Skipped HERE rather than by flipping that global default,
+            # because this one call site has now hung twice and a global
+            # rendering change deserves its own decision.
+            #   What it costs: the paint is no longer front-loaded while the
+            # wait dialog covers the screen, so a heavy page can appear
+            # unpainted for a frame after the dialog goes. Tk repaints from its
+            # own event loop immediately after. A frame of unpainted window is
+            # not in the same category as a hung app.
             if USING_WAYLAND:
-                # XWayland DEADLOCKS draining a big render backlog into a
-                # WITHDRAWN window (faulthandler-confirmed 2026-07-13:
-                # waitdone→update() wedged revealing a verify page). Map the
-                # window FIRST — the wait dialog still covers it, so the UX
-                # is unchanged — then drain.
-                try:
-                    parent.deiconify()
-                except tkinter.TclError:
-                    pass
-                parent.update()
+                log.info("waitdone: revealed %s without draining (Wayland: "
+                        "update() here has deadlocked twice)",parent)
             else:
-                # Original 1.3.38 order elsewhere: render while hidden, then
-                # reveal — the slow paint stays covered by the dialog.
                 parent.update()
-                try:
-                    parent.deiconify()
-                except tkinter.TclError:
-                    pass
-            log.info("waitdone: update+reveal %.1fs (covered by wait dialog)",
-                     time.perf_counter()-_u)
+                log.info("waitdone: update+reveal %.1fs (covered by wait "
+                        "dialog)",time.perf_counter()-_u)
         ww.deactivate()
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1477,7 +2004,631 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
         if compile_now:
             self.compile()
 """below here has UI"""
+_floor_hits = {}
+def _floored(attr,value,total,widget,otherwidth,otherheight,floor):
+    """Record ONE availablexy flooring, and report the BURST rather than each hit.
+
+    This logged per widget at INFO, dozens of near-identical lines per page
+    ("maxheight came out -150 of 1080 … siblings measured 438/1230", repeated
+    for every item). That flood is what ate a field log before its version
+    banner, making the bug in it undiagnosable (2026-09-02). The summary is also
+    strictly better evidence: "floored 12 of 14 widgets, worst -3566 of 1080"
+    says the page is unlayoutable, where twelve identical lines say it twelve
+    times and bury the thirteenth, different one.
+
+    Aggregated to the next idle, which is one page build's worth of measuring —
+    the granularity a reader actually wants. WARNING, not INFO: a measurement
+    claiming there is no room is a defect, and it must survive a field
+    installation's log level."""
+    d=_floor_hits.setdefault(attr,{'n':0,'worst':None,'total':total,
+                                    'sib':(otherwidth,otherheight)})
+    d['n']+=1
+    d['total']=total
+    if d['worst'] is None or value<d['worst']:
+        d['worst']=value
+        d['sib']=(otherwidth,otherheight)
+    if d['n']>1:
+        return #a summary is already scheduled for this burst
+    # SCHEDULE ON THE ROOT, never on the widget being measured. tkinter's
+    # after() wrapper deletes its own Tcl command AFTER running the callback,
+    # and Misc.destroy() sets _tclCommands to None — so if the widget is gone by
+    # then, `self._tclCommands.remove(name)` raises AttributeError from inside
+    # tkinter, which tkintermod re-raises straight out of mainloop and kills the
+    # app. The widgets measured here are page content, destroyed on every
+    # rebuild, so this was the likeliest possible place to make that mistake —
+    # and it crashed a live sort (Kent 2026-09-02). guardvisible carries the
+    # same warning for the same reason: the root outlives every page.
+    try:
+        host=default_root()
+        if host is None:
+            raise RuntimeError('no root yet')
+        host.after_idle(lambda a=attr:_floored_summary(a))
+    except Exception:
+        _floored_summary(attr) #no event loop yet: say it now rather than lose it
+def _floored_summary(attr):
+    d=_floor_hits.pop(attr,None)
+    if not d:
+        return
+    # WHAT THIS ACTUALLY MEANS, established from a full run (Kent 2026-09-03).
+    # The sibling total climbs MONOTONICALLY as sort-group buttons are added,
+    # +126px each, and maxheight follows it straight through zero:
+    #     1033 → 1159 → 1285 → … → 2671
+    #      137     11    -115   …   -1501
+    # So there is ONE condition here, not two, and the sign is incidental — an
+    # earlier version of this line split on it and claimed a small positive
+    # value meant the page was genuinely full. It doesn't; 137 and 11 are just
+    # the last two positive readings before the same run goes far negative.
+    #   The diagnosis is that 11 groups × 126px = 1386px of buttons against a
+    # 1170px screen is a stack living INSIDE A SCROLLER, where exceeding the
+    # screen is normal and expected. _measure_siblings is subtracting scrollable
+    # CONTENT from the screen as though it were consumed real estate. Its guard
+    # skips siblings whose immediate parent is a Canvas/ScrollingFrame, but the
+    # walk goes UP through ancestors, so the enclosing levels are still summed.
+    #   The fix therefore belongs in the measurement — stop the walk at a
+    # scrolling ancestor, because content inside a scroller is not bounded by
+    # the screen — not in the floor, and not in a layout response.
+    log.warning("availablexy floored %s on %d widget(s); worst %d of %d "
+            "(siblings measured %d/%d). Siblings exceeding the screen means "
+            "they are SCROLLABLE CONTENT, not consumed real estate — "
+            "subtracting them measures nothing, and laying out against the "
+            "result produces one-character lines and unreachable buttons.",
+            attr,d['n'],d['worst'],d['total'],d['sib'][0],d['sib'][1])
 _app_root = None  # the application's main themed ui.Root (set in Root.post_tk_init)
+def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
+                    targets_parent=None):
+    """Keep descendant labels'/buttons' `wraplength` matched to the container's
+    REAL width, recomputed on <Configure>.
+
+    THE POINT IS TO STOP GUESSING A WIDTH AT BUILD TIME. Both pages that needed
+    this were predicting one and getting it wrong in opposite directions
+    (2026-09-02):
+
+      * the task chooser asked `tk_root.winfo_width()`, i.e. the HIDDEN ROOT,
+        which has no children and so keeps Tk's default 200x200 for the life of
+        the process — `int(200*.8/3)=53px`, narrower than one word, so labels
+        broke mid-word ("Ajou/ter"). Substituting the window's own width then
+        overshot, because the buttons live in a notebook narrower than the
+        window.
+      * the verify page passed no wraplength at all, so a row was as wide as its
+        string — a form plus two glosses ran ~1350px, off the edge of the page,
+        taking its profile tag with it and (no horizontal scrolling here)
+        putting the text out of reach entirely.
+
+    A width predicted from anything other than the box the widget is actually in
+    is a guess. <Configure> is the moment the real number exists.
+
+    `cols` = grid columns to divide by; a widget spanning n columns gets n cells
+    (read from its own grid_info, so callers needn't track it). `reserve` = px
+    to hold back per cell for borders/tags. An image is subtracted
+    automatically, but ONLY when `compound` puts it beside the text — a
+    compound='top' image sits above and costs no text width.
+
+    Notes on the two hazards:
+      * <Configure> fires continuously during a drag, and setting wraplength
+        relayouts, which fires <Configure> again. Hence the hysteresis: act only
+        on a width change of >=8px, or on a change in how many targets exist.
+      * the target count matters because verify rows are STREAMED in by
+        drive_work, so the children arrive after the bind; a pure width guard
+        would wrap the first rows and none of the rest.
+      * bound with add='+' so it never displaces an existing <Configure>
+        handler — ScrollingFrame has its own, and losing it would break
+        scrolling.
+      * NO update()/update_idletasks() anywhere in here: this runs on Wayland,
+        where a synchronous round-trip during a layout change is the documented
+        deadlock (see the Wayland freeze audit).
+
+    Returns the apply function, so a caller that knows a build has finished can
+    call it once more."""
+    # MEASURE ONE WIDGET, WRAP THE CHILDREN OF ANOTHER. Needed because binding
+    # both to a ScrollingFrame's `content` collapsed the verify page to ~2
+    # characters per line (Kent 2026-09-03): content carries grid_propagate(0)
+    # and is sized BY its children, so measuring it and then sizing its children
+    # from that measurement is circular. Measure the CANVAS — the fixed viewport
+    # — and wrap what scrolls inside it.
+    targets_parent=container if targets_parent is None else targets_parent
+    state={'w':-1,'n':-1}
+    def _collect(parent,out,depth=0):
+        if depth>maxdepth:
+            return
+        try:
+            kids=parent.winfo_children()
+        except Exception:
+            return
+        for ch in kids:
+            try:
+                if 'wraplength' in ch.keys():
+                    out.append(ch)
+                else:
+                    _collect(ch,out,depth+1)
+            except Exception:
+                continue
+    def _unwrap_and_measure(targets):
+        """Unwrap every target, then report each one's natural width."""
+        for t in targets:
+            try:
+                t.config(wraplength=0)
+            except Exception:
+                continue
+        nat=[]
+        for t in targets:
+            try:
+                nat.append(t.winfo_reqwidth())
+            except Exception:
+                nat.append(0)
+        return nat
+    def _cap_all(targets,nat,W):
+        """Apply ONE wraplength cap to every target.
+
+        A cap above a label's natural width is a no-op in Tk, so a short row is
+        untouched by construction — that is hugging, for free, with no test for
+        it and no per-row measurement."""
+        for t,n in zip(targets,nat):
+            try:
+                t.config(wraplength=0 if (not n or n<=W) else W)
+            except Exception:
+                continue
+    def _contentw(scroller):
+        try:
+            return scroller.content.winfo_reqwidth()
+        except Exception:
+            return 0
+    def _fit(targets,scroller,scrollcap):
+        """ITERATE TO FIT instead of predicting a budget.
+
+        Every earlier version of this computed a per-target budget from a
+        PREDICTION of the row's final width — reserve estimates, rootx offsets,
+        sibling-and-pad walks, the row's requested width — and each was wrong in
+        at least one direction, because it ran while neither the row nor the box
+        had settled. Kent's last log shows the end state of that approach: passes
+        ALTERNATING between `budget 1800-1800 | wrapped 0 | content 1313` and
+        `budget 60-1800 | wrapped 5 | content 1451`, with whichever landed last
+        deciding what he saw (2026-09-04).
+
+        So stop predicting and measure the thing we actually care about: the
+        content's own requested width, which has been reliable in every log all
+        day. One cap `W` for all targets; content width is monotone
+        non-decreasing in `W`; binary search the largest `W` that still fits.
+
+        Order is Kent's rule exactly:
+          1. unwrapped content fits → leave everything alone (HUG);
+          2. otherwise search the widest cap that fits (EXPAND to the most
+             available space);
+          3. wrap to that (WRAP on that space).
+
+        Costs ~9 reqwidth reads, no update()/update_idletasks(), so no
+        synchronous X round-trip (the Wayland freeze audit)."""
+        # A MEASUREMENT MUST BE FLUSHED TO BE WORTH ANYTHING. Setting
+        # `wraplength` updates the LABEL's own requested width at once, but the
+        # content frame's requested width is recomputed on the idle queue — so
+        # an unflushed read returns the PREVIOUS layout's number. Kent's log
+        # said so in one field: `cap=200 | content 1613→1613 | wrapped 95 of
+        # 231`, the search groping to its floor because every probe looked too
+        # wide (2026-09-04).
+        #   `content.update_idletasks()` is what ScrollingFrame.windowsize
+        # already calls on this same widget, so this is established practice in
+        # this file rather than a new synchronous-X hazard, and it is a
+        # measurement flush with no window transition in flight — see
+        # the Wayland freeze audit, which now says that is the safe
+        # shape. It is still a flush, so the count is kept small.
+        def _settle():
+            try:
+                scroller.content.update_idletasks()
+            except Exception:
+                pass
+        nat=_unwrap_and_measure(targets)
+        hi=max(nat or [0])
+        if not hi:
+            return None
+        # FLUSH BEFORE THE HUG TEST, not just inside the search. Without this,
+        # `before` is the width of the layout as it was BEFORE the unwrap above
+        # — so arriving from a state where anything was wrapped, the content
+        # looks like it fits, `_fit` concludes "nothing to do", and every target
+        # is left unwrapped with the longest row running off the viewport.
+        # Kent: "tatoo was correct, then cycled back to it, and got this"
+        # (2026-09-04). First visit was right only because nothing had been
+        # wrapped yet, which is why this hid behind a cycle.
+        _settle()
+        before=_contentw(scroller)
+        if before<=scrollcap:
+            return (hi,before,before,0) #hugs unwrapped: nothing to do
+        # SEED WITH ARITHMETIC, THEN CORRECT BY MEASUREMENT. `before` is the
+        # unwrapped content width and is trustworthy, so the overshoot is known:
+        # take it off the widest target and the first probe is usually already
+        # right. Binary search then only has to confirm or nudge, which keeps
+        # this to one or two flushes instead of nine.
+        floor=max(minimum,200) #never search into one-character-per-line
+        lo=floor
+        guess=max(floor,hi-(before-scrollcap))
+        _cap_all(targets,nat,guess); _settle()
+        if _contentw(scroller)<=scrollcap:
+            lo=guess #fits: try to give some of it back
+        else:
+            hi=guess #still too wide: search below the guess
+        # 6 STEPS, NOT 4. Each step halves the remaining range, so 4 left ~50px
+        # on the table — `cap=900 | content 1605→1315` against a 1365 cap, i.e.
+        # a row wrapped that had 50px of room (Kent's log, 2026-09-04). Two more
+        # flushes buy ~13px granularity, and under-using the width is the
+        # failure Kent has objected to most consistently all day.
+        for _i in range(6):
+            mid=(lo+hi)//2
+            if mid<=lo or mid>=hi:
+                break
+            _cap_all(targets,nat,mid); _settle()
+            if _contentw(scroller)<=scrollcap:
+                lo=mid
+            else:
+                hi=mid
+        _cap_all(targets,nat,lo); _settle()
+        return (lo,before,_contentw(scroller),sum(1 for n in nat if n>lo))
+    def _apply(event=None):
+        try:
+            if not container.winfo_exists():
+                return
+            width=container.winfo_width()
+        except Exception:
+            return
+        if width<=1: #not laid out yet; a later <Configure> will carry the size
+            return
+        targets=[]
+        _collect(targets_parent,targets)
+        # ALSO WATCH THE TEXT. Width and target-count miss the case that matters
+        # most for verifying any of this: CYCLING an example replaces a word's
+        # TEXT and changes neither, so a word cycled in after the build keeps
+        # the previous word's wrap (Kent 2026-09-04, 'aunt'). That is worse than
+        # cosmetic here — the cycle button between group frames sits on the
+        # RIGHT, so an overflowing row pushes the control that produced it off
+        # the page.
+        #   A length sum, not the text: cheap for the ~20 targets on these
+        # pages, and it changes whenever any word does. Collisions are possible
+        # in principle (two words of identical total length) and cost nothing —
+        # the next real change re-applies.
+        try:
+            sig=sum(len(str(t.cget('text') or '')) for t in targets)
+        except Exception:
+            sig=None
+        if (abs(width-state['w'])<8 and len(targets)==state['n']
+                and sig==state.get('sig')):
+            return
+        state['w']=width; state['n']=len(targets); state['sig']=sig
+        cell=int(width/max(cols,1))
+        # THE SCROLLER'S CAP IS THE REAL CEILING, NOT THE CONTAINER'S WIDTH.
+        #
+        # Two independent sizing authorities is the whole bug. This helper
+        # budgets from `container`, which on the sort page is the entire 1920px
+        # task window, so a row at x=545 was granted 1920-545-120 = 1255px of
+        # text — while the scroller it lives in had a 1034px viewport and no
+        # horizontal scrollbar. The 220px difference is Kent's clipped `rɛgim`
+        # row, cut off mid-word inside the viewport (2026-09-04).
+        #   Cap, never widen: `min` with whatever the container allowed. The cap
+        # can only pull a budget down to what the viewport can actually show, so
+        # this cannot reintroduce the over-wrapping it replaced.
+        #   `capw`, NOT the current canvas width, and that distinction is the
+        # point. Budgeting from the live viewport would close the loop
+        # content→box→viewport→wrap→content, which is exactly the 1440↔1034
+        # oscillation (cellw 1040↔837) running down the tail of that log. capw
+        # is what the scroller MAY grow to — it held at 1479 across every pass —
+        # so wrapping settles once instead of chasing its own result. That is
+        # also Kent's rule in the right order: expand to the available space
+        # first, then wrap against it.
+        scroller=None
+        try:
+            w=targets_parent
+            for _hop in range(6):
+                if w is None:
+                    break
+                if isinstance(w,ScrollingFrame):
+                    scroller=w
+                    break
+                w=getattr(w,'master',None)
+        except Exception as e:
+            log.log(2,"no enclosing scroller found (%s)",e)
+        scrollcap=None
+        if scroller is not None:
+            try:
+                _capw,_caph,_cellw,_cellh,_winw=scroller._caps()
+                # THE WINDOW IS THE CEILING FOR WRAPPING, even though `capw` is
+                # the ceiling for SIZING — and the difference is not a nuance.
+                # capw takes the LARGEST of three candidates on purpose, so the
+                # box may grow into the page's deliberate margins. But one of
+                # those candidates is `maxwidth` from availablexy, which is
+                # screen-minus-siblings and documented to overshoot badly when
+                # the siblings are themselves scrollable content
+                # (the scroller-sizes-from-layout item). Budgeting text
+                # against width the layout cannot actually deliver puts the row
+                # past the viewport edge and clips it: on the macrosort page
+                # capw read 1479 against a viewport of ~1360 (Kent 2026-09-04).
+                #   `winw` is the honest number — the toplevel minus this
+                # scroller's own left offset minus a right allowance — so take
+                # the smaller. Growing MAY be optimistic; wrapping may not.
+                # `capw` ALONE. Taking min() with `winw` looked like the
+                # conservative choice — winw is the honest window-derived number
+                # and capw can overshoot by ~50 — but winw is
+                # `toplevel - this scroller's rootx offset - 120`, i.e. POSITION
+                # DERIVED, and this block is deliberately centred. So every time
+                # the box hugged down, its left edge moved RIGHT, winw got
+                # smaller, the next budget got tighter, and the box shrank
+                # again: a ratchet, not an oscillation. Kent: "It did eventually
+                # hug to the next longest button, but then when I switch it
+                # back, that button was cut off even more than in the last pic"
+                # (2026-09-04).
+                #   capw is max(maxwidth, cellw, winw) and is dominated here by
+                # `maxwidth`, which does not move, so the ceiling stays put
+                # across a hug. A bounded ~50px overshoot is a far better
+                # failure than a feedback loop that tightens on every cycle.
+                _ceiling=_capw
+                scrollcap=_ceiling-getattr(scroller,'yscrollbarwidth',15)
+                # THE SCROLLER'S OWN SHELL. `capw` is the width of the BOX,
+                # measured from its outer edge, but a row starts inside three
+                # nested borders — the scroller's, the canvas's and the content
+                # frame's — and `_chrome` stops AT the scroller, so it never
+                # counts them. That is the whole of the residual overrun: it
+                # only ever caught the single row whose natural width landed
+                # just inside the budget, which is why one row misbehaved while
+                # every other row on the page was correct. `feavʊr` needed ~940
+                # with ~912 truly available (Kent 2026-09-04).
+                for _w in (scroller,getattr(scroller,'canvas',None),
+                        getattr(scroller,'content',None)):
+                    if _w is None:
+                        continue
+                    for _opt in ('bd','highlightthickness'):
+                        try:
+                            scrollcap-=2*int(float(_w.cget(_opt) or 0))
+                        except Exception:
+                            continue
+            except Exception as e:
+                log.log(2,"scroller cap unavailable for wrapping (%s)",e)
+        # SAY WHAT WAS COMPUTED, once per container. `reserve` is a caller's
+        # estimate of the row chrome it cannot see from where it stands (group
+        # label, play button, profile tag, borders), and when it is short the
+        # symptom is a long row overflowing and losing its tag off the right
+        # edge — which is a number being wrong, not a mechanism being wrong
+        # (Kent 2026-09-03: "the math here is not quite right"). Printing the
+        # inputs makes the dial arithmetic instead of another guess.
+        # ONE LINE PER DISTINCT WIDTH, not one per container. Reporting only the
+        # FIRST pass showed `width=380 reserve=400 → budget=60` — the unsettled
+        # measurement, i.e. the least informative one, while the pass that
+        # actually produced the visible layout went unreported (Kent's log,
+        # 2026-09-03). Deduping on width keeps it to a couple of lines and shows
+        # the progression instead of hiding it.
+        # DROPPED FROM THE FIELD LOG (Kent 2026-09-04: "we don't need budget").
+        # `DIAG-wrap fit` carries what a field report actually needs — the cap
+        # chosen, the content before and after, how many rows wrapped, and the
+        # box — and this line reported inputs to a budget the scroller pages no
+        # longer use. Kept at level 2 for the chooser's cell arithmetic, which
+        # still computes one.
+        if width not in state.setdefault('said',set()):
+            state['said'].add(width)
+            log.log(2,"wrap budget: container=%s width=%s cols=%s cell=%s "
+                    "reserve=%s | scrollcap=%s | %s target(s)",
+                    container,width,cols,cell,reserve,scrollcap,len(targets))
+        # HUG, THEN EXPAND, THEN WRAP — Kent's rule (2026-09-03): "most
+        # scrollingframes should hug short, unwrapped content, and expand to
+        # available window/screen size as possible, before forcing wrapping.
+        # then they should wrap nicely on that most available space."
+        #
+        # So wrapping is a CONSEQUENCE of running out of layout width, never a
+        # cause of the box's size. Step 1 is what the old code skipped: it
+        # imposed `cell` on every target unconditionally, so a short label that
+        # already fitted got wrapped anyway at whatever the container happened
+        # to be — which is how one-word-per-line survived every previous fix.
+        #
+        # Measuring the natural width means asking what the target wants with NO
+        # wrap: set wraplength=0, read winfo_reqwidth(). reqwidth is computed by
+        # Tk when the content changes and needs no update()/flush, so this costs
+        # no synchronous round-trip — which matters here (see
+        # the Wayland freeze audit).
+        # ITERATE TO FIT, where there is a viewport to fit INTO. cols>1 (the
+        # chooser) keeps the cell arithmetic: its buttons are a grid whose
+        # columns define the width, there is no single widest row to search
+        # against, and it works.
+        if scrollcap and cols==1 and targets:
+            res=_fit(targets,scroller,scrollcap)
+            if res is not None:
+                try:
+                    _box=scroller.winfo_width()
+                except Exception:
+                    _box=None
+                _sig=res+(len(targets),scrollcap,_box)
+                if _sig!=state.get('saidfit'):
+                    state['saidfit']=_sig
+                    log.info("DIAG-wrap fit: cap=%s | content %s→%s | wrapped "
+                            "%s of %s | scrollcap=%s | box=%s",*_sig)
+            # GROW THE BOX IN THIS PASS, not on the debounced reflow. `_fit`
+            # targets `scrollcap`, i.e. what the box MAY become — but the box
+            # only actually grows inside `_configure_interior`, which is
+            # scheduled. Arriving back from a hugged state, the box is still
+            # small when the user sees it, so a correctly-fitted row is clipped
+            # by the difference: Kent's return to `midrib` had content needing
+            # ~1350 in a box of 1330, losing the edge of its `CVCC` tag
+            # (2026-09-04). The content is already flushed by `_fit`, so
+            # `windowsize()` has honest numbers to read right now.
+            try:
+                scroller.windowsize()
+            except Exception as e:
+                log.warning("scroller box re-size after fit failed, so a "
+                        "fitted row may clip: %s",e)
+            try:
+                scroller._configure_interior()
+            except Exception as e:
+                log.log(2,"could not ask the scroller to re-measure (%s)",e)
+            return
+        applied=[];naturals=[];wrapped=[0];collapsed=[0];pending=[0];worst=[]
+        for t in targets:
+            chrome=None
+            # NOT GATED ON winfo_ismapped(). The obvious guard here — skip a
+            # target with no geometry yet — is wrong for this page: a row built
+            # below the scroll viewport stays unmapped until someone scrolls to
+            # it, so it would be skipped indefinitely and then appear unwrapped.
+            # `_chrome` measures from siblings and grid options instead, which
+            # are available before anything is on screen, so no target needs to
+            # be deferred. `pending` counts what LOOKS unmapped, as evidence
+            # only.
+            try:
+                if not t.winfo_ismapped():
+                    pending[0]+=1
+            except Exception:
+                pass
+            # SPAN ONLY COUNTS IN THE CONTAINER'S OWN GRID. columnspan is
+            # meaningful against `cols`, which describes THIS container — but a
+            # target nested deeper sits in some inner frame's grid, where a span
+            # of 3 or 4 is routine and multiplying the container's width by it
+            # is nonsense. That is what made rows render ~845px of text from a
+            # 686px container with a 256px budget (Kent's DIAG, 2026-09-03):
+            # the budget being reported was not the budget being applied.
+            try:
+                span=1
+                if t.winfo_parent()==str(container):
+                    span=int(t.grid_info().get('columnspan',1) or 1)
+            except Exception:
+                span=1
+            extra=reserve
+            try:
+                if str(t.cget('compound')) in ('left','right'):
+                    im=t.cget('image')
+                    if im:
+                        extra+=int(t.tk.call('image','width',im))
+            except Exception:
+                pass
+            # RESERVE CANNOT DOMINATE THE CELL. `reserve` is a caller's estimate
+            # of row chrome it cannot measure from where it stands, so on a
+            # narrow or not-yet-settled container it can EXCEED the whole cell —
+            # `width=380 reserve=400` gave budget 60, the `minimum` floor, for
+            # 229 targets at once (Kent's log 2026-09-03). Capping it at 40% of
+            # the cell means a wrong estimate degrades the wrap a little instead
+            # of collapsing it to one character, and it costs nothing when the
+            # estimate is sane (400 of a 1400px cell is well under the cap).
+            extra=min(extra,int(cell*span*0.4))
+            # MEASURE THE LEFT CHROME; ONLY THE RIGHT MARGIN IS ESTIMATED.
+            #
+            # `reserve` as "all the row's chrome" cannot work: the same builder
+            # produces a labelled variant (group label ~180 + profile tag ~90 →
+            # ~500) and an unlabelled one (~230), so one number is wrong on one
+            # of them — Kent's two DIAG sets, 2026-09-04. Everything to the LEFT
+            # of the text is already measurable once mapped: the target's own
+            # x-offset inside the container is exactly the group label plus the
+            # play button plus the illustration, whatever they happen to be.
+            #   So offset is measured and `reserve` shrinks to its honest
+            # meaning: how much to leave free on the RIGHT (profile tag,
+            # scrollbar), which is small and genuinely constant.
+            #   cols==1 only. A multi-column grid (the chooser) wants cell
+            # arithmetic, where an offset would hand column 0 all the width to
+            # the window's right edge.
+            if cols==1:
+                # MEASURED, NOT POSITIONAL — for the same reason as the scroller
+                # branch below. This used to be `t.winfo_rootx() -
+                # container.winfo_rootx()`, which is only meaningful for a
+                # MAPPED widget, and most targets on this page are below the
+                # fold. An unmapped target's rootx is wrong in BOTH directions:
+                # ~0 for `bʊsh`, which then got the whole width and rendered as
+                # one clipped line, and ~1430 for `pɪtea`, which got a 370px
+                # budget with 900px available and wrapped to two lines (Kent
+                # 2026-09-04, one screenshot each). Since the two branches are
+                # combined with min(), a single bad reading in either one
+                # decides the result — so neither may consult a position.
+                # A LOOSE OUTER BOUND ONLY. This used to subtract a per-target
+                # offset — first from `rootx` (meaningless for the 147 targets
+                # below the fold) and then from the sibling walk (unreliable, as
+                # above). Both were wrong often enough to decide the result,
+                # because these branches combine with min(). The row constraint
+                # below is the one that has to be right, so this contributes
+                # nothing but the window's own width.
+                budget=max(width-reserve,minimum)
+            else:
+                budget=max(cell*span-extra,minimum)
+            try:
+                t.config(wraplength=0) #unwrapped: what does it actually want?
+                natural=t.winfo_reqwidth()
+            except Exception:
+                natural=0
+            naturals.append(natural)
+            applied.append(budget)
+            try:
+                if natural and natural<=budget:
+                    continue #step 1: it fits. Leave it unwrapped and hug it.
+                # A COLLAPSED BUDGET IS A FAILED MEASUREMENT, NOT AN INSTRUCTION
+                # TO WRAP AT 60px. `minimum` was acting as a floor to wrap TO,
+                # which is how a 4-character profile tag ends up one character
+                # per line and how Kent's kidney row became a vertical column
+                # (2026-09-04). Nothing on these pages is legitimately 60px
+                # wide, so reaching the floor means this target's offset or
+                # right-chrome measurement is wrong — and leaving it unwrapped
+                # risks an overrun, while wrapping it guarantees garbage.
+                #   Counted and reported rather than silently skipped, because
+                # the count is the evidence for which targets are being
+                # mismeasured: `wrap_to_container` collects ANY widget with a
+                # `wraplength` key, so at maxdepth=5 the macrosort page yields
+                # 231 targets — the row text plus every glyph label, occurrence
+                # count and profile tag. The chrome sits far right, so its
+                # budget collapses first.
+                if budget<=minimum:
+                    collapsed[0]+=1
+                    continue
+                t.config(wraplength=budget) #steps 2-3: all the room, then wrap
+                wrapped[0]+=1
+            except Exception:
+                continue
+        # TELL THE SCROLLER, because growth is INVISIBLE to it.
+        #
+        # A scroller recomputes on <Configure> of its content, which fires when
+        # the content's ACTUAL geometry changes. Shrinking does that; growing
+        # does not, because the canvas pins the content frame at its current
+        # width — so only the content's REQUESTED width rises and nothing
+        # schedules a re-measure. Kent's DIAG shows it exactly: cycling to a
+        # shorter word logged `content=955 | canvas 1133→955`, and cycling back
+        # to the longer one logged NOTHING AT ALL, leaving the row clipped at
+        # the smaller canvas (2026-09-04).
+        #   We are the one place that knows a word changed (the text signature
+        # above), so poke the nearest enclosing scroller. `_configure_interior`,
+        # not `reflow()`: the debounced scheduler, because reflow() flushes
+        # synchronously and that is the XWayland deadlock shape.
+        #   No loop: a reflow changes neither the container's width nor the text
+        # signature, so the guard above stops the next pass dead.
+        # WHAT WAS ACTUALLY APPLIED, once per distinct result. The pre-loop
+        # DIAG reports the container's budget BEFORE the per-target offset,
+        # right-chrome and scroller cap come off it, so on the pages that
+        # misbehave it reports a number nothing used — `budget=1800` while the
+        # rows were getting ~830 (Kent's macrosort log, 2026-09-04). An overrun
+        # is then unattributable: too generous a budget and a budget that was
+        # never applied look identical from the log.
+        if applied:
+            try:
+                _sig=(min(applied),max(applied),max(naturals or [0]),
+                    wrapped[0],len(targets),collapsed[0],pending[0],scrollcap)
+                if _sig!=state.get('saidapplied'):
+                    state['saidapplied']=_sig
+                    log.info("DIAG-wrap applied: budget %s-%s | widest natural "
+                            "%s | wrapped %s of %s | declined %s | unmapped %s "
+                            "| scrollcap=%s",*_sig)
+            except Exception:
+                pass
+        try:
+            if scroller is not None:
+                scroller._configure_interior()
+        except Exception as e:
+            log.log(2,"could not ask the scroller to re-measure (%s)",e)
+    try:
+        container.bind('<Configure>',_apply,add='+')
+    except Exception as e:
+        log.info("wrap_to_container: could not bind <Configure> (%s)",e)
+    _apply()
+    # AND ONCE AFTER IDLE — without this the whole helper could silently never
+    # run (Kent 2026-09-03). The immediate call above lands BEFORE geometry has
+    # settled, so the container is still 1px wide and _apply bails on
+    # `width<=1`; the container then reaches its final size without emitting a
+    # further <Configure>, so nothing re-fires and no wraplength is ever set.
+    # The symptom is not a wrong width but the OLD behaviour persisting —
+    # Label.wrap()'s per-label availablexy fallback, which is why two boxes on
+    # one page wrapped at two different widths (~447px and ~533px) instead of
+    # sharing one.
+    #   after_idle, not update_idletasks: no synchronous X round-trip, per
+    # the Wayland freeze audit. Idempotent — _apply's hysteresis makes
+    # a redundant call free.
+    try:
+        container.after_idle(_apply)
+    except Exception as e:
+        log.info("wrap_to_container: could not schedule the settled-geometry "
+                "pass (%s)",e)
+    return _apply
 def default_root():
     """Return the application's main themed ui.Root — the real program's root,
     carrying the full image theme (.theme/.photo) — or None if none currently
@@ -1495,6 +2646,21 @@ def default_root():
     return None
 class Root(Waitable,UI,tkinter.Tk):
     """this is the root of the tkinter GUI."""
+    def withdraw(self):
+        """As Toplevel.withdraw: say who hid it. The root shows as withdrawn in
+        every NO WINDOW dump, and whether that is normal for the run or the
+        actual fault has never been readable from the log."""
+        try:
+            import traceback as _tb
+            frame=_tb.extract_stack(limit=2)[0]
+            log.info("root window: WITHDRAW (hide) by {}:{} in {}()".format(
+                        frame.filename.rsplit('/',1)[-1],
+                        frame.lineno,frame.name))
+        except Exception as e:
+            log.info("root window: WITHDRAW (hide), caller unknown ({})"
+                     "".format(e))
+        super().withdraw()
+
     def on_quit(self,to_root=False):
         super().on_quit(to_root=to_root)
         logsetup.shutdown()
@@ -1584,11 +2750,108 @@ class Root(Waitable,UI,tkinter.Tk):
         super().__init__(*args, **kwargs)
         self.post_tk_init(**kwargs) #Theme needs Tk to exist by now
         self.renderer=Renderer()
+        # WHICH DISPLAY STACK, now that Tk has actually connected. Only for
+        # THE root — contextmenus and the dummy-program cases make Roots too,
+        # and one line per run is the point. Tk 8.6 has no Wayland backend, so
+        # on a Wayland session this is XWayland with no way to be otherwise;
+        # the socket check in display.py confirms rather than assumes it.
+        # See the Wayland freeze audit.
+        if not globals().get('_said_display_stack'):
+            globals()['_said_display_stack']=True
+            from utilities import display
+            display.report('tkinter root created','tk',self)
         # log.info("Root initialized")
 """These have parent (Childof), but no grid"""
 class Toplevel(Childof,Waitable,UI,tkinter.Toplevel): #
     """This and all Childof classes should have a parent, to inherit a common
     theme. Otherwise, colors, fonts, and icons will be incongruous."""
+
+    def declare_dialog_of(self,parent=None):
+        """Tell the window system this window BELONGS TO another one.
+
+        THE DECLARATION THIS APP HAS NEVER MADE. `wm_transient` appeared
+        nowhere in the codebase before 2026-09-15 — not in either backend —
+        so no window manager has ever been told that the Wait dialog, the
+        status window, ErrorNotice or the Transcriber are dialogs of anything.
+        Each was left to be placed as an unrelated top-level window, which is
+        Kent's "the windows are a bit of a hot mess" (2026-09-11): four
+        overlapping windows, none of them positioned relative to any other.
+
+        What it buys, from the window manager rather than from us: the child
+        is placed on its parent, stays stacked above it, is minimised and
+        raised WITH it, and is grouped with it in the window switcher instead
+        of appearing as a separate application window.
+
+        WHY THIS AND NOT `-topmost`, which three of these windows use today
+        (status_window.py:174, error_notice.py:65, transcriber.py:63):
+        `-topmost` pins a window above EVERYTHING on the desktop, including
+        other applications, which is both too strong and the wrong
+        relationship — and `ui_tkinter.py` already carries a note about NOT
+        setting it because it deadlocks `update_idletasks`. Transience says
+        the thing that was actually meant.
+          The `-topmost` calls are deliberately LEFT IN PLACE for now: they
+        are what currently makes these windows reliably visible, and removing
+        them in the same change as adding this is how a fix becomes a
+        regression. They should go once transience is confirmed to raise
+        these windows properly.
+
+        THE SAME DECLARATION REACHES WAYLAND. Tk 8.6 has no Wayland backend,
+        so this is always XWayland here — and XWayland translates
+        `WM_TRANSIENT_FOR` into `xdg_toplevel.set_parent`, which is the ONLY
+        way a client may influence placement on Wayland (there is no
+        positioning call, by design). So the relational declaration works on
+        the new compositor where coordinates cannot.
+
+        Never raises: a window manager that ignores this is no worse off than
+        before, and a dialog is not worth an exception."""
+        target=parent if parent is not None else getattr(self,'parent',None)
+        if target is None:
+            return False
+        try:
+            # winfo_exists on a destroyed parent would make this a traceback
+            # inside window setup, which is the worst place for one.
+            if not target.winfo_exists():
+                return False
+            self.wm_transient(target)
+            log.log(2,"%s declared a dialog of %s",
+                    type(self).__name__,type(target).__name__)
+            return True
+        except Exception as e:
+            log.info("could not declare {} a dialog of {} ({!r})".format(
+                        type(self).__name__,type(target).__name__,e))
+            return False
+
+    def withdraw(self):
+        """Hide — and NAME WHO ASKED, which is the half the log never had.
+
+        The webview backend has logged every hide/show with the window id since
+        2026-09-04, and its own comment recommends this for here too: "There is
+        a known recurring class here on the Tk side too — a withdrawn run
+        window never revealed — so 'who asked for show' is worth being able to
+        read off a log permanently" (ui_webview.py:2599-2607).
+
+        Added 2026-09-09 for a concrete question the existing logging could not
+        answer. On the NWAA in Add and Parse Words with Audio, `on_quit`'s new
+        decision line proved the task window was `state=normal` when its child
+        dialog closed — visible — and 25 seconds later the watchdog found it
+        `withdrawn`. So something hid it in between, silently, and nothing in
+        the log said what. Reveals are already announced (Window.deiconify's
+        NOTHING BUT QUIT check, guardvisible, the watchdog); hides were not.
+
+        The caller frame, not a full traceback: the producer's file and line is
+        what identifies it, and a traceback per hide would bury the log. Never
+        let the diagnostic break the hide.
+        """
+        try:
+            import traceback as _tb
+            frame=_tb.extract_stack(limit=2)[0]
+            log.info("{}: WITHDRAW (hide) by {}:{} in {}()".format(
+                        self,frame.filename.rsplit('/',1)[-1],
+                        frame.lineno,frame.name))
+        except Exception as e:
+            log.info("{}: WITHDRAW (hide), caller unknown ({})".format(self,e))
+        super().withdraw()
+
     def post_tk_init(self):
         super().post_tk_init()
     def __init__(self, parent, *args, **kwargs):
@@ -1613,7 +2876,28 @@ class Menu(Childof,tkinter.Menu): #not Text
         return label
     def add_command(self,label,command):
         label=self.pad(label)
+        if self._sticky and command is not None:
+            command=self._reposting(command)
         tkinter.Menu.add_command(self,label=label,command=command)
+    def _reposting(self,command):
+        """A STICKY menu's command: run it, then put the menu back where it
+        was. Tk unposts a menu the moment an entry is invoked, and there is
+        no option to stop it — so "stays up" is re-posting at the recorded
+        spot once the command has run (`after_idle`, so the unpost has
+        happened first). `post`, not `tk_popup`: no grab, so the menu sits
+        there for the next adjustment and goes away when the pointer leaves
+        it (the `<Leave>` bind in `__init__`, the window context menu's own
+        rule). Kent, 2026-09-22, on the tone-beep settings: "clicking on a
+        setting should change the setting, play at the new settings, and
+        leave the user able to continue modifying settings."""
+        def run():
+            command()
+            if self._at is not None:
+                self.after_idle(lambda: self.post(*self._at))
+        return run
+    def tk_popup(self,x,y,entry=""):
+        self._at=(x,y)              # where a sticky menu re-posts itself
+        tkinter.Menu.tk_popup(self,x,y,entry)
     def insert_cascade(self,label,menu,index):
         label=self.pad(label)
         tkinter.Menu.insert_cascade(self,label=label,menu=menu,index=index)
@@ -1621,9 +2905,169 @@ class Menu(Childof,tkinter.Menu): #not Text
         label=self.pad(label)
         tkinter.Menu.add_cascade(self,label=label,menu=menu)
     def __init__(self,parent,**kwargs):
+        # `sticky=True`: the menu stays through item clicks (see
+        # `_reposting`). Popped off before Tk sees the kwargs; Tk has no
+        # such option.
+        self._sticky=kwargs.pop('sticky',False)
+        self._at=None
         kwargs['font']=kwargs.get('font','default')
         super().__init__(parent,**kwargs)
         self.post_tk_init()
+        if self._sticky:
+            self.bind('<Leave>',lambda e: self.unpost())
+class Popup(Toplevel):
+    """An undecorated panel at the pointer for a handful of controls that
+    belong to one gesture. It stays through clicks on its OWN controls and
+    goes away on a click anywhere else, like a context menu — Kent,
+    2026-09-22, on the tone-beep settings: six one-line menu entries for
+    three binary options "is a bit weird"; wanted `-|pitch|+` on three rows,
+    and "I want it to go away on a click anywhere else, like context menus".
+    A Tk Menu is a vertical list of entries; this is a grid you can put
+    anything into (`ui.Button`, `ui.Label`, gridded as usual).
+
+    THE GRAB WAS THE BUG, AND IT IS GONE (2026-09-22). Kent, with a
+    screenshot of two panels stacked on each other: "in tkinter, the tone
+    playback configuration window doesn't go away (ever?)" — and, on the
+    webview: "not in gtk". So this is a tkinter-only fault, and the webview
+    `Popup`, which dismisses from the page's own listeners, is left alone.
+
+    What was claimed here: a local grab makes "anywhere else" work the way
+    `tk_popup` does for a menu, delivering outside presses to this window
+    with coordinates outside its box. IT DOES NOT, and the screenshot is the
+    proof — opening the second panel took a right-click, which IS a press
+    outside the first panel, and the first panel was still there. What
+    dismisses a Tk MENU is Tk's own menu implementation unposting itself
+    under that grab (see `do_popup` below and `sort_ui.py:179`); a plain
+    toplevel that calls `grab_set()` inherits none of that behaviour. It
+    inherits the grab's effect on delivery and none of its dismissal, so the
+    grab could only ever keep the press from reaching anything else. With no
+    title bar (`overrideredirect`) and no key binding, the panel was then
+    permanent — exactly as reported.
+
+    So: NO GRAB, and two independent ways out instead.
+
+      1. A press ANYWHERE on the owning window or its widgets, via ONE
+         binding on that toplevel. Every descendant carries its toplevel in
+         its bindtags, so that single binding sees them all — no
+         application-wide `bind_all` to unpick from whatever else binds
+         Button-1, and nothing to unbind per panel.
+      2. `<Escape>`, on the panel and on the owning window.
+
+    `_press` is kept for presses delivered to the panel itself, which is now
+    only its own background.
+
+    WHAT IS GIVEN UP with the grab: a click on ANOTHER APPLICATION no longer
+    dismisses the panel, which a real context menu would. That is the honest
+    trade for a panel that goes away at all, and it is the smaller failure.
+
+    ARMED AT IDLE, NOT AT CREATION. The press that opens a panel is still
+    being dispatched while `__init__` runs, and the owning toplevel's
+    bindtags come AFTER the clicked widget's own — so a binding that was live
+    immediately would fire for the very event that created the panel and take
+    it straight down again. The webview `Popup` defers for the same reason
+    (`setTimeout` in its `widgets.js` case, asserted by its test).
+
+    ONE AT A TIME: `_open` holds the live panels, so opening one takes down
+    any other. Nothing tracked them before, which is why they stacked — and
+    a caller keeping no reference had no way to take one down either.
+
+    Undecorated and placed by coordinates: Tk here is always XWayland, where
+    that works (`declare_dialog_of` explains why native Wayland could not).
+    The webview backend's `Popup` is an element inside the page for the same
+    reason the other way round."""
+    _open=[]                  # every live, armed Popup — newest last
+    @classmethod
+    def dismiss_open(cls,event=None):
+        """Take down every panel that has finished arming.
+
+        UNARMED PANELS ARE SKIPPED, and that is the whole reason `_armed`
+        exists: the right-click that opens panel two reaches the clicked
+        widget's binding first (which builds the panel) and the owning
+        toplevel's binding second (this) — so without the guard a panel
+        would dismiss itself on the press that created it, and right-click
+        would look like it did nothing."""
+        for pop in list(cls._open):
+            if getattr(pop,'_armed',False):
+                pop.dismiss()
+    def __init__(self,parent,x,y,**kwargs):
+        super().__init__(parent,**kwargs)
+        self.wm_overrideredirect(True)
+        self.wm_geometry("+%d+%d" % (int(x),int(y)))
+        try:
+            self['background']=self.theme.menubackground
+        except Exception:
+            pass
+        self._armed=False
+        # ONE AT A TIME. Any panel already up goes now, before this one is
+        # registered — a second right-click replaces the panel rather than
+        # adding to the pile.
+        Popup.dismiss_open()
+        Popup._open.append(self)
+        # Any button, not only the first: a right-click elsewhere must also
+        # take this down.
+        self.bind('<ButtonPress>',self._press,add='+')
+        self.bind('<Escape>',lambda e:self.dismiss(),add='+')
+        self.bind('<Destroy>',self._forget,add='+')
+        self._owner=self._owner_toplevel(parent)
+        self.after_idle(self._arm)
+    def _owner_toplevel(self,parent):
+        """The window this panel belongs to, whose bindtag every widget in it
+        carries. `winfo_toplevel()` on the parent, defensively: a Root is its
+        own toplevel and a Frame parent resolves to the window holding it."""
+        try:
+            return parent.winfo_toplevel()
+        except Exception as e:
+            log.info("Popup %s: no owning toplevel (%s); it can be dismissed "
+                     "with Escape on the panel only",self,e)
+            return None
+    def _arm(self):
+        """Live from here: the press that created this panel has finished
+        dispatching, so the owner's bindings can no longer see it."""
+        if not self.winfo_exists():
+            return
+        self._armed=True
+        owner=self._owner
+        if owner is None:
+            return
+        # BOUND ONCE PER OWNER, FOR THE LIFE OF THAT WINDOW. Binding per panel
+        # would need an unbind per panel, and tkinter's `unbind(seq, funcid)`
+        # clears EVERY binding for that sequence, not just ours — so it would
+        # silently take out whatever else the window binds. A single
+        # class-level dispatcher needs no unbinding at all.
+        try:
+            if not getattr(owner,'_azt_popup_dismiss_bound',False):
+                owner._azt_popup_dismiss_bound=True
+                owner.bind('<ButtonPress>',Popup.dismiss_open,add='+')
+                owner.bind('<Escape>',Popup.dismiss_open,add='+')
+                log.info("Popup %s: owner %s now dismisses panels on a press "
+                         "or Escape",self,owner)
+        except tkinter.TclError as e:
+            log.info("Popup %s: could not bind its owner (%s); Escape on the "
+                     "panel still closes it",self,e)
+    def _press(self,event):
+        # Descendants deliver their own presses (event.widget is the child):
+        # those are the controls being used. A press on the panel's own
+        # background with coordinates outside its box should not happen now
+        # that no grab redirects anything here, but it costs nothing to keep.
+        if event.widget is not self:
+            return
+        w,h=self.winfo_width(),self.winfo_height()
+        if not (0 <= event.x < w and 0 <= event.y < h):
+            self.dismiss()
+    def dismiss(self):
+        if self.winfo_exists():
+            self.destroy()
+    def _forget(self,event=None):
+        # `<Destroy>` on a toplevel also fires for every descendant; only our
+        # own matters, and only once.
+        if event is not None and event.widget is not self:
+            return
+        self._armed=False
+        try:
+            Popup._open.remove(self)
+        except ValueError:
+            return
+        log.info("Popup %s: dismissed (%s still open)",self,len(Popup._open))
 class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
     def post_tk_init(self):
         super().post_tk_init()
@@ -1632,14 +3076,46 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
             value=int(value*100)
         if 0 <= value <= 100:
             self['value']=value
-        # LOAD-BEARING (1.3.27): this per-tick synchronous flush also COMMITS the
-        # Wayland surface, so it's what paints the window during the build. Guarding
-        # it (1.3.26) removed the large-slice deadlock but left the window unpainted
-        # (nothing commits) — confirmed: no visible UI at 150/page. So it stays; the
-        # freeze is avoided by keeping slices small (where it doesn't deadlock). A
-        # non-deadlocking per-tick commit (e.g. update(), which DRAINS the event
-        # queue instead of only flushing) is the #3 fix needed to enable large slices.
-        self.update_idletasks()
+        # LOAD-BEARING (1.3.27): this per-tick commit also COMMITS the Wayland
+        # surface, so it's what paints the window during the build. Guarding it
+        # (1.3.26) removed the large-slice deadlock but left the window
+        # unpainted (nothing commits) — confirmed: no visible UI at 150/page. So
+        # it cannot simply be skipped; that direction is tried and reverted.
+        #
+        # DOING THE #3 FIX THIS COMMENT ASKED FOR (Kent wedged here again
+        # 2026-09-02: faulthandler shows update_idletasks at this line, reached
+        # via progress → waitprogress → sort_buttons:497 during a verify build,
+        # with a half-drawn wait dialog. It is freeze point 3 in
+        # the Wayland freeze audit, listed there since June and never
+        # closed; 1.3.24 scope-guarded the same call in Wait.__init__ and left
+        # this one). Two changes, both aimed at the same hazard:
+        #
+        #   1. update(), not update_idletasks(). update_idletasks flushes idle
+        #      work and BLOCKS waiting on the server; update() DRAINS the event
+        #      queue, so the client can answer the compositor's configure/frame
+        #      requests instead of sitting on them — which is the half of the
+        #      mutual wait we control. This is what the old comment prescribed.
+        # A ~10/SECOND THROTTLE WAS TRIED HERE AND DROPPED THE SAME DAY (Kent
+        # 2026-09-03). The reasoning for it was that the deadlock needs a
+        # synchronous round-trip to coincide with a window-state transition, so
+        # fewer round-trips means less exposure. The reasoning against it is
+        # better: this commit is what PAINTS the wait dialog, and throttling it
+        # made the dialog arrive late — "showing half painted, then fully
+        # painting just before closing, making it not really do what it's there
+        # for". A wait that arrives late is worse than none: the user sees
+        # exactly the half-built page the wait exists to hide, and the cover
+        # appears as it stops being needed. It also matters structurally now,
+        # since the empty-page guards depend on a live wait (iswaiting()
+        # suppresses a premature reveal), so a late wait still suppresses
+        # correctly while telling the user nothing.
+        #   So: commit every tick, as before. Only the update_idletasks() →
+        # update() swap is kept, which is what this comment's older half
+        # prescribed anyway. Exposure is managed by not NEEDING the round-trip
+        # (the audit's Phase 1/2), not by doing it more rarely.
+        try:
+            self.update()
+        except tkinter.TclError:
+            pass #destroyed mid-build; the caller's canary handles it
     def __init__(self, parent, *args, **kwargs):
         if 'orient' not in kwargs:
             kwargs['orient']='horizontal' #or 'vertical'
@@ -1699,7 +3175,43 @@ class TextBase():
         kwargs=TextBase.my_tk_kwargs(self,**kwargs) #then limit
         kwargs=super().pre_tk_init(**kwargs)
         return kwargs
+    # Tk's anchor names, plus the spellings this app actually uses. 'c' is
+    # the app's habit (ui_tkinter.py:4779, sound_ui, the alphabet chart) and
+    # Tk does NOT accept it — it wants "center" — so a pass-through without
+    # this map would trade a silent no-op for a TclError.
+    _anchor_names={'c':'center','centre':'center','center':'center',
+                   'n':'n','ne':'ne','e':'e','se':'se',
+                   's':'s','sw':'sw','w':'w','nw':'nw'}
     def post_tk_init(self,**kwargs):
+        # ANCHOR REACHES TK HERE, and until 2026-09-14 it reached it nowhere.
+        # `__init__` popped it into `self.anchor` and nothing ever read that
+        # attribute back — its assignment was the only occurrence of the name
+        # in this file — so `anchor=` was silently discarded for every Label,
+        # Button, CheckButton, Message and the rest, and what you saw was
+        # always Tk's own default (center). Found by frontend/gallery.py,
+        # which draws all nine anchors side by side: webview honoured them
+        # and tkinter, the reference backend, did not (Kent: "sticky is
+        # working now, but anchor still isn't").
+        #
+        # TWO GUARDS, both deliberate:
+        #   * ONLY AN EXPLICIT ANCHOR is applied. `self.anchor` defaults to
+        #     'w', and restoring that default would have left-aligned every
+        #     text widget in the app that never asked for anything — a change
+        #     to every page, from a line meant to fix one row.
+        #   * AFTER the Tk widget exists, and guarded. TextBase is inherited
+        #     by EntryField, Combobox and ListBox as well, and tk's entry,
+        #     ttk::combobox and listbox have no -anchor option at all; those
+        #     raise TclError rather than accept it. Setting it here means the
+        #     widgets that support it get it and the ones that don't are
+        #     unchanged, instead of a constructor that dies on three classes.
+        asked=getattr(self,'_anchor_asked',None)
+        if asked is not None:
+            name=TextBase._anchor_names.get(str(asked).lower(),asked)
+            try:
+                self['anchor']=name
+            except Exception as e:
+                log.info("{} takes no anchor ({}): {}".format(
+                            type(self).__name__,name,e))
         super().post_tk_init(**kwargs)
     def __init__(self,*args,**kwargs):
         kwargs=TextBase.restore_kwargs(self,**kwargs)
@@ -1715,6 +3227,10 @@ class TextBase():
         self.text=nfc(self.text) #ok empty
         # log.info(f"TextBase found {self.textvariable} ({self.textvariable.__class__}) "
         #             f"{self.text} ({self.text.__class__})")
+        # `_anchor_asked` is None unless the CALLER asked; `self.anchor`
+        # keeps its old default so nothing that reads it changes meaning.
+        # post_tk_init applies the asked-for one — see the note there.
+        self._anchor_asked=kwargs.get('anchor')
         self.anchor=kwargs.pop('anchor',"w")
         if 'font' in kwargs:
             if isinstance(kwargs['font'],tkinter.font.Font):
@@ -1791,12 +3307,45 @@ class Text(TextBase):
         if i and self.text:
             self.wrap()
     def wrap(self):
+        """Set the wrap width. AN EXPLICIT `wraplength` WINS; maxwidth is the
+        fallback for callers that have no better number.
+
+        THIS USED TO TAKE min(asked, maxwidth), AND THAT WAS THE TRAP (Kent
+        2026-09-03, "go ahead and fix wrap()"). `availablexy`'s maxwidth is
+        screen-minus-siblings — the right question ONLY for a fullscreen kiosk
+        page. Everywhere else the caller knows the box it is in, and min() threw
+        that knowledge away whenever the screen-derived figure happened to be
+        smaller. Three separate bugs in two days were that one line:
+
+          * the status window computed its own width in `_wraplength()`
+            explicitly to avoid the screen figure, set it, called wrap(), and
+            had it overridden — with a comment asserting min() would "bound it
+            to the window", which is not what min() does. Its `_rewrap()`, whose
+            whole purpose was repairing the first message once the window was
+            mapped, re-clobbered its own good value every time.
+          * chooser button labels wrapped at 3-4 letters inside full-width
+            cells.
+          * frames clamped to 200px boxes — the "unreachable buttons" half of
+            the same `availablexy` warning.
+
+        Two call sites had worked around it by hand and a third had documented
+        the wrong mental model of it, which is the signal that the default was
+        backwards rather than that three callers were careless.
+
+        maxwidth is still used when the caller has NOT set a wraplength, and a
+        floored (unmeasured) maxwidth still falls back to the work area rather
+        than to 200px, which is a number nobody measured."""
+        asked=getattr(self,'wraplength',None)
+        if asked:
+            # The caller measured something real. Don't second-guess it: a label
+            # wider than its box is a visible, reportable bug, whereas a label
+            # silently narrowed to a few characters looks like a font problem
+            # and has cost days.
+            self.config(wraplength=asked)
+            return
         self.availablexy()
-        if not hasattr(self,'wraplength'):
-            wraplength=self.maxwidth
-        else:
-            wraplength=min(self.wraplength,self.maxwidth)
-        self.config(wraplength=wraplength)
+        self.config(wraplength=self.maxwidth if self.maxwidth_measured
+                    else self.workarea()[0])
     def render(self, **kwargs):
         # log.info(f"Calling render {kwargs=}")
         if not self.renderer.isactive:
@@ -1878,17 +3427,40 @@ class Frame(Childof,Gridded,UI,tkinter.Frame):
     def windowsize(self):
         if not hasattr(self,'configured'):
             self.configured=0
-        if self.configured>10:
-            return
         self.availablexy()
         contentrw=self.winfo_reqwidth()
         contentrh=self.winfo_reqheight()
+        # A LOOP GUARD, NOT A LIFETIME BUDGET (Kent 2026-09-04). `configured>10`
+        # used to bail BEFORE measuring, so after ten reconfigures this frame
+        # stopped resizing for the life of the page. Cycling examples spends
+        # that budget quickly, and the symptom is exactly what he saw: swapping
+        # to a shorter word shrank the content but the viewport did not follow,
+        # and swapping back to the longer one left it CUT OFF where it had
+        # displayed correctly before.
+        #   The guard is still wanted — it stops an oscillation where sizing
+        # triggers a <Configure> that triggers sizing — but it should only
+        # suppress repeats at the SAME requested size. A genuine content change
+        # is new information and re-earns the budget.
+        want=(contentrw,contentrh)
+        if want!=getattr(self,'_sized_for',None):
+            self._sized_for=want
+            self.configured=0
+        elif self.configured>10:
+            return
+        # Same rule as Label.wrap(): an UNMEASURED max is not a size to clamp
+        # to. min(200,content) shrinks the frame to a 200px box whatever it
+        # holds, which is the "unreachable buttons" half of what the availablexy
+        # warning has been predicting. When the measurement failed, let the
+        # content decide — that at least reflects something real, and a frame
+        # bigger than the screen is a visible problem rather than a silent one.
+        capw=self.maxwidth if self.maxwidth_measured else contentrw
+        caph=self.maxheight if self.maxheight_measured else contentrh
         if ((self.winfo_width() < contentrw)
-                or (self.winfo_width() > self.maxwidth)):
-                self.config(width=min(self.maxwidth,contentrw))
+                or (self.winfo_width() > capw)):
+            self.config(width=min(capw,contentrw))
         if ((self.winfo_height() < contentrh)
-                or (self.winfo_height() > self.maxheight)):
-            self.config(height=min(self.maxheight,contentrh))
+                or (self.winfo_height() > caph)):
+            self.config(height=min(caph,contentrh))
         self.configured+=1
     def __init__(self, parent, *args, **kwargs):
         # log.info("Initializing Frame object")
@@ -2076,8 +3648,18 @@ class CheckButton(Childof,Gridded,Text,UI,tkinter.Checkbutton):
         img_names=['uncheckedbox','checkedbox']
         if not kwargs.pop('large_images',False):
             img_names=[f'{i}_sm' for i in img_names]
-        kwargs['selectimage']=kwargs.get('selectimage',
-                                        parent.theme.photo[img_names[1]].scaled)
+        # image_pixels/image_scaleto reach TextBase, which scales `image` — but
+        # `selectimage` never went through it, so asking for a smaller box gave
+        # a small unchecked one and a full-size checked one, i.e. a control that
+        # changed size when you clicked it. Scale both by the same rule.
+        _sel=parent.theme.photo[img_names[1]]
+        if kwargs.get('image_pixels'):
+            _sel=_sel.scale(parent.theme.scale,
+                        pixels=kwargs['image_pixels'],
+                        scaleto=kwargs.get('image_scaleto') or 'height')
+        else:
+            _sel=_sel.scaled
+        kwargs['selectimage']=kwargs.get('selectimage',_sel)
         #image has a helper that expects a string name; selectimage doesn't.
         #Probably not worth the time to generalize for just these two.
         if kwargs.get('selectimage'):
@@ -2124,12 +3706,79 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
         sel=self.curselection()
         if not sel or not self.command:
             return
-        code=self.choices[sel[0]]
+        idx=sel[0]
+        # THE ROW'S TEXT IF THE VALUES LIST IS SHORT. `choices` is kept in
+        # step by `insert`/`delete` below; this is the guard for anything
+        # that still bypasses them, because an IndexError here dies inside
+        # Tk's callback — the page shows the row highlighted and nothing
+        # else happens, which is exactly how the new-language page looked
+        # (Kent, 2026-09-22: English selected, no code, no territories).
+        code=self.choices[idx] if idx < len(self.choices) else self.get(idx)
         if self._window is not None:
             self.command(code,window=self._window)
         else:
             log.info(f"Running {self.command=} with {code=}")
             self.command(code)
+    def _split_choices(self,elements):
+        """(values, display texts) for rows arriving by `insert`, through the
+        same normaliser the constructor's `optionlist` goes through."""
+        codes=[]; texts=[]
+        for e in elements:
+            if self._raw_command:
+                codes.append(e); texts.append(e)
+                continue
+            ck=ButtonFrame.regularize_choice(self,e)
+            if not ck:
+                continue
+            if 'image' in ck:
+                log.info(f"ListBox dropping image for {ck['choice']!r}")
+            codes.append(ck['choice']); texts.append(ck['text'])
+        return codes,texts
+    def insert(self,index,*elements):
+        """Add rows, keeping VALUES and DISPLAY TEXT in step.
+
+        `choices` was filled ONLY from the constructor's `optionlist`, and
+        `insert` was Tk's own — so a list filled after construction, which is
+        what the new-language page, the alphabet comparison and the sound
+        settings all do, had rows on screen and an empty `choices`, and
+        `_on_select` raised IndexError on every click (2026-09-22). The
+        webview `ListBox` had already been given this override for the same
+        reason (ui_webview.py, `insert`); the two backends now agree."""
+        codes,texts=self._split_choices(elements)
+        if not texts:
+            return
+        try:                        # 0, '0': a position; 'end', 'active'…: not
+            pos=int(index)
+        except (TypeError,ValueError):
+            pos=None
+        if pos is not None and 0 <= pos <= len(self.choices):
+            self.choices[pos:pos]=codes
+        else:                       # 'end', END, 'active', '@x,y' …: append
+            if index not in (END,'end'):
+                log.info(f"ListBox.insert at {index!r}: values appended at "
+                         "the end; a mismatch is resynced from the rows")
+            self.choices.extend(codes)
+        tkinter.Listbox.insert(self,index,*texts)
+        self._resync_choices()
+    def delete(self,first,last=None):
+        n=self.size()               # BEFORE the rows go: 'end' means the last one
+        try:
+            f=n-1 if first in (END,'end') else int(first)
+            l=f if last is None else (n-1 if last in (END,'end') else int(last))
+            del self.choices[f:l+1]
+        except (TypeError,ValueError):
+            pass                    # 'active', '@x,y': the resync below decides
+        tkinter.Listbox.delete(self,first,last)
+        self._resync_choices()
+    def _resync_choices(self):
+        """If the two lists ever disagree in length, the display wins: a
+        value list that is out of step is worse than no value list, because
+        it hands the caller the WRONG row's code without a sound."""
+        n=self.size()
+        if len(self.choices) != n:
+            log.info(f"ListBox: {len(self.choices)} values for {n} rows; "
+                     "taking the row texts as the values")
+            self.choices=list(self.get(0,'end'))
     def __init__(self, parent, *args, **kwargs):
         """selectmode can be
         tkinter.BROWSE – allows a single selection. This is the default.
@@ -2304,9 +3953,71 @@ class Window(Toplevel):
             self.progress(value)
         except Exception as e:
             log.info(f"Exception updating progress: {e}")
+    def deiconify(self):
+        """Reveal — and NAME the caller if this page has nothing to show.
+
+        NOTHING BUT QUIT. The Exit button lives in `outsideframe`, not `frame`,
+        so a window revealed with an empty `frame` is a fullscreen block of
+        theme colour whose ONLY control is Quit. Kent watched a user on a Zoom
+        call come close to pressing it precisely because it was the only thing
+        on screen (2026-09-01), so this belongs with data loss rather than with
+        cosmetics: the page solicits the most destructive action available, at
+        the moment the user is most confused.
+
+        LOGS, DOES NOT REFUSE. Refusing would trade this symptom for the worse
+        one — no window at all — wherever the caller has no retry, and this
+        codebase has now been wrong four separate times about when a window
+        should be revealed (2s timer, 15s timer, reveal-on-content, the global
+        watchdog). The log line is the safe half, and it is the half that was
+        missing: `guardvisible` declines to reveal an empty window, but an
+        explicit deiconify() from a page builder has never said anything at
+        all. Grep the log for NOTHING BUT QUIT to get the producer by name.
+
+        A wait dialog covering the window is not a producer — an empty frame is
+        expected mid-build, which is exactly what the wait is for.
+        """
+        try:
+            if (getattr(self,'exitButton',None) is not None
+                    and hasattr(self,'frame') and self.frame.winfo_exists()
+                    and not self.frame.winfo_children()
+                    and not self.iswaiting()):
+                log.warning("NOTHING BUT QUIT: revealing %r with an empty "
+                        "frame — the user gets a fullscreen page whose only "
+                        "control is Exit. Build content before revealing, or "
+                        "cover the gap with waiting(thenshow=True).",
+                        self.title())
+                # AND SAY SO ON SCREEN. This one still REVEALS (see above), so
+                # the user is looking at the bad page — which is exactly the
+                # case where they need to know it was noticed, rather than
+                # concluding the app is broken and unrecoverable.
+                from frontend.visibility import report_empty_page
+                report_empty_page('deiconify',self,
+                                'revealed anyway (caller has no retry)')
+        except Exception:
+            pass #a diagnostic must never stop a reveal
+        return super().deiconify()
     def resetframe(self):
+        """Blank the content frame. INVARIANT: never call this on a VIEWABLE
+        window outside a waiting() block. The Exit button lives in
+        `outsideframe`, not `frame`, so a mapped window whose frame has just
+        been emptied shows a fullscreen block of theme colour containing
+        nothing but Quit — and it stays that way for as long as the next build
+        takes (Kent measured ~10s). `with waiting(thenshow=True)` is the fix
+        and already exists: wait() withdraws the window and covers the screen
+        with the Loading dialog, waitdone() deiconifies once the build is done.
+        Logged rather than raised — a noisy log beats breaking a live page."""
         if self.parent.exitFlag.istrue():
             return
+        try:
+            if self.winfo_exists() and self.winfo_viewable() \
+                    and not self.iswaiting():
+                log.warning("resetframe on a VIEWABLE window with no wait "
+                            "active (%s) — user sees an empty kiosk page with "
+                            "only Quit until the next build finishes; wrap the "
+                            "teardown+rebuild in waiting(thenshow=True)",
+                            self.title())
+        except Exception:
+            pass # a diagnostic must never be the thing that breaks the reset
         if self.winfo_exists(): #If this has been destroyed, don't bother.
             if hasattr(self,'frame') and type(self.frame) is Frame:
                 self.frame.destroy()
@@ -2354,11 +4065,24 @@ class Window(Toplevel):
         self.outsideframe=Frame(self, # border=True,
                                 row=1, column=1, sticky='nsew',
                                 )
+        # NO WEIGHT HERE — the centring is DELIBERATE. I briefly added
+        # grid_rowconfigure/columnconfigure(1, weight=1) to make outsideframe
+        # fill the window, on the reasoning that the dead margins (~390px left,
+        # ~420px right of 1920) were an oversight. They are not: Kent
+        # 2026-09-04, "the whole block is centred with dead margins: yes, this
+        # is intentional." Stretching everything to the edges would trade a
+        # wrapping problem for a design change nobody asked for.
+        #   What he wants instead is narrower: those margins are space the
+        # SCROLLING FRAME may grow into rather than wrap. So the fix belongs in
+        # what the wrap budget is measured against — the available width,
+        # margins included — not in how this window lays itself out. See the
+        # wrap_to_container call in sort_ui.build_sort_layout.
         self.resetframe()
         # self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
         if exit:
             e=(_("Exit")) #This should be the class, right?
-            self.exitButton=Button(self.outsideframe, width=10, text=e,
+            self.exitButton=Button(self.outsideframe, #width=10, 
+                                text=e,
                                 command=self.on_quit,
                                 font='small',
                                 column=2,row=2
@@ -2407,7 +4131,24 @@ class ContextMenu(Childof):
             # There is a default 'show menus only' one in HasMenus()
             self.parent.setcontext()
         self.menu.tk_popup(event.x_root, event.y_root)
-        self.menu.grab_release() #don't do Tk redundant grab
+        # NO grab_release() HERE — it was the reason the menu stayed up.
+        # THE GRAB `tk_popup` TAKES IS WHAT DISMISSES THE MENU: it routes
+        # every click, on the menu or off it, to the menu, which then unposts
+        # itself. Releasing it immediately ("don't do Tk redundant grab")
+        # leaves a posted menu with nothing listening for the click that
+        # should put it away — so it sat there after the user had already
+        # chosen, and they clicked again (Kent, 2026-09-15: "the context menu
+        # stays up after clicking. so I've clicked multiple times").
+        #   THIS WAS ALREADY KNOWN AND FIXED ONCE, in the other context menu:
+        # `sort_ui.py:179` carries the whole explanation and names THIS
+        # implementation as the one still doing it — "releasing it
+        # immediately (as ui.ContextMenu does …) leaves the menu posted until
+        # an item is picked (Kent 2026-07-28: 'these can't just stick
+        # around')". Two menus, one bug, fixed fourteen months apart because
+        # the fix went into the copy rather than into both.
+        #   The grab is not redundant and does not fight the app's modal
+        # waits: `tk_popup` saves whatever grab it displaces and restores it
+        # on dismissal.
         self.popup=True
     def _bind_to_makemenus(self,event=None): #all needed to cover all of window
         log.info("Binding to make menus")
@@ -2620,9 +4361,80 @@ class ScrollingFrame(Frame):
         # if self.content.winfo_reqwidth() > self.content.winfo_width():
         #     # update the canvas's width to fit the inner frame
         #     self.content.config(width=self.content.winfo_reqwidth())
-        if self.content.winfo_reqwidth() != self.canvas.winfo_width():
-            # update the canvas's width to fit the inner frame
-            self.canvas.config(width=self.content.winfo_reqwidth())
+        # THE VIEWPORT MUST BE WIDE ENOUGH TO SHOW THE CONTENT — rows that fit
+        # in the available space "shouldn't wrap, they should show" (Kent
+        # 2026-09-04).
+        #
+        # This set the canvas to EXACTLY the content's requested width, with no
+        # floor, so the viewport was only ever as wide as the content was when
+        # this last ran. A row that grew afterwards — a longer word cycled in —
+        # was then CLIPPED MID-WORD at the old canvas edge, well inside the box,
+        # which is neither the wrap point nor the box's border. It also made the
+        # behaviour asymmetric: shrinking matched, growing did not, because the
+        # new request had not propagated when the comparison ran.
+        #
+        # NO FLOOR — HUGGING IS THE POINT when the content really is small
+        # (Kent 2026-09-04). I briefly floored this at the box's own width,
+        # which was both wrong in intent and INERT in fact: `width` above is
+        # min(contentrw, capw), so width <= contentrw always, and
+        # max(contentrw, width) is just contentrw. It could not have fixed the
+        # clip and could not have broken hugging; it only read as though it did.
+        #
+        # So the clip is a STALE `contentrw`: the box and the canvas both read
+        # it in this same pass, so when a row's new requested width has not
+        # propagated yet, both come out narrow together and the grown row is cut
+        # at the old canvas edge. The remedy is to run again once the request is
+        # current — which the <Configure>/after_idle path does, and which it can
+        # now actually do since `windowsize`'s lifetime `configured>10` cap
+        # became a per-size loop guard.
+        #
+        # The cap stays: `capw` is the same available figure the wrap budget
+        # uses, so the viewport and the text agree about how much room exists.
+        capw,caph,cellw,cellh,winw=self._caps()
+        wantcanvas=min(size[0],capw)
+        canvasnow=self.canvas.winfo_width()
+        if wantcanvas and wantcanvas!=canvasnow:
+            self.canvas.config(width=wantcanvas)
+        # DIAG scroller_pass: every DISTINCT pass, so the PROGRESSION is visible.
+        # The clip is believed to be a stale `contentrw` — the box and the canvas
+        # read it in the same pass, so a row whose new requested width has not
+        # propagated makes both come out narrow together and cuts the grown row
+        # at the old canvas edge. That is only decidable by watching the numbers
+        # across passes: if contentrw rises on a later pass and the canvas
+        # follows, the re-measure is working; if contentrw never rises, the
+        # request itself is not being recomputed and the fix is upstream of
+        # here. Deduped on the whole tuple, so a settled page prints once.
+        try:
+            sig=(size,capw,caph,wantcanvas)
+            if sig!=getattr(self,'_said_pass',None):
+                self._said_pass=sig
+                log.info("scroller pass: content=%sx%s | cap=%sx%s "
+                        "(maxw=%s cellw=%s winw=%s) | canvas %s→%s | box=%s",
+                        size[0],size[1],capw,caph,self.maxwidth,cellw,winw,
+                        canvasnow,wantcanvas,self.winfo_width())
+        except Exception:
+            pass
+        # SIZE THE BOX IN THE SAME PASS. The canvas is gridded sticky='nsew'
+        # with columnconfigure(0, weight=1), so its ACTUAL width is the box's
+        # inner width no matter what we request of it — `config(width=957)`
+        # above changes only its requested size. Kent's DIAG shows the
+        # consequence: `canvas 1133→957` three passes running, with canvasnow
+        # stuck at 1133, because the box stayed at 1150 and stretched the canvas
+        # to fill it. So cycling to a SHORTER word did not hug (2026-09-04).
+        #   Calling windowsize() here means the box and the canvas are set from
+        # the same numbers in the same pass, which is also the only way they
+        # cannot drift — the failure mode this whole area keeps returning to.
+        try:
+            self.windowsize()
+        except Exception as e:
+            # WARNING, not log.log(2). Swallowing this at level 2 made a failing
+            # box re-size indistinguishable from one that never ran: the canvas
+            # stayed stretched to the old width, `canvasnow` never moved off
+            # 1133, and no `scroller cap` line appeared — which reads exactly
+            # like the call not being there (Kent 2026-09-04). A diagnostic path
+            # that can fail invisibly costs more than it saves.
+            log.warning("scroller box re-size failed, so the canvas will stay "
+                    "stretched to its old width: %s",e)
         # Cap the viewport HEIGHT at the available screen space. The scrollregion
         # set above is the FULL content height, so content taller than the cap
         # stays scrollable. Without the cap, sizing the canvas (and, when hugging,
@@ -2633,7 +4445,16 @@ class ScrollingFrame(Frame):
         # page grew past one screen; before that, content fit and hugging was a
         # harmless no-op.)
         self.availablexy()  # refresh self.maxheight/self.maxwidth
-        viewh = min(self.content.winfo_reqheight(), self.maxheight)
+        if getattr(self, '_fill_parent', False) and self.winfo_height() > 1:
+            # Opt-in (the status window): the VIEWPORT IS THIS FRAME. availablexy
+            # measures the SCREEN minus siblings, which is right for a fullscreen
+            # kiosk page and meaningless in a window sized to a fraction of the
+            # screen — there the canvas came out unrelated to the window holding
+            # it, filling about a third of it (Kent 2026-08-25). Scrollregion is
+            # still the full content, so taller content scrolls as always.
+            viewh = self.winfo_height()
+        else:
+            viewh = min(self.content.winfo_reqheight(), self.maxheight)
         if viewh != self.canvas.winfo_height():
             self.canvas.config(height=viewh)
         if getattr(self, '_hug_content', False):
@@ -2673,11 +4494,111 @@ class ScrollingFrame(Frame):
         log.info("self.canvas.height={}, width={}\n".format(
                 self.canvas.winfo_height(), self.canvas.winfo_width()))
     def windowsize(self, event=None):
+        """Re-entrancy guard around the real sizing pass below.
+
+        WHY: this method calls `self.content.update_idletasks()`, which runs
+        pending idle callbacks — and one of those is
+        `_do_configure_interior`, which calls `reflow()` → `windowsize()` →
+        `update_idletasks()` again. `_do_configure_interior` clears
+        `_configure_pending` before running, so every nested level is free to
+        schedule another, and the nesting is unbounded.
+        Kent's stack dump (2026-09-14) shows the cycle three deep and still
+        descending:
+
+            windowsize -> update_idletasks -> callit
+              -> _do_configure_interior -> windowsize -> update_idletasks
+                -> _do_configure_interior -> ...
+
+        Each level is an X round trip, which on this display costs about a
+        second (see the Wayland freeze audit), so the pass he timed took
+        **35 seconds** and the alphabet chart sat half-built the whole time —
+        which is what he read as a nothing-but-Quit page. It was not a layout
+        decision; it was a build that had not finished.
+
+        The nested call has nothing to add: the outer pass is measuring the
+        same content and will finish the job. So it returns, and nothing is
+        lost. `_suspend_configure` would also break the cycle but it drops the
+        pending recompute (`_configure_pending` is already False by then),
+        which is a different and worse trade.
+        """
+        if getattr(self, '_sizing', False):
+            log.log(3, "windowsize re-entered from an idle callback; the "
+                       "outer pass is already doing this")
+            return
+        # DIAG, and the numbers it takes to settle this (2026-09-14). The
+        # docstring above blames a nesting cascade; the guard it describes
+        # stops a scroller re-entering ITSELF, yet passes still take 37-42s.
+        # So either the cascade hops between scroller INSTANCES — which this
+        # guard cannot see and the deduped log lines could not count — or the
+        # time is in one call. `inside` and `scrollers` decide that.
+        global _scroller_passes,_scroller_depth
+        _scroller_passes+=1
+        _started_at=_scroller_passes
+        if _scroller_depth == 0:
+            _scroller_ids.clear()
+        _scroller_ids.add(id(self))
+        _scroller_depth+=1
+        self._pass_n=getattr(self,'_pass_n',0)+1
+        self._t_avail=self._t_flush=0.0
+        self._n_probes=0
+        _t0=time.perf_counter()
+        self._sizing = True
+        try:
+            return self._windowsize(event)
+        finally:
+            self._sizing = False
+            _scroller_depth-=1
+            _elapsed=time.perf_counter()-_t0
+            if _elapsed >= SLOW_SCROLLER_PASS_S:
+                # WARNING: 37s with a half-built page on screen is a fault, and
+                # the user reads it as a hung app (Kent called it NBQ).
+                _n=getattr(self,'_n_widgets',0) or 0
+                log.warning("scroller SLOW pass: %.1fs = availablexy %.1fs "
+                        "(%s sibling probes) + content.update_idletasks %.1fs "
+                        "for %s widgets (%.0fms each) + %.1fs elsewhere | %s "
+                        "passes ran INSIDE it across %s scrollers | pass #%s "
+                        "for this scroller, nesting depth %s",
+                        _elapsed,self._t_avail,self._n_probes,self._t_flush,
+                        _n,(self._t_flush*1000.0/_n) if _n else 0.0,
+                        max(0.0,_elapsed-self._t_avail-self._t_flush),
+                        _scroller_passes-_started_at,len(_scroller_ids),
+                        self._pass_n,_scroller_depth+1)
+
+    def _windowsize(self, event=None):
+        # TIMED SEPARATELY — these are the only two candidates for the 37s
+        # passes; see SLOW_SCROLLER_PASS_S and the `windowsize` wrapper, which
+        # prints these. availablexy walks up the grid tree doing a grid_info()
+        # per sibling per level; update_idletasks runs every pending idle
+        # callback, including other scrollers' <Configure> handlers.
+        _t=time.perf_counter()
+        _probes0=_sibling_probes
         self.availablexy() #>self.maxheight, self.maxwidth
+        self._t_avail=time.perf_counter()-_t
+        self._n_probes=_sibling_probes-_probes0
         """This section deals with the content on the canvas (self.content)!!
         This is how much space the contents of the scrolling canvas is asking
         for. We don't need the scrolling frame to be any bigger than this."""
+        # HOW BIG IS THE TREE BEING FLUSHED. The flush turned out to be the
+        # whole cost (2026-09-14: 44.1s of a 44.1s pass, sibling measurement
+        # at 0.0s, no nested passes at all), so the question became whether
+        # that is per-widget work or a fixed stall.
+        #
+        # `.children`, NOT `winfo_children()`: the latter asks Tk, so walking
+        # the tree that way would add a round-trip per widget to a pass that
+        # is already the problem. `.children` is the dict Tk's Python side
+        # keeps anyway — same information, no traffic.
+        def _count(w):
+            n=1
+            for c in getattr(w,'children',{}).values():
+                n+=_count(c)
+            return n
+        try:
+            self._n_widgets=_count(self.content)
+        except Exception:
+            self._n_widgets=0
+        _t=time.perf_counter()
         self.content.update_idletasks()
+        self._t_flush=time.perf_counter()-_t
         contentrw=self.content.winfo_reqwidth()+self.yscrollbarwidth
         contentrh=self.content.winfo_reqheight()
         # for child in self.content.winfo_children():
@@ -2717,17 +4638,69 @@ class ScrollingFrame(Frame):
             -the max dimensions, from above."""
         #This should maybe be pulled out to another method?
         #scrolling window width
-        if contentrw > self.maxwidth and not self.ignore_maxwidth:
-            width=self.maxwidth
+        # THE CAP COMES FROM THE LAYOUT, NOT FROM THE SCREEN.
+        #
+        # This min() is ALREADY Kent's rule (2026-09-03) — "hug short,
+        # unwrapped content, and expand to available window/screen size as
+        # possible, before forcing wrapping" — so the structure was right all
+        # along. What was wrong is the second term: maxwidth/maxheight come from
+        # availablexy, i.e. screen minus _measure_siblings, which counts
+        # SCROLLABLE CONTENT as consumed real estate. His log shows the sibling
+        # total climbing +126px per sort-group button, 1033→2671 against a
+        # 1170px screen, driving maxheight through zero (137 → 11 → -115 → …
+        # → -1501) — eleven buttons that legitimately exceed the screen BECAUSE
+        # they are in a scroller, where that is normal.
+        #
+        # The allotted space is what the parent gives us. That also breaks the
+        # circle measured in DIAG-verify-wrap (content=615 canvas=1
+        # scrollframe=1 runwindow.frame=1489): the box stops being sized by what
+        # is inside it, so children can finally be wrapped to the box.
+        # REVERTED 2026-09-03, same session it was tried. Capping from the
+        # PARENT's width instead of maxwidth clipped the status board's progress
+        # table to ~110px — one and a half columns of a wide table. The approach
+        # is wrong for the same reason the old one is: a parent that is ITSELF
+        # content-sized hands down a small number, so "ask the parent" just
+        # moves the content-drives-box circularity one level up. The allotted
+        # space has to come from something whose size is set by the layout all
+        # the way up, which is what the ScrollingFrame-sizes-from-layout item now has to
+        # work out; MIN_PLAUSIBLE=300 was not enough of a guard.
+        # EXPAND BEFORE WRAPPING (Kent's rule), and WIDEN ONLY.
+        #
+        # The cap here is availablexy's maxwidth/maxheight = screen minus
+        # _measure_siblings, which UNDERCOUNTS badly whenever the siblings are
+        # themselves scrollable content: Kent's log shows the sibling total
+        # climbing +126px per sort-group button, 1033→2671 against a 1170px
+        # screen. So a scroller told "you have 200px" sits at 200px in a 1920px
+        # window — "hugs too tightly", with rows wrapping that had room to be
+        # one line (`heagoat` needed ~765 in a ~750 box, with ~1100px unused to
+        # its right).
+        #
+        # `_cellsize()` asks the geometry manager what it actually allotted.
+        # Taking the LARGER of the two is the safety property my reverted
+        # attempt lacked: that one REPLACED maxwidth with a parent-derived
+        # number and clipped the status board's progress table to ~110px.
+        # max() cannot narrow anything, so the worst case here is no change.
+        capw,caph,cellw,cellh,winw=self._caps()
+        if contentrw > capw and not self.ignore_maxwidth:
+            width=capw
         else:
-            width=contentrw #self.config(width=contentrw)
-        # if self.winfo_width() > self.maxwidth:
-        #     self.config(width=self.maxwidth)
+            width=contentrw #hug: it fits, so take only what it needs
         #scrolling window height
-        if contentrh > self.maxheight:
-            height=self.maxheight #self.config(height=self.maxheight)
-        else: #if self.winfo_height() < contentrh:
-            height=contentrh# self.config(height=contentrh)
+        if contentrh > caph:
+            height=caph
+        else:
+            height=contentrh
+        # Deduped by TUPLE, not once per scroller: printing only the first pass
+        # made it impossible to tell whether this ran again after a cycle, which
+        # was exactly the question (Kent 2026-09-04).
+        _capsig=(self.maxwidth,cellw,winw,capw,self.maxheight,cellh,caph,
+                contentrw,contentrh,width,height)
+        if _capsig!=getattr(self,'_said_cap',None):
+            self._said_cap=_capsig
+            log.info("scroller cap: maxw=%s cellw=%s winw=%s → capw=%s | "
+                    "maxh=%s cellh=%s → caph=%s | content=%sx%s → %sx%s",
+                    self.maxwidth,cellw,winw,capw,self.maxheight,cellh,caph,
+                    contentrw,contentrh,width,height)
         self.config(height=height, width=width)
         log.log(4,"height={}, width={}".format(height, width))
         # if self.winfo_height() > self.maxheight:
@@ -2756,6 +4729,108 @@ class ScrollingFrame(Frame):
         self.hwinfo(event)
         # if self.winfo_height() > self.maxheight:
         #     self.config(height=self.maxheight)
+    def _caps(self):
+        """(capw, caph, cellw, cellh, winw) — how wide/tall this scroller MAY be.
+
+        ONE definition, called by both `windowsize` (which sizes the box) and
+        `_do_configure_interior` (which sizes the canvas). They were computing
+        it separately, which is precisely how the two numbers drift apart — and
+        drift is the whole bug history here: a viewport capped tighter than the
+        wrap budget wrapped rows that had room, and one capped looser let a row
+        grow past the canvas and be CLIPPED mid-word (Kent 2026-09-04, both
+        symptoms in one sitting). It also crashed once as a NameError, which was
+        the honest version of the same mistake.
+
+        Three candidates, and the LARGEST wins — widen only, never narrow:
+          * `maxwidth`/`maxheight` from availablexy: screen minus
+            _measure_siblings, which undercounts badly when the siblings are
+            themselves scrollable content (Kent's log: +126px per group button,
+            1033→2671 against a 1170px screen, so a scroller gets told it has
+            200px in a 1920px window);
+          * `_cellsize()`: what the geometry manager actually allotted;
+          * the WINDOW's available width — the toplevel minus this scroller's
+            own left offset minus a right allowance, i.e. everything from here
+            to the edge. This is what lets the box grow into the deliberate
+            margins rather than wrap inside them ("those margins are space that
+            I would expect we increase the scrolling frame into, rather than
+            wrap").
+        max() is the safety property the reverted attempt lacked: that one
+        REPLACED maxwidth with a parent-derived number and clipped the status
+        board's progress table to ~110px."""
+        self.availablexy()
+        cellw,cellh=self._cellsize()
+        winw=None
+        try:
+            top=self.winfo_toplevel()
+            off=max(0,self.winfo_rootx()-top.winfo_rootx())
+            tw=top.winfo_width()
+            if tw and tw>1:
+                winw=max(0,tw-off-120)
+        except Exception as e:
+            log.log(2,"scroller window-available unavailable (%s)",e)
+        # `winw` IS LOGGED BUT NO LONGER CAPS. It is
+        # `toplevel - self.winfo_rootx() offset - 120`, so it is position
+        # derived, and this block is centred: it reads high while the layout is
+        # unsettled and low after a hug. Combined with the widest-seen memory
+        # below, a single early high reading got REMEMBERED — Kent's log shows
+        # `capw=1432` standing while `maxw=1382 cellw=891 winw=1400`, i.e. the
+        # cap preserving a stale number rather than a good one, and 1432 against
+        # a box that settles at 1382 is precisely the ~50px that kept one row
+        # per page unwrapped and clipped.
+        #   maxwidth and cellw are both layout-derived and consult no position,
+        # so they are safe to remember. If a page now hugs too tightly, that is
+        # availablexy under-measuring (the known _measure_siblings fault) and
+        # will show up as maxw being small in this very line — visible and
+        # attributable, which the old rescue-by-winw was not.
+        capw=max([v for v in (self.maxwidth,cellw) if v is not None])
+        # THE CAP MAY NOT SHRINK BECAUSE THE BOX HUGGED. All three candidates
+        # move the SAME way when the content gets shorter — `maxwidth` is the
+        # screen minus _measure_siblings, `cellw` is grid_bbox of a box that
+        # just got narrower, and `winw` is derived from this scroller's rootx,
+        # which moves right when a centred block shrinks — so max() protects
+        # nothing here: the cap falls, the next long word is capped lower, and
+        # the row is clipped worse on every cycle. Kent: "It did eventually hug
+        # to the next longest button, but then when I switch it back, that
+        # button was cut off even more" (2026-09-04), and crucially "it wasn't
+        # more wrapping, it was more clipping" — the text kept its width and the
+        # VIEWPORT failed to come back.
+        #   So remember the widest cap seen, keyed on the TOPLEVEL's width: the
+        # window is the one thing here that does not move when the box hugs.
+        # A real window resize changes the key and re-baselines, so this cannot
+        # strand an over-large cap after the user makes the window smaller.
+        try:
+            _key=self.winfo_toplevel().winfo_width()
+        except Exception:
+            _key=None
+        if _key and _key>1:
+            if getattr(self,'_capw_key',None)==_key:
+                capw=max(capw,getattr(self,'_capw_max',0) or 0)
+            else:
+                self._capw_key=_key
+            self._capw_max=capw
+        caph=self.maxheight if cellh is None else max(self.maxheight,cellh)
+        return capw,caph,cellw,cellh,winw
+    def _cellsize(self):
+        """(width, height) the GEOMETRY MANAGER allotted this scroller, or
+        (None, None).
+
+        `master.grid_bbox(col,row)` is the honest question — "what is this
+        cell" — and it is the one I had not asked. The reverted attempt asked
+        the PARENT's width instead, which is a different question: a parent that
+        is itself content-sized hands down a small number, and the status
+        board's progress table clipped to ~110px (2026-09-03).
+
+        Still not immune to circularity — a weighted column's share depends on
+        the parent having space to distribute — which is why the caller only
+        ever WIDENS with this, never narrows."""
+        try:
+            gi=self.grid_info()
+            bbox=self.master.grid_bbox(int(gi['column']),int(gi['row']))
+            if bbox and len(bbox)>=4:
+                return bbox[2] or None,bbox[3] or None
+        except Exception as e:
+            log.log(2,"scroller cell size unavailable (%s)",e)
+        return None,None
     def tobottom(self):
         self.update_idletasks()
         self.canvas.yview_moveto(1)
@@ -2813,7 +4888,53 @@ class ScrollingFrame(Frame):
         # per-frame wheel bindings are needed here.
         # self.canvas.bind('<Configure>', self._configure_canvas) #called by:
         self.content.bind('<Configure>', self._configure_interior)
+        # CONTENT changing size is not the only reason to reflow: the WINDOW
+        # changing size gives this frame a different amount of room, and nothing
+        # was listening for that — so a hand-resized window kept a viewport sized
+        # for the old one until some content change happened to fire the binding
+        # above (Kent 2026-08-25, on the status window). Bound on `self`, so every
+        # ScrollingFrame in the app gets it.
+        self.bind('<Configure>', self._on_frame_resize, add='+')
+        # CANCEL ON DEATH. tkinter's after() wrapper runs the callback and then
+        # deletecommand()s itself; a widget destroyed in the meantime has
+        # _tclCommands = None, and callit catches TclError but NOT the resulting
+        # AttributeError — so it escapes as a crash with a traceback pointing at
+        # tkinter, not at us (Kent 2026-08-25, mid-presort). Teardown resizes
+        # siblings, so a doomed frame reliably schedules one of these first.
+        self.bind('<Destroy>', self._cancel_resize_job, add='+')
         self.bind('<Visibility>', self.windowsize, add='+')
+    def _cancel_resize_job(self, event=None):
+        job=getattr(self, '_resize_job', None)
+        if not job:
+            return
+        self._resize_job=None
+        try:
+            self.after_cancel(job)
+        except Exception:
+            pass
+    RESIZE_SETTLE_MS=150
+    def _on_frame_resize(self, event=None):
+        """Reflow after the frame's own allocation changes — debounced.
+
+        Two guards, both load-bearing. (1) Only act when the size actually
+        CHANGED: `_do_configure_interior` sets `canvas.config(...)` and, when
+        hugging, `self.config(height=…)`, each of which fires <Configure> again —
+        so an unguarded handler oscillates. (2) Coalesce with `after`, because a
+        drag-resize emits a continuous stream and the recompute is O(content)."""
+        if event is not None and getattr(event, 'widget', None) is not self:
+            return #a child's Configure bubbling; not our allocation
+        size=(self.winfo_width(), self.winfo_height())
+        if size==getattr(self, '_last_frame_size', None):
+            return
+        self._last_frame_size=size
+        job=getattr(self, '_resize_job', None)
+        if job:
+            try:
+                self.after_cancel(job)
+            except Exception:
+                pass
+        self._resize_job=self.after(self.RESIZE_SETTLE_MS,
+                    self._configure_interior)
 class ScrollingButtonFrame(ScrollingFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
     def reserve_kwargs(self,**kwargs):
@@ -2918,10 +5039,16 @@ class ToolTip(object):
         self.dispy = 20
         self.widget = widget
         self.text = text
-        self.widget.bind("<Enter>", self.enter)
-        self.widget.bind("<Leave>", self.leave)
-        self.widget.bind("<ButtonPress>", self.leave)
-        self.widget.bind("<Destroy>", self.hidetip)
+        # ADDITIVE, so a tooltip never silently replaces a binding the
+        # widget's owner made. These were bare binds, and a bare `bind`
+        # REPLACES the instance binding for that sequence — so the record
+        # button's `<Leave>` (press-and-hold ends on slide-off,
+        # `composites.hold`) was wiped the moment its tooltip was created
+        # after it, and again by `showtip` below (2026-09-17).
+        self.widget.bind("<Enter>", self.enter, add='+')
+        self.widget.bind("<Leave>", self.leave, add='+')
+        self.widget.bind("<ButtonPress>", self.leave, add='+')
+        self.widget.bind("<Destroy>", self.hidetip, add='+')
         self.id = None
         self.tw = None
     def enter(self, event=None):
@@ -2945,7 +5072,11 @@ class ToolTip(object):
         if id:
             self.widget.after_cancel(id)
     def showtip(self, event=None):
-        self.widget.unbind("<Leave>")
+        # No `unbind("<Leave>")` here any more: it removed EVERY `<Leave>`
+        # binding on the widget, not only this tooltip's, and the rebind at
+        # the end of this method restored only the tooltip's own. Net effect
+        # on the tooltip: none. Net effect on everyone else: their `<Leave>`
+        # binding vanished the first time the tip showed.
         x = y = 0
         x, y, cx, cy = self.widget.bbox("insert")
         # #based on widgets (flashy):
@@ -2965,13 +5096,25 @@ class ToolTip(object):
                        wraplength = self.wraplength)
         label['background']="#ffffff"
         label.pack(ipadx=1)
-        self.widget.bind("<Leave>", self.leave)
         self.widget.after(self.showtime, self.hidetip)
     def hidetip(self, event=None):
         tw = self.tw
         self.tw= None
         if tw:
             tw.destroy()
+    def settext(self, text):
+        """Change what this tooltip says.
+
+        `showtip` reads `self.text` each time it builds its Toplevel, so a
+        plain reassignment is enough here — but the webview ToolTip has to
+        PUSH the new text to the page, so it grew a `settext` and this didn't.
+        A caller that wants a tooltip to follow a widget's state (the sort
+        board's cycle buttons, whose tooltip promised a function the disabled
+        button refused — Kent, 2026-09-15: "the tooltip is lying") needs the
+        same call to exist on both backends. Hides any tip already showing,
+        so the OLD text cannot sit on screen after the change."""
+        self.text = text
+        self.hidetip()
 """Move back to main"""
 class Wait(Window): #tkinter.Toplevel?
     """The single 'Please Wait' window. Built ONCE (mastered by tk_root) and then

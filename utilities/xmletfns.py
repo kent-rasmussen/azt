@@ -87,9 +87,25 @@ class XML(object): #fns called outside of this class call self.nodes here.
             self.read() #load and parse the XML file.
         except Exception:
             raise BadParseError(self.filename)
+        # ONE PER RUN, AND NO COLONS. The time is deliberate — these are
+        # per-run backups, not daily ones, whatever the old `#once/day`
+        # comment said. What was not deliberate is the FORMAT: it was built
+        # by `isoformat()[:-16]`, a slice that only means anything at one
+        # exact string length, and what reached the disk carried a clock
+        # time. A clock time has colons, and Windows forbids them in
+        # filenames, so the backup simply did not get written there:
+        #
+        #   There was a problem writing to partial file:
+        #   ...\nm1.lift_ 16:31:48.374013+00:00.txt.part
+        #   ([Errno 22] Invalid argument)
+        #
+        # — Kim's Windows 11 machine, 2026-09-24. `strftime` says what it
+        # means, keeps per-run precision to the second, and cannot produce a
+        # character any of the three platforms rejects.
         backupbits=[filename,'_',
-                    datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat()[:-16], #once/day
-                    '.txt']
+                    datetime.datetime.now(datetime.timezone.utc
+                                          ).strftime('%Y-%m-%dT%H%M%S'),
+                    '.txt'] #one per run
         self.backupfilename=''.join(backupbits)
         # self.diagnostics()
         log.info(_("XML initialization done."))

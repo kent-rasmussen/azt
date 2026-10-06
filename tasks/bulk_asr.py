@@ -1,5 +1,5 @@
 # coding=UTF-8
-"""Stage-2 bulk ASR (asr_bulk_transcription_design.md).
+"""Stage-2 bulk ASR (the ASR bulk-transcription design).
 
 Sweeps every recorded audio form in the lexicon through the configured models
 on a worker thread (model-major, language-major — see

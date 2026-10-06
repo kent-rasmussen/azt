@@ -30,7 +30,7 @@ from backend.core.analysis import SyllableSliceDict
 
 
 class SyllablePrep(object):
-    """Task 1 (syllable PREP) driver — see docs/syllable_sort_redesign.md. Mixed
+    """Task 1 (syllable PREP) driver — see the syllable-sort redesign. Mixed
     into SortSyllables BEFORE Sort so runcheck routes the three primitive checks
     (#C/C#/syls) through a DEDICATED per-slice verify loop (maybeverifysyllables),
     NOT maybesort — prep never sorts/joins/macrosorts, only verifies one ≤MAX_SLICE
@@ -40,8 +40,16 @@ class SyllablePrep(object):
     profile sort) via the inherited Sort.runcheck/maybesort."""
 
     def syllable_slices(self,rebuild=False):
-        """The current ps's prep-slice object (built/assigned + status synced)."""
-        ps=self.program.slices.ps()
+        """The prep-slice object (built/assigned + status synced).
+
+        NOT "the current ps's" — this took `slices.ps()` and rebuilt whenever
+        it changed, which made one wordlist-wide job into one job per
+        category. `SYLLABLE_PREP_PS` is where this state already belonged:
+        `syllable_prep_complete` reads the node there and ignores the ps it
+        is handed, "kept only for caller compatibility". Now the builder
+        agrees with the reader (2026-09-30; the syllable-sort-is-not-per-ps
+        item)."""
+        ps=self.program.params.SYLLABLE_PREP_PS
         ftype=self.program.params.ftype()
         sl=getattr(self.program,'syllable_slices',None)
         if sl is None or rebuild or sl.ps!=ps or sl.ftype!=ftype:
@@ -53,7 +61,14 @@ class SyllablePrep(object):
         ps=self.program.slices.ps()
         if self.program.params.syllable_prep_complete(ps):
             # Task 1 done → Task 2 (profile-class profile sort) on the shared engine.
-            # Point the engine at the profile (ftype) check, not a stale primitive.
+            # Point the engine at the profile (word) check, not a stale primitive.
+            #   UNCONDITIONAL, and that is the direction: ftype → check.
+            # Plan 6 briefly guarded this so a user's check choice would
+            # survive, because the check line was then the form chooser;
+            # reverted 2026-09-30, since the form is chosen on the slice
+            # line instead. For cvt 'S' the check IS the current form — the
+            # check list is `[ftype()]` — so aligning them here is not
+            # overwriting a choice, it is honouring the one made upstairs.
             self.program.params.check(self.program.params.ftype())
             return super().runcheck()
         # Task 1: seed the per-word primitives by orthography (Syllables.
@@ -97,6 +112,28 @@ class SyllablePrep(object):
             NotifyUser(text=_("All the syllable groups are checked! You can now "
                         "sort the words by syllable profile."),
                         title=_("Done!"))
+            # DIAG (Kent 2026-08-27): this branch is the last thing that runs
+            # before the app goes idle — on_quit the run window, refresh the
+            # board, notify, return. Nothing after it builds a page, so if the
+            # board came back empty the user is left staring at a full-screen
+            # window with nothing on it and no code coming to fill it, which is
+            # what two faulthandler dumps showed (main thread parked in
+            # mainloop, preload worker idle on an empty queue). isrunwindow()
+            # already logs exists/mapped/viewable/iswaiting/state for both
+            # windows — call it here so the next occurrence names the window
+            # instead of needing another round of guessing.
+            try:
+                log.info("DIAG-prepdone: window state after Task 1 completion")
+                self.ui.isrunwindow()
+                board=getattr(self.status,'leaderboard',None) # NOT 'board' —
+                # that attribute does not exist, so this reported board=None
+                # every time and told us nothing for two rounds.
+                log.info("DIAG-prepdone: leaderboard=%s children=%s",
+                         board,
+                         len(board.winfo_children()) if board is not None
+                            and hasattr(board,'winfo_children') else 'n/a')
+            except Exception as e:
+                log.info("DIAG-prepdone failed: %s", e)
             return
         check,group,idx=nxt
         self.program.params.check(check)
@@ -119,6 +156,15 @@ class SyllablePrep(object):
         """The reused prep run window: keep the existing one (just clear its frame
         for the next slice), creating one only if there isn't a live one. Reusing
         it means no fullscreen destroy/recreate transition between slices."""
+        # NO WAIT HERE. build_verify_layout owns the wait on this path — it
+        # drives the first-page build through wait_and_drive_work and does the
+        # reveal itself (see the comment at verify()'s getrunwindow call). A
+        # second wait opened here fought that one: withdraw/reveal/withdraw,
+        # which Kent saw as the window "flashing back and forth, painting
+        # nothing-but-quit, then withdrawing, then painting again"
+        # (2026-08-27). Adding one was my error, against a contract already
+        # written down. If the reuse branch's blank interval needs covering,
+        # the fix belongs inside build_verify_layout, where the one wait lives.
         rw=getattr(self.ui,'runwindow',None)
         if rw is not None and rw.winfo_exists() and not rw.exitFlag.istrue():
             for w in list(rw.frame.winfo_children()):
@@ -200,6 +246,36 @@ class Sort(Categories):
     checks a common identity."""
     show_buttoncolumnsline=True #does this belong here?
 
+    def reload_for_word_check(self):
+        """The form changed; rebuild what was derived from the old one.
+
+        EVERY SORT CARES WHICH FORM IT IS SORTING, not just the syllable
+        one — the vowels of a citation form are not the vowels of a plural.
+        I first offered Kent a choice between giving segmental sorts a
+        reload and showing them no form at all; he: *"that's a false
+        choice, but let's give SortV a reload."* It was: the third option
+        was simply to write this.
+
+        THE PROFILE SLICES ARE ftype-DERIVED, which is what makes this more
+        than a repaint: `profilesbysense` records the ftype it was built
+        for (`profiles.py`), and `profile_class_of_sense` reads the
+        primitives off the chosen form's node. So the slices must be rebuilt
+        before the board is redrawn from them.
+
+        The check and the group are already settled by the caller —
+        `refreshattributechanges` runs `makecheckok`, which chains into
+        `makegroupok` — so this is only the data and the picture.
+
+        `SortSyllables` overrides this with a larger version: its slices are
+        keyed `(ps, ftype)` and it has prep state to resync as well.
+
+        Never raises: a refresh that fails must not take the page with it."""
+        try:
+            self.program.db.load_ps_profiles(self.program.params.ftype())
+            self.status.maybeboard()
+        except Exception as e:
+            log.info("sort refresh after the word check changed failed: %s",e)
+
     def _get_safe_window(self):
         """Return runwindow if it exists and is viewable, else tk_root."""
         try:
@@ -216,11 +292,42 @@ class Sort(Categories):
             # (field 2026-07-29: "closing that window left them with nothing at
             # all, so we had to restart"). We are about to drive work in this
             # window, so it has to be visible.
+            #
+            # BUT NOT BY DEICONIFYING IT. A window straight out of
+            # getrunwindow() has an EMPTY frame, and the Exit button lives in
+            # outsideframe — so revealing it here produced a fullscreen page
+            # whose only control was Quit, which is the sibling bug
+            # (the fullscreen-with-only-quit (NBQ) item). Caught by the new QuitOnlyGuard on
+            # its first live run, 2026-09-01, logging exactly this window: the
+            # 2026-07-29 cure for "no window at all" was the cause of "nothing
+            # but Quit". Both symptoms come off the same dependency, and a WAIT
+            # is the answer to both — it is visible, it says what is happening,
+            # and it is the one thing both visibility guards accept as evidence.
+            #
+            # Safe to leave open: both callers of this method drive_work() on the
+            # window immediately, and drive_work closes the wait on StopIteration
+            # AND on a None generator. A wait nobody closes is the tryNAgain
+            # hole, so that guarantee is the precondition for doing this here.
             try:
                 if w is not None and not w.winfo_viewable():
-                    w.deiconify()
+                    # thenshow=FALSE: this is a PREPARATION wait, and it does
+                    # not build the page. Both callers drive_work() and then
+                    # hand off — runcheck to maybesort, which raises its OWN
+                    # wait ("Setting up the sort page…") and builds there. So
+                    # asking to reveal on completion asked to reveal a page this
+                    # wait was never going to fill: before the waitdone guard
+                    # that was a genuine empty flash between the two waits, and
+                    # after it, it is the guard declining every single time.
+                    #   Named by the guard's own stack (Kent 2026-09-03):
+                    #     EMPTY PAGE (waitdone) | the wait said 'Getting ready
+                    #     to sort…' | called from: … ← sorting_engine.py:651:
+                    #     runcheck
+                    # which is the caller-specific remedy the notice was built
+                    # to make findable. The page still gets revealed — by the
+                    # wait that actually builds it.
+                    w.wait(msg=_("Getting ready to sort…"),thenshow=False)
             except Exception as ex:
-                log.info("run window reveal in _get_safe_window: %s", ex)
+                log.info("run window cover in _get_safe_window: %s", ex)
             return w
 
     def _safe_quit_runwindow(self):
@@ -336,11 +443,24 @@ class Sort(Categories):
             w.grid(row=1,column=0,sticky='ew')
             b=p.button(self.ui.runwindow.frame, text=_("OK"), command=w.destroy, anchor='c')
             b.grid(row=2,column=0,sticky='ew')
+            # getrunwindow() (no msg) created this window WITHDRAWN and withdrew
+            # the task window, so the waitdone() above had no active wait to
+            # reveal through — it is a no-op here. Reveal explicitly, as the join
+            # and glyph-rename pages do, or this wait_window blocks on a window
+            # the user can neither see nor dismiss.
+            if not self.ui.runwindow.exitFlag.istrue():
+                self.ui.runwindow.deiconify()
+                self.ui.runwindow.update_idletasks()
             self.ui.runwindow.wait_window(w)
             w.destroy()
         if self.ui.runwindow.exitFlag.istrue():
             return
-        self.ui.runwindow.wait()
+        # thenshow=True: without it showafterwait is winfo_viewable()|thenshow ==
+        # False on a window just created withdrawn, so the waitdone() in the
+        # finally below reveals NOTHING and wait_window(scroll) blocks invisibly.
+        # Same defect the changelog records as fixed in generator.getresults.
+        self.ui.runwindow.wait(msg=_("Building the ad hoc sort group page"),
+                                thenshow=True)
         try:
             p.label(self.ui.runwindow.frame,text=title,font='title',
                     ).grid(row=0,column=0,sticky='ew')
@@ -556,6 +676,32 @@ class Sort(Categories):
         self.program.settings.storesettingsfile()
         # t=(_('Run Check'))
         log.info("Running check...")
+        # THE SECOND-FORM GATE THAT STOOD HERE IS GONE (2026-09-29, plan 3 of
+        # the second-form flags audit). It read:
+        #
+        #     if (getattr(self,'uses_second_forms',False) and
+        #             not self.ui.assure_second_forms(then=self.runcheck)):
+        #         return
+        #
+        # It was WIRED TO THE TASKS THAT DO NOT NEED IT AND ABSENT FROM THE
+        # ONES THAT DO — the audit's central finding. `runcheck` is reached
+        # by SortSyllables, SortCV, SortS, SortV, SortC and SortT, none of
+        # which declares `uses_second_forms`, so the gate could never fire
+        # here. Parse and the second-form collection tasks, which DO declare
+        # it, never pass through `runcheck` at all.
+        #
+        # The comment it replaces called itself "inert today, deliberately"
+        # and kept the call as a hook for some later task that might need
+        # asking at the point of use. That task arrived and it is Parse,
+        # which asks in its own word loader instead — three escalating asks,
+        # only the last of which withholds anything (plan 4, v1.15.38). So
+        # the hook has been answered somewhere better, and keeping an
+        # unreachable copy here only preserves the miswiring the audit
+        # existed to find.
+        #
+        # `StatusFrame.assure_second_forms` and `composites`' `after_commit`
+        # STAY: they are what plan 4 is built on. What is deleted is this
+        # call site, not the mechanism.
         cvt=self.program.params.cvt()
         # The missing-profiles offer also fires here (on 'Sort!' and on advancing
         # to a new profile/check via ncheck/nprofile). On 'sort' we tear down THIS
@@ -715,7 +861,11 @@ class Sort(Categories):
         self.check=self.get_check()
         self.ps=self.get_ps()
         self.profile=self.get_profile()
-        self.ftype=self.get_ftype()
+        # A per-task ftype copy was refreshed here, re-reading the global on
+        # every pass to keep the task's copy from going stale. There is no
+        # copy any more (2026-09-29) — every reader asks `params.ftype()` —
+        # so there is nothing to refresh. `check`, `ps` and `profile` above
+        # are still real attributes and still need theirs.
         log.info("Maybe Sort")
         if self.checktosort(): # w/o parameters, tests current check
             if warnorcontinue(self.sort()):
@@ -1064,7 +1214,7 @@ class Sort(Categories):
     def present_sense(self,sense):
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
         frame=self.get_frame()
-        text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
+        text=sense.formatted(self.analang, self.glosslangs, self.program.params.ftype(), frame)
         return self.sort_ui.build_present_sense(
             self.ui.runwindow.frame, self.buttonframe, text, sense)
     def unverify_profile(self,sense,advance=True):
@@ -1138,6 +1288,36 @@ class Sort(Categories):
             self._notprofile_advance=True  # tell sortselected to advance, not Exit
         self.program.status_dirty=True     # current slice rebuilds (minus this word)
         self.maybewrite()
+    def rename_profile_group(self,old,new):
+        """Rename a syllable PROFILE group: every word marked `old` becomes `new`.
+
+        For a group that is internally consistent but MISNAMED — the members
+        already agree with each other, so nothing is re-profiled, only renamed
+        (Kent 2026-08-24: a whole group genuinely CCVCCVC, all marked CCVCVVC).
+        Join cannot do this when `new` doesn't exist yet, which is the common
+        case: the legal-profile space is far larger than the attested one, so a
+        misnamed group usually has nothing to merge into.
+
+        `rename_group` does the work — moves the senses, updates forms, and
+        carries the verified list across via `rename_group_verification` — so a
+        STRICT rename keeps its verification, which is right here because the
+        data was correct and only the name was wrong. Anything that changes what
+        a word IS must not come through here."""
+        if not new or new==old:
+            return
+        log.info("Renaming profile group %s > %s", old, new)
+        self.rename_group(old,new)
+        # Come back to the SAME group under its real name, rather than moving on
+        # to another one (Kent 2026-08-24: "minimally confusing, if not wrong").
+        # The user renamed THIS group and has not yet verified it; reverify_group
+        # makes it current, drops it from verified, and sets self.reverifying, so
+        # the verify loop returns to it instead of advancing.
+        try:
+            self.reverify_group(new)
+        except Exception as e:
+            log.info("post-rename reverify skipped: %s", e)
+        self.program.status_dirty=True
+        self.maybewrite()
     def escape_profile_class(self,sense,check,value):
         """"This word doesn’t belong in this {class} at all" — write ONE primitive
         (#C, C# or syls), which re-buckets the word into a different, fully-named
@@ -1148,9 +1328,69 @@ class Sort(Categories):
         verify page, which had no way to say this at all. Persist immediately
         (power-fault tolerant) and drop the word from the LIVE to-sort list so the
         current page can't re-present it; what "advance" means on the page is the
-        caller's business, not ours."""
+        caller's business, not ours.
+
+        DEVIATION, deliberate and narrow: this writes the new primitive as
+        VERIFIED. Everywhere else verification is an independent step confirming
+        congruence — see the comment at the write below for why primitives are the
+        exception and why it must not be copied."""
         ftype=self.program.params.ftype()
         sense.annotationvaluebyftypelang(ftype,self.analang,check,value)
+        # The sense's OWN primitive verification code still asserts the value we
+        # just replaced — 'C#=C' while the annotation now reads V (Kent
+        # 2026-08-21). Stored check values are authoritative, so every reader is
+        # right to trust that stale code, and the word keeps coming back in later
+        # tests. Replace the code for THIS check (the check being everything
+        # before the first '='), leaving the other primitives' confirmations
+        # alone.
+        #
+        # !!! THE FLIP COUNTS AS THE VERIFICATION — AND THIS IS THE ONE PLACE
+        # THAT IS TRUE. DO NOT COPY THIS PATTERN. Everywhere else in AZT,
+        # verification is an INDEPENDENT step that confirms congruence between
+        # what was recorded and what a human sees: marksortgroup actively
+        # rmverification()s unless told otherwise, precisely so that placing a
+        # word never counts as confirming it. Writing 'verified' at the moment of
+        # the edit is exactly the conflation the rest of the codebase is built to
+        # avoid, and copying it haphazardly would quietly turn machine guesses
+        # into confirmed data.
+        #
+        # It is admissible HERE, for PRIMITIVES ONLY (#C / C# / syls), because
+        # (Kent 2026-08-25):
+        #   - the user is not placing a word, they are stating the primitive's
+        #     VALUE — which is the single statement the prep verify page exists
+        #     to collect, so this is a second entrance to the same act;
+        #   - the option set is tiny: #C and C# are binary, so "not C" fully
+        #     determines V, and syls comes from an explicit chooser. There is no
+        #     room for the user to mean something other than what is recorded;
+        #   - sorting isn't finished in any case, so a wrong call here surfaces
+        #     again downstream rather than being final;
+        #   - it presumes the user has verified this word before, which on the
+        #     profile pages they have.
+        # Leaving it UNVERIFIED instead was the 2026-08-21 behaviour, and it left
+        # a hole: profile_class_of_sense reads the ANNOTATIONS, so the word moves
+        # to its new class at once, while syllable_prep_complete (the gate for
+        # the Task-1 board, Task-2 board and runcheck) is only re-evaluated at a
+        # task boundary — so the word could be profile-sorted in a class whose
+        # defining primitive nobody had confirmed.
+        try:
+            codes=[c for c in sense.primitiveverification(ftype)
+                        if c.split('=')[0]!=check]
+            codes.append('{}={}'.format(check,value)) #same shape as _set_confirmed
+            sense.primitiveverification(ftype,value=codes)
+        except Exception as e:
+            log.info("class escape primitive-verify skipped: %s", e)
+        # Same problem one level up. Verification keyed by a profile or class the
+        # word has just LEFT is harmless — nothing reads 'CVCV lc verification'
+        # for a word that is no longer CVCV (Kent 2026-08-21) — but the
+        # SYLLABLE_SLICE_SENTINEL profile is a constant, not a profile the word
+        # can leave, so its 'lc=<profile>' code stays live and now asserts a
+        # profile these primitives contradict. All three primitives constrain the
+        # profile, so any of them changing invalidates it.
+        try:
+            self.rmverification(sense,
+                        self.program.params.SYLLABLE_SLICE_SENTINEL,ftype)
+        except Exception as e:
+            log.info("class escape profile-unverify skipped: %s", e)
         try:
             tosort=self.program.status.sensestosort()
             if tosort and sense in tosort:
@@ -1177,11 +1417,21 @@ class Sort(Categories):
         board + maybesort read."""
         ftype=self.program.params.ftype()
         analang=self.program.db.analang
-        by={}  # {ps: {profile_class: {annotation group: every-member-verified bool}}}
+        # NO ps DIMENSION (2026-09-30). This bucketed `by[ps][pc]` and wrote a
+        # node per ps, so the identical profile work was tracked once per
+        # category and a word sorted under Noun stayed unsorted under Verb —
+        # though a cvprofile is a fact about the FORM and cannot differ
+        # between two words that look the same. One bucket per profile class
+        # now, under `SYLLABLE_PREP_PS`, which is where prep already keeps its
+        # state for the same reason. See the syllable-sort-is-not-per-ps item.
+        #   A SENSE WITH NO ps STILL COUNTS, where it used to be skipped by
+        # the `if not (ps and pc)` guard below — 33 of them in the demo file
+        # per the boot log ("Computed CV profiles for 33 part-of-speech-less
+        # word(s)"), silently absent from every board.
+        by={}  # {profile_class: {annotation group: every-member-verified bool}}
         for s in self.program.db.senses:
-            ps=s.psvalue()
             pc=self.program.params.profile_class_of_sense(s, ftype=ftype)
-            if not (ps and pc):
+            if not pc:
                 continue
             ann=s.annotationvaluebyftypelang(ftype, analang, ftype)
             if not ann or ann in ('NA','Invalid'):
@@ -1189,21 +1439,22 @@ class Sort(Categories):
             # Verified iff the confirmed …-x-cvprofile matches the sort annotation;
             # a group is done only if EVERY member is verified that way.
             verified=(s.cvprofilevalue(ftype)==ann)
-            grps=by.setdefault(ps,{}).setdefault(pc,{})
+            grps=by.setdefault(pc,{})
             grps[ann]=grps.get(ann,True) and verified
-        for ps,pcs in by.items():
-            for pc,grps in pcs.items():
-                node=self.program.status.node(cvt='S',ps=ps,profile=pc,check=ftype)
-                done=sorted(g for g,ok in grps.items() if ok)
-                node['groups']=sorted(grps)
-                node['done']=done
-                # Trust the DISTINCTIONS too (status.json only, not LIFT): verified
-                # profiles are distinct cvprofile strings that never meaningfully
-                # merge, so mark every verified pair distinguished. Otherwise
-                # maybesort's join step — which distinguishes pairs of VERIFIED
-                # groups (group_pairs_to_distinguish) — re-fires and 'Sort!' jumps
-                # to a spurious join instead of moving on to the unprofiled words.
-                node['distinguished']=set(itertools.combinations(done,2))
+        prep_ps=self.program.params.SYLLABLE_PREP_PS
+        for pc,grps in by.items():
+            node=self.program.status.node(cvt='S',ps=prep_ps,profile=pc,
+                                          check=ftype)
+            done=sorted(g for g,ok in grps.items() if ok)
+            node['groups']=sorted(grps)
+            node['done']=done
+            # Trust the DISTINCTIONS too (status.json only, not LIFT): verified
+            # profiles are distinct cvprofile strings that never meaningfully
+            # merge, so mark every verified pair distinguished. Otherwise
+            # maybesort's join step — which distinguishes pairs of VERIFIED
+            # groups (group_pairs_to_distinguish) — re-fires and 'Sort!' jumps
+            # to a spurious join instead of moving on to the unprofiled words.
+            node['distinguished']=set(itertools.combinations(done,2))
         self.program.status.store()
     def present_group(self,item):
         log.info("presenting group {item}".format(item=item))
@@ -1301,7 +1552,7 @@ class Sort(Categories):
             self.buttonframe.reset_selected()
             return
         # Syllable 'Other {profile class} profile' picker resolved to a real,
-        # primitive-consistent profile P (ADR 0003 / cv_group_creation_merging).
+        # primitive-consistent profile P (ADR 0003 / the CV-group creation-and-merging item).
         # Mark the current word into P via the normal NEW-group path — NOT
         # add_int_group (which mints a meaningless integer). The picker advanced by
         # destroying the sort item, so this runs with no button selection.
@@ -1422,22 +1673,46 @@ class Sort(Categories):
             return 1
         log.info(f"Getting Runwindow")
         self.ui.getrunwindow() #after we know this will do something
-        self.groupsFrame, self.buttonframe = self.sort_ui.build_sort_layout(
-            self.ui.runwindow, img_mod, self.pageicon(macrosort=macrosort),
-            instructions, self, groups, macrosort)
-        # log.info("Sort SBF done macrosort={macrosort}".format(macrosort=macrosort))
-        """Stuff that changes by lexical entry
-        The second frame, for the other two buttons, which also scroll"""
-        while current_list_fn():
-            if self.ui.runwindow.exitFlag.istrue():
-                return
-            item=self.presenttosort(current_list_fn()[0], macrosort=macrosort)
-            # log.info("presenttosort done")
-            if not self.ui.runwindow.exitFlag.istrue() and item is not None:
-                r=self.sortselected(item, macrosort=macrosort)
-                if r: #on restarting to maybesort
+        # Cover the build. getrunwindow() returns with BOTH windows hidden here
+        # (no msg passed, and the msg path is gated on a mature repo anyway), so
+        # nothing at all is viewable while build_sort_layout and the first
+        # present_group/present_sense run — long enough on an image-heavy page
+        # for guardvisible to fire at 15s and reveal the HALF-BUILT page: a
+        # fullscreen block of theme colour whose only widget is the Exit button
+        # in outsideframe. The guard added for the no-window bug thus produces
+        # the nothing-but-quit one, because "frame has children" is not the same
+        # question as "frame has anything the user can see" (a ScrollingFrame's
+        # rows are invisible until reflow). A wait dialog fixes both halves: it
+        # covers the build for the user, and it counts as viewable, so the guard
+        # stays quiet. presenttosort's existing waitdone() closes it the moment
+        # the first item is ready — that call is already in the right place.
+        self.ui.runwindow.wait(msg=_("Setting up the sort page…"), thenshow=True)
+        try:
+            self.groupsFrame, self.buttonframe = self.sort_ui.build_sort_layout(
+                self.ui.runwindow, img_mod, self.pageicon(macrosort=macrosort),
+                instructions, self, groups, macrosort)
+            # log.info("Sort SBF done macrosort={macrosort}".format(macrosort=macrosort))
+            """Stuff that changes by lexical entry
+            The second frame, for the other two buttons, which also scroll"""
+            while current_list_fn():
+                if self.ui.runwindow.exitFlag.istrue():
                     return
-                self.buttonframe.updatecounts()
+                item=self.presenttosort(current_list_fn()[0], macrosort=macrosort)
+                # log.info("presenttosort done")
+                if not self.ui.runwindow.exitFlag.istrue() and item is not None:
+                    r=self.sortselected(item, macrosort=macrosort)
+                    if r: #on restarting to maybesort
+                        return
+                    self.buttonframe.updatecounts()
+        finally:
+            # presenttosort normally closes the wait, but it can return before
+            # reaching its waitdone() (exitFlag, or an empty sortitem), and the
+            # returns above leave by other doors. A dialog left up over the
+            # sorted page would look exactly like the hang we are chasing.
+            try:
+                self.ui.runwindow.waitdone()
+            except Exception as e:
+                log.info("could not close the sort-build wait: %s", e)
         if macrosort: #generalize
             self.program.alphabet.save_settings()
             self.program.settings.storesettingsfile('alphabet')
@@ -1629,7 +1904,7 @@ class Sort(Categories):
             if items:
                 def _formkey(s):
                     try:
-                        return (s.formattedform(self.analang,self.ftype)
+                        return (s.formattedform(self.analang,self.program.params.ftype())
                                 or '').casefold()
                     except Exception:
                         return ''
@@ -1667,6 +1942,12 @@ class Sort(Categories):
         # The title for this page changes by group, below.
         self.program.status.build()
         last=False
+        # Does a group of one still owe a judgement? Only under an '=' check, and
+        # `check` exists only on the non-macrosort branch above — a macrosort page
+        # verifies sort GROUPS against a letter, which is a different question and
+        # keeps the old shortcut. Computed here so the elif below stays readable.
+        singleton_still_asks=(not macrosort
+                    and self.program.status._na_is_a_result(check=check))
         if not items: #then remove the group
             groups=self.groups(wsorted=True) #from which to remove, put back
             # log.info("Groups: {}".format(self.groups(toverify=True)))
@@ -1685,7 +1966,26 @@ class Sort(Categories):
             log.info("Groups to verify: {groups}"
                         "".format(groups=self.groups(toverify=True)))
             return
-        elif len(items) == 1 and not getattr(self,'reverifying',False):
+        elif (len(items) == 1 and not getattr(self,'reverifying',False)
+                and not singleton_still_asks):
+            # SINGLETONS AUTO-VERIFY, EXCEPT UNDER AN '=' CHECK (Kent 2026-08-25,
+            # after finding 'nephew' alone in V1=V2=e, marked verified, never
+            # looked at).
+            #   AZT categorises before it describes, so the question a one-word
+            # page must ask is NOT "is this value e" — the group's VALUE is set
+            # later, which is why a new group can be born with an integer name
+            # and 'V1=V2=1' is perfectly fine. The unasked question is whether
+            # V1=V2 HOLDS FOR THIS WORD AT ALL, and the right answer may be to
+            # skip it: the test doesn't apply. Under an '=' check the presort
+            # partitions into the equal groups plus a not-equal remainder (NA),
+            # so a group of one is precisely where that judgement is still owed —
+            # the same reason _na_is_a_result gates NA into the verify loop.
+            #   Every other check keeps the shortcut: presorting one word into a
+            # group of its own may still be wrong, but that is the price of the
+            # convenience, and there is no comparison to make. Tone already works
+            # this way — the user says "this word goes in this frame" rather than
+            # having the first word auto-seed a group, in case of a grammatical
+            # or other clash.
             log.info(_("Group ‘{group}’ only has {count} example; marking verified and "
                     "continuing.").format(group=group,count=len(items)))
             updatestatus(True)
@@ -1750,6 +2050,14 @@ class Sort(Categories):
                 updatestatus(True)
         self.ui.runwindow.on_quit()
         return 1
+    # Flagging the SECOND-TO-LAST member of a group used to remove the last one
+    # with it: at two-or-fewer remaining, one "not this" cleared them all, on the
+    # reasoning that a group this broken is best started over. Easier joining
+    # makes that much less valuable, and it took the choice away from the user —
+    # so it is gated OFF (Kent 2026-08-24), not deleted, in case it earns its way
+    # back. Flip to True to restore the old behaviour. Lives on Sort, so it
+    # covers SortS/SortV/SortT alike — verifybutton is shared by all of them.
+    REMOVE_REMAINDER_AT_PENULTIMATE=False
     def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
         """This should maybe take examples as input, rather than senses"""
         # This must run one subcheck at a time. If the subcheck changes,
@@ -1793,12 +2101,20 @@ class Sort(Categories):
                 self.maybewrite()
                 bf.destroy()
                 return
-            if len(self.currentsortitems) > 2:
+            if self.REMOVE_REMAINDER_AT_PENULTIMATE and len(
+                        self.currentsortitems) <= 2:
+                for i in list(self.currentsortitems): #copy: the call mutates it
+                    self.removeitemfromgroup(i,sorting=True,write=False)
+                self.currentsortitems.clear()
+            else:
                 self.removeitemfromgroup(sense,sorting=True,write=False)
                 self.currentsortitems.remove(sense)
-            else:
-                for i in self.currentsortitems:
-                    self.removeitemfromgroup(i,sorting=True,write=False)
+            # The close-and-move-on half is KEPT, and only for the LAST member:
+            # with nothing left there is no group to verify, so end the page —
+            # WITHOUT confirming it verified, since the OK button is what
+            # confirms. Removing the penultimate member now just leaves a group
+            # of one, which the user may keep or clear as they like.
+            if not self.currentsortitems:
                 self.verifycanary.destroy()
             self.maybewrite()
             bf.destroy()
@@ -1817,8 +2133,7 @@ class Sort(Categories):
                 if len(self.currentsortitems) < 2:
                     self.verifycanary.destroy()
                 (bf or b).destroy()
-            self.sort_ui.ask_class_escape(self.ui.runwindow,self,sense,
-                                        on_applied=gone)
+            return gone
         def notprofile():
             """Right-click → 'Not {profile}': this word doesn't belong to this CV
             profile at all. The sort page has had this escape hatch as a button
@@ -1845,7 +2160,7 @@ class Sort(Categories):
         #This should be pulling from the example, as it is there already
         check=self.program.params.check()
         frame=self.get_frame()
-        text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
+        text=sense.formatted(self.analang, self.glosslangs, self.program.params.ftype(), frame)
         if self.program.settings.lowverticalspace:
             ipady=0
         else:
@@ -1863,9 +2178,11 @@ class Sort(Categories):
             # the flip a left click already performs, and syls has its own
             # longer/shorter chooser (see notok's _prep_verify branch above).
             if not self.program.params.is_syllable_primitive_check(check):
-                menu_items.append((_("This word doesn’t belong in this {cls} "
-                                    "profile at all…").format(cls=profile),
-                                    class_escape))
+                # The moves themselves, not an entry that opens a window to show
+                # them (Kent 2026-08-21). class_escape() now just returns its
+                # `gone` callback for the items to run after the write.
+                menu_items.extend(self.sort_ui.class_escape_items(
+                            self,sense,on_applied=class_escape()))
         elif profile:
             # Segmental/tone: leave the CV profile entirely (the sort page's
             # 'Not {profile}' button, sort_buttons.getanotherskip).
@@ -1907,16 +2224,33 @@ class Sort(Categories):
         # non-macrosort: shared with macrosort eligibility (analysis.py). Keys off
         # THIS slice's verified groups (kwargs), fixing the old current-slice bug.
         return self.program.status.pending_distinctions(**kwargs)
-    def join(self,macrosort=False,sortgroup=None):
-        def move_on_cleanly():
-            # self.ui.runwindow.withdraw()
-            # self.last_pair=pair_frame.winfo_children()
-            # self.last_pair=self.current_pair
-            for w in self.current_pair:
-                buttons[w].grid_remove() #don't destroy buttons with canary
-            # for w in pair_frame.winfo_children():
-            #     w.grid_remove() #don't destroy buttons with canary
-            self.canary.destroy()
+    def join_groups(self,pair,macrosort=False,keep=None,on_done=None):
+        """Join two groups: move one into the other, per the direction rules.
+
+        `keep` names the group that SURVIVES, for a caller that knows the user's
+        intent — dropping A onto B means B (Kent 2026-08-24). Segmental joins
+        have never had a good way to decide direction, so the rule below is a
+        tiebreak rather than a judgement; an explicit drop beats it. The join
+        PAGE passes nothing, because a pair on that page carries no direction,
+        and so keeps the old behaviour exactly.
+
+        Lifted out of `join()`'s closures 2026-08-24 (Kent) so a caller that is
+        NOT the join page — the sort page's drag-and-drop — can join a pair. The
+        join page still routes through here, so its behaviour is unchanged; every
+        value the closures used to capture is derived here instead (`img_mod`
+        from macrosort, `check` from params, the button class from sort_ui)."""
+        img_mod='glyphs' if macrosort else ''
+        check=self.program.params.check()
+        def finish():
+            # The join PAGE is done once a pair is joined, so quitting its run
+            # window was the whole ending. A caller that stays open — the sort
+            # page, after a drag-join — passes on_done instead and repairs
+            # itself in place (Kent 2026-08-24: drop A on B → delete A, refresh
+            # B; no full rebuild, no closing the page).
+            if on_done:
+                on_done()
+            else:
+                self.ui.runwindow.on_quit()
         def _do_join(lpr):
             # lpr=[remove, keep]: move the first group into the second.
             log.info("Joining {lpr} (macrosort={macrosort}).".format(lpr=lpr, macrosort=macrosort))
@@ -1948,7 +2282,7 @@ class Sort(Categories):
                     except Exception as e:
                         log.info("join glyph-unverify skipped: %s",e)
                     self.did[f'join{img_mod}']=True
-                    self.ui.runwindow.on_quit()
+                    finish()
                 self.ui.runwindow.drive_work(
                     self.updatebygroupsense(*lpr),
                     on_done=join_pair_done)
@@ -1961,32 +2295,53 @@ class Sort(Categories):
                 self.did[f'join{img_mod}']=True
             finally:
                 self.ui.runwindow.waitdone()
-            self.ui.runwindow.on_quit()
+            finish()
+        # Syllable PROFILE join: both sides are REAL CV profiles (no isdigit
+        # placeholder to break the tie — the picker+scrub keep integers out), so
+        # the DIRECTION is a linguistic call: CVCV→CVCCV and CVCCV→CVCV are NOT
+        # the same result, and one corrupts correct data. Ask which is correct
+        # rather than picking by lexicographic accident. See ADR 0003.
+        if self.cvt=='S' and not self.program.params.is_syllable_primitive_check():
+            counts={g:len(self.getsensesincheckgroup(check=check,group=g))
+                    for g in pair}
+            def _on_choose(winner):
+                loser=next(g for g in pair if g!=winner)
+                _do_join([loser,winner])   # [remove, keep]
+            self.sort_ui.choose_join_direction(
+                self.ui.runwindow, self.sort_ui.group_button_class(macrosort),
+                self, list(pair), counts,
+                _on_choose)  # on_back=None → just close, back to the join page
+            return
+        # Segmental/other: choose remove-vs-keep between the two EXISTING names
+        # (lpr=[remove, keep] — first is removed into second).
+        if keep and keep in pair:
+            # The caller knows which one the user meant to keep — a drop onto B
+            # says B. Beats the tiebreak below, which exists only because there
+            # was no way to know.
+            _do_join([next(g for g in pair if g!=keep), keep])
+            return
+        # Rank:
+        #   1. digit placeholder first → unnamed placeholder removed into a real name;
+        #   2. between two real names, the LONGER is removed into the SHORTER (simpler)
+        #      one ('g' + 'gu' → keep 'g'), not the lexicographic accident of key=str;
+        #   3. equal length → lexicographic tiebreak (stable, arbitrary as before).
+        _do_join(sorted(pair, key=lambda g: (0 if str(g).isdigit() else 1,
+                                             -len(str(g)), str(g))))
+    def join(self,macrosort=False,sortgroup=None):
+        def move_on_cleanly():
+            # self.ui.runwindow.withdraw()
+            # self.last_pair=pair_frame.winfo_children()
+            # self.last_pair=self.current_pair
+            for w in self.current_pair:
+                buttons[w].grid_remove() #don't destroy buttons with canary
+            # for w in pair_frame.winfo_children():
+            #     w.grid_remove() #don't destroy buttons with canary
+            self.canary.destroy()
         def join_pair():
-            pair=self.current_pair
-            # Syllable PROFILE join: both sides are REAL CV profiles (no isdigit
-            # placeholder to break the tie — the picker+scrub keep integers out), so
-            # the DIRECTION is a linguistic call: CVCV→CVCCV and CVCCV→CVCV are NOT
-            # the same result, and one corrupts correct data. Ask which is correct
-            # rather than picking by lexicographic accident. See ADR 0003.
-            if self.cvt=='S' and not self.program.params.is_syllable_primitive_check():
-                counts={g:len(self.getsensesincheckgroup(check=check,group=g))
-                        for g in pair}
-                def _on_choose(winner):
-                    loser=next(g for g in pair if g!=winner)
-                    _do_join([loser,winner])   # [remove, keep]
-                self.sort_ui.choose_join_direction(
-                    self.ui.runwindow, buttonclass, self, list(pair), counts,
-                    _on_choose)  # on_back=None → just close, back to the join page
-                return
-            # Segmental/other: choose remove-vs-keep between the two EXISTING names
-            # (lpr=[remove, keep] — first is removed into second). Rank:
-            #   1. digit placeholder first → unnamed placeholder removed into a real name;
-            #   2. between two real names, the LONGER is removed into the SHORTER (simpler)
-            #      one ('g' + 'gu' → keep 'g'), not the lexicographic accident of key=str;
-            #   3. equal length → lexicographic tiebreak (stable, arbitrary as before).
-            _do_join(sorted(pair, key=lambda g: (0 if str(g).isdigit() else 1,
-                                                 -len(str(g)), str(g))))
+            # Body lifted to Sort.join_groups 2026-08-24, so callers other than
+            # this page (sort-page drag-and-drop) can join a pair. Behaviour
+            # here is unchanged — this page still supplies the pair.
+            self.join_groups(self.current_pair, macrosort=macrosort)
         def distinguish_pair():
             if macrosort:
                 self.program.alphabet.distinguish(self.current_pair)
@@ -2070,6 +2425,16 @@ class Sort(Categories):
             buttontxt=_("Sort!")
             text=_("Not Trying Again; set a tone frame first!")
             self.sort_ui.label(self.ui.runwindow.frame, text=text).grid(row=0,column=0)
+            # This branch builds an error page and RETURNS to the event loop, so
+            # nothing downstream reveals anything. On a mature repo getrunwindow
+            # opened a thenshow wait that nobody ever closes — and a viewable
+            # wait window suppresses guardvisible by design, so the user is left
+            # with "Resetting unSorted items" forever, over a message they never
+            # see. On a new repo no wait opened, so nothing is visible at all.
+            self.ui.runwindow.waitdone()
+            if not self.ui.runwindow.exitFlag.istrue():
+                self.ui.runwindow.deiconify()
+                self.ui.runwindow.update_idletasks()
             return
         for item in senses:
             self.removeitemfromgroup(item)

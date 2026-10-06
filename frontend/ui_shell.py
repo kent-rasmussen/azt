@@ -8,6 +8,8 @@ import collections
 import re
 import datetime
 from frontend import ui
+from frontend import composites
+from frontend import visibility
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns, executables
 from io_put import lift
@@ -307,7 +309,10 @@ class Menus(ui.Menu):
 
         if getattr(self.parent, 'is_record_task', False):
             recordmenu = ui.Menu(self.menubar, tearoff=0)
-            self.command(recordmenu, label=_("Sound Card Settings"),
+            # Matches the window's own title, renamed 2026-09-15 — a menu
+            # entry that names a different page than the one it opens is a
+            # small lie the user has to reconcile.
+            self.command(recordmenu, label=_("Sound Settings"),
                             cmd=self.parent.mikecheck)
             self.command(recordmenu, label=_("Record tone group examples"),
                             cmd=self.parent.showtonegroupexs)
@@ -579,6 +584,18 @@ class Menus(ui.Menu):
             else:
                 helpitems+=[(_("Revert to {azt} main version").format(azt=self.program.name),
                                 self.parent.reverttomainazt)]
+        # SENDING A LOG WITHOUT CRASHING FIRST. Until now the only way to
+        # package a log was the error page, so a machine that merely MISBEHAVED
+        # — the wrong page, a button that did nothing, a page with only Quit —
+        # had no way to hand one over at all, and every field-diagnosis item on
+        # the agenda stalls on exactly that. Placed after Update and
+        # test/revert per Kent (2026-09-02): those are what you try first, and
+        # this is what you do when they did not help.
+        #
+        # NOT gated on source_repo like the items above: this needs no repo, no
+        # internet and no daemon, and the moment you most need it is the moment
+        # something else is broken.
+        helpitems+=[(_("Email log"),self.program.email_log)]
         helpitems+=[(_("What’s with the New Interface?"),
                         self.parent.helpnewinterface)
                     ]
@@ -629,12 +646,157 @@ class StatusFrame(ui.Frame):
         else:
             l=ui.Button(parent,text=text,font='report',anchor='w',
                 relief=self.mainrelief)
+        # A GAP BETWEEN WORDS THAT ARE SEPARATE WIDGETS. These labels are
+        # gridded side by side to make one sentence — "Looking at {profile}"
+        # then "{ps} words ({count})" — and with nothing between them the
+        # page read "Looking at CVCVNoun words (51)". The space cannot go
+        # in either string: each is a translatable sentence fragment, and a
+        # leading or trailing space in a catalogue entry is invisible to a
+        # translator and routinely lost (the same reason yesterday's field
+        # quotes became their own widgets rather than parts of the
+        # neighbouring text).
+        #   So it is padding, on every label after the first in a line. The
+        # first gets none, or the sentence would start indented.
+        padx=(0 if column == 0 else 4)
         l.grid(column=column, row=self.irow, columnspan=columnspan,
-                ipadx=ipadx, sticky='w')
+                ipadx=ipadx, padx=padx, sticky='w')
         if kwargs.get('cmd'):
             l.bind('<ButtonRelease-1>',kwargs.get('cmd'))
         if kwargs.get('tt'):
             ttl=ui.ToolTip(l,kwargs.get('tt'))
+        return l
+
+    def prosefield(self, key, prefix, var, options_fn, setter, tt,
+                   parent=None, editable=False, value_fn=None, suffix=None,
+                   prefix_fn=None, allow_new=False, delimit=None,
+                   placeholder=None):
+        """A prose line whose LAST WORD is the setting, changed in place.
+
+        "Studying Kent's English" is a sentence with a value in it, and
+        clicking it used to raise a window — one per language question, five
+        of them, each a title bar and a list wrapped around a single choice
+        (the settings-prompts-in-one-window item). The sentence now ends in a
+        click-to-edit value: the chooser opens where the word is.
+
+        NO RESERVED WIDTH and the prefix anchored WEST, unlike the settings
+        page. These are sentences, not a column of names — "Using" must sit
+        against the language it names — and the status frame is left-aligned,
+        so a chooser wider than the word it replaces grows rightward into
+        empty space instead of shifting anything.
+
+        `options_fn` returns the app's own `{'code','name'}` dicts, so the
+        user picks a NAME and the setter is given the CODE it belongs to —
+        the same split `_option_dialog` made, without the window.
+        """
+        # A FRAME OF ITS OWN PER PAIR — the opposite of the settings page,
+        # and for the opposite reason. There, names and values share the
+        # parent's columns so they line up ACROSS rows. Here they must not:
+        # the prose lines sit in the same grid as "Using second form field
+        # ‘Plural’ (Noun)" and "Parse with confirmation at Two fields, which
+        # don't parse", so a shared column 0 is as wide as the longest of
+        # those and "Using" ended up an inch from the language it names
+        # (Kent, 2026-09-15: "excess spacing"). Inside its own frame a pair
+        # is measured only against itself, and the words sit together.
+        holder = ui.Frame(parent if parent is not None else self.proseframe,
+                          row=self.irow,
+                          column=(parent.ncolumns() if parent is not None
+                                  else self.opts['labelcolumn']),
+                          sticky='w')
+        # A PREFIX THAT CAN GO AWAY. Most are fixed words, but the second
+        # gloss language's is not: with a second language the line reads
+        # "… and French", and with none it reads "… only" — not "and only"
+        # (Kent, 2026-09-16). So the prefix is a variable when the caller
+        # gives a `prefix_fn`, re-read whenever the value is, and the label
+        # tracks it the way any other Variable-backed label does.
+        prefix_var = None
+        if prefix_fn is not None:
+            prefix_var = ui.StringVar(value=prefix_fn())
+            prefix = prefix_var
+        field = composites.choice_field(
+                    holder, var,
+                    lambda: [o['name'] for o in options_fn()],
+                    editable=editable,
+                    label=prefix,
+                    label_anchor='w',
+                    # NO RESERVED WIDTH. That is the settings page's device
+                    # for stopping a column resizing when a chooser opens;
+                    # here it would put 25 characters of nothing between
+                    # "Using" and the language it names. A prose line is
+                    # left-aligned in a frame of its own, so a chooser wider
+                    # than the word it replaces grows rightward into empty
+                    # space and shifts nothing.
+                    width=None,
+                    delimit=delimit,
+                    # A WORD THE LABEL MAY SAY AND THE EDITOR MAY NOT —
+                    # `<unset>` on the second-form field line. See
+                    # `ClickToEdit.showing_placeholder`.
+                    placeholder=placeholder,
+                    font='report',
+                    on_commit=lambda chosen: self._setlang(
+                                    chosen, options_fn, setter, value_fn,
+                                    var, allow_new, prefix_fn, prefix_var),
+                    row=0, column=0)
+        # A TRAILING WORD, for the lines that have one: "Using second form
+        # field ‘Plural’ (Noun)" is prefix, value, suffix, and the part that
+        # says WHICH grammatical category has to stay on screen while the
+        # value is being chosen — it is what tells the two field lines apart.
+        if suffix:
+            # `endcolumn`, not a literal: the field's own width in columns
+            # varies with whether it has a name and delimiters, and counting
+            # it here would go wrong the moment either changed.
+            ui.Label(holder, text=suffix, font='report', anchor='w',
+                     row=0, column=getattr(field, 'endcolumn', 2),
+                     sticky='w')
+        for w in (field.namelabel, field.shown):
+            if w is not None:
+                ui.ToolTip(w, tt)
+        self.labels[key] = {'text': var, 'field': field,
+                            'prefix': prefix_var}
+        return field
+
+    def _setlang(self, chosen, options_fn, setter, value_fn=None, var=None,
+                 allow_new=False, prefix_fn=None, prefix_var=None):
+        """Map the name the user picked back to the code the setter wants,
+        then show what the setting ACTUALLY became.
+
+        The two are not always the same word, and the second gloss language
+        is the case that proves it: picking "just use Kent's English" means
+        NO second language, so the line should read "and only" — but the
+        field was left showing the option's own label, because nothing
+        re-read the setting after the setter ran (Kent, 2026-09-15:
+        "glosslang2 behavior not consistent (should say 'only' if 'just
+        use ...' selected)").
+        """
+        for opt in options_fn():
+            if str(opt['name']) == str(chosen):
+                setter(opt['code'])
+                break
+        else:
+            # `allow_new`, NOT `editable` — TYPING AND INVENTING ARE TWO
+            # DIFFERENT PERMISSIONS, and the sense picker needs the first
+            # without the second. It is editable so you can SEARCH 1700
+            # senses by typing, but its codes are sense OBJECTS: a typed
+            # string that matches nothing is a search that found nothing, not
+            # a new sense, and handing it to the setter would store a string
+            # where a sense belongs.
+            #   The second form field is the opposite: its code IS the name,
+            # so a name the database has never seen is a perfectly good
+            # answer (it used to take a third window to give one).
+            if allow_new and str(chosen).strip():
+                setter(str(chosen))
+            else:
+                log.info("%r is not one of the options offered; leaving it "
+                         "alone", chosen)
+        if value_fn is not None and var is not None:
+            try:
+                var.set(value_fn())
+            except Exception as e:
+                log.info("couldn't re-read the language setting (%r)", e)
+        if prefix_fn is not None and prefix_var is not None:
+            try:
+                prefix_var.set(prefix_fn())
+            except Exception as e:
+                log.info("couldn't re-read the line's prefix (%r)", e)
     def button(self,text,fn,**kwargs): #=opts['labelcolumn']
         """cmd overrides the standard button command system."""
         ttt=kwargs.pop('tttext',None)
@@ -653,49 +815,139 @@ class StatusFrame(ui.Frame):
         if hasattr(self,'proseframe'):
             self.proseframe.destroy()
         self.proseframe=ui.Frame(self,row=0,column=0,sticky='nw')
+    # ── The language lines: the value is what you click ──────────────────
+    # Each of these was a sentence bound to a handler that raised a WINDOW —
+    # five windows for five language questions, each a title bar and a list
+    # around one choice. The sentence now ends in a click-to-edit value, so
+    # the chooser opens where the word is
+    # (the settings-prompts-in-one-window item, 2026-09-15).
+    #   `…label()` still returns the whole sentence: the log and the stored
+    # `*_label` UI variables use it, and so does anything that wants the line
+    # as prose. `…value()` is the half that is now editable.
+    def interfacelangvalue(self):
+        return str(self.program.settings.languagenames[
+                                        self.program.interfacelang()])
+
+    def interfacelangoptions(self):
+        return [{'code': i,
+                 'name': self.program.settings.languagenames[i]}
+                for i in self.program.interfacelangs]
+
     def updateinterfacelang(self):
         if 'interfacelang' not in self.labels:
             return
-        self.labels['interfacelang']['text'].set(self.interfacelanglabel())
+        self.labels['interfacelang']['text'].set(self.interfacelangvalue())
     def interfacelanglabel(self):
         # for l in self.program.taskchooser.interfacelangs:
         #     if l['code']==self.program.interfacelang():
         #         interfacelanguagename=l['name']
         return (_("Using {lang}").format(lang=self.program.settings.languagenames[self.program.interfacelang()]))
     def interfacelangline(self):
-        self.labels['interfacelang']={
-                        'text':self.program.settings.get_ui_var('interfacelang_label', self.interfacelanglabel()),
-                        'columnplus':1,
-                        'cmd':self.program.ui_settings.getinterfacelang,
-                        'tt':_("change the interface language")}
-        self.proselabel(**self.labels['interfacelang'])
+        self.prosefield('interfacelang', _("Using"),
+                        self.program.settings.get_ui_var(
+                            'interfacelang_label', self.interfacelangvalue()),
+                        self.interfacelangoptions,
+                        self.program.settings.interfacelangwrapper,
+                        _("change the interface language"),
+                        value_fn=self.interfacelangvalue)
+    def analangvalue(self):
+        return str(self.program.settings.languagenames[
+                                        self.program.params.analang()])
+
+    def analangoptions(self):
+        return [{'code': lang,
+                 'name': self.program.settings.languagenames[lang]}
+                for lang in (self.program.db.analangs or [])]
+
     def updateanalang(self):
         if 'analangline' not in self.labels:
             return
-        self.labels['analangline']['text'].set(self.analanglabel())
+        self.labels['analangline']['text'].set(self.analangvalue())
     def analanglabel(self):
         analang=self.program.params.analang()
         langname=self.program.settings.languagenames[analang]
         return (_("Studying {lang}").format(lang=langname))
     def analangline(self):
         self.newrow()
-        if self.program.params.analang() not in self.program.settings.languagenames:
-            cmd=self.program.ui_settings.getanalangname
-            tt=_("Set analysis language Name")
+        var=self.program.settings.get_ui_var('analang_label',
+                                             self.analangvalue())
+        # ONE LINE, TWO KINDS, decided by the DATA. With two or more analysis
+        # languages in the file this is a choice between them; with one there
+        # is nothing to choose, and what the user wants is to NAME it — which
+        # is what `getanalang` did by redirecting to `getanalangname`
+        # (ui_shell.py:3837, "The user probably wants to change display").
+        # The old line picked its handler by whether the language had a name,
+        # and then that handler picked again by the count, so the name test
+        # only ever decided the tooltip.
+        if len(self.program.db.analangs or []) > 1:
+            self.prosefield('analangline', _("Studying"), var,
+                            self.analangoptions,
+                            self.program.settings.setanalang,
+                            _("Change analysis language"),
+                            value_fn=self.analangvalue)
         else:
-            cmd=self.program.ui_settings.getanalang
-            tt=_("Change analysis language")
-        self.labels['analangline']={
-                                'text':self.program.settings.get_ui_var('analang_label', self.analanglabel()),
-                                'columnplus':1,
-                                'cmd':cmd,
-                                'tt':tt}
-        self.proselabel(**self.labels['analangline'])
+            # ITS OWN FRAME, like `prosefield`'s — straight into `proseframe`
+            # it shared columns with "Using second form field ‘Plural’
+            # (Noun)" and sat an inch from its own value (Kent, 2026-09-15:
+            # the "Studying" line was the one still spaced out after the
+            # others came right).
+            holder=ui.Frame(self.proseframe, row=self.irow,
+                            column=self.opts['labelcolumn'], sticky='w')
+            self.labels['analangline']={'text':var,
+                    'field':composites.entry_field(
+                        holder, var,
+                        label=_("Studying"), label_anchor='w',
+                        font='report',
+                        on_commit=self.program.ui_settings.setanalangname,
+                        row=0, column=0)}
+            ui.ToolTip(self.labels['analangline']['field'].shown,
+                       _("Set analysis language Name"))
+    def glosslangvalue(self):
+        return str(self.program.settings.languagenames[
+                                self.program.settings.glosslangs.lang1()])
+
+    def glosslangvalue2(self):
+        if len(self.program.settings.glosslangs) > 1:
+            return str(self.program.settings.languagenames[
+                                self.program.settings.glosslangs.lang2()])
+        return _("only")
+
+    def glosslangprefix2(self):
+        """"and" only when there IS a second language.
+
+        With none the line reads "Meanings in X only", not "and only" (Kent,
+        2026-09-16) — the word "only" does the joining itself."""
+        if len(self.program.settings.glosslangs) > 1:
+            return _("and")
+        return ''
+
+    def glosslangoptions(self):
+        return [{'code': lang,
+                 'name': self.program.settings.languagenames[lang]}
+                for lang in set(self.program.db.glosslangs)
+                            | set(self.program.settings.glosslangs[1:])]
+
+    def glosslangoptions2(self):
+        langs=[{'code': lang,
+                'name': self.program.settings.languagenames[lang]}
+               for lang in set(self.program.db.glosslangs)
+                           | set(self.program.settings.glosslangs[:1])
+               if lang != self.program.settings.glosslangs[0]]
+        # "just use X" is how you say NO SECOND LANGUAGE — it has to be on
+        # the list, because a list you cannot decline is one you cannot undo.
+        langs.append({'code': None,
+                      'name': _('just use {name}').format(
+                          name=self.program.settings.languagenames[
+                              self.program.settings.glosslangs.lang1()])})
+        return langs
+
     def updateglosslangs(self):
         if 'glosslang' not in self.labels:
             return
-        self.labels['glosslang']['text'].set(self.glosslanglabel())
-        self.labels['glosslang2']['text'].set(self.glosslanglabel2())
+        self.labels['glosslang']['text'].set(self.glosslangvalue())
+        self.labels['glosslang2']['text'].set(self.glosslangvalue2())
+        if self.labels['glosslang2'].get('prefix') is not None:
+            self.labels['glosslang2']['prefix'].set(self.glosslangprefix2())
     def glosslanglabel(self):
         lang=self.program.settings.glosslangs.lang1()
         return (_("Meanings in {lang}").format(lang=self.program.settings.languagenames[lang]))
@@ -709,32 +961,144 @@ class StatusFrame(ui.Frame):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w') #3 cols is the width of frame
-        self.labels['glosslang']={'text':self.program.settings.get_ui_var('glosslang_label', self.glosslanglabel()),
-                                'columnplus':1,
-                                # 'rowplus':1,
-                                'cmd':self.program.ui_settings.getglosslang,
-                                'parent':line,
-                                'tt':_("change this gloss language")
-                                    if len(self.program.settings.glosslangs) >1
-                                    else _("change this glosslang")
-                                    }
-        self.proselabel(**self.labels['glosslang'])
-        self.labels['glosslang2']={'text':self.program.settings.get_ui_var('glosslang2_label', self.glosslanglabel2()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getglosslang2,
-                                'parent':line,
-                                'tt':_("add another gloss language")}
-        self.proselabel(**self.labels['glosslang2'])
+        # BOTH GLOSS LANGUAGES ON ONE LINE, as before: "Meanings in X and Y".
+        # `parent=line` puts each pair in the next free columns of that one
+        # row, so the four widgets (two prefixes, two values) read as a
+        # sentence rather than stacking.
+        self.prosefield('glosslang', _("Meanings in"),
+                        self.program.settings.get_ui_var(
+                            'glosslang_label', self.glosslangvalue()),
+                        self.glosslangoptions,
+                        self.program.settings.setglosslang,
+                        _("change this gloss language")
+                            if len(self.program.settings.glosslangs) > 1
+                            else _("change this glosslang"),
+                        parent=line, value_fn=self.glosslangvalue)
+        self.prosefield('glosslang2', None,
+                        self.program.settings.get_ui_var(
+                            'glosslang2_label', self.glosslangvalue2()),
+                        self.glosslangoptions2,
+                        self.program.settings.setglosslang2,
+                        _("add another gloss language"),
+                        parent=line, value_fn=self.glosslangvalue2,
+                        prefix_fn=self.glosslangprefix2)
     def updatefields(self):
         for ps in [self.program.settings.nominalps, self.program.settings.verbalps]:
             if 'fields'+ps in self.labels:
-                self.labels['fields'+ps]['text'].set(self.fieldslabel(ps))
+                self.labels['fields'+ps]['text'].set(self.fieldsvalue(ps))
     def fieldslabel(self,ps):
-        if ps in self.program.settings.secondformfield:
-            field=self.program.settings.secondformfield[ps]
+        return (_("Using second form field ‘{field}’ ({ps})").format(
+                    field=self.fieldsvalue(ps), ps=ps))
+
+    def fieldsvalue(self,ps):
+        # ONE SENTINEL, OWNED BY THE LAYER THAT REFUSES IT. This returned a
+        # literal `'<unset>'` while `settings` knew nothing about the
+        # string, so the setter had no way to tell a placeholder from an
+        # answer — and one duly reached `project.json` (Kent, 2026-09-17).
+        # `secondformfieldset` is the same test every other consumer uses.
+        if self.program.settings.secondformfieldset(ps):
+            return str(self.program.settings.secondformfield[ps])
+        return self.program.settings.UNSETFIELD
+
+    def fieldsoptions(self,ps):
+        """The field names already in the database, plus the defaults.
+
+        `code` and `name` are the same thing here — the setting IS the field
+        name — but the shape matches the language lines so `_setlang` can map
+        either kind back for the setter.
+
+        `othername` is excluded: the other grammatical category's field
+        cannot also be this one's. The dialog this replaced took the same
+        precaution, by an argument of that name."""
+        s=self.program.settings
+        if ps == s.nominalps:
+            opts, othername = s.plopts, s.imperativename
         else:
-            field='<unset>'
-        return (_("Using second form field ‘{field}’ ({ps})").format(field=field, ps=ps))
+            opts, othername = s.impopts, s.pluralname
+        names=[]
+        for name in list(opts or []):
+            if name and name != othername and name not in names:
+                names.append(name)
+        return [{'code':n,'name':n} for n in names]
+    def updatewordcheck(self):
+        if 'wordcheck' not in self.labels:
+            return
+        self.labels['wordcheck']['text'].set(self.wordcheckvalue())
+
+    def wordcheckvalue(self):
+        return self.program.params.word_check_name()
+
+    def wordcheckoptions(self):
+        """The word checks, shaped for `_setlang`'s code/name mapping.
+
+        Unlike `fieldsoptions` the code and the name are DIFFERENT here: the
+        user picks "‘Plural’ forms (Noun)" and the setter is given `pl`."""
+        return [{'code':code,'name':name}
+                for code, name in self.program.params.word_checks()]
+
+    def wordcheckline(self):
+        """WHICH FORM OF THE WORD this task works on — a word check.
+
+        NOT the cvt check line (`cvcheck`, further down), which picks
+        segments WITHIN a form: the first vowel, the tone frame. Kent,
+        2026-09-29: "these are **word** checks, not cvt checks." The two are
+        independent — you sort the first vowel OF the citation form — and
+        this page never draws the cvt line anyway (`WordCollection` sets
+        `do_not_show_slices`, so `makeui` skips the whole slice block).
+
+        This replaces a CLASS PER FORM. `WordCollectionLexeme`,
+        `WordCollectionCitation`, `WordCollectionPlural` and
+        `WordCollectionImperative` each existed to hard-code one ftype, and
+        the chooser offered none of them. Kent, 2026-09-29: "can we
+        generalize [the one live collection task] to include a check line
+        that would allow users to select between lx, lc, pl, and imp? I think
+        that was the original intent." Plan 2 of
+        the second-form flags audit.
+
+        NOT EDITABLE, unlike the field line below it. A field name the
+        database has never seen is a fine answer; a form code it has never
+        heard of is not — there are exactly four, and two of them exist only
+        when their field is named.
+
+        ONLY WHERE NOTHING ELSE ALREADY CHOOSES THE FORM — which is why
+        `whole_word_checks` is not the test. All three word-check pages
+        carry that flag and only one wants this line:
+
+        * **word collection** — no cvt line at all (`do_not_show_slices`),
+          so this is the only place to pick a form. Draws it.
+        * **the syllable sort** — its CHECK LINE is the form chooser as of
+          plan 6: `checks()` for cvt 'S' lists the word checks and
+          `setcheck` sets the ftype from the one picked. A second control
+          for the same setting would be two ways to say one thing.
+        * **the record page** — shows a record button per form it finds, so
+          there is nothing to choose first. Kent, 2026-09-29: "IF we're
+          presenting to record ALL word forms in an entry, then there is no
+          real point to displaying or offering a choice."
+
+        The flag says which. Acting on a change is a separate contract,
+        `reload_for_word_check`.
+        """
+        if not getattr(self.program.task,'offers_word_check_line',False):
+            log.info("no word-check line for %s: a word-check page, but not "
+                     "one that needs its own chooser",
+                     type(self.program.task).__name__)
+            return
+        self.newrow()
+        self.prosefield('wordcheck',
+                        _(getattr(self.program.task,'word_check_prefix',
+                                  "Working on")),
+                        self.program.settings.get_ui_var(
+                            'wordcheck_label', self.wordcheckvalue()),
+                        self.wordcheckoptions,
+                        self.program.settings.setwordcheck,
+                        _("change which form of the word you are working on"),
+                        value_fn=self.wordcheckvalue,
+                        # The noun: `word_checks` names are adjectival now,
+                        # so this line reads "Collecting Citation forms"
+                        # and the slice line reads "Looking at Citation C1C
+                        # words" off the same list.
+                        suffix=_("forms"))
+
     def fieldsline(self):
         # log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
         # log.info("Starting fieldsline w/task {} ({})".format(self.task,
@@ -743,27 +1107,138 @@ class StatusFrame(ui.Frame):
             if not ps:
                 continue
             self.newrow()
-            # These shouldn't need to be updated:
-            if ps == self.program.settings.nominalps:
-                cmd=self.program.ui_settings.getsecondformfieldN
-            else:
-                cmd=self.program.ui_settings.getsecondformfieldV
-            if ps not in self.program.settings.secondformfield and (
-                    self.program.task.uses_second_forms or ( #Parse
-                        self.program.task.ftype not in ['lx','lc'])):
-                cmd() #Make sure these are defined where needed (i.e., parsing or collecting them.)
-                # return #just do one at a time
-            self.labels['fields'+ps]={
-                            'text':self.program.settings.get_ui_var('fields'+ps+'_label', self.fieldslabel(ps)),
-                            'columnplus':1,
-                            'cmd':cmd,
-                            'tt':_("change this field")}
-            self.proselabel(**self.labels['fields'+ps])
+            # THE ASSURANCE MOVED OUT OF HERE. This used to call the chooser
+            # dialog to define an unset field, which made the guarantee a
+            # SIDE EFFECT OF RENDERING: a task that needed the setting but
+            # did not draw this line never got it, and a page that drew the
+            # line raised a dialog while the user was still reading it.
+            # Kent, 2026-09-17: "assuring second forms are there before
+            # using them is good, but maybe that should be on runcheck(),
+            # rather than displaying settings (given that settings display
+            # can be all kinds of wonky before finally settling on the
+            # values to use, before using them)."
+            #   It is `Sort.runcheck` that now asks, once, at the point of
+            # use — see `assure_second_forms`.
+            # EDITABLE, because the answer may not be on the list. The old
+            # flow was three windows deep for this one value — pick from the
+            # database's fields, or "other" for the defaults, or "custom" to
+            # type a name — three windows deep, and deleted 2026-09-29.
+            # An editable combo is all three: the existing names are offered,
+            # and anything else can be typed. Kent, 2026-09-15: "second forms
+            # combo/entry".
+            # THE QUOTES ARE WIDGETS, not text. `delimit` puts them either
+            # side of the value, so the line still reads "Using second form
+            # field ‘Plural’ (Noun)" while every translatable string stays a
+            # whole phrase — a msgid ending in a lone ‘ is not something a
+            # translator can work with (Kent, 2026-09-16).
+            self.prosefield('fields'+ps,
+                            _("Using second form field"),
+                            self.program.settings.get_ui_var(
+                                'fields'+ps+'_label', self.fieldsvalue(ps)),
+                            lambda ps=ps: self.fieldsoptions(ps),
+                            (self.program.settings.setsecondformfieldN
+                             if ps == self.program.settings.nominalps
+                             else self.program.settings.setsecondformfieldV),
+                            _("change this field"),
+                            editable=True, allow_new=True,
+                            value_fn=lambda ps=ps: self.fieldsvalue(ps),
+                            delimit=('‘','’'),
+                            # SHOWN, NEVER OFFERED. `fieldsvalue` says
+                            # `<unset>` when no field is defined; the combo
+                            # opened with that word in it as though it were
+                            # the current field name, and committing it is
+                            # how the string reached `project.json` (Kent,
+                            # 2026-09-17: "we don't want that value to show
+                            # in the editor at all").
+                            placeholder=self.program.settings.UNSETFIELD,
+                            suffix=_("({ps})").format(ps=ps))
+    def assure_second_forms(self, then=None):
+        """Every second-form field defined? If not, open the first one.
+
+        ASKED AT THE POINT OF USE, not while settings are being drawn.
+        `fieldsline` used to define an unset field as a side effect of
+        rendering itself, which meant the guarantee depended on the line
+        being drawn and arrived while the user was still reading the page.
+        Kent, 2026-09-17: settings display "can be all kinds of wonky before
+        finally settling on the values to use, before using them."
+
+        AN EDIT IN PLACE, NOT A MODAL. The old path raised a chooser window
+        per field, and is gone (2026-09-29). Kent: "in the current paradigm,
+        it would make more sense for [the chooser] to simply mark the
+        appropriate settings label as 'edit', rather than keeping the old
+        dialog just for this." The
+        cost he named is real — two undefined fields means two passes — and
+        `then` is what stops those being two CLICKS: committing the field
+        re-enters the work, so the user makes one gesture per missing value
+        and the sort starts when the last one lands.
+
+        `<unset>` is a DISPLAY string (`fieldsvalue`), never a stored value,
+        so the test is membership in the settings dict, not the text shown.
+
+        Returns True when nothing was missing and the caller may proceed."""
+        # `secondformfieldset`, NOT membership. A stored `<unset>` is a
+        # placeholder that reached `project.json`, and testing presence read
+        # it as an answer — so this would never have prompted for a field
+        # that was never set. See `SettingsManager.UNSETFIELD`.
+        missing=[ps for ps in (self.program.settings.nominalps,
+                               self.program.settings.verbalps)
+                 if ps and not self.program.settings.secondformfieldset(ps)]
+        if not missing:
+            return True
+        ps=missing[0]
+        field=(self.labels.get('fields'+ps) or {}).get('field')
+        if field is None or not hasattr(field,'edit'):
+            # No field on this page to open — the line is not drawn here.
+            # Say so and let the caller proceed rather than blocking work on
+            # a widget that does not exist.
+            log.info("second form field for %s is undefined and this page "
+                     "has no field to open; continuing without it",ps)
+            return True
+        log.info("second form field for %s is undefined; opening it rather "
+                 "than raising a dialog",ps)
+        if then is not None:
+            # ONLY IF WE OPENED IT, AND ONLY IF A VALUE ARRIVED. Kent,
+            # 2026-09-17, on the resume: "ONLY ONLY ONLY if it got there
+            # from runcheck. NEVER runcheck just because that was set."
+            #
+            # Three guards, because `commit` fires on more than a
+            # deliberate answer:
+            #   * the hook exists ONLY on a field this method opened, so
+            #     editing the same field by hand never carries it;
+            #   * it is cleared FIRST, so it can fire at most once and a
+            #     later edit cannot resurrect it;
+            #   * and it checks the setting is now actually DEFINED —
+            #     `close_open_field` commits our field when the user clicks
+            #     a different one, so a commit is not proof that the value
+            #     was supplied. Without this, walking away from the field
+            #     would start a sort nobody asked for, which is exactly the
+            #     case being forbidden.
+            def resume(*args,**kwargs):
+                field.after_commit=None
+                # `secondformfieldset`, NOT membership: a stored `<unset>`
+                # is present and still means nothing is defined.
+                if not self.program.settings.secondformfieldset(ps):
+                    log.info("second form field for %s still undefined "
+                             "after the field closed; NOT resuming",ps)
+                    return
+                try:
+                    then()
+                except Exception as e:
+                    log.info("could not resume after defining the second "
+                             "form field for %s: %r",ps,e)
+            field.after_commit=resume
+        field.edit()
+        return False
+
     def updateprofile(self):
         if 'profile' not in self.labels:
             return
-        self.labels['profile']['text'].set(self.profilelabel())
-        self.labels['ps']['text'].set(self.pslabel())
+        # VALUES, not sentences: "Looking at" and "words (N)" are their own
+        # widgets now (see `sliceline`), so these set only the part the
+        # fields show. Delegating the ps half to `updateps` keeps the word
+        # count in one place rather than two.
+        self.labels['profile']['text'].set(self.profilevalue())
+        self.updateps()
     def profilelabel(self):
         if self.program.params.cvt()=='S':
             # 'S' sorts the whole ps across all profiles; the per-profile label
@@ -776,7 +1251,12 @@ class StatusFrame(ui.Frame):
     def updateps(self):
         if 'ps' not in self.labels:
             return
-        self.labels['ps']['text'].set(self.pslabel())
+        # THE VALUE AND ITS TAIL ARE NOW TWO WIDGETS, so both are set: the
+        # field shows the category, the suffix carries the word count that
+        # used to be part of the same sentence.
+        self.labels['ps']['text'].set(self.psvalue())
+        if 'ps_suffix' in self.labels:
+            self.labels['ps_suffix'].set(self.pssuffix())
         self.makesliceattrs()
     def pslabel(self):
         count=self.program.slices.count()
@@ -784,42 +1264,221 @@ class StatusFrame(ui.Frame):
         if not ps:
             ps=_("<no grammatical category>")
         return (_("{ps} words ({count})").format(ps=ps, count=count))
+    def profilevalue(self):
+        """The syllable profile alone — the part the field edits.
+
+        `profilelabel()` returns the whole sentence, which was right while
+        the line was one clickable label. A click-to-edit field needs the
+        VALUE by itself, with "Looking at" as its own prefix."""
+        if self.program.params.cvt()=='S':
+            # THE PROFILE CLASS, which is what 'S' slices by — `C2V`, not a
+            # cvprofile. This returned '' with the note "'S' sorts the whole
+            # ps across profiles; there is no single profile to show", which
+            # was wrong twice: the slice IS a single profile class once the
+            # three primitives compose one (`status.node(cvt='S', …,
+            # profile=profile_class, …)` has always keyed on it), and there
+            # is no ps in it at all.
+            #   Before that, during prep, there genuinely is no class yet —
+            # `SYLLABLE_SLICE_SENTINEL` stands in — and the honest word for
+            # the slice then is every word in the file. Every word, not
+            # every word of one category: see the
+            # syllable-sort-is-not-per-ps item.
+            profile=self.program.slices.profile()
+            if not profile or profile==self.program.params.SYLLABLE_SLICE_SENTINEL:
+                return _("all words")
+            return str(profile)
+        return self.program.slices.profile() or _("<no syllable profile>")
+
+    def profileoptions(self):
+        """Profiles for the current ps, each with its word count.
+
+        THE COUNT IS PART OF THE NAME, as it was in the window this
+        replaces (`ui_settings.getprofile` built `f"{x} ({count})"` for its
+        list box): choosing a profile with no words in it is a mistake the
+        count prevents. `code` is the bare profile, which is what the setter
+        takes.
+
+        Empty when there is no ps — the old window raised an ErrorNotice for
+        that, which is the wrong shape for a field that opens in place; an
+        empty list simply offers nothing to pick."""
+        ps=self.program.slices.ps()
+        if not ps:
+            return []
+        counts={}
+        try:
+            counts.update(self.program.slices.valid() or {})
+            adhoccounts=self.program.slices.adhoccounts()
+            if adhoccounts:
+                counts.update(adhoccounts)
+        except Exception as e:
+            log.info("no profile counts to offer: %s",e)
+        profiles=list(self.program.status.profiles())
+        try:
+            adhoc=self.program.slices.adhoc()
+            if ps in adhoc:
+                profiles+=[p for p in adhoc[ps] if p not in profiles]
+        except Exception as e:
+            log.info("no ad hoc profiles to offer: %s",e)
+        out=[]
+        for p in dict.fromkeys(profiles):
+            n=counts.get((p,ps))
+            out.append({'code':p,
+                        'name':f"{p} ({n})" if n is not None else str(p)})
+        return out
+
+    def psvalue(self):
+        return self.program.slices.ps() or _("<no grammatical category>")
+
+    def pssuffix(self):
+        """"words (N)" — the tail of the ps half of the line.
+
+        A VARIABLE, not a fixed string, because N changes with the slice.
+        `prosefield` puts the suffix in a Label, and a Label takes a
+        Variable as its text in both backends, so the count stays live
+        without the line being rebuilt."""
+        return _("words ({count})").format(count=self.program.slices.count())
+
+    def psoptions(self):
+        """Lexical categories, as the old `getps` window offered them."""
+        pss=list(self.program.db.pss)
+        extra=getattr(self.program.settings,'additionalps',None)
+        if extra:
+            pss+=[p for p in extra if p not in pss]
+        return [{'code':p,'name':p} for p in pss]
+
     def sliceline(self):
+        # TWO FIELDS, ONE SENTENCE. Both `prosefield`s share this frame so
+        # they sit side by side — "Looking at CVCV" + "Noun words (51)" —
+        # rather than each making its own row. Converted from two clickable
+        # labels, each of which raised a window: the profile one built its
+        # own list box with counts (`ui_settings.getprofile`), the category
+        # one an `_option_dialog`. See
+        # the settings-prompts-in-one-window item.
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
-        self.labels['profile']={'text':self.program.settings.get_ui_var('profile_label', self.profilelabel()),
-                                'columnplus':1,
-                                'rowplus':1,
-                                'cmd':self.program.ui_settings.getprofile,
-                                'parent':line,
-                                'tt':_("change this syllable profile")}
-        self.proselabel(**self.labels['profile'])
-        self.program.settings.get_ui_var('profile_label').trace_add("write", self.update_active_cell)
-        self.labels['ps']={'text':self.program.settings.get_ui_var('ps_label', self.pslabel()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getps,
-                                'parent':line,
-                                'tt':_("change this grammatical category")}
-        self.proselabel(**self.labels['ps'])
+        # NO ps ON THE SYLLABLE SORT. A cvprofile and its profile class are
+        # facts about the FORM, so nothing on that page varies by category —
+        # Kent, 2026-09-30: "NOTHING in SortSyllables does", and "we
+        # shouldn't be sorting by syllable profile for each ps". The slice
+        # there is the profile class alone ("Looking at C2V words"), or
+        # every word in the file while the three primitives are still being
+        # established. See the syllable-sort-is-not-per-ps item.
+        #   `profilevalue` carries that: the profile class, or "all words"
+        # for the prep sentinel. It used to return '' here, which drew a
+        # prefix with nothing after it and a chooser offering profiles that
+        # did not apply (Kent: "'looking at {ps} words' has the editor for
+        # primitives when clicking on 'looking', but no label?") — and it
+        # LEAKED onto Record Words, which draws this line with whatever cvt
+        # it inherited.
+        syllables=self.program.params.cvt()=='S'
+        # THE FORM COMES FIRST, because it is the widest scope on the line.
+        # Kent, 2026-09-30: "looking at {ps} words is the higher scope (than
+        # checking {cvt}, working on {check}) and {ftype} is higher than ps,
+        # or at least on the same level … I think putting ftype before ps
+        # might be generalizable." So the line reads outside-in: which form,
+        # then which slice of it, then which category.
+        #   Only where the task can act on a change — `reload_for_word_check`
+        # is that contract. The record page has a slice line and no reload,
+        # and needs no chooser anyway (a button per form).
+        if hasattr(self.program.task,'reload_for_word_check'):
+            self.prosefield('sliceftype',
+                            _("Looking at"),
+                            self.program.settings.get_ui_var(
+                                'sliceftype_label', self.wordcheckvalue()),
+                            self.wordcheckoptions,
+                            self.program.settings.setwordcheck,
+                            _("change which form of the word you are "
+                              "working on"),
+                            parent=line,
+                            value_fn=self.wordcheckvalue)
+        profile_var=self.program.settings.get_ui_var('profile_label',
+                                                     self.profilevalue())
+        self.prosefield('profile',
+                        # "Looking at" belongs to the form when there is
+                        # one; this field then just continues the sentence.
+                        None if hasattr(self.program.task,
+                                        'reload_for_word_check')
+                        else _("Looking at"),
+                        profile_var,
+                        self.profileoptions,
+                        self.program.settings.setprofile,
+                        _("change this syllable profile class") if syllables
+                        else _("change this syllable profile"),
+                        parent=line,
+                        value_fn=self.profilevalue,
+                        # "Looking at C2V words" — the noun the ps field
+                        # carries on every other page.
+                        suffix=_("words") if syllables else None)
+        # THE TRACE STAYS. The board's current-cell marker follows this
+        # variable (`update_active_cell`), and it fires on any write —
+        # including the one `_setlang` makes after the setter has run,
+        # which is what keeps the marker and the working slice from
+        # diverging.
+        profile_var.trace_add("write", self.update_active_cell)
+        if syllables:
+            return
+        self.labels['ps_suffix']=ui.StringVar(value=self.pssuffix())
+        self.prosefield('ps',
+                        None,
+                        self.program.settings.get_ui_var('ps_label',
+                                                         self.psvalue()),
+                        self.psoptions,
+                        self.program.settings.setps,
+                        _("change this grammatical category"),
+                        parent=line,
+                        value_fn=self.psvalue,
+                        suffix=self.labels['ps_suffix'])
     def updatecvt(self):
         if 'cvt' not in self.labels:
             return
-        self.labels['cvt']['text'].set(self.cvtlabel())
+        # REFRESH, THEN RENDER. These two lines were the other way round, so
+        # every explicit update painted the label from the PREVIOUS cvt:
+        # the value reads `self.cvt`, and `makesliceattrs` is what re-reads
+        # it from `params`. One step stale, every time (2026-09-29).
         self.makesliceattrs()
-    def cvtlabel(self):
-        return (_("Checking {cvt},").format(cvt=self.program.params.cvtdict()[self.cvt]['pl']))
+        self.labels['cvt']['text'].set(self.cvtvalue())
+    def cvtvalue(self):
+        return self.program.params.cvtdict()[self.cvt]['pl']
+    def cvtoptions(self):
+        """The check types this task may switch to.
+
+        Same filter `getcvt` applied in the window this replaced: a sort
+        task is not offered CV or VC."""
+        tdict=self.program.params.cvtdict()
+        skip=(('CV','VC')
+              if getattr(self.program.task,'is_sort_task',False) else ())
+        return [{'code':c,'name':tdict[c]['pl']}
+                for c in tdict if c not in skip]
     def cvtline(self):
+        # CLICK THE VALUE, NOT THE SENTENCE. This was a label bound to
+        # `ui_settings.getcvt`, which raised a window ('Select Check Type')
+        # around one choice. Kent, 2026-09-29, on the new check chooser
+        # being hard to read: "it's hard to see with the extra settings
+        # dialogs. Convert the rest of sort word syllables into composite
+        # widgets." See the settings-prompts-in-one-window item.
+        #   THE COMMA IS A DELIMITER, not a suffix. The phrase continues
+        # into the check ("Checking Syllable Profiles, working on …") and a
+        # msgid may not end in a lone comma, so it has to be a widget — but
+        # `suffix` sits in its own cell with its own padding and rendered
+        # "Checking Vowels ," (Kent, 2026-09-30). `delimit` is the mechanism
+        # built for punctuation that must TOUCH the value: it draws its
+        # labels with `ipadx: 0`, which is why the field-name quotes come
+        # out as ‘Plural’ and not ‘ Plural ’. Empty opening delimiter,
+        # comma closing.
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
-        self.labels['cvt']={'text':self.program.settings.get_ui_var('cvt_label', self.cvtlabel()),
-                                'columnplus':1,
-                                'rowplus':1,
-                                'cmd':self.program.ui_settings.getcvt,
-                                'parent':line,
-                                'tt':_("change to other check types")}
-        self.proselabel(**self.labels['cvt'])
+        self.prosefield('cvt',
+                        _("Checking"),
+                        self.program.settings.get_ui_var('cvt_label',
+                                                         self.cvtvalue()),
+                        self.cvtoptions,
+                        self.program.settings.setcvt,
+                        _("change to other check types"),
+                        parent=line,
+                        value_fn=self.cvtvalue,
+                        delimit=('',','))
         #this continues on the same line:
         if self.cvt == 'T':
             self.toneframe(line)
@@ -892,138 +1551,274 @@ class StatusFrame(ui.Frame):
     def updatecvcheck(self):
         if 'cvcheck' not in self.labels:
             return
-        self.labels['cvcheck']['text'].set(self.cvchecklabel())
-    def cvchecklabel(self):
-        return (_("working on {check}").format(check=self.program.params.cvcheckname()))
+        self.labels['cvcheck']['text'].set(self.cvcheckvalue())
+    def cvcheckvalue(self):
+        return self.program.params.cvcheckname()
+    def cvcheckoptions(self):
+        """The checks available in this slice, named.
+
+        ON THE SYLLABLE SORT THESE ARE THE WORD CHECKS — the forms — as of
+        plan 6 of the second-form flags audit, which is what makes this
+        line a chooser rather than a statement. `cvcheckname(c)` names each
+        one; it used to ignore its argument for cvt 'S' and name them all
+        after the current form, so a two-entry list read the same twice
+        (Kent, 2026-09-29: "I see whole citation twice?")."""
+        checks=self.program.status.checks() or []
+        return [{'code':c,'name':self.program.params.cvcheckname(c) or c}
+                for c in checks]
     def cvcheck(self,line):
-        self.labels['cvcheck']={'text':self.program.settings.get_ui_var('cvcheck_label', self.cvchecklabel()),
-                                'columnplus':1,
-                                'cmd':self.program.task.getcheck,
-                                'parent':line,
-                                'tt':_("change this check")}
-        self.proselabel(**self.labels['cvcheck'])
-        self.program.settings.get_ui_var('cvcheck_label').trace_add("write", self.update_active_cell)
+        # Was a label bound to `task.getcheck`, which raised a window
+        # ('What check do you want to do?') around one choice.
+        cvcheck_var=self.program.settings.get_ui_var('cvcheck_label',
+                                                     self.cvcheckvalue())
+        self.prosefield('cvcheck',
+                        _("working on"),
+                        cvcheck_var,
+                        self.cvcheckoptions,
+                        self.program.settings.setcheck,
+                        _("change this check"),
+                        parent=line,
+                        value_fn=self.cvcheckvalue)
+        # THE TRACE STAYS, for the reason it stays on the profile field: the
+        # board's current-cell marker follows this variable, and it fires on
+        # any write — including the one `_setlang` makes after the setter has
+        # run, which keeps the marker and the working slice together.
+        cvcheck_var.trace_add("write", self.update_active_cell)
     def updatecvgroup(self):
         if 'cvgroup' not in self.labels:
             return
-        self.labels['cvgroup']['text'].set(self.cvgrouplabel())
-    def cvgrouplabel(self):
-        check=self.program.params.check()
-        if not check or 'x' in check:
-            # Return '' not a bare None: updatecvgroup() does StringVar.set(this),
-            # and set(None) renders the literal "None" in the status frame (seen as
-            # "working on First Vowel None" when the label went stale from an
-            # x-check phase). Blank is the right "no group applies here" display.
-            return ''
+        self.labels['cvgroup']['text'].set(self.cvgroupvalue())
+        prefix=self.labels['cvgroup'].get('prefix')
+        if prefix is not None:
+            prefix.set(self.cvgroupprefix())
+    def cvgroupprefix(self):
+        # "= C" when there is one, nothing in front of "All groups".
+        return '=' if self.program.status.group() else ''
+    def cvgroupvalue(self):
         group=self.program.status.group()
         if not group:
-            return (_("(All groups)"))
+            return _("All groups")
         # For syllable prep the bare code ('C'/'V'/'2') is cryptic; show the
         # human group name (e.g. 'consonant initial', '2 syllables').
         if self.program.params.cvt()=='S' and \
                 self.program.params.is_syllable_primitive_check():
-            return f"= {self.program.params.syllable_group_name(check,group)}"
-        return (f"= {group}")
+            return str(self.program.params.syllable_group_name(
+                            self.program.params.check(),group))
+        return str(group)
+    def cvgroupnames(self,g):
+        if self.program.params.cvt()=='S' and \
+                self.program.params.is_syllable_primitive_check():
+            return str(self.program.params.syllable_group_name(
+                            self.program.params.check(),g))
+        return str(g)
+    def cvgroupoptions(self):
+        """The groups this slice offers, plus "All groups".
+
+        `groups_visible` is the same list the window used (`_getgroup`), and
+        it is the one that drops NA — which is never a selectable group."""
+        try:
+            groups=self.program.status.groups_visible() or []
+        except Exception as e:
+            log.info("no groups to offer: %s",e)
+            groups=[]
+        return ([{'code':None,'name':_("All groups")}]
+                +[{'code':g,'name':self.cvgroupnames(g)} for g in groups])
     def cvgroup(self,line):
-        self.labels['cvgroup']={'text':self.program.settings.get_ui_var('cvgroup_label', self.cvgrouplabel()),
-                                'columnplus':2,
-                                'cmd':self.program.task.getgroup,
-                                'parent':line,
-                                'tt':_("change this group")
-                                if self.program.status.group()
-                                else _("specify one group")
-                                }
-        self.proselabel(**self.labels['cvgroup'])
+        # Was a label bound to `task.getgroup`, which raised a window per
+        # cvt — 'Select Vowel', 'Select Consonant', 'Select Framed Tone
+        # Group'. Kent, 2026-09-30: "getgroups should be composite. any
+        # given page is asking for one set, right? what's the problem?"
+        # Right: `_getgroup` builds ONE list, `groups_visible(cvt=…)`, and
+        # the per-cvt branching is only the window's title.
+        #   THE EXCEPTION IS THE CxV PATH, which asks twice ("for
+        # kwargs['cvt'] in ['C','V']") and is not converted — it is already
+        # tracked as dead (`cv_group_selection_dead.md`) and `getcvt` hides
+        # CV/VC from sort tasks, so no live page reaches it. `getgroup`
+        # stays for whatever still calls it.
+        #   NO FIELD AT ALL ON AN x-CHECK: no group applies to a
+        # correspondence check, and the old label returned '' for it —
+        # which left a clickable empty string. Drawing nothing is the
+        # honest version.
+        check=self.program.params.check()
+        if not check or 'x' in check:
+            return
+        self.prosefield('cvgroup',
+                        self.cvgroupprefix(),
+                        self.program.settings.get_ui_var(
+                            'cvgroup_label', self.cvgroupvalue()),
+                        self.cvgroupoptions,
+                        self.program.settings.setgroup,
+                        _("change this group")
+                        if self.program.status.group()
+                        else _("specify one group"),
+                        parent=line,
+                        value_fn=self.cvgroupvalue,
+                        prefix_fn=self.cvgroupprefix)
     def updatebuttoncolumns(self):
         if 'buttoncolumns' not in self.labels:
             return
-        self.labels['buttoncolumns']['text'].set(self.buttoncolumnslabel())
-    def buttoncolumnslabel(self):
-        b=self.program.settings.buttoncolumns
-        if b:
-            return (_("Using {n} button columns").format(n=b))
-        else:
-            return (_("Not using multiple button columns"))
+        self.labels['buttoncolumns']['text'].set(self.buttoncolumnsvalue())
+    def buttoncolumnsname(self,n):
+        # TWO WHOLE MSGIDS, not a number plus an 's'. Singular and plural
+        # are different sentences in most languages, and assembling one from
+        # pieces is what the 2026-07-10 sweep found breaks catalogues.
+        try:
+            one=int(n) == 1
+        except (TypeError,ValueError):
+            one=True
+        return _("1 column") if one else _("{n} columns").format(n=n)
+    def buttoncolumnsvalue(self):
+        return self.buttoncolumnsname(self.program.settings.buttoncolumns or 1)
+    def buttoncolumnsoptions(self):
+        return [{'code':n,'name':self.buttoncolumnsname(n)} for n in (1,2,3)]
     def buttoncolumnsline(self):
-        # log.info(t)
-        tt=_("Click here to change the number of columns used for sort buttons")
+        # Was a label bound to `ui_settings.getbuttoncolumns` ('Select
+        # Button Columns'). The sentence is now "Using 2 columns", with the
+        # count as the clickable value — so the singular/plural lives in the
+        # option NAMES and "Not using multiple button columns" becomes the
+        # honest "Using 1 column".
         self.newrow()
-        self.labels['buttoncolumns']={'text':self.program.settings.get_ui_var('buttoncolumns_label', self.buttoncolumnslabel()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getbuttoncolumns,
-                                'tt':tt}
-        self.proselabel(**self.labels['buttoncolumns'])
+        self.prosefield('buttoncolumns',
+                        _("Using"),
+                        self.program.settings.get_ui_var(
+                            'buttoncolumns_label', self.buttoncolumnsvalue()),
+                        self.buttoncolumnsoptions,
+                        self.program.settings.setbuttoncolumns,
+                        _("change the number of columns used for sort "
+                          "buttons"),
+                        value_fn=self.buttoncolumnsvalue)
     def updatemaxslice(self):
         if 'maxslice' not in self.labels:
             return
-        self.labels['maxslice']['text'].set(self.maxslicelabel())
-    def maxslicelabel(self):
+        self.labels['maxslice']['text'].set(self.maxslicevalue())
+    def maxslicevalue(self):
         # default 50 mirrors backend.core.analysis.MAX_SLICE (kept in sync by hand
         # to avoid the UI importing a backend constant)
-        n=getattr(self.program.settings,'syllable_max_slice',None) or 50
-        return _("Showing {n} words per page").format(n=n)
+        return str(getattr(self.program.settings,'syllable_max_slice',None)
+                   or 50)
+    def maxsliceoptions(self):
+        # The same ladder the window offered.
+        return [{'code':n,'name':str(n)}
+                for n in (15,30,50,75,100,150,200,300)]
     def maxsliceline(self):
-        tt=_("Click to change how many words appear per page when sorting "
-             "syllables (fewer = faster pages, but more of them; tune per machine)")
+        # Was a label bound to `ui_settings.getmaxslice` ('Select Words Per
+        # Page'). The explanation the window carried in its body has nowhere
+        # to go on a prose line, so it is the tooltip.
         self.newrow()
-        self.labels['maxslice']={'text':self.program.settings.get_ui_var('maxslice_label', self.maxslicelabel()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getmaxslice,
-                                'tt':tt}
-        self.proselabel(**self.labels['maxslice'])
+        self.prosefield('maxslice',
+                        _("Showing"),
+                        self.program.settings.get_ui_var(
+                            'maxslice_label', self.maxslicevalue()),
+                        self.maxsliceoptions,
+                        self.program.settings.setmaxslice,
+                        _("change how many words appear per page when "
+                          "sorting syllables — fewer means each page "
+                          "appears faster but there are more of them; tune "
+                          "to this machine"),
+                        value_fn=self.maxslicevalue,
+                        suffix=_("words per page"))
+    # THREE DEAD UPDATERS, FIXED WITH THE CONVERSION (2026-09-30). Both
+    # `maxes` updaters guarded on `'maxes' in self.labels` and wrote
+    # `labels['maxes']` — a key `maxes()` never creates; it makes
+    # `maxprofiles` and `maxpss`. So both returned early, always.
+    # `updatemulticheckscope` guarded on and wrote `labels['cvgroup']`,
+    # a different line's key, so it would have overwritten the GROUP with
+    # the scope text had it ever run. Same class as the `get_ui_var` freeze:
+    # a label that nothing can repaint.
     def updatemaxprofiles(self):
-        if 'maxes' not in self.labels:
+        if 'maxprofiles' not in self.labels:
             return
-        self.labels['maxes']['text'].set(self.maxprofileslabel())
-    def maxprofileslabel(self):
-        return (_("Max profiles: {max_profiles}; ").format(max_profiles=self.program.settings.maxprofiles))
+        self.labels['maxprofiles']['text'].set(self.maxprofilesvalue())
+    def maxprofilesvalue(self):
+        return str(self.program.settings.maxprofiles)
     def updatemaxpss(self):
-        if 'maxes' not in self.labels:
+        if 'maxpss' not in self.labels:
             return
-        self.labels['maxes']['text'].set(self.maxpsslabel())
-    def maxpsslabel(self):
-        return (_("Max lexical categories: {max_pss}").format(max_pss=self.program.settings.maxpss))
+        self.labels['maxpss']['text'].set(self.maxpssvalue())
+    def maxpssvalue(self):
+        return str(self.program.settings.maxpss)
+    def maxoptions(self):
+        """1–9, as both windows offered."""
+        return [{'code':n,'name':str(n)} for n in range(1,10)]
     def maxes(self):
+        # Was two labels, each raising a window ('Select Maximum Number of
+        # Syllable Profiles', '…of Lexical Categories'). The semicolon is a
+        # delimiter rather than a suffix, for the reason the cvt line's
+        # comma is: a suffix sits in its own padded cell and renders
+        # "Max profiles: 5 ;".
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
-        self.labels['maxprofiles']={
-                        'text':self.program.settings.get_ui_var('maxprofiles_label', self.maxprofileslabel()),
-                        'columnplus':1,
-                        'cmd':self.program.ui_settings.getmaxprofiles,
-                        'parent':line,
-                        'tt':_("change this max")}
-        self.proselabel(**self.labels['maxprofiles'])
-        self.opts['columnplus']=1
-        self.labels['maxpss']={'text':self.program.settings.get_ui_var('maxpss_label', self.maxpsslabel()),
-                                'columnplus':1,
-                                'cmd':self.program.ui_settings.getmaxpss,
-                                'parent':line,
-                                'tt':_("change this check")}
-        self.proselabel(**self.labels['maxpss'])
+        self.prosefield('maxprofiles',
+                        _("Max profiles:"),
+                        self.program.settings.get_ui_var(
+                            'maxprofiles_label', self.maxprofilesvalue()),
+                        self.maxoptions,
+                        self.program.settings.setmaxprofiles,
+                        _("change how many syllable profiles to report"),
+                        parent=line,
+                        value_fn=self.maxprofilesvalue,
+                        delimit=('',';'))
+        self.prosefield('maxpss',
+                        _("Max lexical categories:"),
+                        self.program.settings.get_ui_var(
+                            'maxpss_label', self.maxpssvalue()),
+                        self.maxoptions,
+                        self.program.settings.setmaxpss,
+                        _("change how many lexical categories to report "
+                          "(2 = Noun and Verb)"),
+                        parent=line,
+                        value_fn=self.maxpssvalue)
     def updatemulticheckscope(self):
-        if 'cvgroup' not in self.labels:
+        if 'multicheckscope' not in self.labels:
             return
-        self.labels['cvgroup']['text'].set(self.multicheckscopelabel())
-    def multicheckscopelabel(self):
-        return (_("Run all checks for {checks}").format(checks=unlist(self.program.ui_settings.cvtstodoprose())))
+        self.labels['multicheckscope']['text'].set(
+                                            self.multicheckscopevalue())
+    def multicheckscopevalue(self):
+        return str(unlist(self.program.ui_settings.cvtstodoprose()))
+    def multicheckscopeoptions(self):
+        """Every combination of check types, each ONE pick.
+
+        NOT a multi-select, which is why this converts at all: the window
+        this replaces already enumerated the combinations and offered them
+        as single choices, with `code` a LIST of cvts — exactly the shape
+        `_setlang` maps back for the setter. Tone is excluded, as it was
+        there: it is not a segmental check."""
+        cvts=[[i] for i in self.program.params.cvts()]
+        if ['T'] in cvts:
+            cvts.remove(['T'])
+        done=cvts[:]
+        for j in cvts[:2]+[[i[0] for i in cvts[:2]]]:
+            done+=[j+i for i in cvts
+                   if i[0] not in j
+                   if set(j+i) not in [set(k) for k in done]]
+        done+=[[i[0] for i in cvts]]
+        options=[]
+        for opt in done:
+            name=unlist([self.program.params.cvtdict()[i]['pl'] for i in opt])
+            if len(opt) == 1:
+                name+=' '+_("(only)")
+            options.append({'code':opt,'name':name})
+        return options
     def multicheckscope(self):
+        # Was a label raising 'Select Scope of Checks'.
         if not hasattr(self.program.task,'cvtstodo'):
             self.program.task.cvtstodo=['V']
         self.newrow()
-        line=ui.Frame(self.proseframe,row=self.irow,column=0,
-                        columnspan=3,sticky='w')
-        self.labels['multicheckscope']={
-                        'text':self.program.settings.get_ui_var('multicheckscope_label', self.multicheckscopelabel()),
-                        'columnplus':1,
-                        'cmd':self.program.ui_settings.getmulticheckscope,
-                        'parent':line,
-                        'tt':_("change this check")}
-        self.proselabel(**self.labels['multicheckscope'])
+        self.prosefield('multicheckscope',
+                        _("Run all checks for"),
+                        self.program.settings.get_ui_var(
+                            'multicheckscope_label',
+                            self.multicheckscopevalue()),
+                        self.multicheckscopeoptions,
+                        self.program.settings.setmulticheckscope,
+                        _("change which kinds of check to run"),
+                        value_fn=self.multicheckscopevalue)
     def updateparserasklevel(self):
         if 'parserasklevel' not in self.labels:
             return
-        self.labels['parserasklevel']['text'].set(self.parserasklevellabel())
+        self.labels['parserasklevel']['text'].set(
+                                            self.parserlevelvalue('ask'))
     def parserasklevellabel(self):
         try:
             ls=self.program.task.parser.levels() # we need this anyway, and a parser test
@@ -1034,7 +1829,8 @@ class StatusFrame(ui.Frame):
     def updateparserautolevel(self):
         if 'parserautolevel' not in self.labels:
             return
-        self.labels['parserautolevel']['text'].set(self.parserautolevellabel())
+        self.labels['parserautolevel']['text'].set(
+                                            self.parserlevelvalue('auto'))
     def parserautolevellabel(self):
         try:
             ls=self.program.task.parser.levels()
@@ -1042,48 +1838,156 @@ class StatusFrame(ui.Frame):
         except AttributeError as e:
             log.info(f"Error loading parser levels: {e}")
             return
+    def parserlevelvalue(self, which):
+        """The name of the level currently set for `which` ('ask' or 'auto').
+
+        THE PARSER IS NOT THERE YET when the status frame is first built —
+        "'WordCollectnParsewRecordings' object has no attribute 'parser'" is
+        a normal line in a healthy log — so this has to answer something.
+        `updateparserasklevel`/`…autolevel` fill it in once the parser
+        exists; until then an empty string is the honest answer and the row
+        shows only its name.
+          An UNRECOGNISED level shows as its own code rather than as
+        nothing: the odd value is the thing worth seeing, which is the same
+        rule `sound_ui._describe` follows."""
+        try:
+            parser=self.program.task.parser
+        except AttributeError as e:
+            # SAY "LOADING", NOT NOTHING. The task assigns `self.parser` in
+            # its own __init__ (lexicon.py:2196) — AFTER the window and this
+            # status frame have been built — so an empty row here is normal
+            # for a moment and a blank one reads as broken (Kent, 2026-09-16:
+            # 'maybe say "...loading"?'). `parserlevels` schedules a re-read,
+            # so this is what is on screen until that lands.
+            log.info("parser not ready for its levels yet ({})".format(e))
+            return _("…loading")
+        level=getattr(parser, which, None)
+        try:
+            return str(parser.levels()[level])
+        except (AttributeError, KeyError, TypeError) as e:
+            log.info("parse level %r has no name (%r); showing it as-is",
+                     level, e)
+            return '' if level is None else str(level)
+
+    def parserleveloptions(self):
+        """`getparserlevels()` answers in (code, name) TUPLES, highest first.
+
+        Not the `{'code','name'}` dicts the language lines use — the option
+        lists in this app come in both shapes (and in bare strings, and in
+        2/3/4-tuples; `ButtonFrame.regularize_choice` exists to cope), and
+        assuming the dict one here got "tuple indices must be integers"
+        logged and an empty list offered (Kent, 2026-09-16). The ORDER is
+        deliberate and preserved: `getparserlevels` sorts by code descending
+        so the strictest match is first."""
+        try:
+            levels=self.program.task.getparserlevels() or []
+        except AttributeError as e:
+            log.info("Error loading parser levels: {}".format(e))
+            return []
+        return [{'code':code,'name':str(name)} for code,name in levels]
+
     def parserlevels(self):
+        # STRICT LISTS, both: a parse level is one of the parser's own, and
+        # there is nothing sensible to type. Kent, 2026-09-15: "others are
+        # strict lists".
         self.newrow()
-        line=ui.Frame(self.proseframe,row=self.irow,column=0,
-                        columnspan=3,sticky='w')
-        self.labels['parserasklevel']={
-                        'text':self.program.settings.get_ui_var('parserasklevel_label', self.parserasklevellabel()),
-                        'columnplus':1,
-                        'cmd':self.program.task.getparserasklevel,
-                        'parent':line,
-                        'tt':_("change this confirmed parse level")}
-        self.proselabel(**self.labels['parserasklevel'])
+        self.prosefield('parserasklevel', _("Parse with confirmation at"),
+                        self.program.settings.get_ui_var(
+                            'parserasklevel_label',
+                            self.parserlevelvalue('ask')),
+                        self.parserleveloptions,
+                        self.program.settings.setparserasklevel,
+                        _("change this confirmed parse level"),
+                        value_fn=lambda: self.parserlevelvalue('ask'))
         self.newrow()
-        line=ui.Frame(self.proseframe,row=self.irow,column=0,
-                        columnspan=3,sticky='w')
-        self.labels['parserautolevel']={
-                        'text':self.program.settings.get_ui_var('parserautolevel_label', self.parserautolevellabel()),
-                        'columnplus':1,
-                        'cmd':self.program.task.getparserautolevel,
-                        'parent':line,
-                        'tt':_("change this auto parse level")}
-        self.proselabel(**self.labels['parserautolevel'])
+        self.prosefield('parserautolevel', _("Parse automatically at"),
+                        self.program.settings.get_ui_var(
+                            'parserautolevel_label',
+                            self.parserlevelvalue('auto')),
+                        self.parserleveloptions,
+                        self.program.settings.setparserautolevel,
+                        _("change this auto parse level"),
+                        value_fn=lambda: self.parserlevelvalue('auto'))
+        self._reread_parser_levels()
+
+    def _reread_parser_levels(self, tries=6):
+        """Fill the parse-level rows in once the parser exists.
+
+        THE ROWS ARE BUILT BEFORE THE PARSER IS. `self.parser` is assigned in
+        the task's own `__init__` (lexicon.py:2196), which runs after the
+        window and this frame — so the two rows can only say "…loading" when
+        first drawn, and nothing then told them to look again:
+        `updateparserasklevel` is called by the SETTER, i.e. only if the user
+        changes the level themselves.
+          Polling rather than a callback because the parser is created in
+        backend/core, which has no frontend imports by design and must not
+        acquire one to notify a label. Bounded: six looks, half a second
+        apart, then it stops and the rows keep whatever they have. Stops
+        early as soon as there is something real to show.
+        """
+        if tries <= 0:
+            return
+        self.updateparserasklevel()
+        self.updateparserautolevel()
+        if str(self.parserlevelvalue('ask')) not in ('', _("…loading")):
+            return
+        try:
+            self.after(500, lambda: self._reread_parser_levels(tries - 1))
+        except Exception as e:
+            log.info("couldn't schedule a parse-level re-read (%r)", e)
     def updatesensetodo(self):
         if 'sensetodo' not in self.labels:
             return
-        self.labels['sensetodo']['text'].set(self.sensetodolabel())
+        self.labels['sensetodo']['text'].set(self.sensetodovalue())
     def sensetodolabel(self):
         t=self.program.task
         if hasattr(t,'sensetodo') and t.sensetodo is not None:
             return _("Parsing {sense}").format(sense=t.sensetodo.formatted(t.analang,t.glosslangs))
         else:
             return _("Parsing all words")
+    def sensetodovalue(self):
+        t=self.program.task
+        if getattr(t,'sensetodo',None) is not None:
+            return str(t.sensetodo.formatted(t.analang,t.glosslangs))
+        return _("all words")
+
+    def sensetodooptions(self):
+        """Every sense, by its formatted name, plus "all words" to clear it.
+
+        NO LETTER BUCKETS. Picking a sense took TWO windows — one asking
+        "What letter does your sense start with?" over first-letter (or
+        first-two-letter) buckets, then a second listing the senses in that
+        bucket. The buckets were never the question the user had; they
+        existed because a flat list of every sense is too long to present as
+        a column of buttons, and 15 was the threshold at which one letter
+        stopped being enough to cut it down (`getsensetodo`).
+          A field you can type into does that job directly: the list narrows
+        as you type, which is what the letters were approximating, and the
+        answer is one action instead of three. Kent, 2026-09-15: "convert
+        from current two window form to search and selectable box".
+        """
+        t=self.program.task
+        senses=[{'code':s,
+                 'name':str(s.formatted(t.analang,t.glosslangs))}
+                for s in self.program.db.senses
+                if s.unformatted(t.analang,t.glosslangs)]
+        senses.sort(key=lambda o: o['name'])
+        # FIRST, so "go back to everything" is not at the end of 1700 rows.
+        return [{'code':None,'name':_("all words")}]+senses
+
     def sensetodo(self):
         self.newrow()
-        line=ui.Frame(self.proseframe,row=self.irow,column=0,
-                        columnspan=3,sticky='w')
-        self.labels['sensetodo']={
-                            'text':self.program.settings.get_ui_var('sensetodo_label', self.sensetodolabel()),
-                            'columnplus':1,
-                            'cmd':self.program.task.getsensetodo,
-                            'parent':line,
-                            'tt':_("change this sense to do")}
-        self.proselabel(**self.labels['sensetodo'])
+        # EDITABLE SO IT CAN BE SEARCHED, but `allow_new=False`: the codes
+        # here are sense objects, so a typed string that matches nothing is
+        # a search that found nothing rather than a new sense.
+        self.prosefield('sensetodo', _("Parsing"),
+                        self.program.settings.get_ui_var(
+                            'sensetodo_label', self.sensetodovalue()),
+                        self.sensetodooptions,
+                        self.program.task.setsensetodo,
+                        _("change this sense to do"),
+                        editable=True, allow_new=False,
+                        value_fn=self.sensetodovalue)
     def redofinalbuttons(self):
         if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
             self.bigbutton.destroy()
@@ -1104,27 +2008,30 @@ class StatusFrame(ui.Frame):
         #     pass
         except Exception as e:
             log.error(f"Problem: {e}")
-    def makesecondfieldsOK(self):
-        """Not called anywhere?"""
-        for ps in [self.program.settings.nominalps, self.program.settings.verbalps]:
-            if ps not in self.program.settings.secondformfield and (
-                isinstance(self.program.task,Parse) or (
-                    isinstance(self.program.task,WordCollection) and
-                    self.type not in ['lx','lc'])):
-                if ps == self.program.settings.nominalps:
-                    self.program.ui_settings.getsecondformfieldN()
-                else:
-                    self.program.ui_settings.getsecondformfieldV()
-                return #just do one at a time
+    # `makesecondfieldsOK` DELETED 2026-09-29. Its own docstring asked "Not
+    # called anywhere?" and the answer was no — see plan 7 of
+    # the second-form flags audit. It was also the last
+    # `isinstance(self.program.task, Parse)` dispatch in this file, which the
+    # flag-based approach replaced everywhere else.
     """Right side"""
     def maybeboard(self):
         if not self.winfo_exists(): #stale after()/post-wait call; this frame's
+            log.info("maybeboard: frame gone; no board built")
             return                  #window was destroyed (e.g. task switch)
         if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
             self.leaderboard.destroy()
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky='') #nesw
         #Given the line above, much of the below can go, but not all?
+        # ORDER RESTORED 2026-08-28. I had moved this check ABOVE the
+        # destroy+recreate, reasoning that a task wanting no board shouldn't
+        # silently discard the existing one. That was speculative — I never
+        # confirmed this branch was the one being taken — and it changed real
+        # control flow: on this path `self.leaderboard` was then never created
+        # at all, where before it always existed as an empty Frame. Reverted
+        # while a data regression is being chased; the logging stays, since
+        # that is what the branch was missing in the first place.
         if self.program.task.no_leaderboard:
+            log.info("maybeboard: task wants no leaderboard; empty board")
             return
         if self.program.task.icon_leaderboard or not self.program.taskchooser.doneenough['collectionlc']:
             self.makenoboard()
@@ -1162,6 +2069,15 @@ class StatusFrame(ui.Frame):
         titleframe=ui.Frame(self.leaderboard)
         titleframe.grid(row=0,column=0,sticky='n')
         cvtdict=self.program.params.cvtdict()
+        # NO ps IN THE SYLLABLE TITLE. "Progress for Noun" over a syllable
+        # board said the work was per-category, which it is not — a
+        # cvprofile is a fact about the form (2026-09-30, the
+        # syllable-sort-is-not-per-ps item). The segmental boards keep it:
+        # there the slice genuinely IS (profile × ps).
+        if self.program.params.cvt()=='S':
+            ui.Label(titleframe, text=_('Syllable profile progress'),
+                     font='title', row=0,column=1,sticky='nwe',padx=10)
+            return
         ui.Label(titleframe, text=_('Progress for'), font='title',
                 row=0,column=1,sticky='nwe',padx=10)
         if not self.mainrelief:
@@ -1172,6 +2088,39 @@ class StatusFrame(ui.Frame):
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
         lps.bind('<ButtonRelease-1>',self.program.ui_settings.getps)
+    def _reflow_board_soon(self,scroll,tries=10):
+        """Reflow a board's ScrollingFrame AFTER the window is actually mapped.
+
+        NEVER call reflow() inline from a board builder. maybeboard() runs from
+        maybeverifysyllables() inside a Tk callback, moments after
+        runwindowcleanup() called deiconify() on the task window — the map is
+        still QUEUED. reflow() drains synchronously (update_idletasks), and
+        XWayland deadlocks draining a backlog into a window that is not mapped
+        yet: the same hazard spelled out at ui_tkinter.py:1411-1415 for
+        waitdone(). Calling it inline wedged the app in
+        _configure_canvas→update_idletasks (Kent 2026-08-28).
+
+        So: schedule it, and before draining, CHECK the toplevel is viewable —
+        retrying briefly if not, giving up rather than blocking. A board that
+        stays unreflowed is invisible, which is bad; a wedged app is worse."""
+        def go(n=tries):
+            try:
+                if not scroll.winfo_exists():
+                    return
+                top=scroll.winfo_toplevel()
+                if not top.winfo_viewable():
+                    if n>0:
+                        self.after(50,lambda:go(n-1))
+                    else:
+                        log.info("board reflow skipped: window never mapped")
+                    return
+                scroll.reflow()
+            except Exception as e:
+                log.info("board reflow failed: %s", e)
+        try:
+            self.after_idle(go)
+        except Exception as e:
+            log.info("could not schedule board reflow: %s", e)
     def makenoboard(self):
         log.info("No Progress board")
         try:
@@ -1309,7 +2258,7 @@ class StatusFrame(ui.Frame):
         groups (#C #V | C# V# | 1 2 3 …) under check headers, ragged rows = the
         stable ≤MAX_SLICE slices within each group. Each cell shows the live word
         count, dressed verified (✓) / not (bordered); clicking verifies that slice
-        next. See docs/syllable_sort_redesign.md."""
+        next. See the syllable-sort redesign."""
         self._cells={}
         self._active_cell=None
         params=self.program.params
@@ -1380,6 +2329,8 @@ class StatusFrame(ui.Frame):
                     else sl._first_pending_slice()
         if active in self._cells:
             self.activate_cell(self._cells[active])
+        # Reflow, or none of the above is visible — see makeSyllableprogresstable.
+        self._reflow_board_soon(leaderscroll)
     def makeSyllableprogresstable(self):
         """2-D syllable progress board, shown only once the three primitive
         checks (#C/C#/syls) are VERIFIED. Rows = syllable count; columns grouped
@@ -1387,16 +2338,29 @@ class StatusFrame(ui.Frame):
         (consonant/vowel). Each cell is the Beg+count+End profile class,
         showing its word count, dressed verified (✓) / not (bordered) / active
         (highlighted); clicking sets the current slice. See
-        docs/sort_syllables_design.md."""
+        the sort-syllables design."""
         self._cells={}
         self._active_cell=None
         params=self.program.params
         status=self.program.status
         ps=self.program.slices.ps()
+        # THE SYLLABLE STATE CARRIES NO ps (2026-09-30). A cvprofile and its
+        # profile class are facts about the FORM, so their sorted/verified
+        # state is one wordlist-wide record, read here under
+        # `SYLLABLE_PREP_PS` — the key prep has always used. Reading it under
+        # the live ps showed a class as unfinished because the work had been
+        # recorded under a different category. See the
+        # syllable-sort-is-not-per-ps item.
+        #   `ps` above is still read, for `_syllable_primitives_verified`
+        # and the title; the CELLS no longer key on it.
+        prep_ps=params.SYLLABLE_PREP_PS
         ftype=params.ftype()
         sentinel=params.SYLLABLE_SLICE_SENTINEL
         if not self._syllable_primitives_verified(ps):
             # profile classes aren't defined until the 3 primitives are verified
+            log.info("Task-2 board: primitives not verified for ps=%s → blank "
+                     "board (makenoboard renders an EMPTY spacer, so this is "
+                     "the full-screen blank page the user sees)", ps)
             self.makenoboard()
             return
         # Bucket the ps words by profile class (Beg+count+End). Two indicators, same
@@ -1421,6 +2385,17 @@ class StatusFrame(ui.Frame):
             beg,syls,end=params.parse_profile_class(pc)
             begends.add((beg,end)); sylset.add(syls)
         if not counts:
+            # No word has a profile class, so there is nothing to draw. Say WHY:
+            # profile_class_of_sense returns None until all three primitives are
+            # set, so this is either an empty sentinel slice or words missing a
+            # primitive — two very different problems that look identical on
+            # screen (a blank full-screen page, since makenoboard draws an empty
+            # spacer). Kent 2026-08-28.
+            log.info("Task-2 board: no profile classes → blank board. "
+                     "ps=%s sentinel-slice words=%d (a word counts only once "
+                     "#C, C# AND syls are all set)", ps,
+                     len(list(self.program.slices.senses(ps=ps,
+                                                        profile=sentinel))))
             self.makenoboard()
             return
         self.boardtitle()
@@ -1468,7 +2443,9 @@ class StatusFrame(ui.Frame):
                 #   • per-profile '+' = that profile group is VERIFIED, read from the
                 #     node's membership-keyed 'done'; its absence = to-verify.
                 try:
-                    done=set(status.node(cvt='S',ps=ps,profile=pc,
+                    # ps-free: see `_has_work` below and the
+                    # syllable-sort-is-not-per-ps item.
+                    done=set(status.node(cvt='S',ps=prep_ps,profile=pc,
                                         check=ftype).get('done',[]))
                 except Exception:
                     done=set()
@@ -1520,7 +2497,12 @@ class StatusFrame(ui.Frame):
             if pc_unsorted.get(pc,0):
                 return True  # unsorted words
             try:
-                n=status.node(cvt='S',ps=ps,profile=pc,check=ftype)
+                # `SYLLABLE_PREP_PS`, not the live ps. A cvprofile is a fact
+                # about the FORM, so its sorted/verified state carries no
+                # category — reading it under one ps showed a class as
+                # unfinished because the work had been recorded under
+                # another (2026-09-30, the syllable-sort-is-not-per-ps item).
+                n=status.node(cvt='S',ps=prep_ps,profile=pc,check=ftype)
                 g=set(n.get('groups',[])); d=set(n.get('done',[]))
                 return bool(g) and not (g<=d)  # unverified groups
             except Exception:
@@ -1541,6 +2523,19 @@ class StatusFrame(ui.Frame):
             if getattr(self.program.slices,'_S_profile_class',None)!=active:
                 self.program.slices.profile(active)
             self.activate_cell(self._cells[active])
+        # REFLOW, or the whole board is invisible. leaderscroll is a
+        # ScrollingFrame, which carries grid_propagate(0): its canvas is not
+        # sized to the content until reflow, so every cell above is built,
+        # gridded, and unseen. That is the stage 1 → 2 "freeze" — the task
+        # window comes back mapped/viewable/state=normal with nothing on it and
+        # nothing scheduled, which reads exactly like a hang (Kent 2026-08-28).
+        # The glyph board already does this (updateglyphbuttons); this one never
+        # did. SCHEDULED, never inline — I first wrote this as a direct
+        # reflow() on the reasoning that runwindowcleanup had already
+        # deiconified the task window, and that is wrong: the deiconify is only
+        # QUEUED at this point, so the drain deadlocked. See
+        # _reflow_board_soon.
+        self._reflow_board_soon(leaderscroll)
     def update_S_profile_class(self,pc):
         """Click a profile-class cell → make that Beg+count+End the current 'S'
         slice (so its profile sort can be worked) and move the highlight."""
@@ -1649,9 +2644,21 @@ class StatusFrame(ui.Frame):
                     if node == {} or not hasboarddata(node):
                         continue
                     #Make row header
+                    # THE COUNT IS NOT A DETAIL. It was gated on
+                    # `showdetails`, so the row said `CVCV` in one mode and
+                    # `CVCV (51)` in the other — Kent, 2026-09-17: "I can't
+                    # recall if this was intentional, but I don't like it.
+                    # this should always appear." How many words a profile
+                    # has is the first thing you need to read the row at
+                    # all; `showdetails` is for swapping counts for group
+                    # NAMES inside the cells, which is a different question.
                     t=profile
-                    if self.program.settings.showdetails:
+                    try:
                         t+=(f" ({len(self.program.profiles.profilesbysense[ps][profile])})")
+                    except (KeyError,TypeError) as e:
+                        # A profile with no sense list yet: show the bare
+                        # name rather than losing the row.
+                        log.info("no word count for profile %s: %s",profile,e)
                     h=ui.Label(self.leaderboardtable,text=t,
                                 row=row,
                                 column=column,
@@ -1793,6 +2800,10 @@ class StatusFrame(ui.Frame):
         if ungroups > 0:
             log.error(_("You have more groups verified than there are, in {count} "
                         "cells").format(count=ungroups))
+        # Reflow, or none of the above is visible — see makeSyllableprogresstable.
+        # (The commented-out self.frame.update() below was an earlier, blunter
+        # attempt at the same thing.)
+        self._reflow_board_soon(leaderscroll)
         # self.frame.update()
     def __init__(self, parent, program, **kwargs):
         # log.info("Remaking status frame")
@@ -1822,7 +2833,24 @@ class StatusFrame(ui.Frame):
         if not self.program.task or self.is_descendant_of(self.program.taskchooser):
             return
         self.glosslangline()
-        if getattr(self.program.task,'show_second_fields'):
+        # TWO REASONS TO DRAW THIS LINE, and they are different reasons
+        # (plan 1 of the second-form flags audit, 2026-09-29):
+        #   `whole_word_checks` — the task lets the user choose WHICH form to
+        #       work on, and the field is what makes a pl/imp choice exist.
+        #       Word collection and the syllable sort. `<unset>` is fine.
+        #   `uses_second_forms` — the task FAILS without the field. Parse.
+        # It used to be one flag on `Segments`, so every segmental task drew
+        # a line for a setting it never read: eleven task families showing
+        # it, two needing it.
+        # THE WORD CHECK COMES FIRST, and the field line explains it: "you
+        # can also work on ‘Plural’ forms, and that field is where they
+        # live." Only `whole_word_checks` draws it — Parse pins `lc` on
+        # purpose (lexicon.py, `Parse.__init__`), so offering it a choice
+        # would be offering one that cannot be taken.
+        if getattr(self.program.task,'whole_word_checks',False):
+            self.wordcheckline()
+        if (getattr(self.program.task,'whole_word_checks',False)
+                or getattr(self.program.task,'uses_second_forms',False)):
             self.fieldsline()
         if (hasattr(self.program, 'slices') and
                 not getattr(self.program.task,'do_not_show_slices')):
@@ -1862,6 +2890,15 @@ class StatusFrame(ui.Frame):
         self.updateanalang()
         self.updateglosslangs()
         self.updatefields()
+        # AFTER `updatefields`, and that order is the point: NAMING A SECOND
+        # FORM FIELD MAKES ITS WORD CHECK EXIST, and Kent, 2026-09-29, wants
+        # the user to "define a second form field, then immediately select
+        # the check for it". The chooser's OPTIONS need no help — a callable
+        # `options` is re-read on every open (`composites.choice_field`,
+        # `rebuild=True`) — but a RENAME also changes the name of the check
+        # already selected, and the label would otherwise go on advertising
+        # a field nobody has.
+        self.updatewordcheck()
         self.updateprofile()
         self.updateps()
         self.updatecvt()
@@ -1935,12 +2972,12 @@ class TaskDressing(HasMenus,ui.Window):
         for child in frame.winfo_children():
             child.destroy()
         tasktuples=self._makeoptions_fn(category)
-        bpr=3
+        # buttons per row. optionlist_maxi is the last INDEX, not the count, so
+        # `== 3` means FOUR items → a 2×2 grid rather than 3+1. The old
+        # `elif optionlist_maxi > 9: bpr=3` was dead — bpr is already 3 — so it
+        # is gone; it read as though 11+ items were a special case.
         optionlist_maxi=len(tasktuples)-1
-        if optionlist_maxi == 3:
-            bpr=2
-        elif optionlist_maxi > 9:
-            bpr=3
+        bpr=2 if optionlist_maxi == 3 else 3
         columnspan=1
         for n,o in enumerate(tasktuples):
             if n == optionlist_maxi and int(n/bpr):
@@ -1954,9 +2991,27 @@ class TaskDressing(HasMenus,ui.Window):
             # 2782, 3616). Also dropped *theme.scale: winfo_* are already pixels,
             # and scaling a pixel width by the FONT scale wrapped later than the
             # column is wide on a scaled display.
-            avail=self.program.tk_root.winfo_width()
-            if avail < 100: #unmapped (1) or absurd → the screen is a safe proxy
-                avail=self.program.tk_root.winfo_screenwidth()
+            # THE WIDTH OF THIS WINDOW, NOT OF THE HIDDEN ROOT. Kent's
+            # screenshot 2026-09-02 settled this: labels broke MID-WORD —
+            # "Ajou/ter", "Enre/gistr/er", "sylla/bes" — so the wraplength was
+            # narrower than one word, ~4-5 characters, ~50px. Working back
+            # through int(avail*.8/bpr) puts avail at about 200, and 200 is
+            # TK'S DEFAULT ROOT GEOMETRY: every real window in this app is a
+            # Toplevel, so tk_root has no children, never grows past 200x200,
+            # and reports 200 forever. The old `avail < 100` guard catches only
+            # the UNMAPPED root (which reports 1) and sails straight past that.
+            #   `self` is the chooser window itself, which is the thing these
+            # buttons are actually laid out in — so ask it. The threshold is
+            # well above Tk's default: no real chooser window is 400px wide, so
+            # anything smaller is a default or a stale/withdrawn read, not a
+            # measurement (this method runs from gettask, which withdraws the
+            # window before rebuilding).
+            avail=self.winfo_width()
+            if avail < 400:
+                try:
+                    avail=self.workarea()[0]
+                except Exception:
+                    avail=self.winfo_screenwidth()
             screen_wrap=avail*.8
             # sticky='nesw' (kept, per Kent 2026-07-28: content-sized buttons
             # looked ugly). The columns below are weight=1 + uniform, so this
@@ -1970,18 +3025,58 @@ class TaskDressing(HasMenus,ui.Window):
                         row=int(n/bpr),
                         compound='top',
                         image=o[2],
-                        wraplength=int(screen_wrap/bpr),
+                        # × columnspan: the LAST button spans the rest of its
+                        # row (see above), so a 1-cell wraplength on a 3-cell
+                        # button wrapped its text at a third of its own width
+                        # and left the remainder empty — text in a narrow strip
+                        # with a large gap to the cell edge (Kent 2026-09-02).
+                        # columnspan is 1 for every other button, so this is the
+                        # same number as before everywhere else.
+                        wraplength=int(screen_wrap*columnspan/bpr),
                         anchor='n',
                         sticky='nesw',
                         norender=True,
                         columnspan=columnspan
                         )
+            # DIAG chooser_button_xpad: labels wrapping after 3-4 letters with
+            # massive space to the cell edge (Kent 2026-09-02, "it isn't cell
+            # width driving the wrap, except through padx"). Reading the code
+            # gives two candidate mechanisms and cannot separate them: the
+            # wraplength we ASK for here (avail*.8/bpr) versus what Label.wrap()
+            # may reduce it to (min(wraplength,maxwidth), and availablexy floors
+            # maxwidth at MIN_AVAILABLE=200 after _measure_siblings counts the
+            # OTHER COLUMNS' buttons as consumers of this button's width). So
+            # print the numbers for the first button of each tab, once, the way
+            # DIAG-rowheight settled the button height rather than arguing about
+            # it. `avail` is named too: the winfo_width()-or-screen choice above
+            # is the other place a small number can come from.
+            if not n:
+                try:
+                    log.info("DIAG-chooser-xpad %s: asked wraplength=%s | live=%s"
+                            " | avail=%s (root w=%s) | bpr=%s | maxwidth=%s"
+                            " | padx=%s ipadx=%s | font=%s size=%s | req w=%s",
+                            category,int(screen_wrap/bpr),b.cget('wraplength'),
+                            int(avail),self.program.tk_root.winfo_width(),bpr,
+                            getattr(b,'maxwidth','(unset — wrap() never ran)'),
+                            b.cget('padx'),getattr(b,'ipadx','?'),
+                            b.cget('font'),self.theme.fonts['default']['size'],
+                            b.winfo_reqwidth())
+                except Exception as e:
+                    log.info("DIAG-chooser-xpad failed: %s",e)
             try:
                 ui.ToolTip(b, o[0].tooltip(None))
             except AttributeError:
                 log.info(_("Task {task} doesn\u2019t seem to have a tooltip.").format(task=o[0]))
         for c in range(bpr):
             frame.grid_columnconfigure(c, weight=1, uniform=category+str(c))
+        # THE REAL WIDTH, WHEN IT EXISTS. Everything above only sets a starting
+        # wraplength from a predicted width; this keeps it matched to the tab
+        # frame the buttons are actually in, on every resize. It also handles the
+        # last button's columnspan (read from its own grid_info) and its
+        # compound='top' image (no text-width cost, so not subtracted). See
+        # ui.wrap_to_container for why predicting was hopeless here.
+        ui.wrap_to_container(frame,cols=bpr,
+                            reserve=int(16*getattr(self.theme,'scale',1) or 16))
     def _select_chooser_tab(self,tab_name):
         tab_map={
             'datacollection':self.tab_datacollection,
@@ -2186,6 +3281,29 @@ class TaskDressing(HasMenus,ui.Window):
             self.deiconify()
         self.program.settings.storesettingsfile()
         log.info(_("{type} StatusFrame created").format(type=type(self)))
+    def assure_second_forms(self, then=None):
+        """Forward to the settings pane, which owns the field widgets.
+
+        THE WINDOW IS WHAT BACKEND CODE CAN REACH. `self.ui` is this window
+        (`task.ui`), and the method that opens the field lives on the
+        StatusFrame, because that is what holds `self.labels` — so
+        `self.ui.assure_second_forms` was an AttributeError at the one call
+        site that needed it (Kent, 2026-09-17, from `runcheck`).
+
+        No pane, or a pane that has been replaced, means there is no field to
+        open: say so and let the caller proceed rather than blocking work on
+        a widget that does not exist."""
+        status=getattr(self,'status',None)
+        fn=getattr(status,'assure_second_forms',None)
+        try:
+            alive=bool(fn) and status.winfo_exists()
+        except Exception:
+            alive=False
+        if not alive:
+            log.info("no settings pane to open a second form field on; "
+                     "continuing without it")
+            return True
+        return fn(then=then)
     def getparserlevels(self,event=None):
         try:
             levels=self.parser.levels()
@@ -2217,14 +3335,49 @@ class TaskDressing(HasMenus,ui.Window):
                               'the parser to do automatically?'),
                        optionlist=levels,
                        command=self.program.settings.setparserautolevel)
-    def setsensetodo(self,choice,window):
-        self.sense=self.sensetodo=choice
-        self.program.mainwindow.status.updatesensetodo()
-        window.destroy()
+    def setsensetodo(self,choice,window=None):  # None: set in place, no dialog
+        # SET THESE ON THE TASK, NOT ON THE WINDOW. Both readers look at the
+        # task — `getword` tests `getattr(self,'sensetodo',None)`
+        # (lexicon.py:1352) and `sensetodolabel` tests
+        # `self.program.task.sensetodo` (:1083) — and the task OWNS the
+        # attribute rather than borrowing it: `initsensetodo`
+        # (lexicon.py:1921-1932) treats it as a one-shot token and does
+        # `self.sensetodo=None` on the task while the to-do list is being
+        # built, i.e. before the user picks anything.
+        #   From that moment the task has its own `None`, so ordinary
+        # attribute lookup finds it and the TaskWindow.__getattr__ bridge to
+        # this window is never consulted. Writing `self.sensetodo` here was
+        # therefore invisible to everything that reads it: `getword` fell
+        # through to its silent `elif not self.entries:` branch, killed the
+        # word frame and returned — the task page came back with no word on it
+        # (Kent, 2026-09-09: "the sense was selected as expected, but result
+        # is same Task window, without the sense visible") — and the status
+        # label kept saying "Parsing all words".
+        #   The bridge only covers attributes the task does NOT define. An
+        # attribute either side assigns is not shared state, and this one is
+        # assigned on both.
         task = getattr(self, 'task', self)
+        task.sense=task.sensetodo=choice
+        self.program.mainwindow.status.updatesensetodo()
+        if window:
+            window.destroy()
         if isinstance(task, WordCollection):
-            self.withdraw()
-            task.getword()
+            # WITHDRAW AND REBUILD INSIDE A WAIT, never by hand. A bare
+            # `self.withdraw()` here hid this window and nothing revealed it
+            # again: getword() → dowordframe() builds the word frame INTO this
+            # window, so the page ended up fully built and permanently
+            # invisible — `content=True state=withdrawn`, reported 25s later as
+            # NO WINDOW (Kent, Add and Parse Words with Audio → pick a word →
+            # pick a sense letter → nothing; traced 2026-09-09 by the withdraw
+            # logging in Toplevel.withdraw, which named this line).
+            #   `waiting(thenshow=True)` is the codebase's existing answer and
+            # is used correctly at several sites: entering withdraws and covers
+            # the screen with the wait dialog, leaving deiconifies. So the
+            # window is never mapped-and-empty AND never left hidden — the two
+            # failures this area keeps alternating between. See
+            # the fullscreen-with-only-Quit item, whose rule this follows.
+            with self.waiting(_("Getting that word ready..."),thenshow=True):
+                task.getword()
     def getsensetodobyletter(self,choice,window,event=None):
         window.on_quit()
         msg=_("Preparing to ask for a sense...")
@@ -2532,6 +3685,26 @@ class TaskDressing(HasMenus,ui.Window):
             w=ui.Window(self,title=title_mod(_('Select Framed Tone Group')))
             self._getgroup(window=w,**kwargs) #guess=guess,
             # windowT.wait_window(window=windowT) #?!?
+        elif cvt == 'S':
+            # The syllable-prep primitives ('#C', 'C#', 'syls') and the profile
+            # checks. These fell through with `w` unbound, so "Sort Word profiles"
+            # died on an UnboundLocalError at the return below (Kent 2026-08-21).
+            # This is select-an-existing-group, so _getgroup is the right picker —
+            # NOT sort_buttons.pick_syllable_profile, which generates NEW profiles
+            # for one word and needs a profile class already set.
+            params=self.program.params
+            name=params.syllable_check_name(kwargs.get('check',params.check()))
+            w=ui.Window(self,title=title_mod(
+                        _('Which {type}?').format(type=name) if name
+                        else _('Select Group')))
+            self._getgroup(w,**kwargs)
+        else:
+            # Genuinely unknown cvt. Open something rather than crash, and say so
+            # loudly — a caller landing here probably wants a different picker.
+            log.warning("getgroup: no branch for cvt=%r; opening a generic "
+                    "group picker. Check whether this caller wants another.",cvt)
+            w=ui.Window(self,title=title_mod(_('Select Group')))
+            self._getgroup(w,**kwargs)
         return w #so others can wait for this
     def getgroupwsorted(self,event=None,**kwargs):
         kwargs['wsorted']=True
@@ -2567,29 +3740,271 @@ class TaskDressing(HasMenus,ui.Window):
             title=(_("Run Window"))
         if self.exitFlag.istrue():
             return
+        # SAY WHO ASKED, AND WHAT IT COSTS. This is the app's most expensive
+        # routine idiom — it DESTROYS any existing run window and builds a
+        # new one, fullscreen, with a page to follow — and it logged nothing
+        # at all. Kent's run (2026-09-16) created run windows 236 and 240
+        # back to back: `Window.__init__` makes three children, so 236+3=239
+        # and 240 is the very next widget, i.e. a whole window built,
+        # fullscreened and thrown away with nothing built into it. The log
+        # could not say which two callers those were, because the only line
+        # naming a caller was inside `takekioskscreen` and named
+        # `getrunwindow` itself.
+        #   Two frames up, not one: one frame up is this method's caller and
+        # that is the thing being identified; the frame above it says which
+        # flow it belongs to, which is what distinguishes "two steps of one
+        # page load" from "the same step twice".
+        try:
+            import traceback as _tb
+            stack = _tb.extract_stack()[:-1][-2:]
+            who = ' <- '.join('{}:{} in {}()'.format(
+                                f.filename.rsplit('/', 1)[-1], f.lineno,
+                                f.name) for f in reversed(stack))
+        except Exception:
+            who = 'caller unknown'
+        # ANNOUNCED AFTER THE DECISION, not before it. This said
+        # "DESTROYING the run window that already exists" whenever one
+        # existed — which is now printed on the reuse path too, where
+        # nothing is destroyed at all (Kent's log, 2026-09-16). A diagnostic
+        # that reports an intention rather than an outcome is how the
+        # `--window-size` run became unreadable earlier the same day.
+        log.info("getrunwindow(title={!r}, msg={}) asked by {}"
+                 "".format(title, 'yes' if msg else 'no', who))
+        # REUSE THE WINDOW WE ALREADY HAVE. This destroyed it and built
+        # another, every time, and the cost was a whole fullscreen window per
+        # page load with nothing ever put in it: Kent's run, 2026-09-16,
+        # created run window 233 for `_get_safe_window` (so `runcheck` had
+        # somewhere to drive work), and then `sort()` asked again four widget
+        # ids later, destroying 233 unused and building 237. Kent: "yeah,
+        # let's not do that."
+        #
+        # THE RULE ALREADY EXISTED for the slice loop, one class up —
+        # `sorting_engine.py:225`: "Reuse the SAME window for the next slice
+        # (no on_quit/recreate churn)" — and :80 says never destroy and
+        # recreate the kiosk window per slice. This is that rule applied
+        # where the churn actually comes from, instead of at one call site.
+        #
+        # A REUSED WINDOW IS RE-EMPTIED AND RE-HIDDEN, so what this returns
+        # is what it always returned: a hidden window with an empty frame,
+        # whose title is the one asked for. Skipping that would show the
+        # PREVIOUS page while the next one builds, or — after
+        # `resetframe()` — an empty fullscreen page whose only control is
+        # Exit, which is the fullscreen-with-only-quit (NBQ) item.
+        #
+        # NOT REUSED IF IT HAS QUIT. `exitFlag` is how every flow downstream
+        # asks "did the user leave?", so handing back a window carrying a
+        # true flag would read as the user quitting the new page before it
+        # existed.
+        existing = getattr(self, 'runwindow', None)
+        reusable = False
+        if existing is not None:
+            try:
+                reusable = (existing.winfo_exists()
+                            and not existing.exitFlag.istrue())
+            except Exception as e:
+                log.info("run window reuse check failed ({!r}); "
+                         "rebuilding".format(e))
+                reusable = False
+        if reusable:
+            log.info("reusing run window {} (no destroy/recreate)"
+                     "".format(getattr(existing, '_wid', '?')))
+            try:
+                existing.withdraw()
+                existing.resetframe()
+                existing.title(title)
+                existing.cleanup = self.runwindowcleanup
+                self._cover_run_window(existing, msg)
+                self.withdraw()  # the task, as below
+                self.guardvisible()
+                return existing
+            except Exception as e:
+                # A reuse that half-worked is worse than a rebuild: fall
+                # through and make a clean one rather than hand back a
+                # window in an unknown state.
+                log.info("run window reuse failed part-way ({!r}); "
+                         "rebuilding".format(e))
+        if existing is not None:
+            log.info("run window {} DESTROYED and rebuilt (it could not be "
+                     "reused)".format(getattr(existing, '_wid', '?')))
         self.clear_runwindow()
-        self.runwindow=ui.Window(self,title=title,withdrawn=True)
+        # kiosk AT CREATION. Under webview this becomes
+        # `create_window(fullscreen=True)`, so the window is never seen at
+        # another size; the `takekioskscreen()` below then finds the state
+        # already correct and sends nothing. Kent's 20fps filmstrip of one
+        # page load (2026-09-16) is what this is for: the window appeared
+        # decorated at 800x600, resized four times, and only then went
+        # fullscreen — because the toggle is DEFERRED until the page loads
+        # (his log: `replaying deferred [..., 'toggle_fullscreen']`).
+        #   The call below STAYS: it is the fallback for a pywebview without
+        # `fullscreen=`, it is what binds Escape as the way out, and under
+        # tkinter it is a no-op repeat of an attribute already set.
+        self.runwindow=ui.Window(self,title=title,withdrawn=True,kiosk=True)
         self.runwindow.title(title)
+        # MODAL ON ITS TASK, which is the third link of the stack: the
+        # chooser is behind the task, the task is behind its run window, and
+        # closing each returns to the one below. Saying so is the only
+        # placement statement a Wayland client may make, and it is what
+        # `_reveal_parent_on_quit` reads to decide what comes back.
+        # Best-effort by nature — see `declare_dialog_of`; a stack that
+        # cannot be told is exactly as it was.
+        try:
+            self.runwindow.declare_dialog_of(self)
+        except Exception as e:
+            log.info("run window could not be declared modal on its task "
+                     "({!r})".format(e))
         self.runwindow.takekioskscreen()
         self.runwindow.cleanup=self.runwindowcleanup
-        if msg and any(i.mature for i in self.program.data_repo.values()):
-            log.info("Found mature repo; showing runwindow wait")
-        #withdraw one way or another, but just waitdone to return
-            self.runwindow.wait(msg=msg,thenshow=True)
+        self._cover_run_window(self.runwindow, msg)
         self.withdraw() #this is the parent of the runwindow, the task
+        self.guardvisible()
         return self.runwindow
+
+    def _runwindow_default_msg(self):
+        """What a run window says while it builds, absent a caller's own.
+
+        A METHOD, NOT A CLASS ATTRIBUTE. `_()` in a class body runs at
+        IMPORT time, before `set_translator()` has installed the live
+        translator (`utilities/i18n.py`), so the string would be frozen in
+        English for the session no matter what interface language was
+        chosen. Same trap as the f-string-before-translation finding in the
+        recorder's 2026-05-04 audit, and easy to write by accident — I just
+        did."""
+        return _("Getting the next page ready…")
+
+    def _cover_run_window(self, window, msg=None):
+        """Put a wait on the run window BEFORE the task window is hidden.
+
+        THE TWO BLANK INTERVALS WERE THIS. `getrunwindow` withdrew the task
+        window while the run window was still hidden, so nothing was on
+        screen until something later deiconified — and on Kent's 20fps
+        contact sheet (2026-09-16) that is tiles 9-10 and 17-18, the second
+        of them lasting 3.6 seconds. He counted six distinct states before
+        the sort page appeared, two of them nothing at all: "much more than
+        the presence of the bar, I'm concerned with the flashing of
+        screens."
+          The old code raised a wait here only when a `msg` was given AND
+        the repo was mature, which is why the guard below exists at all —
+        see `guardvisible`'s own docstring on the field bug where nothing
+        revealed anything. Covering unconditionally makes that path
+        impossible rather than guarded: there is always something on screen,
+        and it always says what is happening.
+
+        A MESSAGE EVEN WITHOUT ONE FROM THE CALLER. Most callers pass no
+        `msg` because under tkinter a wait meant hiding the page, so asking
+        for one was asking for a flicker. Here the wait IS the page until the
+        content arrives, so silence is the worse default.
+
+        Never raises: this is on the way to returning a window, and a failed
+        cover must not cost the caller its window."""
+        # `_runwindow_default_msg()`, the METHOD. This line still named the
+        # class attribute it replaced, so the cover raised AttributeError on
+        # every run window of every task, was caught below, and the run
+        # window was never revealed by the cover's `thenshow` — the log said
+        # "it will be blank until something reveals it" and, under webview,
+        # nothing else does. When the caller then died as well (Kent's Sort
+        # Tone NWAA, 2026-09-22, `soundsettings` not yet probed), the task
+        # window had already been withdrawn at :3506 and there was no window
+        # at all. Except-and-log hid a bug on every page for six days.
+        try:
+            window.wait(msg=msg or self._runwindow_default_msg(), thenshow=True)
+        except Exception as e:
+            log.error("could not cover the run window while it builds ({!r}); "
+                      "it will be blank until something reveals it".format(e))
+
+    RUNWINDOW_GUARD_MS=15000
+    def guardvisible(self,delay=None):
+        """Safety net: getrunwindow returns with BOTH windows hidden unless a
+        wait was started, and that needs a msg AND a mature repo — so a caller
+        that passes no msg, or any caller at all on a new repo, leaves nothing
+        on screen and something later must deiconify. The 2026-07-29 field bug
+        was exactly a path where nothing did: console only, and closing it lost
+        the app. Rather than audit ~15 call sites and hope, make the mechanism
+        incapable of it — if nothing is viewable when this fires, reveal the run
+        window (empty is better than absent) and log it loudly, since a user with
+        no window cannot file a useful report.
+
+        This is the SCOPED guard, and it is now the junior partner: since 1.14.3
+        `frontend.visibility.VisibilityWatchdog` polls for the same condition
+        globally, for the life of the app, regardless of who withdrew what. Keep
+        this one anyway — it knows WHICH run window belongs to the call in
+        flight, so it can reveal the right page at 15s where the global one can
+        only offer a generic target at 25s. Do not let the global poll drop below
+        RUNWINDOW_GUARD_MS; a test guards that ordering."""
+        if delay is None:
+            delay=self.RUNWINDOW_GUARD_MS
+        # The predicates live in frontend/visibility.py, shared with the GLOBAL
+        # watchdog. One rule for "what counts as viewable", in one place: the
+        # guard_ambient discovery (2026-08-27) had to be made once and must not
+        # be re-derived differently by the two guards. This one passes its own
+        # windows as extras, since it knows which call is in flight.
+        anythingviewable=lambda: visibility.anything_viewable(
+                                    self,getattr(self,'runwindow',None))
+        haschildren=visibility.has_content
+        def check():
+            try:
+                if self.exitFlag.istrue():
+                    return
+                if anythingviewable():
+                    return
+                # NEVER reveal an EMPTY window. Revealing the bare run window
+                # showed a fullscreen block of theme colour whose only content was
+                # its own exit button — which reads as "quit the app?" at exactly
+                # the wrong moment (Kent 2026-08-24, on "Sort!"). A window with no
+                # children isn't a window the user can do anything with, so a
+                # build still in progress must not be interrupted by one.
+                w=next((x for x in (getattr(self,'runwindow',None),self)
+                            if haschildren(x)),None)
+                if w is None:
+                    log.warning("NO WINDOW: nothing viewable %sms after "
+                            "getrunwindow, and nothing built to reveal. Some "
+                            "caller left every window withdrawn.",delay)
+                    return
+                log.warning("NO WINDOW: nothing viewable %sms after getrunwindow; "
+                        "revealing %s. Some caller left every window withdrawn.",
+                        delay,w)
+                w.deiconify()
+            except Exception:
+                log.exception("visibility guard failed")
+        try:
+            # Schedule on the ROOT, not on this window. 15s is a long time for a
+            # task window to survive, and tkinter's after() wrapper deletes its
+            # own command AFTER running the callback — on a widget destroyed
+            # meanwhile that is an AttributeError it doesn't catch, surfacing as
+            # a crash inside tkinter (Kent 2026-08-25). The root outlives every
+            # page; `check` already tolerates its window being gone.
+            host=None
+            try:
+                host=ui.default_root()
+            except Exception:
+                host=None
+            (host or self).after(delay,check)
+        except Exception:
+            log.exception("could not schedule visibility guard")
     def isrunwindow(self):
         log.info(f"{hasattr(self,'runwindow')=}")
         widgets=[self]
         if hasattr(self,'runwindow'):
             widgets+=[self.runwindow]
         for w in widgets:
-            log.info(f"{w} {w.winfo_exists()=}")
-            log.info(f"{w} {w.winfo_ismapped()=}")
-            log.info(f"{w} {w.winfo_viewable()=}")
-            log.info(f"{w} {w.iswaiting()=}")
-            log.info(f"{w} {w.state()=}")
-            log.info(f"{w} {w.winfo_toplevel() == w=}")
+            # STOP AT A DEAD WIDGET. Every probe below raises TclError 'bad
+            # window path name' on a destroyed window, so the old code turned a
+            # diagnostic into an exception exactly when the thing it was called
+            # to explain had happened (Kent 2026-08-27: the run window was gone,
+            # and isrunwindow crashed instead of reporting the task window's
+            # state). A diagnostic that dies on the interesting case is worse
+            # than none.
+            try:
+                alive=w.winfo_exists()
+                log.info(f"{w} {alive=}")
+                if not alive:
+                    continue
+                log.info(f"{w} {w.winfo_ismapped()=}")
+                log.info(f"{w} {w.winfo_viewable()=}")
+                log.info(f"{w} {w.iswaiting()=}")
+                log.info(f"{w} {w.state()=}")
+                log.info(f"{w} {w.winfo_toplevel() == w=}")
+            except Exception as e:
+                log.info(f"{w} probe failed: {e}")
     def clear_runwindow(self):
         if hasattr(self,'runwindow'):
             self.runwindow.destroy()
@@ -2700,7 +4115,33 @@ class TaskDressing(HasMenus,ui.Window):
         if not getattr(self,'is_chooser',False):
             self._taskchooserbutton()
         self._removemenus() #self.correlatemenus()
-        self.takekioskscreen()
+        # KIOSK IS FOR RUN WINDOWS, AND ONLY FOR RUN WINDOWS. This window is
+        # the task's MAIN window — its title, its status lines, its start
+        # button — and the work happens in the run window that
+        # `getrunwindow()` creates, which kiosks itself (ui_shell.py:2773).
+        # So nothing here takes the screen.
+        #
+        # THE DISTINCTION HAD BEEN LOST. This called `takekioskscreen()` for
+        # every task window, with one exception carved out for the chooser on
+        # 2026-09-10 — so "Add and Parse Words with Audio" came up owning a
+        # 1920x1200 display to show a title, five status lines, one card and
+        # two buttons, all in the top-left corner (Kent, 2026-09-15: "that
+        # screen (the task mainwindow) should not be kiosk. did we loose the
+        # distinction of runwindows (only) as kiosks?" — we had). Carving out
+        # the chooser treated the symptom: the rule is about WHICH KIND OF
+        # WINDOW, not about which task.
+        #
+        # Kiosk's reason is still good where it applies: a work page fills
+        # the screen so nothing distracts from the work. A task's front page
+        # is where you look around and decide, exactly like the chooser, and
+        # a fullscreen page with no window dressing reads as the app having
+        # taken over the machine.
+        #
+        # Nothing replaces it: both backends size a window to its content
+        # (tkinter natively, webview via `fit_to_content`), which is what a
+        # front page wants.
+        log.info("task window: natural size, not kiosk (kiosk is for run "
+                 "windows)")
         self.thread_names=list()
         #This withdrawn flag is only for the TaskChooser on startup
         if not self.exitFlag.istrue() and not kwargs.get('withdrawn'):
@@ -2810,6 +4251,18 @@ class ImageFrame(ui.Frame):
         else:
             self.citationframe()
 class Splash(ui.Window):
+    # BOOT ONLY: visible, but not a surface the user can work in. It still
+    # counts for the visibility guards — a splash on screen means "something is
+    # happening", which is exactly the evidence they should accept — but it must
+    # NOT count as "the app came up", because the whole of _run_setup
+    # (FileParser, repocheck, Settings, the analyzers) runs after it, and that
+    # is the failure window the restart marker exists to describe. So the
+    # marker's clear waits for the chooser or a task window. Kent, 2026-09-01:
+    # "So it should clear as soon as we see the 'loading' splash screen?" No.
+    # Any other window that is visible during boot but not yet usable should
+    # carry this flag too. Distinct from guard_ambient, which means "viewable
+    # but never a work surface, at any point in the session".
+    boot_only = True
     def maketexts(self):
         if self.exitFlag.istrue():
             return
@@ -2893,8 +4346,33 @@ class LiftChooser(ui.Window,HasMenus):
     def newfile_page(self):
         self._new_w=ui.Window(self.program.tk_root,title=_("Start New LIFT Database"))
         defaults={'pady':20,'padx':20,'column':0,'sticky':'w','gridwait':True}
-        self.title_frame=ui.Frame(self._new_w.frame, row=0, **defaults)
+        # THE FRAMES ARE PLACED HERE OR BY NAME BELOW, never by accident.
+        # `gridwait=True` in `defaults` is for the children that appear later
+        # (the code label, the "Use this code" button, the dialect button),
+        # and the frames inherited it through `**defaults` — so `title_frame`
+        # and `code_frame` were created removed and NOTHING ever gridded them.
+        # Under tkinter the page opened with no title, no instructions, no
+        # code and no button (Kent's screenshot, 2026-09-22); the webview page
+        # happened to show them, which is the two backends disagreeing, not
+        # either being right. The title is placed now; the code frame is
+        # placed by `update_code` when there is a code to show.
+        self.title_frame=ui.Frame(self._new_w.frame, row=0,
+                                  **{**defaults,'gridwait':False})
         self.code_frame=ui.Frame(self._new_w.frame, row=1, **defaults)
+        # HIDDEN UNTIL THERE IS A CODE TO SHOW — A CHANGE, NOT A FIX (Kent,
+        # 2026-09-28). The code line was
+        # visible from the moment the page opened, and that was INTENTIONAL;
+        # nothing was broken about it. Kent: *"this is a change, not a fix. it
+        # was there intentionally, but I find it distracting"* — *"the
+        # 'code:...' line should show up after the user has typed something in
+        # the box."* So this is a preference about when to reveal it, and if
+        # the old behaviour is ever wanted back, deleting this one line is the
+        # whole revert.
+        #   `gridwait=True` in `defaults` did not achieve this on its own: the
+        # webview backend placed the frame regardless. Saying it explicitly
+        # makes both backends agree, and matches subtags_frame three lines
+        # below, which has always been explicit for the same reason.
+        self.code_frame.grid_remove()
         self.entryframe=ui.Frame(self._new_w.frame, row=2, **defaults)
         self.subtags_frame=ui.Frame(self._new_w.frame, row=3, **defaults)
         self.subtags_frame.grid_remove()
@@ -3052,8 +4530,15 @@ class LiftChooser(ui.Window,HasMenus):
             self.list_of_possibles.insert("end", i)
         max_value_len=max([0]+[len(self.list_of_possibles.get(i))
                     for i in range(len(self.list_of_possibles.get(0,'end')))])
+        # FIVE, not four (Kent, 2026-09-28: "let's make the initial size on the
+        # language scrollbox max at 5 languages, not three"). The cap is what
+        # decides how many matches you can see without scrolling, and this list
+        # is the one you actually pick from. The TERRITORY list below still
+        # caps at four; it was not asked about, and it is chosen from far less
+        # often. If the two should agree, the other number is at the
+        # `list_of_territories.configure` call.
         self.list_of_possibles.configure(width=max(10,max_value_len),
-                                        height=min(4,len(self.options)))
+                                        height=min(5,len(self.options)))
         log.info(f"Done updating possibles for '{value}'")
     def lang_name_selected(self,*args):
         log.info("lang_name_selected")
@@ -3075,12 +4560,21 @@ class LiftChooser(ui.Window,HasMenus):
             self.check_tag_validity()
             self._new_w.update_idletasks()
             self.code_label['text']=f"code: {self.code}"
+            # AND HIDE IT AGAIN. `_show_possibles` calls this when the entry
+            # box has been emptied, with the comment "remove code and button"
+            # — which nothing here did, so the line stayed on screen reading
+            # "code: " with nothing after it. That is the same distraction
+            # Kent asked to defer at page open (2026-09-28), arrived at from
+            # the other direction, so it follows the same rule: no text in the
+            # box, no code line.
+            self.code_frame.grid_remove()
             return
         if self.territory_entry.get():
             self.code+='-'+self.territory_entry.get()
         if self.variant_entry.get():
             self.code+='-x-'+self.variant_entry.get().lower() #in case caps
         self.code_label['text']=f"code: {self.code}"
+        self.code_frame.grid()      # the frame too, or its children are placed in nothing
         self.code_label.grid()
         self.use_code_button.grid()
         self.check_tag_validity()
@@ -3541,7 +5035,7 @@ class LiftChooser(ui.Window,HasMenus):
                                 )
         # make mediadir look for *.git
         ui.Label(self.frame, image=self.program.theme.photo['small'],
-                text=text, font='title', compound='top',
+                # text=text, font='title', compound='top',
                 column=1, row=1, ipadx=20)
         # if hasattr(self.program.taskchooser,'splash'):
         try:
@@ -3575,22 +5069,39 @@ class Settings(object):
         return (getattr(task,'ui',None) if task else None) \
                 or getattr(self.program,'mainwindow',None) \
                 or self.program.tk_root
+    def setanalangname(self, name):
+        """Name the analysis language, or clear the name if given nothing.
+
+        EXTRACTED FROM THE DIALOG 2026-09-15 so the status line can call it
+        directly. `getanalangname` still exists and still works — it now
+        submits through this — but the common route is the line itself:
+        "Studying <name>", where the name is a text field opened in place
+        (the settings-prompts-in-one-window item).
+
+        Clearing is deliberate and was already the dialog's behaviour: an
+        empty answer deletes both the display name and the stored one, and
+        `langnames()` then re-derives the fallback ("Language with code
+        [xyz]"), so there is no way to end up with a language named "".
+        """
+        analang=self.program.params.analang()
+        if name:
+            self.program.settings.languagenames[analang]=name
+            #This stores to file:
+            setnesteddictobjectval(self.program.settings,'adnlangnames',
+                                   name,analang)
+        else:
+            if analang in self.program.settings.languagenames:
+                del self.program.settings.languagenames[analang]
+            if analang in self.program.settings.adnlangnames:
+                del self.program.settings.adnlangnames[analang]
+            self.program.settings.langnames([analang]) #refreshes w/above
+        self.program.settings.storesettingsfile()
+        self.program.mainwindow.status.updateanalang() #ui
+
     def getanalangname(self,event=None):
         log.info(_("this sets the language name"))
         def submit(event=None):
-            if namevar.get():
-                self.program.settings.languagenames[self.program.params.analang()]=namevar.get()
-                #This stores to file:
-                setnesteddictobjectval(self.program.settings,'adnlangnames',
-                                    namevar.get(),self.program.params.analang())
-            else:
-                if self.program.params.analang() in self.program.settings.languagenames:
-                    del self.program.settings.languagenames[self.program.params.analang()]
-                if self.program.params.analang() in self.program.settings.adnlangnames:
-                    del self.program.settings.adnlangnames[self.program.params.analang()]
-                self.program.settings.langnames([self.program.params.analang()]) #refreshes w/above
-            self.program.settings.storesettingsfile()
-            self.program.mainwindow.status.updateanalang() #ui
+            self.setanalangname(namevar.get())
             window.destroy()
         window=ui.Window(self.dialogparent(),title=_('Enter Analysis Language Name'))
         curname=self.program.settings.languagenames[self.program.params.analang()]
@@ -3745,128 +5256,22 @@ class Settings(object):
                             row=0, column=1)
             listbox.config(yscrollcommand=sb.set)
             window.wait_window(window)
-    def getsecondformfieldN(self,event=None):
-        ps=self.program.settings.nominalps
-        opts=self.program.settings.plopts
-        othername=self.program.settings.imperativename
-        setcmd=self.program.settings.setsecondformfieldN
-        self.getsecondformfield(ps,opts,othername,setcmd)
-    def getsecondformfieldV(self,event=None):
-        # log.info(".impopts: {}".format(self.program.settings.impopts))
-        ps=self.program.settings.verbalps
-        opts=self.program.settings.impopts
-        othername=self.program.settings.pluralname
-        setcmd=self.program.settings.setsecondformfieldV
-        self.getsecondformfield(ps,opts,othername,setcmd)
-    def getcustomsecondformfield(self,ps,othername,setcmd):
-        def updateerror(event=None):
-            if event.keysym != 'Return':
-                self.program.task.errorlabel['text'] = ''
-        def submitform(event=None):
-            log.info(_("setting {custom} (not {other})").format(custom=custom.get(), other=othername))
-            if custom.get() == othername:
-                text=_("That name is already used!")
-                log.error(text)
-                self.program.task.errorlabel['text']=text
-                return
-            setcmd(custom.get())
-            window.on_quit()
-        title=_('Make Custom Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self.dialogparent(),title=title)
-        #should never be othername
-        l=ui.Label(window,
-                text=_("What field name do you want to use for {ps} words?"
-                        ).format(ps=ps),
-                row=0,column=0)
-        custom=ui.StringVar()
-        formfield = ui.EntryField(window, render=True,
-                                    text=custom,
-                                    row=1,column=0,
-                                    sticky='')
-        formfield.focus_set()
-        formfield.bind('<Return>',submitform)
-        formfield.bind('<KeyRelease>',updateerror)
-        self.program.task.errorlabel=ui.Label(window,text='',
-                            fg='red',
-                            wraplength=int(self.program.task.frame.winfo_screenwidth()/3),
-                            row=2,column=0,sticky='nsew'
-                            )
-        window.wait_window()
-    def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
-        """'other' is used when fields already present in the database
-        do not include a good option. 'Othername' is used to exclude another
-        grammatical category, e.g., verb fields for a noun second form.
-        If there are no such fields in the db (e.g., if you just started
-        a new db for word collection), the user will go straight to selecting
-        from default options, or providing a custom name for the new field"""
-        def getother():
-            """Current db fields aren't enough, ask for default or custom"""
-            window.destroy()
-            self.getsecondformfield(ps=ps,
-                                    opts=opts,
-                                    othername=othername,
-                                    setcmd=setcmd,
-                                    other=True)
-        def getcustom():
-            """Current db fields and custom names aren't enough, get custom"""
-            window.destroy()
-            self.getcustomsecondformfield(ps=ps,
-                                    # opts=opts,
-                                    othername=othername,
-                                    setcmd=setcmd,
-                                    # other=True
-                                    )
-        log.info(_("Asking for ‘{ps}’ second form field...").format(ps=ps))
-        try:
-            assert other == False
-            othernames=[i for i in self.program.db.fieldnames[self.program.params.analang()]
-                    if i != othername and i not in ['lc','lx']]
-        except (KeyError,AssertionError):
-            othernames=[]
-        if othernames:
-            if len(othernames)-1:
-                text=_("Select a database field "
-                        "to use for second forms of ‘{ps}’ words").format(ps=ps)
-                otherbuttontext=_("None of these; make a new field")
-            else:
-                text=_("Select the ‘{field}’ database field "
-                        "for second forms of ‘{ps}’ words").format(field=othernames[0],ps=ps)
-                otherbuttontext=_("No; make a new field")
-            cmd=getother
-            optionslist=othernames
-        else:
-            setcmd(opts[0])
-            # ErrorNotice(_("No suitable database fields were found for second "
-            #             f"forms of '{ps}' words; using '{opts[0]}'."))
-            return
-            # text=_("No suitable database fields were found; what name "
-            #         f"do you want to use for second forms of '{ps}' words?")
-            # otherbuttontext=_("None of these work; make my own field")
-            # cmd=getcustom
-            # optionslist=opts
-        title=_('Select Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self.dialogparent(),title=title)
-        ui.Label(window.frame, text=text, column=0, row=0)
-        """What does this extra frame do?"""
-        window.scroll=ui.Frame(window.frame)
-        window.scroll.grid(column=0, row=2)
-        buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                optionlist=optionslist,
-                command=setcmd,
-                window=window,
-                column=0, row=0
-                )
-        otherbutton=ui.Button(buttonFrame1.content,
-                            text=otherbuttontext,
-                            column=0, row=1,
-                            cmd=cmd
-                            )
-        if self.program.task.winfo_viewable():
-            self.program.task.withdraw()
-            window.wait_window(window)
-            self.program.task.deiconify()
-        else:
-            window.wait_window(window)
+    # ── The second-form field chooser: DELETED 2026-09-29 ─────────────────
+    # `getsecondformfieldN`, `getsecondformfieldV`, `getcustomsecondformfield`
+    # and `getsecondformfield` stood here, three windows deep for one value:
+    # pick from the database's fields, or "other" for the defaults, or
+    # "custom" to type a name. Nothing had called any of them since the
+    # settings pane stopped defining the field as a side effect of drawing
+    # itself (2026-09-17).
+    #   What replaced them is `StatusFrame.assure_second_forms`, which opens
+    # the field IN PLACE on the settings pane. Kent, 2026-09-15: "in the
+    # current paradigm, it would make more sense for getsecondformfield to
+    # simply mark the appropriate settings label as 'edit', rather than
+    # keeping the old dialog just for this." An editable combo is all three
+    # old windows at once — the existing names are offered, and anything
+    # else can be typed.
+    #   Plan 7 of the second-form flags audit; the whole cluster
+    # was a closed call graph with no entry point from the rest of the app.
     def getmulticheckscope(self,event=None):
             log.info(_("Asking for multicheckscope..."))
             cvts=[[i] for i in self.program.params.cvts()]
@@ -3897,14 +5302,10 @@ class Settings(object):
         for cvt in self.cvtstodo:
             output+=[self.program.params.cvtdict()[cvt]['pl']]
         return output
-    def secondfieldnames(self):
-        """Not called anywhere?"""
-        if self.program.settings.nominalps not in self.program.settings.secondformfield:
-            self.getsecondformfieldN()
-        if self.program.settings.verbalps not in self.program.settings.secondformfield:
-            self.getsecondformfieldV()
-        return (self.program.settings.secondformfield[self.program.settings.verbalps],
-                self.program.settings.secondformfield[self.program.settings.nominalps])
+    # `secondfieldnames` DELETED 2026-09-29 with the chooser it called. Its
+    # own docstring asked "Not called anywhere?" — correct. It also indexed
+    # `secondformfield` directly, which is the read that a stored `<unset>`
+    # fools; `secondformfieldset()` is the predicate now.
     def getbuttoncolumns(self,event=None):
         log.info(_("Asking for number of button columns..."))
         _option_dialog(self.dialogparent(),
@@ -4101,6 +5502,12 @@ class Settings(object):
                     ]
             log.info(_("Variable keys to check: {vars}").format(vars=vars))
         else:
+            # Both windows are hidden at this point (getrunwindow withdrew the
+            # task window), and the half-built run window is not worth revealing,
+            # so hand the screen back the way JoinUFgroups' no-groups branch
+            # does: on_quit → runwindowcleanup → deiconify the task window.
+            # Returning without this leaves NO window once the notice is closed.
+            self.program.task.runwindow.on_quit()
             ErrorNotice(_("Something happened! "
                         "(language not keyed in segment dictionary)"))
             return
@@ -4189,7 +5596,15 @@ class Settings(object):
                         anchor='e',
                         row=0,column=0,sticky='e',
                         pady=options.pady)
+        # getrunwindow() (no msg) created the window WITHDRAWN and withdrew the
+        # task window, so this waitdone() has no active wait to reveal through —
+        # a no-op. This method is a menu command: it returns straight to the
+        # event loop, so NOTHING downstream reveals the page it just built, and
+        # the app is left with no window at all until guardvisible fires.
         self.program.task.runwindow.waitdone()
+        if not self.program.task.runwindow.exitFlag.istrue():
+            self.program.task.runwindow.deiconify()
+            self.program.task.runwindow.update_idletasks()
     def getexamplespergrouptorecord(self):
         log.info(_("this sets the number of examples per group to record"))
         self.npossible=[

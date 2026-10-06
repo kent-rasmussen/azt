@@ -4,7 +4,7 @@ from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 import platform
-import sys
+import os,sys
 import subprocess
 from utilities.utilities import stouttostr
 
@@ -13,6 +13,120 @@ try:
 except NameError:
     def _(x):
         return str(x)
+
+
+def _under_test():
+    """Are we inside a test run? Then CHANGE NOTHING on this machine.
+
+    DEFINED FIRST because three things in this module run AT IMPORT TIME and
+    all of them mutate the machine: `ensure_venv()` (can create a venv,
+    relaunch the process with the current argv and exit), `sync_requirements()`
+    (pip install -r) and `pip_install()` (the per-package fallback). That is
+    the app's bootstrap design — the first import repairs the environment —
+    and it means ANY `import py_modules`, including from a test, does all of
+    it.
+      Found the hard way: a test importing this ran a real package sync during
+    collection, and on Windows left app-startup and collab-daemon lines after
+    pytest's summary, including "Teammates' changes were merged with your last
+    save". A first fix gated two of the three and missed
+    `sync_requirements()`, which is why it looked like a platform difference:
+    on macOS the requirements stamp matched so that call returned early, and
+    on Windows it did not, so pip ran. Not a platform difference at all —
+    Kent: "can you not just look around for that now? start with code that
+    doesn't run on mac", which found it in one grep.
+
+    Three signals, because one can be absent where the others are not:
+    `sys.modules` misses pytest in a SUBPROCESS a test spawned, the env var is
+    only set while a test is executing (not during collection), and argv only
+    helps a bare `pytest` invocation rather than `python -m pytest`.
+    """
+    if 'pytest' in sys.modules or 'PYTEST_CURRENT_TEST' in os.environ:
+        return True
+    if os.environ.get('AZT_NO_AUTOINSTALL'):
+        return True     # an explicit way out, for anyone diagnosing this
+    argv0 = os.path.basename(sys.argv[0] if sys.argv else '')
+    return argv0.startswith('pytest') or argv0 == 'py.test'
+
+def requirements_one_at_a_time(root):
+    """requirements.txt, split into one pip invocation per requirement.
+
+    THE ANSWER TO "do we still need py_modules? or at least all of its
+    detail?" (Kent, 2026-09-10) — the MECHANISM is worth keeping and the LIST
+    was not.
+
+    Why the mechanism earns its place: `pip install -r requirements.txt` is
+    all-or-nothing at resolution, so ONE unavailable package means the user
+    gets none of them — no numpy, no sounddevice, no sound at all, because
+    something unrelated could not be found. Installing one requirement per
+    invocation means the failures are contained to the packages that actually
+    failed.
+
+    Why the list did not: it was a second hand-maintained copy of the same
+    facts, and a python list cannot hold a PEP 508 marker. That is exactly
+    how a Mac came to be asked for `torch==2.7.1+cpu`, which has never
+    existed for macOS, while requirements.txt held the correct
+    `torch==2.7.1; sys_platform == "darwin"` all along. Its own comments said
+    "keep in step with requirements.txt" in two places; it could not.
+      pip evaluates a marker given on the command line, so each line of
+    requirements.txt can be handed over verbatim — markers, pins, extras and
+    all — and the file stays the single source of truth.
+
+    Lines beginning with `-` are pip's own options (`--extra-index-url` for
+    the pytorch CPU wheels) and apply to every invocation.
+    """
+    path = os.path.join(root, 'requirements.txt')
+    options, wanted = [], []
+    try:
+        with open(path, encoding='utf-8') as f:
+            for raw in f:
+                line = raw.split('#', 1)[0].strip()  # markers contain no '#'
+                if not line:
+                    continue
+                if line.startswith('-'):
+                    options.extend(line.split())
+                else:
+                    wanted.append(line)
+    except OSError as e:
+        log.error("couldn't read {} ({}); the per-package fallback has "
+                  "nothing to install".format(path, e))
+        return []
+    log.info("per-package fallback: {} requirements from requirements.txt"
+             "".format(len(wanted)))
+    return [[w] + options for w in wanted]
+
+
+#: Packages that ship NO WHEEL — pip can only build them from source. On a
+#: Mac with no developer tools the install runs `--only-binary :all:`
+#: deliberately (see _mac_without_compiler), so these cannot arrive there and
+#: asking produces only a confusing "from versions: none".
+SOURCE_ONLY = ('openai_whisper', 'openai-whisper')
+
+
+def drop_what_cannot_build(installs):
+    """Remove requirements this machine has no way to build, saying why.
+
+    The ONE thing a PEP 508 marker cannot express, so it stays in code: a
+    marker can test the platform, not whether developer tools are present. On
+    macOS without them the source-only packages fail no matter what
+    requirements.txt says, and a stated skip is worth more than a failure
+    nobody can act on.
+    """
+    if not _mac_without_compiler():
+        return installs
+    kept, dropped = [], []
+    for entry in installs:
+        name = entry[0].split(';')[0].split('[')[0].split('=')[0].strip()
+        if name in SOURCE_ONLY:
+            dropped.append(name)
+        else:
+            kept.append(entry)
+    if dropped:
+        log.info("skipping {}: no wheel exists and this Mac has no developer "
+                 "tools, so it cannot be built. Transcription stays off; "
+                 "recording and playback are unaffected."
+                 "".format(', '.join(dropped)))
+    return kept
+
 
 def pip_install(installs=[],secondtry=False):
     """With a list provided in installs, this installs only those modules.
@@ -24,8 +138,15 @@ def pip_install(installs=[],secondtry=False):
     else:
         log.info(_("Installing python dependencies"))
     if platform.system() == 'Linux':
-        log.info(_("If you have errors containing ˋportaudioˊ above, you should "
-            "install pyaudio with your package manager."))
+        # Was "install pyaudio with your package manager" — wrong twice over
+        # since 2026-09-09: pyaudio is gone (sounddevice replaced it), and
+        # what a package manager supplies is the PortAudio RUNTIME, not a
+        # python module. Naming the wrong thing sends a user to install
+        # something the app no longer uses.
+        log.info(_("If you see errors mentioning ˋportaudioˊ above, install "
+            "the system PortAudio runtime with your package manager "
+            "(libportaudio2 on Debian/Ubuntu). A-Z+T uses sounddevice, which "
+            "needs that library present but does not build it."))
     # The following is here to see what version python will be looking for, and
     # why it didn't find what's there. It doesn't input to anything afterwards.
     log.info("FYI, looking for this platform: {}_{}".format(
@@ -33,44 +154,19 @@ def pip_install(installs=[],secondtry=False):
                                                         platform.processor()))
     installfolder='modulestoinstall/'
     installedsomething=False
-    """Migrate this to `bin/pip install -r requirements.txt`"""
     if not installs:
-        installs=[
-            ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
-            ['urllib3'],
-            ['numpy>=2.1,<2.5'], #KEEP IN STEP with requirements.txt — a bare
-            # 'numpy' here installed 2.5.1 over the pin and re-broke numba
-            # (2026-07-16); the backstop must never fight the requirements
-            ['pyaudio'],
-            ['Pillow'], #for PIL
-            ['lxml'],
-            ['psutil'],
-            ['soundfile'],
-            ['scipy'], #resampling (file_sound); also a transformers dep
-            ['transformers'],
-            ['huggingface_hub[hf_xet]'], #allow large file download
-            ['langcodes[data]'],
-            ['pyautogui'],
-            ['svglib'],
-            # ['mysql-connector-python', 'wave'], #needed for wave
-            # 'pymysql', #or maybe this one
-            ['torch==2.7.1+cpu',
-             '--extra-index-url','https://download.pytorch.org/whl/cpu'],
-            #pinned CPU wheel — bare 'torch' from PyPI pulls the CUDA build
-            #(GBs) on Linux; keep in step with requirements.txt
-            ['openai-whisper'], #for import whisper
-            ['packaging'],
-            ['patiencediff'],
-            ['reportlab'], #for PDF
-            #azt-collab collaboration (daemon runs in this env on desktop):
-            ['dulwich'], #daemon git ops
-            ['cryptography'], #LAN identity (peer keypair + cert)
-            ['zeroconf'], #LAN discovery (mDNS)
-            ['segno'], #pairing-QR rendering
-            ['kivy'], #NOT imported in-process: the daemon's project picker +
-            #          settings UI are Kivy SUBPROCESSES, and a standalone
-            #          install has no other python to run them in
-            ]
+        # DERIVED FROM requirements.txt, not a second copy of it. The old
+        # hand-kept list is gone: see requirements_one_at_a_time() for why
+        # (in short, a python list cannot carry a PEP 508 marker, so macOS was
+        # asked for a torch build that does not exist while requirements.txt
+        # had the right line). The "Migrate this to `pip install -r
+        # requirements.txt`" note that sat here since long before is now done,
+        # keeping the one-package-per-invocation behaviour that makes this a
+        # useful fallback at all.
+        installs=[['--upgrade','pip','setuptools','wheel']] + \
+                 drop_what_cannot_build(requirements_one_at_a_time(
+                        os.path.dirname(os.path.dirname(
+                                        os.path.abspath(__file__)))))
     else:
         installs=[installs] #do the whole list at once, if given a list
     log.info("Installs: {}".format(', '.join([i for j in installs for i in j])))
@@ -80,6 +176,18 @@ def pip_install(installs=[],secondtry=False):
         '-f', installfolder, #install the one in this folder, if there
         '--no-index' #This stops it from looking online
         ]
+        # macOS with no developer tools: never let pip reach for a compiler.
+        # THIS is the path that did it (measured 2026-09-08): the per-package
+        # backstop fetched the PyAudio, cryptography and openai-whisper
+        # SDISTS and started building — pyaudio's C extension and
+        # cryptography's Rust both ran `clang`/`cc`, which put a modal "The
+        # ˋclangˊ command requires the command line developer tools" dialog
+        # in front of the user mid-boot, and cryptography went as far as
+        # downloading its own rustup and cargo first. A missing optional
+        # engine is a degraded install that A-Z+T already reports and works
+        # around; a compiler prompt is an unanswerable question.
+        if _mac_without_compiler():
+            pyargs.extend(['--only-binary',':all:'])
         npyargs=len(pyargs)
         if secondtry:
             pyargs.extend(['--force-reinstall'])
@@ -445,6 +553,18 @@ def ensure_venv():
     # above already carries any inherited value through.
     _prior=[p for p in env.get('AZT_PREDECESSOR_PIDS','').split(',') if p]
     env['AZT_PREDECESSOR_PIDS']=','.join((_prior+[str(os.getpid())])[-8:])
+    # BREADCRUMB. This is the SECOND restart producer (sysrestart is the other),
+    # and the earliest: a venv relaunch that fails to come back used to be
+    # completely silent. restartmark._path() has a pathlib-only fallback exactly
+    # for here, because this runs at import time in a process whose job is to
+    # obtain the dependencies utilities.file needs. The successor reports and
+    # clears it like any other; note it is identified by AZT_VENV_RELAUNCHED
+    # rather than --restart, which this hop does not add.
+    try:
+        from utilities import restartmark
+        restartmark.mark(reason='venv relaunch')
+    except Exception as e:
+        log.info("restart marker skipped for the venv relaunch: {}".format(e))
     try:
         subprocess.Popen([py]+sys.argv,env=env)
     except Exception as e:
@@ -452,7 +572,42 @@ def ensure_venv():
                     "".format(e,sys.executable))
         return
     sys.exit(0) #the venv process takes over from here
-ensure_venv()
+if not _under_test():
+    ensure_venv()
+
+_MAC_NO_COMPILER=None #cached: asked once per process, not once per package
+
+def _mac_without_compiler():
+    """True on a macOS box with no Xcode command-line tools.
+
+    Cached, because the per-package installer below asks per package: that
+    would be ~25 `xcode-select` subprocesses on every boot of every Mac,
+    including ones where the answer is a flat no.
+
+    Why this exists: macOS keeps STUB SHIMS at /usr/bin for the developer
+    tools, and merely running one — which pip does the moment a package has
+    no wheel and has to build — pops a modal "The ˋclangˊ command requires
+    the command line developer tools. Would you like to install the tools
+    now?" dialog. In front of a linguist, mid-startup, that is unanswerable:
+    the tools may be several GB, the machine's owner may have refused them
+    already (2026-09-08), and nothing about A-Z+T needs them.
+
+    `xcode-select -p` is the safe way to ask. It reports the developer
+    directory or fails, and does NOT itself trigger the install dialog."""
+    global _MAC_NO_COMPILER
+    if _MAC_NO_COMPILER is not None:
+        return _MAC_NO_COMPILER
+    if platform.system() != 'Darwin':
+        _MAC_NO_COMPILER=False
+        return _MAC_NO_COMPILER
+    try:
+        subprocess.check_output(['xcode-select','-p'],
+                                stderr=subprocess.STDOUT,timeout=30)
+        _MAC_NO_COMPILER=False #tools present: building is allowed to work,
+                               #  exactly as it does on Linux and Windows
+    except Exception:
+        _MAC_NO_COMPILER=True
+    return _MAC_NO_COMPILER
 
 def sync_requirements():
     """Keep the venv in step with requirements.txt: any edit there (new
@@ -488,6 +643,14 @@ def sync_requirements():
     base=[sys.executable,'-m','pip','install',
           '-f',os.path.join(root,'modulestoinstall'),
           '-r',req]
+    # See _mac_without_compiler(): on a Mac with no developer tools, refuse
+    # source builds rather than let pip invoke a compiler that is not there
+    # (and put a modal Xcode dialog in front of the user mid-boot).
+    if _mac_without_compiler():
+        base=base+['--only-binary',':all:']
+        log.info("macOS without developer tools: installing only from wheels. "
+                 "Any package with no macOS wheel will be reported as missing "
+                 "rather than built — that is deliberate.")
     for args in (base+['--no-index'],base): #offline-first, then online
         passname='offline' if '--no-index' in args else 'online'
         try:
@@ -515,7 +678,8 @@ def sync_requirements():
         except Exception as e:
             log.error("package sync failed ({}); continuing with "
                         "what’s installed".format(e))
-sync_requirements()
+if not _under_test():
+    sync_requirements()
 
 def ensure_sister_repos():
     """azt expects some repos cloned beside its own clone: the collab
@@ -531,16 +695,61 @@ def ensure_sister_repos():
                             "continuing without it.").format(name=name))
     except Exception as e:
         log.error("Sister-repo setup failed ({}); continuing.".format(e))
-ensure_sister_repos()
+
+
+if _under_test():
+    # SAID OUT LOUD, so the guard's absence is evidence rather than a
+    # mystery: Windows appeared to run pip during a test run while macOS did
+    # not (Kent, 2026-09-11), which cannot follow from the check itself —
+    # it is the same on every platform. If a run shows pip output and NOT
+    # this line, that machine is on a build without the guard.
+    log.info("under pytest: A-Z+T will NOT set up sister repos or install "
+             "packages. Nothing on this machine is being changed.")
+else:
+    ensure_sister_repos()
+
+# ── MANDATORY vs OPTIONAL, and why the distinction has to be here ──────────
+# This block decides whether to run the installer, and it treated `torch` and
+# `whisper` as mandatory. On a platform where they are DELIBERATELY excluded
+# it therefore failed on every boot however complete the install was — so the
+# per-package backstop ran every single open, trying to install packages that
+# cannot exist there. Measured on an Intel Mac 2026-09-11: PyTorch has
+# shipped no macOS x86_64 wheel since 2.2.x, `openai_whisper` is excluded for
+# the same platform in requirements.txt, and the install "failed" forever.
+#   An optional engine missing is a DEGRADED install that A-Z+T already
+# reports and works around. Only a mandatory package can justify reaching for
+# pip.
+OPTIONAL_ENGINES = []
+try:
+    import torch                                    # noqa: F401
+except Exception as _e:
+    OPTIONAL_ENGINES.append(('torch (transcription)', str(_e)))
+try:
+    import whisper                                  # noqa: F401
+except Exception as _e:
+    OPTIONAL_ENGINES.append(('whisper (transcription)', str(_e)))
+if OPTIONAL_ENGINES:
+    log.info("optional engines not installed: {}. Transcription is off; "
+             "recording, playback and everything else are unaffected, and "
+             "this is NOT a reason to reinstall anything."
+             "".format('; '.join('{} ({})'.format(n, e)
+                                 for n, e in OPTIONAL_ENGINES)))
 
 try:
     o=[]
-    import urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, scipy
-    o.append("urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, scipy imported fine")
-    import transformers, huggingface_hub, langcodes #, pyautogui
+    import urllib3, numpy, sounddevice, PIL, lxml, psutil, soundfile, scipy
+    o.append("urllib3, numpy, sounddevice, PIL, lxml, psutil, soundfile, scipy imported fine")
+    # pyautogui was listed here and in the old backstop and is imported
+    # NOWHERE (checked 2026-09-10: only commented-out lines in
+    # frontend/alphabet_chart.py, for a screenshot feature never finished).
+    # It was being downloaded on every fresh install for nothing.
+    import transformers, huggingface_hub, langcodes
     o.append("transformers, huggingface_hub, langcodes imported fine")
-    import whisper, patiencediff, reportlab, language_data
-    o.append("whisper, patiencediff, reportlab, language_data imported fine")
+    # `whisper` moved OUT of this list (see OPTIONAL_ENGINES above): it is a
+    # transcription engine, absent by design on some platforms, and having it
+    # here made every boot on those platforms run the installer.
+    import patiencediff, reportlab, language_data
+    o.append("patiencediff, reportlab, language_data imported fine")
     # kivy: presence check ONLY — never import it in this (tkinter) process;
     # its import-time argv parser can eat azt's own flags (see collab.py).
     # It's needed as a SUBPROCESS runtime for the collab picker/settings UI.
@@ -549,8 +758,14 @@ try:
         raise ImportError('kivy not installed (needed for the collab '
                           'project picker / settings UI subprocesses)')
     o.append("kivy present (not imported)")
-    import os, svglib
-    o.append("os, svglib imported fine")
+    # `os` is imported at the top of this module; having it here too meant
+    # that when an EARLIER line in this try failed, `os` was never bound —
+    # and `pip_install()`, called from the handler below, then died with
+    # "NameError: name 'os' is not defined" (Kent's Mac, 2026-09-11). A
+    # re-import inside a try that can fail earlier is not a safe place for a
+    # name the error path needs.
+    import svglib
+    o.append("svglib imported fine")
     # import platform
     if platform.system() == "Windows":
         import ctypes
@@ -563,13 +778,19 @@ try:
         except Exception as e:
             log.info(f"Exception loading torch dll: {e}")
 
-    # Testing
-    # from PyQt6.QtWidgets import QApplication
-    import torch
+    # `import torch` was HERE, and it is the reason a correctly-installed
+    # Intel Mac reinstalled on every open: torch has no macOS x86_64 wheel
+    # since 2.2.x, so this line raised forever. It is checked above, as an
+    # optional engine, without triggering the installer.
 except Exception as e:
     log.info('\n'.join(o))
     log.error(f"Exception: {e}")
     if '--help' in sys.argv or '-h' in sys.argv:
         log.error("Not all modules installed, but not installing them because you asked for help.")
         sys.exit(0)
-    pip_install()
+    if _under_test():
+        log.info("under pytest: NOT installing anything. A missing package "
+                 "makes tests skip, which is the right answer; installing "
+                 "would change the machine the tests are measuring.")
+    else:
+        pip_install()

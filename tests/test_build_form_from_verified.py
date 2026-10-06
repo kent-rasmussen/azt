@@ -35,9 +35,12 @@ class _FakeSense:
 
 
 def build(sense):
-    # unbound call with a minimal self: the method only reads self.ftype
+    # Unbound call with a minimal self. The method used to read `self.ftype`;
+    # the word form has one owner as of 2026-09-29 and it reads
+    # `self.program.params.ftype()`, so the stand-in grew two levels.
     return Segments.build_form_from_verified(
-        SimpleNamespace(ftype="lc"), sense)
+        SimpleNamespace(program=SimpleNamespace(
+            params=SimpleNamespace(ftype=lambda: "lc"))), sense)
 
 
 def test_builds_from_fully_named_verified_segments():

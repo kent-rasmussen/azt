@@ -16,6 +16,7 @@ lxml=False
 # from xmletfns import * # from xml.etree import ElementTree as ET
 from utilities import xmletfns as et
 from utilities import xmlfns, file, rx
+from utilities.error_handler import notify_user as NotifyUser
 import sys
 import pathlib
 import threading
@@ -38,6 +39,78 @@ class Object(object):
 #         self=Tree(lift).parsed
 #         log.info(self.glosslang)
 #         Tree.__init__(self, db, guid=guid)
+def _profile_if_asked(name,fn,*a):
+    """Run `fn`, and under `--profile-load` say where its time went.
+
+    A SWITCH, not a guess. The per-step timing put 2.23s of the LIFT load
+    inside `getentries` and stopped there, and this item's own history says
+    what happens next if I keep adding timers by intuition: two of the three
+    original finds were guessed wrong from reading before a measurement
+    named them. cProfile names the function in one run.
+
+    Temporary, with the rest of the DIAG-liftload instrumentation — see
+    the rescan-instead-of-grouping item.
+    """
+    if '--profile-load' not in sys.argv:
+        return fn(*a)
+    import cProfile, pstats, io as _sio
+    pr=cProfile.Profile()
+    pr.enable()
+    try:
+        return fn(*a)
+    finally:
+        pr.disable()
+        s=_sio.StringIO()
+        pstats.Stats(pr,stream=s).sort_stats('tottime').print_stats(20)
+        log.info("DIAG-liftload profile of %s:\n%s",name,s.getvalue())
+def _safe_attrib_value(value,where=''):
+    """One attribute value, guaranteed to be a string ElementTree will escape.
+
+    THE HAZARD, found the hard way (Kent 2026-08-26). ElementTree escapes
+    attribute values in `_escape_attrib`, which is written as:
+
+        try:
+            if "&" in text: ...
+            if '"' in text: text=text.replace('"','&quot;')
+        except (TypeError, AttributeError):
+            _raise_serialization_error(text)
+
+    Hand it a TUPLE and `"&" in text` is a MEMBERSHIP test, not a substring
+    test — it returns False and raises nothing. Every check is skipped, the
+    tuple comes back untouched, and the serializer then writes
+    `" %s=\\"%s\\"" % (name, value)`, i.e. `str(tuple)` — Python's repr, with
+    Python's own quote-switching. So a tuple whose member contains `'` is
+    emitted as raw `"` INSIDE a `"`-delimited attribute, and the file stops
+    being well-formed. Silently: nothing raises, at set time or at write time.
+
+    That is exactly how `<trait name="Noun-infl-class" value="(('ngom', 'li'),
+    ('ngombi', "'"))" />` reached a production lexicon.
+
+    So: refuse CONTAINERS, whose repr is not a defined interchange format and
+    which only `literal_eval` can read back — serialise those deliberately at
+    the call site (see `utilities.affixset_to_str`). Coerce scalars, since
+    `str(2)` is unambiguous, but log it: it still means someone skipped the
+    decision about how their data is stored."""
+    if isinstance(value,str):
+        return value
+    if isinstance(value,(list,tuple,dict,set,frozenset)):
+        raise TypeError("LIFT attribute values must be strings; got {} ({!r})"
+                "{}. Serialise it at the call site.".format(
+                    type(value).__name__,value,' in <%s>'%where if where else ''))
+    if value is None:
+        return value #ElementTree's own business; not our repr hazard
+    log.info("coercing %s %r to str for a LIFT attribute%s",
+                type(value).__name__,value,' in <%s>'%where if where else '')
+    return str(value)
+def _safe_attrib(attrib,tag=''):
+    """Every value in an attrib dict, checked. Node creation and attribute
+    updates both route through here, because `myvalue` alone was not enough:
+    `annotationvalue` builds an Annotation directly when one doesn't exist yet,
+    and `annotationsupdate` calls `.set()` and the Node constructor with values
+    straight out of a dict."""
+    if not isinstance(attrib,dict):
+        return attrib
+    return {k:_safe_attrib_value(v,tag) for k,v in attrib.items()}
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
@@ -63,8 +136,16 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         """Problems reading a valid LIFT file are dealt with in main.py"""
         try:
             self.read() #load and parse the XML file. (Should this go to check?)
-        except Exception:
-            raise BadParseError(self.filename)
+        except Exception as e:
+            # The bare `except Exception: raise BadParseError(...)` threw the real
+            # error away — message, line and column with it — so a file that
+            # wouldn't parse said nothing about WHY (Kent 2026-08-26, after a
+            # `git checkout HEAD -- <lift>` still failed to load).
+            self._log_parse_failure(e)
+            if self._repair_unparseable(e):
+                self.read() #repaired in place and verified; carry on
+            else:
+                raise BadParseError(self.filename)
         self.getglosslangs() #sets: self.glosslangs
         # self.word_list_n_attr='cawln' #make this configurable
         self.word_list_field_name='SILCAWL' #make this configurable
@@ -80,25 +161,39 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         with the CAWL template
         self.get_langs should work for Demo databases, or 
         for new langauges from template."""
-        self.get_langs(analang) #sets: self.analangs, self.audiolangs
-        self.getentries() #need self.analang by here
-        self.getsenses()
-        self.getpss() #all ps values, in a prioritized list
-        self.slicebyerror()
-        self.load_ps_profiles()
-        self.slicebyid()
-        self.slicebylx()
-        self.slicebylc() #1.14s
+        # TEMPORARY per-step timing — REMOVE WITH the rescan-instead-of-
+        # grouping item, as the matching lines in langtags.Languages.__init__
+        # are. This whole sequence sits inside ONE gap in the boot profile
+        # (3.1s on 2026-09-14, down from 4.2s), so the log can say the load
+        # is slow and not which of fifteen steps is slow — and reading to
+        # guess which has already been wrong twice on this item. Anything
+        # under 50ms stays quiet, so the log names only what matters.
+        def _step(name,fn,*a):
+            t0=time.perf_counter()
+            r=fn(*a)
+            dt=time.perf_counter()-t0
+            if dt > 0.05:
+                log.info("DIAG-liftload %-26s %6.2fs",name,dt)
+            return r
+        _step('get_langs',self.get_langs,analang) #sets: self.analangs, self.audiolangs
+        _step('getentries',_profile_if_asked,'getentries',self.getentries) #need self.analang by here
+        _step('getsenses',self.getsenses)
+        _step('getpss',self.getpss) #all ps values, in a prioritized list
+        _step('slicebyerror',self.slicebyerror)
+        _step('load_ps_profiles',self.load_ps_profiles)
+        _step('slicebyid',self.slicebyid)
+        _step('slicebylx',self.slicebylx)
+        _step('slicebylc',self.slicebylc) #was 1.14s; one pass since 2026-09-14
         #the following should probably replaced by getsenseidsbyps everywhere
         """These three get all possible langs by type"""
-        self.legacylangconvert() #update from any old language forms to xyz-x-py
-        self.getentrieswanalangdata() #sets: self.(n)entriesw(lexeme|citation)data
-        self.getsenseswglosslangdata() #sets: self.nsensesw(gloss|defn)data
+        _step('legacylangconvert',self.legacylangconvert) #update from any old language forms to xyz-x-py
+        _step('getentrieswanalangdata',self.getentrieswanalangdata) #sets: self.(n)entriesw(lexeme|citation)data
+        _step('getsenseswglosslangdata',self.getsenseswglosslangdata) #sets: self.nsensesw(gloss|defn)data
         #HERE
-        self.getfieldnames() #sets self.fieldnames (of entry)
-        self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
-        self.legacyverificationconvert() #data to form nodes (no name changes)
-        self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
+        _step('getfieldnames',self.getfieldnames) #sets self.fieldnames (of entry)
+        _step('getsensefieldnames',self.getsensefieldnames) #sets self.sensefieldnames (fields of sense)
+        _step('legacyverificationconvert',self.legacyverificationconvert) #data to form nodes (no name changes)
+        _step('getfieldswsoundfiles',self.getfieldswsoundfiles) #sets self.nfields & self.nfieldswsoundfiles
         log.info(_("Working on {file} with {nguids} entries, with lexeme data counts: {lex_counts}, "
                    "citation data counts: {citation_counts} and {nsenseids} senses")
                 .format(file=self.filename, nguids=self.nguids, lex_counts=self.nentrieswlexemedata,
@@ -106,20 +201,20 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info(_("Found gloss data counts: {gloss_counts}, definition counts: {def_counts}")
                 .format(gloss_counts=self.nsenseswglossdata, def_counts=self.nsenseswdefndata))
         #This may be superfluous:
-        self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
-        self.get_senses_by_word_list_n()
+        _step('getsenseidsbyps',self.getsenseidsbyps) #sets: self.senseidsbyps and self.nsenseidsbyps
+        _step('get_senses_by_word_list_n',self.get_senses_by_word_list_n)
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
-        self.lcs=self.citations()
-        self.lxs=self.lexemes()
-        self.getlocations()
+        self.lcs=_step('citations',self.citations)
+        self.lxs=_step('lexemes',self.lexemes)
+        _step('getlocations',self.getlocations)
         self.defaults=[ #these are lift related defaults
                     'analang',
                     'glosslangs',
                     'audiolang'
                 ]
-        self.slists() #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
-        self.extrasegments() #tell me if there's anything not in a V or C regex.
+        _step('slists',self.slists) #sets: self.c self.v, not done with self.segmentsnotinregexes[lang]
+        _step('extrasegments',self.extrasegments) #tell me if there's anything not in a V or C regex.
         # self.findduplicateforms()
         self.findduplicateexamples()
         """Think through where this belongs; what classes/functions need it?"""
@@ -557,42 +652,55 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                             }
     def get_senses_by_word_list_n(self):
         self.sensesbyword_list_n={s.word_list_n:s for s in self.senses}
-    def slicebyps_profile(self):
+    def slicebyps_profile(self,ftype='lc'):
         # Only REAL profiles: skip empty/Invalid. A word with no confirmed/affirmed
         # CV profile has no profile DATA yet, so it isn't sliced (and the segment
         # status board won't list an empty/no-data profile).
         self.sensesbyps_profile={ps:{profile:[i for i in self.sensesbyps[ps]
-                                            if i.cvprofilevalue() == profile]
-                                    for profile in {i.cvprofilevalue()
+                                            if i.cvprofilevalue(ftype) == profile]
+                                    for profile in {i.cvprofilevalue(ftype)
                                                     for i in self.sensesbyps[ps]}
                                     if profile and profile!='Invalid'
                                     }
                                 for ps in self.sensesbyps
                                 }
         # log.info(f"{self.sensesbyps_profile=}")
-    def get_ps_profiles(self):
+    def get_ps_profiles(self,ftype='lc'):
         """The set of REAL profiles per ps (empty/Invalid excluded — no data)."""
-        self.ps_profiles={k:{p for p in (i.cvprofilevalue() for i in v if i)
+        self.ps_profiles={k:{p for p in (i.cvprofilevalue(ftype) for i in v if i)
                             if p and p!='Invalid'}
                             for k,v in self.sensesbyps.items()
                             }
         # log.info(f"{self.ps_profiles=}")
-    def load_ps_profiles(self):
+    def load_ps_profiles(self,ftype='lc'):
+        """Rebuild the ps/profile slices FOR ONE WORD FORM. Every profile here
+        is read off the `cvprofile_<ftype>` field, so the whole picture — which
+        words have a profile, which profiles exist, what the boards count — is
+        relative to `ftype` and has to be rebuilt when the user picks another
+        form. It defaulted to 'lc' internally until 2026-09-30, which made
+        `Sort.reload_for_word_check` a no-op by construction: the form chooser
+        moved and the board never changed. Callers that know the live form pass
+        `params.ftype()`; the default is for LIFT load, before params exist.
+
+        Only 'lc' has ever been profiled in any project, so another form gives a
+        near-empty picture until it is profiled. That is the honest answer and
+        the intended one — better than showing citation data under a Root
+        heading."""
         self.slicebyps()
-        self.slicebyps_profile()
-        self.get_ps_profiles()
-    def annotation_values_by_ps_profile(self):
+        self.slicebyps_profile(ftype)
+        self.get_ps_profiles(ftype)
+    def annotation_values_by_ps_profile(self,ftype='lc'):
         # sort out cvt (e.g., V1 is 'V') later
         return {ps:{profile:{check:{v
                             for sense in self.sensesbyps_profile[ps][profile]
                             for c,v in sense.annotationvaluedictbyftypelang(
-                                            'lc',self.analang).items()
+                                            ftype,self.analang).items()
                             if v
                             if c==check
                                     }
                             for sense in self.sensesbyps_profile[ps][profile]
                             for check in sense.annotationkeysbyftypelang(
-                                                    'lc',self.analang)
+                                                    ftype,self.analang)
                             }
                     for profile in self.ps_profiles[ps]
                     if profile
@@ -652,6 +760,13 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 }
     def verification_values_by_ps_profile(self):
         # sort out cvt (e.g., V1 is 'V') later
+        # STILL HARDCODED TO 'lc', deliberately (2026-09-30). Its siblings above
+        # now take an ftype, because a per-form read under the wrong form is a
+        # silent wrong answer; this one has NO CALLERS, so it can't give one.
+        # Kept rather than deleted because more of this file has to learn about
+        # forms as analysis moves past lc, and this is one of the places that
+        # will need it. Clean it up — convert or delete — with that pass, not
+        # piecemeal now.
         return {ps:{profile:{check:{v for k,v
                                     in {i for j in [
                                     sense.getcvverificationkeys('lc')[1].items()
@@ -686,6 +801,22 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     ]
                 for k in keys
                 }
+        # ONE PASS. This built the key set, then rescanned every sense once
+        # PER KEY to collect the ids for it — so `imgselectiondir` and
+        # `collectionglosses` were evaluated len(keys)×len(senses) times, and
+        # both are properties that do work. It is the `dict_by` shape again
+        # (the rescan-instead-of-grouping item), and it costs nothing when
+        # every sense has an image directory and everything when none does,
+        # which is exactly the situation it exists to report on.
+        #   Same keys, same ids, same order: the group lists come out in
+        # sense order either way.
+        errors={}
+        for i in self.senses:
+            if i.imgselectiondir:
+                continue
+            errors.setdefault((i.cawln,', '.join(i.collectionglosses)),
+                              []).append(i.id)
+        keys=set(errors)
         # log.info("Errors ({}): {}".format(len(errors),errors))
         if keys:
             log.info("keys ({}): {}".format(len(keys),list(keys)[:min(len(keys)-1,5)]))
@@ -698,39 +829,57 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 "{}-{} ({}): {}"
                 "".format(cawl,glosses,len(errors[(cawl,glosses)]),
                 errors[(cawl,glosses)][:min(len(errors[(cawl,glosses)]),5)]))
+    def _group_entries_by(self, textof, keepnone=False):
+        """{lang: {text: [entries with that text]}} in ONE PASS per language.
+
+        These three were the `dict_by` shape, and the most expensive instance
+        of it left after the 1.15.23 sweep (the rescan-instead-of-grouping
+        item). Written out, the old form was:
+
+            {l:{t:[j for j in self.entries if t == j.lx.textvaluebylang(l)]
+                for t in [i.lx.textvaluebylang(l) for i in self.entries]
+                if t}
+             for l in self.analangs}
+
+        The key list is one entry per ENTRY, not per distinct text — so for a
+        lexicon of n entries it rescans all n entries n times, calling
+        `textvaluebylang` on each: n² calls, ~2.9 million on Kent's 1700-entry
+        Demo. `slicebylc` carried a hand-written "#1.14s" at its call site
+        (:148) and sat inside the 4.2-second gap that the boot profile puts
+        before `legacylangconvert` (2026-09-14).
+
+        THE RESULT IS IDENTICAL, not merely equivalent: a dict comprehension
+        keyed on repeated values keeps the FIRST occurrence's position, which
+        is entry order, and `setdefault` inserts on first occurrence too; the
+        grouped lists are in entry order either way, duplicates included.
+
+        `keepnone` because `slicebypl` did NOT filter empty keys and the
+        other two did — preserved rather than tidied, since a caller may be
+        reading `entriesbypl[l][None]`.
+        """
+        out={}
+        for l in self.analangs:
+            bylang={}
+            for i in self.entries:
+                t=textof(i,l)
+                if t or keepnone:
+                    bylang.setdefault(t,[]).append(i)
+            out[l]=bylang
+        return out
     def slicebylx(self):
         #This can be converted to by profile in main.py
-        self.entriesbylx={l:{t:[j for j in self.entries
-                                    if t == j.lx.textvaluebylang(l)
-                                ]
-                            for t in [i.lx.textvaluebylang(l)
-                                        for i in self.entries]
-                            if t #don't give None keys
-                            }
-                            for l in self.analangs
-                        }
+        self.entriesbylx=self._group_entries_by(
+                            lambda i,l: i.lx.textvaluebylang(l))
     def slicebylc(self):
         #This can be converted to by profile in main.py
-        self.entriesbylc={l:{t:[j for j in self.entries
-                                    if t == j.lc.textvaluebylang(l)
-                                ]
-                            for t in [i.lc.textvaluebylang(l)
-                                        for i in self.entries]
-                            if t #don't give None keys
-                            }
-                            for l in self.analangs
-                        }
+        self.entriesbylc=self._group_entries_by(
+                            lambda i,l: i.lc.textvaluebylang(l))
     def slicebypl(self):
         """Is this used? if so, 'Plural' here should be generalized."""
         #This can be converted to by profile in main.py
-        self.entriesbypl={l:{t:[j for j in self.entries
-                                    if t == j.fieldvalue('Plural',l)
-                                ]
-                            for t in [i.fieldvalue('Plural',l)
-                                        for i in self.entries]
-                            }
-                            for l in self.analangs
-                        }
+        self.entriesbypl=self._group_entries_by(
+                            lambda i,l: i.fieldvalue('Plural',l),
+                            keepnone=True)
     def slicebyimp(self):
         """Is this used? if so, .imp should be updated."""
         raise
@@ -1167,6 +1316,256 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 e.attrib['dateModified']=getnow()
         if write:
             self.write()
+    def _log_parse_failure(self,e):
+        """Say WHY and WHERE a LIFT wouldn't parse, and WHICH BYTES we read.
+
+        Two possibilities have to be told apart, and until now nothing let us
+        (Kent 2026-08-26: a `git checkout HEAD -- <lift>` restored the file and it
+        STILL failed to load):
+          a. the committed file is itself corrupt — corruption reached history;
+          b. the file is fine on disk and something mangles it during load.
+        The size + sha256 below decide it: compare them against the committed
+        blob (`git show HEAD:<file> | sha256sum`, `| wc -c`). Same digest means
+        the committed bytes really are bad — case (a). Different means something
+        rewrote the file after checkout — case (b), and the mtime says when."""
+        fn=str(self.filename)
+        log.error("LIFT PARSE FAILED: %s", fn)
+        log.error("LIFT PARSE FAILED: %s: %s", type(e).__name__, e)
+        try:
+            import hashlib
+            st=os.stat(fn)
+            h=hashlib.sha256()
+            with open(fn,'rb') as f:
+                for chunk in iter(lambda: f.read(1<<20), b''):
+                    h.update(chunk)
+            log.error("LIFT PARSE FAILED: %d bytes, mtime %s, sha256 %s "
+                    "(compare: `git show HEAD:%s | sha256sum`)",
+                    st.st_size,
+                    time.strftime('%Y-%m-%d %H:%M:%S',
+                                time.localtime(st.st_mtime)),
+                    h.hexdigest(), pathlib.Path(fn).name)
+        except Exception as ex:
+            log.error("LIFT PARSE FAILED: couldn’t stat/hash it: %s", ex)
+        # ElementTree's ParseError carries (line, column); show that line and its
+        # neighbours, which is usually the whole diagnosis.
+        pos=getattr(e,'position',None)
+        try:
+            with open(fn,'r',encoding='utf-8',errors='replace') as f:
+                lines=f.readlines()
+            log.error("LIFT PARSE FAILED: %d lines", len(lines))
+            if pos:
+                ln,col=pos
+                log.error("LIFT PARSE FAILED: at line %s, column %s", ln, col)
+                for i in range(max(0,ln-3), min(len(lines), ln+2)):
+                    log.error("LIFT PARSE FAILED: %s%5d| %.300s",
+                            '>>' if i==ln-1 else '  ', i+1,
+                            lines[i].rstrip('\n'))
+            # The tail regardless: truncation is the failure we have in hand, and
+            # it shows there rather than at the reported position.
+            log.error("LIFT PARSE FAILED: last 200 chars: %r",
+                        ''.join(lines[-3:])[-200:] if lines else '')
+        except Exception as ex:
+            log.error("LIFT PARSE FAILED: couldn’t read it as text: %s", ex)
+        self._log_committed_version(fn)
+    def _log_committed_version(self,fn):
+        """The COMMITTED bytes beside the on-disk ones, so the two cases separate
+        themselves in the log instead of by hand (Kent 2026-08-26).
+
+        Same digest as the file above ⇒ the corruption is IN HISTORY, and a
+        checkout can only restore it — which is exactly what he saw. A committed
+        tail that ends properly while the disk one doesn't ⇒ the file was fine
+        when committed and something broke it since.
+
+        `HEAD:./<name>` resolves relative to `-C <dir>`, so this needs no
+        repo-relative path. Bounded and best-effort: a lexicon that isn't in a
+        repo, or a git that isn't there, is a normal answer, not an error."""
+        try:
+            import subprocess, hashlib
+            p=pathlib.Path(fn)
+            r=subprocess.run(['git','-C',str(p.parent),'show',
+                            'HEAD:./{}'.format(p.name)],
+                            capture_output=True,timeout=30)
+            if r.returncode:
+                log.error("LIFT PARSE FAILED: no committed copy to compare "
+                        "(git said: %.200s)",
+                        (r.stderr or b'').decode('utf-8','replace').strip())
+                return
+            blob=r.stdout
+            log.error("LIFT PARSE FAILED: committed HEAD copy is %d bytes, "
+                    "sha256 %s", len(blob),
+                    hashlib.sha256(blob).hexdigest())
+            tail=blob.decode('utf-8','replace').splitlines()[-5:]
+            log.error("LIFT PARSE FAILED: committed HEAD copy, last 5 lines:")
+            for l in tail:
+                log.error("LIFT PARSE FAILED: HEAD| %.300s", l)
+            if b'</lift>' not in blob[-512:]:
+                log.error("LIFT PARSE FAILED: the COMMITTED copy is ALSO cut "
+                        "off — the corruption is in history, so a checkout "
+                        "cannot fix it.")
+        except Exception as ex:
+            log.error("LIFT PARSE FAILED: couldn’t read the committed copy: %s",
+                        ex)
+    MAX_REPAIRS=200 # a parse reports ONE error at a time; bound the loop
+    # An attribute value that swallowed stray quotes. Anchored so the mess must be
+    # the LAST attribute on the line and every attribute BEFORE it well-formed
+    # ([\w:-]+="[^"]*"), which is exactly the shape a Python repr produces:
+    #     <trait name="Noun-infl-class" value="(('ngom','li'),('ngombi',"'"))" />
+    # The greedy middle then runs to the last quote before `/>`. Refusing the
+    # general case is deliberate: on a line with several damaged attributes, a
+    # greedy grab would happily produce something that PARSES but means something
+    # else, which is worse than failing to load.
+    _BAD_ATTR=re.compile(r'^(\s*<[\w:-]+(?:\s+[\w:-]+="[^"]*")*\s+[\w:-]+=")'
+                        r'(.*)'
+                        r'("\s*/?>\s*)$')
+    def _repair_unparseable(self,e):
+        """Repair known malformations IN PLACE, verify by re-parsing, and keep the
+        original. Returns True only if the file now parses.
+
+        Rolling back to a committed revision was the plan for corruption — but for
+        this class repair is strictly better: a rollback discards whatever the
+        user has done since, while escaping a quote discards nothing. And it is
+        the only thing that helps when the bad bytes are ALSO the committed ones.
+
+        Only ever touches a file that has ALREADY failed to parse, always writes
+        `<name>.unparseable-<stamp>` first, and reverts if the repair doesn't
+        actually fix it — so the worst case is the file we started with."""
+        try:
+            with open(str(self.filename),'r',encoding='utf-8') as f:
+                lines=f.readlines()
+        except Exception as ex:
+            log.error("LIFT REPAIR: can’t read the file to repair it: %s",ex)
+            return False
+        fixed=[]
+        for _n in range(self.MAX_REPAIRS):
+            pos=getattr(e,'position',None)
+            if not pos:
+                break #nothing to aim at
+            ln=pos[0]
+            if not 0<ln<=len(lines):
+                break
+            m=self._BAD_ATTR.match(lines[ln-1])
+            if not m or '"' not in m.group(2):
+                break #not a shape we know how to fix; don't guess
+            head,val,tail=m.groups()
+            # Escape BARE ampersands only — one already part of an entity
+            # (&amp; &#39; &#x27;) must be left alone, or a valid value gets
+            # double-escaped into nonsense while we are "repairing" it.
+            val=re.sub(r'&(?![a-zA-Z][a-zA-Z0-9]*;|#[0-9]+;|#x[0-9a-fA-F]+;)',
+                        '&amp;',val)
+            lines[ln-1]=head+val.replace('"','&quot;')+tail
+            fixed.append(ln)
+            try:
+                from xml.etree import ElementTree as _ET
+                _ET.fromstring(''.join(lines))
+                break #parses now
+            except Exception as e2:
+                e=e2 #next error; keep going
+        else:
+            log.error("LIFT REPAIR: gave up after %d repairs",self.MAX_REPAIRS)
+            return False
+        if not fixed:
+            return False
+        # Verify BEFORE writing anything: a repair that doesn't parse is not a
+        # repair, and we must not leave the user worse off than we found them.
+        try:
+            from xml.etree import ElementTree as _ET
+            _ET.fromstring(''.join(lines))
+        except Exception as ex:
+            log.error("LIFT REPAIR: repaired %d line(s) and it STILL doesn’t "
+                    "parse (%s); leaving the file alone",len(fixed),ex)
+            return False
+        keep='{}.unparseable-{}'.format(self.filename,
+                    time.strftime('%Y%m%d-%H%M%S'))
+        try:
+            import shutil
+            shutil.copy2(str(self.filename),keep)
+            with open(str(self.filename),'w',encoding='utf-8') as f:
+                f.writelines(lines)
+        except Exception as ex:
+            log.error("LIFT REPAIR: couldn’t write the repair: %s",ex)
+            return False
+        msg=_("Your lexicon wouldn’t open: {n} attribute value(s) contained "
+            "quotes that hadn’t been escaped (line(s) {lines}). A-Z+T has "
+            "repaired them and kept the original at {keep}. Nothing was "
+            "lost.").format(n=len(fixed),
+                        lines=', '.join(str(i) for i in fixed),keep=keep)
+        log.warning("LIFT REPAIR: fixed line(s) %s; original kept at %s",
+                    fixed,keep)
+        try:
+            NotifyUser(msg,title=_("Lexicon repaired"))
+        except Exception as ex:
+            log.info("couldn’t report the repair: %s",ex)
+        return True
+    CATASTROPHIC_SHRINK=4 # refuse a save under 1/Nth of what it replaces
+    def _written_file_sane(self,tmp,filename):
+        """(ok, why) — cheap sanity on the file we just wrote, BEFORE it replaces
+        the user's data or goes to the daemon.
+
+        A production machine is holding a LIFT that ends about five entries in,
+        mid-`<field>` (Kent 2026-08-26). Whatever produced it, the lesson is that
+        a writer returning without raising does NOT mean the bytes are good — so
+        check before committing to them. Without this gate a truncated file is not
+        merely a local loss: on a collab project it gets committed and pushed, and
+        one machine's bad write reaches the whole team.
+
+        Three cheap checks first, because they fail fast and name the problem
+        plainly:
+          - empty/missing;
+          - doesn't end in the closing tag — i.e. TRUNCATED;
+          - collapsed to a fraction of the file it would replace. Same shape as
+            azt-collab's `_looks_catastrophic_output`, which exists because a
+            merge there once went 1700 entries to 1 field.
+
+        Then a FULL PARSE. An earlier version of this stopped at the cheap three,
+        reasoning that parsing a multi-MB LIFT roughly doubles the local cost of
+        a save (~0.07s indent + ~0.21s serialise). The evidence overruled it: the
+        second corruption found (Kent 2026-08-26) was a `<trait>` whose value
+        carried an unescaped `"`, from a Python tuple repr —
+
+            value="(('ngom', 'li'), ('ngombi', "'"))"
+
+        — a file that is complete, correctly terminated, and full-sized, and NOT
+        well-formed. The cheap checks pass it; only a parse catches it. Since the
+        thing being protected is the entire lexicon, and the alternative is
+        shipping malformed XML to the user's disk and (on a collab project) to
+        their teammates, the parse is worth its cost."""
+        try:
+            n=os.path.getsize(tmp)
+        except OSError as e:
+            return False,_("it isn’t there ({e})").format(e=e)
+        if not n:
+            return False,_("it is empty")
+        try:
+            with open(tmp,'rb') as f:
+                f.seek(max(0,n-512))
+                tail=f.read()
+        except OSError as e:
+            return False,_("it can’t be read back ({e})").format(e=e)
+        if b'</lift>' not in tail:
+            return False,_("it is cut off — no closing tag at the end")
+        try:
+            old=os.path.getsize(filename)
+        except OSError:
+            old=0 #first write, or replacing nothing: nothing to compare against
+        if old and n*self.CATASTROPHIC_SHRINK<old:
+            return False,_("it is {n} bytes, replacing {old} — a collapse, not "
+                    "an edit").format(n=n,old=old)
+        # The real gate: does it PARSE? Everything above is a fast reject.
+        try:
+            from xml.etree import ElementTree as _ET
+            _t0=time.perf_counter()
+            _ET.parse(tmp)
+            _el=time.perf_counter()-_t0
+            if _el>0.5:
+                log.info("save validation parsed %d bytes in %.2fs",n,_el)
+        except Exception as e:
+            # Say WHERE, exactly as the load-side failure does — the position is
+            # most of the diagnosis, and here we still have the good file.
+            _pos=getattr(e,'position',None)
+            _at=_(" at line {ln}, column {col}").format(ln=_pos[0],col=_pos[1]
+                        ) if _pos else ''
+            return False,_("it isn’t valid XML{at}: {e}").format(at=_at,e=e)
+        return True,''
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
@@ -1219,7 +1618,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
     def _log_save_cost(self,nbytes,t_indent,t_ser,t_submit,outcome,
                         t_replace=None):
         """One greppable line per save: where the time went, and how big the file
-        is. Phase 0 of desktop_save_cost_reduction.md — a one-line edit rewrites
+        is. Phase 0 of the azt-collab desktop save-cost item — a one-line edit rewrites
         the whole document, so the split between the full-tree reindent, the
         serialize+write, and the daemon submit is what decides whether per-entry
         submission (Phase 3) is worth a contract change or whether the cost is all
@@ -1244,7 +1643,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # log.info(f"{filename=} ({type(filename)=})")
         write=0
         nodes=self.nodes
-        # SAVE-COST INSTRUMENTATION (2026-07-30, desktop_save_cost_reduction.md
+        # SAVE-COST INSTRUMENTATION (2026-07-30, the azt-collab desktop save-cost item,
         # Phase 0). A one-line edit rewrites the WHOLE file — easily 16 MB — so
         # before changing anything we need the split: how much is the full-tree
         # reindent, how much the serialize+write, how much the daemon submit. These
@@ -1262,12 +1661,64 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             # log.info(f"{tmp=} ({type(tmp)=})")
             _t0=time.perf_counter()
             tree.write(tmp, encoding="UTF-8")
+            # FSYNC BEFORE THE RENAME. os.replace below gives ATOMICITY — the
+            # destination is never half-written by us — but NOT DURABILITY: the
+            # rename can reach the disk while the new file's data is still in the
+            # page cache, so a crash or power loss leaves the right filename with
+            # a missing tail. That is not theoretical: a production machine is
+            # holding a LIFT that ends about five entries in, mid-<field> node
+            # (Kent 2026-08-26). ext4's default data=ordered mostly hides this;
+            # Windows, network shares and cloud-synced folders do not.
+            #   Cost is one flush of a file we just wrote, on a path that already
+            # takes ~0.2s to serialise — and the thing it protects is the whole
+            # lexicon.
+            #   FSYNC FAILURE FAILS THE SAVE. It used to warn and carry on, which
+            # was worse than doing nothing: if fsync fails with ENOSPC the tail
+            # may never have reached the disk, but the validation below reads the
+            # file back THROUGH THE PAGE CACHE, sees it complete, and cheerfully
+            # replaces the user's good lexicon with one that is short after the
+            # next reboot. That is the exact failure this is here to prevent, and
+            # it is Kent's own precondition: no commit after a write unless the
+            # write completed (2026-08-26).
+            with open(tmp,'rb+') as _f:
+                _f.flush()
+                os.fsync(_f.fileno())
             _t_ser=time.perf_counter()-_t0
             write=True
         except Exception as e:
             error=_("There was a problem writing to partial file: "
                 "{tmp} ({e})").format(tmp=tmp,e=e)
             log.error(error)
+        if write:
+            _ok,_why=self._written_file_sane(tmp,filename)
+            if not _ok:
+                # Keep the bad bytes under a name the NEXT save won't reuse: the
+                # top of this method removes `<name>.part` before writing, so
+                # leaving it there would destroy the only copy of whatever went
+                # wrong — and possibly the only copy of the user's edits.
+                _kept=tmp
+                try:
+                    _kept='{}.corrupt-{}'.format(tmp,
+                                time.strftime('%Y%m%d-%H%M%S'))
+                    os.replace(tmp,_kept)
+                except Exception as e:
+                    log.error("could not set aside the bad %s: %s",tmp,e)
+                    _kept=tmp
+                error=_("Refusing to save {name}: the file just written looks "
+                    "corrupt ({why}). Your previous file has NOT been touched, "
+                    "so nothing already saved is lost — but THIS SESSION’S "
+                    "CHANGES ARE NOT SAVED. The bad file is kept at {kept} in "
+                    "case it can be recovered.").format(
+                        name=pathlib.Path(filename).name,why=_why,kept=_kept)
+                log.error("REFUSING SAVE: %s (%s); bad file kept at %s",
+                            filename,_why,_kept)
+                # The user MUST hear this: a silent refusal leaves them believing
+                # their work is saved, which is worse than the corruption.
+                try:
+                    NotifyUser(error,title=_("Save refused"))
+                except Exception as e:
+                    log.error("could not report the refused save: %s",e)
+                write=False
         if write:
             # Collab seam (see backend/core/collab.py): when this db
             # belongs to a daemon-connected project, the .part handoff
@@ -1323,6 +1774,18 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             try:
                 _t0=time.perf_counter()
                 os.replace(tmp,filename)
+                # And fsync the DIRECTORY, so the rename itself survives a crash:
+                # the file's data is already durable (above), but the directory
+                # entry pointing at it need not be. POSIX only — Windows can't
+                # open a directory, so this is best-effort by design.
+                try:
+                    _dfd=os.open(str(pathlib.Path(filename).parent),os.O_RDONLY)
+                    try:
+                        os.fsync(_dfd)
+                    finally:
+                        os.close(_dfd)
+                except Exception as e:
+                    log.info("directory fsync skipped for %s: %s",filename,e)
                 _t_replace=time.perf_counter()-_t0
                 # Logged AFTER the replace (2026-07-30): the first field numbers
                 # showed 5-6 s between this line and "Done writing to lift", so the
@@ -1484,16 +1947,36 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                                 }
         log.info('Fields found in Entries: {}'.format(self.fieldnames))
     def getsensefieldnames(self,guid=None,lang=None): # all field types in a given entry
-        self.sensefieldnames={l:set([k
-                                    for i in self.senses
-                                    for k in i.fields
-                                    if l in i.fields[k].forms
-                                    if k
-                                    ])
-                                for i in self.senses
-                                for k in i.fields
-                                for l in i.fields[k].forms
-                                }
+        """Which field names carry data in which language, across all senses.
+
+        ONE PASS. It used to be a dict comprehension whose OUTER loops ran
+        over every (sense, field, language) TRIPLE — thousands of them — and
+        rebuilt the inner set by scanning all senses and all their fields for
+        each one. Every triple sharing a language recomputed the identical
+        set and overwrote it, and the whole thing produced five keys.
+
+        Measured on Kent's log, 2026-09-14: **32.6 seconds** of a 53-second
+        boot, between this method's line and `getfieldnames`' — for 1700
+        senses, ~19ms each. The LIFT XML parse that precedes it takes 0.1s.
+        `getfieldnames` just above has the right shape by accident: its outer
+        loop is the ~11 languages, not the data.
+
+        FAITHFUL, including one oddity worth keeping: the old outer loop did
+        not test `if k`, so a language appearing only under an unnamed field
+        still got a key, with an empty set. `setdefault` below preserves
+        that rather than quietly changing what callers see.
+        """
+        names={}
+        for sense in self.senses:
+            fields=sense.fields     # bound once: `fields` is a property on
+                                    # Sense, so `sense.fields[k]` in the
+                                    # inner loop re-ran it per field
+            for k,field in fields.items():
+                for l in field.forms:
+                    names.setdefault(l,set())
+                    if k:
+                        names[l].add(k)
+        self.sensefieldnames=names
         log.info('Fields found in Senses: {}'.format(self.sensefieldnames))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
         self.locations=list(dict.fromkeys(self.get('example/locationfield/form/text',
@@ -1817,7 +2300,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     'qu', #French
                     'mp', 'nt', 'nk', 'ŋk',
                     # 'kw','tw',
-                    'Pk','Pw' #tsh
+                    'Pk','Pw', #tsh
                     'pʰ','tʰ','kʰ','qʰ',
                     'p̚', 't\u031A','k\u031A','q\u031A',#IPA
                     ] #gnd
@@ -1845,7 +2328,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     ]
         #Assuming x is voiceless, per IPA and most useage...
         c['f'][1]=['F','f','s','ʃ','θ','x','h', #not 'S'
-                    'ɦ','χ','ʂ','ɕ','ʁ','ʑ','ʐ' #IPA
+                    'ɦ','χ','ʂ','ɕ','ʁ','ʑ','ʐ', #IPA
                     'ཞ','ཞ', #/ʒa/
                     'ཟ', #/za/
                     'ར', #/ra/
@@ -2342,7 +2825,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info("Filling in empty image fields where possible")
         # self.get_imgdir() #in case this isn't up to date
         log.info("Writing to {}".format(self.imgdir))
-        for sense in self.senses:
+        # enumerate, NOT .index() — see the yield at the end of this loop.
+        total=len(self.senses)
+        for n,sense in enumerate(self.senses):
             # log.info("Working on line number {}".format(sense.word_list_n))
             # log.info("Working on sense {}".format(sense.id))
             # log.info("Working with image field {}".format(sense.illustrationvalue()))
@@ -2353,7 +2838,14 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             # If lift thinks there's a file there, but there isn't,
             # fill in that, too (gating inside the method):
             sense.backfill_illustration()
-            yield self.senses.index(sense)*100/len(self.senses)
+            # `self.senses.index(sense)` scanned the whole sense list to find
+            # the item the loop had just handed us — n²/2 comparisons over
+            # the app's largest collection, spent entirely on saying how far
+            # along we were. It was also wrong on duplicates: .index returns
+            # the FIRST match, so equal senses reported the same percentage
+            # and the bar stalled. (the rescan-instead-of-grouping item;
+            # found by tests/manual/rescan_sweep.py.)
+            yield n*100/total
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
@@ -2401,6 +2893,12 @@ class Node(et.Element):
             log.error("{} node in entry {} has multiple forms for {} tag. "
                     "This is not legal LIFT; please fix this!"
                     "".format(self.tag,self.entry.guid,tag))
+    def set(self,key,value):
+        """Every attribute UPDATE goes through here, as every creation goes
+        through Node.__init__ — the two doors into ElementTree's attrib dict.
+        See `_safe_attrib_value` for what a non-string does at serialisation
+        time, and why nothing catches it later."""
+        return super().set(key,_safe_attrib_value(value,self.tag))
     def tagattrib(self,node,**kwargs):
         if isinstance(node,et.Element):
             tag=node.tag
@@ -2423,6 +2921,7 @@ class Node(et.Element):
     def __init__(self, parent, node=None, **kwargs):
         self.parent=parent
         tag,attrib=self.tagattrib(node,**kwargs) #this pulls from either
+        attrib=_safe_attrib(attrib,tag)
         # log.info("Calling with tag: {}, attrib: {}, kwargs: {}".format(
         #                                                 tag, attrib, kwargs
         #                                                     ))
@@ -2478,6 +2977,9 @@ class Text(Node):
 class ValueNode(Node):
     def myvalue(self,value=None):
         if value:
+            # Type-checked by Node.set — the ONE place that guards attribute
+            # updates, as Node.__init__ guards creation. Don't re-check here:
+            # two copies of the rule drift apart.
             self.set(self.valuename,value)
         elif value == '':
             del self.attrib[self.valuename]
@@ -3164,16 +3666,24 @@ class Sense(Node,FieldParent):
         if not os.path.isdir(rootimgdir):
             from images.to_select_update import ensure_available
             ensure_available()
+            # Whatever was just downloaded is not in any cached listing.
+            file.forget_directory(rootimgdir)
         #These first two depend on real directories being there
         # if self.db.word_list_field_name is set, 
         # self.word_list_n should be a True int()
+        # CACHED: this runs for EVERY SENSE, and the uncached form re-read
+        # `images/toselect/` each time — 2.82s of the LIFT load on Kent's
+        # 1700-entry Demo, which was the whole of what remained after the
+        # comprehension fixes (the rescan-instead-of-grouping item). The
+        # directory is static for a session; `ensure_available` above is the
+        # one thing that can change it, and it drops the cache.
         if self.word_list_n:
-            self.imgselectiondir=[i for i in file.getfilesofdirectory(
+            self.imgselectiondir=[i for i in file.getfilesofdirectory_cached(
                             rootimgdir,
                             regex='_'.join([self.word_list_n,
                                             self.collectionglossesunderlined])+'*'                                )]
         elif self.collectionglossesunderlined:
-            self.imgselectiondir=[i for i in file.getfilesofdirectory(
+            self.imgselectiondir=[i for i in file.getfilesofdirectory_cached(
                                     rootimgdir,
                                     regex='*_'+self.collectionglossesunderlined)]
         if self.imgselectiondir: #unlist if there
@@ -3305,7 +3815,7 @@ class Sense(Node,FieldParent):
     def cvprofilemachinevalue(self,ftype='lc',value=None):
         """The machine-analyzed (computed) profile — the …-x-cvprofile_MT form,
         alongside (never clobbering) the plain user-confirmed form. Thin wrapper
-        over cvprofilevalue(machine=True). See docs/sort_syllables_design.md."""
+        over cvprofilevalue(machine=True). See the sort-syllables design."""
         return self.cvprofilevalue(ftype,value=value,machine=True)
     def uftonevalue(self,value=None,machine=False):
         """Underlying-form tone on the 'tone' field. machine=False → the human
@@ -3369,6 +3879,38 @@ class Sense(Node,FieldParent):
         except KeyError:
             # log.info("No {} type to pull ({})".format(ftype,self.ftypes))
             pass
+    def set_ftype(self,code,name):
+        """Point `code` at the entry field called `name`; unset it if gone.
+
+        TOLD, NEVER DERIVED. `lx` and `lc` are LIFT's own tags, so this class
+        can build those itself. `pl` and `imp` are the app's codes for
+        whichever fields a user decided hold plurals and imperatives, and
+        this module has no way to know that and no business knowing it — so
+        the caller that does supplies the mapping. `name` is the field's
+        LIFT type string ('Plural', 'Pluriel', whatever the project uses);
+        `code` is the app's shorthand for it.
+
+        WHY THIS EXISTS AT ALL: `ftypes` was `{'lx':…, 'lc':…}` plus `'ph'`
+        and nothing else, while a docstring below claimed pl and imp were
+        added at boot, on naming the field and on creating one. No code did
+        any of those, so every ftype-keyed read of a second form —
+        `textvaluebyftypelang`, `nodebyftype`, `formattedform` — returned
+        nothing, silently. Writing worked (`plvalue` takes the name), so the
+        data went in and could not be read back by code. Fixed 2026-09-29.
+
+        RE-POINTS RATHER THAN ACCUMULATES: renaming the field must not leave
+        `pl` resolving to the field the user abandoned, so a name that names
+        nothing here REMOVES the key rather than leaving the old one.
+
+        Returns True when the code now resolves to a field."""
+        if name and name in self.entry.fields:
+            self.ftypes[code]=self.entry.fields[name]
+            return True
+        # Absent is the honest answer for an entry that has no such field
+        # yet: `textvaluebyftypelang` then returns None and the collection
+        # page reads the word as not yet collected, which it is.
+        self.ftypes.pop(code,None)
+        return False
     def textvaluebyftypelang(self,ftype,lang,value=None):
         if ftype in self.ftypes:
             return self.ftypes[ftype].textvaluebylang(lang,value)
@@ -3594,9 +4136,29 @@ class Sense(Node,FieldParent):
         v=self.verificationtextvalue(profile,ftype)
         try:
             v.remove(value)
-            self.verificationtextvalue(profile,ftype,value=v) #remove on []
+        except ValueError:
+            # THE NORMAL CASE, and the old line reported it as a suspected
+            # fault: "tried to remove what wasn't there? (list.remove(x): x not
+            # in list)", at INFO, once per sense. Kent saw six in a row beside
+            # six "Field removal succeeded!" lines and read the pair as the two
+            # stores disagreeing (2026-09-03).
+            #   They are not the same store. categories.removeitemfromgroup
+            # clears the GROUP ANNOTATION — that is the "succeeded" line — while
+            # this clears a VERIFICATION CODE. A word the user is removing from
+            # a group is usually one that was never verified INTO it, so there
+            # is no code to remove and nothing has gone wrong. Say that, at a
+            # level that does not draw the eye.
+            log.log(2,"no %r to remove from the %s %s verification list "
+                    "(it was never verified into it)",value,profile,ftype)
+            return
         except Exception as e:
-            log.info(_("tried to remove what wasn’t there? ({error})").format(error=e))
+            # A real failure — a missing/None list, not an absent member. The
+            # old blanket `except Exception` gave this the same soothing
+            # question-mark message as the no-op above.
+            log.error("could not remove %r from the %s %s verification list: "
+                    "%s",value,profile,ftype,e)
+            return
+        self.verificationtextvalue(profile,ftype,value=v) #remove on []
     def rmverificationnode(self,profile,ftype):
         key=self.verificationkey(profile,ftype)
         # log.info(f"Removing {key} verification from {self}")
@@ -3760,12 +4322,23 @@ class Sense(Node,FieldParent):
         self.id=self.get('id')
         self.psvalue() #set if there
         self.pssubclassvalue() #set if there
-        """ftypes for pl and imp are set on three other occasions:
-        1. Boot, if found on setting (for all entries)
-        2. on setting/changing field name (for all entries)
+        """`lx` and `lc` only — LIFT's own tags, which this class can name
+        itself.
+
+        `pl` and `imp` are NOT built here and cannot be: they are the app's
+        codes for whichever fields a user decided hold plurals and
+        imperatives, and this module is not told that at load time. They
+        arrive later through `set_ftype`, from the layer that knows the
+        setting, on three occasions:
+        1. once the field names are settled — stored or guessed
+        2. on changing a field name (for all entries)
         3. on creating a new field (for that entry)
-        Otherwise, do not expect these to be there!
-        """
+
+        THIS DOCSTRING DESCRIBED THOSE THREE OCCASIONS FOR A LONG TIME AND
+        NOTHING PERFORMED THEM. Until 2026-09-29 `ftypes` was assigned here
+        and in one other place (`'ph'`), so every ftype-keyed read of a
+        second form returned nothing and the promise above was decoration.
+        Do not restore it as a promise; `set_ftype` is the mechanism."""
         self.ftypes={'lx': self.entry.lx,
                     'lc': self.entry.lc
                     }

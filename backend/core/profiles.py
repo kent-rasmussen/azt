@@ -200,7 +200,23 @@ class ProfileAnalyzer:
         self.slists()  # makes s; depends on polygraphs
         analang = self.program.db.analang
         glyphs_present = self.program.status.all_groups_verified_anywhere()
-        for cvt in glyphs_present:
+        # GLYPH cvts ONLY. This loop exists for one purpose: make sure every
+        # ANALYZED glyph group reaches the C&V regexes even when lift.py's
+        # possible∩present scan missed it. 'C' and 'V' are the only cvts whose
+        # groups are glyphs. The syllable pseudo-cvt 'S' has cvprofiles for group
+        # names, and tone 'T' has melodies — neither is a segment, and NO
+        # cvprofile group may enter the segment inventory, ever, for any reason
+        # (Kent 2026-08-28).
+        #   The earlier guard here filtered group ids containing
+        # SyllableSliceDict.SEP, which caught only the SLICED ids ('CVC␟2') and
+        # let the bare group names through — 'C', 'V', '1', 'CVC', 'CVCV',
+        # 'CCVCVCC=CCVC'. Those landed in class 'S' (the 'S'-overload trap: the
+        # syllable cvt and the sonorant class share a letter), and an
+        # undistinguished 'S' folds into C — so the C class ended up matching the
+        # literal 'V' that the V pass had just written, turning CVCVCV into
+        # CCCCCC on every load. Filtering by cvt is the fix; the separator never
+        # was the distinction that mattered.
+        for cvt in [c for c in glyphs_present if c in ('C', 'V')]:
             if cvt == 'V':
                 there = self.s[analang][cvt]
             else:
@@ -211,13 +227,10 @@ class ProfileAnalyzer:
                         if k in self.s[analang]
                         for i in j
                     ]
-            # Keep encoded syllable-slice ids out of the segment inventory. The
-            # syllable pseudo-cvt 'S' collides with the sonorant class 'S' (the
-            # 'S'-overload trap in CONTEXT.md), so all_groups_verified_anywhere()
-            # hands this loop that node's group␟slice 'done' ids. SEP is
-            # collision-free, so filtering it drops only synthetic ids, never a
-            # real grapheme — otherwise those ids poison C-class expansion and
-            # every fromCV() seed regex matches nothing.
+            # Belt-and-braces only: with the cvt filter above, a group␟slice id
+            # can no longer reach this line (those live in the 'S' node). Kept
+            # because a synthetic id is never a grapheme under any future
+            # keying, and it costs one set comprehension.
             fresh = {g for g in glyphs_present[cvt]
                         if SyllableSliceDict.SEP not in g}
             self.s[analang][cvt].extend(fresh - set(there))
@@ -287,6 +300,43 @@ class ProfileAnalyzer:
         becomes a presort group (e.g. 'CVCV' → 'CVC' for a confirmed C_1_C word).
         No-op until primitives are verified. Logging: conversions and invalid
         results once per INPUT profile; syls=None once per sense id."""
+        # 'NA' IS NOT A PROFILE — and this is where 'NAV' came from (Kent found
+        # it 2026-09-02, in this function's own log line: "Syllable presort:
+        # NA → NAV to fit confirmed primitives (#C=C C#=V syls=1)").
+        #   The chain: a user skips a word, which parks it in the 'NA' group;
+        # 'NA' then arrives here as the SELECTED sort value — not the machine
+        # analysis, whatever this function's `profile` parameter and docstring
+        # suggest: scrub_sorts_to_primitives passes the lc ANNOTATION, and the
+        # _MT form still reads 'CV' throughout; the conformer
+        # dutifully makes it fit the confirmed primitives by appending the V
+        # that C#=V demands; and the result PASSES validation, because
+        # _segment_type reads anything that isn't V/Ṽ as a consonant — so 'NAV'
+        # is C-initial, V-final, one vowel run, exactly the confirmed class.
+        # A sentinel went in, a well-formed-looking profile came out, and 9 of
+        # OBT's words were sorted into a group named after a typo-shaped string
+        # that no analysis ever produced (their machine profile is 'CV').
+        #   THE LESSON, worth more than the fix: conforming an input that isn't
+        # of the expected KIND doesn't fail, it launders. The output satisfies
+        # every constraint we thought to check and is still nonsense. So refuse
+        # by VOCABULARY at the door — the same profilelegit test the machine path
+        # applies (getprofileofsense clamps a non-legit result to 'Invalid') and
+        # the by-hand entry page now applies to typed input.
+        #   Returned UNCHANGED, not as 'Invalid': 'NA' is a meaningful parking
+        # value ("NA parks unsortable words", alphabet.py:333). A skipped word
+        # must stay skipped, not become invalid.
+        bad = self.program.params.illegal_profile_symbols(profile)
+        if bad:
+            seen = getattr(self, '_nonprofile_logged', None)
+            if seen is None:
+                seen = self._nonprofile_logged = set()
+            if profile not in seen:
+                seen.add(profile)
+                log.warning("Syllable presort: %r is not a profile (%s not C "
+                        "or V), so NOT fitting it to the primitives — that is "
+                        "how 'NA' became 'NAV'. Left as-is; e.g. sense %s.",
+                        profile, ', '.join(repr(c) for c in bad),
+                        getattr(sense, 'id', '?'))
+            return profile
         beg, end, syls = self._confirmed_primitives(sense, ftype)
         if beg is None and end is None and syls is None:
             return profile  # nothing confirmed → leave the machine analysis alone
@@ -488,7 +538,7 @@ class ProfileAnalyzer:
         if n and write: # see affirm_machine_profiles on write=False
             self.program.maybewrite(definitely=True)
         if n and rebuild:
-            self.rebuild_slices()
+            self.rebuild_slices(ftype)
         return n
 
     def _set_trusted_profile(self, sense, ftype, profile):
@@ -505,15 +555,18 @@ class ProfileAnalyzer:
                                          ftype, profile)
         self.trust_primitives_from_profile(sense, ftype, profile)
 
-    def rebuild_slices(self):
+    def rebuild_slices(self, ftype=None):
         """FULL post-trust rebuild: refresh the db-level ps/profile
         dicts, then re-run the analyzer — run() re-aggregates
         _profilesbysense from the (newly) confirmed cvprofile forms and
         ends by constructing a fresh SliceDict, which registers itself
         as program.slices with real ps/profile priorities.
         db.load_ps_profiles alone leaves the session's SliceDict stale,
-        so a trust looked like a no-op until restart (2026-07-24)."""
-        self.program.db.load_ps_profiles()
+        so a trust looked like a no-op until restart (2026-07-24).
+
+        `ftype` says WHICH FORM's profiles to rebuild from; it defaults to
+        the live one, like every other method here."""
+        self.program.db.load_ps_profiles(ftype or self.program.params.ftype())
         self.run()
     def affirm_machine_profiles(self, ftype=None, rebuild=True, write=True):
         """Accept the straight machine CV analysis as the (confirmed) profile DATA:
@@ -553,7 +606,7 @@ class ProfileAnalyzer:
             # file without them and the "set up profiles?" trigger fires again.
             self.program.maybewrite(definitely=True)
         if rebuild and n:
-            self.rebuild_slices()
+            self.rebuild_slices(ftype)
         return n
 
     def reconcile_profiles_to_primitives(self, ftype=None, rebuild=True,
@@ -587,7 +640,7 @@ class ProfileAnalyzer:
         if n and write: # see affirm_machine_profiles on write=False
             self.program.maybewrite(definitely=True)
         if rebuild and n:
-            self.rebuild_slices()
+            self.rebuild_slices(ftype)
         return n
 
     def scrub_sorts_to_primitives(self, ftype=None):
@@ -616,8 +669,49 @@ class ProfileAnalyzer:
         fixed_sort = cleared_verif = 0
         for s in self.program.db.senses:
             anno = s.annotationvaluebyftypelang(ftype, analang, ftype)
-            if not anno or anno == 'Invalid':
-                continue  # (1) missing sort — never auto-add
+            # ('NA','Invalid') — the pair, as everywhere else that reads a sort
+            # annotation (sorting_engine.py:1337). This site had only 'Invalid',
+            # so a word PARKED by a skip was fed to the conformer, which fitted
+            # 'NA' to the confirmed primitives by appending the V that C#=V
+            # wants and wrote 'NAV' back as the word's legal sort AND its
+            # confirmed profile (Kent reproduced it end to end on 'to',
+            # 2026-09-02). NA is not a profile to repair, it is a decision to
+            # leave alone: the user said "not this one now".
+            if not anno or anno in ('NA','Invalid'):
+                continue  # (1) missing sort, or parked — never auto-add
+            # (1b) REPAIR a sort annotation that is not a profile at all — the
+            # 'NAV' words already in the field (Kent 2026-09-02: ship the repair
+            # with this build). The guards added upstream stop new ones, but a
+            # word already carrying 'NAV' would otherwise keep it for ever: the
+            # conformer now returns such an input UNCHANGED, so (2) below sees
+            # legal == anno and does nothing.
+            #   Clearing both the annotation and the confirmed profile is the
+            # SAME remedy this pass already applies at (3): the word loses its
+            # trusted profile, drops out of segmental slicing, and the
+            # profile-setup trigger asks the user to set it — which is the
+            # honest state, since nothing ever legitimately sorted these words.
+            # The '<profile> lc verification' fields are left alone, as at (3):
+            # they are tagged by the profile they were confirmed under.
+            bad = self.program.params.illegal_profile_symbols(anno)
+            if bad:
+                log.warning("Profile scrub: %r is not a profile (%s not C or "
+                        "V) — clearing the sort and the confirmed profile so "
+                        "the word can be sorted properly; sense %s.",
+                        anno, ', '.join(repr(c) for c in bad),
+                        getattr(s, 'id', '?'))
+                # '', NOT False. Annotation.myvalue clears only on '' —
+                #     if value:          self.set(...)
+                #     elif value == '':  del self.attrib[self.valuename]
+                # — and `False == ''` is False in Python, so passing False
+                # falls through BOTH branches and silently does nothing while
+                # the log above claims a repair. (cvprofilevalue(…, False) is a
+                # different path and does clear; the two idioms differ.)
+                s.annotationvaluebyftypelang(ftype, analang, ftype, '')
+                if s.cvprofilevalue(ftype):
+                    s.cvprofilevalue(ftype, False)
+                    cleared_verif += 1
+                fixed_sort += 1
+                continue
             legal = self.constrain_presort_profile(s, anno, ftype)  # (2)
             if legal and legal != 'Invalid' and legal != anno:
                 s.annotationvaluebyftypelang(ftype, analang, ftype, legal)
@@ -780,16 +874,18 @@ class ProfileAnalyzer:
         analang = self.program.db.analang
         if any(s.annotationvaluebyftypelang(ftype, analang, '#C')
                 for s in self.program.db.senses):
-            tally = {'seeded': 0, 'edges': 0, 'defaulted': 0, 'syls': 0}
+            tally = {'seeded': 0, 'edges': 0, 'defaulted': 0, 'syls': 0,
+                     'backfilled': 0}
             for s in self.program.db.senses:
                 tag = self.program.params.seed_sense_primitives(s, ftype, analang)
                 if tag in tally:
                     tally[tag] += 1
             if any(tally.values()):
                 log.info("Load: seeded syllable primitives (seeded=%d "
-                        "edges-from-form=%d defaulted=%d syls-backfilled=%d).",
+                        "edges-from-form=%d defaulted=%d syls-backfilled=%d "
+                        "other-backfilled=%d).",
                         tally['seeded'], tally['edges'], tally['defaulted'],
-                        tally['syls'])
+                        tally['syls'], tally['backfilled'])
             try:
                 SyllableSliceDict(self.program,
                                 self.program.slices.ps(), ftype).build()

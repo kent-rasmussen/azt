@@ -37,11 +37,22 @@ EXCLUDE_FILES = {"main.py", "test.py", "conftest.py", "setup.py"}
 # Skipped-with-reason rather than failed, so the suite is green but the issue
 # stays visible. If you wire one of these into the app or fix its imports,
 # remove it here so a future regression fails. See AUDIT_FINDINGS.md.
+# FIXED 2026-09-24 RATHER THAN EXCUSED: praatfns, setdefaults and
+# utilities.openclipart each had a bare `import logsetup` / `import urls`.
+# This list called them "standalone scripts"; they were rotted imports that
+# failed from anywhere they would be run, and the entry here made the breakage
+# look intentional. One line each, now covered like everything else.
+#
+# ANYTHING ADDED BELOW SHOULD BE QUESTIONED, NOT ACCOMMODATED. An entry here
+# excuses a module from the one test that would notice it is broken, so it
+# needs a reason that will still be true later — which the three above did not
+# have.
 EXPECTED_NOT_IMPORTABLE = {
-    "harmony_sync": "WIP/orphan: imports absent module `harmony_client`; not imported by the app",
-    "praatfns": "standalone script: Python-2-style bare `import logsetup` (app uses utilities.logsetup); not imported by the app",
-    "setdefaults": "standalone script: bare `import logsetup`; not imported by the app",
-    "utilities.openclipart": "orphan: bare `import urls` (should be utilities.urls); not imported by the app",
+    # Imports `harmony_client`, absent from this repo; never runnable. No
+    # implementation, and no agenda item found for it 2026-09-24 — which is
+    # the part to pick up: how an untracked file earned an exemption here.
+    "harmony_sync": "imports absent module `harmony_client`; untracked, "
+                    "see the note above EXPECTED_NOT_IMPORTABLE",
 }
 
 # Third-party deps that may be absent in a lean/headless test env. A failure to

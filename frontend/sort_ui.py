@@ -310,6 +310,16 @@ class SortPresenter(PresenterBase):
     def sort_button_frame(self, parent, sort_obj, groups, **kwargs):
         return SortButtonFrame(parent, sort_obj, groups, **kwargs)
 
+    def relayout_group_buttons(self, columns):
+        """Re-lay the live sort button frames for a new column count.
+
+        The seam the `buttoncolumns` setter reaches the page through, so the
+        settings layer asks a presenter rather than importing a widget class
+        — the same arrangement as every other backend→frontend call here.
+        Returns the number of frames re-laid; 0 before `Sort!`, when there
+        is no frame yet and the next one built will read the setting itself."""
+        return SortButtonFrame.relayout_all(columns)
+
     def sort_group_button_frame(self, parent, sort_obj, **kwargs):
         return SortGroupButtonFrame(parent, sort_obj, **kwargs)
 
@@ -380,6 +390,50 @@ class SortPresenter(PresenterBase):
                 l['compound'] = 'left'
         l.wrap()
         buttonframe.sortitem = sortitem
+        # The class escape was a button at the BOTTOM of the page until Kent
+        # 2026-08-21 — now it is a right-click on the word, matching the verify
+        # page. Same gate the button had (SortButtonFrame: 'S' sort, non-primitive
+        # check); advancing still means what it meant there.
+        try:
+            params = buttonframe.program.params
+            if (getattr(buttonframe, 'cvt', None) == 'S'
+                    and not params.is_syllable_primitive_check(
+                        getattr(buttonframe, 'check', None))):
+                def advance():
+                    # The word is already out of the live to-sort list, so tell
+                    # sortselected to ADVANCE rather than read the now-empty
+                    # selection as Exit (which fired the spurious 'not done'
+                    # warning). Mirrors 'Not {profile}'.
+                    buttonframe.task._notprofile_advance = True
+                    if getattr(buttonframe, 'sortitem', None):
+                        buttonframe.sortitem.destroy()
+                self.attach_context_menu(l, self.class_escape_items(
+                            buttonframe.task, sense, on_applied=advance))
+            elif (getattr(buttonframe, 'cvt', None) != 'S'
+                    and not getattr(buttonframe, 'macrosort', False)
+                    and buttonframe.program.slices.profile()):
+                # SEGMENTAL/TONE: 'Not {profile}' on the word (Kent 2026-08-31).
+                # Same gesture the verify page already offers
+                # (sorting_engine's `elif profile:` menu item) and the same
+                # action as the sort page's own button, which STAYS below for
+                # now — two affordances, one wording, deliberately identical.
+                # macrosort is excluded because the thing presented there is a
+                # GROUP, not a word, so "not this profile" has no referent.
+                profile = buttonframe.program.slices.profile()
+                def notprofile():
+                    # Mirrors sort_buttons.getanotherskip's notprofile() — keep
+                    # the two in step, and if that button is ever removed this
+                    # becomes the only copy.
+                    todo = buttonframe.task.itemstosort()
+                    if todo:
+                        buttonframe.task.unverify_profile(todo[0])
+                    # Advance with NO group chosen → maybesort restarts without it.
+                    if getattr(buttonframe, 'sortitem', None):
+                        buttonframe.sortitem.destroy()
+                self.attach_context_menu(l, [
+                    (_("Not {profile}").format(profile=profile), notprofile)])
+        except Exception as e:
+            log.info("sort-page class-escape menu skipped: %s", e)
         return sortitem
 
     def build_present_group(self, runwindow_frame, buttonframe, sort_obj,
@@ -421,8 +475,193 @@ class SortPresenter(PresenterBase):
                 anchor='c', sticky='sew')
         buttonframe = SortButtonFrame(groupsFrame, sort_obj, groups,
                                      macrosort=macrosort,
+                                     joinable=True,
                                      row=1, sticky='nsew', columnspan=2)
+        # WRAP THESE ROWS TOO. The verify page got this on 2026-09-02 and this
+        # page did not, because they are separate builders — so `midrib` still
+        # ran off the right edge here, clipped mid-word at the scrollbar, while
+        # the verify page had been fixed (Kent 2026-09-03, same session).
+        #   groupsFrame, NOT the scroller: it is grid column 1 with weight 1, so
+        # its width comes from the LAYOUT (the window minus the icon column),
+        # where a ScrollingFrame's canvas/content are sized by what is inside
+        # them and cannot be measured to size their own children.
+        #   maxdepth=5: rows here are deeper than on the verify page —
+        # buttonframe → SortGlyphGroupButtonFrame → row frame → the labelled
+        # button — and the helper's default of 2 would not reach them.
+        #   reserve is A STARTING GUESS, not a measurement: each row also holds
+        # the group label, the play button and the profile tag as siblings of
+        # the text, and I cannot read their widths from here. The helper logs
+        # the width it used, so one run says whether this is right; over-wide is
+        # visible and reportable, under-wide reads as a font bug.
+        #   runwindow.frame, NOT groupsFrame — measured, not guessed (Kent's
+        # DIAG, 2026-09-03): groupsFrame settles at 656-686px while its rows
+        # render ~1200, so it is not the width the rows actually get, whereas
+        # the verify page's runwindow.frame reports 1438 and lays out correctly.
+        # Same container as the verify page, which is one less thing to differ.
+        #   reserve=500 is now ARITHMETIC rather than an estimate: the row
+        # carries a group label (~180), a play button (~100), the profile tag
+        # (~90) and borders (~40) beside the text, ≈440, plus the scrollbar. On
+        # a 1438px frame that leaves ~938, less the ~60px illustration the
+        # helper subtracts per target, ≈878 — which is the ~870 the overflowing
+        # rows needed.
+        # reserve=120 now means only the RIGHT margin — profile tag + scrollbar.
+        # Everything left of the text (group label, play button, illustration)
+        # is measured from the target's own offset, so the labelled and
+        # unlabelled variants of this page no longer need different numbers.
+        #   THE WINDOW is the container — the AVAILABLE width, margins included.
+        #
+        # Not the box (`buttonframe`): the box hugs its content and the content
+        # is what we are wrapping, so measuring it is circular — it wrapped too
+        # early before a refresh and CLIPPED after (Kent 2026-09-04). Not
+        # `runwindow.frame` either: that stops at the centred block's edge, and
+        # the dead margins around it are DELIBERATE but are also space the
+        # scroller may grow INTO rather than wrap ("those margins are space that
+        # I would expect we increase the scrolling frame into, rather than
+        # wrap").
+        #
+        # So the budget is the window minus what is actually to the row's left,
+        # minus a right margin. The offset is MEASURED from the container's left
+        # edge to each target, so it absorbs the left margin, the icon column
+        # and the row's own chrome without any of them being estimated — which
+        # is what stops the labelled and unlabelled variants needing different
+        # numbers. `reserve` is only the right-hand allowance.
+        ui.wrap_to_container(runwindow,cols=1,reserve=120,
+                        targets_parent=buttonframe,maxdepth=5)
         return groupsFrame, buttonframe
+
+    def attach_group_rename(self, widgets, parent, task, group,
+                           on_renamed=None):
+        """Right-click → "this group is misnamed" on every surface that shows the
+        profile NAME: the verify page's title, instructions and last button
+        (Kent 2026-08-24 — the same trio `syllable_group_name`'s docstring
+        names). Deliberately NOT the group button beside "Reverify this group":
+        reverify appears alone.
+
+        No-op outside the syllable PROFILE check — the primitives' groups
+        ('C'/'V', syllable counts) are not names anyone renames."""
+        try:
+            params=task.program.params
+            if getattr(task,'cvt',None)!='S':
+                return
+            if params.is_syllable_primitive_check(params.check()):
+                return
+            items=[(_("These words aren’t {group}…").format(group=group),
+                    lambda: self.ask_group_rename(parent, task, group,
+                                                on_renamed=on_renamed))]
+            for w in widgets:
+                if w is not None:
+                    self.attach_context_menu(w, items)
+        except Exception as e:
+            log.info("group-rename menu skipped: %s", e)
+
+    def ask_group_rename(self, parent, task, group, on_renamed=None):
+        """'These words aren't {group}…' — page 1. The same chooser
+        `pick_syllable_profile` uses for ONE word, with the verb changed: it
+        renames the GROUP. Legal profiles for this class that aren't already in
+        play, plus 'Other…' → by-hand entry."""
+        params=task.program.params
+        beg,syls,end=params.parse_profile_class(task.program.slices.profile())
+        if beg is None:
+            log.info("ask_group_rename: no profile class set; ignoring.")
+            return
+        options=[p for p in params.unused_profiles_for_class(beg,syls,end,
+                                                    limit=12) if p!=group]
+        w=ui.Window(parent, title=_("What is this group really?"), exit=False)
+        ui.Label(w.frame, text=_("These words are all marked {group}. "
+                    "What should they be?").format(group=group),
+                    font='instructions', row=0, column=0, sticky='ew')
+        def apply(new):
+            w.destroy()
+            task.rename_profile_group(group,new)
+            if on_renamed:
+                on_renamed()
+        # THE OPTIONS SCROLL; THE ESCAPES DO NOT (Kent 2026-08-31, Windows:
+        # "bottom options run off the page"). Everything used to be gridded
+        # straight into w.frame — up to twelve profile buttons plus the two
+        # escapes, fifteen rows at font 'normal' — so on a short or scaled
+        # screen the page simply ran past the bottom edge. The rows that fell
+        # off were the LAST two, i.e. 'Other…' and 'Cancel', and this window is
+        # built exit=False, so a user who cannot reach Cancel has no button at
+        # all. Put the variable-length list in a scroll frame and keep the
+        # fixed escapes outside it, always on screen — the same shape Kent
+        # asked for on the sibling entry page ("the OK|these groups line should
+        # be just under the field").
+        w.frame.grid_rowconfigure(1, weight=1)
+        w.frame.grid_columnconfigure(0, weight=1)
+        scroll=ui.ScrollingFrame(w.frame, row=1, column=0, sticky='nsew')
+        r=0
+        for prof in options:
+            ui.Button(scroll.content, text=prof, cmd=lambda p=prof:apply(p),
+                        anchor='w', font='normal', row=r, column=0,
+                        sticky='ew'); r+=1
+        if not options:
+            ui.Label(scroll.content,
+                        text=_("(every simple profile here is already used)"),
+                        font='instructions', row=r, column=0, sticky='ew')
+        ui.Button(w.frame, text=_("Other… (set a profile by hand)"),
+                    cmd=lambda:self._group_rename_freeentry(w, parent, task,
+                                                group, beg, syls, end, apply),
+                    anchor='w', relief='flat', font='normal',
+                    row=2, column=0, sticky='ew')
+        ui.Button(w.frame, text=_("Cancel — go back"), cmd=w.destroy,
+                    anchor='w', relief='flat', font='normal',
+                    row=3, column=0, sticky='ew')
+        # Reflow or the list is invisible (grid_propagate(0)) — but SCHEDULED
+        # and only once the window is really mapped: reflow drains
+        # synchronously, and XWayland deadlocks draining into an unmapped
+        # window (ui_tkinter.py:1411-1415). Same rule as the boards.
+        def _settle(n=10):
+            try:
+                if not scroll.winfo_exists():
+                    return
+                if not w.winfo_viewable():
+                    if n>0:
+                        w.after(50,lambda:_settle(n-1))
+                    return
+                scroll.reflow()
+            except Exception as e:
+                log.info("group-rename list reflow failed: %s", e)
+        try:
+            w.after_idle(_settle)
+        except Exception as e:
+            log.info("could not schedule group-rename reflow: %s", e)
+        return w
+
+    def _group_rename_freeentry(self, page1, parent, task, group,
+                               beg, syls, end, apply):
+        """Page 2: type the profile by hand, validated against the class
+        primitives exactly as `_syllable_profile_freeentry` does for one word."""
+        page1.destroy()
+        params=task.program.params
+        w=ui.Window(parent, title=_("Set a profile by hand"), exit=False)
+        warn=ui.Label(w.frame, text='\n'.join([
+            _("⚠ Setting a profile by hand is a linguist’s "
+            "call — work with your language team."),
+            _("This renames EVERY word marked {group}.").format(group=group),
+            _("It must be {beg}-initial, {end}-final, and "
+            "{n} syllable(s)").format(beg=beg,end=end,n=syls)]),
+            font='instructions', row=0, column=0, columnspan=2, sticky='ew')
+        warn.wrap()
+        var=self.string_var(value='')
+        self.entry_field(w.frame, text=var).grid(row=1, column=0, sticky='ew')
+        msg=ui.Label(w.frame, text='', font='instructions', row=2, column=0,
+                    columnspan=2, sticky='ew')
+        def submit():
+            prof=(var.get() or '').strip().upper()
+            if not params.profile_fits_class(prof,beg,syls,end):
+                msg['text']=_("‘{p}’ doesn’t fit this class.").format(p=prof)
+                return
+            w.destroy()
+            apply(prof)
+        ui.Button(w.frame, text=_("Use this profile"), cmd=submit,
+                    anchor='c', font='instructions', row=3, column=0,
+                    sticky='ew')
+        ui.Button(w.frame, text=_("← Back"),
+                    cmd=lambda:(w.destroy(),
+                                self.ask_group_rename(parent,task,group)),
+                    anchor='c', font='instructions', row=3, column=1,
+                    sticky='ew')
+        return w
 
     def build_verify_layout(self, runwindow, title, page_icon, instructions,
                            prog_text, img_mod, group,
@@ -437,7 +676,7 @@ class SortPresenter(PresenterBase):
         f.grid_rowconfigure(1, weight=1)
         f.grid_columnconfigure(1, weight=1)
         titles = ui.Frame(f, column=1, row=0, columnspan=1, sticky='w')
-        ui.Label(titles, text=' '.join(title), font='title',
+        titlelabel = ui.Label(titles, text=' '.join(title), font='title',
                 column=0, row=0, sticky='w')
         # Optional progress indicator beside the title (e.g. "(N remaining)" /
         # "(last group)"); supplied by the caller as prog_text, blank if None.
@@ -489,6 +728,31 @@ class SortPresenter(PresenterBase):
             if not runwindow.exitFlag.istrue():
                 runwindow.deiconify()
                 runwindow.update_idletasks()
+                # REFLOW WITH THE CANARY IN IT. Nothing did, and that is the
+                # whole bug (field, OBT's Windows machine, 2026-09-01): the OK
+                # button is gridded into the scroll content just above, but the
+                # only reflow armed for this page was scheduled at the END of
+                # SortButtonFrame.__init__ — BEFORE the canary existed — so the
+                # FIFO idle queue could run _do_configure_interior on a stale
+                # reqheight and set the scrollregion to end at the last group
+                # button. The button was built and alive the whole time, simply
+                # outside the scrollable area, with the scrollbar already at its
+                # end: nothing to scroll to. Confirmed by test — removing one
+                # group row mutated the content, re-fired <Configure>, and the
+                # button appeared.
+                #
+                # WORSE THAN COSMETIC, which is why this is a small fix to a
+                # serious bug: the page blocks on wait_window(verifycanary), so
+                # with OK unreachable the page can only be QUIT, never finished.
+                #
+                # Placed HERE rather than beside the grid() call: reflow() reads
+                # content.winfo_reqheight(), and grid() only queues that
+                # recompute as an idle task — the update_idletasks() above is
+                # what makes the measurement true. Exactly the trap
+                # ScrollingFrame.reflow's own docstring documents, and the
+                # non-macrosort branch's resume_configure() at the end of its
+                # word list is the same move.
+                buttonframe.reflow()
         else:
             buttonframe = ui.ScrollingFrame(f, row=1, column=1, rowspan=2,
                                             sticky='wsn')
@@ -530,9 +794,90 @@ class SortPresenter(PresenterBase):
                 # other sort); clicking it ends the verify (destroys the canary).
                 navframe=ui.Frame(buttonframe.content, sticky='ew')
                 navframe.grid(row=nav_row, column=0, columnspan=bc, sticky='ew')
-                ui.Button(navframe, text=oktext, font='instructions',
+                okbutton=ui.Button(navframe, text=oktext, font='instructions',
                          cmd=verifycanary.destroy,
                          column=0, row=0, sticky='ew', padx=4)
+                # The profile name is shown in all three of these, so "this
+                # group is misnamed" is available wherever the name is (Kent
+                # 2026-08-24). Renaming ends the page: the group the user was
+                # verifying no longer exists under that name.
+                self.attach_group_rename([titlelabel, i, okbutton], runwindow,
+                            sort_obj, group,
+                            on_renamed=verifycanary.destroy)
+                # WRAP THE ROWS TO THE PAGE, before the reflow that sizes it.
+                # These rows carried NO wraplength at all, so each was as wide as
+                # its string — a form plus two glosses ran ~1350px, off the right
+                # edge, taking its profile tag with it, and with no horizontal
+                # scrolling here the text was simply unreachable (Kent's 'midrib'
+                # row, 2026-09-02). Bound to the CONTENT frame, so the number is
+                # the page's real width rather than a prediction; re-applies as
+                # drive_work streams more rows in (the helper watches the target
+                # count as well as the width, for exactly that reason).
+                #   reserve leaves room for the row frame's border/pad and the
+                # profile tag to its right; the illustration is subtracted by the
+                # helper, since compound='left' makes it cost text width.
+                #   MEASURE THE CANVAS, WRAP THE CONTENT. Binding both to
+                # `content` collapsed the rows to ~2 characters ("be/gg/a/—/'be
+                # /gg/ar'", Kent 2026-09-03): content carries grid_propagate(0)
+                # and is sized BY its children, so measuring it to size those
+                # same children is circular and settles small. The canvas is the
+                # fixed viewport and is the only honest width here.
+                #   MEASURE THE RUN WINDOW'S FRAME. Settled by measurement
+                # rather than by a third guess (DIAG-verify-wrap, Kent
+                # 2026-09-03): content=831 canvas=1 scrollframe=1
+                # runwindow.frame=1470 toplevel=1920 — and on a second page
+                # every one of them was 1.
+                #   So the canvas and the ScrollingFrame have NO WIDTH at build
+                # time, which also corrects my previous reading: measuring the
+                # canvas did not lose to a content↔canvas feedback loop, it
+                # never ran, because wrap_to_container returns early on
+                # width<=1. `content` has a width (831) but it is derived from
+                # its children, so it is unusable by construction — never size a
+                # child from a parent whose size comes from its children.
+                # runwindow.frame is the shallowest widget whose width comes
+                # from the LAYOUT, and the all-1s case is what the <Configure>
+                # binding is for.
+                #   KNOWN IMPRECISION: the frame also holds the group-button
+                # column as a grid sibling (~200px), so this overestimates the
+                # list's share by roughly that much. Deliberate — an over-wide
+                # label is visible and reportable, an under-wide one looks like
+                # a font bug and has cost days — and `reserve` is the dial.
+                ui.wrap_to_container(runwindow.frame,cols=bc,reserve=96,
+                                targets_parent=buttonframe.content)
+                # DIAG verify_wrap_container: WHICH widget has an honest width?
+                # Two guesses have now been wrong, and the second failed for a
+                # structural reason worth writing down: ScrollingFrame sizes its
+                # canvas FROM the content (`if contentrw > self.maxwidth …
+                # width=self.maxwidth`, else it tracks contentrw), so
+                # canvas ← content ← wraplength ← canvas is a CLOSED LOOP that
+                # settles at whatever it started small at and cannot grow. Any
+                # container whose width is derived from its children is
+                # unusable here by construction.
+                #   So print the whole chain once, after idle so the numbers are
+                # real, and pick the widest thing whose width comes from the
+                # LAYOUT rather than from what is inside it. after_idle, not
+                # update_idletasks: no synchronous round-trip (Wayland).
+                def _diag_widths():
+                    try:
+                        w=[]
+                        for name,widget in (('content',buttonframe.content),
+                                        ('canvas',buttonframe.canvas),
+                                        ('scrollframe',buttonframe),
+                                        ('runwindow.frame',runwindow.frame),
+                                        ('toplevel',runwindow)):
+                            try:
+                                w.append('{}={}'.format(name,
+                                            widget.winfo_width()))
+                            except Exception as e:
+                                w.append('{}=?({})'.format(name,e))
+                        log.info("DIAG-verify-wrap widths: %s | bc=%s | "
+                                "reserve=96",' '.join(w),bc)
+                    except Exception as e:
+                        log.info("DIAG-verify-wrap failed: %s",e)
+                try:
+                    runwindow.after_idle(_diag_widths)
+                except Exception:
+                    pass
                 _r=time.perf_counter()
                 buttonframe.resume_configure() # one reflow now the list is whole
                 self._reflow_t+=time.perf_counter()-_r
@@ -769,20 +1114,25 @@ class SortPresenter(PresenterBase):
         parent.wait_window(w)
         return result['value']
 
-    def ask_class_escape(self, parent, task, sense, on_applied=None):
-        """"This word doesn’t belong in this {class} profile at all…" — the four
-        one-axis moves out of a syllable profile class: flip word-initial, flip
-        word-final, Shorter, Longer. Each names its DESTINATION class in prose, so
-        the user picks where the word goes rather than just rejecting where it is.
+    def class_escape_items(self, task, sense, on_applied=None):
+        """[(label, cmd), …] for attach_context_menu: the one-axis moves out of a
+        syllable profile class — flip word-initial, flip word-final, Shorter,
+        Longer. Three of them at one syllable, since nothing is shorter.
 
-        Lives here, not on the sort button frame, because BOTH the sort page and
-        the profile VERIFY page offer it (Kent 2026-07-29 — the verify page is
-        where a misfiled word actually gets noticed, and it had no escape). The
-        data write is the task's (`escape_profile_class`); `on_applied` is how each
-        page says what "the word is gone from here" means — the sort page destroys
-        its sort item to advance, the verify page drops the row."""
+        Was a WINDOW (ask_class_escape) until Kent 2026-08-21 asked for the moves
+        to be offered directly on the word, on both the sort page and the profile
+        verify page — the verify page already had a context-menu entry whose only
+        job was to open that window, and the sort page had a button at the bottom
+        of the page.
+
+        Lives here, not on the sort button frame, because BOTH pages offer it
+        (Kent 2026-07-29 — the verify page is where a misfiled word actually gets
+        noticed, and it had no escape). The data write is the task's
+        (`escape_profile_class`); `on_applied` is how each page says what "the word
+        is gone from here" means — the sort page destroys its sort item to advance,
+        the verify page drops the row."""
         params=task.program.params
-        ftype=task.ftype
+        ftype=params.ftype()
         analang=task.program.db.analang
         av=sense.annotationvaluebyftypelang
         beg=av(ftype,analang,'#C')
@@ -794,28 +1144,25 @@ class SortPresenter(PresenterBase):
             n=1
             syls=str(n) # unset syls: don't put '' into the destination prose
         flip=lambda v:'V' if v=='C' else 'C'
-        # (button label = destination profile-class prose, primitive check, value)
-        moves=[(params.profile_class_prose(flip(beg),syls,end),'#C',flip(beg)),
-                (params.profile_class_prose(beg,syls,flip(end)),'C#',flip(end))]
+        # (button label, primitive check, value). Each label names ONLY the axis
+        # it moves. Labelling every button with the whole destination class made
+        # all four restate all three dimensions, so the one thing that differed
+        # sat mid-string; the class is stated ONCE below instead (Kent 2026-08-21).
+        # The per-axis renderers already existed next to begend_name.
+        moves=[(params.profile_class_initial_name(flip(beg)),'#C',flip(beg)),
+                (params.profile_class_final_name(flip(end)),'C#',flip(end))]
         if n>1:
-            moves.append((_("Shorter — ")+params.profile_class_prose(beg,str(n-1),end),
-                        'syls',str(n-1)))
-        moves.append((_("Longer — ")+params.profile_class_prose(beg,str(n+1),end),
-                        'syls',str(n+1)))
-        w=ui.Window(parent, title=_("Where does this word belong?"), exit=False)
+            moves.append((_("Shorter"),'syls',str(n-1)))
+        moves.append((_("Longer"),'syls',str(n+1)))
         def apply(check,value):
             task.escape_profile_class(sense,check,value)
-            w.destroy()
             if on_applied:
                 on_applied()
-        for r,(label,check,value) in enumerate(moves):
-            ui.Button(w.frame, text=label, cmd=lambda c=check,v=value:apply(c,v),
-                        anchor='w', font='instructions', row=r, column=0,
-                        sticky='ew')
-        ui.Button(w.frame, text=_("Cancel"), cmd=w.destroy,
-                    anchor='c', font='instructions', row=len(moves), column=0,
-                    sticky='ew')
-        return w
+        # No "this word is currently marked …" header any more: the menu is posted
+        # on the word itself, so the context is the gesture. attach_context_menu
+        # takes (label, cmd) pairs and has no disabled-header entry.
+        return [(label,lambda c=check,v=value:apply(c,v))
+                    for label,check,value in moves]
 
     def build_verify_button(self, parent, text, sense, is_label,
                            notok_fn, row, column, ipady, menu_items=None,
@@ -842,8 +1189,49 @@ class SortPresenter(PresenterBase):
                          column=0, row=0, sticky='ew',
                          ipady=ipady, **kwargs)
         self._wid_t+=time.perf_counter()-_w
+        # ZERO THE WIDGET'S OWN VERTICAL CHROME (Kent 2026-08-31: verify rows far
+        # taller than their one line of text). The `pady='0'` above does NOT do
+        # this: ui.Button routes a constructor pady to the GRID, so the widget's
+        # own pady is still Tk's default — the same trap recorded at
+        # sort_buttons.check_segments_row ("ui.Label routes constructor padx to
+        # the GRID, so the Label's own 1px-a-side default is only reachable after
+        # construction"), which is why that method sets l['padx'] AFTER building.
+        # Tk's per-widget defaults are small individually but they stack with the
+        # frame's border on every row of a whole slice. highlightthickness is the
+        # focus ring, invisible here and pure height. borderwidth is deliberately
+        # NOT touched: it draws the visible box these pages are designed around.
+        for _k,_v in (('pady',0),('ipady',0),('highlightthickness',0)):
+            try:
+                b[_k]=_v
+            except Exception:
+                pass # not every widget/backend carries every option
         b['image'] = self.set_sense_illustration(sense)
         b['compound'] = 'left'
+        # ONE-SHOT height breakdown (Kent 2026-08-31: verify rows far taller than
+        # their one line of text, on Windows). Three candidates — font, image, or
+        # padding — and inspection has not settled it: rows WITHOUT an
+        # illustration are as tall as rows with one, which rules the image out,
+        # and lowverticalspace=true already gives ipady=0/pady=1, which rules out
+        # the padding I was asked to reduce. So measure instead of infer. Once per
+        # page build, on the first row, and every field wrapped: a diagnostic must
+        # never be what breaks the page.
+        if not getattr(self,'_logged_row_height',False):
+            self._logged_row_height=True
+            try:
+                import tkinter.font as _tkfont
+                b.update_idletasks()
+                f=_tkfont.Font(font=b['font'])
+                img=b['image']
+                log.info("DIAG-rowheight: button req=%s actual=%s | frame req=%s "
+                         "| font %r linespace=%s | image h=%s | widget pady=%r "
+                         "ipady(grid)=%r | scale=%s",
+                         b.winfo_reqheight(), b.winfo_height(),
+                         bf.winfo_reqheight() if bf is not None else 'n/a',
+                         b['font'], f.metrics('linespace'),
+                         (b.tk.call('image','height',img) if img else 0),
+                         b['pady'], ipady, self.theme.scale)
+            except Exception as e:
+                log.info("DIAG-rowheight failed: %s", e)
         if menu_items:
             self.attach_context_menu(b, menu_items)
         return b, bf
@@ -922,7 +1310,7 @@ class SortPresenter(PresenterBase):
         KEPT — the other re-annotates to it. Back cancels (no join). There's no
         lexicographic/isdigit default here (both sides are real CV profiles), so
         this is the only way the direction is chosen. See ADR 0003 /
-        cv_group_creation_merging."""
+        the CV-group creation-and-merging item."""
         w = ui.Window(runwindow, title=_("Which profile is correct?"), exit=False)
         f = w.frame
         ui.Label(f, text=_("We are joining these profiles; which is correct?"),

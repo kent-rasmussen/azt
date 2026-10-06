@@ -37,6 +37,83 @@ class Senses(object):
     (with their various forms), whereas others handle examples.
     This refactoring was interrupted, though, so should likely
     be reconsidered. (see Tone class below)"""
+    def _window_is_there(self):
+        """Is the window this work builds into still there? Never raises.
+
+        THE BACKEND-FRONTEND BOUNDARY TEST. Kent's rule, 2026-09-14: "if
+        there is backend logic that relies on the frontend, it should test
+        that it is there before continuing. I used to have lots of code that
+        would diesel on long after tkinter had shut down, until I started
+        asking about that."
+
+        Asks about the WINDOW, and that choice is the whole content of this
+        method. Three candidates were tried; the other two are wrong:
+
+          * **`ui.frame`** is absent during construction as well as after
+            teardown — the same observation, and only one of the two is a
+            reason to stop.
+          * **`exitFlag`** would work — it IS per-window, though it takes
+            three classes to see that: `Childof.__init__` copies the
+            parent's via `inherit()` (`:916`), then `Exitable.__init__`
+            replaces it with a fresh one (`:1529`). Not used here because it
+            only reports a quit that went through `on_quit`, where
+            `winfo_exists` also covers a window destroyed any other way.
+            See the exit-flag-names-its-scope item.
+          * **the window** is created by `Task.__init__` before any of the
+            slow work, and `on_quit` ends in `self.destroy()`
+            (`ui_tkinter.py:1527`). So `winfo_exists()` is false exactly
+            when the work has nowhere to go, and never merely early.
+            Webview answers it from `_exists`.
+
+        AND THE WINDOW IS NO LONGER ENOUGH (2026-09-16). That third bullet
+        is a tkinter fact: webview HIDES windows rather than destroying them
+        (`_close_native_window` — freeing a pywebview window at the wrong
+        moment crashes Qt, and this app reuses windows anyway), so a closed
+        task's window is alive and answers "carry on". Worse, page events
+        each arrive on their own thread there, so a click no longer
+        interrupts the loop that is asking — two task flows run side by
+        side. Kent, watching the parser still working after starting an
+        unrelated task: "that wait shouldn't appear at all."
+          So this now asks the TASK as well, via `TaskBase.still_wanted()`,
+        and the task's answer is authoritative because a closed task KNOWS
+        it is closed instead of having it deduced. The window test is kept
+        rather than replaced: it still catches a window destroyed by
+        something that never routed through `on_quit`.
+          See the concurrent-webview-flows item.
+
+        Absent or unaskable counts as THERE, on both tests. A page that
+        never appears is a worse failure than one that raises, so this may
+        only stop work on positive evidence.
+        """
+        # ON THE TYPE, NOT THE INSTANCE. `getattr(self, 'still_wanted',
+        # None)` resolves through `__getattr__` — the task/window bridge —
+        # and a default only swallows AttributeError, so a bridge raising
+        # anything else propagates straight out of this "never raises"
+        # method. Both of this item's own tests say so and both caught it:
+        # `test_a_hostile_bridge_counts_as_there` (the bridge raises
+        # RuntimeError while a window is dying) and
+        # `test_getwords_bails_before_touching_anything` (nothing may be
+        # resolved through the bridge on the way out). A type lookup finds
+        # the method `TaskBase` defines without consulting the instance at
+        # all, and answers None for a mixin used without a task.
+        wanted = getattr(type(self), 'still_wanted', None)
+        if callable(wanted):
+            try:
+                if not wanted(self):
+                    return False
+            except Exception:
+                pass        # unaskable counts as there; fall through
+        try:
+            ui = getattr(self, 'ui', None)
+        except Exception:
+            return True
+        exists = getattr(ui, 'winfo_exists', None)
+        if not callable(exists):
+            return True
+        try:
+            return bool(exists())
+        except Exception:
+            return False    # Tk refusing to answer IS the dead-window answer
     def groups(self,**kwargs): #toverify=True
         return self.program.status.groups(**kwargs)
     def groups_visible(self,g=None,**kwargs):
@@ -103,7 +180,64 @@ class Senses(object):
         super().__init__(**kwargs)
 class Segments(Senses):
     """docstring for Segments."""
-    show_second_fields=True
+    # `show_second_fields=True` STOOD HERE and is gone (2026-09-29, plan 1 of
+    # the second-form flags audit). On `Segments` it meant EVERY
+    # segmental task drew the second-form field line — SortV, SortC, SortCV,
+    # TranscribeS/V/C, RecordCitation and the whole Report family — none of
+    # which ever reads the setting. The audit's matrix found the line was
+    # drawn on eleven task families and needed by two.
+    #   It is now `whole_word_checks`, on `WordCollection` and `Syllables`.
+    # Parse gets the line from `uses_second_forms` instead, which is the
+    # honest reason in its case: it does not merely offer the field, it
+    # fails without one.
+    def second_forms_ready(self,then=None):
+        """Are the second-form fields set? If not, open the first one.
+
+        ON `Segments` BECAUSE BOTH SIDES NEED IT: `Parse` and `WordCollection`
+        each extend this, and `ParseWords(Parse,Task)` has no word page at all
+        — its point of use is the "Parse!" button, not a Next button — so a
+        home on either subclass would miss one of them.
+
+        THREE ASKS, NONE OF THEM A WALL (Kent, 2026-09-28). The written design
+        was a gate: no first word until both fields were set. He replaced it
+        with escalation, which is better, because it dissolves the abandonment
+        problem the gate design spent most of its length on — what to do when
+        the user walks away and the page is left with an empty work area and
+        nothing explaining it. Kent: *"If a user wants to see the whole page
+        first, or not fill out that field yet, fine."*
+
+          1. **page load** — open the field. Click away and you still get a
+             word; the page is never held hostage.
+          2. **clicking into the word field** — open it again, cancellable.
+             You can still type the word.
+          3. **Next** — open it again, and this time do not move on.
+
+        Kent: *"they can see the whole page, but the last button doesn't allow
+        the user to move on."* So what is withheld is the ADVANCE, not the
+        page and not the typing. The parse rides on Next (`nextword` →
+        `storethisword` → parse), so gating Next gates the parse — which is
+        the thing that actually needs the fields.
+
+        Gating at Next also avoids what killed the point-of-need gate:
+        `parse_foreground` withdraws the window on its first line and then
+        runs modal prompts, and a field can only be opened on a mapped pane.
+        Next is before all of that.
+
+        Returns True when the caller may proceed. A task without
+        `uses_second_forms` always may, so the flag is the gate and no
+        `isinstance` is needed."""
+        if not getattr(self,'uses_second_forms',False):
+            return True
+        return self.ui.assure_second_forms(then=then)
+    def second_forms_set(self):
+        """The same question WITHOUT opening anything.
+
+        `second_forms_ready` has a side effect — it opens the editor — which
+        makes it useless for asking "should I say something?" Ask 2 needs the
+        answer and must NOT open: see `_ask_second_forms`."""
+        if not getattr(self,'uses_second_forms',False):
+            return True
+        return not self.program.settings.missing_second_form_pss()
     def buildregex(self,**kwargs):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
@@ -145,9 +279,9 @@ class Segments(Senses):
         # log.info("Looking for senses by regex {}".format(regex))
         self.output=[s for s in self.program.slices.senses(**kwargs)
                                                     # self.program.db.senses
-                        if s.ftypes[self.ftype].textvaluebylang(self.analang)
+                        if s.ftypes[self.program.params.ftype()].textvaluebylang(self.analang)
                         if regex.search(
-                        s.ftypes[self.ftype].textvaluebylang(self.analang)
+                        s.ftypes[self.program.params.ftype()].textvaluebylang(self.analang)
                                         )
                     ]
         # log.info("Found senses: {}".format(self.output))
@@ -192,7 +326,7 @@ class Segments(Senses):
         posgroups={} #position value (C1 guess) -> senses; only for positional checks
         if posrx is not None:
             for sense in unsortedids:
-                form=sense.ftypes[self.ftype].textvaluebylang(self.analang)
+                form=sense.ftypes[self.program.params.ftype()].textvaluebylang(self.analang)
                 m=posrx.search(form) if form else None
                 if m and m.groups():
                     posgroups.setdefault(m.groups()[-1],set()).add(sense)
@@ -273,7 +407,7 @@ class Segments(Senses):
         any slot verified into a still-unnamed (digit-placeholder or NA) group.
         Because it's assembled from verified segments, it can't corrupt — and it
         doesn't depend on profileofform reading the result correctly."""
-        ftype=ftype or self.ftype
+        ftype=ftype or self.program.params.ftype()
         if not sense.cvverificationdone(ftype):
             return None
         profile=sense.cvprofilevalue(ftype)
@@ -300,7 +434,7 @@ class Segments(Senses):
         return ''.join(out)
     def updateformtoannotations(self,sense,check=None,write=False):
         """This should take a sense and check, in normal usage.
-        provide self.ftype prior to this
+        set the word form (`params.ftype`) prior to this
         If we want to update forms to *all* annotations, don't give check.
         Iterate across a few or many senses.
         Iterate also across ftypes, to catch them all...
@@ -321,13 +455,13 @@ class Segments(Senses):
                                              for c in check.split('=')):
                 return True
             return value in ['NA',None] or (check and check.isdigit()) or value.isdigit()
-        form_ori=formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
+        form_ori=formvalue=sense.textvaluebyftypelang(self.program.params.ftype(),self.analang)
         if not formvalue:
             log.info(_("updateformtoannotations didn’t return a form value for "
-                    "{id}, {check}, {ftype}, {ana}").format(id=sense.id, check=check, ftype=self.ftype, ana=self.analang))
+                    "{id}, {check}, {ftype}, {ana}").format(id=sense.id, check=check, ftype=self.program.params.ftype(), ana=self.analang))
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
-        annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
+        annodict=sense.annotationvaluedictbyftypelang(self.program.params.ftype(),self.analang)
         conflict_text=_("Not updating ‘{form}’ (conflict in {anno}.").format(form=formvalue, anno=annodict)
         error_nb=_("Check the log for any further conflicts")
         error=False
@@ -341,19 +475,19 @@ class Segments(Senses):
             if built is not None:
                 if built!=form_ori:
                     key=max([int(i) for i in annodict.keys() if i.isdigit()]+[-1])+1
-                    sense.annotationvaluebyftypelang(self.ftype,self.analang,
+                    sense.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,
                                                      str(key),form_ori)
-                sense.textvaluebyftypelang(self.ftype,self.analang,built)
+                sense.textvaluebyftypelang(self.program.params.ftype(),self.analang,built)
                 log.info("DIAG-formconform RESULT %s BUILD %r→%r profile=%s "
                          "(from verified segments)", sense.id, form_ori, built,
-                         sense.cvprofilevalue(self.ftype))
+                         sense.cvprofilevalue(self.program.params.ftype()))
                 if write:
                     self.maybewrite()
                 return
         # DIAG-formconform (grep this): the confirmed cvprofile is the TARGET the
         # updated form must still read as. Log the starting picture per word so the
         # whole from>to + profile-conforming story is visible.
-        confirmed=sense.cvprofilevalue(self.ftype)
+        confirmed=sense.cvprofilevalue(self.program.params.ftype())
         ps=sense.psvalue()
         # PRIMITIVES CONSTRAIN the profile (item Model): if the word's verified
         # #C/C#/syls make the confirmed cvprofile inconsistent — e.g. 'tribe' has
@@ -362,8 +496,8 @@ class Segments(Senses):
         # never yields a syls-violating shape, so this is the authoritative target.
         target=confirmed
         av=sense.annotationvaluebyftypelang
-        beg=av(self.ftype,self.analang,'#C'); end=av(self.ftype,self.analang,'C#')
-        syls=av(self.ftype,self.analang,'syls')
+        beg=av(self.program.params.ftype(),self.analang,'#C'); end=av(self.program.params.ftype(),self.analang,'C#')
+        syls=av(self.program.params.ftype(),self.analang,'syls')
         if confirmed and confirmed!='Invalid' and beg and end and syls:
             r=self.program.params.constrain_profile(confirmed,beg,end,syls)
             if r.get('profile') and r['profile']!=confirmed:
@@ -474,10 +608,10 @@ class Segments(Senses):
                         #         _("Left unchanged — review by hand."),error_nb]))
                         #     self.updateconflictwarned=True
                         return
-            sense.textvaluebyftypelang(self.ftype,self.analang,formvalue)
+            sense.textvaluebyftypelang(self.program.params.ftype(),self.analang,formvalue)
             if form_ori != formvalue:
                 key=max([int(i) for i in annodict.keys() if i.isdigit()]+[-1])+1
-                sense.annotationvaluebyftypelang(self.ftype,self.analang,
+                sense.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,
                                                     str(key),form_ori)
                 log.info("DIAG-formconform RESULT %s COMMIT %r→%r target=%s segs=[%s] "
                          "(old form saved as anno %s)", sense.id, form_ori, formvalue,
@@ -538,7 +672,7 @@ class Segments(Senses):
         return newform, dropped, inserted
     def setitemgroup(self,item,check,group,**kwargs):
         # log.info(_("Setting segment sort group"))
-        item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
+        item.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check,group)
     def updateformsallchecks(self):
         """Generator: updates forms from annotations for every sense."""
         log.info(_("updateformsallchecks"))
@@ -682,7 +816,7 @@ class Segments(Senses):
     def getsensesincheck(self):
         return [
                 i for i in self.program.db.senses
-                if i.ftypes[self.ftype].annotationkeyinlang(self.check)
+                if i.ftypes[self.program.params.ftype()].annotationkeyinlang(self.check)
                 ]
     def getsensesingroup(self,check,group):
         ftype=self.program.params.ftype()
@@ -698,13 +832,17 @@ class Segments(Senses):
                 ]
     def getitemgroup(self,item,check):
         # ftype=self.program.params.ftype() #not helpful for Tone.getitemgroup
-        return item.annotationvaluebyftypelang(self.ftype,self.analang,check)
+        return item.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check)
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.updateconflictwarned=False
         self.dodone=True
         self.dodoneonly=False #don't give me other words
-        self.ftype=self.program.params.ftype()
+        # A COPY OF THE GLOBAL was taken here at construction, and went
+        # stale the moment anything else set it. Gone 2026-09-29: the word
+        # form has one owner, `program.params.ftype()`, and every read below
+        # asks it directly. Kent: "drop it and read params.ftype()
+        # everywhere."
         self.rxdict=self.program.profiles.rxdict
 class Consonants():
     cvt='C'
@@ -717,6 +855,19 @@ class Vowels():
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     taskicon = 'iconWord'
+    # WHICH FORM to collect is a rational choice here, so the second-form
+    # field line belongs on the page: the field is what makes a pl/imp
+    # choice exist. Moved off `Segments` 2026-09-29, plan 1 of
+    # the second-form flags audit.
+    whole_word_checks=True
+    # ITS OWN CHOOSER, because this page has no check line to carry the
+    # choice: `do_not_show_slices` below means `makeui` never reaches
+    # `cvtline`. Contrast the syllable sort, whose check line IS the form
+    # chooser (plan 6).
+    offers_word_check_line=True
+    # "Collecting citation forms" — the verb on the word-check line
+    # (`StatusFrame.wordcheckline`). Translated at use, not here.
+    word_check_prefix="Collecting"
     do_not_show_slices=True
     no_leaderboard=True
     def run_addCAWLentries(self):
@@ -771,14 +922,30 @@ class WordCollection(Segments):
         # DIFFERENT words, and Add-and-Parse said "all done" falsely): one
         # line per build naming the basis this task's list keys on.
         log.info("DIAG-todo %s: ftype=%r dodone=%s dodoneonly=%s all=%d",
-                 type(self).__name__, self.ftype,
+                 type(self).__name__, self.program.params.ftype(),
                  getattr(self,'dodone',None), getattr(self,'dodoneonly',None),
                  len(all))
-        if self.dodone and not self.dodoneonly: #i.e., all data
+        # ABSENT MEANS FALSE, and absence is DELIBERATE. The Add-and-Parse
+        # collection variants do not set these at all — see the comment in
+        # `Parse.__init__` (:2074-2080): they must present the same full
+        # wordlist as the plain collection tasks, and setting dodoneonly there
+        # once made a fresh project's list empty and falsely congratulate the
+        # user. So the flags' absence is part of the design.
+        #   The DIAG line just above already reads them with
+        # `getattr(self,'dodone',None)`; these two tests used bare attribute
+        # access, so the same function both tolerated and required them. It
+        # survived only because something else happened to set defaults first:
+        # reached before that (from `setsensetodo` → `getword` → here, Kent
+        # 2026-09-10) it raised `'WordCollectnParsewRecordings' object has no
+        # attribute 'dodone'` after a full trip through the task↔window
+        # bridge.
+        dodone=getattr(self,'dodone',False)
+        dodoneonly=getattr(self,'dodoneonly',False)
+        if dodone and not dodoneonly: #i.e., all data
             return all
         done=[i for i in all
-                    if i.sense.textvaluebyftypelang(self.ftype,self.analang)]
-        if self.dodone: #i.e., dodoneonly
+                    if i.sense.textvaluebyftypelang(self.program.params.ftype(),self.analang)]
+        if dodone: #i.e., dodoneonly
             log.info("DIAG-todo %s: done-only=%d",type(self).__name__,len(done))
             return done
         # At this point, done isn't wanted
@@ -791,8 +958,85 @@ class WordCollection(Segments):
                 "\nJust type consonants and vowels; don’t worry about tone "
                 "for now.")
     def getwords(self):
+        """Build the word-collection page.
+
+        BAILS IF THE WINDOW IS GONE. Clicking Tasks mid-load retires this
+        window while the catalog is still building into it, and tkinter then
+        refuses the parent — `bad window path name
+        ".!taskwindow.!taskwindow.!frame.!frame"`. Webview survives the same
+        race silently (virtual widgets), which is the worse outcome.
+
+        Stopping the build is not the whole job: the click that stopped it
+        still has to be honoured. That is `hide_chooser`'s half — see
+        the work-outliving-its-window item.
+        """
+        if not self._window_is_there():
+            log.info("word collection: the window closed while this page was "
+                     "still building; stopping rather than building into a "
+                     "window that is no longer there")
+            return
         p = self.lex_ui
+        import time as _time
+        _t_frames=_time.perf_counter()
+        # THE FRAMES ARE BUILT ONCE; THE WORDS LOAD AS OFTEN AS ASKED. This
+        # method used to do both, which is why it could not be called twice:
+        # it grids a NEW `wordsframe` into the same cell on every call, while
+        # `dowordframe` returns early when a `wordframe` already exists — so
+        # a second call left the old word inside the first frame and stacked
+        # an empty second one over it. Changing the word check has to reload
+        # the list without that (plan 2 of
+        # the second-form flags audit), so the reloadable half is
+        # `loadwords` below.
+        #   Guarded like `dowordframe`, and for the same reason.
+        if not hasattr(self,'wordsframe'):
+            self.wordsframe=p.frame(self.ui.frame,row=1,column=1,sticky='ew')
+            self.instructions=p.label(self.wordsframe,
+                                        text=self.getinstructions(),
+                                        row=0, column=0)
+        self.dirfn=self.nextword
+        _t1=_time.perf_counter()
+        self.loadwords()
+        log.info("word page: page frames %.2fs, load %.2fs",
+                 _t1-_t_frames, _time.perf_counter()-_t1)
+        # ASK 1 OF 3 (see `second_forms_ready`): open the field on page load,
+        # AFTER the first word is on screen. Order is the point — Kent,
+        # 2026-09-28: *"we open this on page load, and if someone clicks off,
+        # they can see a word."* Asking first and blocking on the answer is
+        # the design this replaced.
+        #   ON THE BUILD ONLY, not on every load: a reload comes from the
+        # user changing the word check, and re-opening the field editor
+        # under their hands as they do it is not an ask, it is a fight.
+        self.second_forms_ready()
+
+    def reload_for_word_check(self):
+        """The word check changed; show this form's words instead.
+
+        THE CAPABILITY THE LINE ASKS FOR. `StatusFrame.wordcheckline`
+        declines to draw on a task that cannot act on a change, and this is
+        what "can act" means. Two pages implement it and they do quite
+        different things — a collection page reloads a word list,
+        `SortSyllables` rebuilds slices and its board — so the name is the
+        contract and neither is the other's special case."""
+        return self.loadwords()
+
+    def loadwords(self):
+        """Rebuild the todo list and show its first word, into frames that
+        already exist.
+
+        THE RE-RUNNABLE HALF of `getwords`. Called on every page build, and
+        again whenever the WORD CHECK changes — a different ftype is a
+        different set of words (`getlisttodo` filters on the word form), but
+        the same widgets. Kent, 2026-09-17, on switching form mid-page:
+        "this workflow shouldn't break us."
+
+        The caller that changes the check is
+        `SettingsManager.refreshattributechanges`, via the `ftype` branch —
+        the same place the gloss-language change calls `getword()`.
+        """
+        import time as _time
+        _t_todo=_time.perf_counter()
         self.entries=self.getlisttodo()
+        _t_word=_time.perf_counter()
         self.nentries=len(self.entries)
         self.index=0
         # A5 in-place reload: resume at the word the user was on. Guid-keyed
@@ -806,12 +1050,16 @@ class WordCollection(Segments):
                 log.info("word collection: resuming at %s (reload anchor)",
                          anchor['guid'])
             self.program._reload_anchor=None
-        self.wordsframe=p.frame(self.ui.frame,row=1,column=1,sticky='ew')
-        self.instructions=p.label(self.wordsframe,
-                                    text=self.getinstructions(),
-                                    row=0, column=0)
-        self.dirfn=self.nextword
+        # TIMED because the affix catalog was exonerated by measurement and
+        # the wait is still there (Kent, 2026-09-28: catalog 0.41s, 0 yields,
+        # "it takes forever"). `getlisttodo` walks every entry deciding what is
+        # done, and `getword` builds the word frame and loads an illustration.
+        # Both are on the path to the first word; neither has ever been timed.
         r=self.getword()
+        log.info("word load: getlisttodo %.2fs (%s entries), getword %.2fs",
+                 _t_word-_t_todo, self.nentries,
+                 _time.perf_counter()-_t_word)
+        return r
     def promptstrings(self,lang):
         if lang == self.analang:
             text=_("What is the form of the new "
@@ -858,16 +1106,28 @@ class WordCollection(Segments):
         formfield.focus_set()
         formfield.bind('<Return>',lambda event,l=lang:self.submitform(l))
         formfield.rendered.grid(row=2,column=0,sticky='new')
+        # submitform(self,lang) REQUIRES the language; tkinter calls a button
+        # command with no arguments, so this raised TypeError on every click and
+        # the only working way forward was the <Return> binding (which does pass
+        # it). Same closure-over-the-loop-variable shape as that binding.
         sub_btn=p.button(self.ui.runwindow.frame2,text = strings['ok'],
-                            command = self.submitform,
+                            command = lambda l=lang: self.submitform(l),
                             anchor ='c',row=2,column=0,sticky='')
         if strings['skip']:
             sub_btnNo=p.button(self.ui.runwindow.frame2,
                                 text = strings['skip'],
                                 command = skipform,
                                 row=1,column=1,sticky='')
+        # addmorpheme's getrunwindow() passes no msg, so the window was created
+        # WITHDRAWN with no wait covering the build: this waitdone() is a no-op
+        # and lift() cannot map an unmapped window. Deiconify explicitly (as the
+        # join and glyph-rename pages do) or wait_window blocks on a window the
+        # user can neither see nor dismiss — once per gloss language.
         self.ui.runwindow.lift()
         self.ui.runwindow.waitdone()
+        if not self.ui.runwindow.exitFlag.istrue():
+            self.ui.runwindow.deiconify()
+            self.ui.runwindow.update_idletasks()
         sub_btn.wait_window(self.ui.runwindow.frame2) #then move to next step
     def addmorpheme(self):
         p = self.lex_ui
@@ -982,9 +1242,60 @@ class WordCollection(Segments):
                     "").format(missing=self.program.taskchooser.cawlmissing)
         log.info(text)
         ErrorNotice(text,title=title)
+    def _ask_second_forms(self,event=None):
+        """Ask 2 of 3: open the field the FIRST time the user clicks into the
+        word entry, and never again.
+
+        ONCE, BECAUSE OPENING TAKES THE FOCUS. `ClickToEdit.edit()` ends with
+        `focus_set()` on its editor, so opening from a click ON THE WORD FIELD
+        pulls focus off the field just clicked. Unarmed, that repeats on every
+        click and the word entry can never be typed in at all — Kent,
+        2026-09-28: *"typing in the entry space is not possible, whether one
+        clicked off, hit OK, or left it alone."* Kent's fix: *"let's just arm
+        the entry field once, maybe?"*
+          Once is enough precisely because clicking away now CANCELS (see
+        `composites.close_open_field`): the second click into the word field
+        closes the editor and leaves it closed, so the user types.
+
+        Per PAGE, and per word would be identical — Kent, 2026-09-28: *"you
+        can't get to a second word without passing this, so this is fine."*
+        Quite so: ask 3 gates Next on the fields being set, so word two is
+        unreachable while they are unset, and by the time it is reached this
+        would decline anyway. The flag's scope is therefore unobservable, and
+        the choice is not worth defending on either side.
+
+        Returns None so neither backend treats the click as handled."""
+        if getattr(self,'_second_forms_asked_on_entry',False):
+            return
+        self._second_forms_asked_on_entry=True
+        self.second_forms_ready()
+    def say_second_forms_needed(self):
+        """Put the reason beside the button that just refused to move."""
+        notice=getattr(self,'secondformnotice',None)
+        if notice is None:
+            return
+        pss=self.program.settings.missing_second_form_pss()
+        notice['text']=_("Parsing needs the second form field for {pss}. "
+                         "Set it above, and this word will go through."
+                         ).format(pss=', '.join(pss)) if pss else ''
+        try:
+            notice.wrap()
+        except Exception:
+            pass
     def nextword(self,nostore=False):
         self.dirfn=self.nextword
         # log.info("running nextword (nostore = {})".format(nostore))
+        # ASK 3 OF 3, and the only one that withholds anything. Gated on
+        # STORING, not on navigating: `<Down>`/`<Next>` pass nostore=True and
+        # are pure browsing, which needs no field and should stay free.
+        #   `then=self.nextword` so that committing the value completes the
+        # action the user just asked for, rather than making them press Next
+        # twice.
+        if not nostore and not self.second_forms_ready(then=self.nextword):
+            self.say_second_forms_needed()
+            return
+        if getattr(self,'secondformnotice',None) is not None:
+            self.secondformnotice['text']=''
         if not nostore:
             # log.info("storing nextword (nostore = {})".format(nostore))
             self.storethisword()
@@ -1029,21 +1340,40 @@ class WordCollection(Segments):
             log.info("Stripping typed diacritics for storage: {} > {}"
                         "".format(self.var.get(),value))
             self.var.set(value) #show what will be stored
-        log.info(_("WordCollection trying to store {value} ({type})").format(value=value,type=self.ftype))
+        log.info(_("WordCollection trying to store {value} ({type})").format(value=value,type=self.program.params.ftype()))
         try:
-            if self.ftype in ['lc','lx']:
-                self.sense.textvaluebyftypelang(self.ftype,
+            if self.program.params.ftype() in ['lc','lx']:
+                self.sense.textvaluebyftypelang(self.program.params.ftype(),
                                             self.analang,
                                             value)
-            elif self.ftype == 'pl':
-                self.entry.plvalue(
-                    self.program.settings.secondformfield[self.program.settings.nominalps],
-                    value)
-                # lift.prettyprint(self.entry.pl)
-            elif self.ftype == 'imp':
-                self.entry.fieldvalue(
-                        self.program.settings.secondformfield[self.program.settings.verbalps],
-                        value)
+            elif self.program.params.ftype() in ('pl','imp'):
+                # WRITE BY NAME, THEN REGISTER THE NODE. The write has
+                # always gone through the field NAME, because that is what
+                # LIFT knows; what never happened is pointing the sense's
+                # `pl`/`imp` at the field afterwards. So the form went in
+                # and no ftype-keyed read could ever find it again —
+                # `getlisttodo` went on calling the word uncollected and
+                # `getword` went on showing an empty box.
+                #   OCCASION 3 (`Sense.set_ftype`), and the only per-entry
+                # one: `fieldvalue` CREATES the field node when given a
+                # value and there was none, so this entry gains a field the
+                # boot-time pass could not have seen.
+                #   AND THE IMPERATIVE BRANCH WAS PASSING ITS VALUE AS A
+                # LANGUAGE. It read `entry.fieldvalue(name, value)`, but the
+                # signature is `fieldvalue(type, lang=None, value=None)` —
+                # so the form went in as `lang` and `value` stayed None,
+                # which is a read, not a write. The plural branch was right
+                # because `plvalue` supplies the lang itself. Unified here,
+                # with the lang named explicitly.
+                #   `self.analang` rather than `plvalue`'s `db.analang`:
+                # the same value, and the lc/lx branch above already uses
+                # the task's.
+                code=self.program.params.ftype()
+                ps=(self.program.settings.nominalps if code == 'pl'
+                    else self.program.settings.verbalps)
+                name=self.program.settings.secondformfield[ps]
+                self.entry.fieldvalue(name,self.analang,value)
+                self.sense.set_ftype(code,name)
             # self.entry.lc.textvaluebylang(self.analang,self.var.get())
             self.maybewrite() #only if above is successful
             # lift.prettyprint(self.entry)
@@ -1314,6 +1644,27 @@ class WordCollection(Segments):
                         fg='red',
                         row=7,column=0,columnspan=3,sticky='ew')
         self.var.trace_add('write',self.check_input_warnings)
+        # WHY "Next" IS NOT MOVING. Its own label, not `inputwarning` (which
+        # `check_input_warnings` rewrites on every keystroke, and whose
+        # docstring says it informs and never blocks) and not `instructions2`
+        # (which the transcription tasks own). This one says the opposite: it
+        # appears only when something IS blocked.
+        self.secondformnotice=p.label(self.wordframe,text='',font='small',
+                        row=8,column=0,columnspan=3,sticky='ew')
+        # ASK 2 OF 3 (see `second_forms_ready`): clicking into the word field
+        # is the moment before the value is needed, so re-open the settings
+        # field then — cancellable, and the user can still type.
+        # `<Button-1>` ONLY, NEVER `<FocusIn>` (2026-09-28). `getword()` ends
+        # with `self.lxenter.focus_set()`, so a FocusIn binding fires on every
+        # word load — programmatically, with no user anywhere near it. Two
+        # symptoms, one cause, both reported by Kent within a minute:
+        #   * the field appeared to open by itself after the first word, which
+        #     looked like ask 1 and was ask 2 wearing its coat;
+        #   * "clicking off the edit" never returned it to a label, because it
+        #     DID close, focus went back to the word entry, and it reopened.
+        # A user click is the signal ask 2 wants; focus arriving on its own is
+        # not a signal at all.
+        self.lxenter.bind('<Button-1>',self._ask_second_forms)
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
         next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
@@ -1332,8 +1683,39 @@ class WordCollection(Segments):
     def set_up_transcription(self):
         pass
     def getword(self):
+        """Show one word on the word page.
+
+        BUILD THE PAGE FIRST IF IT IS NOT THERE. `getwords()` is what creates
+        `entries`, `wordsframe`, `instructions` and `dirfn`, and it ends by
+        calling this — so this method has always assumed those exist. But it
+        is also called from OUTSIDE that sequence: `ui_shell.setsensetodo`
+        invokes `task.getword()` when the user picks a sense from the status
+        line, which can happen before (or without) any page build. Then
+        `self.instructions['text']=…` below raised
+        `'WordCollectnParsewRecordings' object has no attribute
+        'instructions'` — after travelling the whole task↔window bridge
+        looking for it (Kent, 2026-09-10).
+          Delegating is safe and terminates: `getwords()` assigns
+        `instructions` (:810) before it calls back here (:814), so the second
+        pass finds it. It also rebuilds `entries`, which is what a caller
+        arriving from a sense choice wants anyway.
+          This is the third instance of the same shape in two days — an outer
+        method's preconditions being assumed by an inner one that other code
+        calls directly (see also `sensetodo` and the withdraw-without-reveal
+        in `setsensetodo`). Worth reading with
+        the bridge-shadowed-attributes item.
+        """
+        if not hasattr(self,'instructions'):
+            log.info("getword: the word page isn't built yet (no "
+                     "instructions label), so building it first")
+            return self.getwords()
         p = self.lex_ui
-        self.program.taskchooser.withdraw()# not sure why necessary
+        # Was an unconditional `taskchooser.withdraw()# not sure why
+        # necessary`. It is not necessary when the user has just gone BACK to
+        # the chooser, and hiding it then is how they ended up with no window
+        # at all (2026-09-14) — hide_chooser declines in that case.
+        if not self.hide_chooser():
+            return
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         # log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
         # log.info("index: {}".format(self.index))
@@ -1399,7 +1781,7 @@ class WordCollection(Segments):
         self.updatereturnbind()
         """I don't want this on every ImageFrame, just here"""
         self.wordframe.pic.bindchildren('<ButtonRelease-1>', self.selectimage)
-        default=self.sense.textvaluebyftypelang(self.ftype,self.analang)
+        default=self.sense.textvaluebyftypelang(self.program.params.ftype(),self.analang)
         if not default:
             default=''
         self.var.set(default)
@@ -1431,6 +1813,20 @@ class Parse(Segments):
     do_not_show_slices=True
     show_parser_ui=True
     uses_second_forms=True
+    # NO WORD-CHECK LINE: PARSE PINS THE CITATION FORM. It pairs the
+    # collected `lc` against both second forms per ps, so which form to work
+    # on is not the user's to choose here — Kent, 2026-09-17: "this is
+    # correct, and likely will remain so."
+    #   DECLARED BECAUSE THE COMBOS INHERIT IT. `WordsParse`,
+    # `WordCollectnParse` and `WordCollectnParsewRecordings` all take
+    # `WordCollection` as well, which sets this True, and `Parse` precedes
+    # it in every one of their MROs. Without this line all three drew a
+    # chooser offering a form the task would ignore — and on
+    # `WordsParse`, "Parse Already Collected Words", it read "Collecting
+    # citation forms" (Kent saw it, 2026-09-29).
+    #   The second-form FIELD line is unaffected: `makeui` draws that for
+    # `whole_word_checks` OR `uses_second_forms`, and Parse needs it.
+    whole_word_checks=False
     no_leaderboard=True
     def getgloss(self,ftype=None):
         return ', '.join([', '.join(self.parser.sense.formattedgloss(l,
@@ -1819,7 +2215,9 @@ class Parse(Segments):
                         "".format(*r[1:5]))
             log.info("adding {} affix set {}".format(*r[4:]))
             self.parser.addaffixset(*r[4:])#self.ps,afxs)
-            self.parser.sense.pssubclassvalue(r[-1])
+            # Serialise before it reaches the LIFT layer — see parser.doparsetolx,
+            # the other writer of this trait.
+            self.parser.sense.pssubclassvalue(affixset_to_str(r[-1]))
             return
         else:
             log.info(f"No parse (trythreeforms).")
@@ -1842,13 +2240,20 @@ class Parse(Segments):
         self.ui.withdraw()
         self.updatereturnbind()
         self.userresponse.rootchange=False #reset for each root
-        self.parse(**kwargs)
-        self.updateparseUI()
-        if self.ui.iswaiting():
-            self.ui.waitdone()
-        if self.winfo_exists():
-            self.ui.deiconify()
-            self.updatereturnbind()
+        # finally: the reveal was straight-line code, so ANY exception out of
+        # parse()/updateparseUI() left the task window withdrawn and the user with
+        # no window — the traceback goes to the log, the user gets a blank screen.
+        # A withdraw whose deiconify is not in a finally is a producer of this
+        # item's symptom no matter which window it is.
+        try:
+            self.parse(**kwargs)
+            self.updateparseUI()
+        finally:
+            if self.ui.iswaiting():
+                self.ui.waitdone()
+            if self.winfo_exists():
+                self.ui.deiconify()
+                self.updatereturnbind()
     def parse(self,**kwargs):
         # These functions return nothing when the parse goes through, 1 when
         # not done. If the user exits, self.exited is set
@@ -1954,25 +2359,101 @@ class Parse(Segments):
         collector=parser.AffixCollector(self.program.parsecatalog,
                                         self.program.db)
         if self.loadfromlift:
+            import time as _time
+            _t0=_time.perf_counter()
+            _yields=_reports=0
+            _last=None
             with self.ui.waiting(_("Loading Affixes")):
                 # for i in collector.do():
                 for i in collector.getfromlift():
+                    _yields+=1
                     # log.info("Progress: {}".format(i))
-                    self.waitprogress(i)
+                    # THE DIESELING LOOP, and where the check belongs. Kent,
+                    # 2026-09-14: "the answer here may be more of a check the
+                    # catalog to not return to a window that just isn't
+                    # there." This loop is slow enough that the user can
+                    # click Tasks part way through, and `waiting()` +
+                    # `waitprogress` drain the event loop, so the click is
+                    # serviced HERE — gettask() quits this task and the loop
+                    # carries on reporting progress to a window that has been
+                    # destroyed. waitprogress tolerates that silently (it
+                    # returns on a missing wait window), so nothing stopped:
+                    # the catalog ran to completion and only then tried to
+                    # build a page, which is where the crash surfaced.
+                    if not self._window_is_there():
+                        log.info("affix catalog: the window closed part way "
+                                 "through loading (at %s%%); stopping rather "
+                                 "than finishing into a window that is no "
+                                 "longer there",i)
+                        return
+                    # ONLY WHEN THE NUMBER CHANGES. `getfromlift` yields once
+                    # per inflection-class trait — one per sense per ps — and
+                    # the value is an integer percentage, so most calls set
+                    # the bar to what it already says. Same shape as the
+                    # `print()` per yield removed from that loop on
+                    # 2026-09-16, one layer up. Kent reports not seeing the
+                    # "Loading Affixes" wait in practice, in which case these
+                    # were cheap no-ops and this changes nothing — which is
+                    # why the counters below exist rather than a conclusion.
+                    if i != _last:
+                        _last=i
+                        _reports+=1
+                        self.waitprogress(i)
                 self.program.parsecatalog.report()
+            # MEASURE, DO NOT THEORISE (the sound-card-probe item
+            # plan 1). This is the wait Kent describes as "can take awhile",
+            # and nothing has ever timed it. Three numbers, because they
+            # separate three different problems: total time says whether it is
+            # worth attacking at all; the yield count says whether the cost
+            # scales with the lexicon; and reports-vs-yields says how much of
+            # it was progress reporting rather than work.
+            log.info("affix catalog loaded in %.2fs (%s yields, %s progress "
+                     "reports, %s parts of speech)",
+                     _time.perf_counter()-_t0,_yields,_reports,
+                     len(getattr(self,'pss',()) or ()))
     def showwhenready(self):
+        """Deiconify the parser UI once the status window exists.
+
+        Split in two on 2026-09-14. One `try` around both the readiness test
+        and the show meant a FAILED deiconify was read as "not ready yet" and
+        retried: 100 tries at 100ms of "self.status not found", none of it
+        about self.status. It also kept retrying after the user had closed
+        the task — the work-outliving-its-window class — so it checks that
+        too, and says which of the three things happened.
+        """
+        if not self._window_is_there():
+            log.info("parser UI: the window closed before self.status "
+                     "appeared; not showing it")
+            return
         try:
-            assert self.status.winfo_exists()
+            ready = bool(self.status.winfo_exists())
+            why = None
+        except Exception as e:
+            ready = False
+            why = e
+        if ready:
             log.info("self.status found; showing parser UI")
-            self.ui.deiconify()
-        except Exception:
-            self.ready_waits=getattr(self,'ready_waits',0)+1
-            if self.ready_waits < self.try_times:
-                log.info("self.status not found; waiting 100ms before showing parser UI")
-                self.after(self.try_each_ms,self.showwhenready)
-            else:
-                log.error("self.status not found after {} tries @ {}ms; giving up"
-                        "".format(self.try_times,self.try_each_ms))
+            try:
+                self.ui.deiconify()
+            except Exception as e:
+                log.error("self.status is there but the parser UI would not "
+                          "show: %r",e)
+            return
+        self.ready_waits=getattr(self,'ready_waits',0)+1
+        if self.ready_waits >= self.try_times:
+            log.error("self.status not found after {} tries @ {}ms; giving up"
+                    "".format(self.try_times,self.try_each_ms))
+            return
+        # Only the first wait is worth a line at info; the rest would be the
+        # same line up to 99 more times.
+        log.log(20 if self.ready_waits == 1 else 3,
+                "self.status not found (%r); waiting %sms before showing "
+                "parser UI",why,self.try_each_ms)
+        try:
+            self.after(self.try_each_ms,self.showwhenready)
+        except Exception as e:
+            log.error("cannot schedule the next parser-UI check; giving up "
+                      "after %s tries: %r",self.ready_waits,e)
     def storethisword(self):
         from utilities.encodings import strip_diacritics
         v=strip_diacritics(self.var.get())
@@ -1980,10 +2461,10 @@ class Parse(Segments):
             log.info("Stripping typed diacritics for storage: {} > {}"
                         "".format(self.var.get(),v))
             self.var.set(v) #show what will be stored
-        log.info(_("Parse trying to store {value} ({type})").format(value=v,type=self.ftype))
+        log.info(_("Parse trying to store {value} ({type})").format(value=v,type=self.program.params.ftype()))
         try:
             assert v
-            self.entry.fields[self.ftype].textvaluebylang(self.analang,v)
+            self.entry.fields[self.program.params.ftype()].textvaluebylang(self.analang,v)
             if not self.done():
                 self.parse_foreground(entry=self.entry)
             self.maybewrite() #only if above is successful
@@ -1996,24 +2477,52 @@ class Parse(Segments):
             log.info(f"Not storing word (Parse): {e}")
         except Exception as e:
             log.info(f"Exception storing word (Parse): {e}")
-    def waitforOKsecondfields(self):
-        while not self.program.settings.secondformfieldsOK():
-            after(10*100,callback=self.waitforOKsecondfields) # wait a second
+    # `waitforOKsecondfields` DELETED 2026-09-29, and deleting it is what
+    # closes the bare-`after`-NameError item. It called a bare
+    # `after(...)`, which this module does not define or import — verified:
+    # the only wildcard import is `utilities.utilities`, which has no
+    # `after` — so it would have raised NameError on its first iteration.
+    # Nothing but itself ever called it, so that never happened.
+    #   It was also a busy-wait spelling of what plan 4 now does properly:
+    # `Segments.second_forms_ready` asks, and the field's own commit hook
+    # resumes the work. See the second-form flags audit plan 7.
     def __init__(self, **kwargs): #frame, filename=None
+        # TIMED IN PHASES, because the page waits on ALL of this and not only
+        # on the part that looks slow
+        # (the sound-card-probe item).
+        # Kent, 2026-09-28, when told the engine build was not the suspect:
+        # *"but the page doesn't finish loading and show the first word until
+        # it is finished being built."* Quite right — what matters is what the
+        # user waits for, not which line I find interesting. So measure the
+        # whole span and let the numbers apportion it.
+        import time as _time
+        _t=_time.perf_counter
+        _t0=_t()
         self.byslice=False
         self.initsensetodo()
         super().__init__(**kwargs)
+        _t_super=_t()
         self.secondformfield=self.program.settings.secondformfield
         self.nominalps=self.program.settings.nominalps
         self.verbalps=self.program.settings.verbalps
         self.loadfromlift=True
-        # self.program.settings.makesecondformfieldsOK() #do elsewhere
         if not hasattr(self.program,'parsecatalog'):
             self.initparsecatalog()
         self.parsecatalog=self.program.parsecatalog
+        _t_catalog=_t()
         # else:
         if not hasattr(self.program,'parser'):
             self.program.parser=parser.Engine(self.parsecatalog,self)
+        _t_engine=_t()
+        # Read as "of the wait before the first word, how much was each".
+        # `super()` builds the task and its window; `catalog` is the affix
+        # sweep of the LIFT file; `engine` should be ~0 (setlevels plus four
+        # attribute reads) and is timed anyway, because that is the claim
+        # being checked rather than assumed.
+        log.info("Parse.__init__ phases: super %.2fs, catalog %.2fs, "
+                 "engine %.4fs, total %.2fs",
+                 _t_super-_t0, _t_catalog-_t_super,
+                 _t_engine-_t_catalog, _t_engine-_t0)
         #     self.parser=self.program.parser
         # else:
         #     self.parser=
@@ -2021,8 +2530,15 @@ class Parse(Segments):
             #These should come from settings
         self.parser.autolevel(5) #no auto
         self.parser.asklevel(0)
-        self.ftype=self.program.params.ftype('lc') #Is this always correct?
-        # self.ftype=self.program.params.ftype('lx') #I think once we parse, we want this
+        # PARSE WORKS ON CITATION FORMS, and says so through
+        # `works_on_ftype='lc'` on the task class rather than writing the
+        # global from a mixin's `__init__` (2026-09-29). It inherits the
+        # TaskBase default, so there is nothing to declare.
+        #   The old line carried "Is this always correct?" and a commented
+        # `'lx'` alternative — "I think once we parse, we want this". Kent
+        # settled the first, 2026-09-17: "this is correct, and likely will
+        # remain so." The `lx` thought is not lost; it belongs to whatever
+        # runs AFTER a parse, not to the parse.
         # self.nodetag='citation'
         # dodone/dodoneonly are deliberately NOT set here: the Add-and-Parse
         # collection variants must present the SAME full wordlist as the plain
@@ -2087,10 +2603,21 @@ class Tone(Senses):
         from tasks.tasks import ToneFrameDrafter #local: backend can't import tasks at module level
         if 'window' in kwargs:
             kwargs['window'].destroy() #in any case; if fails, try again.
+        # The task window is hidden for the drafter's sake, and ONLY
+        # ToneFrameDrafter.submit puts it back (tasks.py, self.task.deiconify()).
+        # So abandoning the drafter — closing it, or exiting before it opens —
+        # left the app with no window at all, reachable straight from the
+        # ‘Add Tone frame’ menu item. Restore it on every exit path; if the
+        # caller is about to open a run window (aframe → runcheck) that withdraws
+        # it again, which is a flash, not a hang.
         self.ui.withdraw()
-        t=ToneFrameDrafter(self)
-        if not t.exitFlag.istrue():
-            self.ui.wait_window(t)
+        try:
+            t=ToneFrameDrafter(self)
+            if not t.exitFlag.istrue():
+                self.ui.wait_window(t)
+        finally:
+            if not self.ui.exitFlag.istrue():
+                self.ui.deiconify()
     def aframe(self):
         self.ui.runwindow.on_quit()
         self.addframe()
@@ -2118,7 +2645,7 @@ class Tone(Senses):
             # providing both ftype and frame isn't necessary, but allows check
             # that they align:
             assert check in item.examples
-            f=item.formattedform(self.analang,self.ftype,
+            f=item.formattedform(self.analang,self.program.params.ftype(),
                                 self.program.toneframes[ps][check])
             # log.info("Setting form to {}".format(f))
             item.examples[check].textvaluebylang(
@@ -2128,7 +2655,7 @@ class Tone(Senses):
             item.examples[check].tonevalue(group)
             for g in (set(self.glosslangs)& #selected
                         set(self.program.toneframes[ps][check])& #defined
-                        set(item.ftypes[self.ftype])): # form in lexicon
+                        set(item.ftypes[self.program.params.ftype()])): # form in lexicon
                 for f in item.formattedgloss(g,
                                         self.program.toneframes[ps][check])[:1]:
                     # log.info("Setting {} translation to {}".format(g,f))
@@ -2164,7 +2691,7 @@ class Tone(Senses):
         # if program is not None:
         #     self.program=program
 class Syllables(Senses):
-    """Cyclical syllable sort (see docs/sort_syllables_design.md). FOUR checks:
+    """Cyclical syllable sort (see the sort-syllables design). FOUR checks:
     three primitive sorts on the WHOLE wordlist — '#C' (word-initial C/V),
     'C#' (word-final C/V), 'syls' (syllable count) — whose outcomes compose into
     a Beg+count+End **profile class** (the 'S' slice, DERIVED from the three
@@ -2177,6 +2704,16 @@ class Syllables(Senses):
     Primitives are seeded by orthography from the computed profile (the user then
     judges by ear). The profile annotation is named by the ftype; the three
     primitives by their check code."""
+    # `<unset>` IS LEGAL HERE AND THE LINE IS STILL WANTED — the one place
+    # the audit found the display question genuinely separate from the
+    # needs-it question. The lc check runs with no second-form field at all;
+    # a pl or imp check only EXISTS once one is named, so this line is how
+    # the user makes that check available (Kent, 2026-09-17: "SortS is
+    # actually a good use case for 'show': <unset> in UI is legal … so
+    # people can continue without having set those values, but should be
+    # able to see and set them"). Reaches `SortSyllables` through this
+    # class. Plan 1 of the second-form flags audit.
+    whole_word_checks=True
     def updateformtoannotations(self,*args,**kwargs):
         pass  # never rewrite the surface form
     def name_new_glyphs(self):
@@ -2184,12 +2721,12 @@ class Syllables(Senses):
     # --- annotation channel (mirrors Segments; kept here so the 'S' routing in
     #     updatesortingstatus/getexamples stays pointed at Syllables) ---
     def getitemgroup(self,item,check):
-        return item.annotationvaluebyftypelang(self.ftype,self.analang,check)
+        return item.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check)
     def setitemgroup(self,item,check,group,**kwargs):
-        item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
+        item.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check,group)
     def getsensesingroup(self,check,group):
         return [i for i in self.program.db.senses
-                if i.annotationvaluebyftypelang(self.ftype,self.analang,check)
+                if i.annotationvaluebyftypelang(self.program.params.ftype(),self.analang,check)
                     ==str(group)] #str: see Segments variant
     # --- the three primitives: canonical impl is on params (also reached off-task
     #     by the board-render rebuild); these delegate so existing self._word_*/
@@ -2204,7 +2741,7 @@ class Syllables(Senses):
         """The 'S' slice = Beg+count+End profile class, composed on the fly from
         the three primitive annotations. Delegates to params (the single source of
         the profile-class format). Returns e.g. 'C2V', or None if not all set."""
-        return self.program.params.profile_class_of_sense(sense,ftype=self.ftype)
+        return self.program.params.profile_class_of_sense(sense,ftype=self.program.params.ftype())
     def presortgroups(self,**kwargs):
         """Seed each word's four attributes by orthography so the obvious
         bucketing is pre-done; the user then verifies each (by ear) and fixes
@@ -2222,15 +2759,21 @@ class Syllables(Senses):
         n=max(len(senses),1)
         # Per-sense seeding is the shared params.seed_sense_primitives rule (also
         # run at LIFT load), so the two paths can't drift. Tally what it did.
-        tally={'seeded':0,'edges':0,'defaulted':0,'syls':0}
+        tally={'seeded':0,'edges':0,'defaulted':0,'syls':0,'backfilled':0}
         for i,sense in enumerate(senses):
             tag=self.program.params.seed_sense_primitives(sense,ftype,analang)
             if tag in tally:
                 tally[tag]+=1
             yield i*100//n
         log.info("Presort (wordlist-wide): total=%d seeded=%d edges-from-form=%d "
-                "defaulted→#C=C=%d syls-backfilled=%d", n, tally['seeded'],
-                tally['edges'], tally['defaulted'], tally['syls'])
+                "defaulted→#C=C=%d syls-backfilled=%d other-backfilled=%d", n,
+                tally['seeded'], tally['edges'], tally['defaulted'],
+                tally['syls'], tally['backfilled'])
+        if tally['backfilled']:
+            log.info("Presort: filled a missing primitive on %d already-bucketed "
+                    "word(s) — most likely C# on a word that had #C and syls "
+                    "(the 'mʌchete' shape). They re-enter their check.",
+                    tally['backfilled'])
         if tally['syls']:
             log.info("Presort: backfilled syls for %d already-bucketed word(s) "
                     "that had #C/C# but no syllable count — they re-enter the "

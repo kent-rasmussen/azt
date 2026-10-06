@@ -37,13 +37,55 @@ class Repository(object):
                 ).replace('?','_').replace('"','_').replace('<','_').replace('>','_'
                 ).replace('|','_').replace('~','_').replace('^','_').replace('[','_'
                 ).replace('@{','_').replace('\\','_')
-    def checkout(self,branchname=None):
+    def checkout(self,branchname=None,_tries=0,_generated=None):
         args=['checkout']
+        # RECYCLE ONLY OUR OWN GENERATED WORK BRANCH (Kent 2026-08-31).
+        # The delete below existed for the multi-machine merge scheme:
+        # checkout() with NO argument mints `work_from_<username>`, and dropping
+        # a stale one before making it fresh is reasonable — it is ours, and it
+        # is disposable by construction.
+        #   But the same delete fired for a branch a CALLER named. The field log
+        # shows it plainly:
+        #     branch_exists ['--list','testing']: testing
+        #     remove_branch ['-d','testing']: Deleted branch testing (was 6d82d95)
+        #     checkout ['testing']: Switched to a new branch 'testing'
+        #     branch 'testing' set up to track 'origin/testing'
+        # i.e. delete the local branch, then let git DWIM re-create it from
+        # origin — an implicit `reset --hard origin/<branch>` that silently
+        # discards any local commits. Nobody asked for a reset; they asked to
+        # switch branches. testversion()/reverttomain() go through here, so
+        # "try the testing version" was quietly throwing away local work.
+        #   That the reset was never the point is recorded in reverttomain
+        # itself, which still carries the standing TODO `need to also / git reset
+        # --hard origin/main` — the explicit reset was always understood to be a
+        # SEPARATE step that had not been written. If a reset is wanted, it
+        # belongs there, deliberately, not as a side effect of switching.
+        if _generated is None:
+            _generated=not branchname #only the defaulted name is ours to recycle
         if not branchname:
             branchname=self.legalize(f"work_from_{self.username}")
         if self.branch_exists(branchname):
-            if branchname != self.main and not self.remove_branch(branchname):
-                return self.checkout(branchname+'_')
+            if (_generated and branchname != self.main
+                    and not self.remove_branch(branchname)):
+                # BOUNDED (Kent 2026-08-31, field: a RECURSIVE "cannot delete
+                # branch main" on attempted update). This retry was unbounded:
+                # every failed delete recursed with another '_' appended, so a
+                # delete that can never succeed — the branch is checked out, or
+                # `-d` refuses it as unmerged — spins forever, minting
+                # work_from_x, work_from_x_, work_from_x__ … A git failure
+                # should be reported once, not looped on. Three attempts is
+                # already generous: the second only helps if the collision was
+                # with a DIFFERENT stale branch.
+                if _tries>=3:
+                    log.error(_("Could not check out ‘{branch}’: it already "
+                        "exists and cannot be deleted (checked out elsewhere, "
+                        "or not fully merged). Giving up after {n} attempts "
+                        "rather than renaming indefinitely.").format(
+                            branch=branchname,n=_tries+1))
+                    return
+                # Still ours after the rename, so keep the recycle permission.
+                return self.checkout(branchname+'_',_tries=_tries+1,
+                                    _generated=True)
         else:
             args.append('-b')
         args.append(branchname)
@@ -57,6 +99,40 @@ class Repository(object):
     def branch_exists(self,branchname):
         return self.do(['branch','--list',branchname])
     def remove_branch(self,branchname):
+        # REFUSE main, and refuse the branch we are standing on. Both callers
+        # already exclude self.main (checkout's rename retry, try_pull_main's
+        # post-merge cleanup) — and yet a field machine produced "cannot delete
+        # branch main" on an update (Kent 2026-08-31), so a path reaches here
+        # with 'main' that reading those two guards does not explain. Guarding
+        # the single choke point makes the whole class impossible rather than
+        # relying on every present and future caller to remember; git would
+        # refuse both of these anyway, so this only changes a confusing error
+        # into a clear log line. Deleting the checked-out branch is the other
+        # thing git always refuses, and it is the likelier real cause: these
+        # branches exist for the multi-machine merge scheme, where the branch
+        # being cleaned up can still be the current one.
+        current=getattr(self,'branch',None)
+        for name,why in ((getattr(self,'main',None),'the main branch'),
+                        (current,'the branch currently checked out')):
+            if name and branchname==name:
+                # NAME THE CALLER. Refusing quietly would trade a loud wrong
+                # behaviour for a silent one, and "who asked to delete main?"
+                # is a SEPARATE bug from "main got deleted" (Kent 2026-08-31) —
+                # both call sites guard against it, so whoever reaches here is
+                # doing something this file does not account for. Log the stack
+                # once so the next occurrence identifies itself instead of
+                # needing another field round-trip.
+                try:
+                    import traceback
+                    chain=''.join(traceback.format_stack()[-6:-1])
+                except Exception:
+                    chain='(stack unavailable)'
+                log.error(_("Refusing to delete ‘{branch}’: it is {why}. "
+                    "Nothing deletes it; continuing. THIS CALL SHOULD NOT "
+                    "HAPPEN — called by {caller}; stack:\n{chain}").format(
+                        branch=branchname,why=why,
+                        caller=callerfn(),chain=chain))
+                return
         return self.do(['branch','-d',branchname])
     def add(self,file,force=False):
         #This function must be used to see changes
@@ -138,6 +214,24 @@ class Repository(object):
     def status(self):
         args=['status']
         log.info(self.do(args))
+    """THESE TWO CLONES ARE DELIBERATELY NOT SHALLOW.
+
+    Sister-repo clones went to `--depth 1` on 2026-09-01 ("we don't need history
+    for any users"), and for rollout assets that is plainly right. It is NOT
+    right here, and the distinction is worth stating rather than rediscovering:
+
+      - These methods serve DATA repos as well as the source, and a project's
+        history is not a developer luxury — it is the user's own record of their
+        work, and it is the merge base the collab three-way merge needs. A
+        shallow project repo can lose the ability to merge with a peer.
+      - `clonetoUSB` makes a BARE clone and then `addremote`s it, i.e. the clone
+        becomes a two-way sync channel. `--depth` on a repo used as a remote in
+        both directions is a footgun, not an optimisation.
+
+    If the AZT SOURCE clone-to-USB specifically should be shallow (it is only an
+    offline installer payload), split it out from the shared method first — do
+    not add a depth flag here.
+    """
     def clonefromUSB(self,directory):
         log.info(_("Preparing to clone to {dir} from USB repo").format(dir=directory))
         #this should be a pathlib object
@@ -189,6 +283,7 @@ class Repository(object):
     def undo_pull(self):
         self.do(['reset','--hard','@{1}'])
     def share(self,remotes=None,noclone=False,nocommit=False):
+        remotes=self._remotelist(remotes) #never iterate one URL's characters
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes and not noclone:
@@ -202,6 +297,7 @@ class Repository(object):
             r=self.push(remotes)
         return r #ok if we don't track results for each
     def fetch(self,remotes=None,noclone=False):
+        remotes=self._remotelist(remotes) #never iterate one URL's characters
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes and not noclone:
@@ -216,23 +312,55 @@ class Repository(object):
             r=self.do(args)
             # log.info("Pull return: {}".format(r))
         return r #if we want results for each, do this once for each
+    def _remotelist(self,remotes):
+        """Always a LIST of remotes, never one remote's characters.
+
+        A single remote is a str (a URL) or a path — both ITERABLE — so
+        `for remote in remotes` walked a URL one character at a time and ran
+        `git pull u main`, `git pull s main`, `git pull s main`, … one fatal
+        per letter of 'kent-rasmussen/azt' (Kent's log, 2026-09-01). The path
+        in was pull() handing try_pull_main a `str(remote)`, and try_pull_main
+        handing that same str straight back to pull(). Normalised at the choke
+        point rather than trusting four call sites and every future one: pull,
+        push, fetch and share all have the same `for remote in remotes` shape,
+        so any of them could be handed a single remote and none of them would
+        complain — they would just do something absurd."""
+        if remotes is None:
+            return None
+        if isinstance(remotes,(str,bytes)) or hasattr(remotes,'__fspath__'):
+            return [remotes]
+        return list(remotes)
     def try_pull_main(self,remotes):
-        if self.branch == self.main:
+        # CAPTURE THE BRANCH FIRST. This used to read self.branch AFTER the pull
+        # below, and pull() calls try_pull_main() for every remote, which calls
+        # pull() again — mutual recursion. The inner call checks out main, so
+        # the outer frame then read self.branch as 'main' and asked to delete
+        # the branch it was standing on: "cannot delete branch main", the field
+        # report from 2026-08-31, in both its halves (the recursion AND the
+        # impossible delete). Caught in the act by remove_branch's own guard,
+        # which logged the stack (Kent, 2026-09-01).
+        old_branch=self.branch
+        if old_branch == self.main:
             return
+        remotes=self._remotelist(remotes)
         try:
-            r=self.pull(remotes,branch=self.main)
+            # _main_attempted: do not let the nested pull start this dance
+            # again. One attempt to get onto main is the whole point; repeating
+            # it per remote, per recursion level, is how it ran away.
+            r=self.pull(remotes,branch=self.main,_main_attempted=True)
             log.info(_("Pulled from {repo} {branch} ; {result}").format(
                         repo=self.repotypename,
                         branch=self.main,
                         result=r))
-            old_branch=self.branch
             self.checkout(self.main)
-            self.remove_branch(old_branch) #only if fully merged
+            if old_branch != self.main: #never the branch we just moved onto
+                self.remove_branch(old_branch) #only if fully merged
         except Exception as err:
             self.undo_pull()
-    def pull(self,remotes=None,branch=None):
+    def pull(self,remotes=None,branch=None,_retried=False,_main_attempted=False):
         if not branch:
             branch=self.branch
+        remotes=self._remotelist(remotes) #never iterate one URL's characters
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
@@ -245,16 +373,33 @@ class Repository(object):
             elif self.code == 'hg':
                 args=['pull','-u',str(remote),branch]
             log.info("Pulling: {}".format(args))
-            self.try_pull_main(str(remote))
+            if not _main_attempted: #or pull↔try_pull_main recurse (see there)
+                self.try_pull_main([str(remote)])
             r=self.do(args)
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
+                # BOUNDED (Kent 2026-08-31). This retried itself unconditionally:
+                # undo, move to a work branch, push, pull again — and if the
+                # merge fails the same way a second time (it usually will, the
+                # conflicting commits being unchanged), it recursed forever,
+                # calling checkout() on every pass. Together with checkout's own
+                # unbounded rename retry that is the "recursive" half of the
+                # field report. One retry is the whole value here: the point of
+                # the detour is to get off a branch that can't fast-forward, and
+                # if that doesn't work once it will not work by repetition.
+                if _retried:
+                    log.error(_("Automatic merge failed again after moving to a "
+                        "work branch; giving up rather than retrying. Result: "
+                        "{result}").format(result=r))
+                    return r
                 self.undo_pull()
                 self.checkout()
                 self.push(remotes,setupstream=True)
-                return self.pull(remotes)
+                return self.pull(remotes,_retried=True,
+                                _main_attempted=_main_attempted)
         return r #if we want results for each, do this once for each
     def push(self,remotes=None,setupstream=False):
+        remotes=self._remotelist(remotes) #never iterate one URL's characters
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
@@ -926,6 +1071,19 @@ class GitReadOnly(Git):
             # This doesn't mind if there is no USB:
             remotes=self.localremotes() #don't publish to internet this way
             log.info(_("remotes: {remotes}").format(remotes=remotes))
+            if not remotes:
+                # NOTHING TO PUSH TO → DON'T TOUCH THE BRANCHES (Kent
+                # 2026-08-31). Both loops below iterate `remotes`, so with none
+                # found they do nothing at all — but switchbranches() still ran
+                # twice, checking the working tree out to the other branch and
+                # back for no benefit whatsoever. That is where the update's
+                # branch deletion came from, in a run whose own log said
+                # `remotes: []`. Branch surgery is not free (it rewrites the
+                # working tree, and used to delete and re-create the branch), so
+                # it must not happen when the work it exists to enable cannot.
+                log.info(_("No local remotes to publish to; skipping the "
+                            "both-branches push and leaving the branch alone."))
+                return r
             for remote in remotes: #iterate here to keep results
                 r[remote+'/'+self.branch]=method(self,remotes=[remote])
             # self.stash()
@@ -946,40 +1104,219 @@ class GitReadOnly(Git):
             for remote in remotes:
                 r[remote+'/'+self.branch]=method(self,remotes=[remote])
         return r
-        remotes=self.findpresentremotes() #do once
-        if not remotes:
-            return
-        branches = ['main',self.program.testversionname]
-        fns = [self.testversion, self.reverttomain]
-        if self.branch != 'main':
-            branches.reverse()
-            fns.reverse()
-        try:
-            for i in range(2):
-                log.info(_("Running index {index} ({branch} {fn})").format(index=i,branch=branches[i],fn=fns[i]))
-                #not pulling here, as not sharing in that direction.
-                r=Repository.push(self,remotes=remotes,branch=branches[i])
-                if r:
-                    r=fns[i]()
-        except Exception as e:
-            ErrorNotice(e)
+        # (Removed 2026-08-31: ~17 lines of unreachable code sat here, after the
+        # return — an earlier both-branches implementation using a
+        # branches/fns pair reversed by current branch. It could not run, and
+        # reading it as live made this method look like it did something it
+        # does not. The live version is the `if self.program.me:` block above.)
     def switchbranches(self):
-        if self.branch == 'main':
-            self.testversion()
+        """Move to the OTHER branch, non-destructively.
+
+        NEVER hard_checkout here. This is the developer publish loop
+        (share() under program.me): it visits the other branch only to push it,
+        so resetting that branch to origin would discard exactly the unpushed
+        commits it is about to publish, and -f would discard working-tree edits
+        on the maintainer's own machine. The destructive reset belongs to the
+        USER-facing 'Try testing version' / 'Revert to main' buttons, where
+        overwriting local mess is the point (Kent 2026-08-31) — those still call
+        reverttomain/testversion, which still hard_checkout.
+        A plain checkout is also honest here: git refuses the switch if
+        uncommitted changes would be clobbered, which is the correct answer for
+        a machine whose work is the thing being shared."""
+        target=self.program.testversionname if self.branch=='main' else 'main'
+        return self.checkout(target)
+    def hard_checkout(self,branchname):
+        """Switch to `branchname` and make it match origin/<branchname> EXACTLY,
+        discarding local commits and local edits.
+
+        That destruction is deliberate (Kent 2026-08-31): this UI is used by
+        people who don't use git, so anything they have accidentally changed
+        SHOULD be overwritten by the published branch.
+
+        `checkout -f -B` says all of that in one command:
+          -B <b> <start>  create OR RESET the branch to the start point, so it
+                          works even when we are standing on it — unlike the old
+                          delete-then-checkout, which git refuses for the current
+                          branch (the "cannot delete branch" failures) and which
+                          left the branch GONE if anything failed in between.
+          origin/<b>      name the source explicitly instead of relying on git's
+                          DWIM re-creation, which needs exactly one remote to
+                          carry the branch and quietly does nothing like this if
+                          the branch already exists locally.
+          -f              discard conflicting working-tree changes — the half the
+                          old code never did at all. Delete-and-recreate threw
+                          away COMMITS (the valuable half) while leaving
+                          uncommitted edits in place, i.e. exactly backwards.
+        This retires the standing `need to also / git reset --hard origin/main`
+        TODO that sat in reverttomain: the reset is no longer a missing separate
+        step, it is what this does."""
+        start='origin/'+branchname
+        # ALWAYS refresh, not just when the ref is missing. This checks the
+        # branch out AT origin/<b>, and nothing else in the app ever updates a
+        # remote-tracking ref: pull() and fetch() are called with a URL, which
+        # writes FETCH_HEAD and leaves origin/* exactly as the original clone
+        # left it. So on any install older than a few days, "try the testing
+        # version" would reset you to a MONTHS-OLD origin/testing and report
+        # success — silently right-looking, since the branch name and the
+        # switch both work. (Kent asked "didn't pull?" seeing testing at
+        # 1.13.21 / five weeks old; there it was honest — that IS what is
+        # published — but only because the clone was hours old.)
+        # It also covers the ref being ABSENT, not merely stale. Kent
+        # 2026-09-01: "if a user calls trytesting when there is no
+        # origin/testing, we want to track on origin/testing explicitly…
+        # knowing that trap is there isn't as good as fixing it proactively."
+        # Safe precisely because the name is OURS (program.testversionname /
+        # 'main'), not a guess at something a user might have: if it ever goes
+        # away, that is our doing and our problem to see.
+        fetched,why=self.fetch_tracking_branch(branchname)
+        if self.do(['rev-parse','--verify','--quiet',start]):
+            r=self.do(['checkout','-f','-B',branchname,start])
+        elif self.do(['rev-parse','--verify','--quiet',
+                        'refs/heads/'+branchname]):
+            # A local branch of that name already exists: switching to it is a
+            # real answer, just not a RESET one. Say which we did.
+            log.warning(_("No {start} (and could not fetch it: {why}); "
+                        "switching to the existing local ‘{branch}’ WITHOUT "
+                        "resetting it to the published version.").format(
+                        start=start,branch=branchname,
+                        why=why or _("no reason given")))
+            r=self.checkout(branchname)
         else:
-            self.reverttomain()
+            # DO NOT fall through to checkout() here. With no local branch it
+            # takes its `-b` path, creating the branch AT HEAD with no upstream
+            # — so "try the testing version" reported success (the caller only
+            # checks that self.branch matches the NAME) while running exactly
+            # the code it was already running. Silent and self-confirming, and
+            # the reason the checkout-B-from-HEAD-not-remote item exists.
+            # Better to fail loudly and stay put than to lie about which code
+            # is running.
+            r=_("Could not switch to ‘{branch}’.\n\n{why}\n\nThere is no local "
+                "‘{branch}’ to fall back to either, so nothing was changed — "
+                "you are still on ‘{now}’."
+                ).format(branch=branchname,now=self.branch,
+                         why=why or _("There is no published {start} to take "
+                                      "it from.").format(start=start))
+            log.error(r)
+        log.info(r)
+        self.branchname() #because this changes
+        return r
+    def fetch_tracking_branch(self,branchname):
+        """Put `refs/remotes/origin/<branchname>` where hard_checkout can use it.
+
+        WHY THIS IS NEEDED AT ALL, which is not obvious: this app pulls and
+        fetches BY URL (`pull <url> <branch>`, see pull()), and that updates
+        FETCH_HEAD — never a remote-tracking ref. So `origin/<branch>` is only
+        ever as fresh as the original `git clone`, and on a shallow clone
+        (`--depth 1` implies `--single-branch`) it does not exist at all. Both
+        cases sent hard_checkout down its fallback, where the old code invented
+        a branch at HEAD.
+
+        The refspec is explicit — `<b>:refs/remotes/origin/<b>` — rather than a
+        bare `fetch <url> <b>`, because a bare fetch on a single-branch clone
+        updates FETCH_HEAD and may write no tracking ref at all, which is the
+        very hole being closed. Writing that ref does not require a git remote
+        NAMED origin to exist; it is just a ref.
+
+        Internet remotes only: a USB clone can be stale or a bare mirror of this
+        same machine, and "the published version" means the published one.
+
+        Returns ``(ok, reason)``: ``ok`` is whether the ref is there
+        afterwards, ``reason`` is '' on success or a sentence fit to show a
+        user on failure. It returned a bare bool until 2026-09-28 and threw the
+        fetch output away, so a temporary outage, a clone with no known remote
+        and a RENAMED branch all reached the caller as the same flat
+        nothing."""
+        start='origin/'+branchname
+        # remoteurls(), NOT findpresentremotes(). The latter is not a read-only
+        # lookup: it offers the user a USB drive and does
+        # `self.program.taskchooser.withdraw()` — so calling it from here, a git
+        # primitive that can run before the chooser exists, raised "'App' object
+        # has no attribute 'taskchooser'" (Kent 2026-09-02). We only want the
+        # published URL, and remoteurls() is the stored dict, with no side
+        # effects and nothing to prompt about.
+        try:
+            # Both sources findpresentremotes draws on, minus its prompting:
+            # the URLs stored in settings, and git's own remote NAMES (a name is
+            # a fine fetch target, and isinternet() resolves it to a URL).
+            remotes=list((self.remoteurls() or {}).values())
+            remotes+=[n for n in (getattr(self,'remotenames',None) or [])
+                        if n not in remotes]
+        except Exception as e:
+            log.info(_("Could not list remotes to fetch ‘{branch}’: {error}"
+                        ).format(branch=branchname,error=e))
+            remotes=[]
+        # LAST-RESORT REMOTE: the URL THIS CLONE CAME FROM (2026-09-28).
+        # Without it, a clone whose settings hold no remote URLs tries NOTHING
+        # — the loop below never runs a single command — and the caller cannot
+        # tell that from a fetch that ran and failed. `remote.origin.url` is
+        # present in every clone by construction and needs no settings, no
+        # prompting and no scraping.
+        if not any(self.isinternet(r) for r in remotes):
+            origin=self.do(['config','--get','remote.origin.url'])
+            origin=(origin or '').strip().split('\n')[0].strip()
+            if origin and isinterneturl(origin):
+                log.info(_("No usable remote in settings; falling back to the "
+                            "URL this clone came from: {url}").format(url=origin))
+                remotes.append(origin)
+        spec='{b}:refs/remotes/origin/{b}'.format(b=branchname)
+        # WHY A REASON, NOT JUST A BOOL (Kent, 2026-09-28: failures of kind (2)
+        # "will happen, and should be recoverable"). Three things can leave the
+        # ref absent and they need different responses from the user:
+        #   1. nothing was even tried — no remote looked like an internet URL;
+        #   2. the fetch ran and failed — offline, proxy, credentials. TRANSIENT,
+        #      so the message must invite a retry rather than read as final;
+        #   3. the remote has no such branch — which is what a RENAMED
+        #      testversionname looks like, the lockout Kent is guarding against.
+        # The old code discarded the fetch output entirely, so all three
+        # surfaced as one flat "there is no published origin/<b>" — a transient
+        # outage disguised as a permanent absence, and a rename disguised as
+        # both.
+        tried,lasterr=False,''
+        for remote in remotes:
+            try:
+                if not self.isinternet(remote):
+                    continue
+                tried=True
+                log.info(_("No {start} yet; fetching ‘{branch}’ from {remote}."
+                            "").format(start=start,branch=branchname,
+                            remote=remote))
+                out=self.do(['fetch',str(remote),spec]) or ''
+                if self.do(['rev-parse','--verify','--quiet',start]):
+                    return True,''
+                lasterr=str(out).strip() or lasterr
+            except Exception as e:
+                lasterr=str(e)
+                log.info(_("Fetching ‘{branch}’ from {remote} failed: {error}"
+                            ).format(branch=branchname,remote=remote,error=e))
+        if self.do(['rev-parse','--verify','--quiet',start]):
+            return True,''
+        if not tried:
+            return False,_("No internet remote to fetch it from. A-Z+T knows "
+                            "of no published address for this copy, so nothing "
+                            "was tried.")
+        tail='\n'.join(lasterr.split('\n')[-4:]).strip()
+        if 'find remote ref' in lasterr or 'not found' in lasterr.lower():
+            # Case 3. Say the BRANCH is missing, not the network — this is what
+            # a renamed test branch looks like, and calling it a network fault
+            # would send the reader hunting in the wrong place for a long time.
+            return False,_("The published repository has no branch called "
+                            "‘{branch}’. If the test version was renamed, "
+                            "A-Z+T is looking for the old name.{tail}").format(
+                            branch=branchname,
+                            tail='\n'+tail if tail else '')
+        return False,_("Could not reach the published repository to fetch "
+                        "‘{branch}’. This is usually temporary — try again "
+                        "when you are online.{tail}").format(
+                        branch=branchname,tail='\n'+tail if tail else '')
     def reverttomain(self,event=None):
-        r=self.checkout('main')
-        """need to also
-        git reset --hard origin/main
-        """
+        r=self.hard_checkout('main')
         log.info(r)
         if self.branch == 'main':
             return True
         else:
             ErrorNotice(r)
     def testversion(self,event=None):
-        r=self.checkout(self.program.testversionname)
+        r=self.hard_checkout(self.program.testversionname)
         log.info(r)
         if self.branch == self.program.testversionname:
             return True

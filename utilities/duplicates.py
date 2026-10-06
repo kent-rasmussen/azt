@@ -59,6 +59,22 @@ def running_file(path):
                 if qcmd is None or '-X' in qcmd or [i for i in qcmd
                                                 if 'py.exe' in i]: #avoids need for try/except
                     continue
+                # A ZOMBIE IS NOT "ALREADY RUNNING". A process that has exited
+                # but whose parent has not reaped it keeps its pid and its
+                # cmdline, so it matches here and blocks the launch — and the
+                # user is told A-Z+T is already running when nothing is. That
+                # is indistinguishable, from the printed list, from a real
+                # second copy: the 2026-09-09 Mac failure listed a pid 43209s
+                # (12h) old, which may well have been one.
+                #   Kept narrow deliberately: only states that mean "this pid
+                # no longer runs code" are skipped. A live-but-busy process
+                # still counts, because it IS another copy.
+                try:
+                    if q.status() in (psutil.STATUS_ZOMBIE,
+                                      psutil.STATUS_DEAD):
+                        continue
+                except Exception:
+                    pass    #status is best-effort; absence is not evidence
                 for c in qcmd:
                     if resolved == pathlib.Path(c).resolve():
                         # Keep the pid and age: when this gate fires wrongly the
@@ -69,7 +85,15 @@ def running_file(path):
                             age=int(time.time()-q.create_time())
                         except Exception:
                             age=-1
-                        l.append((q.pid,age,qcmd))
+                        # State too: "running" and "sleeping" read very
+                        # differently to someone deciding whether the gate
+                        # fired wrongly, and a 12-hour-old entry says nothing
+                        # by itself about whether it is still doing anything.
+                        try:
+                            state=q.status()
+                        except Exception:
+                            state='?'
+                        l.append((q.pid,age,qcmd,state))
     except OSError as e:
         print(f"OS Error checking for running file: {e}")
         return
@@ -85,10 +109,24 @@ def running_file(path):
             running="is already running"
             enter="Press ENTER, or close this window, to exit"
         print(f"\n{pathlib.Path(path).resolve()} {running}:\n\n",
-                '\n'.join(f"pid {pid} ({age}s old): {cmd}"
-                            for pid,age,cmd in l))
+                '\n'.join(f"pid {pid} ({age}s old, {state}): {cmd}"
+                            for pid,age,cmd,state in l))
         print(f"(this process: pid {os.getpid()}; "
                 f"allowed {ok_processes}; skipped pids: "
                 f"{sorted(skip_pids) or 'none'})")
-        input('\n' + enter + '\n')
+        # "Press ENTER to exit" needs somewhere to read ENTER FROM, and after
+        # the venv relaunch there is nowhere: the parent has exited, the child
+        # inherits no terminal, and `input()` raises EOFError — so the guard
+        # crashed on its own way out instead of exiting (Kent's Mac,
+        # 2026-09-09). The pause exists to let a user READ the list before the
+        # window closes, which is worth nothing if the traceback replaces the
+        # list. Losing the pause is the smaller loss, and the message above
+        # has already been printed either way.
+        try:
+            input('\n' + enter + '\n')
+        except (EOFError, OSError):
+            print('\n' + enter.replace('Appuyer ENTER, ou fermer ce fenetre,',
+                                       'Fermez cette fenêtre').replace(
+                    'Press ENTER, or close this window,', 'Close this window')
+                  + '\n(no keyboard attached to this window)')
         return True

@@ -4,7 +4,7 @@
 - Date: 2026-06-24
 - Scope: `azt/` (desktop) — record / bulk-ASR / transcription-select workflow
 - Author: drafted by Claude (AI agent), not yet reviewed/owned by the maintainer
-- Related: [design doc](../asr_bulk_transcription_design.md); machine-form
+- Related: the ASR bulk-transcription design (agenda item); machine-form
   precedent in `Sense.cvprofilemachinevalue` (`io_put/lift.py`); selection UI in
   `WordCollectionwRecordings.show_drafts` (`tasks/tasks.py`).
 

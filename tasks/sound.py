@@ -1,6 +1,7 @@
 from backend.core.sound import SoundSettings, Record as BackendRecord
 from frontend import sound_ui, ui
 from utilities import logsetup
+from utilities.error_handler import notify_user
 from io_put import lift
 
 log = logsetup.getlog(__name__)
@@ -15,27 +16,189 @@ class Sound(object):
     is_sound_task = True
 
     def _configure_sound(self, event=None):
-        sound_ui.SoundSettingsWindow(self)
+        # The DELIBERATE route: context menu -> "Sound settings". Verify here
+        # too, not only in mikecheck() — this is what a user does when sound
+        # has gone wrong, and it previously opened the window without checking
+        # anything. mikecheck() is the automatic route, entered only when the
+        # stored settings fail to validate.
+        #
+        # ONE OPEN AT A TIME, AND THE DEDUP BELOW CANNOT DO IT. That guard
+        # reads `self.soundsettingswindow`, which is only assigned once
+        # `SoundSettingsWindow(...)` RETURNS — so for the whole of the build
+        # it is unset and a second click sees no window to reuse. The build
+        # is not quick: this method runs `_verify_rate()` first, which
+        # RECORDS about two seconds of audio, and the page itself then takes
+        # a while. Kent, 2026-09-15: "the flash open of the settings window,
+        # requiring a second open immediately afterwards".
+        #   The cost is not just a duplicate window. Two clicks mean two
+        # `_verify_rate()` calls, and under webview they arrive on the JS
+        # bridge's thread, so the second can open a PortAudio input stream
+        # while the first still holds one — the same concurrent-stream fault
+        # guarded in `sound_ui._new_input_card`, by a different door. The app
+        # has been dying silently around exactly this, with no traceback and
+        # no signal.
+        #   A flag rather than a lock: this is "ignore a click", not "wait
+        # your turn". Queueing a second open behind the first would give the
+        # user the window twice, which is what the dedup exists to prevent.
+        if getattr(self, '_opening_sound_settings', False):
+            log.info("Sound settings is already opening; ignoring this click")
+            return
+        self._opening_sound_settings = True
+        message = None
+        try:
+            message = self._verify_rate()
+            self._sound_settings_window()
+        finally:
+            self._opening_sound_settings = False
+        # AFTER the window exists, so the notice lands beside the thing it
+        # talks about rather than alone on a bare desktop.
+        if message:
+            notify_user(message)
+
+    def _sound_settings_window(self):
+        """The ONE Sound Card Settings window — revealed, not rebuilt.
+
+        Kent, 2026-09-11: "apparently I can have multiple sound settings
+        windows open at the same time?" Yes: both routes here constructed one
+        unconditionally, with nothing to notice an existing one, so every
+        visit to the context menu made another.
+
+        That is worse than duplicate clutter, because this window WITHDRAWS
+        the task window on open and reveals it again on close: with two open,
+        the first one closed hands the task window back while the second is
+        still up, and the second's close then reveals a task window that is
+        already showing. The settings each window holds are the same object
+        (`SoundSettings.ensure`), so two views can also disagree on screen
+        after a change made in one — the "two UIs, one daemon" shape that
+        azt-collab has its own agenda item for.
+
+        Reusing rather than rebuilding is this app's idiom anyway: the `Wait`
+        dialog is "built ONCE on the root and then withdrawn/deiconified
+        rather than destroyed/rebuilt per wait", and under webview a window
+        costs a page load, four HTTP round trips and a JS bridge handshake.
+        """
+        window = getattr(self, 'soundsettingswindow', None)
+        if window is not None:
+            try:
+                alive = (getattr(window, '_exists', True)
+                         and window.winfo_exists()
+                         and not window.exitFlag.istrue())
+            except Exception:
+                alive = False
+            if alive:
+                log.info("Sound settings is already open; showing it rather "
+                         "than opening a second one")
+                try:
+                    window.deiconify()
+                    window.lift()
+                except Exception as e:
+                    log.info("couldn't raise the open sound settings ({})"
+                             "".format(e))
+                return window
+        self.soundsettingswindow = sound_ui.SoundSettingsWindow(self)
+        return self.soundsettingswindow
 
     def setcontext(self):
         super().setcontext()
         self.context.menuitem("Sound settings", self._configure_sound)
 
     def soundcheck(self):
+        # TIMED 2026-09-28. A screencast put a 6.47s gap between the task page
+        # painting and anything else happening, and this runs in exactly that
+        # window: `Sound.__init__` calls `super().__init__()` — which builds
+        # and paints the task window — and THEN calls this. The affix catalog,
+        # long blamed for the wait, comes later still and measures under a
+        # second.
+        #   The comment below already records a "blocking ~1s audio probe"
+        # being taken out of this same spot for this same reason, so audio
+        # work here has form. Three phases, because `ensure` may construct the
+        # settings (and open the device) while `soundcheck` validates stored
+        # settings against the hardware, and they would want different fixes.
+        import time as _time
+        _t0 = _time.perf_counter()
         analang_obj = self.program.languages.get_obj(self.analang)
         ss = SoundSettings.ensure(self.program, analang_obj=analang_obj)
+        _t_ensure = _time.perf_counter()
         self.soundsettings = ss
-        self.pyaudio = ss.pyaudio
-        if ss.soundcheck(include_input=getattr(self, 'is_record_task', False)):
+        self.audio = ss.audio
+        _needs = ss.soundcheck(include_input=getattr(self, 'is_record_task',
+                                                     False))
+        _t_check = _time.perf_counter()
+        log.info("task soundcheck: SoundSettings.ensure %.2fs, "
+                 "soundcheck %.2fs, total %.2fs (mikecheck needed: %s)",
+                 _t_ensure - _t0, _t_check - _t_ensure, _t_check - _t0,
+                 bool(_needs))
+        if _needs:
             self.mikecheck()
+        # NOTHING ELSE HERE. A `_verify_rate()` call was added in this branch
+        # to measure the rate before any real recording, and it was in the
+        # wrong place twice over: it ran DURING TASK CONSTRUCTION, so a
+        # blocking ~1s audio probe and a status window landed partway through
+        # building the task window — and a startup crash followed it ("bad
+        # window path name .!taskwindow.!taskwindow.!frame.!frame", the task
+        # frame gone before getwords() could build in it).
+        #   It was also redundant, as Kent pointed out: users are already
+        # asked to test a recording in the settings window before collecting
+        # data, and that take goes through the per-take check with several
+        # seconds of real audio — better evidence than any probe here, and it
+        # feeds back through SoundSettings.note_fake_rate(). The measurement
+        # belongs to a user action, not to opening a task.
+
+    def _verify_rate(self):
+        """Measure what the chosen microphone really records, and say so.
+
+        Called from mikecheck() — the point at which the user has already
+        stopped to deal with sound, so a second of recording is affordable
+        here and nowhere else. `default_fs()` deliberately never measures:
+        it is on the startup path and in the step-down fallbacks.
+
+        Cached per device name inside SoundSettings, so re-opening the mic
+        check costs nothing. Failure is not worth interrupting anyone over —
+        the rate simply stays whatever it was.
+        """
+        # EVERYTHING here is inside the try, and the method returns a message
+        # instead of showing one. Both because of a NWAA this caused
+        # (2026-09-10): `notify_user` sat outside the try, so an exception in
+        # it propagated out of here — and since mikecheck() calls this AFTER
+        # self.ui.withdraw(), the settings window was never created and the
+        # only mapped window left in the whole app was the status window the
+        # notice had just opened. A check on the settings is not worth one
+        # window of the user's work, let alone all of them.
+        #
+        # No waiting dialog either: a wait parented on a withdrawn window is
+        # the recurring reveal bug. The probe stops at the first rate that
+        # verifies, so it is about a second at worst.
+        try:
+            ss = self.program.soundsettings
+            if not hasattr(ss, 'verify_fs'):
+                return None
+            rate, message = ss.verify_fs()
+            if rate:
+                try:
+                    self.program.settings.storesettingsfile(
+                                                    setting='soundsettings')
+                except Exception as e:
+                    log.info("couldn't persist the verified rate "
+                             "({})".format(e))
+            return message
+        except Exception as e:
+            log.info("couldn't verify the sample rate ({})".format(e))
+            return None
 
     def mikecheck(self):
         self.ui.withdraw()
-        self.program.soundsettings.confirm_pyaudio()
-        self.soundsettingswindow = sound_ui.SoundSettingsWindow(self)
+        self.program.soundsettings.confirm_audio()
+        message = self._verify_rate()
+        # Through the accessor, so the automatic route cannot open a SECOND
+        # window over one the user already has up. It destroys the window at
+        # the end of this method, and the accessor checks `winfo_exists()`,
+        # so a later visit builds a fresh one.
+        self._sound_settings_window()
+        if message:
+            notify_user(message)
         if not self.soundsettingswindow.exitFlag.istrue():
             self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        self.program.soundsettings.done_pyaudio()
+        self.program.soundsettings.done_audio()
         self.ui.deiconify()
         if (not self.ui.exitFlag.istrue()
                 and self.soundsettingswindow.winfo_exists()):
@@ -106,62 +269,100 @@ class Record(BackendRecord, Sound):
             return
         if not self.ui.runwindow.frame.winfo_exists():
             return
-        self.ui.runwindow.resetframe()
-        ps = self.program.slices.ps()
-        profile = self.program.slices.profile()
-        count = self.program.slices.count()
-        text = "Record {profile} {ps} Words: click 'Record', talk, and release ({count} words)".format(profile=profile, ps=ps, count=count)
-        log.info(text)
-        instr = ui.Label(self.ui.runwindow.frame, anchor='w', text=text)
-        instr.grid(row=0, column=0, sticky='w')
-        senses = self.program.slices.senses(ps=ps, profile=profile)
-        if not senses:
-            senses = self.program.db.senses
-        nperpage = 5
-        pages = [senses[i:i + nperpage] for i in range(0, len(senses), nperpage)]
-        # A5 in-place reload: resume at the page the user was on. The old task
-        # stashes its position as _record_anchor (below); reload_database hands
-        # it over as program._reload_anchor; consume it here (once) by seeking
-        # to the page holding the anchored sense in the anchored slice.
-        start = 0
-        anchor = getattr(self.program, '_reload_anchor', None)
-        if (anchor and anchor.get('ps') == ps
-                and anchor.get('profile') == profile):
-            ids = [s.id for s in senses]
-            if anchor.get('senseid') in ids:
-                start = ids.index(anchor['senseid']) // nperpage
-                log.info("record page: resuming at page %d (reload anchor)",
-                         start)
-            self.program._reload_anchor = None
-        for pageno, page in enumerate(pages):
-            if pageno < start:
-                continue
-            self._record_anchor = {'ps': ps, 'profile': profile,
-                                   'senseid': page[0].id}
-            if self.ui.runwindow.exitFlag.istrue():
-                return
-            with self.ui.runwindow.waiting(thenshow=True):
-                buttonframes = ui.ScrollingFrame(self.ui.runwindow.frame,
-                                                 row=1, column=0, sticky='w')
-                row = 0
-                done = list()
-                for row, entry in enumerate([i.entry for i in page]):
-                    self.ui.runwindow.column = 0
-                    if entry.guid in done:
-                        continue
-                    else:
-                        done.append(entry.guid)
-                    ftypes = ['lc', 'pl', 'imp']
-                    for node in [entry.sense.nodebyftype(f) for f in ftypes
-                                 if entry.sense.nodebyftype(f)]:
-                        self.ui.runwindow.column += 2
-                        self.makelabelsnrecordingbuttons(buttonframes.content, node,
-                                                        row, self.ui.runwindow.column)
-                ui.Button(buttonframes.content, column=1, row=row,
-                          text="Next {count} words".format(count=nperpage),
-                          cmd=lambda x=buttonframes: self.cleanup_pa(x))
-            buttonframes.reflow()  # grow canvas to cover this page's record buttons
-            buttonframes.wait_window(buttonframes)
+        # Open the wait BEFORE resetframe(): on the 2nd and later groups this
+        # window is already mapped, so blanking it here — with Exit living in
+        # outsideframe — leaves an empty fullscreen kiosk page until the first
+        # page finishes building. wait() withdraws and covers the screen; the
+        # per-page `with waiting()` below finds the wait already active, so it
+        # just reuses it and its exit does the single reveal. No extra
+        # withdraw/deiconify cycle, no flash of a one-label page.
+        self.ui.runwindow.wait(msg="Getting words to record…", thenshow=True)
+        try:
+            self.ui.runwindow.resetframe()
+            ps = self.program.slices.ps()
+            profile = self.program.slices.profile()
+            count = self.program.slices.count()
+            text = "Record {profile} {ps} Words: click 'Record', talk, and release ({count} words)".format(profile=profile, ps=ps, count=count)
+            log.info(text)
+            instr = ui.Label(self.ui.runwindow.frame, anchor='w', text=text)
+            instr.grid(row=0, column=0, sticky='w')
+            senses = self.program.slices.senses(ps=ps, profile=profile)
+            if not senses:
+                senses = self.program.db.senses
+            nperpage = 5
+            pages = [senses[i:i + nperpage] for i in range(0, len(senses), nperpage)]
+            # A5 in-place reload: resume at the page the user was on. The old task
+            # stashes its position as _record_anchor (below); reload_database hands
+            # it over as program._reload_anchor; consume it here (once) by seeking
+            # to the page holding the anchored sense in the anchored slice.
+            start = 0
+            anchor = getattr(self.program, '_reload_anchor', None)
+            if (anchor and anchor.get('ps') == ps
+                    and anchor.get('profile') == profile):
+                ids = [s.id for s in senses]
+                if anchor.get('senseid') in ids:
+                    start = ids.index(anchor['senseid']) // nperpage
+                    log.info("record page: resuming at page %d (reload anchor)",
+                             start)
+                self.program._reload_anchor = None
+            for pageno, page in enumerate(pages):
+                if pageno < start:
+                    continue
+                self._record_anchor = {'ps': ps, 'profile': profile,
+                                       'senseid': page[0].id}
+                if self.ui.runwindow.exitFlag.istrue():
+                    return
+                with self.ui.runwindow.waiting(thenshow=True):
+                    buttonframes = ui.ScrollingFrame(self.ui.runwindow.frame,
+                                                     row=1, column=0, sticky='w')
+                    row = 0
+                    done = list()
+                    for row, entry in enumerate([i.entry for i in page]):
+                        self.ui.runwindow.column = 0
+                        if entry.guid in done:
+                            continue
+                        else:
+                            done.append(entry.guid)
+                        # pl and imp resolve now. They always appeared in
+                        # this list and always dropped out at `nodebyftype`,
+                        # because nothing had ever pointed a sense's `pl` at
+                        # the field the user named — so this page offered
+                        # recording buttons for citation forms only, and
+                        # said nothing about the other two. See
+                        # `Sense.set_ftype` (2026-09-29).
+                        ftypes = ['lc', 'pl', 'imp']
+                        for node in [entry.sense.nodebyftype(f) for f in ftypes
+                                     if entry.sense.nodebyftype(f)]:
+                            self.ui.runwindow.column += 2
+                            self.makelabelsnrecordingbuttons(buttonframes.content, node,
+                                                            row, self.ui.runwindow.column)
+                    ui.Button(buttonframes.content, column=1, row=row,
+                              text="Next {count} words".format(count=nperpage),
+                              cmd=lambda x=buttonframes: self.cleanup_pa(x))
+                    # INSIDE the wait block, not after it: leaving the block calls
+                    # waitdone(), and waitdone() IS the reveal (deiconify+update).
+                    # A ScrollingFrame's children are invisible until reflow sizes
+                    # the canvas, so reflowing after the reveal maps a fullscreen
+                    # kiosk window whose only visible widget is the Exit button in
+                    # outsideframe — the "blank page with just Quit" report. Sibling
+                    # showsenseswithexamplestorecord already has the right order
+                    # (reflow, then waitdone).
+                    buttonframes.reflow()  # grow canvas to cover this page's record buttons
+                # Page built and revealed; the outer wait opened above is closed
+                # by this first inner block's exit. Everything from here is the
+                # user working the page, uncovered by design.
+                buttonframes.wait_window(buttonframes)
+        finally:
+            # Covers the paths where NO page build ran — no senses, or every page
+            # skipped by the reload anchor — so the dialog can't be left up over
+            # the wait_window() below. No-op once a page build has closed it.
+            # Guarded: this runs on every exit path, including ones where the run
+            # window is already gone (quit mid-build), and an exception raised in
+            # a finally would replace whatever actually happened.
+            try:
+                self.ui.runwindow.waitdone()
+            except Exception as e:
+                log.info("could not close the record-page wait: {}".format(e))
         if not self.ui.runwindow.exitFlag.istrue():
             self.ui.runwindow.wait_window(self.ui.runwindow.frame)
 
@@ -177,13 +378,38 @@ class Record(BackendRecord, Sound):
                     return 1
                 self.program.slices.ps(psprofile[1])
                 self.program.slices.profile(psprofile[0])
+                def _nextgroup(event=None):
+                    # OPEN THE WAIT BEFORE BLANKING THE PAGE. This button used
+                    # to be wired straight to resetframe, which is precisely
+                    # what resetframe's own docstring forbids: it empties
+                    # `frame` on a VIEWABLE window, and the Exit button lives in
+                    # `outsideframe`, so the user was left looking at a
+                    # fullscreen block of theme colour containing nothing but
+                    # Quit for as long as the next group's page took to build.
+                    # That is the nothing-but-Quit page, on the recording flow,
+                    # produced by a deliberate click — and Kent watched a user
+                    # on a Zoom call come close to pressing that Quit, because
+                    # it was the only thing on screen (2026-09-01).
+                    #
+                    # The wait withdraws the window and covers the screen. The
+                    # next page's own wait (showentryformstorecordpage, which
+                    # opens one and calls resetframe itself) finds this one
+                    # already active and reuses it, so its exit does the single
+                    # reveal — no extra withdraw/deiconify cycle. Exactly the
+                    # handover documented at showentryformstorecordpage's head.
+                    try:
+                        self.ui.runwindow.wait(msg=_("Getting the next group…"),
+                                            thenshow=True)
+                    except Exception as e:
+                        log.info("could not cover the next-group gap: {}".format(e))
+                    self.ui.runwindow.resetframe()
                 nextb = ui.Button(self.ui.runwindow, text="Next Group",
-                                  cmd=self.ui.runwindow.resetframe)
+                                  cmd=_nextgroup)
                 nextb.grid(row=0, column=1, sticky='ne')
                 self.showentryformstorecordpage()
             self.program.slices.ps(ps)
             self.program.slices.profile(profile)
-        self.program.soundsettings.done_pyaudio()
+        self.program.soundsettings.done_audio()
 
     def showsenseswithexamplestorecord(self, senses=None, progress=None, skip=False):
         def setskip(event):
@@ -277,15 +503,19 @@ class Record(BackendRecord, Sound):
                     if exited == True:
                         return
         if not (self.ui.runwindow.exitFlag.istrue() or self.ui.exitFlag.istrue()):
-            self.ui.runwindow.waitdone()
-            self.ui.runwindow.resetframe()
-            ui.Label(self.ui.runwindow.frame, anchor='w', font='read',
-                     text="All done! Sort some more words, and come back."
-                     ).grid(row=0, column=0, sticky='w')
-            ui.Button(self.ui.runwindow.frame,
-                      text="Continue to next syllable profile",
-                      command=next_p).grid(row=1, column=0)
-        self.program.soundsettings.done_pyaudio()
+            # waitdone() is the REVEAL, so it has to come last. It used to run
+            # first, which mapped the window and only then blanked it with
+            # resetframe() — an empty kiosk page showing nothing but Exit until
+            # these two widgets were gridded.
+            with self.ui.runwindow.waiting(thenshow=True):
+                self.ui.runwindow.resetframe()
+                ui.Label(self.ui.runwindow.frame, anchor='w', font='read',
+                         text="All done! Sort some more words, and come back."
+                         ).grid(row=0, column=0, sticky='w')
+                ui.Button(self.ui.runwindow.frame,
+                          text="Continue to next syllable profile",
+                          command=next_p).grid(row=1, column=0)
+        self.program.soundsettings.done_audio()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

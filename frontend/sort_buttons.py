@@ -15,8 +15,117 @@ except Exception as e:
     log.info(f"sound stack unavailable ({e}); play buttons will fall back "
              "to plain labels")
 
+
+# A frame that lays out buttons takes BOTH its own grid options and the ones
+# meant for its children, told apart by a leading `b`: `bpadx` is the button's
+# padx, `padx` is the frame's. This strips the prefix so the child gets plain
+# grid options.
+#
+# HERE, NOT IN A BACKEND. It used to be `ui.GridinGridded.promotegridbkwargs(
+# True, **kwargs)` — reaching into ui_tkinter for a helper and passing `True`
+# as `self`, because it is really a static function. That made a pure dict
+# transform into a backend dependency, and the webview backend has no such
+# class, so this line raised there. The backend-parity audit found it
+# (2026-09-11) and my first fix was to add the class to webview too — which
+# propagates the dependency instead of removing it, the same mistake as
+# copying the image list. Kent: "I think that's a tkinter-internal function...
+# What would we do with it in webview?" Nothing: the naming convention is the
+# APP's, so it belongs with the app code that uses it.
+#
+# ui_tkinter keeps its own copy for its own widgets. That is not duplication
+# to worry about — the convention is `'b' + name` and has not changed.
+_GRID_KWARGS = {'sticky', 'row', 'rowspan', 'column', 'columnspan', 'colspan',
+                'r', 'c', 'col', 'padx', 'pady', 'ipadx', 'ipady',
+                'gridwait', 'draggable', 'droppable', 'dragthreshold'}
+_CHILD_BUTTON_GRID_KWARGS = {'b' + k for k in _GRID_KWARGS}
+
+
+def promote_button_gridkwargs(**kwargs):
+    """`bpadx` -> `padx`, leaving every other key alone."""
+    return {(k[1:] if k in _CHILD_BUTTON_GRID_KWARGS else k): v
+            for k, v in kwargs.items()}
+
+
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
+
+    #: EVERY LIVE FRAME, so a settings change can reach the page the user is
+    #: looking at. Nothing else holds one: `sort_ui` builds them into LOCAL
+    #: variables (`:466`, `:699`) and returns one from `make_button_frame`,
+    #: so `buttoncolumns` had no way of finding the layout it governs — which
+    #: is half of why that setting read as dead for two months.
+    #: Entries are dropped lazily in `relayout_all`: a frame dies with its
+    #: window and gets no say in it, so the list is pruned when it is walked
+    #: rather than by anything hooking destruction.
+    _live = []
+
+    def regrid_group_buttons(self):
+        """Re-grid every group button from its position in the list.
+
+        `index == row` (or row/column, in a multi-column layout) is the
+        invariant the whole frame rests on: `addgroupbutton` grids the next
+        group at `len(groupbuttonlist)`, so anything that changes positions
+        without re-gridding leaves the next addition landing on an occupied
+        row — two joins once put "Other V1" two rows back, on top of the
+        penultimate group (Kent 2026-08-25).
+
+        Extracted from `removegroupbutton` 2026-09-30, unchanged, because a
+        COLUMN-COUNT change needs exactly the same sweep: same list, same
+        formula, same skip-if-already-there. One implementation, two callers.
+
+        `max(…,1)` because a zero would be a ZeroDivisionError inside a
+        layout refresh, and the setting arrives from a chooser."""
+        cols = max(getattr(self, 'buttoncolumns', 1) or 1, 1)
+        for i, b in enumerate(self.groupbuttonlist):
+            r, c = i//cols, i % cols
+            try:
+                if (getattr(b, 'row', None), getattr(b, 'column', None)) == (r, c):
+                    continue
+                b.row, b.column = r, c
+                b.grid(row=r, column=c)
+            except Exception as e:
+                log.info("group button re-grid failed for %s: %s",
+                         getattr(b, 'group', b), e)
+
+    @classmethod
+    def relayout_all(cls, columns):
+        """Apply a new column count to every live frame that takes it.
+
+        MACROSORT FRAMES ARE PINNED AT 1 and must stay that way: two of the
+        three branches in `__init__` set `buttoncolumns=1` deliberately (the
+        gather and verify pages), and only the ordinary sort branch reads the
+        user's setting. So this refreshes the frames that took their value
+        from the setting and leaves the others alone — `_columns_from_setting`
+        records which, at build time, rather than this having to re-derive
+        the branch.
+
+        Returns how many frames were re-laid, so the caller can log whether
+        the change reached anything. Before `Sort!` there is no frame and the
+        answer is 0, which is correct and not a failure: the next frame built
+        reads the setting itself."""
+        try:
+            columns = max(int(columns), 1)
+        except (TypeError, ValueError):
+            log.info("not relaying out group buttons: %r is not a column "
+                     "count", columns)
+            return 0
+        done = 0
+        for f in list(cls._live):
+            try:
+                alive = f.winfo_exists()
+            except Exception:
+                alive = False
+            if not alive:
+                cls._live.remove(f)
+                continue
+            if not getattr(f, '_columns_from_setting', False):
+                continue        # macrosort/verify: pinned at 1 on purpose
+            if f.buttoncolumns == columns:
+                continue
+            f.buttoncolumns = columns
+            f.regrid_group_buttons()
+            done += 1
+        return done
     def _profile_class_name(self):
         """The current syllable PROFILE CLASS for display in button labels, e.g.
         'C2V' (the stored key is already delimiter-free — see
@@ -124,7 +233,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         # alphabet is incomplete. Kept rather than deleted in case there is a
         # use we haven't thought of — drop the `if` below (one line) to
         # restore it. Revisit 2026-08-16:
-        # azt/agenda/macrosort_skip_affordance.md
+        # the macrosort skip-affordance item
         if not self.macrosort:
             vardict['skip']=ui.BooleanVar()
             # log.info("Making skip button")
@@ -135,44 +244,18 @@ class SortButtonFrame(ui.ScrollingFrame):
                             relief='flat',
                             font='instructions',
                             column=0, row=0, sticky='ew')
-        # 'S' profile sort: escape hatch — "this word isn't in this profile class".
-        if (self.cvt=='S'
-                and not self.program.params.is_syllable_primitive_check(self.check)):
-            bf3=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
-            ui.Button(bf3, text=_("This word doesn’t belong in this {cls} profile "
-                        "at all…").format(cls=self._profile_class_name()),
-                        cmd=self.syllable_escape_window,
-                        anchor='w', relief='flat', font='instructions',
-                        column=0, row=0, sticky='ew')
-    def syllable_escape_window(self):
-        """'This word doesn’t belong in this {cls} profile at all…' on the SORT
-        page. The window, the four one-axis moves and the data write now live in
-        the presenter + the task (sort_ui.ask_class_escape →
-        task.escape_profile_class), because the profile VERIFY page offers the
-        SAME escape as of 2026-07-29 and two copies would drift. What stays here is
-        the only part that is page-specific: WHICH word, and what advancing means.
-        See docs/sort_syllables_design.md."""
-        senses=self.task.itemstosort()
-        if not senses:
-            return
-        sense=senses[0]
-        def advance():
-            # The word is already out of the live to-sort list, so tell
-            # sortselected to ADVANCE rather than read the now-empty selection as
-            # Exit (which fired the spurious 'not done' warning), then destroy the
-            # item to end the sort wait. Mirrors 'Not {profile}'.
-            self.task._notprofile_advance=True
-            if getattr(self,'sortitem',None):
-                self.sortitem.destroy()
-        return self.program.sort_ui.ask_class_escape(self,self.task,sense,
-                                                    on_applied=advance)
+        # 'S' profile sort: the escape hatch — "this word isn't in this profile
+        # class" — was a button here until Kent 2026-08-21. It is now a right-click
+        # on the WORD (sort_ui.build_present_sense → class_escape_items), which is
+        # both fewer clicks and the same gesture the verify page uses. The gate it
+        # had (cvt 'S', non-primitive check) moved with it.
     def pick_syllable_profile(self):
         """'Other {profile class} profile' — page 1. Offer a short, sane list of
         NEW legal profiles for this class (generated simplest-first, excluding the
         profiles already sorted here), plus 'Other…' → a by-hand entry page.
         Picking one sorts the current word into that real, primitive-consistent
         profile (via sortselected's _pending_new_profile path). See ADR 0003 /
-        cv_group_creation_merging."""
+        the CV-group creation-and-merging item."""
         params=self.program.params
         beg,syls,end=params.parse_profile_class(self.program.slices.profile())
         if beg is None:
@@ -183,23 +266,51 @@ class SortButtonFrame(ui.ScrollingFrame):
         w=ui.Window(self,title=_("Which {cls} profile?").format(cls=cls),exit=False)
         ui.Label(w.frame,text=_("Which profile fits this word?"),
                     font='instructions',row=0,column=0,sticky='ew')
-        r=1
+        # OPTIONS SCROLL, ESCAPES DON'T — same fix and same reason as
+        # sort_ui.ask_group_rename, which this page is the one-word twin of.
+        # Twelve options plus two nav rows at font 'normal' ran off the bottom
+        # of a short or scaled screen, and the rows lost were the LAST two:
+        # 'Other…' and 'Cancel'. This window is exit=False, so losing Cancel
+        # leaves no button at all (Kent 2026-08-31, Windows).
+        w.frame.grid_rowconfigure(1,weight=1)
+        w.frame.grid_columnconfigure(0,weight=1)
+        scroll=ui.ScrollingFrame(w.frame,row=1,column=0,sticky='nsew')
+        r=0
         for prof in options:
-            ui.Button(w.frame,text=prof,
+            ui.Button(scroll.content,text=prof,
                         cmd=lambda p=prof:self._resolve_new_profile(w,p),
                         anchor='w',font='normal',row=r,column=0,sticky='ew')
             r+=1
         if not options:
-            ui.Label(w.frame,text=_("(every simple profile here is already used)"),
-                        font='instructions',row=r,column=0,sticky='ew'); r+=1
-        # Nav at the bottom, after the options.
+            ui.Label(scroll.content,
+                        text=_("(every simple profile here is already used)"),
+                        font='instructions',row=r,column=0,sticky='ew')
+        # Nav OUTSIDE the scroll, so it is always reachable.
         ui.Button(w.frame,text=_("Other… (set a profile by hand)"),
                     cmd=lambda:self._syllable_profile_freeentry(w,beg,syls,end),
                     anchor='w',relief='flat',font='normal',
-                    row=r,column=0,sticky='ew'); r+=1
+                    row=2,column=0,sticky='ew')
         ui.Button(w.frame,text=_("Cancel — go back"),cmd=w.destroy,
                     anchor='w',relief='flat',font='normal',
-                    row=r,column=0,sticky='ew')
+                    row=3,column=0,sticky='ew')
+        # Reflow (grid_propagate(0) → invisible otherwise), but scheduled and
+        # only once mapped: reflow drains synchronously and XWayland deadlocks
+        # draining into an unmapped window (ui_tkinter.py:1411-1415).
+        def _settle(n=10):
+            try:
+                if not scroll.winfo_exists():
+                    return
+                if not w.winfo_viewable():
+                    if n>0:
+                        w.after(50,lambda:_settle(n-1))
+                    return
+                scroll.reflow()
+            except Exception as e:
+                log.info("profile-picker list reflow failed: %s", e)
+        try:
+            w.after_idle(_settle)
+        except Exception as e:
+            log.info("could not schedule profile-picker reflow: %s", e)
     def _resolve_new_profile(self,w,profile):
         """A profile was chosen/entered: record it so sortselected marks the
         current word into it (the normal new-group path), close the picker, and
@@ -248,6 +359,20 @@ class SortButtonFrame(ui.ScrollingFrame):
                     columnspan=2,sticky='ew')
         def submit():
             prof=(var.get() or '').strip().upper()
+            # VOCABULARY FIRST. profile_fits_class only asks about shape, and
+            # _segment_type reads anything that isn't V as a consonant — so
+            # 'NAV' passes as C-initial, V-final, 1 syllable, and a typo becomes
+            # a real sort group with real words in it (OBT's nml, 2026-09-02).
+            bad=params.illegal_profile_symbols(prof)
+            if bad:
+                msg.configure(text=_("‘{p}’ isn’t made of profile symbols: "
+                            "{bad} {isare} not C or V. Please use only C and V "
+                            "(for example {eg})."
+                            ).format(p=prof,bad=', '.join(
+                                    '‘{}’'.format(c) for c in bad),
+                                    isare=_("is") if len(bad)==1 else _("are"),
+                                    eg=eg))
+                return
             if not params.profile_fits_class(prof,beg,syls,end):
                 # Say which dimension actually failed and what the entry reads as.
                 # The old message asserted all three at once ("isn't C-initial,
@@ -292,16 +417,44 @@ class SortButtonFrame(ui.ScrollingFrame):
         # Second column: the profiles already IN PLAY for this class (computed
         # above), so the user can see what NOT to re-enter (this page is for a NEW
         # profile) — the same set excluded from the examples.
-        side=ui.Frame(w.frame)
-        side.grid(row=0,column=2,rowspan=4,sticky='nw',padx=12)
-        ui.Label(side,text=_("\nAlready in play here —\ndon’t re-enter these:"),
+        # SCROLLING, not a plain Frame: a class with many groups in play made this
+        # column taller than the rows it spans, which stretched rows 0-3 and
+        # pushed the buttons to the bottom of the page — and ran the list off it
+        # entirely (Kent 2026-08-24). ScrollingFrame sets grid_propagate(0), so it
+        # takes the size the GRID gives it and scrolls its content instead of
+        # dictating the window's height; the buttons then sit under the field
+        # where they belong. Children go in .content (as build_verify_layout does).
+        side=ui.ScrollingFrame(w.frame,row=0,column=2,rowspan=4,sticky='nsw',
+                    padx=12)
+        ui.Label(side.content,text=_("Already in play here —\n"
+                    "don’t re-enter these:"),
                     font='instructions',row=0,column=0,sticky='w')
         for i,g in enumerate(inplay or [_("(none yet)")]):
-            ui.Label(side,text=g,font='normal',row=i+1,column=0,sticky='w')
+            ui.Label(side.content,text=g,font='normal',row=i+1,column=0,
+                        sticky='w')
     def updatecounts(self):
         # log.info("Updating counts for each button")
         for b in self.groupbuttonlist:
             b.updatecount()
+    def removegroupbutton(self,group):
+        """Drop ONE group's button — the group no longer exists (it was joined
+        into another). Delisted as well as destroyed: groupbuttonlist feeds
+        updatecounts and groupvars feeds get_selected, so a destroyed-but-listed
+        button would raise on the next refresh."""
+        for b in [i for i in self.groupbuttonlist if i.group==group]:
+            self.groupbuttonlist.remove(b)
+            try:
+                b.destroy()
+            except Exception as e:
+                log.info("removegroupbutton destroy failed for %s: %s",group,e)
+        self.groupvars.pop(group,None)
+        # CLOSE THE GAP. Destroying a button leaves its grid row empty, so the
+        # rows stop matching list positions — and addgroupbutton grids the next
+        # group at len(groupbuttonlist), which would then land on an occupied
+        # row. Re-grid what's left, in order, so index == row again (and the
+        # hole doesn't show). The sweep itself is `regrid_group_buttons`, which
+        # a column-count change needs identically.
+        self.regrid_group_buttons()
     def addgroupbutton(self,group):
         # log.info("SortButtonFrame addgroupbutton for {group}".format(group=group))
         if self.exitFlag.istrue():
@@ -312,7 +465,14 @@ class SortButtonFrame(ui.ScrollingFrame):
         else:
             scaledpady=int(40*self.theme.scale)
         # log.info("This button at row={row}, col={col}".format(row=self.groupbuttons.row, col=self.groupbuttons.col))
-        nbuttons=len(self.groupbuttons.winfo_children())
+        # Count OUR buttons, not the frame's children. winfo_children() also
+        # drops by one whenever a button is destroyed — which never happened
+        # until drag-join started removing the group it merged away (2026-08-24),
+        # after which the next new group button was gridded onto an already
+        # occupied row: two joins put "Other V1" two rows back, on top of the
+        # penultimate group (Kent 2026-08-25). groupbuttonlist is the real
+        # population, and removegroupbutton re-grids it so index == row stays true.
+        nbuttons=len(self.groupbuttonlist)
         r,c=nbuttons//self.buttoncolumns,nbuttons%self.buttoncolumns
         kwargs={'group':group} #this may be glyph, item code, or sort group
         if self.macrosort and not self.remove_on_click:
@@ -328,6 +488,8 @@ class SortButtonFrame(ui.ScrollingFrame):
         # (Kent 2026-07-28).
         if self.reverifiable:
             kwargs['reverifiable']=True
+        if self.joinable:
+            kwargs['joinable']=True
         b=frame_class(self.groupbuttons, self.task,
                         showtonegroup=True,
                         alwaysrefreshable=True,
@@ -344,6 +506,7 @@ class SortButtonFrame(ui.ScrollingFrame):
             b.destroy()
             return
         # log.info('group button example found')
+        b.buttonframe=self #so a button can reach the frame that owns it
         self.groupvars[group]=b.var()
         self.groupbuttonlist.append(b)
         log.info('Group added: {group}'.format(group=group))
@@ -381,6 +544,11 @@ class SortButtonFrame(ui.ScrollingFrame):
         # (addgroupbutton). Opt-in per page, not per frame class: the sort page's
         # group buttons are ANSWERS to 'which group?' and don't get one.
         self.reverifiable=kwargs.pop('reverifiable',False)
+        # Drag one group button onto another to JOIN them. Opt-in per page like
+        # reverifiable: the SORT page (macrosort or not) wants it; the macrosort
+        # VERIFY page does not, since a row there is a group being checked
+        # against a letter, not a group you'd merge.
+        self.joinable=kwargs.pop('joinable',False)
         self.task=task
         self.program=self.task.program
         self.groups=groups
@@ -408,19 +576,31 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.check=self.program.params.check()
         self.cvt=self.program.params.cvt()
         self.maybewrite=self.program.taskchooser.maybewrite
+        # `_columns_from_setting` RECORDS WHICH BRANCH ANSWERED, so a later
+        # settings change can refresh the frames that took the user's value
+        # and leave the two that are pinned at 1 on purpose. Deriving it
+        # afterwards would mean re-testing `macrosort`/`remove_on_click`
+        # somewhere else and keeping the two tests in step. See
+        # `relayout_all`.
         if self.macrosort and not self.remove_on_click:
             msg=[_("Gathering groups"),
                 _("On the next screen, you will sort groups of words into letter groups")]
             self.buttoncolumns=1
+            self._columns_from_setting=False
         elif self.macrosort:
             msg=[_("Verifying groups"),
                 _("On the next screen, you will verify groups of words as belonging together")]
             self.buttoncolumns=1
+            self._columns_from_setting=False
         else:
             msg=[_("Sorting words"),
                 _("On the next screen, you will sort words into groups "
                 "by {cvt}").format(cvt=self.program.params.cvcheckname())]
             self.buttoncolumns=self.task.buttoncolumns
+            self._columns_from_setting=True
+        # REGISTERED ONCE THE COLUMN COUNT IS SETTLED, so a refresh arriving
+        # mid-build cannot find a frame whose `buttoncolumns` is not there yet.
+        SortButtonFrame._live.append(self)
         with task.waiting('\n'.join(msg)):
             # Prefetch examples for all groups at once to avoid O(N^2) lookup
             self.program.examples.prefetch_examples(self.groups, **kwargs)
@@ -451,6 +631,7 @@ class _GroupButtonFrame(object):
                         'goback','all_for_cvt', 'on_select',
                         'show_check',
                         'reverifiable', #right-click → reverify THIS group
+                        'joinable', #drag THIS group onto another to join them
 
                         'gridwait', #frame-only: must NOT reach child buttons,
                         #or they grid_remove themselves and never restore
@@ -472,6 +653,41 @@ class _GroupButtonFrame(object):
                 'ipady',
                 'border',
                 ]
+    def check_segments_row(self,parent,check,profile,**gridkwargs):
+        """The profile on ONE line with the check's own segment(s) bold+underlined
+        — C**V**CC for V1 on CVCC, **C**V**C**V for C1=C2 on CVCV — or None when
+        it doesn't apply (no profile, or a check that names no position).
+
+        Shared by BOTH group-button frames: the sort page's own check display and
+        the glyph frame's cycle label, which showed the bare check until Kent
+        2026-08-25 ("we greatly improved CVCV|V1 display, but in only one of at
+        least two places"). One renderer, so they cannot drift.
+
+        A Tk Label carries a single font for its whole string, so each segment is
+        its own Label; padding is zeroed on the grid AND on the widget (ui.Label
+        routes constructor padx to the GRID, so the Label's own 1px-a-side default
+        is only reachable after construction) because these are letters of one
+        word, not separate items."""
+        segs=hits=None
+        if profile:
+            try:
+                segs,hits=self.program.params.check_segments(check,profile)
+            except Exception as e:
+                log.info("check_segments failed for %s/%s: %s",check,profile,e)
+        if not (segs and hits):
+            return None
+        row=ui.Frame(parent,padx=0,pady=0,ipadx=0,ipady=0,**gridkwargs)
+        for i,s in enumerate(segs):
+            l=ui.Label(row,text=s,column=i,row=0,padx=0,pady=0,
+                        ipadx=0,ipady=0,
+                        font='boldunderline' if i in hits else 'default')
+            try:
+                l['padx']=0
+                l['pady']=0
+                l['borderwidth']=0
+            except Exception as e:
+                log.info("check label tightening skipped: %s", e)
+        return row
     def select(self):
         self._var.set(True)
     def sortnext(self):
@@ -501,11 +717,33 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if self.kwargs['playable'] and self._playable:
             self.player.play()
     def backup(self,event=None):
+        # NOTHING TO BACK UP TO with one example, and the button says so by
+        # being disabled — but `state='disabled'` only stops a button's
+        # COMMAND. A `bind()` still fires, in Tk as in the browser, so
+        # right-click went on cycling a group of one while the control was
+        # greyed out (Kent, 2026-09-15: "it's active on back/right-click, not
+        # left/forward"). The guard belongs here rather than in the binding:
+        # it is the same answer for either backend, and for any other caller.
+        if not self.cycleable():
+            log.info("backup ignored: {} has {} example(s)"
+                     "".format(self.group,self._n.get()))
+            return
         self.kwargs['goback']=True
         self.kwargs['alwaysrefreshable']=True
         self.getexample(**self.kwargs)
         self.again()
         self.kwargs['goback']=False #don't keep going on next
+    def cycleable(self):
+        """Is there more than one example to cycle through?
+
+        The single question behind the refresh button's state, its tooltip and
+        both cycle directions — one method so those three cannot disagree,
+        which is how a greyed-out button came to have a tooltip promising it
+        would change the word."""
+        try:
+            return self._n.get() > 1
+        except Exception:
+            return True         # can't tell; don't block the user
     def remove(self):
         # self.task.groupbuttonlist.remove(self)
         self.destroy() # will this keep the variable around, if stored elsewhere?
@@ -569,6 +807,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if self.kwargs['unsortable']:
             self.unsortbutton()
         self.maybe_reverify_menu()
+        self.maybe_join_dnd()
         self.makerefreshbutton()
         if (self.check and self.kwargs.get('show_check') and
             not isinstance(self.parent, SortGlyphGroupButtonFrame)):
@@ -598,10 +837,63 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self.program.sort_ui.attach_context_menu(w,
                 [(_("Reverify this group (‘{group}’)").format(group=self.group),
                     reverify)])
+    def maybe_join_dnd(self):
+        """Drag one group button onto another to JOIN the two (Kent 2026-08-24).
+
+        Dropping A onto B keeps B (Kent 2026-08-24): the segmental tiebreak
+        exists only because there was never a way to know the user's intent, and
+        a deliberate drop IS that intent. Syllable PROFILES still get
+        `choose_join_direction` regardless — there one direction corrupts real
+        data, so the drop opens the question rather than answering it.
+
+        `dragthreshold` is what makes this safe on these buttons: they already
+        sort a word into the group on click and may carry a right-click menu, and
+        the dnd layer otherwise starts the drag on ButtonPress and eats both."""
+        w=getattr(self,'_display',None)
+        if not self.kwargs.get('joinable') or w is None:
+            return
+        try:
+            w.draggable=w.droppable=True
+            w.dragthreshold=8
+            w.draggable_bindings()
+            w.dnd_bindings()
+            w.joingroup=self.group
+            w.groupframe=self
+            def dnd_commit(source,event,target=w):
+                other=getattr(source,'joingroup',None)
+                if not other or other==target.joingroup:
+                    return #dropped on itself, or on something that isn't a group
+                log.info("Drag-join: %s onto %s",other,target.joingroup)
+                def repair():
+                    # A is gone and B has grown: drop A's button and refresh B,
+                    # rather than quitting the page (which is right for the join
+                    # PAGE, whose job ends with the join) or rebuilding the whole
+                    # frame. Kent 2026-08-24.
+                    try:
+                        exs=self.program.examples
+                        for g in (other,target.joingroup):
+                            exs.clear_cache(group=g) #both memberships changed
+                        bf=getattr(self,'buttonframe',None)
+                        if bf is not None:
+                            bf.removegroupbutton(other)
+                        self.refresh()
+                    except Exception as e:
+                        log.info("drag-join repair failed: %s",e)
+                self.task.join_groups([other,target.joingroup],
+                            macrosort=bool(getattr(self.parent,'macrosort',
+                                        getattr(self,'macrosort',False))),
+                            keep=target.joingroup,
+                            on_done=repair)
+            w.dnd_commit=dnd_commit
+        except Exception as e:
+            log.info("join drag-and-drop skipped for %s: %s",self.group,e)
     """buttons"""
     def labelbutton(self):
+        # 'nsew', matching `playbutton` — the three ways of showing the word
+        # differed only by accident, and the two 'ew' ones left the word
+        # floating in a frame now stretched to the row's height.
         self.label=self._display=ui.Label(self, text=self._text,
-                    column=1, row=0, sticky='ew',
+                    column=1, row=0, sticky='nsew',
                     **self.buttonkwargs()
                     )
         if hasattr(self,'_illustration'):
@@ -612,18 +904,19 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         ``(None,None)`` when this machine can't play.
 
         PLAYBACK IS A PROGRAM RESOURCE, NOT A TASK ONE (Kent 2026-07-29: "'SortV'
-        object has no attribute 'pyaudio'" three times in one evening — and "we
+        object has no attribute 'pyaudio'" — that attribute is now ``.audio``,
+        renamed 2026-09-09 — three times in one evening; and "we
         should have the button on that page playable, though"; 2026-07-31: the
         same miss one argument to the right, on `settings.soundsettings`). Both
         halves are made by ONE canonical accessor, ``SoundSettings.ensure``
         (backend/core/sound.py): it stores the singleton at
         ``program.settings.soundsettings`` AND ``program.soundsettings``, pulls
-        the persisted device choices in from file, and — via ``confirm_pyaudio``
-        in its ``__init__`` — reuses or builds ``program.pyaudio``. Only the Sound
+        the persisted device choices in from file, and — via ``confirm_audio``
+        in its ``__init__`` — reuses or builds ``program.audio``. Only the Sound
         task mixin (tasks/sound.py:26) had ever run it, so a sort page, which
         PLAYS but never records, found neither attribute. Reading either raw is
         the bug; asking a second accessor for the second half (as the first fix
-        did, re-implementing confirm_pyaudio's three steps here) just moves it.
+        did, re-implementing confirm_audio's three steps here) just moves it.
 
         Sound tasks stay different in the one way that matters, and that
         difference is why SortV/SortC must NOT become Sound subclasses: the Sound
@@ -669,16 +962,33 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                            'soundsettings',None))
         if ss is None:
             return None,None
-        pyaudio=(getattr(ss,'pyaudio',None)
-                 or getattr(self.task,'pyaudio',None)
-                 or getattr(self.program,'pyaudio',None))
-        return pyaudio,ss
+        # ONE OWNER FOR THE HANDLE (2026-09-11). This used to read
+        # `ss.audio or task.audio or program.audio` — three places to look for
+        # one object, under the comment above recording the attribute being
+        # missed three times in one evening. A fourth fallback was never the
+        # answer: `SoundSettings.confirm_audio()` is the accessor that OWNS
+        # `program.audio` (backend/core/sound.py:1299) and is guarded by tests
+        # (test_sound_units.py:83-105). Ask it. `ensure` already ran it in
+        # __init__, so the call matters only on the fallback path above, where
+        # `ss` came from a hunt and may predate a handle.
+        audio=getattr(ss,'audio',None)
+        if audio is None:
+            try:
+                ss.confirm_audio()
+                audio=ss.audio
+            except Exception as e:
+                # No handle to be had (sounddevice absent, or the device went
+                # away). A label, not a traceback — as the docstring promises.
+                log.info("no audio handle for %s (%s); the button becomes a "
+                        "label.",type(self.task).__name__,e)
+                return None,None
+        return audio,ss
     def playbutton(self):
         """A play button, or a plain LABEL when this machine can't play at all.
         Returns True only when a player was made (makebuttons keys _playable on
         that, so nothing later reaches for self.player)."""
-        pyaudio,soundsettings=self._playback()
-        if pyaudio is None or soundsettings is None:
+        audio,soundsettings=self._playback()
+        if audio is None or soundsettings is None:
             # Genuinely no audio on this machine (import failed, 'nosound', no
             # device, or an unconfigured output): show the word rather than
             # crash, as a missing sound stack already did.
@@ -687,7 +997,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                     type(self.task).__name__, self._text)
             self.labelbutton()
             return
-        self.player=sound.SoundFilePlayer(self._filenameURL,pyaudio,
+        self.player=sound.SoundFilePlayer(self._filenameURL,audio,
                                             soundsettings)
         b=self._display=ui.Button(self, text=self._text,
                     cmd=self.player.play,
@@ -717,7 +1027,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             cmd=self.selectnsortnext
         b=self.button_select=self._display=ui.Button(self, text=self._text,
                     cmd=cmd,
-                    column=1, row=0, sticky='ew',
+                    column=1, row=0, sticky='nsew',   # see labelbutton
                     **self.buttonkwargs())
         if hasattr(self,'_illustration'):
             b['image']=self._illustration
@@ -725,6 +1035,13 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         bt=ui.ToolTip(b,_("Pick this group ({group})").format(group=self.group))
     def refresh(self):
         log.info("SGBF refresh called")
+        # Same guard as `backup`, for the same reason: the command route is
+        # blocked by the disabled state today, but nothing says it always
+        # will be, and a group of one has no other example to show.
+        if not self.cycleable():
+            log.info("refresh ignored: {} has {} example(s)"
+                     "".format(self.group,self._n.get()))
+            return
         self.kwargs['renew']=True
         self.kwargs['alwaysrefreshable']=True
         self.getexample(**self.kwargs)
@@ -742,10 +1059,23 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
     def refresh_button_state(self):
         if not self.refreshbutton.winfo_exists():
             return
-        if self._n.get() <2:
-            self.refreshbutton['state'] = 'disabled'
-        else:
-            self.refreshbutton['state'] = 'normal'
+        # AND SAY THE SAME THING THE STATE SAYS. The tooltip was written once,
+        # at construction, and promised "Change example word; Right click to
+        # back up" whether or not there was another word to change to — so a
+        # greyed-out button still advertised a function it refused to perform
+        # (Kent, 2026-09-15: "the tooltip is lying"). A disabled control that
+        # explains WHY is more use than one that stays silent, which is why
+        # this replaces the text rather than removing the tooltip.
+        tip = getattr(self, 'refreshtip', None)
+        if tip is not None:
+            try:
+                tip.settext(self.refreshtiptext())
+            except Exception as e:
+                log.info("couldn't update the refresh tooltip ({!r})".format(e))
+        # `cycleable()`, not a second copy of `_n.get() < 2` — the state, the
+        # tooltip and both cycle directions now ask one method.
+        self.refreshbutton['state'] = ('normal' if self.cycleable()
+                                       else 'disabled')
     def makerefreshbutton(self):
         tinyfontkwargs=self.buttonkwargs()
         del tinyfontkwargs['font'] #so it will fit in the circle
@@ -761,16 +1091,33 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                         sticky='nsew',
                         **tinyfontkwargs)
         self.refreshbutton.bind('<ButtonRelease-3>',self.backup)
-        bct=ui.ToolTip(self.refreshbutton,
-                        text=_("Change example word; Right click to back up"))
+        # KEPT, so its text can follow the button's state (refresh_button_state).
+        # It was a local named `bct` and dropped on return, which is part of why
+        # the text could never be corrected.
+        self.refreshtip=ui.ToolTip(self.refreshbutton,
+                        text=self.refreshtiptext())
         self.refresh_button_state()
+    def refreshtiptext(self):
+        if not self.cycleable():
+            # Names the reason, not just the refusal: the count is the thing
+            # the user would otherwise have to work out from the button face.
+            return _("Only one example word in this group")
+        return _("Change example word; Right click to back up")
     def make_check_button(self):
-        # cvprofile on a line ABOVE the check, in ONE label (same cell) so the
-        # profile difference is visible (CVCC over V1 vs CVC over V1) WITHOUT
-        # adding a grid row / making the button taller.
+        # ONE line, with the check's own segment(s) in bold — C**V**CC rather
+        # than 'CVCC' stacked over 'V1', which made the user combine the two in
+        # their head (Kent 2026-08-24). A Tk Label carries a single font for its
+        # whole string, so each segment is its own Label in a row: that also
+        # handles a check naming SEVERAL positions (C1=C2 → **C**V**C**V), which
+        # inline markup would need anyway.
         profile=self.kwargs.get('profile')
-        text=f"{profile}\n{self.check}" if profile else self.check
-        ui.Label(self, text=text, column=self.ncolumns())
+        col=self.ncolumns()
+        if self.check_segments_row(self,self.check,profile,column=col) is None:
+            # Not a positional check (or no profile): keep the two-line form
+            # rather than show a profile with nothing marked, which would say
+            # less than what it replaced.
+            text=f"{profile}\n{self.check}" if profile else self.check
+            ui.Label(self, text=text, column=col)
     def unsortbutton(self):
         t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()
@@ -853,6 +1200,14 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         kwargs.update(self.program.alphabet.parse_verificationcode(item))
         kwargs['column']=1 #specify other attributes shared with frame here
         kwargs['row']=0
+        # FILL THE ROW'S HEIGHT. The row is as tall as its TALLEST column, and
+        # that is the refresh column — the cycle circle with the profile:check
+        # beneath it — so with no vertical sticky the word and its picture sat
+        # centred in a box taller than they are, with slack above and below
+        # (Kent, 2026-09-15: "the sgbf should probably have sticky NS").
+        # Stretching costs nothing here: the frame's own children decide where
+        # the words land inside it.
+        kwargs['sticky']='nsew'
         kwargs['gridwait']=True
         kwargs['var']=self.var()
         # kwargs['playable']=True #This needs to apply with Sound...
@@ -865,14 +1220,27 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         else:
             # log.info(_("No {group} SortGroupButtonFrame ex; removing").format(group=kwargs['group']))
             self.items=self.items[:-1]
+    def cycleable(self):
+        """Is there more than one item to cycle through? See
+        SortGroupButtonFrame.cycleable — same question, same three consumers
+        (button state, tooltip, both directions)."""
+        return len(self.items) > 1
     def next_item(self,event=None):
         # log.info(_("next_item ({index})").format(index=self.shown_index))
+        # WITH ONE ITEM THIS IS NOT A NO-OP, which the binding below assumed
+        # ("nothing on n=1", :1195): both directions land back on the item
+        # already shown, and `show_one` rebuilds the check display every time
+        # — so a disabled control still did work when right-clicked.
+        if not self.cycleable():
+            return
         if self.shown_index == len(self.items)-1: #loop back on last
             self.show_one()
         else:
             self.show_one(self.shown_index+1)
     def prev_item(self,event=None):
         # log.info(_("prev_item ({index})").format(index=self.shown_index))
+        if not self.cycleable():
+            return
         if self.shown_index == 0: #loop back on first
             self.show_one(len(self.items)-1)
         else:
@@ -883,8 +1251,30 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self.items[index].grid()
         log.info(_("Showing item with {code}").format(code=self.items[index].code))
         # "={self.items[index].group}")
-        self.check_label['text']=self.items[index].check
+        self._show_check(self.items[index])
         self.shown_index=index
+    def _show_check(self,item):
+        """The cycle button used to name the bare check ('V1'). Show the same
+        profile-with-the-check-in-bold the sort page shows (Kent 2026-08-25) —
+        the profile is what makes two otherwise identical checks tell apart, and
+        it was left off here for space before the display got compact enough to
+        afford it. Falls back to the bare check when the profile isn't there or
+        the check names no position."""
+        f=getattr(self,'check_segs',None)
+        if f is not None:
+            for w in f.winfo_children():
+                w.destroy()
+            row=self.check_segments_row(f,item.check,
+                        item.kwargs.get('profile'),row=0,column=0,sticky='')
+            if row is not None:
+                self.check_label['text']=''
+                # The segments sit ON the cycle control, so they must cycle too —
+                # otherwise clicking the thing you are reading does nothing.
+                for w in [row]+list(row.winfo_children()):
+                    w.bind('<Button-1>', self.next_item, add='+')
+                    w.bind('<Button-3>', self.prev_item, add='+')
+                return
+        self.check_label['text']=item.check
     def make_refresh(self):
         self.refresh_frame=ui.Frame(self,col=2,border=True,sticky='nsew')
         # self.check_label=ui.Label(self.refresh_frame, text='', #to show check
@@ -896,10 +1286,46 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                                         borderwidth=5,
                                         compound='top',
                                         col=1)
+        # Container for the profile-with-check display, refilled per shown item
+        # by _show_check. Its own frame so that rebuild destroys only these.
+        self.check_segs=ui.Frame(self.refresh_frame,col=1,row=1,
+                    padx=0,pady=0,ipadx=0,ipady=0)
+        # Let column 0 take the whole width, so a row gridded sticky='' inside it
+        # is CENTERED under the cycle button rather than hugging the left edge
+        # (Kent 2026-08-25). Without the weight the column is exactly as wide as
+        # the row, and there is nothing to centre within.
+        self.check_segs.grid_columnconfigure(0, weight=1)
+        # KEPT and TRANSLATED. Dropped on return, the text could never follow
+        # the control's state, so a disabled cycle button went on inviting a
+        # click (Kent, 2026-09-15: "the tooltip is lying"); and the string was
+        # the one bare literal among these, so it stayed English everywhere.
+        self.checktips=[]
         for w in [self.refresh_frame,self.check_label]:#,self.group_count]:
-            ui.ToolTip(w,'click to change group')
+            self.checktips.append(ui.ToolTip(w,self.checktiptext()))
             # w.bind('<Button-1>', self.next_item)
             w.bind('<Button-3>', self.prev_item, add='+') #nothing on n=1
+        self.check_button_state()
+    def checktiptext(self):
+        if not self.cycleable():
+            return _("Only one group here")
+        return _("Click to change group; right click to go back")
+    def check_button_state(self):
+        """Keep the cycle control's state and its tooltip on the same story."""
+        for tip in getattr(self, 'checktips', ()):
+            try:
+                tip.settext(self.checktiptext())
+            except Exception as e:
+                log.info("couldn't update a check tooltip ({!r})".format(e))
+        # `updatecount` can run before `make_refresh` has built the button —
+        # the old code tested `winfo_exists()` for that, which only works
+        # once the ATTRIBUTE is there.
+        b = getattr(self, 'check_label', None)
+        if b is None or not b.winfo_exists():
+            return
+        # RE-ENABLED, not only disabled. `updatecount` set 'disabled' and had
+        # no other branch, so a group that grew past one example kept a dead
+        # cycle button for the rest of the session.
+        b['state'] = 'normal' if self.cycleable() else 'disabled'
     def updatecount(self,n=None):
         # log.info(_("Updating count for group {group} (n={n})").format(group=self.group,n=n))
         if n is not None:
@@ -908,8 +1334,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             # nodes=self.exs.getexamples(self.group)
             # log.info(_("Found {count} examples: {nodes}").format(count=len(nodes),nodes=nodes))
             self._n.set(len(self.items))
-        if self._n.get() <2 and self.check_label.winfo_exists():
-            self.check_label['state'] = 'disabled'
+        self.check_button_state()
     def setcanary(self,canary):
         """This is needed because these buttons are reused across all words
         being sorted. so each word to sort is the canary, in tern, and it is
@@ -935,7 +1360,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         # self.showtonegroup=kwargs.pop('showtonegroup',False)
         # self.alwaysrefreshable=kwargs.pop('alwaysrefreshable',False)
         # self.remove_on_click=kwargs.pop('remove_on_click',False) #compatability
-        kwargs=ui.GridinGridded.promotegridbkwargs(True,**kwargs)
+        kwargs=promote_button_gridkwargs(**kwargs)
         # kwargs=ui.GridinGridded.remove_gridbkwargs(True,**kwargs)
         # for k in ['padx', 'pady']:
         #     frameargs[k]=kwargs.get(k,1)
@@ -949,7 +1374,20 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                     c=0)
             self.hasexample=True #make this error visible
             return
-        self.glyph_label_frame=ui.Frame(self, col=0)
+        # FULL ROW HEIGHT (Kent, 2026-09-15: "glyph buttons should have NS
+        # sticky"). The letter names the whole row, so a button sized to its
+        # own text leaves the row looking like the letter belongs to the
+        # first line of it rather than to all of it — and rows here vary in
+        # height with their example image.
+        #   THREE PARTS, and only the first is the sticky: `ns` on the frame
+        # so it takes the row's height, `ns` on the button so it takes the
+        # frame's, and WEIGHT on the frame's row so there is height to take.
+        # sticky stretches a widget into space its row or column HAS, and a
+        # row only has space beyond its content if weighted — which is why
+        # the sticky alone did nothing when tried first (the webview
+        # window-sizing item records the same rule biting the gallery).
+        self.glyph_label_frame=ui.Frame(self, col=0, sticky='ns')
+        self.glyph_label_frame.grid_rowconfigure(0, weight=1)
         if kwargs.get('on_select'):
             cmd=kwargs['on_select']
         else:
@@ -959,7 +1397,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                                 text='?' if self.group.isdigit() else self.group,
                                 font='readbig',
                                 borderwidth=5,
-                                width=5, col=0)
+                                width=5, col=0, sticky='ns')
         if self.reverifiable:
             # Same move as SortGroupButtonFrame.maybe_reverify_menu, one level up:
             # on the letter distinguish page the group in question is the letter.

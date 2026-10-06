@@ -2,7 +2,22 @@
 # coding=UTF-8
 """Consider making the above work for a venv"""
 """This file runs the actual GUI for lexical file manipulation/checking"""
-# Duplicate gate FIRST: py_modules MUTATES shared state (creates the venv,
+# VERSION FIRST — before the duplicate gate and before py_modules. It is a bare
+# string assignment with no imports behind it, so nothing is gained by defining
+# it later, and something is lost: py_modules.ensure_venv() runs DURING the
+# import below and writes a restart marker, which reads the version off
+# __main__. Defined after that import, it was still unset, so the first-run venv
+# relaunch — the one producer where a failure is hardest to diagnose — recorded
+# `'version': None` (observed on a fresh clone, 2026-09-01).
+__version__='1.15.49' #This is a string...
+# `--help` BEFORE ANYTHING ELSE, and that position is the point: asking a
+# program what its switches are must not build a venv, install packages or
+# trip the duplicate gate, and must work on a machine where the dependencies
+# are not installed yet. `utilities.switches` is stdlib-only for exactly
+# this. It prints and exits; with no `--help` it does nothing at all.
+from utilities import switches
+switches.maybe_help()
+# Duplicate gate: py_modules MUTATES shared state (creates the venv,
 # runs pip, clones sister repos) — a second instance must be stopped before
 # racing the first (two pips in one venv can corrupt packages).
 try:
@@ -13,7 +28,6 @@ except ImportError: #psutil not installed yet — only true on a machine's
     pass            #very first boot, when nothing can be racing anyway;
                     #py_modules below installs it, so every later boot gates.
 import utilities.py_modules #This tries importing, and installs on failure
-__version__='1.13.21' #This is a string...
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
@@ -53,17 +67,17 @@ import migration
 try:
     from io_put import sound
     from frontend import transcriber, sound_ui
-    # These imports now SUCCEED without pyaudio (the sound modules guard
-    # their own roots and degrade), so read the flag rather than relying
+    # These imports now SUCCEED without an audio library (the sound modules
+    # guard their own roots and degrade), so read the flag rather than relying
     # on an ImportError to reach us.
-    program['nosound']=not sound.PYAUDIO_OK
+    program['nosound']=not sound.AUDIO_OK
     if program['nosound']:
-        log.error("pyaudio unavailable; sound features are off "
+        log.error("sounddevice unavailable; sound features are off "
                     "(recording/playback disabled, sorting etc. fine).")
 except Exception as e:
     program['nosound']=True
-    log.error("Problem importing Sound/pyaudio. Is it installed? {}"
-            "".format(e))
+    log.error("Problem importing the Sound module. Is sounddevice installed? "
+            "{}".format(e))
     program['exceptiononload']=True
 from utilities import times
 program['start_time'] = times.now()
@@ -74,6 +88,7 @@ import importlib.util
 import collections
 from random import randint
 import os
+import urllib.parse #mailto: on the error page must be properly encoded
 # Stack dumper for diagnosing freezes: when the UI hangs, run `kill -USR1 <pid>`
 # (pid logged just below) and the Python stacks of all threads are written to
 # /tmp/azt_stacks.txt — works even when stuck in a C-level Tk/X call, so it
@@ -82,13 +97,58 @@ import os
 import faulthandler, signal as _signal
 try:
     _stackfile = open('/tmp/azt_stacks.txt', 'w')
-    faulthandler.register(_signal.SIGUSR1, file=_stackfile, all_threads=True)
-    log.info("faulthandler armed: if it hangs, run `kill -USR1 %s` then send "
-             "/tmp/azt_stacks.txt", os.getpid())
+    all_threads=True
+    faulthandler.register(_signal.SIGUSR1, file=_stackfile, all_threads=all_threads)
+    log.info("faulthandler armed (all_threads=%s): if it hangs, run "
+             "`kill -USR1 %s` then send "
+             "/tmp/azt_stacks.txt", all_threads, os.getpid())
 except (AttributeError, ValueError, OSError) as e:
     log.info("faulthandler not armed: %s", e)  # e.g. Windows
-if os.environ.get('AZT_UI_BACKEND', '').lower() == 'webview':
+# ONE decider, not two. This used to read AZT_UI_BACKEND directly while
+# frontend/__init__ read it separately; that agreed only while neither could
+# refuse. Once the frontend gained a fallback for "webview asked for but no
+# pywebview / no GTK or Qt host", they disagreed and this line set
+# program['tkinter']=False against a tkinter root — reaching mainloop() with
+# the webview signature:
+#   TypeError: Misc.mainloop() got an unexpected keyword argument
+#              'setup_callback'
+# utilities.ui_backend is outside the frontend package on purpose: asking it
+# here must not import frontend, which would import a backend before the Tk
+# error catcher below is installed.
+from utilities import ui_backend as _ui_backend
+if _ui_backend.chosen() == 'webview':
     program['tkinter'] = False
+
+
+class _NoSplash:
+    """Stands in for Splash where a splash is not wanted.
+
+    Swallows the whole splash API — draw/progress/withdraw/destroy/
+    maketexts/deiconify — and reports `winfo_exists()` False so the
+    reveal at frontend/ui_shell.py:3661 skips it rather than deiconifying
+    a window that isn't there. `exitFlag.istrue()` is False because the
+    splash's flag is how the user cancels during boot
+    (tasks/chooser.py:493,549) and a missing splash must never read as
+    "the user asked to quit"."""
+
+    class _Flag:
+        def istrue(self):
+            return False
+
+        def true(self):
+            pass
+
+        def false(self):
+            pass
+
+    def __init__(self):
+        self.exitFlag = self._Flag()
+
+    def winfo_exists(self):
+        return False
+
+    def __getattr__(self, name):
+        return lambda *args, **kwargs: None
 if program['tkinter']:
     import tkinter #as gui
     import tkinter.font
@@ -132,8 +192,7 @@ from backend.core.file_parser import FileParser
 from settings import Settings
 from tasks.tasks import (ExportData, AlphabetChart, AlphabetComparisonPages,
     Sound, Record, Transcription, WordCollectionwRecordings,
-    WordCollectionLexeme, WordCollectionCitation, WordCollectionCitationwRecordings,
-    WordCollectionPlural, WordCollectionImperative, ParseWords, WordCollectnParse,
+    WordCollectionCitationwRecordings, ParseWords, WordCollectnParse,
     WordCollectnParsewRecordings, WordsParse, ParseSlice, ParseSliceWords, Placeholder,
     ToneFrameDrafter, SortSyllables, SortCV, SortV, SortC, SortT, Transcribe,
     TranscribeS, TranscribeV, TranscribeC, TranscribeT, JoinUFgroups, RecordCitation,
@@ -174,6 +233,14 @@ class App:
         log.info(_("Computer identifies as {platform}").format(platform=platform.uname()))
         log.info(_("Loglevel is {level}; started at {time}")
                 .format(level=self.loglevel, time=times.now().isoformat()[:-7]+'Z'))
+        # WHICH DISPLAY STACK, in the log, every run. Kent, 2026-09-14: "I
+        # thought the whole point of these changes was to NOT use XWayland. So
+        # if you're not sure if we're using it or not, let's establish that
+        # now. and document it in the logs, so we're clear going forward."
+        # This call is pre-GUI, so it reports INTENT; each backend reports the
+        # fact again once it has a display open.
+        from utilities import display
+        display.report('startup, before any toolkit')
     def show_scaling_from_windows(self):
         try:
             import ctypes
@@ -342,7 +409,17 @@ class App:
                     #don't worry about hg, if not there already
                     log.info(_("No Git data repository found; creating."))
                     repo[r].init()
-                    repo[r].add(self.liftfilename)
+                    # self.filename, NOT self.liftfilename: that name belongs to
+                    # SettingsManager (settings/__init__.py, set FROM
+                    # program.filename) and has never existed on App — so this
+                    # line raised AttributeError every time it was reached. It
+                    # survived because it is reached only when there is no git
+                    # data repo yet AND git is present, i.e. creating a data
+                    # repo from scratch; collab projects let the daemon own the
+                    # repo, so nobody hit it until a fresh legacy project
+                    # (2026-09-02). Nor would self.settings work here: repocheck
+                    # runs before Settings(self) exists.
+                    repo[r].add(self.filename)
                     repo[r].commit()
                     self.data_repo[r]=repo[r]
     def repo_commit(self):
@@ -353,18 +430,85 @@ class App:
         changes the daemon merged into our working tree and offer a
         reload. Detection lives in CollabSession.poll_remote_change;
         correctness never depends on this poll (saves are base-aware)
-        — it only bounds how long stale peer data stays displayed."""
+        — it only bounds how long stale peer data stays displayed.
+
+        The daemon calls run on a WORKER thread, and only the widget-
+        touching tail returns to the UI loop (_collab_poll_done). Before
+        that they ran here, so a daemon that listened without answering
+        froze the Tk main loop for rpc.call's 300s default — and because
+        this fires inside wait_window's nested loop too, the freeze could
+        land mid-sort. Nothing here is load-bearing, per the paragraph
+        above, so it must never be able to block the UI."""
+        if getattr(self,'_restarting',False):
+            # A confirmed restart keeps this process alive while the successor
+            # boots (see _confirm_restart), and the successor attaches to the
+            # same project. Two clients polling and offering reloads on one
+            # working tree is exactly what the handover is meant to avoid, so
+            # stop polling the moment we start handing over. RESCHEDULED, not
+            # abandoned: a restart can fail, and then this copy is live again
+            # and should be polling — dropping the loop here would leave a
+            # working app quietly not noticing peer changes for the session.
+            self.tk_root.after(10000,self.collab_poll)
+            return
         session=getattr(self,'collab',None)
         if not session:
             return #project disconnected mid-session; stop polling
-        try:
+        if getattr(self,'_collab_poll_busy',False):
+            # Still waiting on the daemon. Skipping beats stacking a thread
+            # per tick on a wedged daemon; log once, then stay quiet.
+            if not getattr(self,'_collab_poll_skipped',False):
+                self._collab_poll_skipped=True
+                log.info("collab_poll: daemon slow to answer; skipping ticks")
+            self.tk_root.after(10000, self.collab_poll)
+            return
+        def work():
             # ONE project_status per tick, shared by the change-detection
             # and the title-bar badge (client contract § 17c rule 4: never
             # fire it from several handlers for the same UI event). It also
             # means both read the SAME snapshot, instead of deciding
             # "stale" and "shared" from two different ones.
-            st=session.status()
-            outcome=session.poll_remote_change(st=st)
+            # poll_remote_change belongs here too: it makes a SECOND call
+            # (since_sha enrichment) once HEAD is known to have moved.
+            st=outcome=None
+            try:
+                st=session.status()
+                outcome=session.poll_remote_change(st=st)
+            except Exception as e:
+                log.info(f"collab_poll worker: {e}")
+            try:
+                self.tk_root.after(
+                        0,lambda: self._collab_poll_done(session,st,outcome))
+            except Exception:
+                pass #root already gone; shutting down
+        self._collab_poll_busy=True
+        try:
+            threading.Thread(target=work,daemon=True,
+                    name='collab_poll').start()
+        except Exception as e:
+            # Never let a thread failure end the poll loop for the session.
+            self._collab_poll_busy=False
+            log.info(f"collab_poll: could not start worker: {e}")
+            self.tk_root.after(10000, self.collab_poll)
+    def _collab_poll_done(self,session,st,outcome):
+        """UI-thread tail of collab_poll — everything here touches widgets."""
+        self._collab_poll_busy=False
+        self._collab_poll_skipped=False
+        try:
+            if getattr(self,'collab',None) is not session:
+                return #disconnected (or reconnected) while we were waiting
+            # Say it out loud, ONCE per outage. status() returns None on every
+            # failure, so without this an unreachable daemon is now completely
+            # silent — the freeze used to be the only symptom. Interim: the
+            # real cause is the daemon wedging before it serves.
+            if st is None and not getattr(self,'_collab_silent_since',None):
+                self._collab_silent_since=time.time()
+                NotifyUser(_("The collaboration server has stopped answering. "
+                        "Sync status will be out of date until it responds."))
+            elif st is not None and getattr(self,'_collab_silent_since',None):
+                mins=(time.time()-self._collab_silent_since)/60
+                self._collab_silent_since=None
+                NotifyUser(_("The collaboration server is answering again "
+                        "(after {mins:.0f} minutes).").format(mins=mins))
             if (outcome == 'changed'
                     and not getattr(self,'writing',False)
                     and session.reload_offer_due()):
@@ -372,7 +516,8 @@ class App:
             self.collab_title_status(session,st=st)
         except Exception as e:
             log.info(f"collab_poll: {e}")
-        self.tk_root.after(10000, self.collab_poll)
+        finally:
+            self.tk_root.after(10000, self.collab_poll)
     def collab_title_status(self,session,st=None):
         """Ambient sync status, title-bar cheap (Kent 2026-07-11): every
         poll tick, append the one-phrase collab truth to the visible
@@ -484,17 +629,56 @@ class App:
         from backend.core.sound import SOUND_PROBLEMS
         if not SOUND_PROBLEMS:
             return
+        # RECORDING BROKEN and TRANSCRIPTION OFF are different situations and
+        # need different words. This said "This computer's sound support is
+        # BROKEN, and A-Z+T couldn't repair it automatically" over a list
+        # whose only entry was "ASR (transcription): No module named 'torch'"
+        # — on a Mac where recording and playback worked fine, and where
+        # torch CANNOT be installed (no macOS x86_64 wheel since 2.2.x). So
+        # every clause was wrong at once: sound was not broken, nothing was
+        # left unrepaired, and "Restarting retries the automatic repair" was
+        # an invitation to wait for something that will never happen (Kent,
+        # 2026-09-11: "at least more scary than it should probably be, for an
+        # expected situation"). The log had it right two lines later.
+        #   A missing optional ENGINE is a degraded install A-Z+T is designed
+        # to run in. A missing audio BACKEND stops recording, which is worth
+        # blocking a fieldworker over.
+        recording = [(c,e) for c,e in SOUND_PROBLEMS
+                     if 'transcription' not in c.lower()]
+        transcription = [(c,e) for c,e in SOUND_PROBLEMS
+                         if 'transcription' in c.lower()]
+        if not recording:
+            # Informational, and NOT blocking: nothing here stops the work
+            # this machine can do.
+            lines=[_("Transcription is switched off on this computer:"),'']
+            lines+=[f"• {component}: {error}"
+                    for component,error in transcription]
+            lines+=['',_("Recording, playback, sorting and reports all work "
+                     "normally. Only the automatic transcription drafts are "
+                     "unavailable — you can still type transcriptions "
+                     "yourself."),'',
+                    _("On some computers this cannot be fixed: the "
+                      "transcription engine is not published for every "
+                      "processor. The log says which component is missing.")]
+            log.info("transcription unavailable, recording is fine: %s",
+                     '; '.join('{}: {}'.format(c,e) for c,e in transcription))
+            ErrorNotice('\n'.join(lines),
+                        title=_("Transcription is not available"))
+            return
         lines=[_("This computer’s sound support is BROKEN, and A-Z+T "
                  "couldn’t repair it automatically:"),'']
         lines+=[f"• {component}: {error}"
                 for component,error in SOUND_PROBLEMS]
+        # Matches the label backend/core/sound.py appends. It was 'pyaudio'
+        # until the sounddevice port (2026-09-09) — a string coupling that
+        # would have silently stopped matching, taking this advice with it,
+        # which is why the label and this test are named together here.
         if (platform.system() == 'Linux'
-                and any(c.startswith('pyaudio') for c,e in SOUND_PROBLEMS)):
-            lines+=['',_("If you have errors containing ˋportaudioˊ above, "
-                     "you should install pyaudio with your package manager "
-                     "(e.g. ˋsudo apt install portaudio19-devˊ, then restart "
-                     "{name} so it can rebuild pyaudio).").format(
-                                                            name=self.name)]
+                and any(c.startswith('sounddevice') for c,e in SOUND_PROBLEMS)):
+            lines+=['',_("On Linux, {name} needs the system PortAudio runtime "
+                     "for sound. Install it with your package manager (e.g. "
+                     "ˋsudo apt install libportaudio2ˊ) and restart {name}. "
+                     "Nothing needs to be compiled.").format(name=self.name)]
         lines+=['',_("You can sort and run reports, but recording, playback "
                  "and/or transcription will NOT work until this is fixed. "
                  "Fix the problem (see the log for details), or ask for "
@@ -545,6 +729,57 @@ class App:
                  "they are free from software.sil.org."
                  ).format(name=self.name)]
         ErrorNotice('\n'.join(lines),title=_("Missing font!"),wait=True)
+    def warn_backend_problems(self):
+        """A UI backend or engine the user ASKED FOR BY NAME could not run.
+
+        A THIRD TIER, and the first of its kind here: worth saying, not worth
+        stopping for. Sound and bootstrap problems both block, because a
+        fieldworker must not record silence or rely on a half-built install.
+        This one must not: the app is completely usable, it is simply drawing
+        its windows with the other toolkit.
+
+        But it must be SEEN, and it is in one way MORE explicit than either
+        blocking case — nobody asks for working sound by name, and this user
+        typed a switch. Until 2026-09-22 the refusal was a log line only, so
+        `--webview` on a machine without pywebview gave a normal tkinter
+        session and a line that scrolled past (Kent, 2026-09-11: "at some
+        point, we're going to want to complain more loudly if someone asks for
+        webview and it isn't installed"). A whole session could be spent
+        believing the webview was under test while looking at tkinter.
+
+        The BULLETS carry the technical detail, which is deliberate: the
+        message from `ui_backend` names the interpreter, which is the thing
+        people get wrong, and the exact pip line to fix it.
+        """
+        from utilities.ui_backend import BACKEND_PROBLEMS, chosen
+        if not BACKEND_PROBLEMS:
+            return
+        lines=[_("{name} could not use the screens you asked for:"
+                 ).format(name=self.name),'']
+        lines+=[f"• {request}: {problem}"
+                for request,problem in BACKEND_PROBLEMS]
+        # SAY WHAT IS RUNNING, not just what isn't. The first version of this
+        # named the problem and then said only that "the screen toolkit" was
+        # different, never which one (Kent, 2026-09-22: "the UserNotice
+        # doesn't mention using tkinter … I think it would be better to be
+        # more explicit"). A notice about a substitution that does not name
+        # the substitute sends the reader to the log for the one fact it
+        # exists to deliver.
+        if chosen() == 'tkinter':
+            lines+=['',_("{name} is running its standard tkinter screens "
+                     "instead.").format(name=self.name)]
+        else:
+            lines+=['',_("{name} is running the webview screens, with the "
+                     "substitute named above.").format(name=self.name)]
+        lines+=[_("Everything works: sorting, recording, reports and all your "
+                 "data are unaffected."),'',
+                _("To get the screens you asked for, fix the problem above "
+                  "and start {name} again with the same option."
+                  ).format(name=self.name)]
+        log.info("backend/engine requested but not delivered: %s",
+                 '; '.join('{}: {}'.format(r,p) for r,p in BACKEND_PROBLEMS))
+        ErrorNotice('\n'.join(lines),
+                    title=_("Not the screens you asked for"))
     def _run_setup(self):
         """All setup that must happen after the UI event loop is live.
 
@@ -552,6 +787,15 @@ class App:
         For pywebview this runs in a background thread after webview.start()
         has loaded, so that blocking calls like wait_window() can work.
         """
+        # Did the run BEFORE this one try to restart and never come back? Asked
+        # first, before any of the slow work below, and deliberately without
+        # clearing: if this boot also fails, the next one must still find it.
+        # See utilities/restartmark.py.
+        try:
+            from utilities import restartmark
+            restartmark.report()
+        except Exception as e:
+            log.info("restart marker check skipped: %s",e)
         lastcommit=self.source_repo.lastcommitdate()
         self.tk_root.wraplength=self.tk_root.winfo_screenwidth()-300 #exit button
         self.tk_root.wraplength=int(self.tk_root.winfo_screenwidth()*.7) #exit button
@@ -576,10 +820,40 @@ class App:
         #                           be silent in a sound-centric app
         self.warn_font_problems() #a substituted font silently changes every
         #                          layout on this machine only
+        self.warn_backend_problems() #LAST, and the only one that does NOT
+        #                             block: the app works, it just isn't the
+        #                             toolkit that was asked for by name
         self.prep_to_write()
         langtags.Languages(self)
         self.get_lift_file() #self.filename, maybe LiftChooser (NOT self.analang)
-        self.splash = Splash(self)
+        # THE SPLASH IS THE FIRST WINDOW A USER SEES: under tkinter the root
+        # is withdrawn and never shown, so the splash is the whole of what
+        # "the app started" looks like. It is therefore the first screen the
+        # webview port should make work, not something to route around — a
+        # logo, a progress bar and some text, no tabs, no icon grid, no
+        # wraplength arithmetic, and it stays up for the whole of boot so no
+        # hide/show race can lose it.
+        #
+        # It was briefly suppressed under webview (2026-09-07) while nothing
+        # rendered at all and an empty themed splash was being mistaken for a
+        # broken chooser. `--no-splash` still does that, for when it is in
+        # the way of testing something else.
+        #
+        # _NoSplash is a null object rather than a guard at each call site:
+        # `splash` is touched in ~15 places across main.py,
+        # tasks/chooser.py and frontend/ui_shell.py (draw, progress,
+        # withdraw, destroy, maketexts, exitFlag, winfo_exists), and every
+        # one would need the same condition.
+        # A MIXED MODE WAS TRIED HERE AND REMOVED (2026-09-14). The splash ran
+        # as a webview child process under a Tk host, with supervision and
+        # fall-back — it worked (v1.15.22) — but a child that runs the app's
+        # real page builder needs the project loaded, and Kent: "I dont' think
+        # I want to reparse lift each time I want to show a page." The
+        # decision is now two complete backends chosen at launch, with tkinter
+        # never regressing so the user can always switch back: ADR 0004,
+        # amendment A1-A4.
+        self.splash = (_NoSplash() if '--no-splash' in sys.argv
+                       else Splash(self))
         self.splash.draw()
         FileParser(self) #needs self.filename, pick up self.analang from settings or file
         # Collab seam: no-op unless this project opted in (per-project
@@ -611,12 +885,38 @@ class App:
         ProfileAnalyzer(self) #registers as self.profiles
         ExampleDict(self) #needed for makestatus, needs params,slices,data
         Alphabet(self) #after slicedict is up; needs params
-        langtags.Languages(self)
+        # langtags.Languages(self)
         self.splash.progress(50)
         # SliceDict(adhoc,profilesbysense,self) #needs adhoc,profilesbysense
         # StatusDict(filename,dict,self) #needs filename,dict
         UISettings(self)
         TaskChooser(self) #TaskChooser MainApplication
+        # GLOBAL no-window watchdog. Started here, last, because this is the
+        # first moment the app is supposed to HAVE a window — everything above
+        # legitimately runs with nothing but the splash on screen. It arms
+        # itself on the first window it actually sees, so an unusually slow
+        # boot below this line still can't produce a false alarm.
+        # THE RESTART SUCCEEDED — but only a window that actually reaches the
+        # SCREEN says so, which is why clearing the marker is handed to the
+        # watchdog rather than done here. Two ways the obvious placement (a
+        # clear at the end of this method) gets it wrong: _run_setup returns
+        # BEFORE mainloop() is entered, so it would claim success while the app
+        # could still wedge before ever painting; and if anything above blocks —
+        # the chooser opening its own window, say — the clear is never reached
+        # at all, and a restart that plainly worked keeps its marker (observed,
+        # Kent 2026-09-01). The watchdog already computes "a window is
+        # viewable", from the event loop, in order to arm itself.
+        from frontend.visibility import VisibilityWatchdog, QuitOnlyGuard
+        from utilities import restartmark
+        self.visibility_watchdog=VisibilityWatchdog(self,
+                                        on_first_window=restartmark.clear)
+        self.visibility_watchdog.start()
+        # Global guard against the nothing-but-Quit page. Same reasoning as the
+        # watchdog and started in the same place: that page is bad no matter who
+        # produced it, so ask about the SCREEN rather than auditing producers
+        # one at a time (Kent 2026-09-01).
+        self.quit_only_guard=QuitOnlyGuard(self)
+        self.quit_only_guard.start()
     def run(self):
         # global program
         log.info("Running main function on {} ({})".format(platform.system(),
@@ -649,14 +949,132 @@ class App:
             # raise
             # sys.exit()
         self.run_problem()
+    def email_log(self,event=None,bundle=None,lastlines=None):
+        """Compress this run's log, open a mail draft, and SHOW the user the file.
+
+        Reachable two ways, deliberately: the Help menu (a normal page, nothing
+        has gone wrong) and the error page (something has). Until now only the
+        error page could package a log at all, so a machine that merely
+        MISBEHAVED had no way to hand one over — which is why field diagnosis
+        keeps stalling on "ask the linguist to find and send a file".
+
+        THE MAIL DRAFT CANNOT CARRY THE LOG, and that is not a limitation of
+        this code: RFC 6068 lists the headers a mailto: handler may honour and
+        says attachment parameters must NOT be, since otherwise any web page
+        could make a mail client exfiltrate a local file. So the best available
+        is: draft addressed and described, and the folder opened with the file
+        HIGHLIGHTED, so attaching is one drag with no searching. Naming a path
+        in the body is not enough for a field user (Kent 2026-09-02: "I can't
+        count on people finding it on their own").
+
+        The previous URL was malformed and reportedly did nothing when clicked.
+        Three faults, any one sufficient: NOTHING WAS ENCODED, while 50 raw log
+        lines went into the query string — '&' ends the body parameter, '#'
+        starts a fragment and drops the rest, a bare '%' is an invalid escape
+        that makes handlers reject the whole URI, and spaces and newlines are
+        illegal outright; it was TOO LONG, 5-10 kB against the ~2 kB that
+        ShellExecute and browsers accept; and the lines were joined with
+        '%0d%0a' when readlines() had already left a real newline on each.
+
+        The log no longer travels in the URL. Kent: the 50-line excerpt "has
+        been useful in the past" — so the single most identifying line goes in
+        the SUBJECT, where it costs nothing and is better placed, because the
+        failure is then visible in the inbox and a report can be triaged, and
+        duplicates spotted, without opening anything. The error page still
+        DISPLAYS all 50, and the attachment holds the whole run."""
+        try:
+            if bundle is None:
+                bundle=str(logsetup.writelzma())
+            if lastlines is None:
+                try:
+                    lastlines=logsetup.contents(50)
+                except Exception:
+                    lastlines=[]
+            failure=''
+            for line in reversed([l.strip() for l in lastlines if l.strip()]):
+                if 'Error' in line or 'Exception' in line:
+                    failure=line[-120:] #the tail: the message, not the prefix
+                    break
+            subject=_("Please help with {name}").format(name=self.name)
+            if failure:
+                subject+=': '+failure
+            body='\n'.join([
+                    _("Please replace this text with a description of what you "
+                        "just did."),
+                    '',
+                    _("IMPORTANT: please attach the file named below. It is "
+                        "the only thing that says what went wrong."),
+                    str(bundle),
+                    ])
+            eurl='mailto:{addr}?subject={subject}&body={body}'.format(
+                        addr=urllib.parse.quote(str(self.Email)),
+                        subject=urllib.parse.quote(subject),
+                        body=urllib.parse.quote(body))
+            # Show the file FIRST, so it is in front of the user whether or not
+            # a mail client exists — the folder is the part that always works.
+            reveal_file(bundle)
+            def _nomailclient():
+                # THE SILENT FAILURE, now spoken (Kent 2026-09-02: "I've seen
+                # that silent error before", then watched it happen: folder
+                # opened, no mail client, no message). No mail client is
+                # configured, so the click genuinely did nothing, which reads as
+                # the app ignoring it. Say so, and give the two facts they need:
+                # where the file is, and who to send it to.
+                NotifyUser(text=_("This computer has no email program set up, "
+                            "so {name} could not start a message for you.\n\n"
+                            "Please send this file to {addr} yourself — it is "
+                            "in the folder that just opened:\n\n{bundle}"
+                            ).format(name=self.name,addr=self.Email,
+                            bundle=bundle),
+                            title=_("No email program"))
+            # ASK BEFORE DISPATCHING. Cheap, synchronous, ON THIS THREAD (so the
+            # notice below is built where Tk allows it), and it answers before
+            # the click has had time to look ignored. mailto_configured() is
+            # also the only thing that can answer on Linux at all — xdg-open
+            # exits 0 with no handler.
+            if mailto_configured() is False:
+                _nomailclient()
+                return bundle
+            def _mail_result(ok):
+                if ok is not False:
+                    return #took it, or we cannot tell: a false alarm is worse
+                # WORKER THREAD — hand the notice to the main loop rather than
+                # building a window here. Tk is main-thread-only, and this is
+                # exactly how the first version of this warning never appeared.
+                root=ui.default_root()
+                if root is None:
+                    log.info("no mail client, and no root to say so on")
+                    return
+                root.after(0,_nomailclient)
+            open_mailto(eurl,on_result=_mail_result)
+            return bundle
+        except Exception as e:
+            log.exception("could not prepare a log to email")
+            try:
+                ErrorNotice(_("Could not prepare your log to send ({error}). "
+                            "Your log files are in {dir}.").format(
+                            error=e,dir=file.getlogdir()),
+                            title=_("Couldn’t send the log"))
+            except Exception:
+                pass
     def run_problem(self):
+        # self.restart(), NOT sysrestart(): these two switch the SOURCE BRANCH and
+        # then restart, which makes them the likeliest of all the restart callers
+        # to fail to come back — a bad checkout means the successor may not start
+        # at all. So they get the confirmed path (a held "Restarting…" dialog, and
+        # the old copy handed back with an explanation if the new one dies) rather
+        # than the fire-and-forget one.
+        #
+        # NB self.restart() RETURNS, where sysrestart() never did: it opens the
+        # wait and schedules the confirm loop. So the destroy() below now actually
+        # runs — which is what it was always meant to do and never could.
         def reverttomain(event=None):
             self.source_repo.reverttomain()
-            sysrestart()
+            self.restart(reason='revert to main branch')
             revertb.destroy()
         def testversion(event=None):
             self.source_repo.testversion()
-            sysrestart()
+            self.restart(reason='switch to testing branch')
             tryb.destroy()
         # global _
         try:
@@ -714,22 +1132,16 @@ class App:
                 )
         lcontents=logsetup.contents(50)
         addr=self.Email
-        eurl='mailto:{addr}?subject=Please help with {name} installation'.format(addr=addr,
-                                                                    name=self.name)
-        eurl+='&body='
-        eurl+=_("Please replace this text with a description of what you just did.")
-        eurl+='%0d%0a'
-        eurl+=_("If the log below doesn’t include the text ‘{text}’, or if it happened "
-                "after a longer work session, please attach "
-                "your compressed log file").format(
-                text='Traceback (most recent call last): ')+' ('+(file)+')'
-        eurl+='%0d%0a--log info--%0d%0a{info}'.format(info='%0d%0a'.join(lcontents))
+        def _email_log(event=None):
+            self.email_log(bundle=file,lastlines=lcontents)
         n=ui.Label(errorw.frame,text=_("\n\nIf this information doesn’t help "
-            "you fix this, please click on this text to Email me your log (to {addr})"
+            "you fix this, click this text to Email me your log (to {addr}). "
+            "Your log file will also be shown in a folder window — please "
+            "attach it to the message."
             "").format(addr=addr),justify='left', font='default',
-            row=3,column=0
+            row=5,column=0
             )
-        n.bind("<Button-1>", lambda e: openweburl(eurl))
+        n.bind("<Button-1>", _email_log)
         o=ui.Label(errorw.frame,text=_("The end of {log} / {file} are below:"
                                     "").format(log=logsetup.getlogfilename(),file=file),
                                     justify='left',
@@ -748,7 +1160,33 @@ class App:
         scroll.reflow()  # grow canvas/scrollregion to the wrapped log label
         scroll.tobottom()
         f=ui.Frame(errorw.outsideframe,row=1,column=2)
+        # WIDE ENOUGH NOT TO BREAK A WORD — least of all the app's own name.
+        # This was a flat 75px, and Tk wraps at HYPHENS as well as spaces, so
+        # "A-Z+T" came out stacked as "A-Z+" / "T" and "updates" as "update" /
+        # "s" (Kent 2026-09-10: "give them enough width to at least not wrap
+        # 'A-Z+T'"). A fixed pixel count could not have held anyway: the fonts
+        # scale with the display, so 75px got tighter on every higher-DPI
+        # screen while everything around it grew.
+        #   So measure. The longest single word across every label these
+        # buttons can carry — in the CURRENT font and the CURRENT translation,
+        # neither of which this code can predict — plus room for the button's
+        # own border and padding.
+        _labels=[_("Check for {azt} updates").format(azt=self.name),
+                 _("Revert to main branch of {azt}").format(azt=self.name),
+                 _("Try testing branch of {azt}").format(azt=self.name),
+                 _("Restart {azt}").format(azt=self.name)]
         buttonwraplength=75
+        try:
+            _font=self.theme.fonts['normal']
+            # split() keeps "A-Z+T" whole, which is the point: Tk would break
+            # it, so its full width is the floor.
+            buttonwraplength=max(_font.measure(w)
+                                 for l in _labels for w in l.split())+24
+            log.info("error page: button wraplength %dpx (measured)",
+                     buttonwraplength)
+        except Exception as e:
+            log.info("error page: couldn't measure the button labels (%s); "
+                     "using %dpx",e,buttonwraplength)
         if (hasattr(self,'source_repo')
                 and hasattr(self.source_repo,'files')): #repo init succeeded
             ui.Button(f,
@@ -918,7 +1356,11 @@ class App:
         else:
             self.taskchooser.gettask() #re-present the chooser
         log.info("In-place reload: done")
-    def restart(self,filename=None):
+    def restart(self,filename=None,reason=None):
+        # `reason` reaches the restart marker, and it is the field worth having:
+        # an update that fails to come back is a different diagnosis from a
+        # branch switch that does. Callers that don't say get 'App.restart',
+        # which at least distinguishes this path from the menu buttons.
         log.info(_("Restarting from App"))
         file.writefilename(self.filename)
         for loc in [self,self.mainwindow]:
@@ -928,22 +1370,170 @@ class App:
         if self.towrite: #Do even if not closed by user
             log.info(_("Final write to lift"))
             self.maybewrite(definitely=True)
-        try:
-            self.task.withdraw() #so users don't do stuff while waiting
-        except (AttributeError, Exception):
-            log.info("There doesn't seem to be a task to hide; moving on.")
-        try:
-            self.task.runwindow.withdraw() #so users don't do stuff while waiting
-        except (AttributeError, Exception):
-            log.info(_("There doesn’t seem to be a runwindow to hide; moving on."))
-        while self.writing:
-            # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
-            #     self.towrite,self.writing,self.taskchooser.writing))
+        # NO withdraw(), and no time.sleep() loop. Both were here to stop the
+        # user acting during the wait, and together they produced the failure
+        # this whole item exists for: every window hidden, and a dead main loop
+        # so nothing — not after(), not a repaint, not either visibility guard —
+        # could run or report. A WAIT DIALOG does the same job honestly: it
+        # blocks input, it says what is happening, and it is the one thing both
+        # guards accept as "something is happening and the user is being told".
+        self._restart_reason=reason or 'App.restart'
+        self._restart_child=None
+        self._restart_childgone=None
+        # Set BEFORE the wait opens: from here on this process is handing over,
+        # so background work that touches the project must stop (collab_poll
+        # checks this). Cleared only by _restart_failed, where we genuinely are
+        # the live copy again.
+        self._restarting=True
+        w=self._restart_holder()
+        if w is not None:
+            try:
+                w.wait(msg=_("Restarting {name}…").format(name=self.name))
+            except Exception as e:
+                log.info("no restart wait dialog: %s",e)
+        self._await_write_then_restart()
+    def _restart_holder(self):
+        """The window that holds the "Restarting…" dialog and, if the restart
+        fails, is handed back to the user. The task if there is one, else the
+        chooser — the same preference order the visibility watchdog uses."""
+        for owner in (getattr(self,'task',None),getattr(self,'taskchooser',None)):
+            if owner is None:
+                continue
+            win=getattr(owner,'ui',owner)
+            try:
+                if win.winfo_exists():
+                    return win
+            except Exception:
+                continue
+        return None
+    RESTART_POLL_MS=500
+    RESTART_EXIT_GRACE_S=15 #a successor may re-exec once (venv relaunch)
+    RESTART_BACKSTOP_S=300
+    def _await_write_then_restart(self):
+        """Drive the write-wait from after(), not sleep(). Same wait, but the
+        event loop stays alive — which is the prerequisite for everything below:
+        a dialog that can paint, and a confirm loop that can run at all."""
+        if self.writing:
             log.info(_("Waiting to finish writing to lift"))
-            time.sleep(1)
-            self.check_if_write_done() #because after() isn't working here...
-        # log.info("Not writing to lift")
-        sysrestart()
+            self.check_if_write_done()
+            self.tk_root.after(1000,self._await_write_then_restart)
+            return
+        self._spawn_and_confirm()
+    def _spawn_and_confirm(self):
+        from utilities.utilities import spawn_successor
+        self._restart_child=spawn_successor(reason=self._restart_reason)
+        if self._restart_child is None:
+            # The launch itself failed, so there is no successor to wait for and
+            # we are still a working app. Say so and stay up; a silent return to
+            # a half-torn-down UI is what we are trying to stop.
+            self._restart_failed(_("Could not start a new copy of {name}. "
+                        "Your work is saved and this window is still usable."
+                        ).format(name=self.name))
+            return
+        from utilities import restartmark
+        if restartmark.pending() is None:
+            # No marker means no signal: its DISAPPEARANCE is what we wait on,
+            # so an absent one would read as instant confirmation of a successor
+            # that has not started. The successor is already launched and this
+            # is only a diagnostic failure, so hand over the old way rather than
+            # pretending to confirm.
+            self._leave_to_successor("no restart marker to watch (could not be "
+                    "written); handing over unconfirmed")
+            return
+        self._restart_started=time.monotonic()
+        self._confirm_restart()
+    def _confirm_restart(self):
+        """Wait for the successor to say it is up, and recover if it cannot.
+
+        THE SIGNAL IS THE MARKER: level 1 already has the successor delete it
+        once a real work surface is on screen, so its disappearance is exactly
+        "I am up" — no second channel, and the thing we wait for is the thing we
+        actually care about (a window the user can use), not merely a process
+        that exists.
+
+        The failure we can detect precisely is the successor EXITING, which
+        poll() reports at once — far better than a wall-clock timeout, which on
+        a slow machine with a big lexicon would cry failure on a boot that was
+        simply taking its time. But an exited child is not proof on its own: a
+        successor may legitimately re-exec once (the venv relaunch Popens and
+        exits), orphaning a grandchild we cannot see. So an exit only counts
+        after a grace period in which the marker is still uncleared."""
+        from utilities import restartmark
+        try:
+            if restartmark.pending() is None:
+                self._leave_to_successor("successor confirmed up")
+                return
+            if self._restart_child.poll() is not None:
+                now=time.monotonic()
+                if self._restart_childgone is None:
+                    self._restart_childgone=now
+                    log.info("successor process exited; waiting %ss in case it "
+                            "re-execed (venv relaunch) before calling it a "
+                            "failure",self.RESTART_EXIT_GRACE_S)
+                elif now-self._restart_childgone>self.RESTART_EXIT_GRACE_S:
+                    self._restart_failed(_("{name} could not restart: the new "
+                            "copy stopped before it opened. Your work is saved "
+                            "and this window is still usable."
+                            ).format(name=self.name))
+                    return
+            elif time.monotonic()-self._restart_started>self.RESTART_BACKSTOP_S:
+                # Still running after a very long time. Do NOT hand the UI back:
+                # two live copies on one project is worse than a long wait, and
+                # the successor owns the project from here.
+                self._leave_to_successor("successor still unconfirmed after "
+                        "{}s but alive; leaving anyway rather than risk two "
+                        "live copies".format(self.RESTART_BACKSTOP_S))
+                return
+        except Exception:
+            log.exception("restart confirmation failed")
+        self.tk_root.after(self.RESTART_POLL_MS,self._confirm_restart)
+    def _leave_to_successor(self,why):
+        """Hand the machine over and GO, from inside an after() callback.
+
+        `sys.exit()` DOES NOT WORK HERE, and that is the bug this method exists
+        for: tkinter catches exceptions raised in a callback (and this app adds
+        its own catcher in frontend/tkintermod.py), so the SystemExit was
+        swallowed and the callback simply returned. Both exit paths of
+        _confirm_restart — the confirmed one and the 300s backstop — therefore
+        did nothing, and the predecessor sat there indefinitely: Kent's
+        duplicate-process gate found two live copies, 1934s and 1216s old, on
+        one project (2026-09-01). Two live copies is the exact outcome the
+        confirm loop was written to prevent, so it was worse than no handshake.
+
+        quit() ends the main loop instead, and App.run() falls through to
+        sysshutdown() at top level, where sys.exit() means something. No final
+        write on the way out, deliberately: the successor owns the project now,
+        and this process already wrote before it spawned."""
+        log.info("%s; predecessor leaving",why)
+        try:
+            self.tk_root.quit()
+        except Exception:
+            # Nothing left to be careful with: the successor is up, this copy
+            # must not linger, and os._exit skips the interpreter shutdown that
+            # a wedged Tk could otherwise block.
+            log.exception("could not end the main loop; forcing exit")
+            os._exit(0)
+    def _restart_failed(self,text):
+        """Give the user their window back, and say why. This is the whole point
+        of level 2: a failed restart becomes a sentence instead of a blank
+        screen."""
+        log.error("RESTART FAILED: %s",text)
+        # We are the live copy again, so background work resumes. Do this first:
+        # everything below can raise, and a stuck _restarting flag would leave a
+        # working app quietly not polling.
+        self._restarting=False
+        w=self._restart_holder()
+        if w is not None:
+            try:
+                w.waitdone()
+                if not w.exitFlag.istrue():
+                    w.deiconify()
+            except Exception:
+                log.exception("could not restore the UI after a failed restart")
+        try:
+            ErrorNotice(text,title=_("Restart failed"))
+        except Exception:
+            log.exception("could not report the failed restart")
     def prep_to_write(self):
         self.writeable=0 #start the count
         self.towrite=False
@@ -1109,7 +1699,30 @@ class App:
             # The daemon is detached and outlives azt restarts; new
             # server code does nothing until it is bounced.
             from backend.core import collab
-            if collab.restart_collab_daemon():
+            # COVER THIS. The update's wait is closed back in updateazt's poll,
+            # BEFORE this method runs — so this daemon bounce, which is network
+            # work and can take tens of seconds, ran with every window withdrawn
+            # and nothing on screen. The global watchdog caught it on a fresh
+            # clone: "found no viewable window in 5 polls (25.0s)", with the Wait
+            # withdrawn too and two task windows sitting there content=True,
+            # unrevealed (Kent's log, 2026-09-01). thenshow=True so waitdone also
+            # puts a window back, which is the half that was missing.
+            parent=kwargs.get('parent')
+            try:
+                if parent is not None:
+                    parent.wait(msg=_("Restarting the collaboration service…"),
+                                thenshow=True)
+            except Exception as e:
+                log.info("could not cover the daemon restart: %s",e)
+            try:
+                bounced=collab.restart_collab_daemon()
+            finally:
+                try:
+                    if parent is not None:
+                        parent.waitdone()
+                except Exception as e:
+                    log.info("could not close the daemon-restart wait: %s",e)
+            if bounced:
                 t+='\n'+_("(Collaboration service restarted with its "
                             "update)")
         button=False
@@ -1130,7 +1743,12 @@ class App:
                     or any(s[1]=='updated' for s in sisters.values()):
                 # sister 'updated' needs a restart too: azt has the old
                 # azt_collab_client already imported in-process.
-                button=(_("Restart Now"),sysrestart)
+                # reason=: this is the restart most worth naming in a marker —
+                # a restart AFTER AN UPDATE is the one whose failure to come back
+                # strands the user on a half-updated install. Without it the
+                # marker said 'unspecified' (Kent's log, 2026-09-01).
+                button=(_("Restart Now"),
+                        lambda event=None:sysrestart(reason='after update'))
         try:
             try:
                 title=_("Update (Git) output")
@@ -1155,17 +1773,30 @@ class App:
             setattr(self,k,v)
         self.default_task='WordCollectnParse'
         self.loglevel=logsetup.loglevel_default #'INFO'
-        if self.aztdir.parent.stem == 'AZT': 
+        # `--user` runs the dev checkout AS A USER WOULD: no dev settings, no
+        # remembered test lift, no auto-opened task, error screens and log
+        # zipping back on. The dev branch is chosen by WHERE the code lives
+        # (parent dir 'AZT'), which is right for everyday work but leaves no
+        # way to see what a user sees without moving the checkout — and the
+        # two paths differ in ways that matter (`testing` gates the webview
+        # devtools panel and the debug window badge, `me` gates the help
+        # line, `production` picks the default theme).
+        if self.aztdir.parent.stem == 'AZT' and '--user' not in sys.argv:
+            log.info("Running with dev settings")
             self.testing=True #eliminates Error screens and zipped logs and repo commits
             # self.production=True #True for making screenshots (default theme)
             self.me=True
             self.testlift='Demo_en' #portion of filename
-            self.testtask='SortT' #Will convert from string to class later
-            # self.testtask='SortV' #Will convert from string to class later
+            # self.testtask='NoChooser' #stop at splash, before Chooser
+            # self.testtask=None #Just open Chooser
+            # self.testtask='WordCollectnParsewRecordings'
+            # self.testtask='SortT' #Will convert from string to class later
+            self.testtask='SortV' #Will convert from string to class later
             # self.testtask='SortSyllables' #Will convert from string to class later
             # self.testtask='WordCollectnParsewRecordings'
             # self.default_task='WordCollectnParse'
         else:
+            log.info("Running without dev settings")
             self.me=False
             self.production=True #True for making screenshots (default theme)
             self.testing=False #True eliminates Error screens and zipped logs

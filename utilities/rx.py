@@ -279,12 +279,25 @@ def make(regex, **kwargs):
     else:
         flags=re.UNICODE
     if kwargs.get('compile'):
+        # DIAG (the presort regex-compile hang item): the UI froze inside re.compile here —
+        # COMPILATION, not matching, so it is pattern size/shape. Say how big and
+        # how long, so the next occurrence names the profile instead of leaving us
+        # to infer it from a faulthandler stack. Only speaks when it is actually
+        # slow, so this costs nothing on the normal path.
+        _t0=time.perf_counter()
         try:
             regex=re.compile(regex, flags=flags)
         except ValueError as e:
             log.error('Regex Value compile problem ({};{})'.format(e,regex))
         except Exception as e:
             log.error('Regex compile problem ({};{})'.format(e,regex))
+        _el=time.perf_counter()-_t0
+        if _el>0.5:
+            _p=kwargs.get('pattern_for') or ''
+            log.warning("SLOW REGEX COMPILE: %.1fs for %s chars%s (ci=%s)",
+                        _el, len(str(regex.pattern if hasattr(regex,'pattern')
+                                    else regex)),
+                        ' [%s]'%_p if _p else '', bool(caseinsensitive))
     return regex
 class RegexDict(object):
     """This makes and stores all the regex's needed for A−Z+T (for now)"""
@@ -592,6 +605,7 @@ class RegexDict(object):
         # log.info("Replacing other Cs and Vs: {}".format(CVs))
         CVs=re.sub(r'\)([^(?]+)\(',')(\\1)(',CVs) #this puts parens around everything
         # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
+        kwargs.setdefault('pattern_for',CVs_ori) #DIAG: name the profile if slow
         self.setrx(CVs_ori, CVs, **kwargs)
         return self.getrx(CVs_ori, **kwargs)
     def profileofform(self,form,ps,diag=False):
@@ -600,6 +614,29 @@ class RegexDict(object):
             return 'Invalid'
         profile=form
         classes=set(self.profilelegit) & set(self.rx)
+        # ONE-SHOT class-set report (Kent 2026-08-28: en-x-cvprofile_MT coming
+        # out all-C — CVC>CCC, CVCVC>CCCCC). Per-form diag is thousands of lines
+        # over a database; the class set is the thing that actually explains it
+        # and it is constant for the run, so say it once. Two failure shapes to
+        # tell apart: 'V' MISSING from the set (setrx refuses an empty regex, so
+        # a class with no glyphs silently vanishes — but that would leave the
+        # vowel LITERAL, 'CaC', not 'CCC'), versus 'V' present but the C regex
+        # matching vowels too, which is what CVC>CCC actually means and points
+        # at the interpret settings feeding compileCVrxforsclass.
+        if not getattr(self,'_logged_class_set',False):
+            self._logged_class_set=True
+            try:
+                log.info("DIAG-classes: profileofform classes=%s | legit=%s | "
+                         "rx keys=%s", sorted(classes),
+                         sorted(self.profilelegit), sorted(self.rx))
+                for s in sorted(classes):
+                    try:
+                        log.info("DIAG-classes: %s uncompiled=%r", s,
+                                 self.rxuncompiled.get(s))
+                    except Exception:
+                        continue
+            except Exception as e:
+                log.info("DIAG-classes failed: %s", e)
         steps=[] # DIAG: (class, polyn, before>after) for each sub that changed it
         for polyn in range(4,0,-1): #find and sub longer forms first
             for s in classes:

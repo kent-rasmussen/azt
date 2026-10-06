@@ -10,6 +10,43 @@
 const _widgets = new Map();  // wid → HTMLElement
 let _nextWid = 0;
 
+// ── The display's size, as CSS can see it ────────────────────────────
+// A CAP MUST NOT MOVE WHEN THE WINDOW DOES. grid.css caps a label at `92vw`
+// and an image at `45vw`/`60vh` so no widget can demand more room than the
+// DISPLAY — the right invariant, in the wrong unit. `vw`/`vh` are the
+// VIEWPORT, i.e. this window, and these windows are sized to their own
+// content: so the content's measured size was a function of the window's
+// size, and `fit_to_content` computed a size from a measurement that then
+// changed because of it. Not idempotent, and monotonic — Kent's cropped
+// Add-and-Parse page walked 654x605 → 1043 → 1282x707 over three fits,
+// growing every time it was measured and cropped at every step
+// (2026-09-15), with the log putting the page's right edge at exactly the
+// "92vw = 966px" the CSS comment quotes. The image did the same thing
+// visibly: 45vw of a window that kept widening, so the picture grew as fast
+// as the window chasing it.
+//   How fast it ran depended on how many refits a build happened to
+// trigger, which is why it read as intermittent and engine-specific.
+//
+// `screen.availWidth/Height` is the display — what does not change while we
+// measure. Exposed RAW, so the stylesheet keeps its own percentages next to
+// the rules they belong to and decides per cap which state wants which unit
+// (grid.css, "The caps, and why they are variables"): window-relative while
+// the page is read, so prose wraps into whatever window it got rather than
+// needing a horizontal scroll; screen-relative only for the duration of a
+// fit. Every use keeps a `vw`/`vh` fallback, so an unset variable degrades
+// to the old behaviour rather than to no cap at all.
+(function setScreenSize() {
+    try {
+        const w = (screen && screen.availWidth) || 0;
+        const h = (screen && screen.availHeight) || 0;
+        const root = document.documentElement.style;
+        if (w > 0) root.setProperty('--screenw', Math.round(w) + 'px');
+        if (h > 0) root.setProperty('--screenh', Math.round(h) + 'px');
+    } catch (e) {
+        /* fallbacks in the stylesheet stand */
+    }
+})();
+
 // ── Helpers ────────────────────────────────────────────────────────────
 
 function _stickyToStyle(sticky) {
@@ -21,13 +58,20 @@ function _stickyToStyle(sticky) {
     const hasE = s.includes('e');
     const hasW = s.includes('w');
 
+    // NO STICKY MEANS CENTRE, NOT STRETCH. Saying nothing here left the grid
+    // to its own default, which IS stretch — so `sticky=''` behaved exactly
+    // like `sticky='nsew'`, the opposite of what tkinter means by it
+    // ("do not stretch; centre in the cell"). Every axis is now stated
+    // rather than defaulted (Kent, 2026-09-14: "nor sticky impact").
     if (hasN && hasS) style.alignSelf = 'stretch';
     else if (hasN)    style.alignSelf = 'start';
     else if (hasS)    style.alignSelf = 'end';
+    else              style.alignSelf = 'center';
 
     if (hasE && hasW) style.justifySelf = 'stretch';
     else if (hasE)    style.justifySelf = 'end';
     else if (hasW)    style.justifySelf = 'start';
+    else              style.justifySelf = 'center';
 
     return style;
 }
@@ -43,39 +87,260 @@ function _applyGrid(el, opts) {
     if (sty.alignSelf)   el.style.alignSelf   = sty.alignSelf;
     if (sty.justifySelf) el.style.justifySelf = sty.justifySelf;
 
-    if (opts.padx) el.style.margin = `0 ${opts.padx}px`;
-    if (opts.pady) {
+    // ZERO IS A VALUE, NOT A MISSING ONE. These were tested for truth, so
+    // `ipadx=0` — tkinter's way of saying "no padding at all" — was
+    // indistinguishable from never mentioning it, and the stylesheet's
+    // default (2px a side on a label) stood instead. It showed up on the
+    // profile-with-check display, where each letter is its own Label
+    // precisely because a Tk label carries one font: the row asks for zero
+    // padding four times over (sort_buttons.py:597-607) because these are
+    // letters of one word, and got 4px between every pair anyway (Kent,
+    // 2026-09-15: "can we put any less space between the letters").
+    //   Python now sends these keys ONLY when a caller asked, so `undefined`
+    // still means "leave the stylesheet alone" and 0 means zero.
+    if (opts.padx !== undefined && opts.padx !== null)
+        el.style.marginLeft = el.style.marginRight = `${opts.padx}px`;
+    if (opts.pady !== undefined && opts.pady !== null) {
         el.style.marginTop    = `${opts.pady}px`;
         el.style.marginBottom = `${opts.pady}px`;
     }
-    if (opts.ipadx) el.style.paddingLeft = el.style.paddingRight = `${opts.ipadx}px`;
-    if (opts.ipady) el.style.paddingTop = el.style.paddingBottom = `${opts.ipady}px`;
+    if (opts.ipadx !== undefined && opts.ipadx !== null)
+        el.style.paddingLeft = el.style.paddingRight = `${opts.ipadx}px`;
+    if (opts.ipady !== undefined && opts.ipady !== null)
+        el.style.paddingTop = el.style.paddingBottom = `${opts.ipady}px`;
+}
+
+// ── Where does a definite height stop? ───────────────────────────────
+// THE CHAIN IS THE THING, NOT ANY ONE RULE. A scroller only bounds itself
+// when every ancestor between it and the viewport has a definite height: a
+// percentage of `auto` is not a constraint, and an `fr` track with no free
+// space behaves as `auto`. Three separate rules have to hold at once for
+// that — the document's height, the weights on each grid in between, and
+// `align-content` not eating the leftover — and a page with the double
+// scroll tells you only that ONE of them failed, not which.
+//   So report the whole chain and let the log name the link. Sent through
+// `on_event` like every other measurement, under --log-heights.
+function reportHeightChain(wid) {
+    if (!(window.pywebview && window.pywebview.api)) return;
+    const seen = [];
+    const targets = document.querySelectorAll(
+                        '.wv-scrolling-frame, .wv-tabpanels');
+    for (const el of targets) {
+        const chain = [];
+        let node = el;
+        while (node && chain.length < 24) {
+            const cs = getComputedStyle(node);
+            chain.push({
+                tag: node.tagName,
+                cls: (node.className || '').toString().slice(0, 60),
+                id: node.id || '',
+                client: node.clientHeight,
+                scroll: node.scrollHeight,
+                // INLINE ONLY — `node.style` never sees the stylesheet, so
+                // this reads `(unset)` for a height set in grid.css. I
+                // labelled it "the authored height" and it is not; the
+                // first report came back `height=(unset)` on html/body/#root
+                // where the stylesheet plainly says `height: 100%`, and only
+                // the `client` column showed that the rule had in fact
+                // applied. Both are reported now: `inline` for what a widget
+                // set on itself, `computed` for what actually took effect.
+                styleh: node.style.height || '(unset)',
+                comph: cs.height,
+                maxh: cs.maxHeight,
+                rows: cs.gridTemplateRows,
+                align: cs.alignContent,
+                overflow: cs.overflowY,
+            });
+            if (node === document.documentElement) break;
+            node = node.parentElement;
+        }
+        seen.push({target: (el.className || '').toString().slice(0, 40),
+                   viewport: window.innerHeight,
+                   chain: chain});
+    }
+    window.pywebview.api.on_event(wid, 'heightchain', {scrollers: seen});
+}
+
+// ── Row/column weights ───────────────────────────────────────────────
+// tkinter's `weight` means "this track takes the space left over"; a CSS
+// Grid track is CONTENT-SIZED by default. `grid_rowconfigure` was a no-op in
+// ui_webview with the comment "CSS Grid handles this automatically", so every
+// weight in the app was discarded — and the cost was the double scroll on the
+// sort page: with row 1 content-sized, the scroller's `max-height: min(100%,
+// …)` had no definite height to resolve `100%` against, fell back to the
+// screen-relative backstop, and took 90% of the screen with the title stacked
+// above it. Page taller than window, so the page scrolled AND the list
+// scrolled inside it (Kent, 2026-09-16).
+function _trackSize(spec) {
+    const weight = Number(spec && spec.weight) || 0;
+    const minsize = Number(spec && spec.minsize) || 0;
+    // ZERO, NOT `auto`, IS THE RIGHT FLOOR FOR A WEIGHTED TRACK — and I
+    // wrote `auto` here first, with a comment claiming it was "identical in
+    // effect… but it states the floor". It is the opposite of identical: an
+    // `auto` minimum means the track can NEVER shrink below its content, so
+    // the `fr` has nothing to give away and the row grows exactly as if it
+    // were unweighted. Kent's height chain, 2026-09-16, with the fix in
+    // place: the scroller's row was `2196px` while the scroller itself
+    // rendered at 1080 — a 1116px hole under it, and the page scrolling
+    // anyway. (That hole is also his earlier "No idea what that space below
+    // is doing"; `max-height` clips the ITEM and does not shrink the TRACK.)
+    //   It is also the faithful reading of tkinter, whose grid SHRINKS rows
+    // when the master is too small rather than overflowing. `minsize` is
+    // the only floor a caller actually asked for.
+    const floor = minsize > 0 ? minsize + 'px' : '0';
+    if (weight > 0) return 'minmax(' + floor + ', ' + weight + 'fr)';
+    return minsize > 0 ? 'minmax(' + minsize + 'px, auto)' : 'auto';
+}
+
+function setGridTracks(wid, rows, cols) {
+    // A WINDOW IS NOT A DOM WIDGET, and windows are where the app's outer
+    // weights are set (`Window.post_tk_init` weights rows 0 and 2 to centre
+    // the content frame). In a window the window IS the page, so an
+    // unresolved wid means the page root — the same fallback createWidget
+    // makes, for the same reason.
+    const el = _widgets.get(wid) || document.getElementById('root');
+    if (!el) return;
+    const build = (map) => {
+        const keys = Object.keys(map || {});
+        if (!keys.length) return null;
+        let n = 0;
+        for (const k of keys) n = Math.max(n, Number(k) + 1);
+        const out = [];
+        // EVERY TRACK UP TO THE LAST ONE NAMED. `grid-template-rows` is
+        // positional, so a page that weights only row 1 still has to say
+        // something about row 0 — 'auto', which is what it had. Tracks PAST
+        // the last named one are left out deliberately: they stay implicit
+        // and `grid-auto-rows` sizes them, so weighting row 1 does not
+        // require knowing how many rows the page will end up with.
+        for (let i = 0; i < n; i++) out.push(_trackSize(map[String(i)]));
+        return out.join(' ');
+    };
+    const r = build(rows), c = build(cols);
+    if (r) el.style.gridTemplateRows = r;
+    if (c) el.style.gridTemplateColumns = c;
 }
 
 // ── API exposed to Python via pywebview.api ───────────────────────────
 
 function createWidget(spec) {
     // spec: {wid, type, parent_wid, props, grid}
+    //
+    // A WINDOW IS NOT A DOM WIDGET. Toplevel/Root create a pywebview window,
+    // never a DOM element, so they are absent from _widgets — and every
+    // widget parented directly to a task window therefore resolved
+    // parent_wid to `undefined`, hit `if (parentEl)` and was SILENTLY NEVER
+    // APPENDED. Its children inherited the same fate, so an entire page
+    // vanished with no error, an empty console and a blank window. (The
+    // debug badge stayed visible because it appends to <body> itself, which
+    // is what made the pages look like a visibility problem rather than a
+    // parenting one.)
+    //
+    // In a window the window IS the page, so an unresolved parent means the
+    // page root. Warn rather than fail quietly: a parent that is missing for
+    // any OTHER reason is a real bug and must not look like this again.
     let el;
-    const parentEl = spec.parent_wid != null ? _widgets.get(spec.parent_wid) : document.getElementById('root');
+    let parentEl = spec.parent_wid != null
+        ? _widgets.get(spec.parent_wid) : document.getElementById('root');
+    if (!parentEl) {
+        parentEl = document.getElementById('root');
+        // Only a WIDGET parent that cannot be found is a fault. Parented to a
+        // window is normal and must stay quiet, or the console fills with
+        // warnings about the expected case and real ones get lost in them.
+        if (!spec.parent_is_window) {
+            console.warn('azt: widget', spec.wid, '(' + spec.type + ') has no'
+                         + ' DOM parent for wid', spec.parent_wid,
+                         '- attaching to #root');
+            // AND TELL PYTHON, because the console is not where anyone
+            // looks. An orphan lands in the page's own grid, so a widget
+            // built with `column=1, sticky='ew'` for a narrow row frame
+            // spans the WHOLE PAGE instead — which is what a group's
+            // selection button did on the macrosort page: "cappɪr 'copper'
+            // 'cuivre'" across the top, above the page icon, with the row
+            // it belonged to left empty (Kent, 2026-09-15). Nothing in the
+            // log said a parent had been missed, so it read as a layout
+            // fault for three rounds.
+            if (window.pywebview && window.pywebview.api) {
+                window.pywebview.api.on_event(spec.wid, 'orphaned', {
+                    type: spec.type,
+                    parent_wid: spec.parent_wid,
+                    text: String(spec.props && spec.props.text || '').slice(0, 40),
+                });
+            }
+        }
+    }
 
     switch (spec.type) {
         case 'frame':
             el = document.createElement('div');
             el.className = 'wv-widget wv-frame';
+            if (spec.props.borderwidth || spec.props.relief)
+                _setBorder(el, spec.props.borderwidth, spec.props.relief);
             break;
+        case 'popup': {
+            // A PANEL AT THE POINTER (ui_webview.Popup): a frame that is
+            // positioned by the page rather than gridded by its parent, and
+            // dismissed like a menu — a mousedown or right-click anywhere
+            // outside it, or Escape. `fixed`, because the coordinates are the
+            // viewport's (clientX/Y) and the page may be scrolled. Python is
+            // told ('dismiss') so the object stops claiming to exist.
+            el = document.createElement('div');
+            el.className = 'wv-widget wv-frame wv-popup';
+            el.style.left = (spec.props.popup_x || 0) + 'px';
+            el.style.top = (spec.props.popup_y || 0) + 'px';
+            const wid = spec.wid;
+            function _gone() {
+                el.remove();
+                if (_widgets.get(wid) === el) _widgets.delete(wid);
+                document.removeEventListener('mousedown', _outside, true);
+                document.removeEventListener('contextmenu', _outside, true);
+                document.removeEventListener('keydown', _escape, true);
+                if (window.pywebview && window.pywebview.api)
+                    window.pywebview.api.on_event(wid, 'dismiss', {});
+            }
+            function _outside(e) {
+                if (el.contains(e.target)) return;
+                _gone();
+            }
+            function _escape(e) {
+                if (e.key === 'Escape') _gone();
+            }
+            // AFTER this event, not during it: the right-click that opened
+            // the popup is still being dispatched, and a `contextmenu`
+            // listener registered now would see it and close what it just
+            // opened.
+            setTimeout(() => {
+                if (!el.isConnected) return;
+                document.addEventListener('mousedown', _outside, true);
+                document.addEventListener('contextmenu', _outside, true);
+                document.addEventListener('keydown', _escape, true);
+            }, 0);
+            break;
+        }
         case 'label':
             el = document.createElement('div');
             el.className = 'wv-widget wv-label';
             if (spec.props.text) el.textContent = spec.props.text;
             if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound,
+                                            spec.props.image_pixels,
+                                            spec.props.image_scaleto);
+            // AFTER the image: _setImage adds the .wv-compound classes that
+            // decide flex-direction, and _setAnchor reads that direction.
+            if (spec.props.anchor) _setAnchor(el, spec.props.anchor);
+            if (spec.props.borderwidth || spec.props.relief)
+                _setBorder(el, spec.props.borderwidth, spec.props.relief);
             break;
         case 'button':
             el = document.createElement('button');
             el.className = 'wv-widget wv-button';
             if (spec.props.text) el.textContent = spec.props.text;
             if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            if (spec.props.image) _setImage(el, spec.props.image, spec.props.compound,
+                                            spec.props.image_pixels,
+                                            spec.props.image_scaleto);
+            if (spec.props.anchor) _setAnchor(el, spec.props.anchor);
             if (spec.props.disabled) el.disabled = true;
+            if (spec.props.state) _setState(el, spec.props.state);
             el.addEventListener('click', () => {
                 if (window.pywebview && window.pywebview.api) {
                     window.pywebview.api.on_event(spec.wid, 'command', {});
@@ -86,12 +351,24 @@ function createWidget(spec) {
             el = document.createElement('input');
             el.className = 'wv-widget wv-entry';
             el.type = 'text';
+            // An <input> does NOT inherit font from its ancestors — browsers
+            // give form controls their own default — so a font class on a
+            // parent never reached it, and `font='readbig'` was being dropped
+            // in ui_webview besides. Both halves, or an entry field stays at
+            // the browser default while every label around it is right.
+            if (spec.props.font) el.classList.add('font-' + spec.props.font);
             if (spec.props.width) el.style.width = spec.props.width + 'ch';
             el.addEventListener('input', () => {
                 if (window.pywebview && window.pywebview.api) {
                     window.pywebview.api.on_event(spec.wid, 'input', {value: el.value});
                 }
             });
+            // Read by updateProp('insert_at_caret'): a field the user has
+            // never been in has no caret worth honouring — engines report
+            // 0 or the end for a fresh input, and 0 would PREPEND — so the
+            // first insertion into an untouched field goes to the end, as
+            // it always did.
+            el.addEventListener('focus', () => { el.dataset.wvTouched = '1'; });
             break;
         case 'progressbar':
             el = document.createElement('div');
@@ -99,6 +376,11 @@ function createWidget(spec) {
             const fill = document.createElement('div');
             fill.className = 'wv-progressbar-fill';
             el.appendChild(fill);
+            // A VERTICAL BAR IS A DIFFERENT SHAPE, not a rotated one: it is
+            // tall and narrow and fills from the BOTTOM, which is what
+            // tkinter draws and what a reader expects of a column.
+            if (String(spec.props.orient || '') === 'vertical')
+                el.classList.add('wv-progressbar-vertical');
             break;
         case 'checkbutton': {
             el = document.createElement('label');
@@ -106,6 +388,13 @@ function createWidget(spec) {
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.checked = !!spec.props.checked;
+            // SIZE. tkinter draws this control from a theme image pair, so a
+            // page asking for a bigger or smaller checkbox says so with
+            // `image_pixels`/`large_images` — see ui_webview.CheckButton.
+            // The browser draws the box, but not at a size anyone chose, so
+            // every webview checkbox came out at the engine default.
+            _setBoxSize(cb, spec.props.box_pixels, spec.props.box_scaleto,
+                        spec.props.box_large);
             el.appendChild(cb);
             const cblbl = document.createElement('span');
             cblbl.textContent = spec.props.text || '';
@@ -141,22 +430,135 @@ function createWidget(spec) {
             el = document.createElement('div');
             el.className = 'wv-widget wv-listbox';
             el.tabIndex = 0;
-            if (spec.props.height) el.style.maxHeight = (spec.props.height * 1.5) + 'em';
+            if (spec.props.height) _listboxRows(el, spec.props.height);
             if (spec.props.width) el.style.width = spec.props.width + 'ch';
             if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            // Read by the click handler in updateProp('items'), which is
+            // where rows are built — so it has to be on the element rather
+            // than in a closure over this spec. The MODE ITSELF, not just
+            // the boolean: extended and multiple are both "more than one"
+            // and behave differently under the pointer.
+            if (spec.props.multiple) el.dataset.multiple = 'true';
+            if (spec.props.selectmode)
+                el.dataset.selectmode = String(spec.props.selectmode);
             // Items added via updateProp('items', [...])
             break;
         }
         case 'combobox': {
-            el = document.createElement('select');
-            el.className = 'wv-widget wv-combobox';
-            if (spec.props.width) el.style.width = spec.props.width + 'ch';
-            if (spec.props.font) el.classList.add('font-' + spec.props.font);
-            el.addEventListener('change', () => {
-                if (window.pywebview && window.pywebview.api) {
-                    window.pywebview.api.on_event(spec.wid, 'select', {value: el.value});
+            // TYPEABLE ONLY IF ASKED. ttk.Combobox has a `state`: 'readonly'
+            // restricts the user to the list, and 'normal' (ttk's default)
+            // leaves the entry half EDITABLE, so a value that is not in the
+            // list can be typed in (Kent, 2026-09-14: "I recall an option
+            // that allows you to search/filter, and/or input something not
+            // on the list?"). A <select> cannot do that at all.
+            //   The <select> stays the default even though ttk's default is
+            // 'normal', because it is the better control for the app's one
+            // call site (the field-type picker, tasks.py:1119, where a typed
+            // value has nothing to map to) and because <datalist> support in
+            // WebKitGTK cannot be relied on for the dropdown half. Asking for
+            // state='normal' explicitly gets the editable form; the
+            // divergence from ttk's default is deliberate and recorded here.
+            // OUR OWN DROPDOWN, NOT <datalist> AND NOT <select>.
+            //
+            // A datalist FILTERS ITS SUGGESTIONS BY WHAT IS ALREADY IN THE
+            // FIELD, so a combobox holding "choice 1" offered exactly one
+            // suggestion where ttk's editable combobox always shows the
+            // whole list (Kent, 2026-09-14: "that reduced combo to just one
+            // choice"). No prop fixes that; it is what the native control
+            // does.
+            //
+            // A <select> has a subtler fault, and it cost the readonly form
+            // its whole purpose: IT ONLY REPORTS A CHANGE. Picking the
+            // option that is already selected fires nothing at all — no
+            // `change`, no `input`, nothing we can listen for — so a field
+            // that closes when you pick a value could not be closed by
+            // picking the value it already had. Kent, 2026-09-15, on the
+            // sound settings: "clicking on any OTHER validates. clicking on
+            // the first in the list doesn't." That is not a wiring slip to
+            // work around; a native select has no event meaning "the user
+            // chose this", only one meaning "this is now different".
+            //   Our rows post on every click (see updateProp 'items'), which
+            // is what a chooser that commits on selection needs. So both
+            // states use it, and `readOnly` is what makes the difference:
+            // 'readonly' can be picked from but not typed into, 'normal'
+            // (ttk's default) accepts a value that is not on the list at
+            // all.
+            {
+                const typeable = String(spec.props.state || '') === 'normal';
+                el = document.createElement('span');
+                el.className = 'wv-widget wv-combobox-wrap';
+                const inp = document.createElement('input');
+                inp.type = 'text';
+                inp.className = 'wv-combobox';
+                inp.autocomplete = 'off';
+                // A readonly combobox is still focusable and clickable — it
+                // just cannot be typed into, which is exactly ttk's
+                // 'readonly'.
+                if (!typeable) inp.readOnly = true;
+                const list = document.createElement('div');
+                list.className = 'wv-combobox-list wv-hidden';
+                if (spec.props.width) inp.style.width = spec.props.width + 'ch';
+                if (spec.props.font) inp.classList.add('font-' + spec.props.font);
+                el.appendChild(inp);
+                el.appendChild(list);
+                const post = () => {
+                    if (window.pywebview && window.pywebview.api) {
+                        window.pywebview.api.on_event(spec.wid, 'select',
+                                                      {value: inp.value});
+                    }
+                };
+                // The same value, reported as TEXT rather than as a choice —
+                // see the `input` listener below.
+                const typed = () => {
+                    if (window.pywebview && window.pywebview.api) {
+                        window.pywebview.api.on_event(spec.wid, 'typed',
+                                                      {value: inp.value});
+                    }
+                };
+                // `q` empty means SHOW EVERYTHING — opening the list is not
+                // a search, it is "what are my choices?". A readonly field
+                // never filters: there is nothing to type, so the list is
+                // always the whole list.
+                const show = (q) => {
+                    const want = typeable ? String(q || '').toLowerCase() : '';
+                    let any = false;
+                    [...list.children].forEach(o => {
+                        const hit = !want ||
+                            o.textContent.toLowerCase().includes(want);
+                        o.style.display = hit ? '' : 'none';
+                        any = any || hit;
+                    });
+                    list.classList.toggle('wv-hidden', !any);
+                };
+                el._wvShow = show;
+                inp.addEventListener('focus', () => show(''));
+                inp.addEventListener('click', () => show(''));
+                if (typeable) {
+                    // TYPING IS NOT CHOOSING. Both used to report as
+                    // 'select', so a field that closes when you pick a value
+                    // closed on the first KEYSTROKE — you could not type a
+                    // second character (Kent, 2026-09-16: "When typing in an
+                    // entry dropdown, a keypress validates and finishes").
+                    //   Typing still has to report, or a bound variable
+                    //   cannot track the text the way tkinter's textvariable
+                    //   does, and the list cannot narrow — which IS a
+                    //   search. So it reports under its own name, and only
+                    //   'select' means "this is my answer".
+                    inp.addEventListener('input',
+                                         () => { show(inp.value); typed(); });
+                    // `change` on a text input fires when the field is
+                    // COMMITTED — Enter, or focus leaving — which is a
+                    // choice, so that one keeps reporting as one.
+                    inp.addEventListener('change', post);
                 }
-            });
+                inp.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' || e.key === 'Enter')
+                        list.classList.add('wv-hidden');
+                });
+                // Delayed, or the click that chose a row never lands.
+                inp.addEventListener('blur', () => setTimeout(
+                    () => list.classList.add('wv-hidden'), 150));
+            }
             break;
         }
         case 'menu': {
@@ -164,13 +566,78 @@ function createWidget(spec) {
             el.className = 'wv-widget wv-menu wv-hidden';
             break;
         }
+        case 'notebook': {
+            // Tab strip above, one panel showing at a time below. Explicit
+            // display so the generic "make the parent a grid" below leaves it
+            // alone - a notebook is not a grid container, its PANELS are.
+            el = document.createElement('div');
+            el.className = 'wv-widget wv-notebook';
+            el.style.display = 'flex';
+            el.style.flexDirection = 'column';
+            const strip = document.createElement('div');
+            strip.className = 'wv-tabstrip';
+            const panels = document.createElement('div');
+            panels.className = 'wv-tabpanels';
+            el.appendChild(strip);
+            el.appendChild(panels);
+            break;
+        }
         default:
             el = document.createElement('div');
             el.className = 'wv-widget';
     }
 
+    // EXTRA CLASSES FROM PYTHON. A subclass that wants its own styling has
+    // no way to say so otherwise: every Frame subclass is created with
+    // widget_type='frame' and gets `wv-frame`, so `.wv-scrolling-frame` in
+    // grid.css had never matched anything at all — ScrollingFrame was a
+    // plain frame wearing no class of its own, which is why capping its
+    // height in the stylesheet did nothing (Kent, 2026-09-14).
+    if (spec.props && spec.props.cssclass) {
+        String(spec.props.cssclass).split(/\s+/).forEach(c => {
+            if (c) el.classList.add(c);
+        });
+    }
+
     el.dataset.wid = spec.wid;
     _widgets.set(spec.wid, el);
+
+    // AFTER REGISTRATION, because these route through updateProp and it
+    // looks the widget up in `_widgets`. A `wraplength` given at
+    // construction was going nowhere: updateProp has handled the option for
+    // a while, but only `wrap()` ever called it, so the constructor kwarg
+    // was inert and a label asked to wrap at 200px ran to full width and
+    // blew its grid column out (Kent's gallery, 2026-09-14).
+    if (spec.props && spec.props.wraplength)
+        updateProp(spec.wid, 'wraplength', spec.props.wraplength);
+
+    // `width` FOR EVERY WIDGET TYPE, not just the three that happened to
+    // handle it. `entry`, `combobox` and `progressbar` read it in their own
+    // cases above; `label`, `frame` and the rest never did, so
+    // `ui.Label(..., width=25)` was accepted and dropped — the same silent
+    // failure as `compound`, `anchor`, `image_pixels` and the grid padding
+    // before it.
+    //   It cost two attempts at a real problem: a settings row reserves the
+    // width its editor will need, so that opening the editor does not resize
+    // the column and shift a centred page sideways. The reservation was a
+    // label width, so it never happened, and the page went on moving (Kent,
+    // 2026-09-15: "clicking still moves stuff; try again" — then, asked
+    // which way, "still moves left/right", which is what said the column was
+    // still resizing rather than the row).
+    //   Characters, as `updateProp('width')` and tkinter both mean it. Set
+    // only when asked, so nothing that never mentioned width acquires one.
+    if (spec.props && spec.props.width !== undefined
+            && spec.props.width !== null && spec.props.width !== ''
+            && !el.style.width)
+        updateProp(spec.wid, 'width', spec.props.width);
+
+    // The highlight ring, for EVERY widget type rather than per case: the
+    // drag layer puts one on whatever is being dragged over, which can be a
+    // label as easily as a frame.
+    if (spec.props && (spec.props.highlightthickness !== undefined
+                       || spec.props.highlightbackground))
+        _setHighlight(el, spec.props.highlightthickness,
+                      spec.props.highlightbackground);
 
     if (spec.grid) {
         _applyGrid(el, spec.grid);
@@ -187,39 +654,718 @@ function createWidget(spec) {
     return spec.wid;
 }
 
+// ── checkbox / radio size ────────────────────────────────────────────
+// A native <input> ignores width/height in some engines unless the default
+// appearance is turned off, so set both dimensions AND clear the appearance
+// when a size is asked for. `accent-color` keeps it looking like a control
+// rather than a bare square once appearance is gone.
+//
+// `large_images` is not a pixel figure in tkinter — it selects the full-size
+// theme image over the `_sm` one — so it maps to a step up from the default
+// rather than to a number.
+const _BOX_LARGE_PX = 24;
+
+function _setBoxSize(input, px, scaleto, large) {
+    const n = px ? parseInt(px, 10) : (large ? _BOX_LARGE_PX : 0);
+    if (!(n > 0)) return;
+    // scaleto 'height' is what the app passes (tasks.py:1173) and a checkbox
+    // is square, so one figure drives both unless a width is named.
+    if (scaleto === 'width') {
+        input.style.width = n + 'px';
+    } else if (scaleto === 'height') {
+        input.style.height = n + 'px';
+        input.style.width = n + 'px';
+    } else {
+        input.style.width = n + 'px';
+        input.style.height = n + 'px';
+    }
+    // THE CLASS CARRIES THE APPEARANCE, not inline styles. Sizing a native
+    // checkbox needs `appearance:none` (WebKit ignores width/height
+    // otherwise), and that removes the engine's check mark — so a checked
+    // box would show NOTHING, which is worse than the wrong size. Drawing
+    // the mark needs `:checked`, which cannot be written inline. See
+    // `.wv-sized-box` in grid.css.
+    input.classList.add('wv-sized-box');
+}
+
+// ── borderwidth / relief ─────────────────────────────────────────────
+// tkinter's reliefs have EXACT CSS counterparts, which is rare among the
+// options in this file: raised→outset, sunken→inset, and groove/ridge are
+// CSS values by those very names. So this is a translation, not a
+// lookalike. 'flat' means no border however wide it was asked to be, which
+// is tkinter's behaviour too.
+//
+// Border COLOUR is `currentColor` — the text colour — deliberately: it
+// follows the theme without a second variable to keep in step, and it
+// cannot become a colour-only signal, since a border is a shape.
+const _RELIEF = {
+    flat: 'none', solid: 'solid', raised: 'outset', sunken: 'inset',
+    groove: 'groove', ridge: 'ridge',
+};
+
+// ── the highlight ring ───────────────────────────────────────────────
+// Tk's `highlightthickness`/`highlightbackground` are nominally the FOCUS
+// ring, and ui_webview dropped them with a comment saying nothing in the app
+// styles it. Two pages do, and not for focus: `tasks.py:2064` and
+// `transcribe_glyph.py:422` both ask for a 10px ring in the theme's white to
+// set the comparison frame apart from the page, and `sort_ui.py:1193` turns
+// one off deliberately. So a real separator was being dropped on two of the
+// busiest pages (Kent, 2026-09-14: "we do actually use those").
+//
+// Drawn as an OUTLINE, for two reasons: the widget's own border is already
+// spoken for by `borderwidth`/`relief`, and Tk's ring sits outside that
+// border too. The difference to know is that Tk RESERVES the ring's space
+// and an outline does not — a thick ring overlaps its neighbours here rather
+// than pushing them apart.
+//
+// Both halves are kept on the element, because they arrive separately: the
+// drag layer sets the colour and the thickness in two calls
+// (`ui_tkinter.dnd_focus_on`), and a colour with no thickness, or a
+// thickness with no colour, has to keep whatever the other one last said.
+function _setHighlight(el, width, color) {
+    if (width !== undefined && width !== null) el.dataset.hlWidth = width;
+    if (color) el.dataset.hlColor = color;
+    const n = parseInt(el.dataset.hlWidth, 10);
+    if (!(n > 0)) {
+        el.style.outline = '';
+        return;
+    }
+    el.style.outline = n + 'px solid ' + (el.dataset.hlColor || 'currentColor');
+    el.style.outlineOffset = '0px';
+}
+
+function _setBorder(el, width, relief) {
+    const style = _RELIEF[String(relief || '').toLowerCase()]
+                  || (width ? 'solid' : null);
+    if (!style) return;
+    const n = parseInt(width, 10);
+    el.style.borderStyle = style;
+    el.style.borderWidth = ((n > 0 ? n : 1)) + 'px';
+    el.style.borderColor = 'currentColor';
+    el.style.boxSizing = 'border-box';
+}
+
+// ── anchor ───────────────────────────────────────────────────────────
+// tkinter's `anchor` says where the CONTENT sits when the widget is bigger
+// than it: n/ne/e/se/s/sw/w/nw, or c/center. 91 call sites pass it and
+// ui_webview dropped every one, so nothing honoured it.
+//
+// THE AXIS SWAP IS THE WHOLE DIFFICULTY. `.wv-label` is already
+// `display:flex`, so horizontal is `justify-content` and vertical is
+// `align-items` — but `.wv-compound-top` / `-bottom` set
+// `flex-direction: column` for an image above or below its text, and that
+// EXCHANGES the two. Setting them by name without checking direction would
+// rotate the anchor on exactly the widgets that carry pictures.
+//
+// A non-flex element (a plain `.wv-button`) has neither property, so it gets
+// `text-align` for the horizontal part; there is nothing sensible to do
+// about the vertical one and nothing that asked for it.
+const _ANCHOR = {
+    n:  ['center', 'start'],  ne: ['end',    'start'],  e: ['end',    'center'],
+    se: ['end',    'end'],    s:  ['center', 'end'],    sw:['start',  'end'],
+    w:  ['start',  'center'], nw: ['start',  'start'],
+    c:  ['center', 'center'], center: ['center', 'center'],
+};
+const _FLEX = {start: 'flex-start', center: 'center', end: 'flex-end'};
+
+function _setAnchor(el, anchor) {
+    const key = String(anchor || '').toLowerCase();
+    const pair = _ANCHOR[key];
+    if (!pair) return;                  // unknown: leave the default alone
+    const [h, v] = pair;
+    // NOT getComputedStyle. The first version branched on the computed
+    // `display`, and this runs from createWidget BEFORE the element is in
+    // the document — so the computed value is the UA default (`block`),
+    // never the stylesheet's `flex`, and every single anchor took the
+    // text-align branch. All nine specimens in frontend/gallery.py came out
+    // identical (2026-09-14).
+    //
+    // classList is knowable without the document, and BOTH mechanisms are
+    // set unconditionally: flex properties are inert on a non-flex element
+    // (a plain .wv-button) and text-align is inert on a flex container, so
+    // whichever applies, applies.
+    const column = el.classList.contains('wv-compound-top')
+                || el.classList.contains('wv-compound-bottom');
+    el.style.justifyContent = _FLEX[column ? v : h];
+    el.style.alignItems     = _FLEX[column ? h : v];
+    el.style.textAlign = h === 'start' ? 'left'
+                       : h === 'end'   ? 'right' : 'center';
+    el.dataset.anchor = key;    // so _reportAnchor can find one to measure
+}
+
+// ONE MEASUREMENT, ONCE, AFTER LAYOUT. Whether an anchored label can honour
+// its anchor depends on whether `sticky` actually stretched it, and that
+// cannot be read before the element is in the document — which is the same
+// mistake as above, so it is not repeated by guessing. Called from a
+// deferred hook; reports to the Python log through the console bridge.
+function reportAnchor() {
+    // ALL OF THEM, AND WHERE THE TEXT ACTUALLY SITS. Measuring one label's
+    // box answered "was it stretched?" and nothing else, so it took a second
+    // run to learn that the box had room and the letters still would not
+    // move. What settles it is the TEXT's offset inside its own box: if
+    // `at(dx,dy)` is the same in all nine, the anchor is not being applied;
+    // if it varies with the anchor, it is, and the doubt was the eye's. The
+    // `slack` pair says whether there was any room to move in — a slack of 0
+    // makes every anchor look identical however correct the code is, which
+    // is the trap the first two versions of this row fell into.
+    const els = [...document.querySelectorAll('[data-anchor]')];
+    if (!els.length) return 'no anchored widget on this page';
+    return els.map(el => {
+        const cs = getComputedStyle(el);
+        const r = el.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const tr = range.getBoundingClientRect();
+        return (el.dataset.anchor
+                + ' box=' + Math.round(r.width) + 'x' + Math.round(r.height)
+                + ' text=' + Math.round(tr.width) + 'x' + Math.round(tr.height)
+                + ' at(' + Math.round(tr.left - r.left) + ','
+                         + Math.round(tr.top - r.top) + ')'
+                + ' slack(' + Math.round(r.width - tr.width) + ','
+                            + Math.round(r.height - tr.height) + ')'
+                + ' ' + cs.display + '/' + cs.justifyContent
+                + '/' + cs.alignItems);
+    }).join('\n    ');
+}
+
+// ── state: 'disabled' / 'normal' ─────────────────────────────────────
+// tkinter's `state` reaches here three ways — a constructor kwarg, item
+// assignment (`b['state']='disabled'`), and `.config(state=…)` — and the
+// last two already worked, because `configure()` forwards any scalar as an
+// updateProp. Two gaps remained (Kent, 2026-09-14):
+//
+//   * the CONSTRUCTOR path, which ui_webview popped and dropped, so a
+//     button asked for disabled at creation started enabled
+//     (`ui_shell.py:3227`);
+//   * every widget that is not a <button>. `list_of_possibles.config(
+//     state='disabled')` (ui_shell.py:3356) and `check_label['state']`
+//     (sort_buttons.py:1154) did nothing at all.
+//
+// A native control gets `.disabled`, which stops events AND greys it. A div
+// has neither, so it gets `pointer-events:none` (a Label's state is about
+// look, but a clickable one must also stop responding) plus the class, so
+// the stylesheet can say what disabled looks like.
+function _setState(el, value) {
+    const off = (value === 'disabled');
+    if ('disabled' in el) {
+        el.disabled = off;
+    } else {
+        el.style.pointerEvents = off ? 'none' : '';
+    }
+    el.classList.toggle('wv-disabled', off);
+    // A fallback appearance, so a disabled control is visibly disabled even
+    // with no stylesheet rule for the class. Cleared rather than set to a
+    // value, so it does not fight a rule that does exist.
+    el.style.opacity = off ? '0.5' : '';
+}
+
+// ── Images on labels and buttons ─────────────────────────────────────
+// Both used to DISCARD `image` (ui_webview popped it and never sent it), so
+// the chooser rendered as text-only buttons where the app shows icons.
+// `compound` mirrors tkinter's: where the image sits relative to the text.
+// `px`/`scaleto` are tkinter's image_pixels/image_scaleto. Without them the
+// <img> had no size constraint at all, so an illustration rendered at its
+// own resolution: the alphabet chart's cells burst the grid (Kent,
+// 2026-09-14). Python was popping both kwargs and never sending them, so
+// this is the other half of that fix.
+//   'width'/'height' pin that dimension and let the other follow the aspect
+// ratio, as scaling to one edge does in tkinter. With no scaleto, the image
+// is FITTED INSIDE a px-by-px box (max-width and max-height), which
+// preserves the aspect ratio and never enlarges a small picture — the
+// behaviour a chart cell wants.
+function _setImage(el, src, compound, px, scaleto) {
+    // REMEMBER WHAT WE WERE TOLD, so a later image on the same widget can be
+    // built the same way. `image_pixels`/`image_scaleto` arrive once, at
+    // construction, and `_reImage` has no other source for them — without
+    // this, swapping a picture threw away its size box and the new one
+    // rendered at its own resolution.
+    if (px !== undefined && px !== null && px !== '')
+        el.dataset.wvImagePixels = px;
+    if (scaleto) el.dataset.wvImageScaleto = scaleto;
+    if (compound) el.dataset.wvCompound = compound;
+    const img = document.createElement('img');
+    img.className = 'wv-img';
+    img.src = src;
+    img.alt = '';
+    if (px) {
+        const n = parseInt(px, 10);
+        if (n > 0) {
+            if (scaleto === 'width') {
+                img.style.width = n + 'px';
+                img.style.height = 'auto';
+            } else if (scaleto === 'height') {
+                img.style.height = n + 'px';
+                img.style.width = 'auto';
+            } else {
+                img.style.maxWidth = n + 'px';
+                img.style.maxHeight = n + 'px';
+            }
+        }
+    }
+    const text = el.textContent;
+    el.textContent = '';
+    if (text) {
+        // COMPOUND MEANS "image AND text"; with no text there is nothing to
+        // arrange, and the arrangement was costing the picture. The sort
+        // page's cycle control is `image=…, text='', compound='top'`
+        // (sort_buttons.py:1125) and drew as two thin lines — the button's
+        // 5px border with nothing between them — while the button beside it,
+        // same image but with a count for text, drew fine (Kent,
+        // 2026-09-15: "right refresh is still missing image"). An
+        // image-only widget is just an image.
+        el.classList.add('wv-compound', 'wv-compound-' + (compound || 'top'));
+        const span = document.createElement('span');
+        span.className = 'wv-img-text';
+        span.textContent = text;
+        // 'left'/'top' describe where the IMAGE goes, as in tkinter.
+        if (compound === 'right' || compound === 'bottom') {
+            el.appendChild(span);
+            el.appendChild(img);
+        } else {
+            el.appendChild(img);
+            el.appendChild(span);
+        }
+    } else {
+        el.classList.add('wv-image-only');
+        el.appendChild(img);
+    }
+}
+
+// WHICH ARRANGEMENT IS THIS WIDGET ALREADY USING — read back off the class
+// `_setImage` wrote. Only a FALLBACK: it returns the default that was applied
+// when nobody had said yet, so it must never beat a value the caller passes.
+function _compoundOf(el) {
+    let comp = null;
+    el.classList.forEach(c => {
+        if (c.indexOf('wv-compound-') === 0 && c !== 'wv-compound-')
+            comp = c.slice('wv-compound-'.length);
+    });
+    return comp;
+}
+
+// REPLACE the image on a widget that may already have one, keeping its text.
+// `_setImage` builds from scratch and reads the text out of the element, so
+// the element has to be handed to it in the state it expects: no stale <img>,
+// no arrangement classes from the previous pass. `el.textContent` still
+// carries the words after the <img> is dropped — it reads through the
+// `.wv-img-text` span a previous pass created — so the text survives.
+function _reImage(el, src, compound) {
+    const existing = el.querySelector('img.wv-img, img');
+    if (existing) existing.remove();
+    el.classList.remove('wv-compound', 'wv-image-only');
+    ['top', 'bottom', 'left', 'right', 'center'].forEach(
+        c => el.classList.remove('wv-compound-' + c));
+    _setImage(el, src, compound,
+              el.dataset.wvImagePixels, el.dataset.wvImageScaleto);
+}
+
+// ── Notebook ─────────────────────────────────────────────────────────
+// add/select/bind were three bare `pass` stubs, which is what made the
+// chooser unreachable: its three tab frames were created, never attached,
+// and never shown.
+function _notebookParts(wid) {
+    const el = _widgets.get(wid);
+    if (!el) return null;
+    return {el: el,
+            strip: el.querySelector(':scope > .wv-tabstrip'),
+            panels: el.querySelector(':scope > .wv-tabpanels')};
+}
+
+function notebookAdd(wid, childWid, text) {
+    const p = _notebookParts(wid);
+    const child = _widgets.get(childWid);
+    if (!p || !child) return;
+    // createWidget already appended the child to the notebook itself; a tab
+    // panel belongs in the panels box, so move it.
+    p.panels.appendChild(child);
+    child.classList.add('wv-tabpanel');
+
+    const tab = document.createElement('div');
+    tab.className = 'wv-tab';
+    tab.textContent = text || '';
+    tab.dataset.panelWid = childWid;
+    tab.addEventListener('click', () => notebookSelect(wid, childWid, true));
+    p.strip.appendChild(tab);
+
+    // FIRST TAB SELECTED, EVERY LATER ONE HIDDEN. Only the first add used to
+    // call notebookSelect, so panels 2..n were appended VISIBLE and nothing
+    // ever hid them: a notebook's pages all stacked on top of each other
+    // (Kent's gallery, 2026-09-14, seven tabs' content on one page).
+    //
+    // The chooser escaped it by accident — it adds its three tabs and then
+    // calls `_select_chooser_tab(...)`, and that select hides the rest. So
+    // the bug was invisible for as long as the only caller happened to
+    // select afterwards, which is not something a Notebook may require.
+    if (p.strip.children.length === 1) {
+        notebookSelect(wid, childWid, false);
+    } else {
+        child.classList.add('wv-hidden');
+    }
+}
+
+function notebookSelect(wid, childWid, notify) {
+    const p = _notebookParts(wid);
+    if (!p) return;
+    let index = -1, i = 0;
+    for (const tab of p.strip.children) {
+        const on = String(tab.dataset.panelWid) === String(childWid);
+        tab.classList.toggle('wv-tab-selected', on);
+        const panel = _widgets.get(Number(tab.dataset.panelWid));
+        if (panel) panel.classList.toggle('wv-hidden', !on);
+        if (on) index = i;
+        i += 1;
+    }
+    if (notify && window.pywebview && window.pywebview.api) {
+        window.pywebview.api.on_event(wid, 'tabchanged',
+                                      {index: index, panel_wid: childWid});
+    }
+}
+
+// ── focus_set ────────────────────────────────────────────────────────
+// Put the keyboard in a widget. tkinter's widgets all answer focus_set(),
+// and EntryField.focus_set() calls this — Transcriber.addchar uses it after
+// clearing the field so the user can carry on typing. Missing until
+// 2026-09-09, when EntryField.delete/insert were added for the same caller.
+// `select` as well as `focus`: an entry that has just been cleared and
+// refilled reads better with its contents selected, which is what tkinter's
+// focus into a re-set entry effectively gives you.
+function focusWidget(wid) {
+    const el = _widgets.get(wid);
+    if (!el) return;
+    try {
+        // A WRAPPER IS NOT FOCUSABLE, and one widget here is a wrapper: the
+        // editable combobox is a <span> holding an <input> and our own
+        // dropdown. `el.focus()` on the span did nothing whatever — no
+        // focus, so no `focus` event, so the list never opened — and since
+        // the caller had just emptied the field, the result looked like the
+        // CHOICES had been cleared rather than the search text (Kent,
+        // 2026-09-14: "clearing on open clears the options, too").
+        const target = (el.matches('input,select,textarea,button')
+                        ? el
+                        : el.querySelector('input,select,textarea')) || el;
+        target.focus();
+        if (typeof target.select === 'function' && target.value)
+            target.select();
+        // And OPENING an editor should show what there is to pick: an empty
+        // field above a shut dropdown offers nothing, which is the state
+        // this whole row is about.
+        if (typeof el._wvShow === 'function') el._wvShow('');
+    } catch (e) {
+        console.warn('focusWidget failed for ' + wid, e);
+    }
+}
+
+// ── ToolTip ──────────────────────────────────────────────────────────
+// The CSS class existed and nothing ever created one. ~38 call sites.
+//
+// ONE TIP ELEMENT FOR THE WHOLE PAGE, and one anchor at a time. Each widget
+// used to own its own `tip` in a closure, so two could be on screen together
+// — and they were: Kent's sort board showed "click to change group" floating
+// in empty space beside the row while a second tip sat under the button
+// (2026-09-15). Either can get stuck, because `mouseleave` is NOT delivered
+// when an element stops being hovered without the pointer moving off it:
+// hiding it (`gridRemove` adds a display:none class), destroying it, or
+// relaying the page under a still pointer all skip the event, and `again()`
+// / a refit do exactly that mid-hover. A single element that a document-level
+// listener can always reclaim cannot accumulate; the pointer check makes the
+// stuck case self-correcting on the next mouse move anywhere.
+let _wvTip = null;          // the one live tooltip element
+let _wvTipAnchor = null;    // the widget it belongs to
+
+function _hideTooltip() {
+    if (_wvTip) { _wvTip.remove(); _wvTip = null; }
+    _wvTipAnchor = null;
+}
+
+function _showTooltip(el) {
+    _hideTooltip();
+    const text = el.dataset.tooltip;
+    // A widget that is not on screen has no business explaining itself, and
+    // its rect is 0×0 — which would put the tip in the top-left corner.
+    if (!text || el.offsetParent === null) return;
+    _wvTipAnchor = el;
+    _wvTip = document.createElement('div');
+    _wvTip.className = 'wv-tooltip';
+    _wvTip.textContent = text;
+    document.body.appendChild(_wvTip);
+    const r = el.getBoundingClientRect();
+    const t = _wvTip.getBoundingClientRect();
+    // CLAMPED TO THE VIEWPORT, so a tip on a widget near an edge is readable
+    // rather than half off the page — and never covers its own anchor.
+    let left = r.left;
+    if (left + t.width > window.innerWidth - 4)
+        left = Math.max(4, window.innerWidth - t.width - 4);
+    let top = r.bottom + 4;
+    if (top + t.height > window.innerHeight - 4)
+        top = Math.max(4, r.top - t.height - 4);
+    _wvTip.style.left = Math.round(left) + 'px';
+    _wvTip.style.top = Math.round(top) + 'px';
+}
+
+// THE RECLAIM. Any pointer movement that is not over the current anchor
+// takes the tip down, whatever happened to the anchor in the meantime.
+document.addEventListener('mousemove', (ev) => {
+    if (!_wvTipAnchor) return;
+    if (!_wvTipAnchor.isConnected || _wvTipAnchor.offsetParent === null
+            || !(ev.target === _wvTipAnchor
+                 || _wvTipAnchor.contains(ev.target)))
+        _hideTooltip();
+}, true);
+// Scrolling moves the anchor out from under a tip that is positioned in
+// viewport coordinates and never repositioned.
+window.addEventListener('scroll', _hideTooltip, true);
+window.addEventListener('blur', _hideTooltip);
+document.addEventListener('mousedown', _hideTooltip, true);
+
+function setTooltip(wid, text) {
+    const el = _widgets.get(wid);
+    if (!el) return;
+    if (!text) {
+        delete el.dataset.tooltip;
+        if (_wvTipAnchor === el) _hideTooltip();
+        return;
+    }
+    el.dataset.tooltip = text;
+    // ALREADY SHOWING? Then the text on screen is the old text. This is the
+    // whole point of a tooltip that tracks state: `settext` is called when
+    // the widget's state changes, which can easily be while it is hovered.
+    if (_wvTipAnchor === el) _showTooltip(el);
+    if (el._wvTipBound) return;
+    el._wvTipBound = true;
+    el.addEventListener('mouseenter', () => _showTooltip(el));
+    el.addEventListener('mouseleave', _hideTooltip);
+    el.addEventListener('click', _hideTooltip);
+}
+
+// ── Style ────────────────────────────────────────────────────────────
+// ttk's Style is a name->options table consulted by widgets; CSS is a
+// name->options table consulted by elements. So a ttk style name maps to a
+// selector and the options to declarations, written into one stylesheet
+// that later calls can overwrite by rule name.
+const _styleSheet = (() => {
+    const s = document.createElement('style');
+    s.id = 'wv-ttk-styles';
+    document.head.appendChild(s);
+    return s;
+})();
+const _styleRules = new Map();   // selector -> {prop: value}
+
+function setStyleRule(selector, decls) {
+    const cur = _styleRules.get(selector) || {};
+    Object.assign(cur, decls);
+    _styleRules.set(selector, cur);
+    let css = '';
+    for (const [sel, d] of _styleRules) {
+        const body = Object.entries(d)
+            .map(([k, v]) => `${k}: ${v};`).join(' ');
+        if (body) css += `${sel} { ${body} }\n`;
+    }
+    _styleSheet.textContent = css;
+}
+
+// Option names already complained about, so one unhandled name costs one
+// message rather than one per widget that sets it.
+const _reportedProps = new Set();
+
+// A LIST'S HEIGHT IS A ROW COUNT, as tkinter's is, and it has to be applied
+// the same way at creation and on configure. The new-language page creates
+// its two lists at height=1 and reconfigures them to min(4, n) once it knows
+// n (ui_shell.py:4019, :4147, :4219) — and `updateProp` had no 'height'
+// case, so the reconfigure went to the console warning below, which nobody
+// watches, and both lists stayed one row tall, scrollbar and all (Kent,
+// 2026-09-22: "very difficult to use"). 1.5em per row is the row's line box
+// plus .wv-listbox-item's vertical padding, near enough that four rows show
+// four items.
+// MEASURE THE ROW; DO NOT GUESS AT IT (2026-09-28). The line above used to
+// end here with `maxHeight = n * 1.5em`, and the estimate was wrong in the
+// direction that costs a row: Kent asked for 4 and saw 3, then asked for 5 and
+// saw 4. A row is a line box plus 2px of padding top and bottom, inside a
+// bordered container, and none of that is knowable from an em.
+//   Kent, 2026-09-28: *"does height start at 0 or 1? 5 gives four lines..."*
+// Neither — it was never an index, which is exactly why the off-by-one
+// reading did not fit. Raising the constant would only move the rounding
+// error to a different font size or theme.
+//   So: remember the row count on the element, and set the height from a
+// REAL row once one exists. The em estimate survives only as the fallback for
+// the moment before any items are added, when there is nothing to measure.
+function _listboxRows(el, rows) {
+    const n = Number(rows);
+    if (!(n > 0)) return;
+    el.dataset.rows = n;
+    _applyListboxHeight(el);
+}
+
+function _applyListboxHeight(el) {
+    const n = Number(el.dataset.rows);
+    if (!(n > 0)) return;
+    const item = el.querySelector('.wv-listbox-item');
+    const h = item ? item.getBoundingClientRect().height : 0;
+    if (!(h > 0)) {                     // no items yet, or not displayed
+        el.style.maxHeight = (n * 1.5) + 'em';
+        return;
+    }
+    // `max-height` applies to the CONTENT box under content-box and to the
+    // BORDER box under border-box, so the container's own border and padding
+    // come out of the budget in one case and not the other. Ask rather than
+    // assume: `.wv-listbox` carries a 1px border, which is a whole row over
+    // enough rows.
+    const cs = getComputedStyle(el);
+    let extra = 0;
+    if (cs.boxSizing === 'border-box') {
+        extra = (parseFloat(cs.borderTopWidth) || 0)
+              + (parseFloat(cs.borderBottomWidth) || 0)
+              + (parseFloat(cs.paddingTop) || 0)
+              + (parseFloat(cs.paddingBottom) || 0);
+    }
+    el.style.maxHeight = (n * h + extra) + 'px';
+}
+
 function updateProp(wid, prop, value) {
     const el = _widgets.get(wid);
     if (!el) return;
 
     switch (prop) {
         case 'text':
-            el.textContent = value;
+            // TEXT AND IMAGE ARE TWO INDEPENDENT OPTIONS. `textContent`
+            // replaces every child, so setting the text on a widget that
+            // carries a picture DELETED THE PICTURE — and tkinter, where
+            // `b['text']=x` touches nothing but the text, gives no hint that
+            // it would.
+            //   This is why the two cycle buttons on the sort page behaved
+            // differently with the SAME image (Kent, 2026-09-15: "any
+            // thoughts on why the SAME image displays on the left, but not
+            // the right?"). The left one (sort_buttons.py:958) is built with
+            // its text and never has it reassigned. The right one
+            // (sort_buttons.py:1125) is built with `text=''` and then
+            // `_show_check` assigns its text on every build AND every cycle
+            // — so its image was wiped immediately after being drawn, every
+            // time, leaving the button's 5px border framing nothing.
+            {
+                const img = el.querySelector('img.wv-img');
+                const src = img ? img.src : null;
+                el.textContent = value;
+                // Re-place it AFTER the text: `_setImage` reads the text off
+                // the element to decide whether there is anything to arrange
+                // around, and in which order the two children go.
+                if (src) _reImage(el, src, el.dataset.wvCompound);
+            }
             break;
         case 'background':
             el.style.background = value;
             break;
         case 'state':
-            if (el.tagName === 'BUTTON') el.disabled = (value === 'disabled');
+            _setState(el, value);
+            break;
+        case 'highlightthickness':
+            _setHighlight(el, value, null);
+            break;
+        case 'highlightbackground':
+        case 'highlightcolor':
+            _setHighlight(el, undefined, value);
+            break;
+        case 'anchor':
+            _setAnchor(el, value);
             break;
         case 'image':
             // value is a base64 data URI
             if (el.tagName === 'IMG') {
                 el.src = value;
-            } else {
-                let img = el.querySelector('img');
-                if (!img) {
-                    img = document.createElement('img');
-                    el.prepend(img);
-                }
-                img.src = value;
+                break;
             }
+            // THROUGH _setImage, like an image passed at construction. This
+            // used to prepend a bare <img> and stop, so a widget whose
+            // image arrives LATER — `b['image']=…`, which is how the sort
+            // page's group buttons get their illustration
+            // (sort_buttons.py:926) — got an image with none of the
+            // compound treatment: no arrangement class, no sizing, and its
+            // text left as a bare node rather than the span the layout
+            // expects. Two ways in, two different results, and the late one
+            // drew nothing (Kent, 2026-09-15).
+            //   The compound comes from the class it already carries, so a
+            //   widget built with one keeps it; `compound` arriving after
+            //   the image re-runs the arrangement (see below).
+            _reImage(el, value, el.dataset.wvCompound || _compoundOf(el));
+            break;
+        case 'compound':
+            // ARRANGEMENT CAN ARRIVE AFTER THE IMAGE, and when it does it
+            // WINS. `b['image']=…` and `b['compound']='left'` are two calls
+            // in that order (sort_buttons.py:926), so the image is placed
+            // before anyone says where it goes: it took the 'top' default,
+            // and my first version then re-read the class it had just
+            // written and kept 'top' — every sort row grew to two lines
+            // with the picture stacked above the word (Kent, 2026-09-15:
+            // "so it happened again, with a lot worse"). The explicit value
+            // must beat the one inferred from the element.
+            el.dataset.wvCompound = value;
+            { const img = el.querySelector('img');
+              if (img && img.src) _reImage(el, img.src, value); }
             break;
         case 'progress':
             const fill = el.querySelector('.wv-progressbar-fill');
-            if (fill) fill.style.width = value + '%';
+            if (fill) {
+                // The percentage drives the dimension the bar GROWS in, so
+                // a vertical bar sets height and stays full width. Setting
+                // width on a vertical bar is what drew it horizontally.
+                if (el.classList.contains('wv-progressbar-vertical')) {
+                    fill.style.height = value + '%';
+                    fill.style.width = '100%';
+                } else {
+                    fill.style.width = value + '%';
+                }
+            }
             break;
         case 'width':
             el.style.width = value + 'ch';
+            break;
+        case 'max_height_em':
+            // A scroller's own height, in text rows, beating the stylesheet's
+            // generic cap. Inline so it wins; `em` so it tracks the font the
+            // way tkinter's row count does.
+            el.style.maxHeight = value + 'em';
+            break;
+        case 'wraplength':
+            // TEXT THAT MUST WRAP. Named after tkinter's own option, which
+            // is what the app calls `Label.wrap()` to get — and which the
+            // webview backend answered with `pass` ("handled by CSS"). The
+            // CSS rule is scoped to labels one or two levels under #root, on
+            // purpose, so anything deeper got no constraint: ErrorNotice's
+            // text rendered as one unbroken line and the window fitted
+            // itself to it, 1680px wide with a single line across the top
+            // (macOS, 2026-09-11).
+            //   PIXELS for a number, because every layout figure in this app
+            //   is raw pixels (see the PT_TO_PX note in ui_tkinter) and the
+            //   value arriving here is the caller's own measurement of the
+            //   box this label sits in — or `availablexy`'s. A string is
+            //   passed through so a caller can still say '40em' deliberately.
+            // CLAMPED TO THE VIEWPORT, because an inline style BEATS the
+            // stylesheet. grid.css caps .wv-label at 92vw so nothing can
+            // demand more width than the window has — and setting maxWidth
+            // inline here silently defeated that cap for every caller of
+            // wrap(). The Sound Card Settings caveat ran off the right edge
+            // of its window under GTK on exactly this path (2026-09-11):
+            // wrap() measured a box wider than the window, and the 92vw
+            // safety valve was overridden by the number it measured.
+            //   CSS min() keeps BOTH constraints in one value: the caller's
+            // measurement of its own box, and the invariant that nothing
+            // exceeds the display.
+            // `--demandcap`, not `92vw` — the caller's own measurement,
+            // bounded by a cap that is window-relative while the page is
+            // read and screen-relative while it is measured. Written as the
+            // variable rather than a resolved number so the inline style
+            // follows the state automatically; see grid.css, "The caps, and
+            // why they are variables".
+            el.style.maxWidth = (typeof value === 'number')
+                ? 'min(' + value + 'px, var(--demandcap, 92vw))' : value;
+            // `pre-wrap`, NOT `normal`: the app's messages carry real newlines
+            // and HTML collapses them. The transcription notice is written as
+            // a lead line, a bulleted problem list and a closing paragraph,
+            // and it arrived as one run of prose (macOS, 2026-09-11, Kent:
+            // "the newlines (at least) that are present elsewhere are not
+            // there"). `pre-wrap` keeps the author's line breaks AND still
+            // wraps long lines, which is exactly tkinter's Label contract —
+            // `normal` only did the second half.
+            el.style.whiteSpace = 'pre-wrap';
+            el.style.overflowWrap = 'break-word';
             break;
         case 'font':
             // Remove old font class, add new
@@ -239,18 +1385,84 @@ function updateProp(wid, prop, value) {
                     div.className = 'wv-listbox-item';
                     div.textContent = item;
                     div.dataset.index = i;
-                    div.addEventListener('click', () => {
-                        el.querySelectorAll('.wv-listbox-item').forEach(d => d.classList.remove('selected'));
-                        div.classList.add('selected');
+                    div.addEventListener('click', (ev) => {
+                        // FOUR MODES, NOT TWO. The first version asked only
+                        // "is this multiple?", which is right for tkinter's
+                        // MULTIPLE and wrong for EXTENDED: extended is the
+                        // file-manager gesture — a plain click REPLACES the
+                        // selection, shift-click extends a run from the
+                        // anchor, ctrl/cmd-click toggles one row. Treating
+                        // it as multiple made every click toggle, so a user
+                        // could never narrow a selection back down without
+                        // clicking each row off again (Kent, 2026-09-14:
+                        // "is this correct for extended?" — it was not).
+                        //   single/browse differ only in drag behaviour,
+                        // which a click handler cannot express; both replace.
+                        const mode = el.dataset.selectmode
+                                  || (el.dataset.multiple === 'true'
+                                      ? 'multiple' : 'browse');
+                        const rows = [...el.querySelectorAll(
+                                            '.wv-listbox-item')];
+                        const clear = () => rows.forEach(
+                                d => d.classList.remove('selected'));
+                        if (mode === 'multiple') {
+                            div.classList.toggle('selected');
+                            el.dataset.anchor = i;
+                        } else if (mode === 'extended' && ev.shiftKey) {
+                            const a = parseInt(el.dataset.anchor);
+                            const from = isNaN(a) ? i : a;
+                            clear();
+                            rows.slice(Math.min(from, i), Math.max(from, i) + 1)
+                                .forEach(d => d.classList.add('selected'));
+                        } else if (mode === 'extended'
+                                   && (ev.ctrlKey || ev.metaKey)) {
+                            div.classList.toggle('selected');
+                            el.dataset.anchor = i;
+                        } else {
+                            clear();
+                            div.classList.add('selected');
+                            el.dataset.anchor = i;
+                        }
+                        const chosen = [...el.querySelectorAll(
+                                            '.wv-listbox-item.selected')]
+                                       .map(d => parseInt(d.dataset.index));
                         if (window.pywebview && window.pywebview.api) {
-                            window.pywebview.api.on_event(parseInt(el.dataset.wid), 'select', {index: i, value: item});
+                            window.pywebview.api.on_event(
+                                parseInt(el.dataset.wid), 'select',
+                                {index: i, value: item, indices: chosen});
                         }
                     });
                     el.appendChild(div);
                 });
             }
-            // For combobox: value is an array of strings
-            if (el.tagName === 'SELECT') {
+            // For combobox: value is an array of strings. Two shapes — the
+            // <select>, and the editable state='normal' form, whose options
+            // live in a <datalist> beside its <input>.
+            if (el.classList.contains('wv-combobox-wrap')) {
+                // The editable form: our own rows, each a div that fills the
+                // field when clicked. `mousedown`, not `click` — the input's
+                // blur fires first and would hide the list out from under a
+                // click.
+                const inp = el.querySelector('input');
+                const list = el.querySelector('.wv-combobox-list');
+                list.innerHTML = '';
+                (value || []).forEach(item => {
+                    const opt = document.createElement('div');
+                    opt.className = 'wv-combobox-option';
+                    opt.textContent = item;
+                    opt.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        inp.value = item;
+                        list.classList.add('wv-hidden');
+                        if (window.pywebview && window.pywebview.api) {
+                            window.pywebview.api.on_event(
+                                parseInt(el.dataset.wid), 'select',
+                                {value: item});
+                        }
+                    });
+                    list.appendChild(opt);
+                });
+            } else if (el.tagName === 'SELECT') {
                 el.innerHTML = '';
                 (value || []).forEach(item => {
                     const opt = document.createElement('option');
@@ -263,6 +1475,87 @@ function updateProp(wid, prop, value) {
         case 'value':
             if (el.tagName === 'SELECT') el.value = value;
             if (el.tagName === 'INPUT') el.value = value;
+            if (el.classList.contains('wv-combobox-wrap')) {
+                const inp = el.querySelector('input');
+                if (inp) inp.value = value;
+            }
+            break;
+        case 'insert_at_caret': {
+            // tkinter's `insert(INSERT, text)`: splice at the caret, caret
+            // ends up after the new text, and the variable learns the result
+            // the same way typing tells it — through 'input'. The Python
+            // side deliberately writes nothing itself (ui_webview
+            // EntryField.insert). Untouched field: append, see the 'entry'
+            // case's focus listener.
+            const inp = el.tagName === 'INPUT' ? el : el.querySelector('input');
+            if (!inp) break;
+            const text = String(value);
+            const touched = inp.dataset.wvTouched === '1'
+                            || document.activeElement === inp;
+            let s = inp.value.length, e = s;
+            if (touched && typeof inp.selectionStart === 'number') {
+                s = inp.selectionStart;
+                e = typeof inp.selectionEnd === 'number' ? inp.selectionEnd : s;
+            }
+            if (typeof inp.setRangeText === 'function') {
+                inp.setRangeText(text, s, e, 'end');
+            } else {
+                inp.value = inp.value.slice(0, s) + text + inp.value.slice(e);
+                inp.setSelectionRange(s + text.length, s + text.length);
+            }
+            inp.dispatchEvent(new Event('input', {bubbles: true}));
+            break;
+        }
+        // SPACING IS SETTABLE AFTER CONSTRUCTION, because tkinter makes the
+        // app do it that way: `ui.Label` routes a constructor `padx` to the
+        // GRID, so a Label's own padding is only reachable once it exists
+        // (sort_buttons.py:602-607 zeroes all three on the check-profile
+        // letters for exactly that reason). There was no case for any of
+        // them and no `default:` below, so all three were accepted and
+        // dropped — the one failure mode this port keeps producing.
+        case 'padx':
+            el.style.marginLeft = el.style.marginRight = `${value}px`;
+            break;
+        case 'pady':
+            el.style.marginTop = el.style.marginBottom = `${value}px`;
+            break;
+        case 'ipadx':
+            el.style.paddingLeft = el.style.paddingRight = `${value}px`;
+            break;
+        case 'ipady':
+            el.style.paddingTop = el.style.paddingBottom = `${value}px`;
+            break;
+        case 'borderwidth':
+        case 'bd':
+            // 0 must clear the border outright, not draw a 0px one of the
+            // class's own style — `.wv-button` declares `2px outset`, and a
+            // `border-width: 0` leaves that style live for anything that
+            // later sets a width again.
+            if (Number(value) > 0) el.style.borderWidth = `${value}px`;
+            else el.style.border = 'none';
+            break;
+        case 'height':
+            // ROWS, for a list — the same rule as at creation, see
+            // _listboxRows. For any other widget 'height' means something
+            // this page has no rule for yet (lines for a Text, pixels for a
+            // Frame), so fall through and let the report below say so
+            // rather than guess.
+            if (el.classList.contains('wv-listbox')) {
+                _listboxRows(el, value);
+                break;
+            }
+            // falls through
+        default:
+            // SAY WHAT WAS IGNORED. A silent drop here is how `compound`,
+            // `image`, `anchor`, `relief` and the padding above each went
+            // missing for weeks: the app sets an option, the page shrugs,
+            // and nothing anywhere says so. Console-only and cheap — the
+            // names are a fixed set, so this cannot flood.
+            if (!_reportedProps.has(prop)) {
+                _reportedProps.add(prop);
+                console.warn('azt: no handler for option', prop,
+                             '- set on', el.className, '(ignored)');
+            }
             break;
     }
 }
@@ -279,6 +1572,139 @@ function gridRemove(wid) {
     if (el) el.classList.add('wv-hidden');
 }
 
+// ── Menu bar ──────────────────────────────────────────────────────────────
+// Drawn from the same `spec()` the popup uses, so the two cannot disagree
+// about which item kinds exist — which is how cascades came to be silently
+// dropped from every menu (see ui_webview.Menu.spec).
+//
+// `spec` is a nested list of {kind, label, path, items?}. A click on a
+// command sends its PATH back, because an index alone cannot name anything
+// below the top level. `spec === null` removes the bar.
+function setMenubar(wid, spec) {
+    let bar = document.getElementById('wv-menubar');
+    if (!spec) { if (bar) bar.remove(); return; }
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'wv-menubar';
+        bar.className = 'wv-menubar';
+        document.body.insertBefore(bar, document.body.firstChild);
+    }
+    // `replaceChildren()` rather than innerHTML, and every LABEL below is set
+    // with textContent rather than interpolated into markup. Menu labels come
+    // from translations and from lexical data, so a label containing `<` must
+    // render as a character and not as a tag. (`Menu.tk_popup` still builds
+    // its rows by f-string — worth changing when the popup moves onto this
+    // same spec.)
+    bar.replaceChildren();
+
+    _buildMenuRows(spec, bar, 0, function (path) {
+        // CLOSE FIRST, THEN DISPATCH. Choosing an item must retire the menu —
+        // staying open is the `sticky` behaviour built for the transcriber's
+        // tone-beep panel, and nothing else wants it (Kent, 2026-09-24: "the
+        // menu cascade remains after something is clicked on … this smells
+        // like a setting we made for the tone play configuration"). It was an
+        // omission rather than a setting: the refactor that gave the bar and
+        // the popup a shared builder left this closer behind.
+        //   Before dispatch, so a command that opens a window does not leave
+        // the menu standing over it.
+        bar.querySelectorAll('.wv-menu-open').forEach(
+            function (e) { e.classList.remove('wv-menu-open'); });
+        pywebview.api.on_event(wid, 'menubarclick', {path: path});
+    });
+    // ONE listener for the life of the page, not one per rebuild. The menu
+    // tree is rebuilt on every setcontext(), so adding a listener here would
+    // accumulate one per rebuild for as long as the window lived.
+    if (!window._wvMenubarCloserBound) {
+        window._wvMenubarCloserBound = true;
+        document.addEventListener('mousedown', function () {
+            document.querySelectorAll('.wv-menu-open').forEach(
+                function (e) { e.classList.remove('wv-menu-open'); });
+        });
+    }
+}
+
+// Shared by the bar and the popup, which is the point: the cascade bug was
+// two renderers, one of which only knew about `command` items. `onPick` takes
+// the item's PATH, since an index cannot name anything below the top level.
+function _buildMenuRows(items, into, depth, onPick) {
+    (items || []).forEach(function (item) {
+        if (item.kind === 'separator') {
+            const rule = document.createElement('div');
+            rule.className = 'wv-menu-sep';
+            into.appendChild(rule);
+            return;
+        }
+        const row = document.createElement('div');
+        row.className = (depth === 0 ? 'wv-menubar-top' : 'wv-menu-item');
+        if (item.kind === 'disabled') row.className += ' wv-menu-disabled';
+        // textContent, never markup: labels come from translations and from
+        // lexical data.
+        row.textContent = item.label;
+        if (item.kind === 'cascade') {
+            row.className += ' wv-menu-cascade';
+            const sub = document.createElement('div');
+            sub.className = (depth === 0 ? 'wv-menubar-drop' : 'wv-menu-sub');
+            _buildMenuRows(item.items, sub, depth + 1, onPick);
+            row.appendChild(sub);
+            // Open on click, not hover: a hover-only submenu cannot be opened
+            // at all on a touch screen, and field machines have them.
+            row.addEventListener('mousedown', function (ev) {
+                ev.stopPropagation();
+                const wasOpen = row.classList.contains('wv-menu-open');
+                let scope = row.parentElement;
+                while (scope && !scope.classList.contains('wv-menubar')
+                             && !scope.classList.contains('wv-menu')) {
+                    scope = scope.parentElement;
+                }
+                (scope || document).querySelectorAll('.wv-menu-open').forEach(
+                    function (e) { e.classList.remove('wv-menu-open'); });
+                if (!wasOpen) row.classList.add('wv-menu-open');
+            });
+        } else if (item.kind === 'command') {
+            row.addEventListener('mousedown', function (ev) {
+                ev.stopPropagation();
+                onPick(item.path);
+            });
+        }
+        into.appendChild(row);
+    });
+}
+
+// A posted context menu, from the same spec as the bar — so cascades appear
+// here too, which they never did before (ui_webview.Menu.tk_popup built its
+// rows itself and skipped every non-command item).
+function postMenu(wid, spec, x, y, sticky) {
+    const prev = _widgets.get(wid);
+    if (prev && prev.remove) prev.remove();
+    const el = document.createElement('div');
+    el.className = 'wv-menu';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.dataset.wid = wid;
+    _buildMenuRows(spec, el, 1, function (path) {
+        pywebview.api.on_event(wid, 'menuclick', {path: path});
+        if (!sticky) {
+            el.remove();
+            if (_widgets.get(wid) === el) _widgets.delete(wid);
+        }
+    });
+    _widgets.set(wid, el);
+    document.body.appendChild(el);
+    // DISMISS ON mousedown AND contextmenu, NOT on click: a right-click never
+    // fires `click`, so a menu posted by right-click could not be dismissed by
+    // another right-click and two stacked up (Kent, 2026-09-15). Anything
+    // inside the menu is ignored, so rows and submenus still work.
+    function _dismiss(e) {
+        if (el.contains(e.target)) return;
+        el.remove();
+        if (_widgets.get(wid) === el) _widgets.delete(wid);
+        document.removeEventListener('mousedown', _dismiss, true);
+        document.removeEventListener('contextmenu', _dismiss, true);
+    }
+    document.addEventListener('mousedown', _dismiss, true);
+    document.addEventListener('contextmenu', _dismiss, true);
+}
+
 function destroyWidget(wid) {
     const el = _widgets.get(wid);
     if (el) {
@@ -287,14 +1713,87 @@ function destroyWidget(wid) {
     }
 }
 
+// tkinter names a specific key; the DOM gives you keydown plus a `key` value.
+// Without this, `<Escape>` fell through as a literal event name that can never
+// fire — which is why nothing released kiosk mode.
+const _keyNames = {
+    '<Escape>': 'Escape', '<Return>': 'Enter', '<KP_Enter>': 'Enter',
+    '<Tab>': 'Tab', '<space>': ' ', '<BackSpace>': 'Backspace',
+    '<Delete>': 'Delete', '<Home>': 'Home', '<End>': 'End',
+    '<Prior>': 'PageUp', '<Next>': 'PageDown',
+    '<Up>': 'ArrowUp', '<Down>': 'ArrowDown',
+    '<Left>': 'ArrowLeft', '<Right>': 'ArrowRight',
+    '<F11>': 'F11',
+};
+
+// The pointer events a disabled widget must not answer. Hover is included:
+// a disabled control should not report <Enter>/<Leave> to the app either,
+// which is a different question from whether its TOOLTIP shows (that is
+// bound separately, and a disabled control explaining itself is useful).
+const _MOUSEY = new Set(['mousedown', 'mouseup', 'click', 'dblclick',
+                         'contextmenu', 'auxclick', 'mousemove',
+                         'mouseenter', 'mouseleave']);
+
 function bindEvent(wid, eventName) {
-    const el = _widgets.get(wid);
-    if (!el) return;
+    // A WINDOW IS NOT A DOM WIDGET, so a binding made on a window found no
+    // element and was silently dropped — `takekioskscreen()` binds Escape and
+    // double-click on the WINDOW to leave fullscreen, so kiosk mode had no
+    // exit at all. Window-level bindings belong on the document: in a window,
+    // the window is the page, and events from any widget bubble up to it,
+    // which is also how tkinter's window-level binds behave.
+    const el = _widgets.get(wid) || document;
 
     // Map tkinter event names to DOM events
     const eventMap = {
-        '<Button-1>': 'click',
-        '<ButtonRelease-1>': 'mouseup',
+        // PRESS IS PRESS. `<ButtonPress-1>` was absent from this map, so it
+        // fell through to addEventListener('<ButtonPress-1>') — a listener
+        // for an event nothing fires, the same dead end <Button-3> had. The
+        // RECORD BUTTON binds press to _start and release to _stop
+        // (sound_ui.py:70-71), so under webview recording never STARTED and
+        // the release handler then raised on state that start() creates:
+        //     no recording to finalise (…wav.tmp was never written)
+        //     AttributeError: 'SoundFileRecorder' object has no attribute
+        //                     'file_write_OK'
+        // (Kent, 2026-09-11.) A press-and-hold control cannot work without
+        // this, and recording is the one thing the sound settings window is
+        // for.
+        //   `<Button-1>` and `<ButtonPress-1>` are SYNONYMS in tkinter, both
+        // meaning press, so both map to mousedown. `<Button-1>` was 'click',
+        // which fires AFTER mouseup — i.e. after `<ButtonRelease-1>` — so the
+        // two ran in the wrong order relative to each other. Anything that
+        // wants "activated" uses `command=`, not a press binding.
+        '<Button-1>': 'mousedown',
+        '<ButtonPress-1>': 'mousedown',
+        // 'click', NOT 'mouseup' — TK HOLDS AN IMPLICIT POINTER GRAB.
+        // ButtonRelease goes to the widget that received the PRESS, wherever
+        // the pointer has since moved to; a DOM `mouseup` goes to whatever
+        // is under the pointer at release. `mouseup` therefore looks like a
+        // faithful translation and is not, and any widget that DISAPPEARS
+        // between press and release hands its release to whatever it was
+        // covering.
+        //   Kent, 2026-09-17: one click on the second-form combo box both
+        // chose from the combo AND opened the next setting's dialog — "one
+        // click", with WHICH dialog depending on where in the combo he
+        // clicked. The dropdown closes on the press, and the release lands
+        // on the prose label now beneath the cursor, whose
+        // `<ButtonRelease-1>` is how every prose field is activated
+        // (`ui_shell.proselabel`).
+        //   A DOM `click` fires on the nearest common ancestor of the
+        // mousedown and mouseup targets, so it requires both on the same
+        // element — which is the grab semantics, for the case that matters.
+        // Ordering is still press-then-release: `click` follows `mouseup`,
+        // and `<Button-1>` is `mousedown`.
+        //   It is also Tk's OWN convention for a button (Kent, 2026-09-17:
+        // "tkinter had slideoff=cancel"): tk::ButtonUp invokes the command
+        // only if the pointer is still over the widget it pressed, and a
+        // release over some other widget completes nothing there either.
+        // The one control that wants a release delivered wherever the
+        // pointer went is press-and-hold, and that binds <Leave> as well
+        // (frontend/composites.hold): a finger off the button is off,
+        // upward or sideways. Known residue: a raw <ButtonRelease-1> bind
+        // on a tkinter LABEL has no such check, so the prose labels
+        // complete on slide-off under tkinter and cancel here.
+        '<ButtonRelease-1>': 'click',
         '<Double-Button-1>': 'dblclick',
         '<Enter>': 'mouseenter',
         '<Leave>': 'mouseleave',
@@ -304,10 +1803,61 @@ function bindEvent(wid, eventName) {
         '<FocusOut>': 'focusout',
         '<Configure>': 'resize',
         '<Motion>': 'mousemove',
+        // RIGHT AND MIDDLE CLICK, missing until 2026-09-09. Unmapped names
+        // fell through to `addEventListener(eventName)` — i.e. a listener for
+        // an event literally called "<Button-3>", which nothing ever fires.
+        // So every right-click binding was silently dead, including the
+        // Transcriber's "Right click to configure" tone-beep window, whose
+        // own tooltip advertises it (transcriber.py:188-190).
+        '<Button-3>': 'contextmenu',
+        '<ButtonRelease-3>': 'contextmenu',
+        // tkinter's VIRTUAL context-menu event, which ui_tkinter's
+        // ContextMenu binds on the window (and re-points at
+        // <Control-Button-1> on Aqua, where there is no Button-3). Unmapped,
+        // it registered a listener for an event named "<<ContextMenu>>" —
+        // dead the same way Button-3 was before 2026-09-09, which is why the
+        // right-click route to Sound Settings did nothing under webview.
+        '<<ContextMenu>>': 'contextmenu',
+        '<Button-2>': 'auxclick',
+        '<ButtonRelease-2>': 'auxclick',
+        '<ButtonPress-2>': 'auxclick',
+        '<ButtonPress-3>': 'contextmenu',
     };
 
-    const domEvent = eventMap[eventName] || eventName;
+    const wantedKey = _keyNames[eventName];
+    const domEvent = wantedKey ? 'keydown' : (eventMap[eventName] || eventName);
     el.addEventListener(domEvent, (e) => {
+        if (wantedKey && e.key !== wantedKey) return;
+        // A DISABLED CONTROL IGNORES ITS BINDINGS TOO. `disabled` on a native
+        // <button> stops its click, so `command` was safely dead — but a
+        // `bind()` listener is ours and fired regardless, and WebKitGTK does
+        // deliver `contextmenu` over a disabled button. So the sort board's
+        // greyed-out cycle button went on cycling on right-click while
+        // refusing to on left (Kent, 2026-09-15: "it's active on
+        // back/right-click, not left/forward").
+        //   Tk has the same split — `-state disabled` is checked by a
+        // Button's CLASS bindings and not by anything `bind` adds — so a
+        // guard in the handler is what the app actually wants, not a
+        // faithful copy of the toolkit. Keyboard and focus events are exempt:
+        // a disabled control is skipped by tabbing anyway, and blocking
+        // focusout could strand state.
+        //   `el` IS `document` FOR A WINDOW-LEVEL BINDING (see the top of
+        // this function), and `document.classList` does not exist — so a
+        // bare `el.classList.contains(...)` threw before dispatching
+        // anything, taking out double-click-to-fit and the window context
+        // menu, which are bound exactly this way (Kent, 2026-09-15:
+        // "double-click here does nothing"). A guard on a disabled widget
+        // must not be able to disable a whole window.
+        if (_MOUSEY.has(domEvent)
+                && (el.disabled
+                    || (el.classList
+                        && el.classList.contains('wv-disabled'))))
+            return;
+        // A right-click that opens OUR menu must not also open the engine's.
+        if (domEvent === 'contextmenu') e.preventDefault();
+        // auxclick covers every non-primary button; only the middle one is
+        // tkinter's Button-2.
+        if (domEvent === 'auxclick' && e.button !== 1) return;
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, eventName, {
                 x: e.clientX, y: e.clientY,
@@ -315,6 +1865,53 @@ function bindEvent(wid, eventName) {
             });
         }
     });
+}
+
+// ── Report the client area whenever it changes ───────────────────────
+// A WINDOW THAT DOES NOT KEEP ITS SIZE IS INVISIBLE FROM PYTHON. The fit
+// learns the client area only when a fit happens to run, so a window resized
+// to 1310x735 and then reverted to its created 800x600 by the compositor
+// looks identical in the log to one that kept the size — the same measured
+// 1282x707, the same "settled at ... sized 1310x735" — and the only
+// difference is on screen. Kent spent several rounds on exactly that pair
+// (2026-09-15: "doubleclick enlarges the window, then focusing on another
+// window makes it shrink again"), and the log could not tell the runs apart.
+//   `resize` fires on the page whenever the client box changes, whoever
+// changed it, so this is the one place the truth is observable. Debounced,
+// because a drag fires it continuously.
+//   `everySample` (Python's --log-resizes) turns the debounce OFF. The
+// debounce is what makes the normal report usable and what makes it useless
+// as evidence: it reports where the window SETTLED, so a shrink that
+// overshoots and partly recovers arrives as one number with no sign that
+// anything else happened. Four such numbers looked like a constant 52x89
+// shortfall and produced a confident wrong theory (2026-09-16). With this on,
+// one focus change gives the whole trajectory — at the price of a line per
+// frame of any drag, which is why it is a switch.
+function installResizeReporter(wid, everySample) {
+    let timer = null;
+    const send = () => {
+        timer = null;
+        if (window.pywebview && window.pywebview.api)
+            window.pywebview.api.on_event(wid, 'clientresize', {
+                w: window.innerWidth, h: window.innerHeight});
+    };
+    window.addEventListener('resize', () => {
+        if (everySample) { send(); return; }
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(send, 150);
+    });
+}
+
+// THE DOCUMENT SCROLLBAR CANNOT BE COVERED. It is painted by the engine
+// outside the layout viewport, so no z-index reaches it — Kent, 2026-09-16,
+// on the wait cover: "the scrollbar shows through, as well." It is there
+// because the page behind the cover is taller than the window WHILE it
+// builds (the board grows before the fit runs), so the only way to remove it
+// is to stop the document scrolling for as long as the cover is up.
+//   Scoped to a class on <html> rather than an inline style, so `grid.css`
+// keeps the rule and this keeps only the fact.
+function setPageWaitCover(on) {
+    document.documentElement.classList.toggle('wv-waiting', !!on);
 }
 
 function setThemeVars(vars) {
@@ -349,11 +1946,21 @@ function makeDraggable(wid) {
     el.draggable = true;
     el.style.cursor = 'grab';
 
+    // THE FEEDBACK IS OURS, NOT THE ENGINE'S. WebKitGTK draws a translucent
+    // snapshot of the dragged element under the cursor; QtWebEngine draws
+    // nothing, so the same page and the same JS looked alive on one engine
+    // and dead on the other (Kent, 2026-09-14: "drag drop registers now, but
+    // animation is gone from qt (there is gtk)"). A class we set ourselves
+    // is drawn by the stylesheet, which both engines do the same way.
+    //   Marked by OUTLINE STYLE, not colour — dashed on the thing being
+    // dragged, solid on the target it is over (~/.claude-sil/CLAUDE.md:
+    // colour may accompany meaning, never carry it). `outline` rather than
+    // `border` so nothing reflows when it appears.
     el.addEventListener('dragstart', (e) => {
         _dragSourceWid = wid;
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', String(wid));
-        el.style.opacity = '0.5';
+        el.classList.add('wv-dragging');
         // Notify Python of drag start
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_start', {x: e.clientX, y: e.clientY});
@@ -361,7 +1968,9 @@ function makeDraggable(wid) {
     });
 
     el.addEventListener('dragend', (e) => {
-        el.style.opacity = '1';
+        el.classList.remove('wv-dragging');
+        document.querySelectorAll('.wv-drop-target').forEach(
+            d => d.classList.remove('wv-drop-target'));
         _dragSourceWid = null;
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_end', {});
@@ -380,14 +1989,14 @@ function makeDroppable(wid) {
 
     el.addEventListener('dragenter', (e) => {
         e.preventDefault();
-        el.style.background = 'var(--activebackground)';
+        el.classList.add('wv-drop-target');
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_enter', {source_wid: _dragSourceWid});
         }
     });
 
     el.addEventListener('dragleave', (e) => {
-        el.style.background = '';
+        el.classList.remove('wv-drop-target');
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_leave', {source_wid: _dragSourceWid});
         }
@@ -395,7 +2004,7 @@ function makeDroppable(wid) {
 
     el.addEventListener('drop', (e) => {
         e.preventDefault();
-        el.style.background = '';
+        el.classList.remove('wv-drop-target');
         const sourceWid = parseInt(e.dataTransfer.getData('text/plain'));
         if (window.pywebview && window.pywebview.api) {
             window.pywebview.api.on_event(wid, 'dnd_commit', {

@@ -523,7 +523,7 @@ class SliceDict(dict):
         # For cvt='S' the slice is a Beg+count+End profile class, not a CV
         # profile. The 3 primitive checks (#C/C#/syls) run on the whole wordlist
         # (sentinel profile); the profile check runs within the current
-        # profile class. See docs/sort_syllables_design.md.
+        # profile class. See the sort-syllables design.
         params=self.program.params
         if params.cvt()=='S':
             sentinel=params.SYLLABLE_SLICE_SENTINEL
@@ -617,19 +617,30 @@ class SliceDict(dict):
     def senses(self,**kwargs): #ps=None,profile=None,
         # cvt='S': sentinel profile → the whole wordlist (the 3 primitive
         # checks); a profile-class profile → just the words in that Beg+count+End
-        # slice (the profile check). See sort_syllables_design.md.
+        # slice (the profile check). See the sort-syllables design.
         params=self.program.params
         if params.cvt()=='S':
-            ps=kwargs.get('ps',self._ps)
-            # 'S' works the WHOLE ps wordlist — NOT _profilesbysense/_sensesbyps,
-            # which hold only words with a CONFIRMED cvprofile (getprofileofsense
-            # adds a word only when `confirmed`). Syllable sorting's JOB is to give
-            # unprofiled words a profile, so they MUST appear here — as UNSORTED
-            # (no lc annotation → white border → presented to sort). Bucketing is
-            # by profile class (the confirmed primitives), independent of cvprofile.
-            # (This restores the documented intent; the old _sensesbyps read
-            # silently hid every unprofiled word from the board and maybesort.)
-            allps=self.program.db.sensesbyps.get(ps,[])
+            # 'S' works the WHOLE WORDLIST, and NOT
+            # _profilesbysense/_sensesbyps, which hold only words with a
+            # CONFIRMED cvprofile (getprofileofsense adds a word only when
+            # `confirmed`). Syllable sorting's JOB is to give unprofiled words
+            # a profile, so they MUST appear here — as UNSORTED (no lc
+            # annotation → white border → presented to sort). Bucketing is by
+            # profile class (the confirmed primitives), independent of
+            # cvprofile.
+            #   NO ps (2026-09-30). This read `db.sensesbyps.get(ps,[])` while
+            # its own comment said "the WHOLE ps wordlist" — so the same
+            # profile work was presented once per ps, and a word sorted under
+            # Noun stayed unsorted under Verb. Nothing here varies by ps: a
+            # cvprofile and a profile class are facts about the FORM, and two
+            # words with the same form have the same profile whatever their
+            # category. Kent, 2026-09-30: "NOTHING in SortSyllables does …
+            # we shouldn't be sorting by syllable profile for each ps."
+            #   The design already said so — `SYLLABLE_PREP_PS` is documented
+            # "ps re-enters only downstream as the (profile × ps) segmental
+            # slice", and prep honoured it while the profile sort did not.
+            # See the syllable-sort-is-not-per-ps item.
+            allps=self.program.db.senses
             profile=kwargs.get('profile',self.profile())
             if not profile or profile==params.SYLLABLE_SLICE_SENTINEL:
                 return allps
@@ -762,7 +773,7 @@ class SliceDict(dict):
         self.renewsenses()
         self.program.settings.settingsobjects() #should do this more; can be redone!
 
-# Syllable PREP (Task 1) slicing — see docs/syllable_sort_redesign.md. Each group
+# Syllable PREP (Task 1) slicing — see the syllable-sort redesign. Each group
 # of the three primitive checks (#C/C#/syls) is cut into STABLE slices of at most
 # MAX_SLICE words, so each verify is one modest, image-bearing list that builds
 # like a normal segmental verify group (which works). Smaller = lighter build =
@@ -875,6 +886,18 @@ class SyllableSliceDict(object):
             return []
     def _members(self,check,group):
         return [s for s in self._psenses() if self._group_of(s,check)==group]
+    def unsorted(self,check):
+        """Senses with NO group in this check — i.e. never sorted for it.
+
+        groups_of() discards None and '' below, so an unannotated word is
+        invisible to every downstream predicate: it is in no group, therefore in
+        no slice, therefore neither next_unverified_slice() nor
+        syllable_prep_complete()'s `groups <= done` can see it. Both ask "is
+        everything I can see finished?" and neither asks "is everything here?",
+        so prep reported complete with words still unclassified (Kent
+        2026-08-28: a word carrying ['#C=C','syls=3'] and no C# at all, while
+        the app had moved on to stage 2)."""
+        return [s for s in self._psenses() if not self._group_of(s,check)]
     def groups_of(self,check):
         gs={self._group_of(s,check) for s in self._psenses()}
         gs.discard(None); gs.discard('')
@@ -1263,6 +1286,12 @@ class StatusDict(dict):
             if idx != len(checks)-1: # i.e., not already last
                 nextcheck=checks[idx+1] #overwrite default in this one case
         self.program.params.check(nextcheck)
+        # The group belongs to the check, so advancing the check settles it.
+        # This path never reaches `setcheck` or `refreshattributechanges` —
+        # `Transcribe.nextcheck` (tasks.py) calls this directly and then
+        # rebuilds its window — so without this line it was the one route
+        # that could still carry a group across a check change (2026-09-30).
+        self.makegroupok(**kwargs)
         return nextcheck
     def nextgroup_visible(self, **kwargs):
         """Advance the current group within the VISIBLE list — NA never landed on.
@@ -1331,23 +1360,51 @@ class StatusDict(dict):
                 p+=[kwargs['profile']]
         # log.info(_("Profiles with kwargs {kwargs}: {profiles}").format(kwargs=kwargs,profiles=p))
         return p
+    def _drop_foreign(self,checks):
+        """Filter the FILE-DERIVED check set (annotation names) against what can
+        be a check at all.
+
+        azt's checks are internally defined (renewchecks), but these two getters
+        read status[cvt][ps][profile], which is built from annotation NAMES — a
+        name space shared with the collab daemon's merge markers. See
+        CheckParameters.is_foreign_annotation. Filtered HERE, at the two getters,
+        rather than at each display site, so every consumer is covered by one
+        edit: the status board (ui_shell), the task check lists, reports.
+
+        Says what it dropped, ONCE per run — the presence of markers is itself
+        the diagnostic, and the count is what distinguishes a real conflict from
+        the known false-marker batch (azt-collab 0.54.20 stripped 1284 of them
+        from a workshop nml)."""
+        foreign=self.program.params.is_foreign_annotation
+        kept=[c for c in checks if not foreign(c)]
+        if len(kept) != len(checks) and not getattr(self,'_said_foreign',False):
+            self._said_foreign=True
+            log.warning("Ignoring %s annotation(s) that are not checks: %s. "
+                    "These are written by the collab daemon, not by a sort; a "
+                    "conflict marker means the merge kept BOTH sides of an "
+                    "entry and someone should look at the data.",
+                    len(checks)-len(kept),
+                    sorted(set(checks)-set(kept)))
+        return kept
     def allcheckswCVdata(self):
-        return list(set([i for j in [self.program.status[cvt][ps][profile]
+        return self._drop_foreign(
+                        list(set([i for j in [self.program.status[cvt][ps][profile]
                                     for cvt in self.program.status
                                     if cvt != 'T'
                                     for ps in self.program.status[cvt]
                                     for profile in self.program.status[cvt][ps]
                                     if ps in self.program.status[cvt]
                                     ]
-                                for i in j]))
+                                for i in j])))
     def allcheckswdata(self, **kwargs): #needs cvt and ps
         cvt=kwargs.get('cvt',self.program.params.cvt())
         ps=kwargs.get('ps',self.program.slices.ps())
-        return list(set([i for j in [self.program.status[cvt][ps][profile]
+        return self._drop_foreign(
+                        list(set([i for j in [self.program.status[cvt][ps][profile]
                                     for profile in self.program.status[cvt][ps]
                                     ]
                             for i in j
-                        ]))
+                        ])))
     def checks(self, **kwargs):
         """This method is designed for tone, which depends on ps, not profile.
         we'll need to rethink it, when working on CV checks, which depend on
@@ -1439,8 +1496,28 @@ class StatusDict(dict):
         """Canonical presentation order for groups. Segment/tone groups are
         unrelated labels (plain alphabetical). Syllable profiles (cvt 'S') are
         related, so present them shortest→longest, then alphabetically (similar
-        patterns sit together). [Secondary key may grow — see Kent's note.]"""
-        if self.program.params.cvt()=='S':
+        patterns sit together).
+
+        EXCEPT the whole-word PROFILE check, which is a chooser: there the
+        profile most words are already in should be nearest to hand, so order by
+        MEMBER COUNT, biggest first (Kent 2026-08-21). Length then alphabetical
+        stay as tie-breaks, so groups of equal size keep the related-patterns
+        order and the list doesn't reshuffle between rebuilds.
+
+        The syllable PRIMITIVES keep the old order deliberately: '#C'/'C#' are
+        'C' before 'V', and 'syls' must stay numeric — neither reads better by
+        popularity. Counts come from the same source the buttons display
+        (`examples.getexamples`), so the order can't disagree with the numbers
+        on screen."""
+        params=self.program.params
+        if params.cvt()=='S':
+            if not params.is_syllable_primitive_check(params.check()):
+                try:
+                    exs=self.program.examples
+                    n={g:len(exs.getexamples(g)) for g in groups}
+                    return sorted(groups, key=lambda g: (-n[g], len(g), g))
+                except Exception as e:
+                    log.info("order_groups: size ordering skipped (%s)", e)
             return sorted(groups, key=lambda g: (len(g), g))
         return sorted(groups)
     @staticmethod
@@ -1518,7 +1595,26 @@ class StatusDict(dict):
             if g is not None:
                 self._groups=sn['groups']=g
             if not self._groups:
-                log.info(_("No groups to sort into! (using {kwargs} node {sn})"
+                # SAYS WHAT IT IS, not what it guesses someone wanted. This
+                # read is generic — anyone asking for the sorted groups of a
+                # slice lands here, including the status refresh — but it
+                # announced "No groups to sort into!", naming the sort as the
+                # purpose. That sent the NBQ diagnosis at the sort path twice in
+                # two logs (2026-09-02) before Kent corrected it: SORT does not
+                # need groups to begin with; an empty group list is the normal
+                # starting state of every slice-check, and groups come into
+                # existence as the user sorts. It is VERIFY and JOIN that
+                # require a group and must not run or build a page without one.
+                # So this line cannot say anything is wrong — it is reporting
+                # the ordinary initial condition.
+                # Nor does it claim sort WILL build: sort needs a WORD to sort,
+                # which is a different question from groups, and after a presort
+                # has assigned everything there may be none (Kent 2026-09-02).
+                # Groups absent is simply not the deciding fact for sort.
+                log.info(_("No sorted groups recorded yet for this slice — "
+                    "normal before sorting starts. Groups aren’t what sort "
+                    "needs (it needs a word to sort); verify and join do need "
+                    "one. (using {kwargs} node {sn})"
                     ).format(kwargs=kwargs,sn=sn))
                 return []
             return self.order_groups(self._groups)
@@ -1567,6 +1663,16 @@ class StatusDict(dict):
                 for s in thispsdict:
                     if s != 'V':
                         todo.extend([i[0] for i in thispsdict[s]])
+            else:
+                # No theoretical list exists for this cvt: the syllable 'S'
+                # primitives ('#C', 'C#', 'syls') take their groups from the node,
+                # not from the segment inventory. Empty is the honest start — the
+                # union below then yields exactly the current groups, instead of
+                # reaching it with `todo` unbound (Kent 2026-08-21, selecting a
+                # profile to sort in "Sort Word profiles" with cvt='S').
+                todo=list()
+                log.info("groups: no theoretical group list for cvt=%r; using "
+                        "the node's current groups",kwargs['cvt'])
             todo=set(todo)|set(sn['groups']) #either way, add current groups
             if not self._na_is_a_result(**kwargs):
                 todo.discard('NA') #theoretical list is shown to users
@@ -1727,7 +1833,19 @@ class StatusDict(dict):
                     # profile dimension is the CV profile, tracked in db.ps_profiles);
                     # 'S' profile classes/sentinels and not-yet-computed ps are left alone.
                     members=getattr(self.program.db,'ps_profiles',None)
-                    if (t!='S' and members is not None and ps in members
+                    # AN EMPTY SET IS NO INFORMATION, NOT "no members".
+                    # `ps_profiles` is built for ONE WORD FORM, and segmental
+                    # status nodes carry no form in their key (cvt, ps,
+                    # profile, check) — so switching the slice line to a form
+                    # nobody has profiled yet leaves every ps key present with
+                    # an EMPTY set, and this sweep read that as "every profile
+                    # has no member words" and deleted all of them. Kent,
+                    # 2026-09-30, switching a segmental sort to Root and back:
+                    # "the reload brought us to an empty status table, but
+                    # returning to Citation didn't give us back our data."
+                    #   The same reasoning as the `is not None` test beside it:
+                    # cull only deletes what it can positively show is empty.
+                    if (t!='S' and members is not None and members.get(ps)
                             and profile not in members[ps]):
                         del self[t][ps][profile]
                         continue
@@ -1764,7 +1882,18 @@ class StatusDict(dict):
             # the current word-form's ftype check. The three primitive checks
             # (#C/C#/syls) are owned by the dedicated Task-1 prep driver
             # (SyllablePrep.maybeverifysyllables) and never ride maybesort. See
-            # docs/syllable_sort_redesign.md.
+            # the syllable-sort redesign.
+            #   ONE ENTRY, THE CURRENT FORM'S. Plan 6 briefly made this the
+            # list of all word checks so the check line could choose the
+            # form; that was reverted 2026-09-30 once the scope came out
+            # right. The form is chosen on the SLICE line, beside the
+            # profile class, because it is slice-scope — and the check
+            # follows it, so the direction is ftype → check.
+            #   The check CODE is the ftype, and that is not incidental:
+            # LIFT stores the verification as `<check>=<group>` with the
+            # ftype as the check — `<field type="C_1_V lc verification">`
+            # holding `['lc=CV']` (Kent, 2026-09-30, from the file). A
+            # separate stage-2 code would orphan every one of those.
             self._checks=[self.program.params.ftype()]
         elif cvt == 'T':
             """This depends on ps and self.program.toneframes"""
@@ -1803,8 +1932,10 @@ class StatusDict(dict):
                     self._checksdict[cvt][ps]=list(self.program.toneframes[ps])
         elif cvt == 'S':
             # Task 2 (shared engine) does only the profile-class profile check
-            # (ftype); the #C/C#/syls primitives are the Task-1 prep driver's.
-            # updatechecksbycvt computes this fresh; cached here for completeness.
+            # (the current form's whole-word profile check); the #C/C#/syls
+            # primitives are the Task-1 prep driver's. updatechecksbycvt
+            # computes this fresh; cached here for completeness, so the two
+            # must agree — both are back to the ftype alone (2026-09-30).
             ftype=self.program.params.ftype()
             for ps in self.program.slices.pss():
                 self._checksdict[cvt][ps]=[ftype]
@@ -1968,13 +2099,31 @@ class StatusDict(dict):
         if self.group() == j:
             self.group(k)
     def makegroupok(self,**kwargs):
+        """Make the current group one that belongs to the current slice.
+
+        The counterpart of `makecheckok`, and until 2026-09-30 it had NO
+        CALLERS — written for this and never wired up, so a group survived
+        every change of check, profile, ps and cvt. `refreshattributechanges`
+        calls it now, once, after those have settled.
+
+        AN EMPTY SLICE CLEARS THE GROUP rather than keeping the old one.
+        This used to leave `_group` alone when a slice had no groups yet,
+        which is how a stage-1 syllable answer (`C`, from `#C`/`C#`) stayed
+        on screen beside a stage-2 check whose groups are cvprofiles — Kent,
+        2026-09-30: "C is not a legal value in C3C … I assume we're mixing
+        checks and groups across the two stages?" None reads as "All
+        groups", which is what a slice with nothing sorted into it means."""
         kwargs=grouptype(**kwargs)
         groups=self.groups(**kwargs)
         if not hasattr(self,'_group'):
              self._group=None #define this attr, one way or another
-        if groups != []:
+        if groups:
             if self._group not in groups:
                 self.group(groups[0])
+        elif self._group is not None:
+            log.info("no groups in this slice; clearing the group (was %r)",
+                     self._group)
+            self.group(None)
     def makecheckok(self, **kwargs): #result None w/no checks
         check=self.program.params.check()
         checks=self.checks(**kwargs)
@@ -1983,6 +2132,13 @@ class StatusDict(dict):
                 self.program.params.check(checks[0])
             else:
                 self.program.params.check(unset=True)
+            # CHANGING THE CHECK INVALIDATES THE GROUP, so settle it here
+            # rather than leaving every caller to remember — which is the
+            # failure mode that produced the stale groups in the first
+            # place (2026-09-30). `setcvt` in particular calls this AFTER
+            # `refreshattributechanges` has already run, so nothing
+            # downstream would have caught it.
+            self.makegroupok(**kwargs)
     def toneframedefn(self):
         d=self.program.toneframes[self.program.slices.ps()][self.program.params.check()]
         return d
