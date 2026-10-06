@@ -143,7 +143,7 @@ class Categories:
         # field that records the same code.
         #   Same write the verify path uses for an unverified group
         # (sorting_engine.py:326, `group if verified else False`).
-        if group=='NA' and getattr(self,'cvt',None)=='S':
+        if group=='NA' and getattr(self,'cvt',None)=='σ':
             ftype=self.program.params.ftype()
             if check==ftype:
                 sense.cvprofilevalue(ftype,False)

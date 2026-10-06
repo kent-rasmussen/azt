@@ -183,7 +183,7 @@ class Segments(Senses):
     # `show_second_fields=True` STOOD HERE and is gone (2026-09-29, plan 1 of
     # the second-form flags audit). On `Segments` it meant EVERY
     # segmental task drew the second-form field line — SortV, SortC, SortCV,
-    # TranscribeS/V/C, RecordCitation and the whole Report family — none of
+    # TranscribeCV/V/C, RecordCitation and the whole Report family — none of
     # which ever reads the setting. The audit's matrix found the line was
     # drawn on eleven task families and needed by two.
     #   It is now `whole_word_checks`, on `WordCollection` and `Syllables`.

@@ -17,7 +17,6 @@ Also his: *"both on Sort!, not before, since the settings is meaningless
 before"* — the group buttons live in the run window, so zero frames re-laid
 is a normal answer, not a failure.
 """
-import inspect
 from types import SimpleNamespace
 
 import pytest
@@ -205,7 +204,12 @@ def test_remove_group_button_uses_the_same_sweep():
 
 def test_the_build_records_which_branch_set_the_count():
     """`_columns_from_setting` is what lets a refresh tell a pinned frame
-    from a settings-driven one without re-deriving the branch."""
-    src = inspect.getsource(SortButtonFrame.__init__)
-    assert src.count('_columns_from_setting') == 3, \
+    from a settings-driven one without re-deriving the branch.
+
+    `code()`, not `getsource()`: the comment above those branches EXPLAINS
+    `_columns_from_setting`, so the raw source counts four and this failed
+    on its first run against perfectly correct code. The helper exists for
+    exactly this and was not used here."""
+    from sourcescan import code
+    assert code(SortButtonFrame.__init__).count('_columns_from_setting') == 3, \
         'all three branches must say where the column count came from'

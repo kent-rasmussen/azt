@@ -1239,7 +1239,7 @@ class StatusFrame(ui.Frame):
         self.labels['profile']['text'].set(self.profilevalue())
         self.updateps()
     def profilelabel(self):
-        if self.program.params.cvt()=='S':
+        if self.program.params.cvt()=='σ':
             # 'S' sorts the whole ps across all profiles; the per-profile label
             # doesn't apply (the sentinel 'whole-word' profile would be shown).
             return _("Sorting whole words by syllable profile")
@@ -1269,12 +1269,12 @@ class StatusFrame(ui.Frame):
         `profilelabel()` returns the whole sentence, which was right while
         the line was one clickable label. A click-to-edit field needs the
         VALUE by itself, with "Looking at" as its own prefix."""
-        if self.program.params.cvt()=='S':
+        if self.program.params.cvt()=='σ':
             # THE PROFILE CLASS, which is what 'S' slices by — `C2V`, not a
             # cvprofile. This returned '' with the note "'S' sorts the whole
             # ps across profiles; there is no single profile to show", which
             # was wrong twice: the slice IS a single profile class once the
-            # three primitives compose one (`status.node(cvt='S', …,
+            # three primitives compose one (`status.node(cvt='σ', …,
             # profile=profile_class, …)` has always keyed on it), and there
             # is no ps in it at all.
             #   Before that, during prep, there genuinely is no class yet —
@@ -1370,7 +1370,7 @@ class StatusFrame(ui.Frame):
         # primitives when clicking on 'looking', but no label?") — and it
         # LEAKED onto Record Words, which draws this line with whatever cvt
         # it inherited.
-        syllables=self.program.params.cvt()=='S'
+        syllables=self.program.params.cvt()=='σ'
         # THE FORM COMES FIRST, because it is the widest scope on the line.
         # Kent, 2026-09-30: "looking at {ps} words is the higher scope (than
         # checking {cvt}, working on {check}) and {ftype} is higher than ps,
@@ -1599,13 +1599,13 @@ class StatusFrame(ui.Frame):
             return _("All groups")
         # For syllable prep the bare code ('C'/'V'/'2') is cryptic; show the
         # human group name (e.g. 'consonant initial', '2 syllables').
-        if self.program.params.cvt()=='S' and \
+        if self.program.params.cvt()=='σ' and \
                 self.program.params.is_syllable_primitive_check():
             return str(self.program.params.syllable_group_name(
                             self.program.params.check(),group))
         return str(group)
     def cvgroupnames(self,g):
-        if self.program.params.cvt()=='S' and \
+        if self.program.params.cvt()=='σ' and \
                 self.program.params.is_syllable_primitive_check():
             return str(self.program.params.syllable_group_name(
                             self.program.params.check(),g))
@@ -2041,7 +2041,17 @@ class StatusFrame(ui.Frame):
         profileori=self.program.slices.profile()
         self.program.status.cull() #remove nodes with no data
         if self.cvt in self.program.status:
-            if self.ps in self.program.status[self.cvt]: #because we cull, this == data is there.
+            # THE SYLLABLE SORT HAS NO ps. Its nodes sit under SYLLABLE_PREP_PS
+            # ('*'), not the live category (2026-09-30, the
+            # syllable-sort-is-not-per-ps item) — but this gate kept asking
+            # whether the LIVE ps had a node, which it never does for σ, so
+            # the syllable board fell through to "No Progress board" on every
+            # open since that day. Found 2026-10-02 verifying the σ migration
+            # (Kent: "syllable profiles doesn't get a status table … maybe
+            # that was already broken"). It was.
+            ps_key=(self.program.params.SYLLABLE_PREP_PS if self.cvt=='σ'
+                    else self.ps)
+            if ps_key in self.program.status[self.cvt]: #because we cull, this == data is there.
                 if self.cvt == 'T':
                     if self.ps in self.program.toneframes:
                         self.makeprogresstable()
@@ -2049,7 +2059,7 @@ class StatusFrame(ui.Frame):
                     else:
                         log.info("Ps {} not in toneframes ({})".format(self.ps,
                                 self.program.toneframes))
-                elif self.cvt == 'S':
+                elif self.cvt == 'σ':
                     # Task 1 (prep) board until the three primitive checks are
                     # fully verified; then the Task-2 profile-class board.
                     if self.program.params.syllable_prep_complete(self.ps):
@@ -2073,7 +2083,7 @@ class StatusFrame(ui.Frame):
         # cvprofile is a fact about the form (2026-09-30, the
         # syllable-sort-is-not-per-ps item). The segmental boards keep it:
         # there the slice genuinely IS (profile × ps).
-        if self.program.params.cvt()=='S':
+        if self.program.params.cvt()=='σ':
             ui.Label(titleframe, text=_('Syllable profile progress'),
                      font='title', row=0,column=1,sticky='nwe',padx=10)
             return
@@ -2180,7 +2190,7 @@ class StatusFrame(ui.Frame):
         if not hasattr(self,'_cells'): #This may be called without a table
             return
         log.info(f"update_active_cell {args=}")
-        if self.program.params.cvt()=='S': #cells keyed by profile class (the slice)
+        if self.program.params.cvt()=='σ': #cells keyed by profile class (the slice)
             new_cell=self._cells.get(self.program.slices.profile())
         else:
             new_cell=self._cells.get((self.program.slices.profile(),
@@ -2206,7 +2216,7 @@ class StatusFrame(ui.Frame):
         """Update leaderboard highlight to match current profile/check."""
         if not hasattr(self,'_cells'):
             return
-        if self.program.params.cvt()=='S': #cells keyed by profile class (the slice)
+        if self.program.params.cvt()=='σ': #cells keyed by profile class (the slice)
             new_cell=self._cells.get(self.program.slices.profile())
         else:
             profile=self.program.slices.profile()
@@ -2444,7 +2454,7 @@ class StatusFrame(ui.Frame):
                 try:
                     # ps-free: see `_has_work` below and the
                     # syllable-sort-is-not-per-ps item.
-                    done=set(status.node(cvt='S',ps=prep_ps,profile=pc,
+                    done=set(status.node(cvt='σ',ps=prep_ps,profile=pc,
                                         check=ftype).get('done',[]))
                 except Exception:
                     done=set()
@@ -2501,7 +2511,7 @@ class StatusFrame(ui.Frame):
                 # category — reading it under one ps showed a class as
                 # unfinished because the work had been recorded under
                 # another (2026-09-30, the syllable-sort-is-not-per-ps item).
-                n=status.node(cvt='S',ps=prep_ps,profile=pc,check=ftype)
+                n=status.node(cvt='σ',ps=prep_ps,profile=pc,check=ftype)
                 g=set(n.get('groups',[])); d=set(n.get('done',[]))
                 return bool(g) and not (g<=d)  # unverified groups
             except Exception:
@@ -2595,7 +2605,7 @@ class StatusFrame(ui.Frame):
             p=self.program.params
             return p.is_syllable_primitive_check(check) or \
                    p.is_syllable_primitive_check(str(check).rsplit('-',1)[0])
-        if self.cvt!='S':
+        if self.cvt!='σ':
             self.checks=[c for c in self.checks if not _is_syl_prep(c)]
         # log.info("allchecks dicted: {}".format(allchecks))
         if self.cvt != 'T': #don't resort tone frames
@@ -2828,7 +2838,7 @@ class StatusFrame(ui.Frame):
         self.makeproseframe()
         self.interfacelangline()
         self.analangline()
-        # if isinstance(self.task,Segments) and not isinstance(self.task,TranscribeS):
+        # if isinstance(self.task,Segments) and not isinstance(self.task,TranscribeCV):
         if not self.program.task or self.is_descendant_of(self.program.taskchooser):
             return
         self.glosslangline()
@@ -2855,7 +2865,7 @@ class StatusFrame(ui.Frame):
                 not getattr(self.program.task,'do_not_show_slices')):
                 # isinstance(self.task,(TaskChooser,
                 #                             Parse,
-                #                             TranscribeS,
+                #                             TranscribeCV,
                 #                             WordCollection))
                 # ):
             self.makesliceattrs()
@@ -2875,7 +2885,7 @@ class StatusFrame(ui.Frame):
             if getattr(self.program.task,'show_buttoncolumnsline'):
                 # isinstance(self.task,Sort) and not isinstance(self.task,Transcribe):
                 self.buttoncolumnsline()
-                if self.program.params.cvt()=='S': # syllable prep: slice size matters
+                if self.program.params.cvt()=='σ': # syllable prep: slice size matters
                     self.maxsliceline()
         if getattr(self.program.task,'show_parser_ui'):
             self.parserlevels()
@@ -3684,7 +3694,7 @@ class TaskDressing(HasMenus,ui.Window):
             w=ui.Window(self,title=title_mod(_('Select Framed Tone Group')))
             self._getgroup(window=w,**kwargs) #guess=guess,
             # windowT.wait_window(window=windowT) #?!?
-        elif cvt == 'S':
+        elif cvt == 'σ':
             # The syllable-prep primitives ('#C', 'C#', 'syls') and the profile
             # checks. These fell through with `w` unbound, so "Sort Word profiles"
             # died on an UnboundLocalError at the return below (Kent 2026-08-21).

@@ -1,7 +1,7 @@
 # coding=UTF-8
 """Shared glyph transcription window logic.
 
-Used by TranscribeS (as a task) and by Sort.name_new_glyphs (standalone).
+Used by TranscribeCV (as a task) and by Sort.name_new_glyphs (standalone).
 Contains the makewindow UI builder and all supporting methods for
 naming/renaming glyph groups.
 """

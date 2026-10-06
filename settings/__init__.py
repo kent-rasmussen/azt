@@ -134,6 +134,31 @@ from utilities.utilities import *
 
 _log = _logsetup.getlog(__name__)
 
+def migrate_syllable_tier_code(status):
+    """Rename the syllable tier's status key from 'S' to 'σ', in place.
+
+    THE S-CODES DECISION (Kent, 2026-10-02): "syllable --> :sigma: everywhere
+    a code is used. S alone is **always** sonorant. segmental --> 'CV'."
+    `status[cvt][ps][profile][check]` is the one persisted place the tier
+    code is a key (`<project>.data.json`, shared by every user and host of
+    the project), so a file written before that day still says 'S'. The cvt
+    SETTING takes the same trip in `CheckParameters.cvt()`; class names were
+    never persisted. Verification field names and annotations carry no tier
+    code, so the LIFT file is untouched.
+
+    If both keys are somehow present, 'σ' wins and 'S' fills only what 'σ'
+    lacks — the newer file is the one that was written by code that knew.
+    Returns True when anything changed, so the caller can save."""
+    if not isinstance(status,dict) or 'S' not in status:
+        return False
+    old=status.pop('S') or {}
+    new=status.setdefault('σ',{})
+    for k,v in old.items():
+        new.setdefault(k,v)
+    _log.info("status: syllable tier key 'S' → 'σ' (%d node%s)",
+              len(old), '' if len(old)==1 else 's')
+    return True
+
 
 from utilities.error_handler import notify_error as ErrorNotice
 
@@ -470,6 +495,10 @@ class Settings(SettingsUI):
         return d
     def readsettingsdict(self,settingsdict):
         """This takes a dictionary keyed by attribute names"""
+        # The syllable tier's status key moved from 'S' to 'σ' on 2026-10-02;
+        # `loadsettingsfile` migrates the stored dict before it reaches here
+        # (see migrate_syllable_tier_code). The cvt SETTING takes the same
+        # trip inside CheckParameters.cvt(), which maps a saved 'S' to 'σ'.
         if 'fs' in settingsdict:
             o=self.soundsettings
         else:
@@ -543,6 +572,9 @@ class Settings(SettingsUI):
                 domain_mgr = getattr(self.mgr, domain_name)
                 data = domain_mgr.load()
                 if data:
+                    if (setting == 'status'
+                            and migrate_syllable_tier_code(data.get('status'))):
+                        domain_mgr.save() #load() returned domain_mgr.data itself
                     self.readsettingsdict(data)
                     json_had_data=True #this domain's JSON has real content
                 if setting == 'status' and not hasattr(self.program,'status'):
@@ -570,7 +602,9 @@ class Settings(SettingsUI):
                 self.adhocgroups={}
             return
         if setting == 'status':
-            self.makestatus({k:d[k] for k in d if k != 'DEFAULT'})
+            legacy={k:d[k] for k in d if k != 'DEFAULT'}
+            migrate_syllable_tier_code(legacy)
+            self.makestatus(legacy)
             _log.info(_("makestatus legacy: {status}").format(status=self.program.status))
         elif setting == 'toneframes':
             self.program.toneframes.source({k:d[k] for k in d if k != 'DEFAULT'})
@@ -1250,7 +1284,7 @@ class Settings(SettingsUI):
         self._groups=[]
         if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
             fn=Tone.getitemgroup
-        elif cvt == 'S': #whole-word syllable profile, read from cvprofile field
+        elif cvt == 'σ': #whole-word syllable profile, read from cvprofile field
             fn=Syllables.getitemgroup
         else:
             fn=Segments.getitemgroup #This pulls from annotation, not form
@@ -1335,7 +1369,7 @@ class Settings(SettingsUI):
             # the second-form flags audit.
             #   Only for cvt 'S': the second-form checks are whole-word
             #   syllable-profile checks and appear nowhere else.
-            if t == 'S':
+            if t == 'σ':
                 try:
                     self.program.status.updatechecksbycvt()
                     self.program.status.makecheckok()

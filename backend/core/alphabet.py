@@ -358,6 +358,9 @@ class Alphabet():
             for cvt in [cvt for cvt,glyphs in d.items() if glyph in glyphs]:
                 d[cvt].remove(glyph)
         log.info(_("‘{glyph}’ removed from verified list").format(glyph=glyph))
+        # Same rule as StatusDict.update: a glyph that loses verification
+        # loses every "distinct from" pair naming it (Kent, 2026-10-02).
+        self.undistinguish_any_with(glyph)
         return self.glyphdict(d)
     def cull_glyphdict(self):
         """This limits the verified glyphs to those that actually have members.

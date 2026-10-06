@@ -175,15 +175,22 @@ class SortButtonFrame(ui.ScrollingFrame):
         if '=' in self.check and not self.macrosort:
             skiptext+=f" ({self.check.replace('=','≠')})"
         """This should just add a button, not reload the frame"""
-        # The 'S' word-initial/word-final checks are CLOSED binaries — no
-        # new-group ("Other"). (syls is open: it keeps the normal buttons.)
-        closed=(self.cvt=='S'
-                and self.program.params.is_syllable_boolean_check(self.check))
+        # No "Other" for a location that is not OPEN: a boolean's only
+        # alternative is the other label, and a cardinal is corrected by ±1,
+        # never founded (the data-type declaration, 2026-10-02). In practice
+        # this branch is unreachable: the three primitives never get a sort
+        # page — prep runs verify-only pages through maybeverifysyllables, and
+        # a miscount goes through ask_syllable_count's Shorter/Longer — so it
+        # reads the declaration rather than restating it. The comment here
+        # used to say syls "is open: it keeps the normal buttons"; it was never
+        # on this page at all (Kent, 2026-10-02: "show me how").
+        closed=(self.cvt=='σ'
+                and self.program.params.data_type(self.check)!='open')
         # The 'S' PROFILE check: a new group is a new CV-profile WITHIN the class,
         # which must be a REAL, primitive-consistent value — so its new-group
         # affordance is the two-page picker (pick_syllable_profile), never the
         # integer stub add_int_group the other checks use. See ADR 0003.
-        syl_profile=(self.cvt=='S'
+        syl_profile=(self.cvt=='σ'
                 and not self.program.params.is_syllable_primitive_check(self.check))
         bf1=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
         if closed:
@@ -216,7 +223,7 @@ class SortButtonFrame(ui.ScrollingFrame):
             if todo:
                 self.task.unverify_profile(todo[0])
             sortnext() #advance with NO group chosen → maybesort restarts w/o it
-        if (self.program.slices.profile() and self.cvt!='S'
+        if (self.program.slices.profile() and self.cvt!='σ'
                 and not self.macrosort):
             bfnp=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
             ui.Button(bfnp, text=_("Not {profile}").format(

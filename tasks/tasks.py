@@ -1443,9 +1443,35 @@ class ToneFrameDrafter(ui.Window):
     def store(self):
         log.info(_("Saving toneframes dict to file"))
         self.program.settings.storesettingsfile('toneframes')
+def task_for_tier(family,tier):
+    """The task class of `family` ('Sort' or 'Transcribe') that works on
+    `tier`, or None when there is none.
+
+    ONE TABLE, NO STRING ARITHMETIC. Until 2026-10-02 the tier switch built a
+    class name by concatenation — `task_base + cvt` in `Settings.setcvt`,
+    f"Sort{cvt}" in `Sort.update_to_cvt` and in TranscribeCV's two go-back
+    paths — and `program.task_base()` recovered the family by STRIPPING the
+    cvt letters off the class name. Both broke on the syllable sort: its
+    class is `SortSyllables` and its cvt was `'S'`, which also happened to
+    be the first letter of `SortS`, the segmental base. So choosing `S` on
+    a vowel sort opened the segmental base, and choosing `V` on the
+    syllable sort asked for `SortSyllableV`. Found by reading, 2026-10-02.
+
+    None is an answer, not an error: the tier line offers CV and VC on a
+    transcribe task, and there is no transcribe task for them (there never
+    was; the concatenation raised AttributeError). Callers log and stay.
+
+    Names are resolved at call time, so this may sit above the classes it
+    names. `σ` is the syllable tier (the S-codes decision, 2026-10-02); a
+    saved `'S'` is mapped to it in `CheckParameters.cvt()` before it gets
+    here."""
+    table={'Sort':      {'C':SortC,'V':SortV,'T':SortT,'σ':SortSyllables},
+           'Transcribe':{'C':TranscribeC,'V':TranscribeV,'T':TranscribeT}}
+    return table.get(family,{}).get(tier)
 class Sort(backend.core.sorting_engine.Sort):
     is_sort_task=True
     cvt_sensitive=True
+    task_family='Sort' # read by program.task_base(); feeds task_for_tier
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
                 'fn':self.runcheck,
@@ -1469,7 +1495,7 @@ class SortSyllables(backend.core.sorting_engine.SyllablePrep,
     # the syllable-sort redesign and the sort-syllables design.
     taskicon = 'iconWord'
     tasktitle = "Sort Word Syllables" #Citation Form Sorting in Tone Frames
-    cvt='S'
+    cvt='σ' # the syllable tier (was 'S' until 2026-10-02; S alone is the sonorant class)
     def tooltip(self):
         return _("This task helps you sort words in citation form by whole "
                 "word syllable profiles.")
@@ -1517,12 +1543,21 @@ class SortSyllables(backend.core.sorting_engine.SyllablePrep,
         super().__init__(**kwargs)
         self.reload_for_word_check()
 class SortCV(Sort,Segments,Task):
-    """docstring for SortCV."""
+    """The segmental base: the CV tier's sort task, which SortV and SortC
+    inherit. Not offered in the chooser today; when the combination
+    checks (CV1, VC2 …) are sorted, this is where they run.
+
+    WAS `SortS` UNTIL 2026-10-02. That `S` meant Segment, while the cvt
+    value `'S'` meant the syllable-profile sort, and the two were bridged by
+    string concatenation (`task_base + cvt`, f"Sort{cvt}"): choosing `S` on
+    a segment sort resolved to THIS class instead of `SortSyllables`, and
+    from `SortSyllables` choosing `V` asked for `SortSyllableV`. Kent:
+    "segmental --> 'CV' everywhere a code is used … a SortCV which is not
+    currently called, but is mixed into SortV and SortC." A dormant stub
+    already carried this name; this is that name on the real body. The
+    tier→class mapping is now the explicit table in `task_for_tier`."""
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-class SortS(Sort,Segments,Task):
-    def __init__(self, **kwargs):
-        """TranscribeS sends us here with redo_glyph, to resume sorting that was interrupted
+        """TranscribeCV sends us here with redo_glyph, to resume sorting that was interrupted
         by the need to transcribe a segment. This should probably be handled differently."""
         """Sort.update_to_cvt sends us here with sort_immediately if it is asked to sort
         an item with a wrong cvt"""
@@ -1547,7 +1582,7 @@ class SortS(Sort,Segments,Task):
         else:
             # Profiles fine / affirmed / acknowledged: reveal the board now.
             self.deiconify()
-class SortV(Vowels,SortS):
+class SortV(Vowels,SortCV):
     taskicon = 'iconV'
     tasktitle = "Sort Vowels" #Citation Form Sorting in Tone Frames
     def tooltip(self):
@@ -1558,7 +1593,7 @@ class SortV(Vowels,SortS):
         #     self.redo_joinglyphs(g)
         # elif g:=kwargs.get("sort_immediately"):
         #     self.runcheck()
-class SortC(Consonants,SortS):
+class SortC(Consonants,SortCV):
     taskicon = 'iconC'
     tasktitle = "Sort Consonants" #Citation Form Sorting in Tone Frames
     def tooltip(self):
@@ -1609,7 +1644,7 @@ class SortT(Sort,Tone,Task):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
     def __init__(self, **kwargs): #frame, filename=None
-        # Stay withdrawn until the syllable-profile offer is answered (see SortS):
+        # Stay withdrawn until the syllable-profile offer is answered (see SortCV):
         # one answer ('sort') sends the user elsewhere, so this board must not
         # paint first.
         kwargs["withdrawn"]=True
@@ -1622,6 +1657,7 @@ class SortT(Sort,Tone,Task):
     """Doing stuff"""
 class Transcribe(Sound,Categories,Task):
     cvt_sensitive=True
+    task_family='Transcribe' # read by program.task_base(); feeds task_for_tier
     def updateerror(self):
         newvalue=self.transcriber.formfield.get()
         if newvalue == '':
@@ -1716,10 +1752,10 @@ class Transcribe(Sound,Categories,Task):
         self.mistake=True
     def submitform(self):
         # Only tone reaches submitform now: segmental glyph naming goes through
-        # GlyphTranscribeHelper (TranscribeS.makewindow delegates to it), which
+        # GlyphTranscribeHelper (TranscribeCV.makewindow delegates to it), which
         # has its own submitform + polygraphwarn. The former 'if cvt != "T"'
         # segmental branch here, and Transcribe.polygraphwarn, were dead — their
-        # only entry was TranscribeS.done, which nothing wired — so both are
+        # only entry was TranscribeCV.done, which nothing wired — so both are
         # gone. (polygraphwarn now lives solely on the helper.)
         newvalue=self.transcriber.formfield.get()
         """updateforms=True doesn't seem to be working for segments"""
@@ -1848,7 +1884,8 @@ class Transcribe(Sound,Categories,Task):
         self.mistake=False #track when a user has made a mistake
         self.analang=self.program.params.analang()
         self.program.status.makecheckok()
-class TranscribeS(Transcribe,Segments):
+class TranscribeCV(Transcribe,Segments):
+    # Was `TranscribeS` until 2026-10-02; see SortCV for why the S went.
     macrosort=True
     do_not_show_slices=True
     glyph_leaderboard=True
@@ -1860,7 +1897,7 @@ class TranscribeS(Transcribe,Segments):
         log.info("Transcribe done for now (going back)")
         self.ui.runwindow.on_quit()
         self.program.soundsettings.done_audio()
-        self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
+        self.program.taskchooser.maketask(task_for_tier('Sort',self.program.params.cvt()),
                                         redo_glyph=self.group)
     def set_ok_w_form(self,error=False):
         form=self.transcriber.formfield.get()
@@ -1891,14 +1928,14 @@ class TranscribeS(Transcribe,Segments):
 
     def _go_back_from_helper(self):
         self.program.soundsettings.done_audio()
-        self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
+        self.program.taskchooser.maketask(task_for_tier('Sort',self.program.params.cvt()),
                                         redo_glyph=self._glyph_helper.group)
     def __init__(self, program, **kwargs):
         self.switch_text=_("Switch letters with this group")
         self.switch_tt=_("This switches letters for the two groups, and "
                             "updates each of them")
         super().__init__(program=program, **kwargs)
-class TranscribeV(TranscribeS):
+class TranscribeV(TranscribeCV):
     tasktitle = "Vowel Letters"
     def tooltip(self):
         return _("This task helps you decide on your vowel letters.")
@@ -1908,7 +1945,7 @@ class TranscribeV(TranscribeS):
         self.glyphspossible=VOWEL_GLYPHS
         self.cvt=program.params.cvt('V')
         super().__init__(program=program, **kwargs)
-class TranscribeC(TranscribeS):
+class TranscribeC(TranscribeCV):
     tasktitle = "Consonant Letters"
     def tooltip(self):
         return _("This task helps you decide on your consonant letters.")

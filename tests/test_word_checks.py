@@ -432,7 +432,7 @@ def test_each_syllable_check_is_named_for_itself():
     entry in the list hid it; a chooser does not."""
     names = {}
     p = _params({'Noun': 'Plural'}, ftype='lc')
-    p.cvt = lambda: 'S'
+    p.cvt = lambda: 'σ'
     for attr in ('cvcheckname', 'is_syllable_primitive_check',
                  'syllable_check_name', 'check'):
         setattr(p, attr,
@@ -454,7 +454,7 @@ def test_a_prep_primitive_is_still_named_for_itself():
     """The other half of the same method: #C/C#/syls share one ftype, so
     they are named by the primitive rather than the form."""
     p = _params(ftype='lc')
-    p.cvt = lambda: 'S'
+    p.cvt = lambda: 'σ'
     for attr in ('cvcheckname', 'is_syllable_primitive_check',
                  'syllable_check_name', 'check'):
         setattr(p, attr,

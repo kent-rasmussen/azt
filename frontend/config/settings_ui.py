@@ -343,12 +343,23 @@ class SettingsUI(object):
         if not self.program.task:
             log.info(_("No task, apparently, so not worried about changing cvt"))
         elif self.program.task.cvt_sensitive: #Sort and Transcribe
-        # isinstance(self.program.task,Transcribe):
-            log.info(_("Switching {task_base} tasks").format(task_base=task_base))
-            # newtaskclass=getattr(sys.modules[__name__],task_base+choice)
-            newtaskclass=task_base+choice
-            self.program.status.makecheckok() #this is intentionally broad: *any* check
-            self.program.taskchooser.maketask(newtaskclass)
+            # ONE TABLE, NOT `task_base+choice`: the concatenation made
+            # "SortS" (the segmental base) out of choosing S on a vowel
+            # sort, and "SortSyllableV" out of choosing V on the syllable
+            # sort. See tasks.task_for_tier (2026-10-02).
+            from tasks.tasks import task_for_tier
+            newtaskclass=task_for_tier(task_base,choice)
+            if newtaskclass is None:
+                # CV/VC on a transcribe task: there is no such task, and
+                # never was (this raised AttributeError before). The tier
+                # is set; the board redraws; nothing else happens.
+                log.info(_("No {task_base} task for {cvt}; staying put."
+                           ).format(task_base=task_base,cvt=choice))
+                self.program.mainwindow.status.maybeboard()
+            else:
+                log.info(_("Switching {task_base} tasks").format(task_base=task_base))
+                self.program.status.makecheckok() #this is intentionally broad: *any* check
+                self.program.taskchooser.maketask(newtaskclass)
         # elif isinstance(self.program.task,Sort):
         #     # log.info("Switching Sort tasks")
         #     newtaskclass=getattr(sys.modules[__name__],'Sort'+choice)
@@ -533,7 +544,7 @@ class SettingsUI(object):
         # rebuilds the prep board via _prep_board_data, whose build() re-slices
         # the checks whose cap changed and re-derives 'done' from the durable
         # per-sense codes (so verified words stay verified). Syllable prep only.
-        if self.program.params.cvt()=='S':
+        if self.program.params.cvt()=='σ':
             status.after(10,status.maybeboard)
     # `window=None` on all three (2026-09-30): these lines are click-to-edit
     # now, and a click-to-edit setter is called with ONE argument. Without

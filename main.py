@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.49' #This is a string...
+__version__='1.15.51' #This is a string...
 # `--help` BEFORE ANYTHING ELSE, and that position is the point: asking a
 # program what its switches are must not build a venv, install packages or
 # trip the duplicate gate, and must work on a machine where the dependencies
@@ -195,7 +195,7 @@ from tasks.tasks import (ExportData, AlphabetChart, AlphabetComparisonPages,
     WordCollectionCitationwRecordings, ParseWords, WordCollectnParse,
     WordCollectnParsewRecordings, WordsParse, ParseSlice, ParseSliceWords, Placeholder,
     ToneFrameDrafter, SortSyllables, SortCV, SortV, SortC, SortT, Transcribe,
-    TranscribeS, TranscribeV, TranscribeC, TranscribeT, JoinUFgroups, RecordCitation,
+    TranscribeCV, TranscribeV, TranscribeC, TranscribeT, JoinUFgroups, RecordCitation,
     RecordCitationT, ReportCitation, ReportCitationBackground,
     ReportCitationMulticheckBackground, ReportCitationMultichecksliceBackground,
     ReportCitationByUF, ReportCitationByUFMulticheckBackground,
@@ -1218,25 +1218,18 @@ class App:
         if newtk: #likely never work/needed?
             self.tk_root.mainloop() #This has to be the last thing
     def task_base(self):
+        """The current task's family ('Sort', 'Transcribe'), or its class
+        name when it has none, or "No task".
+
+        DECLARED, NOT DERIVED. This used to recover the family by stripping
+        the cvt letters off the class name (`name[:-len(cvt)]`), which gave
+        "Sort" for `SortV` and "SortSyllable" for `SortSyllables` under cvt
+        `'S'` — the string-arithmetic trap `tasks.task_for_tier` describes.
+        The family is now a class attribute, `task_family`, on `Sort` and
+        `Transcribe` (2026-10-02)."""
         if not self.task:
             return "No task"
-        cvt=self.params.cvt()
-        name=self.task.__class__.__name__
-        # cvt is None on a fresh project before any cvt-bearing task
-        # has run (the chooser doesn't seed params.cvt) — normal, not
-        # an anomaly; crashed TaskChooser init via the base.py boot
-        # log line (field 2026-07-17, fresh project copy).
-        if cvt and cvt in name:
-            return name[:-len(cvt)]
-        if getattr(self.task,'cvt_sensitive',False) \
-                and name.endswith(('S','T')):
-            # params.cvt out of sync with a cvt-suffixed task class;
-            # the class name itself carries the suffix.
-            return name[:-1]
-        if cvt:
-            log.info(f"cvt {cvt} not in task name {name}; "
-                     "not sure how to derive a base")
-        return name
+        return getattr(self.task,'task_family',self.task.__class__.__name__)
     def reload_database(self):
         """A5 (in-place reload): re-read the LIFT from disk and rebuild
         everything derived from it — no process restart. Used when the

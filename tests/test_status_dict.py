@@ -167,6 +167,42 @@ def test_distinguish_and_isdistinguished_are_orderless():
     assert not sd.isdistinguished("2", group="1", **KW)
 
 
+def test_a_group_that_loses_verification_loses_its_distinctions():
+    """Kent, 2026-10-02: "e<>ε shouldn't stand if either group's members
+    change" — a distinction was judged against the members both groups had
+    at the time. Sorting a new member into a done group un-verifies it
+    (`status.update(verified=False)`), and that must void every pair naming
+    it. Pairs between OTHER groups stand; a rename still carries pairs along
+    (the renamegroup test above)."""
+    sd, _ = make_status()  # fake current slice = T/Noun/CVC/c1 == KW
+    sd.verified(["1", "2", "3"], **KW)
+    sd.distinguish(("1", "2"), **KW)
+    sd.distinguish(("3", "1"), **KW)
+    sd.distinguish(("2", "3"), **KW)
+    assert sd.update(group="1", verified=False, writestatus=False) is True
+    assert not sd.isdistinguished("2", group="1", **KW)
+    assert not sd.isdistinguished("3", group="1", **KW)
+    assert sd.isdistinguished("3", group="2", **KW), "other pairs stand"
+    # A group that was not verified loses nothing when "un-verified" again.
+    sd.distinguish(("1", "2"), **KW)
+    assert sd.update(group="1", verified=False, writestatus=False) is False
+    assert sd.isdistinguished("2", group="1", **KW)
+
+
+def test_the_reverify_paths_go_through_update():
+    """Both user-requested re-verifications used to edit the done list in
+    place (`done.remove(group); status.verified(done)`), which would have
+    bypassed the rule above. The alphabet's un-verify applies it too."""
+    pytest.importorskip("backend.core.sorting_engine")
+    from sourcescan import code as _code
+    from backend.core import sorting_engine, alphabet
+    for fn in (sorting_engine.Sort.reverify_group, sorting_engine.Sort.reverify):
+        src = _code(fn)
+        assert "update(group=group,verified=False)" in src.replace(" ", ""), fn.__qualname__
+        assert "done.remove(group)" not in src, fn.__qualname__
+    assert "undistinguish_any_with(glyph)" in _code(alphabet.Alphabet.mark_glyph_not_done)
+
+
 # ── sense to-sort / sorted bookkeeping ───────────────────────────────────
 
 def test_marksensesorted_moves_sense_and_clears_tosort_when_empty():

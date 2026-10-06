@@ -2757,7 +2757,7 @@ class Theme:
         ('iconVCCVRepcomp','AZZA Report Comprehensive_icon.png'),
         ('USBdrive','USB drive.png'),
         ('T','T alone clear6.png'), ('C','Z alone clear6.png'),
-        ('V','A alone clear6.png'), ('S','ZA alone clear6.png'), #syllable-profile (cvt 'S'); was 'CV'
+        ('V','A alone clear6.png'), ('σ','ZA alone clear6.png'), #syllable-profile (cvt 'σ'; was 'S', before that 'CV')
         ('Word','ZAZA clear stacks6.png'), ('WordRec','ZAZA Rclear stacks6.png'),
         ('TRec','T Rclear stacks6.png'),
         ('Report','Report.png'), ('ReportLogo','Generic AZT Reports.png'),

@@ -81,8 +81,8 @@ IMAGELIST = [
     ('V4', 'A alone 4.png'),
     ('V5', 'A alone 5.png'),
     ('V6', 'A alone 6.png'),
-    # syllable-profile (cvt 'S'); was 'CV' (dormant SortCV)
-    ('S', 'ZA alone clear6.png'),
+    # syllable-profile (cvt 'σ'; was 'S', before that 'CV')
+    ('σ', 'ZA alone clear6.png'),
     ('Word', 'ZAZA clear stacks6.png'),
     ('WordRec', 'ZAZA Rclear stacks6.png'),
     ('TRec', 'T Rclear stacks6.png'),

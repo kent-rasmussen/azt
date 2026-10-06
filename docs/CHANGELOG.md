@@ -19,6 +19,117 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Unreleased — built 2026-10-02, AWAITING VERIFICATION
+
+**An un-analysable word gets one syllable, not no count.** The presort
+left `syls` empty for a form it could not read, with a note that "the
+syls sort will ask for it"; there is no syls sort (prep is verify-only),
+so such a word sat in no group and no slice, and prep completed around it
+(logged as "prep unsorted in syls", deliberately not blocking since the
+2026-08-28 livelock). Now it is seeded at 1, the cardinal type's minimum,
+and Longer on the verify page raises it. Kent, 2026-10-02: *"just give
+them 1 syl, and users can increase as needed."* Alongside, the sort page's
+"Other" suppression now reads the data-type declaration (`!= 'open'`)
+instead of naming the two boolean codes; the branch is unreachable for the
+primitives, which never get a sort page, so nothing visible changes, and
+two comments claiming syls "keeps a sort page" are corrected. Guard added
+to `tests/test_primitive_data_types.py`. Watch for: a word whose spelling
+the presort cannot read now appearing in the one-syllable list of the
+count check.
+
+# Version 1.15.51
+
+**The syllable board comes back.** Since the syllable sort stopped being
+per category (v1.15.4x, 2026-09-30) its status nodes have lived under the
+sentinel ps `*`, but the board check in `maybeboard` still asked whether
+the LIVE ps had a node, which for σ it never does, so the syllable task
+fell through to "No Progress board" on every open. Found by Kent
+verifying the σ migration (*"syllable profiles doesn't get a status table
+… maybe that was already broken"*); it was, since 2026-09-30. For σ the
+check now asks for the sentinel. Verified by Kent, 2026-10-02. Guard added
+to `test_syllable_sort_is_not_per_ps.py`.
+
+# Version 1.15.50
+
+Verified by Kent, 2026-10-02, on the webview backend: the tier line
+switches from Sort Vowels to Sort Word Syllables and back; a project last
+used under `S` opened with its status migrated to `σ` (log: 16 nodes); and
+check 3 below, the distinguished rule, *"clean"*. The data-type
+declaration changes no behaviour and the glossary change is documentation.
+
+**Choosing a tier no longer builds a class name out of the tier letter.**
+Found by reading, not by a report: the tier switch made the new task's
+class by string arithmetic (`task_base + choice`, f"Sort{cvt}"), and
+`task_base()` recovered the family by stripping the cvt letters off the
+class name. The syllable sort broke both — its class is `SortSyllables`
+and its cvt was `'S'`, also the last letter of `SortS`, the segmental
+base — so choosing `S` on a vowel sort would have opened the segmental
+base, and choosing `V` on the syllable sort would have asked for
+`SortSyllableV`. Now one table, `tasks.task_for_tier(family, tier)`, and a
+declared `task_family` on `Sort` and `Transcribe`. A tier with no task
+(CV or VC on a transcribe task) is a logged no-op instead of an
+AttributeError.
+
+**`SortS` → `SortCV`, `TranscribeS` → `TranscribeCV`.** Kent's S-codes
+decision (2026-10-02): the segmental tier is the CV tier, so its base
+class is `SortCV`, which `SortV` and `SortC` inherit; `S` alone is always
+the sonorant class. A dormant `SortCV` stub stood beside `SortS`; this is
+that name on the real body. Class names are not persisted anywhere, so no
+data moves. New guard: `tests/test_task_for_tier.py`.
+
+**The syllable tier's code is `σ`.** Same decision: σ is the standard
+single-letter symbol for a syllable, and `S` alone now means only the
+sonorant class (`rx.py`, `profiles.py`, the "Distinguish Sonorants"
+setting), which is what it always meant there. Every `cvt == 'S'` test,
+the `_cvts` and check-name tables, `SortSyllables.cvt`, the tier→task
+table and the three theme-photo keys now say `σ`. Two stored places
+carried the old code and migrate themselves: the status key in
+`<project>.data.json` (`status['S']` → `status['σ']`, once, on load, then
+saved; `settings.migrate_syllable_tier_code`) and a saved `cvt` of `S`,
+which `CheckParameters.cvt()` reads as `σ` with a log line. The LIFT file
+is untouched: no annotation or field name ever carried the tier code. New
+guard: `tests/test_sigma_is_the_syllable_tier.py`. Watch for: the
+syllable board and its prep status reappearing intact on first open of a
+project last used before this build.
+
+**A distinction dies with the verification it was made under.** The join
+step records "these two verified groups are different" so the pair is not
+offered again. That judgement was made against the members both groups
+had at the time; when a group loses verification, because a new word was
+sorted into it or the user asked to re-verify it, its members are about
+to change, so every pair naming it is now void. Until now the pairs
+survived, so a group re-verified with new members kept the "different
+from" judgements of its old self. Kent, 2026-10-02: *"e<>ε shouldn't
+stand if either group's members change"*, and on this rule, *"an extreme
+position, but I think the correct one."* `StatusDict.update(verified=
+False)` now drops every distinguished pair naming the group; the two
+user-requested re-verify paths go through it instead of editing the done
+list in place; the alphabet's `mark_glyph_not_done` does the same for a
+letter. Renames still carry pairs along. Watch for: after sorting a new
+word into a verified group and re-verifying it, the join page offering
+that group's pairs again, once.
+
+**The syllable primitives declare their data types.** `#C` and `C#` are
+boolean, two answers and only two, with the stored labels `C` and `V`
+unchanged (Kent, 2026-10-02: *"keep C/V as the two labels"*; "boolean" is
+the arity of the location, not a Python bool, so nothing in the LIFT file
+moves). `syls` is cardinal: any true result of `len()`. The declaration
+is one dict on `CheckParameters`, and three places that used to know the
+letters now read it: `is_syllable_boolean_check`, the escape hatch's flip
+to "the other one" in `move_misfit`, and the repair of a stored syllable
+count of 0, which the cardinal type now does (Kent: *"this would flow
+from the data type, rather than needing to be stipulated elsewhere in the
+code"*). No behaviour change; `syls` keeps its "Other" button for now,
+since the code and the syllable design disagree about it and that is a
+separate call. New guard: `tests/test_primitive_data_types.py`.
+
+**Glossary (`CONTEXT.md`): `check` and `frame` are one term, `location`.**
+"It identifies what we're looking at when we ask the question 'same or
+different?'" (Kent, 2026-10-02): a position in the word for segments, a
+syntactic frame for tone, a primitive or the form for syllables, each
+with a scope and a data type. The word is the one LIFT already uses for a
+tone frame. Code identifiers are unchanged and lag the glossary.
+
 # Version 1.15.49
 
 **`buttoncolumns` worked all along — on the next task open.** Reported

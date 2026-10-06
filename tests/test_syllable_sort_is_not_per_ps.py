@@ -42,10 +42,20 @@ def test_the_syllable_wordlist_is_not_filtered_by_ps():
     its own comment said "'S' works the WHOLE ps wordlist" — whole **ps**
     wordlist, where the design wants the whole wordlist."""
     head = _code(analysis.SliceDict.senses).split(
-                        "cvt()=='S'")[1].split('if not kwargs')[0]
+                        "cvt()=='σ'")[1].split('if not kwargs')[0]
     assert 'sensesbyps' not in head, \
         "the syllable wordlist must not be filtered by ps"
     assert 'db.senses' in head
+
+
+def test_the_board_gate_keys_on_the_sentinel():
+    """`maybeboard` asked whether the LIVE ps had a σ node; σ nodes live under
+    SYLLABLE_PREP_PS, so the syllable board was never drawn (found 2026-10-02,
+    while verifying the σ migration)."""
+    ui_shell = pytest.importorskip('frontend.ui_shell')
+    src = _code(ui_shell.StatusFrame.maybeboard)
+    assert 'SYLLABLE_PREP_PS' in src
+    assert "if self.ps in self.program.status[self.cvt]" not in src
 
 
 def test_the_profile_done_rebuild_keys_on_the_sentinel():

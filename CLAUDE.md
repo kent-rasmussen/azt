@@ -75,10 +75,10 @@ Senses            — base sense operations, verification codes (backend/core/le
 
 Concrete task inheritance:
 ```
-SortS(Sort, Segments, Task)           — segmental sort tasks
+SortCV(Sort, Segments, Task)          — segmental sort tasks (the CV tier; was SortS until 2026-10-02)
 SortT(Sort, Tone, Task)               — tone sort tasks
 Transcribe(Sound, Categories, Task)   — transcription (does NOT inherit Sort)
-  TranscribeS(Transcribe, Segments)   — segmental transcription
+  TranscribeCV(Transcribe, Segments)  — segmental transcription (was TranscribeS)
   TranscribeT(Transcribe, Tone)       — tone transcription
 ```
 

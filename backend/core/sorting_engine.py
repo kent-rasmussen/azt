@@ -381,7 +381,7 @@ class Sort(Categories):
         # lc=<profile> code in the <profile-class> lc verification field. So set/clear
         # …-x-cvprofile and DON'T write a code. Every other check (segmental
         # V1/C1…, primitives) keeps its check=group code.
-        if self.cvt=='S' and check==ftype:
+        if self.cvt=='σ' and check==ftype:
             for sense in self.program.slices.inslice(senses):
                 sense.cvprofilevalue(ftype, group if verified else False)
         else:
@@ -596,7 +596,7 @@ class Sort(Categories):
         first, THEN launches, so the two sort boards never coexist.
         Returns the user's choice ('affirm'/'sort'/'cancel') or None if not
         offered."""
-        if self.program.params.cvt()=='S': # the syllable sort has its own flow
+        if self.program.params.cvt()=='σ': # the syllable sort has its own flow
             return None
         # Once-per-batch gate: set when we offer (below), cleared by
         # unverify_profile when a word is sent back via 'Not {profile}'.
@@ -685,7 +685,7 @@ class Sort(Categories):
         #
         # It was WIRED TO THE TASKS THAT DO NOT NEED IT AND ABSENT FROM THE
         # ONES THAT DO — the audit's central finding. `runcheck` is reached
-        # by SortSyllables, SortCV, SortS, SortV, SortC and SortT, none of
+        # by SortSyllables, SortCV, SortV, SortC and SortT, none of
         # which declares `uses_second_forms`, so the gate could never fire
         # here. Parse and the second-form collection tasks, which DO declare
         # it, never pass through `runcheck` at all.
@@ -707,7 +707,7 @@ class Sort(Categories):
         # to a new profile/check via ncheck/nprofile). On 'sort' we tear down THIS
         # live segmental task BEFORE opening the syllable sort, so the two boards
         # never coexist (the old concurrent-window bug). 'cancel' just aborts.
-        if cvt!='S':
+        if cvt!='σ':
             choice=self.offer_profile_setup()
             if choice=='sort':
                 self._safe_quit_runwindow()
@@ -885,7 +885,7 @@ class Sort(Categories):
         self.did['join']=False #runs multiple times, so clear here
         # The 'S' primitive checks (#C/C#/syls) are closed/determined classes —
         # no joining. Only the profile check (within a profile class) joins.
-        syl_primitive=(self.cvt=='S'
+        syl_primitive=(self.cvt=='σ'
                         and self.program.params.is_syllable_primitive_check())
         if self.to_distinguish() and not syl_primitive:
             warnorcontinue(self.join()) #1 here is now done; did.join intenally
@@ -904,7 +904,7 @@ class Sort(Categories):
         fields, as the user tells us which groups should be represented by the
         same letter. After which all these fields will be updated.
         """
-        if self.cvt not in ('T','S'):
+        if self.cvt not in ('T','σ'):
             log.info("Maybe Macrosort (with {did})".format(did=[k for k,v in self.did.items() if v]))
             if items := self.program.alphabet.renew_items_tomacrosort(self.cvt):
                 if not any({v for k,v in self.did.items() if 'glyphs' in k}):
@@ -1065,7 +1065,8 @@ class Sort(Categories):
     def update_to_cvt(self):
         log.info(_("Group is on a different CVT; updating to that to sort."))
         self._safe_quit_runwindow()
-        self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
+        from tasks.tasks import task_for_tier #local: backend can't import tasks at module level
+        self.program.taskchooser.maketask(task_for_tier('Sort',self.program.params.cvt()),
                                         sort_immediately=self.group)
     def sort_on_group_by_item(self,item):
         kwargs=self.program.alphabet.parse_verificationcode(item)
@@ -1443,7 +1444,7 @@ class Sort(Categories):
             grps[ann]=grps.get(ann,True) and verified
         prep_ps=self.program.params.SYLLABLE_PREP_PS
         for pc,grps in by.items():
-            node=self.program.status.node(cvt='S',ps=prep_ps,profile=pc,
+            node=self.program.status.node(cvt='σ',ps=prep_ps,profile=pc,
                                           check=ftype)
             done=sorted(g for g,ok in grps.items() if ok)
             node['groups']=sorted(grps)
@@ -1775,10 +1776,12 @@ class Sort(Categories):
                 "{check}-{group} (ps={ps}, profile={profile})".format(
                     check=check,group=group,ps=self.program.slices.ps(),
                     profile=self.program.slices.profile()))
-        done=self.program.status.verified()
-        if group in done:
-            done.remove(group)
-            self.program.status.verified(done)
+        if group in self.program.status.verified():
+            # Through update(), not by editing the done list in place, so the
+            # group's distinctions go with its verification (analysis.py,
+            # StatusDict.update). Status only, as before: the LIFT codes are
+            # left for the re-verification itself to rewrite.
+            self.program.status.update(group=group,verified=False)
         else:
             log.info("Group ‘{group}’ wasn’t marked verified; re-running the "
                     "check anyway.".format(group=group))
@@ -1801,8 +1804,8 @@ class Sort(Categories):
             if group not in done: #i.e., still
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
-        done.remove(group)
-        self.program.status.verified(done)
+        # Through update(): the group's distinctions go with its verification.
+        self.program.status.update(group=group,verified=False)
         self.reverifying=True
         self.runcheck()
     def verifyselected(self, macrosort=False):
@@ -1873,7 +1876,7 @@ class Sort(Categories):
             # Users don't know the raw check codes (lc/lx/pl/imp); for syllable
             # sorting (cvt 'S') show only the prose name, and these labels don't
             # take the "sound" grammar that the C/V/T segment labels do.
-            is_syl=(self.program.params.cvt()=='S')
+            is_syl=(self.program.params.cvt()=='σ')
             if is_syl:
                 item_name=self.program.params.cvtname() #e.g. "Syllable Profile"
             else:
@@ -2056,7 +2059,7 @@ class Sort(Categories):
     # makes that much less valuable, and it took the choice away from the user —
     # so it is gated OFF (Kent 2026-08-24), not deleted, in case it earns its way
     # back. Flip to True to restore the old behaviour. Lives on Sort, so it
-    # covers SortS/SortV/SortT alike — verifybutton is shared by all of them.
+    # covers SortCV/SortV/SortT alike — verifybutton is shared by all of them.
     REMOVE_REMAINDER_AT_PENULTIMATE=False
     def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
         """This should maybe take examples as input, rather than senses"""
@@ -2169,7 +2172,7 @@ class Sort(Categories):
         # SortButtonFrame (groups), never from here (words).
         profile=self.program.slices.profile()
         menu_items=[]
-        if self.cvt=='S':
+        if self.cvt=='σ':
             # SYLLABLE pages. The PROFILE page gets the class escape the sort page
             # has always had — "this word isn't in this class at all" — because the
             # verify page is where a misfiled word is actually noticed, and it had
@@ -2301,7 +2304,7 @@ class Sort(Categories):
         # the DIRECTION is a linguistic call: CVCV→CVCCV and CVCCV→CVCV are NOT
         # the same result, and one corrupts correct data. Ask which is correct
         # rather than picking by lexicographic accident. See ADR 0003.
-        if self.cvt=='S' and not self.program.params.is_syllable_primitive_check():
+        if self.cvt=='σ' and not self.program.params.is_syllable_primitive_check():
             counts={g:len(self.getsensesincheckgroup(check=check,group=g))
                     for g in pair}
             def _on_choose(winner):

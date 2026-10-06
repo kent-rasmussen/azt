@@ -445,7 +445,7 @@ class SliceDict(dict):
     here that the consequences of the change are done (done in check)."""
     def count(self):
         # _profile/_ps may not exist yet: a sort task can be loaded before the
-        # slices are built, and cvt='S' tracks its slice in _S_profile_class (not
+        # slices are built, and cvt='σ' tracks its slice in _S_profile_class (not
         # _profile) so _profile is never set. Treat "no slice yet" as count 0.
         # (A dedicated syllable SliceDict would remove this special-casing.)
         try:
@@ -501,14 +501,14 @@ class SliceDict(dict):
                         "").format(pss=pss))
     def profiles(self,ps=None):
         """This returns profiles for either a specified ps or the current one.
-        For cvt='S' the 'profiles' (slices) are the Beg+count+End profile classes
+        For cvt='σ' the 'profiles' (slices) are the Beg+count+End profile classes
         present in the ps — DERIVED from the words' primitive annotations. Read
         from the WHOLE ps wordlist (db.sensesbyps), not _profilesbysense, so a
         profile class whose words are all still unprofiled still shows up (its
         words need sorting)."""
         if not ps:
             ps=self.ps()
-        if self.program.params.cvt()=='S':
+        if self.program.params.cvt()=='σ':
             params=self.program.params
             pcs={params.profile_class_of_sense(s)
                             for s in self.program.db.sensesbyps.get(ps,[])}
@@ -520,12 +520,12 @@ class SliceDict(dict):
         else:
             return []
     def profile(self,profile=None):
-        # For cvt='S' the slice is a Beg+count+End profile class, not a CV
+        # For cvt='σ' the slice is a Beg+count+End profile class, not a CV
         # profile. The 3 primitive checks (#C/C#/syls) run on the whole wordlist
         # (sentinel profile); the profile check runs within the current
         # profile class. See the sort-syllables design.
         params=self.program.params
-        if params.cvt()=='S':
+        if params.cvt()=='σ':
             sentinel=params.SYLLABLE_SLICE_SENTINEL
             if profile is None: #getter
                 if params.is_syllable_primitive_check():
@@ -615,11 +615,11 @@ class SliceDict(dict):
         else:
             log.error(_("Not sure what happened here!"))
     def senses(self,**kwargs): #ps=None,profile=None,
-        # cvt='S': sentinel profile → the whole wordlist (the 3 primitive
+        # cvt='σ': sentinel profile → the whole wordlist (the 3 primitive
         # checks); a profile-class profile → just the words in that Beg+count+End
         # slice (the profile check). See the sort-syllables design.
         params=self.program.params
-        if params.cvt()=='S':
+        if params.cvt()=='σ':
             # 'S' works the WHOLE WORDLIST, and NOT
             # _profilesbysense/_sensesbyps, which hold only words with a
             # CONFIRMED cvprofile (getprofileofsense adds a word only when
@@ -663,7 +663,7 @@ class SliceDict(dict):
                 self._sensesbyps[ps]+=self._profilesbysense[ps][prof]
     def renewsenses(self):
         self._senses=[]
-        if self.program.params.cvt()=='S':
+        if self.program.params.cvt()=='σ':
             #'S' current slice = whole wordlist (primitives) or the current
             # profile class (profile check); senses() resolves which.
             self._senses=list(self.senses(ps=self._ps))
@@ -964,7 +964,7 @@ class SyllableSliceDict(object):
     def _node(self,check):
         # Wordlist-wide: verify state under the SYLLABLE_PREP_PS sentinel, shared
         # across all ps (NOT self.ps) — so a slice is verified once, not per-ps.
-        return self.program.status.node(cvt='S',
+        return self.program.status.node(cvt='σ',
                                         ps=self.program.params.SYLLABLE_PREP_PS,
                                         profile=self.sentinel,check=check)
     def _clear_slices(self,check):
@@ -1174,8 +1174,9 @@ class SyllableSliceDict(object):
         recompute-and-compare — natural slice if its spelling matches B, else B's
         last slice — then mark B's slice for re-verify. Group A just shrinks."""
         cur=self._group_of(sense,check)
-        if check in ('#C','C#'):
-            B='V' if cur=='C' else 'C'
+        params=self.program.params
+        if params.data_type(check)=='boolean':
+            B=params.other_label(check,cur) # the only alternative, by the type
         else:
             B=str(target) if target is not None else cur
         if B==cur:
@@ -1510,7 +1511,7 @@ class StatusDict(dict):
         (`examples.getexamples`), so the order can't disagree with the numbers
         on screen."""
         params=self.program.params
-        if params.cvt()=='S':
+        if params.cvt()=='σ':
             if not params.is_syllable_primitive_check(params.check()):
                 try:
                     exs=self.program.examples
@@ -1669,7 +1670,7 @@ class StatusDict(dict):
                 # not from the segment inventory. Empty is the honest start — the
                 # union below then yields exactly the current groups, instead of
                 # reaching it with `todo` unbound (Kent 2026-08-21, selecting a
-                # profile to sort in "Sort Word profiles" with cvt='S').
+                # profile to sort in "Sort Word profiles" with cvt='σ').
                 todo=list()
                 log.info("groups: no theoretical group list for cvt=%r; using "
                         "the node's current groups",kwargs['cvt'])
@@ -1845,7 +1846,7 @@ class StatusDict(dict):
                     # returning to Citation didn't give us back our data."
                     #   The same reasoning as the `is not None` test beside it:
                     # cull only deletes what it can positively show is empty.
-                    if (t!='S' and members is not None and members.get(ps)
+                    if (t!='σ' and members is not None and members.get(ps)
                             and profile not in members[ps]):
                         del self[t][ps][profile]
                         continue
@@ -1877,7 +1878,7 @@ class StatusDict(dict):
         if cvt not in self._checksdict:
             self._checksdict[cvt]={}
             self.renewchecks(**kwargs)
-        if cvt == 'S':
+        if cvt == 'σ':
             # The shared engine (Task 2) only does the profile-class PROFILE sort —
             # the current word-form's ftype check. The three primitive checks
             # (#C/C#/syls) are owned by the dedicated Task-1 prep driver
@@ -1930,7 +1931,7 @@ class StatusDict(dict):
             for ps in self.program.slices.pss():
                 if ps in self.program.toneframes:
                     self._checksdict[cvt][ps]=list(self.program.toneframes[ps])
-        elif cvt == 'S':
+        elif cvt == 'σ':
             # Task 2 (shared engine) does only the profile-class profile check
             # (the current form's whole-word profile check); the #C/C#/syls
             # primitives are the Task-1 prep driver's. updatechecksbycvt
@@ -2071,6 +2072,16 @@ class StatusDict(dict):
             if group in n['done']:
                 n['done'].remove(group)
                 changed=True
+                # A DISTINCTION DIES WITH THE VERIFICATION IT WAS MADE UNDER.
+                # "These two groups are different" was judged against the
+                # members both groups had at the time; a group that loses
+                # verification has (or is about to have) different members,
+                # so every pair naming it is void and must be asked again.
+                # Kent, 2026-10-02: "e<>ε shouldn't stand if either group's
+                # members change" — and on this rule, "an extreme position,
+                # but I think the correct one." Renames carry pairs along
+                # (renamegroup); only loss of verification voids them.
+                self.undistinguish_any_with(group)
         if writestatus and changed:
             self.store()
         # log.info("Verification after update: {}".format(self.verified()))

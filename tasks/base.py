@@ -270,7 +270,7 @@ class TaskBase:
             self.checktypename='check'
             # 'S' (SortSyllables) inherits Segments for shared helpers but is a
             # whole-word syllable-profile sort; don't reset it to 'V'.
-            if self.cvt not in ['V','C','CV','S']:
+            if self.cvt not in ['V','C','CV','σ']:
                 self.cvt='V'
         self.cvt=self.program.params.cvt(self.cvt)
 

@@ -396,7 +396,7 @@ class SortPresenter(PresenterBase):
         # check); advancing still means what it meant there.
         try:
             params = buttonframe.program.params
-            if (getattr(buttonframe, 'cvt', None) == 'S'
+            if (getattr(buttonframe, 'cvt', None) == 'σ'
                     and not params.is_syllable_primitive_check(
                         getattr(buttonframe, 'check', None))):
                 def advance():
@@ -409,7 +409,7 @@ class SortPresenter(PresenterBase):
                         buttonframe.sortitem.destroy()
                 self.attach_context_menu(l, self.class_escape_items(
                             buttonframe.task, sense, on_applied=advance))
-            elif (getattr(buttonframe, 'cvt', None) != 'S'
+            elif (getattr(buttonframe, 'cvt', None) != 'σ'
                     and not getattr(buttonframe, 'macrosort', False)
                     and buttonframe.program.slices.profile()):
                 # SEGMENTAL/TONE: 'Not {profile}' on the word (Kent 2026-08-31).
@@ -541,7 +541,7 @@ class SortPresenter(PresenterBase):
         ('C'/'V', syllable counts) are not names anyone renames."""
         try:
             params=task.program.params
-            if getattr(task,'cvt',None)!='S':
+            if getattr(task,'cvt',None)!='σ':
                 return
             if params.is_syllable_primitive_check(params.check()):
                 return

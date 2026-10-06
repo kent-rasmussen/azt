@@ -132,9 +132,19 @@ class CheckParameters(object):
         group=self.group()
         if check not in self.groups():
             self.group(self.groups()[0])
+    SYLLABLE_CVT='σ'        # the syllable tier's code. Kent, 2026-10-02: "syllable
+                            # --> :sigma: everywhere a code is used. S alone is
+                            # **always** sonorant. segmental --> 'CV'." σ is the
+                            # standard single-letter symbol for a syllable.
+    LEGACY_SYLLABLE_CVT='S' # the code until 2026-10-02; still arrives from
+                            # settings files and status keys written before then.
     def cvt(self,cvt=None):
         """This needs to change checks"""
         if cvt is not None:
+            if cvt==self.LEGACY_SYLLABLE_CVT:
+                log.info("cvt 'S' is the pre-σ code for the syllable tier; "
+                         "reading it as 'σ' (S alone is the sonorant class now)")
+                cvt=self.SYLLABLE_CVT
             self._cvt=cvt
         elif not hasattr(self,'_cvt'):
             self._cvt=None
@@ -295,7 +305,7 @@ class CheckParameters(object):
             # (2026-09-30, the syllable-sort-is-not-per-ps item), so reading it
             # under one would find an empty node and offer profiles already in
             # use under another category.
-            node=self.program.status.node(cvt='S',ps=self.SYLLABLE_PREP_PS,
+            node=self.program.status.node(cvt='σ',ps=self.SYLLABLE_PREP_PS,
                                           profile=cls,check=self.ftype())
             inuse=set(node.get('groups',[]))
         except Exception:
@@ -384,8 +394,14 @@ class CheckParameters(object):
         special case would just move the seam, so the gate is gone: work out what
         is MISSING, then fill exactly that, whatever the combination."""
         av=sense.annotationvaluebyftypelang
-        if av(ftype,analang,'syls')=='0':       # normalise a nonsensical 0
-            av(ftype,analang,'syls','1')
+        stored=av(ftype,analang,'syls')
+        if stored is not None and not self.valid_value('syls',stored):
+            # A stored 0 (or worse) is not a cardinal; the type repairs it to
+            # its nearest value, 1 — what "normalise a nonsensical 0" did here
+            # by hand until 2026-10-02.
+            fixed=self.coerce_value('syls',stored)
+            if fixed is not None:
+                av(ftype,analang,'syls',fixed)
         profile=sense.cvprofilevalue(ftype) or sense.cvprofilemachinevalue(ftype)
         valid=bool(profile) and profile!='Invalid'
         missing=[k for k in ('#C','C#','syls') if not av(ftype,analang,k)]
@@ -408,19 +424,27 @@ class CheckParameters(object):
         # FORM rather than calling both consonant: the old blanket default
         # parked vowel-final words in C#=C for no reason visible to the user,
         # and #C/C# are closed binaries with no sort page, so nothing ever
-        # offered them for correction (Kent 2026-07-29). syls stays unset —
-        # that IS the judgement a missing profile deprives us of, and the syls
-        # sort will ask for it. Only the edges that are actually missing get
-        # written, so a confirmed edge is never overwritten by a guess.
+        # offered them for correction (Kent 2026-07-29). Only the edges that
+        # are actually missing get written, so a confirmed edge is never
+        # overwritten by a guess.
+        #   syls: ONE, NOT UNSET. This used to leave syls empty with the note
+        # "the syls sort will ask for it" — there is no syls sort (prep is
+        # verify-only), so a word with no count was in no group, in no
+        # slice, and prep completed around it (syllable_prep_complete logs
+        # these as "prep unsorted in syls" and does not block). The cardinal
+        # type's minimum is the honest default: every word is at least one
+        # syllable, and Longer on the verify page raises it. Kent,
+        # 2026-10-02: "just give them 1 syl, and users can increase as
+        # needed."
         edges=[k for k in missing if k in ('#C','C#')]
-        if not edges:
-            return None # only syls missing, and no profile to count it from
-        beg,end=self.orthographic_edges(sense,ftype,analang)
+        beg,end=self.orthographic_edges(sense,ftype,analang) if edges else (None,None)
         for k,e in (('#C',beg),('C#',end)):
             if k in edges:
                 av(ftype,analang,k,e or 'C')
+        if 'syls' in missing:
+            av(ftype,analang,'syls','1')
         guessed=[e for k,e in (('#C',beg),('C#',end)) if k in edges and e is None]
-        if guessed:
+        if guessed or 'syls' in missing:
             return 'defaulted'
         return 'edges' if first_bucketing else 'backfilled'
     # --- reconciling a machine CV profile with the user's CONFIRMED primitives.
@@ -659,11 +683,72 @@ class CheckParameters(object):
         name=str(name if name is not None else self.check() or '')
         return (name in self.FOREIGN_ANNOTATIONS
                 or name.startswith(self.FOREIGN_ANNOTATION_PREFIX))
+    # DATA TYPES OF THE SYLLABLE PRIMITIVES (Kent, 2026-10-02: "keep C/V as
+    # the two labels"). "Boolean" is the ARITY of a location — two answers and
+    # only two — not a Python bool: the stored value stays the label 'C' or
+    # 'V', which the profile class is composed from (C + 2 + V) and the verify
+    # page names, and which no reader is tempted to test with `if value:`.
+    # `syls` is CARDINAL, any true result of len(), so 0 is not a value — the
+    # type says so, rather than a rule written elsewhere (Kent: "one benefit
+    # of declaring data types better … is that this would flow from the data
+    # type, rather than needing to be stipulated elsewhere in the code").
+    # Every other location is OPEN: any number of groups, new ones may be
+    # founded, two may be joined. This dict is the declaration the engine is
+    # meant to read one day instead of testing cvt (the unified sort model);
+    # today its readers are the predicates below, move_misfit's flip, and
+    # seed_sense_primitives' repair of a stored 0.
+    PRIMITIVE_DATA_TYPES={'#C':  ('boolean',('C','V')),
+                          'C#':  ('boolean',('C','V')),
+                          'syls':('cardinal',None)}
+    def data_type(self,check=None):
+        """'boolean' | 'cardinal' | 'open' for a location code."""
+        return self.PRIMITIVE_DATA_TYPES.get(check or self.check(),('open',None))[0]
+    def labels(self,check=None):
+        """A boolean location's two labels; None for any other type."""
+        return self.PRIMITIVE_DATA_TYPES.get(check or self.check(),('open',None))[1]
+    def other_label(self,check,value):
+        """The other of a boolean location's two labels — the only
+        alternative to the value a word holds there. None for a location
+        that is not boolean."""
+        labels=self.labels(check)
+        if not labels:
+            return None
+        a,b=labels
+        return b if value==a else a
+    def valid_value(self,check,value):
+        """Does `value` belong to the location's data type? boolean: one of
+        its labels; cardinal: an integer of at least 1; open: anything
+        non-empty."""
+        t=self.data_type(check)
+        if t=='boolean':
+            return value in self.labels(check)
+        if t=='cardinal':
+            try:
+                return int(value)>=1
+            except (TypeError,ValueError):
+                return False
+        return bool(value)
+    def coerce_value(self,check,value):
+        """The nearest valid value, or None when there is none. A cardinal
+        below 1 becomes '1' (every word is at least one syllable); a
+        non-label on a boolean has no nearest value."""
+        if self.valid_value(check,value):
+            return value
+        if self.data_type(check)=='cardinal':
+            try:
+                return str(max(int(value),1))
+            except (TypeError,ValueError):
+                return None
+        return None
     def is_syllable_boolean_check(self,check=None):
-        # the CLOSED binary checks: no new-group ("Other"), no sort page (the
-        # presort defaults every word). syls is NOT here — it's a small but OPEN
-        # class (users may create new counts), so it keeps a sort page.
-        return (check or self.check()) in ('#C','C#')
+        # Reads the declaration above. The two boolean primitives. An earlier
+        # comment here said syls "keeps a sort page" with an "Other" button;
+        # it does not and never did: no primitive gets a sort page (prep is
+        # verify-only pages, maybeverifysyllables → verify_slice), and a
+        # miscount is corrected on the verify page through
+        # ask_syllable_count's Shorter/Longer. So syls is cardinal in the
+        # declaration AND in behaviour (Kent, 2026-10-02).
+        return self.data_type(check)=='boolean'
     def is_word_final_check(self,check=None):
         # a check about the END of the word — its verify list reads more
         # naturally sorted from the end of the word (the 'C#' primitive).
@@ -679,7 +764,7 @@ class CheckParameters(object):
         status=self.program.status
         for chk in ('#C','C#','syls'):
             try:
-                n=status.node(cvt='S',ps=self.SYLLABLE_PREP_PS,
+                n=status.node(cvt='σ',ps=self.SYLLABLE_PREP_PS,
                               profile=self.SYLLABLE_SLICE_SENTINEL,check=chk)
             except Exception:
                 return False
@@ -924,7 +1009,7 @@ class CheckParameters(object):
 
     def build_checknames(self):
         self._checknames={
-            'S':{ 1:[
+            'σ':{ 1:[
                 ('#C',_("Consonant Intial")),
                 ('C#',_("Consonant Final")),
                 ('syls',_("Syllable Count")),
@@ -1085,7 +1170,7 @@ class CheckParameters(object):
     def cvcheckname(self,code=None):
         if self.cvt() == 'T':
             code='T'
-        elif self.cvt() == 'S':
+        elif self.cvt() == 'σ':
             # The three prep primitives (#C/C#/syls) share one ftype ('lc'), so
             # keying the name by ftype made them all read identically. Name them
             # by the actual primitive instead; fall back to ftype for Task-2
@@ -1161,7 +1246,7 @@ class CheckParameters(object):
                 'VC':{'sg':'Vowel-Consonant combination',
                         'pl':'Vowel-Consonant combinations'},
                 'T':{'sg':'Tone','pl':'Tones'},
-                'S':{'sg':'Syllable Profile','pl':'Syllable Profiles'},
+                'σ':{'sg':'Syllable Profile','pl':'Syllable Profiles'},
                 }
         self.cvchecknamesdict()
         self.checkcodes_by_cvt()
