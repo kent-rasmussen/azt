@@ -31,6 +31,10 @@ create a Tk root. (Tests that would need a live display should be marked
 | `test_backend_logic.py` | unit + TODO | Public-class API guards for `backend/core`; **skipped stubs** mapping the behavioral tests still to write (LIFT parse, profile analysis). |
 | `test_status_dict.py` | unit | `StatusDict` (the sort/verify status model that sort & macrosort read/write): node creation, group list get/set + rename, verified(`done`) read/write incl. `update()`, per-check flags (`tosort`/`presorted`/`tojoin`), distinguish pairing, sense to-sort/sorted bookkeeping, `cull`/`clear_all_groups`. Uses a tiny fake `program`. |
 | `test_categories_groups.py` | unit | `Categories.add_int_group` — next-numbered-group creation for regular sort (persists via `status`) and macrosort (appends to `alphabet.glyphs()`, no persist). |
+| `tonefixture.py` + `fixtures/tone_mini/` | fixture | Not a test. A small real LIFT lexicon (8 entries, analang `xyy`, nouns with a `Plural` field, confirmed CV profiles, one already-sorted tone example) and `load_lift(tmp_path, monkeypatch)`, which loads it through the real `LiftXML` in a sandbox (no image download, nothing outside tmp_path). Also `make_program` / `tone_worker` for tone work on it. Its docstring says what is in it. |
+| `test_tone_sorting_real_lift.py` | integration | Tone sorting on the fixture: `setitemgroup` creating and rewriting examples (citation and `Plural` frames), read-back, verify/unverify codes, status rebuild from LIFT, write and reload, and renaming a surface group (`rename_group`, `Transcribe.submitform`). |
+| `test_tone_uf_analysis.py` | unit | Tone UF analysis (`Analysis`): cross-frame signature, draft names `<ps>_<profile>_<n>`, missing frames, which frames count (incl. a second-form frame and the real `StatusDict.checks`), write-back to the human tone form vs `_MT`, idempotent re-run, LIFT read-back. Shared kit: `ufkit.py` (real `io_put.lift` tone fields on in-memory nodes). |
+| `test_tone_uf_join_rename.py` | unit | `JoinUFgroups.tonegroupsjoinrename` driven through a recording stand-in `ui`: rename, join, and refusal of empty / blank / already-used names. |
 
 ## How to expand
 

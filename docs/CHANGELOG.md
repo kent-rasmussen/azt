@@ -19,7 +19,59 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
-# Unreleased — built 2026-10-13, AWAITING VERIFICATION
+# Unreleased — tone frame drafter, built 2026-10-13, AWAITING VERIFICATION
+
+Three faults found by the new drafter tests (`tests/test_tone_frame_drafter.py`):
+
+- **A duplicate frame name is refused, and only a duplicate.** The check
+  looked for the name among the parts of speech, so a second "Isolation"
+  for Noun silently replaced the first, while a Noun frame named "Verb"
+  was refused. It now checks that part of speech's frames. And the
+  drafter, which carried on after a refusal as if the frame were saved
+  (selected it, saved, closed), now says the name is taken and stays open.
+- **A frame name containing "before" and "after" no longer crashes the
+  drafter.** It told languages from other entries by searching for those
+  words, so the name counted as a language.
+- **Changing "Field to frame" moves the analysis-language row with it.**
+  The row is keyed by the field (`xyz_lc` → `xyz_Plural`); the new row was
+  added and the old one kept, so a plural frame was saved with a stale
+  citation entry. What was typed now moves to the new key.
+
+Tone sorting, transcription and UF analysis (found by
+`tests/test_tone_sorting_real_lift.py` and the `test_tone_uf_*` tests; the
+suite run of 2026-10-13 15:32 confirmed all eleven; suite clean with the
+fixes at 16:00, 1095 passed; in the app, AWAITING VERIFICATION):
+
+- **Transcribe Tone's OK writes the new group name to LIFT.** It renamed
+  the group in the status file only; the words kept the old name.
+- **Renaming a group keeps it verified if it was, and only then.** A
+  verified group came out unverified, and an unverified one came out
+  verified.
+- **A tone rename after a status rebuild no longer crashes.** The rebuild
+  stored the groups as a set, which a rename can't add to.
+- **Re-sorting a word refreshes its frame translation** from the current
+  gloss. It never did. Reviving that step exposed a second fault hidden
+  inside it: the frame was passed where the form name belongs. The run
+  of 15:58 crashed every re-sort on that; it is fixed too.
+- **Verifying a group with no words touches no words.** It wrote the
+  group's code on every word in the slice. The same fault reached letter
+  renames for a letter with no members.
+- **Tone verification codes go under the frame's own field** (Kent, D1:
+  "use T.location.ftype as a key there"), e.g. a plural frame's codes go
+  in `<profile> Plural verification`. The profile in that name is still
+  the slice's, under the global form, until form switching returns.
+- **UF drafts go in the machine tone form; joins and renames in the human
+  one** (Kent, D3). A word's UF group is its join/rename if it has one,
+  else its draft. Re-analysis clears joins (D5).
+- **UF analysis:** a word sorted in no frame gets no UF group (all such
+  words shared one empty group); reading UFs back reports only the
+  category's frames; the analysis and join times are stamped on the slice
+  analysed, not the current one; the analysis asks for tone frames
+  whatever tier is current; a blank UF name is refused.
+
+# Version 1.15.53 (2026-10-13)
+
+*Verified by Kent, 2026-10-13: "the switching is happening cleanly now."*
 
 **The test version defaults to the webview screens.** Help → Try test
 version now stores `program['webview_test']` (on) as this machine's
@@ -27,7 +79,11 @@ default in its preproject settings, and Revert to main stores
 `program['webview_main']` (off); the next start reads it (Kent,
 2026-10-13). A `--tkinter` or `--webview` switch still wins. Machines
 already on the test version get the default the next time they switch.
-Tests: `tests/test_ui_backend_request.py`.
+The first build read the stored key through the `settings` package, whose
+import runs `frontend/__init__` and so re-entered the backend decision
+while it was being made: the key was written and never honoured. It is now
+read straight from the preproject file. Tests:
+`tests/test_ui_backend_request.py`.
 
 # Unreleased — pre-workshop audit fixes, built 2026-10-12, AWAITING VERIFICATION
 

@@ -184,6 +184,10 @@ surface groups across all frames** (words with the same cross-frame
 signature share a UF). One value per sense (`uftonevalue`). Drafts are named
 like `Noun_CVC_1` until the user renames them ("High", …). Structurally the
 tone analog of a **syllable profile class** (a composition), not of a glyph.
+A **draft** is the program's analysis and is kept apart from the user's
+**joins and renames**; a word's UF group is its join/rename if it has one,
+else its draft. Joins are ephemeral: re-analysis discards them. A word
+sorted in no frame has no UF.
 
 **surface tone group** / **UF group**:
 A group of words judged alike in one frame (surface) vs. a group sharing one

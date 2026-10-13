@@ -77,19 +77,26 @@ class Glosslangs(list):
 
 class ToneFrames(dict):
     def addframe(self,ps,name,defn):
-        """This needs to change checks"""
+        """Add frame `name` to `ps`. Returns True if added, False if refused.
+
+        A DUPLICATE IS A NAME ALREADY IN THIS PS. This checked `name in self`,
+        but self is keyed by ps — so a second "Isolation" for Noun silently
+        REPLACED the first, while a Noun frame named "Verb" was refused
+        (pre-workshop tone tests, 2026-10-13)."""
         if not isinstance(defn,dict):
             log.error(_("The supplied frame definition isn’t a dictionary: {defn}"
                         "").format(defn=defn))
-        elif name in self:
+            return False
+        if name in self.get(ps,{}):
             log.error(_("The supplied frame name is already there: {name} ({defn})"
                         "").format(name=name,defn=defn))
-        else:
-            if not ps in self:
-                self[ps]={}
-            self[ps][name]=defn
-            log.info("Added tone frame %s/%s (now %s)",
-                     ps, name, list(self[ps]))
+            return False
+        if not ps in self:
+            self[ps]={}
+        self[ps][name]=defn
+        log.info("Added tone frame %s/%s (now %s)",
+                 ps, name, list(self[ps]))
+        return True
     def store(self):
         log.info(_("Saving toneframes dict to file"))
         self.program.settings.storesettingsfile('toneframes')

@@ -93,6 +93,7 @@ class FakeSense:
     def __init__(self):
         self.examples = {'Possessive-pl': FakeExample()}
         self.ftypes = {'lc': [], 'pl': []}
+        self.glosses = {}                 # no glosses: no translation rewrite
         self.asked = []
 
     def psvalue(self):

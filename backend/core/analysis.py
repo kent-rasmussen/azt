@@ -362,6 +362,14 @@ class Analysis(object):
         # Collect all unique combinations of location:group pairings.
         # log.info(_("sensedict: {sensedict}").format(sensedict=self.sensedict))
         for sense in self.sensedict:
+            if not self.sensedict[sense]:
+                # Sorted in no frame: nothing to compose a UF from. These all
+                # shared one draft with an empty signature (2026-10-13). Any
+                # old value goes too, as it would on re-analysis (D5).
+                for machine in (True,False):
+                    if sense.uftonevalue(machine=machine) is not None:
+                        sense.uftonevalue(value=False,machine=machine)
+                continue
             #sort into groups by dict values (combinations location:group pairs)
             k=str(self.sensedict[sense])
             try:
@@ -380,7 +388,13 @@ class Analysis(object):
             self.valuesbygroupcheck[name]=ofromstr(k) #return str to dict
             self.sensesbygroup[name]=unnamed[k]
             for sense in unnamed[k]:
-                sense.uftonevalue(name)
+                # D3 (Kent, 2026-10-13): the draft is OUR analysis, so it goes
+                # in the machine form; the human form holds only what the
+                # user joined or renamed. Re-analysis drops those (D5:
+                # "joining is supposed to be ephemeral").
+                sense.uftonevalue(value=name,machine=True)
+                if sense.uftonevalue() is not None:
+                    sense.uftonevalue(value=False)
         # log.info(_("Done adding senses to groups."))
         # return self.groups
     def tonegroupsbyUFcheckfromLIFT(self):
@@ -390,7 +404,9 @@ class Analysis(object):
         for group in self.sensesbygroup:
             values[group]={}
             for sense in self.sensesbygroup[group]:
-                for check in sense.examples:
+                # The slice's frames only, as do() uses: a leftover example at
+                # a frame the ps no longer has reached the report (2026-10-13).
+                for check in [c for c in self.checks if c in sense.examples]:
                     try:
                         values[group][check].add(sense.tonevaluebyframe(check))
                     except KeyError:
@@ -406,8 +422,9 @@ class Analysis(object):
         log.debug(_("Looking for sensids by UF tone groups for {profile}-{ps}").format(
                     profile=self.profile, ps=self.ps
                     ))
-        self.sensesbygroup={g:[s for s in self.senses if s.uftonevalue() == g]
-                            for g in set([s.uftonevalue() for s in self.senses])
+        # ufgroup: the user's join/rename, else the analysis draft (D3).
+        self.sensesbygroup={g:[s for s in self.senses if s.ufgroup() == g]
+                            for g in set([s.ufgroup() for s in self.senses])
                             if g}
         return self.sensesbygroup
     def donoUFanalysis(self):
@@ -421,7 +438,10 @@ class Analysis(object):
         self.sorttoUFs() # > self.sensesbygroup and self.valuesbygroupcheck
         self.program.db.write()
         self.doanyway()
-        self.program.status.last('analysis',update=True)
+        # Stamp the slice analysed, which a report may have chosen; with no
+        # scope this landed on the CURRENT slice (2026-10-13).
+        self.program.status.last('analysis',update=True,cvt='T',
+                                ps=self.ps,profile=self.profile)
         self.program.status.store()
     def doanyway(self):
         """compare(x=UFs/checks) give self.comparison(x) and self.ordered(x)"""
@@ -432,7 +452,9 @@ class Analysis(object):
     def setslice(self,**kwargs):
         self.ps=kwargs.get('ps',self.program.slices.ps())
         self.profile=kwargs.get('profile',self.program.slices.profile())
-        self.checks=self.program.status.checks(ps=self.ps,profile=self.profile)
+        # Tone frames, whatever tier is current: Analysis is tone-only.
+        self.checks=self.program.status.checks(cvt='T',ps=self.ps,
+                                                profile=self.profile)
         self.senses=self.program.slices.senses(ps=self.ps,profile=self.profile)
     def __init__(self, program, **kwargs):
         super(Analysis, self).__init__()
@@ -606,8 +628,13 @@ class SliceDict(dict):
         # log.info(_("validbyps: {validbyps}").format(validbyps=self._validbyps))
     def inslice(self,s=None,**kwargs):
         senses=self.senses(**kwargs) #if no kwargs, returns current
-        if not s:
+        # Only s=None means "the whole slice". An EMPTY list is an empty
+        # selection: verifying a group with no members went through here and
+        # wrote its code onto every word in the slice (2026-10-13).
+        if s is None:
             return set(senses)
+        if not isinstance(s,lift.Sense) and hasattr(s,'__iter__') and not s:
+            return set()
         elif isinstance(s,lift.Sense):
             return set(senses).intersection(set([s]))
         elif hasattr(s, '__iter__'):
@@ -2102,12 +2129,19 @@ class StatusDict(dict):
     def renamegroup(self,j,k,**kwargs):
         # log.info(f"Status renaming {j}>{k} for {kwargs=}")
         sn=self.node(**kwargs)
+        # Lists, as status keeps them; a rebuild once left a set here and
+        # .append crashed (2026-10-13). Renaming onto an existing name merges.
+        for key in ('done','groups'):
+            if not isinstance(sn.get(key),list):
+                sn[key]=list(sn.get(key) or [])
         if j in sn['done']:
-            sn['done'][sn['done'].index(j)]=k
+            sn['done'].remove(j)
+            if k not in sn['done']:
+                sn['done'].append(k)
         if j in sn['groups']:
-            # sn['groups'][sn['groups'].index(j)]=k
             sn['groups'].remove(j)
-            sn['groups'].append(k)
+            if k not in sn['groups']:
+                sn['groups'].append(k)
         if j in sn['recorded']:
             sn['recorded'][sn['recorded'].index(j)]=k
         if 'distinguished' in sn:
@@ -2205,7 +2239,10 @@ class StatusDict(dict):
         return kwargs
     def last(self,task,update=False,**kwargs):
         if update and not kwargs.get('check'): #write cross-check tone analysis
-            for kwargs['check'] in self.checks():
+            # The checks of the slice ASKED FOR, not the current one: an
+            # analysis of another slice was stamped on this one (2026-10-13).
+            scope={k:kwargs[k] for k in ('cvt','ps','profile') if kwargs.get(k)}
+            for kwargs['check'] in self.checks(**scope):
                 self.last(task,update,**kwargs)
             return
         sn=self.node(**kwargs)

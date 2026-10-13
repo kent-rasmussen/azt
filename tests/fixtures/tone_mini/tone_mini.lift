@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  tone_mini.lift: a tiny lexicon for tone-sorting tests. Documented in
+  tests/tonefixture.py, which also loads it; change the two together.
+
+  Analysis language 'xyy'. 'xyz' is the suite's usual stand-in, but langcodes
+  does not register it, so LiftXML.get_langs would drop it from `analangs`.
+  'xyy' is registered. The words are invented.
+-->
+<lift producer="A-Z+T test fixture" version="0.13">
+    <entry dateCreated="2026-09-01T10:00:00Z" dateModified="2026-09-01T10:00:00Z" guid="0a1c0001-0000-4000-8000-000000000001" id="kalo_0a1c0001-0000-4000-8000-000000000001">
+        <lexical-unit>
+            <form lang="xyy">
+                <text>kalo</text>
+            </form>
+        </lexical-unit>
+        <citation>
+            <form lang="xyy">
+                <text>kalo</text>
+            </form>
+        </citation>
+        <field type="Plural">
+            <form lang="xyy">
+                <text>bakalo</text>
+            </form>
+        </field>
+        <sense id="dog_0b2c0001-0000-4000-8000-000000000001">
+            <grammatical-info value="Noun" />
+            <gloss lang="en">
+                <text>dog</text>
+            </gloss>
+            <field type="cvprofile_lc">
+                <form lang="xyy-x-cvprofile">
+                    <text>CVCV</text>
+                </form>
+                <form lang="xyy-x-cvprofile_MT">
+                    <text>CVCV</text>
+                </form>
+            </field>
+        </sense>
+    </entry>
+    <entry dateCreated="2026-09-01T10:00:00Z" dateModified="2026-09-01T10:00:00Z" guid="0a1c0002-0000-4000-8000-000000000002" id="tama_0a1c0002-0000-4000-8000-000000000002">
+        <lexical-unit>
+            <form lang="xyy">
+                <text>tama</text>
+            </form>
+        </lexical-unit>
+        <citation>
+            <form lang="xyy">
+                <text>tama</text>
+            </form>
+        </citation>
+        <field type="Plural">
+            <form lang="xyy">
+                <text>matama</text>
+            </form>
+        </field>
+        <sense id="house_0b2c0002-0000-4000-8000-000000000002">
+            <grammatical-info value="Noun" />
+            <gloss lang="en">
+                <text>house</text>
+            </gloss>
+            <field type="cvprofile_lc">
+                <form lang="xyy-x-cvprofile">
+                    <text>CVCV</text>
+                </form>
+                <form lang="xyy-x-cvprofile_MT">
+                    <text>CVCV</text>
+                </form>
+            </field>
+            <example source="AZT sorted first on 2026-09-01T10:00:00">
+                <form lang="xyy">
+                    <text>tama ka</text>
+                </form>
+                <translation type="Frame translation">
+                    <form lang="en">
+                        <text>the house</text>
+                    </form>
+                </translation>
+                <field type="tone">
+                    <form lang="xyy-x-tone">
+                        <text>1</text>
+                    </form>
+                </field>
+                <field type="location">
+                    <form lang="en">
+                        <text>Isolation</text>
+                    </form>
+                </field>
+                <trait name="Latest A-Z+T Sort" value="2026-09-01T10:00:00" />
+            </example>
+            <field type="CVCV lc verification">
+                <form lang="xyy-x-py">
+                    <text>['Isolation=1']</text>
+                </form>
+            </field>
+        </sense>
+    </entry>
+    <entry dateCreated="2026-09-01T10:00:00Z" dateModified="2026-09-01T10:00:00Z" guid="0a1c0003-0000-4000-8000-000000000003" id="sibo_0a1c0003-0000-4000-8000-000000000003">
+        <lexical-unit>
+            <form lang="xyy">
+                <text>sibo</text>
+            </form>
+        </lexical-unit>
+        <citation>
+            <form lang="xyy">
+                <text>sibo</text>
+            </form>
+        </citation>
+        <field type="Plural">
+            <form lang="xyy">
+                <text>misibo</text>
+            </form>
+        </field>
+        <field type="Pluriel">
+            <form lang="xyy">
+                <text>basibo</text>
+            </form>
+        </field>
+        <sense id="tree_0b2c0003-0000-4000-8000-000000000003">
+            <grammatical-info value="Noun" />
+            <gloss lang="en">
+                <text>tree</text>
+            </gloss>
+            <field type="cvprofile_lc">
+                <form lang="xyy-x-cvprofile">
+                    <text>CVCV</text>
+                </form>
+            </field>
+        </sense>
+    </entry>
+    <entry dateCreated="2026-09-01T10:00:00Z" dateModified="2026-09-01T10:00:00Z" guid="0a1c0004-0000-4000-8000-000000000004" id="kan_0a1c0004-0000-4000-8000-000000000004">
+        <lexical-unit>
+            <form lang="xyy">
+                <text>kan</text>
+            </form>
+        </lexical-unit>
+        <citation>
+            <form lang="xyy">
+                <text>kan</text>
+            </form>
+        </citation>
+        <field type="Plural">
+            <form lang="xyy">
+                <text>makan</text>
+            </form>
+        </field>
+        <sense id="eye_0b2c0004-0000-4000-8000-000000000004">
+            <grammatical-info value="Noun" />
+            <gloss lang="en">
+                <text>eye</text>
+            </gloss>
+            <field type="cvprofile_lc">
+                <form lang="xyy-x-cvprofile">
+                    <text>CVC</text>
+                </form>
+            </field>
+        </sense>
+    </entry>
+    <entry dateCreated="2026-09-01T10:00:00Z" dateModified="2026-09-01T10:00:00Z" guid="0a1c0005-0000-4000-8000-000000000005" id="tob_0a1c0005-0000-4000-8000-000000000005">
+        <lexical-unit>
+            <form lang="xyy">
+                <text>tob</text>
+            </form>
+        </lexical-unit>
+        <citation>
+            <form lang="xyy">
+                <text>tob</text>
+            </form>
+        </citation>
+        <sense id="stone_0b2c0005-0000-4000-8000-000000000005">
+            <grammatical-info value="Noun" />
+            <gloss lang="en">
+                <text>stone</text>
+            </gloss>
+            <field type="cvprofile_lc">
+                <form lang="xyy-x-cvprofile">
+                    <text>CVC</text>
+                </form>
+            </field>
+        </sense>
+    </entry>
+    <entry dateCreated="2026-09-01T10:00:00Z" dateModified="2026-09-01T10:00:00Z" guid="0a1c0006-0000-4000-8000-000000000006" id="pema_0a1c0006-0000-4000-8000-000000000006">
+        <lexical-unit>
+            <form lang="xyy">
+                <text>pema</text>
+            </form>
+        </lexical-unit>
+        <citation>
+            <form lang="xyy">
+                <text>pema</text>
+            </form>
+        </citation>
+        <sense id="see_0b2c0006-0000-4000-8000-000000000006">
+            <grammatical-info value="Verb" />
+            <gloss lang="en">
+                <text>see</text>
+            </gloss>
+            <field type="cvprofile_lc">
+                <form lang="xyy-x-cvprofile">
+                    <text>CVCV</text>
+                </form>
+            </field>
+        </sense>
+    </entry>
+    <entry dateCreated="2026-09-01T10:00:00Z" dateModified="2026-09-01T10:00:00Z" guid="0a1c0007-0000-4000-8000-000000000007" id="lisa_0a1c0007-0000-4000-8000-000000000007">
+        <lexical-unit>
+            <form lang="xyy">
+                <text>lisa</text>
+            </form>
+        </lexical-unit>
+        <citation>
+            <form lang="xyy">
+                <text>lisa</text>
+            </form>
+        </citation>
+        <sense id="eat_0b2c0007-0000-4000-8000-000000000007">
+            <grammatical-info value="Verb" />
+            <gloss lang="en">
+                <text>eat</text>
+            </gloss>
+            <field type="cvprofile_lc">
+                <form lang="xyy-x-cvprofile">
+                    <text>CVCV</text>
+                </form>
+            </field>
+        </sense>
+    </entry>
+    <entry dateCreated="2026-09-01T10:00:00Z" dateModified="2026-09-01T10:00:00Z" guid="0a1c0008-0000-4000-8000-000000000008" id="dop_0a1c0008-0000-4000-8000-000000000008">
+        <lexical-unit>
+            <form lang="xyy">
+                <text>dop</text>
+            </form>
+        </lexical-unit>
+        <citation>
+            <form lang="xyy">
+                <text>dop</text>
+            </form>
+        </citation>
+        <sense id="go_0b2c0008-0000-4000-8000-000000000008">
+            <grammatical-info value="Verb" />
+            <gloss lang="en">
+                <text>go</text>
+            </gloss>
+            <field type="cvprofile_lc">
+                <form lang="xyy-x-cvprofile">
+                    <text>CVC</text>
+                </form>
+            </field>
+        </sense>
+    </entry>
+</lift>

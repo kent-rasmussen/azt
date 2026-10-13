@@ -2668,11 +2668,17 @@ class Tone(Senses):
                                     value=f)
             log.info("Setting tone sort group to '{}'".format(group))
             item.examples[check].tonevalue(group)
+            # The third set is the languages this sense HAS GLOSSES in. It was
+            # the word-form node (no language keys), so the intersection was
+            # always empty and a re-sort never refreshed a translation
+            # (2026-10-13).
             for g in (set(self.glosslangs)& #selected
                         set(self.program.toneframes[ps][check])& #defined
-                        set(item.nodebyftype(ftype) or [])): # form in lexicon
+                        set(item.glosses or {})): # glossed in the lexicon
+                # frame BY KEYWORD: positionally it landed in the ftype slot
+                # (hidden while this loop never ran).
                 for f in item.formattedgloss(g,
-                                        self.program.toneframes[ps][check])[:1]:
+                                    frame=self.program.toneframes[ps][check])[:1]:
                     # log.info("Setting {} translation to {}".format(g,f))
                     item.examples[check].translationvalue(g,f)
             item.examples[check].lastAZTsort()
@@ -2687,7 +2693,7 @@ class Tone(Senses):
     def getsensesinUFgroup(self,group):
         return [
                 i for i in self.program.db.senses
-                if i.uftonevalue() == group
+                if i.ufgroup() == group #join/rename, else draft (D3)
                 ]
     def getsensesingroup(self,check,group):
         return [
@@ -2698,7 +2704,7 @@ class Tone(Senses):
         """This works without ftype, as each frame only has one"""
         return item.tonevaluebyframe(check)
     def getUFgroupofsense(self,sense):
-        return sense.uftonevalue()
+        return sense.ufgroup() #join/rename, else draft (D3)
     def name_new_glyphs(self):
         pass
     def __init__(self, **kwargs):

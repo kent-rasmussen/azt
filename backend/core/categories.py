@@ -17,6 +17,22 @@ class Categories:
         return self.program.slices.profile()
     def get_ftype(self):
         return self.program.params.ftype()
+    def verification_ftype(self,check=None):
+        """The form named in a verification field, '<profile> <ftype>
+        verification'. A tone frame's codes go under the frame's OWN field
+        (Kent, 2026-10-13, D1: "use T.location.ftype as a key there"); every
+        other check uses the form being worked on. NB the profile half is
+        still the current slice's, read under the global form, until tone
+        form switching returns."""
+        cvt=getattr(self.program.params,'cvt',None)
+        if cvt and cvt()=='T':
+            check=check or self.program.params.check()
+            toneframes=getattr(self.program,'toneframes',None) or {}
+            frames=toneframes.get(self.program.slices.ps()) or {}
+            frame=frames.get(check)
+            if frame:
+                return frame.get('field') or 'lc'
+        return self.program.params.ftype()
     def getsensesincheckgroup(self,**kwargs):
         check=kwargs.get('check',self.program.params.check())
         group=kwargs.get('group',self.program.status.group())
@@ -37,9 +53,10 @@ class Categories:
         """
         added=None
         assert not add or check in add
-        values=sense.verificationtextvalue(profile,self.program.params.ftype()) #always returns list
+        vftype=self.verification_ftype(check)
+        values=sense.verificationtextvalue(profile,vftype) #always returns list
         if add and not values:
-            v=sense.verificationtextvalue(profile,self.program.params.ftype(),value=[add])
+            v=sense.verificationtextvalue(profile,vftype,value=[add])
             return #if more complex, continue
         # EXACT match on the check part, not a substring one. A verification
         # code is '<check>=<group>', split on the LAST '=' because checks are
@@ -66,7 +83,7 @@ class Categories:
         if add: #i.e., still, after switching out current values for changes
             values.append(add)
             added=add
-        v=sense.verificationtextvalue(profile,self.program.params.ftype(),value=values)
+        v=sense.verificationtextvalue(profile,vftype,value=values)
     def confirmverificationgroup(self,sense,profile,check):
         """This does the one field storing a list of verified values
         for all checks"""
@@ -75,7 +92,8 @@ class Categories:
         log.info(_("Confirming that current group and verification code match "
                     "before making changes."))
         annogroup=self.getitemgroup(sense,check) #Segment or Tone
-        vals=sense.verificationtextvalue(profile,self.program.params.ftype())
+        vftype=self.verification_ftype(check)
+        vals=sense.verificationtextvalue(profile,vftype)
         # EXACT check match, for the same reason as modverification above.
         # The old `if check in i` was justified by "V1 must match V1=V2, if
         # present" — which is exactly backwards: a code's check part is
@@ -86,7 +104,7 @@ class Categories:
         # showed, because an NA code's check part is compound whenever the check
         # is (Kent 2026-07-31: "x=y=NA is NECESSARILY a compound check").
         curvalues=[i.split('=')[-1]  #last (value), if multiple
-                    for i in sense.verificationtextvalue(profile,self.program.params.ftype())
+                    for i in sense.verificationtextvalue(profile,vftype)
                     if '='.join(i.split('=')[:-1])==check]
         nvals=len(set(curvalues))
         if nvals == 1:
@@ -210,7 +228,7 @@ class Categories:
             return
         rm=self.verificationcode(check=check,group=group)
         profile=kwargs.get('profile',self.program.slices.profile())
-        item.rmverificationvalue(profile,self.program.params.ftype(),rm)
+        item.rmverificationvalue(profile,self.verification_ftype(check),rm)
         self.program.status.last('sort',update=True)
         self.program.examples.clear_cache(**kwargs) #anything should still be in kwargs
         if write:
@@ -234,13 +252,22 @@ class Categories:
         log.info("Groups (appended): {groups}".format(groups=groups))
         return str(newgroup)
     def rename_group(self,x,y,updatestatus=True):
+        # Read 'verified' BEFORE the work: the status reload inside it culls
+        # done to the groups it finds, which by then are named y, so x was
+        # dropped and the rename found nothing to carry over (2026-10-13).
+        was_verified=x in self.program.status.verified()
         for _progress in self.updatebygroupsense(x,y,
                                 updatestatus=updatestatus,
                                 updateforms=True):
             pass  # consume generator synchronously
         if updatestatus:
             self.program.settings.reloadstatusdata_cleanup()
-        self.rename_group_verification(x,y)
+        v=[g for g in self.program.status.verified() if g not in (x,y)]
+        if was_verified:
+            log.info("Carrying verification over: {old}>{new}".format(
+                                                                old=x, new=y))
+            v.append(y)
+        self.program.status.verified(g=v)
     def rename_group_verification(self,x,y,**kwargs):
         v=self.program.status.verified(**kwargs)
         if x in v:
@@ -262,12 +289,18 @@ class Categories:
             log.info("No senses for {check}={value}".format(check=check,value=x))
             return
         kwargs={'not_sorting':True,
-                'updateverification':True,
                 'updateforms':updateforms
                 }
+        # A word keeps the verification it had: one carrying '<check>=x' gets
+        # '<check>=y'; one without stays unverified. Marking them all verified
+        # made renaming an unverified group verify it (2026-10-13).
+        old=self.verificationcode(check=check,group=x)
+        vftype=self.verification_ftype(check)
         n=len(senses)
         for i, sense in enumerate(senses):
-            self.marksortgroup(sense, y, **kwargs)
+            verified=old in sense.verificationtextvalue(profile,vftype)
+            self.marksortgroup(sense, y, updateverification=verified,
+                                **kwargs)
             yield i * 50 // n  # 0-50 for marksortgroup phase
         if updatestatus:
             yield from self.program.settings.reloadstatusdata() # 0-100 mapped to ~50 already

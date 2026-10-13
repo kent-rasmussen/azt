@@ -1022,8 +1022,21 @@ class ToneFrameDrafter(ui.Window):
             return
         if key == ('name',None):
             value=self._name_for_this_ps(value)
+        old_analang_key=(self.analangftypecode()
+                         if key in self.STRUCTURAL and 'field' in self.forms
+                         else None)
         self._store(key,value)
         if key in self.STRUCTURAL:
+            # RE-KEY THE ANALYSIS-LANGUAGE ROW, as STRUCTURAL says: it is
+            # keyed '<analang>_<field>', so the row typed under the old field
+            # moves to the new key. status() only ADDED the new row, so the
+            # old one survived into the definition — a plural frame saved
+            # with a stale 'xyz_lc' entry, written to disk for good
+            # (pre-workshop tone tests, 2026-10-13).
+            new_analang_key=self.analangftypecode()
+            if (old_analang_key and old_analang_key != new_analang_key
+                    and old_analang_key in self.forms):
+                self.forms[new_analang_key]=self.forms.pop(old_analang_key)
             self.status() #re-keys the language rows; also drops the examples
             return
         pair=self.fields.get(key)
@@ -1262,7 +1275,12 @@ class ToneFrameDrafter(ui.Window):
         checkdefntoadd={'field':self.forms['field']}
         log.info("Ready to add frame with this form info: {}".format(self.forms))
         # log.info("Ready to add frame with this lookingfor info: {}".format(self.lookingfor))
+        # LANGUAGE ROWS ONLY: the dict values. self.forms also holds 'name'
+        # and 'field' as STRINGS, and `'before' in <str>` is a substring
+        # test, so a frame named e.g. "before and after" was taken for a
+        # language and indexed as a dict (TypeError).
         for lang in [i for i in self.forms #self.lookingfor
+                            if isinstance(self.forms[i],dict)
                             if 'before' in self.forms[i]
                             if 'after' in self.forms[i]
                 ]: #just the defined languages
@@ -1394,7 +1412,15 @@ class ToneFrameDrafter(ui.Window):
                                                 checktoadd,checkdefntoadd
                                                 ))
         # Having made and unset these, we now reset and write them to file.
-        self.program.toneframes.addframe(self.ps,checktoadd,checkdefntoadd)
+        if not self.program.toneframes.addframe(self.ps,checktoadd,
+                                                checkdefntoadd):
+            # REFUSED (a duplicate name in this ps, or a bad definition):
+            # stay on the page and say so. This used to carry on as if it had
+            # worked — select the frame, save, close the drafter.
+            ErrorNotice(_("There is already a {ps} tone frame called ‘{name}’. "
+                          "Please give this one a different name."
+                          ).format(ps=self.ps,name=checktoadd))
+            return
         self.program.status.renewchecks() #renew (not update), because of new frame
         # log.info("object: {}".format(self.program.toneframes))
         self.program.settings.storesettingsfile(setting='toneframes')
@@ -1403,7 +1429,7 @@ class ToneFrameDrafter(ui.Window):
         self.destroy()
     def gimmesense(self,sense=None,next=False,**kwargs):
         sensesbyps=self.program.db.sensesbyps[self.ps]
-        if next and sense:
+        if next and sense is not None: #an Element's truth is its child count
             # log.info("trying {} sense {}/{}".format(self.ps,
             #                                     sensesbyps.index(sense)+1,
             #                                     len(sensesbyps)))
@@ -1797,7 +1823,13 @@ class Transcribe(Sound,Categories,Task):
         # gone. (polygraphwarn now lives solely on the helper.)
         newvalue=self.transcriber.formfield.get()
         """updateforms=True doesn't seem to be working for segments"""
-        self.updatebygroupsense(self.group,newvalue,updateforms=True)
+        # updatebygroupsense is a GENERATOR: calling it without consuming it
+        # ran none of it, so OK renamed the status file and never touched
+        # LIFT (2026-10-13). Status is renamed just below, so no reload here.
+        for _progress in self.updatebygroupsense(self.group,newvalue,
+                                                updateforms=True,
+                                                updatestatus=False):
+            pass
         #NO: this should update formstosearch and profile data.
         # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
         self.program.status.renamegroup(self.group,newvalue) #status file only
@@ -2200,7 +2232,8 @@ class JoinUFgroups(Tone,Task):
             errorlabel['text'] = ''
         def submitform():
             clearerror()
-            uf=named.get()
+            # strip: a blank name ('   ') passed the empty check (2026-10-13)
+            uf=named.get().strip()
             if uf == '':
                 noname=_("Give a name for this UF tone group!")
                 log.debug(noname)
@@ -2223,10 +2256,13 @@ class JoinUFgroups(Tone,Task):
                             "following sense.ids: {ids}").format(group=group,uf=uf,
                             ids=[i.id for i in self.analysis.sensesbygroup[group]]))
                     for sense in self.analysis.sensesbygroup[group]:
-                        sense.uftonevalue(uf)
+                        # The HUMAN form: the user's join/rename (D3); the
+                        # draft stays in the machine form beneath it.
+                        sense.uftonevalue(value=uf)
             self.maybewrite()
             self.ui.runwindow.on_quit()
-            self.program.status.last('joinUF',update=True)
+            self.program.status.last('joinUF',update=True,cvt='T',
+                                        ps=ps,profile=profile)
             self.tonegroupsjoinrename() #call again, in case needed
         self.makeanalysis()
         def redo(timestamps=_("By manual request")):

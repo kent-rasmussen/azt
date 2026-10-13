@@ -667,7 +667,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # log.info(f"{self.sensesbyps_profile=}")
     def get_ps_profiles(self,ftype='lc'):
         """The set of REAL profiles per ps (empty/Invalid excluded — no data)."""
-        self.ps_profiles={k:{p for p in (i.cvprofilevalue(ftype) for i in v if i)
+        self.ps_profiles={k:{p for p in (i.cvprofilevalue(ftype) for i in v
+                                                if i is not None) #not truth: an
+                                                # Element's is its child count
                             if p and p!='Invalid'}
                             for k,v in self.sensesbyps.items()
                             }
@@ -3836,6 +3838,12 @@ class Sense(Node,FieldParent):
         by (analang, machine), like cvprofile). value must be the kwarg — see
         1.3.92 (positionally it landed in fieldvalue's `lang` slot)."""
         return self.fieldvalue('tone',value=value,machine=machine)
+    def ufgroup(self):
+        """The UF tone group a word is IN: the human form (a user's join or
+        rename) if there is one, else the machine form (the analysis draft).
+        Kent, 2026-10-13 (D3): "put our analysis into machine codes, then the
+        joined and renamed forms into data fields"."""
+        return self.uftonevalue() or self.uftonevalue(machine=True)
     def pssubclassvalue(self,value=None):
         try:
             assert isinstance(self.pssubclass,et.Element)

@@ -1211,7 +1211,11 @@ class Settings(SettingsUI):
         for k['ps'],profile_dict in t.items():
             for k['profile'],check_dict in profile_dict.items():
                 for k['check'],groups in check_dict.items():
-                    self.program.status.groups(groups, wsorted=True, **k)
+                    # A LIST, not the set the reader returns: status group
+                    # lists are appended to (renamegroup, add_int_group), and
+                    # a set there crashed the next tone rename (2026-10-13).
+                    self.program.status.groups(sorted(groups), wsorted=True,
+                                                **k)
                     yield start_at + (end_at-start_at) * len(k)/len(t) #maybe more detail later
     def reloadstatusdata(self):
         _log.info(_("Refreshing all status settings from LIFT"))
