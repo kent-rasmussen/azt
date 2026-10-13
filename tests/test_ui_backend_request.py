@@ -41,6 +41,35 @@ def test_a_stored_webview_default_counts_as_asked_for(monkeypatch):
     assert 'preproject' in backend.request_source()
 
 
+def test_the_stored_default_is_read_without_importing_settings():
+    """Importing `settings` from inside the decision re-entered it through
+    frontend/__init__ and cached tkinter (2026-10-13)."""
+    import inspect
+    src = inspect.getsource(backend._stored_webview).split('"""')[-1]
+    assert 'import settings' not in src and 'from settings' not in src
+    assert '_app_settings' not in src
+
+
+def test_the_stored_default_is_read_from_the_preproject_file(
+        monkeypatch, tmp_path):
+    import json
+    import utilities
+    monkeypatch.undo()   # the autouse fixture stubbed _stored_webview out
+    monkeypatch.setattr(backend.sys, 'argv', ['main.py'])
+    monkeypatch.delenv('AZT_UI_BACKEND', raising=False)
+    monkeypatch.setattr(utilities, 'source_base_dir', str(tmp_path))
+    monkeypatch.setattr(backend.getpass if hasattr(backend, 'getpass')
+                        else __import__('getpass'), 'getuser', lambda: 'u')
+    monkeypatch.setattr(backend.platform, 'uname',
+                        lambda: type('U', (), {'node': 'h'})())
+    (tmp_path / 'azt.u.h.preproject.json').write_text(
+        json.dumps({'webview': True}), encoding='utf-8')
+    assert backend._stored_webview() is True
+    (tmp_path / 'azt.u.h.preproject.json').write_text(
+        json.dumps({'webview': False}), encoding='utf-8')
+    assert backend._stored_webview() is False
+
+
 def test_a_switch_beats_the_stored_default(monkeypatch):
     monkeypatch.setattr(backend, '_stored_webview', lambda: True)
     monkeypatch.setattr(backend.sys, 'argv', ['main.py', '--tkinter'])

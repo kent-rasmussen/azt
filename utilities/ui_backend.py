@@ -557,11 +557,29 @@ def _stored_webview():
     'webview_test' / 'webview_main', written by ui_shell at the switch —
     Kent, 2026-10-13). LAST in `_request`, so any switch or the environment
     variable wins; False or absent leaves the usual default alone. Never
-    raises: an unreadable file is no default."""
+    raises: an unreadable file is no default.
+
+    READ THE FILE DIRECTLY — DO NOT IMPORT `settings` HERE. The first
+    version went through `file._app_settings()`, which imports the `settings`
+    package; that imports `frontend.config.settings_ui`, whose `frontend`
+    import runs `frontend/__init__`, which calls `chosen()` — re-entering
+    this decision while it is still being made. The import failed half-way,
+    the failure read as "no default", and the nested call cached tkinter:
+    the key was written (Kent saw it, twice) and never honoured. Same path
+    as `settings.manager.ConfigManager._get_filename` for 'preproject':
+    `<aztdir>/azt.<user>.<host>.preproject.json`."""
     try:
-        from utilities import file
-        mgr = file._app_settings()
-        return bool(mgr and mgr.app.get_webview())
+        import getpass
+        import json
+        from utilities import source_base_dir
+        if not source_base_dir:
+            return False
+        path = os.path.join(source_base_dir, 'azt.{}.{}.preproject.json'.format(
+                            getpass.getuser(), platform.uname().node))
+        if not os.path.exists(path):
+            return False
+        with open(path, encoding='utf-8') as f:
+            return bool(json.load(f).get('webview', False))
     except Exception:
         return False
 
