@@ -193,9 +193,10 @@ underlying category across all frames (UF).
 The syntactic context a word's tone is judged in (isolation, a possessive
 frame, …): a **location** on the tone tier, whose scope is one lexical
 category, since a construction built for nouns cannot take a verb. A frame
-is also built on one **form type** for good: its words are presented,
-sliced (by that form's profile) and verified under that form, so choosing
-a frame on another form switches the form being worked on. A frame name
+is also built on one form for good — named by its **field**, not by the
+"plural"/"imperative" role: a language can have two plural fields, and a
+frame good for one may not suit the other. Its words are presented,
+sliced (by that field's profile) and verified under that field. A frame name
 already used for another category is proposed with "-{category}" added
 (`Isolation-Verb`). **isolation** is the one universal, context-free frame.
 

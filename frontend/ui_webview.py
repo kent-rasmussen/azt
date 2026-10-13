@@ -1368,6 +1368,34 @@ def _start_kwargs(program=None):
 
 # ── Startup state ────────────────────────────────────────────────────
 _started = threading.Event()      # set once webview.start() has loaded
+# THE PROGRAM IS LEAVING. Set by Root.quit / Root.on_quit before any window
+# is closed. Every window's close box CANCELS the native close (it hides
+# instead — see _close_native_window), which is right for one window and
+# wrong for all of them: webview.start() returns only when every window is
+# really gone, so a quit that hid them left the process alive behind its
+# hidden windows, its threads still running — a "Restarting…" page that
+# never went away, a quit copy that re-showed its sort and saved status
+# (Kent's logs, 2026-10-13). While this is set, closes go through.
+_quitting = threading.Event()
+
+
+def _exit_deadline(seconds, why):
+    """Leave the process after `seconds` if the main loop has not let us go.
+    A daemon timer: if the interpreter exits first, it never fires. Writes
+    are atomic (.part then replace), so this can cut short a pending save
+    but not corrupt a file; the grace period is for those to finish."""
+    def _leave():
+        try:
+            log.info("still here %ss after %s; forcing exit", seconds, why)
+        except Exception:
+            pass
+        os._exit(0)
+    try:
+        t = threading.Timer(seconds, _leave)
+        t.daemon = True
+        t.start()
+    except Exception as e:
+        log.info("could not arm the exit deadline ({!r})".format(e))
 _js_queue = []                     # [(window, code), ...] queued before start
 _js_queue_lock = threading.Lock()
 
@@ -7567,6 +7595,8 @@ class Toplevel(_WebviewWidget):
             return
 
         def _on_closing():
+            if _quitting.is_set():
+                return True #the program is leaving: let it close for real
             handler = getattr(self, '_delete_handler', None)
             try:
                 if handler:
@@ -9082,6 +9112,7 @@ class Root(_WebviewWidget):
             self.exitFlag.true()
         except Exception as e:
             log.info('quit: could not set exitFlag ({!r})'.format(e))
+        _quitting.set() #close boxes stop cancelling: see _quitting
         # AND MARK OUR OWN WRAPPERS DEAD. Below we destroy PYWEBVIEW's
         # windows, which does not run `Toplevel.on_quit` — and `on_quit` is
         # what sets `_exists = False`. Without this the wrappers still report
@@ -9232,6 +9263,8 @@ class Root(_WebviewWidget):
             return
 
         def _on_closing():
+            if _quitting.is_set():
+                return True #the program is leaving: let it close for real
             handler = getattr(self, '_delete_handler', None)
             try:
                 if handler:
@@ -9277,6 +9310,19 @@ class Root(_WebviewWidget):
                  "deliberate exit, not a crash; the log ends here because "
                  "logging is shut down next", who, to_root)
         self.exitFlag.true()
+        # END THE LOOP, NOT JUST THE ROOT WINDOW. Destroying the root alone
+        # left every other window hidden-but-alive, so webview.start() never
+        # returned and the quit copy kept running its flows — it re-showed a
+        # sort page and saved status after a successor had started (Kent's
+        # log, 2026-10-13). quit() closes them all, with _quitting letting
+        # the closes through; the deadline covers a toolkit that still won't.
+        _quitting.set()
+        if _started.is_set():
+            try:
+                self.quit()
+            except Exception as e:
+                log.info("quit from on_quit: {!r}".format(e))
+            _exit_deadline(10, 'the program quit')
         logsetup.shutdown()
         if self._wv_window and _started.is_set():
             try:

@@ -31,24 +31,23 @@ def program(global_ftype='lc'):
     return prog
 
 
-def test_a_field_name_maps_to_its_form_code():
-    """The drafter stores the second-form FIELD NAME; forms are keyed by
-    code (pre-workshop audit, 2026-10-12)."""
+def test_a_field_name_is_never_mapped_to_a_code():
+    """A language can have two plural fields; a frame on one must not pick
+    up the other because both are 'plural' (Kent, 2026-10-13)."""
     p = program().params
-    assert p.form_code('Plural') == 'pl'
+    assert p.form_code('Plural') == 'Plural'
     assert p.form_code('pl') == 'pl'
     assert p.form_code(None) == 'lc'
-    assert p.form_code('lx') == 'lx'
 
 
-def test_a_frame_stored_by_field_name_writes_the_plural():
+def test_a_frame_stored_by_field_name_uses_that_field():
     item = FakeSense()
     prog = program('lc')
     prog.toneframes = {'Noun': {'Possessive-pl': {'field': 'Plural',
                                                   'en': 'my __'}}}
     s = SimpleNamespace(program=prog, analang='xyz', glosslangs=['en'])
     lexicon.Tone.setitemgroup(s, item, 'Possessive-pl', '3')
-    assert item.asked == ['pl']
+    assert item.asked == ['Plural']
     assert item.examples['Possessive-pl'].tone == '3'
 
 
@@ -98,6 +97,9 @@ class FakeSense:
 
     def psvalue(self):
         return 'Noun'
+
+    def nodebyftype(self, ftype):
+        return self.ftypes.get(ftype)
 
     def formattedform(self, analang, ftype=None, frame=False):
         self.asked.append(ftype)

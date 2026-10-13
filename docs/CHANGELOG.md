@@ -21,7 +21,7 @@
 
 # Unreleased — pre-workshop audit fixes, built 2026-10-12, AWAITING VERIFICATION
 
-*Test suite clean (Kent, 2026-10-13 12:45: 964 passed, 6 skipped), covering
+*Test suite clean (Kent, 2026-10-13 13:01: 971 passed, 6 skipped), covering
 everything in this section; not yet confirmed in the app or on a user's
 install.*
 
@@ -57,6 +57,40 @@ no longer says "(non-XML) problem loading your database", which read as a
 fault in the user's file: it now says the file was read as valid XML but
 A−Z+T failed while reading its contents, shows the error, and asks for the
 log.
+
+**A tone frame on a plural or imperative field works, and uses exactly
+that field.** Defining or using such a frame crashed: the frame stores the
+field's NAME ("Plural"), and form lookups knew only codes ("pl"). Lookups
+now find the code, or else exactly the entry field of that name — never
+"whatever is the plural now", since a language can have two plural fields
+and a frame built on one must not pick up the other (Kent, 2026-10-13).
+The frame's analysis-language text, keyed by that field's name, matches
+as before. (A first version of the 2026-10-12 work mapped the name to a
+code; withdrawn for the same reason.) Tests:
+`tests/test_second_form_by_name_or_code.py`.
+
+**Renaming a second-form field offers to carry its tone frames along.** A
+frame names its field (Kent: "the frame needs to refer to the field name,
+not 'pl'"), and on a rename "that field name needs to be updated". But a
+rename and a switch to a second, deliberately different field are the
+same gesture in settings, so nothing moves on its own (Kent: "we can't
+just rename here. we can offer the user to ask for that, but don't just do
+it without the user's request"). When the old field holds no data any
+more, a notice lists the frames built on it and offers "Move them to
+‘<new>’", which moves each frame's field and its analysis-language text.
+When the old field still holds data, there are two fields: the frames
+stay, and the rename note names them. If the count can't be made, nothing
+is offered.
+
+**Quitting under webview ends the program.** Every window's close box
+cancels the native close and hides the window instead (right for one
+window); so quitting — or the old copy leaving after a restart — hid
+everything and left the process running behind it, its flows still
+showing windows and saving (Kent's logs, 2026-10-13). While the program
+is quitting, closes now go through, a program quit ends the main loop
+rather than only closing the root window, and if the toolkit still won't
+let go the process leaves after ten seconds (writes are atomic, so that
+can cut a save short but not corrupt a file).
 
 **Updating the program never merges.** A user's Help → Update was a git
 pull — a merge — and on any branch but main it first merged main into the

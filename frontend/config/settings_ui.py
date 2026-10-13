@@ -320,25 +320,103 @@ class SettingsUI(object):
                     n+=1
         except Exception as e:
             log.info("could not count data left in field %r (%r)", old, e)
-            return 0
+            return None #UNKNOWN, not 0: 0 would read as a rename and move frames
         if n:
             log.info("second form field for %s changed %r → %r; "
                      "%d entries have data in %r", ps, old, new, n, old)
-            notify_user(_(
+            text=_(
                 "You changed the second form field for {ps} from ‘{old}’ to "
                 "‘{new}’.\n\nEntries with data in ‘{old}’: {n}. That data is "
                 "still there, but A−Z+T now reads {ps} second forms from "
                 "‘{new}’ only. If you want to use the old data under ‘{new}’, "
                 "you will need to convert it yourself."
-                ).format(ps=ps, old=old, new=new, n=n),
+                ).format(ps=ps, old=old, new=new, n=n)
+            frames=self._frames_on_field(ps,old)
+            if frames:
+                # TWO FIELDS, NOT A RENAME: the old one still holds data, so
+                # its frames stay with it (see _offer_to_move_frames).
+                text+='\n\n'+_("Tone frames built on ‘{old}’ stay on it: "
+                              "{frames}.").format(old=old,
+                                                  frames=', '.join(frames))
+            notify_user(text,
                 title=_("Data left in ‘{old}’").format(old=old))
         return n
+
+    def _frames_on_field(self,ps,field):
+        """Names of `ps`'s tone frames built on the field called `field`."""
+        try:
+            frames=(self.program.toneframes or {}).get(ps,{}) or {}
+            return [name for name,d in frames.items()
+                    if isinstance(d,dict) and d.get('field') == field]
+        except Exception:
+            return []
+
+    def _offer_to_move_frames(self,ps,old,new,left):
+        """When it LOOKS like a rename, OFFER to move the tone frames.
+
+        A frame names its FIELD, not the plural/imperative role (Kent,
+        2026-10-13: "the frame needs to refer to the field name, not 'pl'"),
+        and on a rename "that field name needs to be updated". But a rename
+        and a switch to a second, deliberately different field are the same
+        gesture here, so the app may not decide: "we can't just rename here.
+        we can offer the user to ask for that, but don't just do it without
+        the user's request" (Kent, same day).
+          `left` is how many entries still have data in the old field
+        (`_note_data_left_in_old_field`). Some: two fields, the frames stay,
+        and that note already names them. None: it looks like a rename, so
+        offer — a notice with a button that moves them on request. Unknown
+        (None): say nothing. Returns the frames offered. Never raises."""
+        if not old or not new or old == new or left or left is None:
+            return []
+        names=self._frames_on_field(ps,old)
+        if not names:
+            return []
+        try:
+            ErrorNotice(_(
+                "‘{old}’ has no data left, so it may have been renamed to "
+                "‘{new}’.\n\nThese tone frames are built on ‘{old}’: "
+                "{frames}.\nIf ‘{new}’ is the same field under a new name, "
+                "move them to it. If it is a different field, leave them: a "
+                "frame that suits one field may not suit another."
+                ).format(old=old,new=new,frames=', '.join(names)),
+                title=_("Move tone frames to ‘{new}’?").format(new=new),
+                button=(_("Move them to ‘{new}’").format(new=new),
+                        lambda: self._move_frames_to_field(ps,old,new)))
+        except Exception as e:
+            log.info("could not offer to move tone frames (%r)", e)
+        return names
+
+    def _move_frames_to_field(self,ps,old,new):
+        """Move `ps`'s tone frames from field `old` to field `new` — only ever
+        on the user's request (see _offer_to_move_frames): the `field` value
+        and the analysis-language key built from it (`<lang>_<field>`).
+        Saves the frames when anything moved. Never raises."""
+        moved=[]
+        try:
+            frames=(self.program.toneframes or {}).get(ps,{}) or {}
+            for name,d in frames.items():
+                if not isinstance(d,dict) or d.get('field') != old:
+                    continue
+                d['field']=new
+                suffix='_'+old
+                for key in [k for k in list(d) if k.endswith(suffix)]:
+                    d[key[:-len(suffix)]+'_'+new]=d.pop(key)
+                moved.append(name)
+            if moved:
+                log.info("on request, tone frames for %s moved from field "
+                         "%r to %r: %s", ps, old, new, moved)
+                self.program.toneframes.store()
+        except Exception as e:
+            log.info("could not move tone frames from %r to %r (%r)",
+                     old, new, e)
+        return moved
 
     def setsecondformfieldN(self,choice,window=None):
         if self._refuse_unset_field(self.nominalps,choice):
             return
-        self._note_data_left_in_old_field(self.nominalps,
-                        self._old_second_form_field(self.nominalps),choice)
+        old=self._old_second_form_field(self.nominalps)
+        left=self._note_data_left_in_old_field(self.nominalps,old,choice)
+        self._offer_to_move_frames(self.nominalps,old,choice,left)
         self.secondformfield[self.nominalps]=self.pluralname=choice
         self._checknames_follow_the_field()
         if self.statusisup():
@@ -357,8 +435,9 @@ class SettingsUI(object):
     def setsecondformfieldV(self,choice,window=None):
         if self._refuse_unset_field(self.verbalps,choice):
             return
-        self._note_data_left_in_old_field(self.verbalps,
-                        self._old_second_form_field(self.verbalps),choice)
+        old=self._old_second_form_field(self.verbalps)
+        left=self._note_data_left_in_old_field(self.verbalps,old,choice)
+        self._offer_to_move_frames(self.verbalps,old,choice,left)
         self.secondformfield[self.verbalps]=self.imperativename=choice
         self._checknames_follow_the_field()
         if self.statusisup():

@@ -33,6 +33,7 @@ def fake_self(entries, stored=None, is_set=True):
             db=SimpleNamespace(entries=entries)),
         secondformfield=dict(stored or {}),
         secondformfieldset=lambda ps: is_set,
+        _frames_on_field=lambda ps, field: [],
     )
 
 
@@ -83,5 +84,80 @@ def test_the_old_field_is_read_only_when_it_was_really_set():
 
 def test_a_failed_count_never_breaks_the_setting(notices):
     s = fake_self(None)                 # iterating None raises inside
-    assert note(s, 'Plural', 'Plurals') == 0
+    assert note(s, 'Plural', 'Plurals') is None   # unknown, not "no data"
     assert notices == []
+
+
+class FakeFrames(dict):
+    stored = 0
+
+    def store(self):
+        FakeFrames.stored += 1
+
+
+def frames():
+    FakeFrames.stored = 0
+    return FakeFrames({'Noun': {
+        'Possessive-pl': {'field': 'Plural', 'xyz_Plural': 'nde __ wa',
+                          'en': 'my __'},
+        'Isolation': {'field': 'lc', 'xyz_lc': '__', 'en': '__'}}})
+
+
+@pytest.fixture
+def offers(monkeypatch):
+    shown = []
+    monkeypatch.setattr(settings_ui, 'ErrorNotice',
+                        lambda text, **kw: shown.append((text, kw)))
+    return shown
+
+
+def offer(s, old, new, left):
+    s._frames_on_field = lambda ps, f: SettingsUI._frames_on_field(s, ps, f)
+    s._move_frames_to_field = lambda ps, o, n: \
+        SettingsUI._move_frames_to_field(s, ps, o, n)
+    return SettingsUI._offer_to_move_frames(s, 'Noun', old, new, left)
+
+
+def test_an_apparent_rename_only_OFFERS_to_move_the_frames(offers):
+    """Kent, 2026-10-13: "we can't just rename here. we can offer the user
+    to ask for that, but don't just do it without the user's request"."""
+    s = fake_self([])
+    s.program.toneframes = frames()
+    assert offer(s, 'Plural', 'Pluriel', 0) == ['Possessive-pl']
+    assert s.program.toneframes['Noun']['Possessive-pl']['field'] == 'Plural'
+    assert FakeFrames.stored == 0, 'nothing moves until the user asks'
+    (text, kw), = offers
+    assert 'Possessive-pl' in text
+    label, act = kw['button']
+    act()                                   # the user asks
+    d = s.program.toneframes['Noun']['Possessive-pl']
+    assert d['field'] == 'Pluriel'
+    assert d['xyz_Pluriel'] == 'nde __ wa' and 'xyz_Plural' not in d
+    assert s.program.toneframes['Noun']['Isolation']['field'] == 'lc'
+    assert FakeFrames.stored == 1
+
+
+def test_two_fields_offer_nothing_and_move_nothing(offers):
+    """Data still in the old field: two different fields, and a frame good
+    for one may not suit the other."""
+    s = fake_self([])
+    s.program.toneframes = frames()
+    assert offer(s, 'Plural', 'Plural2', 5) == []
+    assert offers == []
+    assert s.program.toneframes['Noun']['Possessive-pl']['field'] == 'Plural'
+
+
+def test_an_unknown_count_offers_nothing(offers):
+    s = fake_self([])
+    s.program.toneframes = frames()
+    assert offer(s, 'Plural', 'Pluriel', None) == []
+    assert offers == []
+
+
+def test_the_note_names_the_frames_that_stay(notices):
+    s = fake_self([entry(Plural='babibi')])
+    s.program.toneframes = frames()
+    s._frames_on_field = lambda ps, f: SettingsUI._frames_on_field(s, ps, f)
+    note(s, 'Plural', 'Plural2')
+    (text, _kw), = notices
+    assert 'Possessive-pl' in text

@@ -1037,24 +1037,14 @@ class CheckParameters(object):
             return None
         return self.form_code((d or {}).get('field'))
     def form_code(self,field):
-        """A frame's `field` as the app's form code. The drafter stores the
-        second-form FIELD NAME ('Plural'), while forms are keyed by code
-        ('pl', 'imp') everywhere else (`sense.ftypes`, verification fields);
-        reading the name as a code made every lookup miss (pre-workshop
-        audit, 2026-10-12). No field is a citation frame."""
-        if not field:
-            return 'lc'
-        if field in ('lc','lx','pl','imp'):
-            return field
-        try:
-            s=self.program.settings
-            if field == s.secondformfield.get(s.nominalps):
-                return 'pl'
-            if field == s.secondformfield.get(s.verbalps):
-                return 'imp'
-        except Exception:
-            pass
-        return field
+        """A frame's `field`, as stored; no field is a citation frame.
+
+        DELIBERATELY NOT MAPPED to 'pl'/'imp'. A first version turned the
+        field name ('Plural') into the code of whatever field is the plural
+        NOW; a language can have two plural fields, and a frame built on one
+        must never pick up the other (Kent, 2026-10-13). Lookups resolve the
+        exact field by name (`Sense.nodebyftype`)."""
+        return field or 'lc'
     def build_checknames(self):
         self._checknames={
             'σ':{ 1:[

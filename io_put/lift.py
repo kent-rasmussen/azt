@@ -3336,8 +3336,18 @@ class FormParent(Node):
         return t
     def formatted(self,analang,glosslangs,ftype=None,frame=None,**kwargs):
         # Don't die on showtonegroup
-        if (ftype and ftype != self.ftype) or (frame and 'field' in frame and
-                                                frame['field'] != self.ftype):
+        # same_form, not !=: a second form's node has the FIELD NAME as its
+        # type ('Plural') while callers pass the code ('pl'), or the reverse.
+        sense=getattr(self,'sense',None)
+        def _same(a):
+            if a == self.ftype:
+                return True
+            try:
+                return bool(sense) and sense.same_form(a,self.ftype)
+            except Exception:
+                return False
+        if (ftype and not _same(ftype)) or (frame and 'field' in frame and
+                                                not _same(frame['field'])):
             try:
                 log.error("Problem; asked for ftype {}, but working on {} node "
                         "with {} frame"
@@ -3877,11 +3887,31 @@ class Sense(Node,FieldParent):
             # log.info("No {} type to pull annotation dict from".format(ftype))
             return []
     def nodebyftype(self,ftype):
+        """The form node for `ftype`: the app's CODE ('lc', 'pl') through
+        `ftypes`, or else EXACTLY the entry field of that NAME ('Plural').
+
+        A tone frame stores the field name (and keys its analysis-language
+        text by it, `wmg_Plural`, which is that node's own langftypecode),
+        while `ftypes` is keyed by code; looking the name up as a code found
+        nothing, so defining or using a plural/imperative frame crashed
+        (pre-workshop audit, 2026-10-13). The name is matched to THAT field
+        only — never mapped to "whatever is the plural now": a language can
+        have two plural fields, and a frame built on one must not pick up the
+        other (Kent, 2026-10-13). None if this entry has no such field."""
         try:
             return self.ftypes[ftype]
-        except KeyError:
-            # log.info("No {} type to pull ({})".format(ftype,self.ftypes))
+        except (KeyError,TypeError):
             pass
+        try:
+            return self.entry.fields.get(ftype)
+        except AttributeError:
+            return None
+    def same_form(self,a,b):
+        """Do `a` and `b` (codes or field names) name the same form here?"""
+        if a == b:
+            return True
+        na=self.nodebyftype(a)
+        return na is not None and na is self.nodebyftype(b)
     def set_ftype(self,code,name):
         """Point `code` at the entry field called `name`; unset it if gone.
 
@@ -4031,10 +4061,11 @@ class Sense(Node,FieldParent):
                 ftype=frame['field']
             else:
                 ftype='lc'
-        try:
-            return self.ftypes[ftype].formattedbylang(analang,frame)
-        except KeyError:
+        node=self.nodebyftype(ftype) #code or field name
+        if node is None:
             log.info(_("No {type} type ({ftypes})").format(type=ftype, ftypes=self.ftypes))
+            return None
+        return node.formattedbylang(analang,frame)
     def formattedgloss(self,glosslang,ftype=None,frame=False,quoted=False):
         """This outputs a list that can be joined as needed"""
         # log.info("formattedgloss called with glosslang={}, ftype={}, frame={}, "
@@ -4071,7 +4102,7 @@ class Sense(Node,FieldParent):
         # log.info("gloss forms returned: {}".format(t))
         return t
     def formatteddictbylang(self,analang,glosslangs,ftype=None,frame=None):
-        if frame and ftype and not frame['field'] == ftype:
+        if frame and ftype and not self.same_form(frame['field'],ftype):
             val_ff = frame['field']
             log.error(_("ftype mismatch! ({val}/{type})").format(val=val_ff, type=ftype))
             return
@@ -4083,8 +4114,10 @@ class Sense(Node,FieldParent):
         d={lang:', '.join(self.formattedgloss(lang,ftype,frame,quoted=True))
             for lang in [i for i in glosslangs if i in self.glosses]}
         #don't overwrite gloss in analang, if both there:
-        d[self.nodebyftype(ftype).langftypecode(analang)
-            ]=self.formattedform(analang,ftype,frame)
+        node=self.nodebyftype(ftype)
+        if node is None: #this sense has no such form: nothing to show for it
+            return d
+        d[node.langftypecode(analang)]=self.formattedform(analang,ftype,frame)
         return d
     def formattedexample(self,analang,glosslangs,loc,showtonegroup=False):
         if loc in self.examples:
@@ -4093,7 +4126,7 @@ class Sense(Node,FieldParent):
     def formatted(self,analang,glosslangs,ftype=0,frame=0): #,showtonegroup=0):
         """This uses frame definition, not name"""
         """As a format of the sense, there should be no tonegroup to show"""
-        if frame and not frame['field'] == ftype:
+        if frame and ftype and not self.same_form(frame['field'],ftype):
             val_ff = frame['field']
             log.error(_("ftype mismatch! ({val}/{type})").format(val=val_ff, type=ftype))
             return

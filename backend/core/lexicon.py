@@ -2657,7 +2657,9 @@ class Tone(Senses):
             # an example that exists, so the group was never written. The
             # drafter stores 'Plural' where `ftypes` is keyed 'pl', and a
             # sense with no such form has no key at all (audit, 2026-10-12).
-            ftype=self.program.params.form_code(frame.get('field'))
+            # The frame's own field, exactly (see Sense.nodebyftype): not a
+            # mapped code, which could name a different plural field.
+            ftype=frame.get('field') or 'lc'
             f=item.formattedform(self.analang,ftype,frame)
             # log.info("Setting form to {}".format(f))
             if f: #a sense without that form keeps the text it has
@@ -2668,7 +2670,7 @@ class Tone(Senses):
             item.examples[check].tonevalue(group)
             for g in (set(self.glosslangs)& #selected
                         set(self.program.toneframes[ps][check])& #defined
-                        set(item.ftypes.get(ftype) or [])): # form in lexicon
+                        set(item.nodebyftype(ftype) or [])): # form in lexicon
                 for f in item.formattedgloss(g,
                                         self.program.toneframes[ps][check])[:1]:
                     # log.info("Setting {} translation to {}".format(g,f))

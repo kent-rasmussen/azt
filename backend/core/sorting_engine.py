@@ -349,7 +349,10 @@ class Sort(Categories):
         ftype it is handed, so passing the global form with a plural frame
         returned nothing at all."""
         if frame:
-            return self.program.params.form_code(frame.get('field'))
+            # The frame's OWN field, as stored — never mapped to a code, so a
+            # frame on one plural field can't pick up another (Kent,
+            # 2026-10-13). Sense.nodebyftype finds exactly that field.
+            return frame.get('field') or 'lc'
         return self.program.params.ftype()
     def get_frame(self):
         if self.cvt != 'T': # not for segmental checks
