@@ -32,3 +32,13 @@ class AppConfig(ConfigManager):
 
     def set_ui_theme(self, theme):
         self.set('ui_theme', theme)
+
+    def get_webview(self):
+        """Use the webview screens by default on this machine? Written when
+        switching between the main and test versions, from
+        program['webview_main'] / program['webview_test'] (Kent, 2026-10-13);
+        read by utilities.ui_backend. A command-line switch still wins."""
+        return bool(self.get('webview', False))
+
+    def set_webview(self, value):
+        self.set('webview', bool(value))

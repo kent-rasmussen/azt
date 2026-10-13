@@ -43,11 +43,14 @@ import sys
 SWITCHES = [
     ("Which interface", [
         ('--tkinter', None,
-         "Use the tkinter interface. This is the current default."),
+         "Use the tkinter interface. The default, unless this machine last "
+         "switched to a version whose default is the webview."),
         ('--webview', None,
          "Use the webview interface. Needs pywebview and a host toolkit "
          "this python can see; if either is missing it says why and falls "
-         "back to tkinter."),
+         "back to tkinter. Switching to the test version makes this the "
+         "default on this machine (and back to main makes it not), as "
+         "stored in its preproject settings."),
         ('--engine=', 'NAME',
          "Which webview engine: gtk, qt, cef, edgechromium or mshtml. "
          "Only relevant for Linux, which has a real choice between gtk and qt."),

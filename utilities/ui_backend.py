@@ -546,7 +546,24 @@ def _request():
     name = os.environ.get('AZT_UI_BACKEND', '').lower()
     if name in ('tkinter', 'webview'):
         return name, 'AZT_UI_BACKEND={}'.format(name)
+    if _stored_webview():
+        return 'webview', 'this machine’s default (preproject.json)'
     return None, None
+
+
+def _stored_webview():
+    """This machine's stored default from preproject.json: True only when
+    the last switch between versions chose the webview (program
+    'webview_test' / 'webview_main', written by ui_shell at the switch —
+    Kent, 2026-10-13). LAST in `_request`, so any switch or the environment
+    variable wins; False or absent leaves the usual default alone. Never
+    raises: an unreadable file is no default."""
+    try:
+        from utilities import file
+        mgr = file._app_settings()
+        return bool(mgr and mgr.app.get_webview())
+    except Exception:
+        return False
 
 
 def request_source():

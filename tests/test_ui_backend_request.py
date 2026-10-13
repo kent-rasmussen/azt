@@ -27,6 +27,24 @@ def clean_env(monkeypatch):
     # who exports it would otherwise change what these tests measure.
     monkeypatch.delenv('PYWEBVIEW_GUI', raising=False)
     monkeypatch.setattr(backend.sys, 'argv', ['main.py'])
+    # This machine's stored default (preproject.json) would change what these
+    # tests measure, as an exported variable would.
+    monkeypatch.setattr(backend, '_stored_webview', lambda: False)
+
+
+def test_a_stored_webview_default_counts_as_asked_for(monkeypatch):
+    """Switching to the test version stores program['webview_test'] in
+    preproject.json; the next start defaults to the webview (Kent,
+    2026-10-13)."""
+    monkeypatch.setattr(backend, '_stored_webview', lambda: True)
+    assert backend.explicit() == 'webview'
+    assert 'preproject' in backend.request_source()
+
+
+def test_a_switch_beats_the_stored_default(monkeypatch):
+    monkeypatch.setattr(backend, '_stored_webview', lambda: True)
+    monkeypatch.setattr(backend.sys, 'argv', ['main.py', '--tkinter'])
+    assert backend.explicit() == 'tkinter'
 
 
 def test_nothing_asked_for_is_None_not_tkinter():

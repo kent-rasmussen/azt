@@ -160,17 +160,28 @@ class HasMenus():
     # ahead at once, so the new copy could start mid-git — and that Update
     # was a pull, i.e. a merge (see GitReadOnly.update_by_reset). Companion
     # repos are refreshed by the next Help → Update.
+    def _store_webview_default(self,key):
+        """The screens this version uses by default, kept per machine in
+        preproject.json and read at the next start (utilities.ui_backend).
+        Written HERE, when switching versions (Kent, 2026-10-13): the
+        branch is known at this moment, so startup never has to read git."""
+        try:
+            file._app_settings().app.set_webview(getattr(self.program,key))
+        except Exception as e:
+            log.info("could not store the webview default ({!r})".format(e))
     def reverttomainazt(self,event=None):
         #This doesn't care which (test) version one is on
         r=self.program.source_repo.reverttomain()
         log.info("reverttomainazt: {}".format(r))
         if r:
+            self._store_webview_default('webview_main')
             self.program.restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
         r=self.program.source_repo.testversion()
         log.info("trytestazt: {}".format(r))
         if r:
+            self._store_webview_default('webview_test')
             self.program.restart()
     def _removemenus(self,event=None):
         # log.info(_("Hiding menus? (vars={vars}, self:{self}, event={event})")

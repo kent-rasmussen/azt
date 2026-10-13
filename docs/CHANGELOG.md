@@ -19,6 +19,16 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Unreleased — built 2026-10-13, AWAITING VERIFICATION
+
+**The test version defaults to the webview screens.** Help → Try test
+version now stores `program['webview_test']` (on) as this machine's
+default in its preproject settings, and Revert to main stores
+`program['webview_main']` (off); the next start reads it (Kent,
+2026-10-13). A `--tkinter` or `--webview` switch still wins. Machines
+already on the test version get the default the next time they switch.
+Tests: `tests/test_ui_backend_request.py`.
+
 # Unreleased — pre-workshop audit fixes, built 2026-10-12, AWAITING VERIFICATION
 
 *Test suite clean (Kent, 2026-10-13 13:01: 971 passed, 6 skipped), covering

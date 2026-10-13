@@ -35,6 +35,8 @@ program={'name':'A-Z+T',
         'Demo':False, #will get set otherwise later if it is
         'version':__version__, 
         'testversionname':'testing', #always have some real test branch here
+        'webview_test':True,
+        'webview_main':False,
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org',
         'exceptiononload':False #for now
