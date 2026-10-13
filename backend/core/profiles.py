@@ -456,6 +456,8 @@ class ProfileAnalyzer:
         derivation. Returns the checks touched (including annotation-only repairs),
         so a bulk caller can count senses changed."""
         analang = self.program.db.analang
+        if not self.program.params.has_written_form(sense, ftype, analang):
+            return [] # audio-only: no form node to annotate (2026-10-13)
         verified = self._primitive_codes(sense, ftype)
         codes = list(sense.primitiveverification(ftype))
         added = []      # dimensions that gained a verification code
@@ -485,6 +487,8 @@ class ProfileAnalyzer:
         whether to SHOW the Trust offer: primitives only matter when a word is
         sent back, so a word that is never untrusted never needs them written
         (Kent 2026-07-28), and the offer keeps its own trigger."""
+        if not self.program.params.has_written_form(sense, ftype):
+            return False # audio-only: nothing to back-fill onto (2026-10-13)
         cur = sense.cvprofilevalue(ftype)
         # NO PROFILE IS NOT AN EXCUSE (Kent 2026-07-29). Such a word still has
         # readable EDGES (orthographic_edges), and it was the excluded population:
@@ -555,6 +559,41 @@ class ProfileAnalyzer:
                                          ftype, profile)
         self.trust_primitives_from_profile(sense, ftype, profile)
 
+    def affirmable(self, sense, ftype=None):
+        """Can Trust give this word a profile? ONE RULE for Trust and for the
+        "Set up syllable profiles?" gate, so the gate never offers what Trust
+        cannot do: no confirmed profile yet, a real machine analysis, AND a
+        written form to profile. A word with only an audio form can carry a
+        machine profile left from older data (the _MT migration moves the old
+        value over), but Trust has nothing to annotate on it ("has no wmg form;
+        can't apply"), so it stayed unprofiled and re-triggered the gate at
+        every start (Kent, 2026-10-13: "if they aren't eligible for machine
+        profiling, they shouldn't trigger that gate")."""
+        ftype = ftype or self.program.params.ftype()
+        return self.trusted_profile_for(sense, ftype) is not None
+
+    def trusted_profile_for(self, sense, ftype=None):
+        """The profile Trust WOULD write for this word, or None if it would
+        skip it. Trust writes the machine analysis CONSTRAINED to the word's
+        confirmed primitives, and skips a word when that comes out empty or
+        'Invalid' — so the offer, which only checked the raw machine value,
+        kept counting words Trust had already declined (Kent, 2026-10-13: the
+        same 13 words after Trust). Exactly Trust's test, so the two can't
+        disagree."""
+        ftype = ftype or self.program.params.ftype()
+        if sense.cvprofilevalue(ftype):
+            return None
+        m = sense.cvprofilemachinevalue(ftype)
+        if m in (None, '', 'Invalid'):
+            return None
+        if not self.program.params.has_written_form(sense, ftype,
+                                                    self.program.db.analang):
+            return None
+        affirmed = self.constrain_presort_profile(sense, m, ftype)
+        if not affirmed or affirmed == 'Invalid':
+            return None
+        return affirmed
+
     def rebuild_slices(self, ftype=None):
         """FULL post-trust rebuild: refresh the db-level ps/profile
         dicts, then re-run the analyzer — run() re-aggregates
@@ -586,17 +625,12 @@ class ProfileAnalyzer:
             # Fill HOLES only — never rewrite an existing profile (it may be
             # hand-verified good data; affirm must not clobber it). To repair
             # already-written bad profiles, use reconcile_profiles_to_primitives.
-            if s.cvprofilevalue(ftype):
-                continue
-            m = s.cvprofilemachinevalue(ftype)
-            if not m or m == 'Invalid':
-                continue
             # Respect any verified syllable sorting: affirm the machine profile
             # CONSTRAINED to the word's confirmed primitives (#C/C#/syls), not the
             # raw _MT (e.g. machine 'CCVCV', 2 syls/V-final, on a word verified
             # C#=C, syls=1 → 'CCVC'). No verified primitives → no-op → raw machine.
-            affirmed = self.constrain_presort_profile(s, m, ftype)
-            if affirmed and affirmed != 'Invalid':
+            affirmed = self.trusted_profile_for(s, ftype)
+            if affirmed:
                 self._set_trusted_profile(s, ftype, affirmed)
                 n += 1
         log.info("Affirmed the machine CV analysis as profile data for %d "

@@ -33,6 +33,20 @@ log = logsetup.getlog(__name__)
 from utilities.i18n import _
 
 
+def _tell_user(text):
+    """A plain, framed console message for the person waiting, as
+    `py_modules.tell_user` does (not imported from there: importing
+    py_modules runs the package install). Never raises; no stdout under
+    pythonw."""
+    log.info(text)
+    try:
+        if sys.stdout is not None:
+            bar = '=' * 70
+            print('\n{}\n{}\n{}\n'.format(bar, text, bar), flush=True)
+    except Exception:
+        pass
+
+
 def azt_root():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -344,6 +358,12 @@ def ensure_detail(name):
                         name=name, url=spec['url'], dest=dest))
             if spec.get('size_note'):
                 log.info(spec['size_note'])
+            # SAY IT TO THE PERSON, not only the log (Kent, 2026-10-13).
+            _tell_user(_("A−Z+T is downloading {name}, which it needs "
+                         "beside it.{note}\nPlease leave this window open."
+                         ).format(name=name,
+                                  note=(' '+spec['size_note'])
+                                       if spec.get('size_note') else ''))
             # SHALLOW BY DEFAULT (Kent 2026-09-01: "all our cloning should be
             # shallow clones. we don't need history for any users"). These are
             # rollout assets, not anybody's work: nothing here reads history,
@@ -375,6 +395,9 @@ def ensure_detail(name):
     except subprocess.TimeoutExpired:
         log.info(_("Fetching {name} timed out; will try again next start."
                     "").format(name=name))
+        _tell_user(_("Downloading {name} took too long, so A−Z+T is "
+                     "starting without it.\nIt will try again the next "
+                     "time A−Z+T starts.").format(name=name))
     except Exception as e:
         # DON'T BLAME THE NETWORK FOR EVERYTHING. This said "maybe no
         # internet?" for any failure at all, and on Kim's Windows machine the

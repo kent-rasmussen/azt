@@ -367,6 +367,19 @@ class CheckParameters(object):
                 n+=1
             inrun=v
         return max(n,1)  # every word is at least one syllable (0 is nonsense)
+    def has_written_form(self,sense,ftype,analang=None):
+        """Does this word have a written form to analyse and annotate? An
+        audio-only word has none: the #C/C#/syls and profile annotations live ON
+        the written form's node, so every attempt to seed or trust them logged
+        "has no wmg form; can't apply …", at every start (Kent, 2026-10-13:
+        apply the eligibility rule of the profile offer to those lines too).
+        ONE TEST for the seeder, the trust writers and the profile offer."""
+        analang=analang or self.program.db.analang
+        try:
+            form=sense.textvaluebyftypelang(ftype,analang)
+        except Exception:
+            form=None
+        return bool(form and str(form).strip())
     def seed_sense_primitives(self,sense,ftype,analang):
         """Seed a sense's #C/C#/syls primitive annotations (and the profile
         annotation) from its CV profile, IDEMPOTENTLY — the single seeding rule
@@ -392,7 +405,12 @@ class CheckParameters(object):
         next_unverified_slice() because a word in no group is in no slice, so prep
         reported complete with it outstanding (Kent 2026-08-28). Adding a second
         special case would just move the seam, so the gate is gone: work out what
-        is MISSING, then fill exactly that, whatever the combination."""
+        is MISSING, then fill exactly that, whatever the combination.
+
+        A WORD WITH NO WRITTEN FORM IS SKIPPED (None): there is nothing to read
+        primitives off, and nowhere to write them (`has_written_form`)."""
+        if not self.has_written_form(sense,ftype,analang):
+            return None
         av=sense.annotationvaluebyftypelang
         stored=av(ftype,analang,'syls')
         if stored is not None and not self.valid_value('syls',stored):

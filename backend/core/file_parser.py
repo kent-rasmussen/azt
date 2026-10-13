@@ -27,9 +27,20 @@ class FileParser(object):
             file.writefilename() #just clear the default
             raise #Then force a quit and retry
         except Exception as e:
-            text=_("There seems to be a (non-XML) problem loading your "
-            "database ({filename}); I will remove it as default so you can open "
-            "another").format(filename=self.filename)
+            # NEUTRAL ON PURPOSE (Kent, 2026-10-14). Everything raised after a
+            # successful parse lands here: program bugs (the `cawln` rename),
+            # well-formed content the code can't handle, and settings or
+            # environment problems — the exception type doesn't tell them
+            # apart. "(non-XML) problem loading your database" read as a fault
+            # in the user's file when it was a bug. Until content problems get
+            # their own error type (agenda: "LIFT content errors get their own
+            # type"), say only what is known: it parsed, reading it failed.
+            text=_("{filename} was read as valid XML, but A−Z+T failed while "
+                   "reading its contents:\n\n{error}\n\nPlease send the log "
+                   "to whoever supports you. I will remove this file as the "
+                   "default, so you can open another."
+                   ).format(filename=self.filename,
+                            error='{}: {}'.format(type(e).__name__, e))
             log.error(text)
             ErrorNotice(text,title=_('LIFT non-parse error'),wait=True)
             file.writefilename()

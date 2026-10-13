@@ -128,6 +128,29 @@ def drop_what_cannot_build(installs):
     return kept
 
 
+# PATIENCE ON A FIELD CONNECTION. pip's default is a 15-second read timeout
+# and 5 retries; a slow link timed out mid-download on files.pythonhosted.org
+# ("ReadTimeoutError … Read timed out"), which failed the whole all-or-
+# nothing requirements sync and sent every package through the per-package
+# backstop — and, with no stamp written, the same again at the next start
+# (seen on a user's Windows screen, 2026-10-13). A longer wait costs nothing
+# on a good connection.
+PIP_NETWORK_PATIENCE=['--timeout','120','--retries','10']
+def tell_user(text):
+    """A plain message for the PERSON watching the console, before any window
+    exists. The console otherwise shows only pip's output and log lines
+    written for developers, so on a slow first start a user cannot tell
+    working from stuck (Kent, 2026-10-13, watching a user's screen: "But is
+    it working at all? we should report something to the user"). Framed so
+    it stands out from pip's lines; also logged. Never raises: under pythonw
+    there is no stdout."""
+    log.info(text)
+    try:
+        if sys.stdout is not None:
+            bar='='*70
+            print('\n{}\n{}\n{}\n'.format(bar, text, bar), flush=True)
+    except Exception:
+        pass
 def pip_install(installs=[],secondtry=False):
     """With a list provided in installs, this installs only those modules.
     Otherwise, it tries to install everything needed by A−Z+T.
@@ -173,6 +196,7 @@ def pip_install(installs=[],secondtry=False):
     for install in installs:
         thisinstalled=False
         pyargs=[sys.executable, '-m', 'pip', 'install',
+        *PIP_NETWORK_PATIENCE,
         '-f', installfolder, #install the one in this folder, if there
         '--no-index' #This stops it from looking online
         ]
@@ -640,7 +664,12 @@ def sync_requirements():
         pass
     log.info(_("Requirements changed (or first run in this env); "
                 "synchronizing python packages — this can take a while..."))
+    tell_user(_("A−Z+T is installing the software it needs.\n"
+                "On a slow connection this can take a long time — sometimes "
+                "an hour.\nPlease leave this window open. A−Z+T will start "
+                "by itself when it is done."))
     base=[sys.executable,'-m','pip','install',
+          *PIP_NETWORK_PATIENCE,
           '-f',os.path.join(root,'modulestoinstall'),
           '-r',req]
     # See _mac_without_compiler(): on a Mac with no developer tools, refuse
@@ -664,6 +693,7 @@ def sync_requirements():
                                         else 'nothing to change'))
             with open(stampfile,'w') as f:
                 f.write(cur)
+            tell_user(_("The software A−Z+T needs is installed. Continuing…"))
             return
         except subprocess.CalledProcessError as e:
             o=stouttostr(e.output)
@@ -675,6 +705,11 @@ def sync_requirements():
                 log.error("package sync FAILED — the requirements did NOT "
                             "install; the per-package backstop below will "
                             "try individually. pip said:\n{}".format(tail))
+                tell_user(_("Not everything installed in one go — usually a "
+                            "slow or interrupted connection.\nA−Z+T will now "
+                            "try the missing pieces one at a time. This is "
+                            "slower, but it is still working.\nPlease keep "
+                            "this window open."))
         except Exception as e:
             log.error("package sync failed ({}); continuing with "
                         "what’s installed".format(e))

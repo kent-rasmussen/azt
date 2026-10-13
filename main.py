@@ -1498,6 +1498,30 @@ class App:
         write on the way out, deliberately: the successor owns the project now,
         and this process already wrote before it spawned."""
         log.info("%s; predecessor leaving",why)
+        # A DEADLINE, because asking is not leaving. Under webview, quit()
+        # asks every window to close, but windows are HIDDEN rather than
+        # destroyed (freeing a pywebview window at the wrong moment crashes
+        # Qt), and the loop returns only when all are gone — so the old copy
+        # lingered with its "Restarting A-Z+T…" page on screen (Kent's log,
+        # 2026-10-13 12:12:14: 5 of 8 windows logged closing, then nothing).
+        # The successor is up and owns the project, and this copy already
+        # wrote before spawning it, so after a grace period for the normal
+        # exit, leave regardless. A daemon timer: if the loop does return
+        # and the interpreter exits first, it never fires.
+        try:
+            import threading
+            def _leave_regardless():
+                try:
+                    log.info("predecessor still here after the grace period; "
+                             "forcing exit")
+                except Exception:
+                    pass
+                os._exit(0)
+            t=threading.Timer(5.0,_leave_regardless)
+            t.daemon=True
+            t.start()
+        except Exception:
+            log.exception("could not arm the predecessor's exit deadline")
         try:
             self.tk_root.quit()
         except Exception:

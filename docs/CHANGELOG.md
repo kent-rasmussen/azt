@@ -21,8 +21,9 @@
 
 # Unreleased — pre-workshop audit fixes, built 2026-10-12, AWAITING VERIFICATION
 
-*Test suite clean (Kent, 2026-10-13); not yet confirmed in the app or on a
-user's install.*
+*Test suite clean (Kent, 2026-10-13 12:45: 964 passed, 6 skipped), covering
+everything in this section; not yet confirmed in the app or on a user's
+install.*
 
 **Installed copies no longer run with developer settings.** Dev settings
 were chosen by azt's parent folder being called `AZT` — and the Windows
@@ -43,6 +44,102 @@ from reports and the UF analysis, and read the frame's stored field NAME
 1.15.51. What stays: a frame's examples are written with the frame's own
 form, the field name now mapped to its code, and a word without that form
 still gets its group instead of the write being lost.
+
+**A project opens again when some words have no image folder.** Loading
+the database crashed with "'Sense' object has no attribute 'cawln'"
+(a user's screen, 2026-10-14): the sense attribute was renamed
+`word_list_n`, and `slicebyerror` — which runs on every load and reports
+words whose image folder can't be found — still read the old name. It
+fires whenever any word lacks an image folder, which is exactly what a
+failed or partial image-set download leaves. The same stale name in the
+lc-to-gloss copy utility is fixed too. The notice for any such failure
+no longer says "(non-XML) problem loading your database", which read as a
+fault in the user's file: it now says the file was read as valid XML but
+A−Z+T failed while reading its contents, shows the error, and asks for the
+log.
+
+**Updating the program never merges.** A user's Help → Update was a git
+pull — a merge — and on any branch but main it first merged main into the
+current branch, moved to main and deleted the old branch. That machinery
+is for user DATA (keeping both people's work while a collaboration merge
+is sorted out, the work_from_x branches) and it stays exactly as it was
+for the data repository. For the program it merged main into a deliberate
+testing copy, tried to move the user off it, and failed on shallow
+clones with "refusing to merge unrelated histories". Update now makes the
+current branch match its published version (local program edits are
+overwritten, as Try/Revert already did; Kent: "that's fine, for users"),
+and offline uses a USB copy only if it is newer than what is installed.
+Try test version and Revert to main no longer start a second, threaded
+Update while the restart is already under way.
+
+**A renamed project folder can be reconnected to collaboration.** The
+attach check compared the opened file's path with the one the
+collaboration server has registered and called any difference "a
+different copy", even when the registered folder no longer existed (Kent,
+2026-10-13: wmg-new renamed to wmg-nopush). Now, when the registered
+folder is gone, the notice says the project seems to have moved and
+offers "Use this folder for collaboration"; that button and Advanced →
+Reconnect re-register the project at the new folder. Asked, never silent:
+an unplugged drive also makes the old folder vanish. And for a real
+second copy, Reconnect no longer re-probes the server and restarts into
+the same refusal — it says what would change the answer.
+Tests: `tests/test_collab_moved_project.py`. The button itself did
+nothing under webview at first: every notice's extra action button
+(this one, "Try the server again now", "Restart Now", "Try Again", "USB
+inserted", …) was wired to a bare '<ButtonRelease>' event that webview
+never delivers. It is now an ordinary button command, as OK always was.
+
+**After a restart, the old copy really leaves (webview).** Once the new
+copy confirmed it was up, the old one asked its windows to close and
+waited for its main loop to return — but under webview windows are hidden,
+not destroyed, and the loop never returned, so the old copy stayed alive
+with its "Restarting A−Z+T…" page on screen (Kent's log, 2026-10-13
+12:12). It now forces its own exit if it is still there five seconds
+after the hand-over; the new copy owns the project by then and the old
+one has already saved.
+
+**Setting digraphs no longer leaves two copies of A−Z+T running (webview).**
+Clicking OK on the digraph/trigraph question closed the window before
+recording the choice; under webview that released the waiting code at
+once, which took the default "exit with no changes" path, found the
+unsaved changes, decided the user had exited, and quit — while OK went on
+to save and restart. The old copy then kept running behind its hidden
+windows, re-showed its vowel sort, and saved status after the new copy
+had started (Kent's log, 2026-10-13: two "Trier Voyelles" windows, the
+start-up questions asked twice). The choice is now recorded before the
+window closes, and the waiting code honours it.
+
+**Words with no written form no longer re-trigger "Set up syllable
+profiles?".** Audio-only words kept a machine profile from older data, so
+the sort page counted them as words Trust could profile; Trust then had
+no written form to annotate ("has no wmg form; can't apply"), they stayed
+unprofiled, and the offer came back at every start (Kent, 2026-10-13: "if
+they aren't eligible for machine profiling, they shouldn't trigger that
+gate"). Trust and the offer now share one eligibility rule, which
+requires a written form — and is Trust's own test: a word whose machine
+profile, constrained to its confirmed syllable details, comes out empty or
+invalid is one Trust skips, and the offer no longer counts it either (the
+same 13 words were offered again after Trust). The offer now logs which
+words it is counting. The same rule now keeps the start-up seeding of
+#C/C#/syls and the Trust/back-fill writers off such words, which is what
+logged "has no wmg form; can't apply …" twice per audio-only word at every
+start. Tests: `tests/test_affirmable_needs_a_form.py`.
+
+**Package installs wait longer on a slow connection.** pip's 15-second
+read timeout failed a user's whole requirements sync on a field link
+(2026-10-13), sending every package through the slow one-by-one backstop,
+and again at each start. The app's pip calls now allow 120 seconds and 10
+retries.
+
+**The console now tells the person waiting what is happening.** On a slow
+first start the console showed only pip's output and developer log lines,
+so a user could not tell working from stuck (Kent, 2026-10-13: "But is it
+working at all? we should report something to the user"). Framed plain
+messages now say: installing the software it needs, which can take an
+hour, leave the window open; not everything installed in one go, trying
+piece by piece, still working; done; downloading a companion folder (with
+its size note); a download took too long, starting without it and trying
+again next time.
 
 **Smaller fixes from the same audit:** the σ status migration is applied
 where the live status is built, so it is no longer undone at every boot;

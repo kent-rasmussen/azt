@@ -1056,6 +1056,7 @@ NO_SERVER   = 'server-not-answering'
 # 300 s default — which, on the startup path, is a hang, not a wait.
 ATTACH_TIMEOUT_S = 20
 WRONG_TREE  = 'wrong-copy'
+MOVED       = 'project-moved'
 NO_HOOK     = 'save-hook-failed'
 
 def _safe_tail():
@@ -1069,10 +1070,12 @@ def _safe_tail():
 
 
 def _decline(program, langcode, reason, short, title, message,
-             retriable=False):
+             retriable=False, button_label=None):
     """Refuse collaboration for THIS session, visibly. Records the reason
     on ``program.collab_wanted``, logs it, and puts a distinct notice on
-    screen. Always returns None so callers can ``return _decline(...)``."""
+    screen. Always returns None so callers can ``return _decline(...)``.
+    `button_label` names the notice's action when it is not a plain retry
+    (the moved-project case re-points the registration)."""
     program.collab_wanted = {'langcode': langcode, 'reason': reason,
                              'short': short, 'message': message,
                              'retriable': retriable}
@@ -1081,7 +1084,7 @@ def _decline(program, langcode, reason, short, title, message,
     from utilities.error_handler import notify_error
     kwargs = {'title': title}
     if retriable:
-        kwargs['button'] = (_("Try the server again now"),
+        kwargs['button'] = (button_label or _("Try the server again now"),
                             lambda e=None: _retry_from_notice(program))
     try:
         notify_error(message + '\n\n' + _safe_tail(), **kwargs)
@@ -1135,6 +1138,22 @@ def retry_connection(program):
     if not langcode:
         return False, _("This project has no collaboration project code "
                         "stored, so there is nothing to reconnect to.")
+    reason = wanted.get('reason')
+    if reason == MOVED:
+        # The registered folder is gone and the user asked to use this one:
+        # re-registering the same code re-points it (projects.register
+        # updates working_dir for an existing langcode).
+        return connect_current_project(program)
+    if reason == WRONG_TREE:
+        # A SERVER THAT ANSWERS IS NOT THE PROBLEM HERE. Probing it
+        # "succeeded", the app restarted, and the same identity check
+        # refused again — a reconnect loop (Kent's log, 2026-10-13 12:11:56
+        # → restart 12:12:01). Say what would actually change the answer.
+        return False, _(
+            "The collaboration server is answering; the problem is that it "
+            "manages a different copy of project “{langcode}”, which still "
+            "exists. Open that copy instead, or disconnect this file from "
+            "collaboration.").format(langcode=langcode)
     restarted = restart_collab_daemon()
     log.info(f"retry_connection: restart_server accepted={restarted}")
     try:
@@ -1258,6 +1277,26 @@ def attach(program):
     if not theirs and getattr(proj,'working_dir',''):
         theirs=os.path.join(proj.working_dir,os.path.basename(ours))
     theirs=os.path.realpath(theirs) if theirs else ''
+    if (theirs and ours != theirs
+            and not os.path.exists(os.path.dirname(theirs))):
+        # MOVED, NOT COPIED. The registered folder is gone, so there is no
+        # second copy to split history with: the project was renamed or
+        # moved (Kent, 2026-10-13: wmg-new → wmg-nopush, "this is a real
+        # rename"). Asked, never silent — an unplugged USB drive also makes
+        # the registered folder vanish, and re-pointing then WOULD split it.
+        return _decline(program, langcode, MOVED,
+            _("project moved"),
+            _("Collaboration: project moved?"),
+            _("This file belongs to collaboration project “{langcode}”, "
+              "but the folder the collaboration server knows for it no "
+              "longer exists:\n{theirs}\nYou opened:\n{ours}\n"
+              "If you renamed or moved the project folder, use the button "
+              "below (or Advanced → Reconnect) to point collaboration at "
+              "this folder. If the old folder is on a drive that is not "
+              "plugged in, plug it in and restart instead."
+              ).format(langcode=langcode, theirs=theirs, ours=ours),
+            retriable=True,
+            button_label=_("Use this folder for collaboration"))
     if theirs and ours != theirs:
         return _decline(program, langcode, WRONG_TREE,
             _("wrong copy open"),

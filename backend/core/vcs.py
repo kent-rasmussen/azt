@@ -1093,20 +1093,70 @@ class GitReadOnly(Git):
             self.switchbranches()
             # self.unstash()
         else:
-            method=Repository.pull
-            #make sure we at least try the github remote:
-            # User is asked for a USB if nothing is found here:
-            remotes=self.findpresentremotes(firsttry=False) #don't ask
-            homeurl=self.program.url+'.git'
-            remotes.extend([homeurl])
-            log.info(_("remotes: {remotes}").format(remotes=remotes))
-            self.fetch(remotes)
-            for remote in remotes:
-                # str(): a USB/local remote comes back from findpresentremotes
-                # as a Path, and Path + str raised TypeError, so Update failed
-                # before ever trying GitHub (pre-workshop audit, 2026-10-12).
-                r[str(remote)+'/'+self.branch]=method(self,remotes=[remote])
+            return self.update_by_reset()
         return r
+    def update_by_reset(self):
+        """A user's Update of the PROGRAM: make the current branch match its
+        published version. Never a merge, never a change of branch.
+
+        It used to be `Repository.pull`, i.e. fetch + MERGE, and on any branch
+        but main `pull` first ran `try_pull_main` — merge main INTO this
+        branch, check out main, delete this branch. That machinery (with the
+        `work_from_x` branches) exists for USER DATA, where two people's work
+        must both be kept while their computers sort out a merge; for the
+        program it merged main into a deliberate `testing` copy, tried to move
+        the user off it, and on a shallow clone failed with "refusing to merge
+        unrelated histories" (pre-workshop audit, 2026-10-13). Kent, the same
+        day: overwriting local program edits is "fine, for users"; the data
+        repository keeps its merge-and-preserve logic untouched — this
+        override is on GitReadOnly, the program-source class, only.
+
+        Source: the published branch (fetch_tracking_branch). OFFLINE, a
+        present USB/local copy is used — but only if it is a fast-forward
+        from here, so a stale stick can never take a computer backwards.
+        Returns {source: git output}, shaped for App.updateaztdone: "Already
+        up to date." when nothing moved, so it isn't reported as an update."""
+        branch=self.branch
+        before=(self.do(['rev-parse','HEAD']) or '').strip()
+        key='origin/'+branch
+        fetched,why=self.fetch_tracking_branch(branch)
+        source='origin/'+branch if fetched else None
+        if not source:
+            for remote in (self.localremotes() or []):
+                ref='refs/azt/local/'+branch
+                try:
+                    self.do(['fetch',str(remote),
+                             '+{b}:{r}'.format(b=branch,r=ref)])
+                    if not self.do(['rev-parse','--verify','--quiet',ref]):
+                        continue
+                    # Commits HERE that the local copy lacks: 0 means it is
+                    # this version or newer. Unrelated history (shallow
+                    # clones) gives >0, so it is refused — conservative.
+                    ahead=(self.do(['rev-list','--count',ref+'..HEAD'])
+                           or '').strip()
+                except Exception as e:
+                    log.info(_("Could not read {remote}: {error}").format(
+                                remote=remote,error=e))
+                    continue
+                if ahead=='0':
+                    source,key=ref,str(remote)+'/'+branch
+                    log.info(_("Offline: updating from the local copy at "
+                               "{remote}").format(remote=remote))
+                    break
+                log.info(_("The local copy at {remote} is not newer than this "
+                           "one; not using it").format(remote=remote))
+        if not source:
+            # 'error: ' so App.updateaztdone reads it as a failure, not an
+            # update (utilities.updated); a network cause inside `why` is
+            # still caught first by internetconnectionproblemin.
+            return {key:'error: '+(why or _("Could not reach the published "
+                                             "version."))}
+        out=self.do(['checkout','-f','-B',branch,source]) or ''
+        self.branchname() #refresh
+        after=(self.do(['rev-parse','HEAD']) or '').strip()
+        if after and after==before:
+            return {key:'Already up to date.'}
+        return {key:out or _("Updated {branch}.").format(branch=branch)}
         # (Removed 2026-08-31: ~17 lines of unreachable code sat here, after the
         # return — an earlier both-branches implementation using a
         # branches/fns pair reversed by current branch. It could not run, and

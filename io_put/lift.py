@@ -812,7 +812,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         for i in self.senses:
             if i.imgselectiondir:
                 continue
-            errors.setdefault((i.cawln,', '.join(i.collectionglosses)),
+            # word_list_n, not `cawln`: the attribute was renamed and this
+            # line was not, so ANY sense without an image directory raised
+            # AttributeError while loading the database — the project could
+            # not open (a user's screen, 2026-10-14).
+            errors.setdefault((i.word_list_n,
+                               ', '.join(i.collectionglosses or [])),
                               []).append(i.id)
         keys=set(errors)
         # log.info("Errors ({}): {}".format(len(errors),errors))
@@ -5188,8 +5193,8 @@ def copy_lc_to_new_lift_gloss(lift_w_lc,lift_target,analang='ln-CD'):
         lc=e.lc.textvaluebylang(analang)
         if not lc:
             continue
-        cawln=e.sense.cawln
-        for s_target in [i for i in l_target.senses if i.cawln == cawln]:
+        cawln=e.sense.word_list_n #renamed from `cawln`
+        for s_target in [i for i in l_target.senses if i.word_list_n == cawln]:
             try:
                 assert s_target.glosses[analang][0].textvalue() == lc
                 s_target.glosses[analang][0].textvalue(lc)

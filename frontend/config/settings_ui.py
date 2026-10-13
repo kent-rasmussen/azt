@@ -55,8 +55,16 @@ class SettingsUI(object):
             if foundchanges():
                 log.info(_("Found changes, but not storing them; returning 1."))
                 return 1
+        decided={} #what the user chose, read after the wait (see below)
         def makechanges():
             log.info(_("Changes called for; like it or not, redoing analysis."))
+            # DECIDE BEFORE DESTROYING. Under webview, destroy() releases the
+            # wait_window below AT ONCE, and the code after it runs alongside
+            # this handler: it ran the default "no changes" exit, found the
+            # unsaved changes, reported that the user had exited, and the
+            # program quit — while this handler went on to save and restart.
+            # Two copies ended up running (Kent's log, 2026-10-13 11:21:24).
+            decided['changes']=True
             pgw.destroy()
             if not foundchanges():
                 log.info(_("User asked for changes to polygraph settings, but "
@@ -188,6 +196,8 @@ class SettingsUI(object):
             b=ui.Button(pgw.frame,text=oktext,command=makechanges, width=15,
                     column=0, row=row, sticky='e',padx=15)
         pgw.wait_window(pgw)
+        if decided.get('changes'):
+            return #OK was chosen: makechanges saves and restarts; not an exit
         if not self.program.taskchooser.exitFlag.istrue():
             return nochanges() #this is the default exit behavior
     def notifyuserofextrasegments(self):

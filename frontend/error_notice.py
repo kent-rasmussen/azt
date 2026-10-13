@@ -53,12 +53,43 @@ class ErrorNotice(ui.Window):
                     ipadx=25)
         l.wrap()
         if button and type(button) is tuple:
+            # A COMMAND, NOT A '<ButtonRelease>' BINDING. The bare event name
+            # never fired under webview, so the notice's action button was
+            # drawn and did nothing ("Use this folder for collaboration",
+            # Kent 2026-10-13: "there, but nonfunctional"); OK beside it, a
+            # command, worked. Close first, then act — the action may open
+            # its own notice or restart the app.
+            action=button[1]
+            # Some handlers here were written for the event argument
+            # (`lambda event, x=…`), others take none: ask the signature
+            # rather than retrying on TypeError, which would run a handler
+            # twice if it raised one itself.
+            import inspect
+            try:
+                inspect.signature(action).bind()
+                wants_event=False
+            except TypeError:
+                wants_event=True
+            except ValueError: #no signature (builtins): assume none
+                wants_event=False
+            def _act(*args):
+                try:
+                    self.withdraw()
+                except Exception:
+                    pass
+                try:
+                    if wants_event:
+                        action(args[0] if args else None)
+                    else:
+                        action()
+                finally:
+                    try:
+                        self.destroy()
+                    except Exception:
+                        pass
             b=ui.Button(self.frame, text=button[0],
-                    cmd=None,
+                    cmd=_act,
                     row=1, column=1, sticky='e')
-            b.bind('<ButtonRelease>',self.withdraw)
-            b.bind('<ButtonRelease>',button[1],add='+')
-            b.bind('<ButtonRelease>',self.destroy,add='+')
         b=ui.Button(self.frame, text=_("OK"),
                 cmd=self.on_quit,
                 row=1, column=2, sticky='nse')

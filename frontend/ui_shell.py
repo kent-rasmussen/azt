@@ -154,18 +154,22 @@ class HasMenus():
                                                     self.program.name)
         maill.bind("<Button-1>", lambda e: openweburl(murl))
         ui.ToolTip(maill, _("Send me an Email (from your mail client)"))
+    # NO updateazt() AFTER THE SWITCH (pre-workshop audit, 2026-10-13). The
+    # switch is hard_checkout, which already fetched and reset to the
+    # published branch. The extra Update ran on a THREAD while restart() went
+    # ahead at once, so the new copy could start mid-git — and that Update
+    # was a pull, i.e. a merge (see GitReadOnly.update_by_reset). Companion
+    # repos are refreshed by the next Help → Update.
     def reverttomainazt(self,event=None):
         #This doesn't care which (test) version one is on
         r=self.program.source_repo.reverttomain()
         log.info("reverttomainazt: {}".format(r))
-        self.updateazt()
         if r:
             self.program.restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
         r=self.program.source_repo.testversion()
         log.info("trytestazt: {}".format(r))
-        self.updateazt()
         if r:
             self.program.restart()
     def _removemenus(self,event=None):

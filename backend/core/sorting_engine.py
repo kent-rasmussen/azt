@@ -628,12 +628,23 @@ class Sort(Categories):
         # confirmed profile yet, but a real machine analysis to affirm. Words with
         # no/Invalid machine analysis can never be affirmed, so they must not keep
         # the prompt alive forever (once affirmed, 'Trust' fully silences it).
-        def _affirmable(s):
-            return (not s.cvprofilevalue(ftype)
-                    and s.cvprofilemachinevalue(ftype) not in (None,'','Invalid'))
-        _affirm=[s for s in senses if _affirmable(s)]
+        # One rule with Trust (`ProfileAnalyzer.affirmable`): a word with no
+        # written form (audio only) is not eligible, so it can't keep the gate
+        # firing (Kent, 2026-10-13).
+        affirmable=self.program.profiles.affirmable
+        _affirm=[s for s in senses if affirmable(s,ftype)]
         if not _affirm:
             return None # nothing left that affirming/sorting would profile
+        # SAY WHICH. The page shows only a count past ten, so a stubborn
+        # remainder could not be identified from the log (2026-10-13).
+        log.info("profile-setup offer: %d word(s) Trust can profile: %s",
+                 len(_affirm),
+                 '; '.join('{} {!r} machine={} → {}'.format(
+                        s.id, s.textvaluebyftypelang(ftype,
+                                                     self.program.db.analang),
+                        s.cvprofilemachinevalue(ftype),
+                        self.program.profiles.trusted_profile_for(s,ftype))
+                        for s in _affirm[:30]))
         self._offered_profile_setup=True
         if ps:
             note=_("Some of these words have no syllable profile yet, so "
