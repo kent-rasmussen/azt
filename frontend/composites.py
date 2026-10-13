@@ -155,6 +155,20 @@ def _click_landed_inside(event, field):
         return True
     w = getattr(event, 'widget', None)
     box = getattr(field, 'box', None)
+    # A PATH, NOT A WIDGET: a ttk Combobox's dropdown list is Tk's own
+    # `<combobox>.popdown.f.l`, which Python never created, so tkinter hands
+    # the click over with `event.widget` as that path STRING. Walking its
+    # `master` found nothing, the click on an option read as a click away,
+    # and the field closed before the pick could land — choosing from any
+    # dropdown did nothing (Kent, 2026-10-12, the second-form field line).
+    # Tk path names nest, so the dropdown is inside the box iff its path
+    # starts with the box's.
+    if isinstance(w, str) and box is not None:
+        try:
+            boxpath = str(box)
+            return w == boxpath or w.startswith(boxpath + '.')
+        except Exception:
+            return True   # fail safe, as below
     if w is None or box is None:
         # No widget on the event: the flag above was this click's only
         # witness, and it did not speak, so the click was elsewhere.

@@ -1007,6 +1007,36 @@ class CheckParameters(object):
         log.error("no word check named %r", code)
         return code
 
+    def frame_form(self,ps,frame):
+        """The form a tone frame is built on: its definition's `field`. A
+        frame is bound to that one form for good (Kent, 2026-10-12), so it is
+        read, sorted, sliced and verified under it. A definition with no
+        `field` is a citation-form frame, as `formattedform` already assumes.
+        None for a frame this ps does not have."""
+        try:
+            d=self.program.toneframes[ps][frame]
+        except (AttributeError,KeyError,TypeError):
+            return None
+        return self.form_code((d or {}).get('field'))
+    def form_code(self,field):
+        """A frame's `field` as the app's form code. The drafter stores the
+        second-form FIELD NAME ('Plural'), while forms are keyed by code
+        ('pl', 'imp') everywhere else (`sense.ftypes`, verification fields);
+        reading the name as a code made every lookup miss (pre-workshop
+        audit, 2026-10-12). No field is a citation frame."""
+        if not field:
+            return 'lc'
+        if field in ('lc','lx','pl','imp'):
+            return field
+        try:
+            s=self.program.settings
+            if field == s.secondformfield.get(s.nominalps):
+                return 'pl'
+            if field == s.secondformfield.get(s.verbalps):
+                return 'imp'
+        except Exception:
+            pass
+        return field
     def build_checknames(self):
         self._checknames={
             'σ':{ 1:[

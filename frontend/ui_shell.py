@@ -3443,6 +3443,16 @@ class TaskDressing(HasMenus,ui.Window):
         log.info(_("this sets the check"))
         log.info(_("Getting the check name..."))
         checks=self.program.status.checks(**kwargs)
+        if self.program.params.cvt() == 'T' and not guess:
+            # EVERY FRAME OF THE PS, whatever its form (Kent, 2026-10-12:
+            # "offer all locations for a ps"). `status.checks()` holds only
+            # the current form's frames — the engine's list — and choosing
+            # one on another form switches the form (`setcheck`).
+            try:
+                checks=list(self.program.toneframes[
+                                        self.program.slices.ps()])
+            except (KeyError,TypeError):
+                checks=[]
         self.withdraw()
         window=ui.Window(self,title=_('Select Check'))
         window.withdraw()

@@ -166,7 +166,14 @@ class TaskChooser(Task):
     def maketask(self,taskclass,**kwargs): #,filename=None
         if type(taskclass) is str:
             import tasks.tasks
-            taskclass=getattr(tasks.tasks, taskclass)
+            taskclass=getattr(tasks.tasks, taskclass, None)
+        if taskclass is None:
+            # No such task (e.g. task_for_tier for a tier the family lacks).
+            # Back to the chooser rather than a TypeError out of a button
+            # (pre-workshop audit, 2026-10-12).
+            log.info(_("No task to make; showing the task list instead."))
+            self.gettask()
+            return
         taskclass(program=self.program,**kwargs) #filename
     def i_am_mainwindow(self):
         if not self.ui.mainwindow:

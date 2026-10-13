@@ -19,7 +19,145 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Unreleased — pre-workshop audit fixes, built 2026-10-12, AWAITING VERIFICATION
+
+*Test suite clean (Kent, 2026-10-13); not yet confirmed in the app or on a
+user's install.*
+
+**Installed copies no longer run with developer settings.** Dev settings
+were chosen by azt's parent folder being called `AZT` — and the Windows
+installer puts azt at `%LOCALAPPDATA%\Programs\AZT\azt`. So every
+installed copy ran as the developer's: Update pushed to a USB instead of
+pulling (and could only ever ask for one), the project's data repository
+got no commits, error screens were off, and a vowel sort opened at start.
+Dev settings now need `--dev`, or the development checkout on the
+development machine; `--user` still overrides. Copies already installed
+get this only by updating, which their in-app Update can't do: re-run the
+installer, or update by hand.
+
+**The tone-frame form switching of 1.15.52 is withheld until verified.**
+Unverified, it rebuilt the session's slices from a form nobody had
+profiled and left them that way for the next task, hid other forms' frames
+from reports and the UF analysis, and read the frame's stored field NAME
+("Plural") as a form code. Which frames are offered and sorted is back to
+1.15.51. What stays: a frame's examples are written with the frame's own
+form, the field name now mapped to its code, and a word without that form
+still gets its group instead of the write being lost.
+
+**Smaller fixes from the same audit:** the σ status migration is applied
+where the live status is built, so it is no longer undone at every boot;
+Update no longer crashes when a USB copy of the source is found; a pull
+git refused is no longer reported as an update; with no git installed,
+Update and sister-repo setup report it instead of "cannot unpack
+non-iterable bool object"; choosing a tier a transcribe task has no page
+for is refused instead of breaking the page, and "go back" can no longer
+build a task from nothing; a letter losing verification drops its
+"distinct from" pairs on its own tier; an ad hoc group naming a deleted
+word no longer stops the program at start. Tests:
+`tests/test_preworkshop_audit.py`, `tests/test_tone_location_ftype.py`.
+
+# Version 1.15.52 (2026-10-12)
+
+Patch bump at Kent's direction when "ftype as a setting" closed. **What is
+verified and what is not:** the test suite is clean for everything below;
+in the app, the frame-name suffix is confirmed (Kent: "Isolation-Verb
+works", log: "proposing 'Isolation-Verb'"), and the rename note fired with
+the right count (log: "20 entries have data in 'Plural'") though the
+Messages window then vanished. Awaiting verification in the app: the
+Messages-window fix, the dropdown fix, the drafter's full page under
+webview, and the tone sort start with no frames on the current form. The
+three tone-frame form entries wait on a plural-rich database
+(agenda: "Verify tone frames on another form").
+
+**Renaming a second-form field says what it leaves behind.** Changing the
+plural or imperative field to another name orphans the old field's data,
+by design: nothing is moved or deleted, the app just stops reading it as
+that category's second forms. Now, if the old field holds forms, the
+Messages window says so, with the count of entries, and that converting
+them to the new field is the user's to do (Kent, 2026-10-12: *"we should
+probably post a note that they should convert that data manually, if they
+want to use it under the new field name"*). Counted from fields already
+loaded, so it reads nothing new and creates no field. Tests:
+`tests/test_second_form_rename_notice.py`.
+
+**A tone frame reads and writes its own form.** Every frame is built on
+one form (citation, plural, …), and all of a category's frames are offered
+whatever form is being worked on. But two places used the global form
+instead of the frame's: re-sorting a word whose example already existed
+rewrote the example with the global form (so a plural frame, sorted while
+working on citation forms, got citation forms in its examples), and the
+sort and verify pages handed the global form to a formatter that refuses a
+frame built on another form, so the word showed no text. Both now use the
+frame's form, as new examples already did (Kent, 2026-10-12: *"make
+everything write the location.ftype"*). Tests:
+`tests/test_tone_location_ftype.py`.
+
+**A tone frame's words are sliced and verified under the frame's form.**
+The frame menu offers every frame of the category; choosing one built on
+another form switches to that form, rebuilds the slices from that form's
+profiles (keeping the category), and settles the check, group and page.
+So a plural frame's words are grouped by their plural profile, and its
+verification codes go into the plural verification field. The sort
+itself works one form's frames at a time: the engine's frame list is only
+the frames on the current form. The status rebuilt from LIFT files each
+frame only under its own form's profiles. Moving on to another form's
+frames is a frame choice from the menu, by design (Kent, 2026-10-12:
+"sounds fine as-is").
+
+*Status of the three 2026-10-12 entries above:* test suite clean (Kent,
+2026-10-12); in-app behaviour not yet confirmed.
+
+**A frame name another category already uses gets "-{category}".** In the
+tone frame drafter, committing a name like "Isolation" on a Verb frame
+when Noun already has an "Isolation" turns it into "Isolation-Verb" at
+once, on the name button, where it can be edited to anything else. A name
+the same category already has is left alone. Frame names are permanent
+codes, and the other categories' frames are not shown in the drafter, so
+the collision was easy to make without knowing (Kent, 2026-10-12). Tests:
+`tests/test_frame_name_suffix.py`.
+
+**The tone frame drafter shows its whole page under webview.** It stopped
+after the frame name (Kent, 2026-10-12: "TFDP is just showing name,
+nothing beyond that one field"; log: "Object of type ToneFrameDrafter is
+not JSON serializable"). Its two text variables were built tkinter-style,
+`StringVar(self, value)`; the webview StringVar takes the value first, so
+the drafter window became the value. Both now pass `value=` by keyword, as
+the rest of the code does. Guard: `tests/test_ui_vars_take_value_by_keyword.py`.
+
+**The Messages window stays up under webview.** A message appeared and
+then disappeared (Kent, 2026-10-12, with the rename note). The window is
+built withdrawn; under webview it reported itself viewable anyway (the
+toplevel answers from its layout, not from whether it was withdrawn), so
+surfacing it sent no show, and the page's deferred replay re-asserted the
+construction-time hide. It now asks the backend's own record of whether
+the window is meant to be shown.
+
+**Choosing from a dropdown in a settings line works again under tkinter.**
+Clicking an option in an open dropdown, such as the second-form field
+line, did nothing (Kent, 2026-10-12). The click-away watch added
+2026-09-28 cancels an open field when a click lands outside it; a ttk
+dropdown's option list is a Tk-internal window, so tkinter reports the
+click with the window's path as text, the watch could not trace that back
+to the field, and it cancelled the field before the choice landed. The
+watch now treats any path inside the field's own box as inside. Tests:
+`tests/test_dropdown_click_is_inside.py`.
+
+**Opening the tone sort no longer crashes when the category has no frames
+on the current form.** Every task opens on the citation form, and the
+engine now lists only the current form's frames, so a category whose
+frames are all on another form had none: the check was unset and the
+group lookup raised `KeyError: None` out of task start (log, 2026-10-12,
+Verb). Two changes: with no check there are no groups, instead of a
+crash; and the tone sort moves to a form the category's frames are on
+(the selected frame's, if the category has it, else its first), the same
+switch choosing such a frame makes. A category with no frames at all
+gets the existing "Define a New Tone Frame" page.
+
 # Unreleased — built 2026-10-02, AWAITING VERIFICATION
+
+*Verification waits on a fuller database (Kent, 2026-10-12); tracked with
+the tone-frame checks in the agenda item "Verify tone frames on another
+form".*
 
 **An un-analysable word gets one syllable, not no count.** The presort
 left `syls` empty for a form it could not read, with a note that "the

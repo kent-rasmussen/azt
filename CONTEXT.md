@@ -192,8 +192,12 @@ underlying category across all frames (UF).
 **tone frame**:
 The syntactic context a word's tone is judged in (isolation, a possessive
 frame, …): a **location** on the tone tier, whose scope is one lexical
-category, since a construction built for nouns cannot take a verb.
-**isolation** is the one universal, context-free frame.
+category, since a construction built for nouns cannot take a verb. A frame
+is also built on one **form type** for good: its words are presented,
+sliced (by that form's profile) and verified under that form, so choosing
+a frame on another form switches the form being worked on. A frame name
+already used for another category is proposed with "-{category}" added
+(`Isolation-Verb`). **isolation** is the one universal, context-free frame.
 
 **tone melody**:
 The pitch pattern of a word/morpheme (e.g. ˥˨) that a surface tone group

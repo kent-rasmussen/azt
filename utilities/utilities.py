@@ -251,8 +251,16 @@ def isinterneturl(x):
             return True
 def updated(x):
     #put strings that indicate a repo was updated here
-    if not uptodate(x) and 'fatal: ' not in x:
-        return True
+    # A REFUSAL IS NOT AN UPDATE. git's "error: Your local changes … would be
+    # overwritten by merge … Aborting" has no 'fatal: ', and was reported as
+    # "(Restart A-Z+T to use this update)" with nothing changed (pre-workshop
+    # audit, 2026-10-12).
+    if not x or uptodate(x):
+        return False
+    if 'fatal: ' in x or 'error: ' in x or '\nAborting' in x \
+            or x.startswith('Aborting'):
+        return False
+    return True
 def uptodate(x):
     #These are repo already up to date messages
     u=['Everything up-to-date',

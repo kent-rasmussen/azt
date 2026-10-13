@@ -976,6 +976,38 @@ class ToneFrameDrafter(ui.Window):
         # runs — the defect that made three boards look empty (fixed 08-28).
         # Swapping widgets in a scroll frame without reflowing is the same bug.
         self._reflow()
+    def _name_for_this_ps(self,name):
+        """Propose "{name}-{ps}" when another category already has a frame
+        of that name.
+
+        A FRAME NAME IS ITS PERMANENT CODE, and frames are kept per category,
+        so two categories could each have an "Isolation" — a problem before,
+        just not one anyone cared about (Kent, 2026-10-12). Since the other
+        categories' frames are not shown here, someone will eventually define
+        a second one without knowing: "I imagine something like appending
+        "_{ps}" when a name already exists for another ps should be
+        sufficient. Probably do this upfront, so people can modify as
+        needed." A hyphen, not an underscore (decided 2026-10-09). Up front
+        means at the name's commit: the suffixed name is what the button
+        then shows, and the user can edit it to anything else. A name this
+        category already has is left alone; that is not this rule's case."""
+        text=str(name or '').strip()
+        if not text:
+            return name
+        try:
+            frames=self.program.toneframes
+            mine=set(frames.get(self.ps,{}) or {})
+            others={n for ps,fdict in frames.items() if ps != self.ps
+                    for n in (fdict or {})}
+        except Exception as e:
+            log.info("could not check frame names across categories (%r)",e)
+            return name
+        if text in others and text not in mine:
+            proposed='{}-{}'.format(text,self.ps)
+            log.info("frame name %r is already used for another category; "
+                     "proposing %r", text, proposed)
+            return proposed
+        return name
     def commit(self,key=None,value=None):
         """Take the value — or, with no key, abandon the edit.
 
@@ -988,6 +1020,8 @@ class ToneFrameDrafter(ui.Window):
         self._close_active()
         if key is None:
             return
+        if key == ('name',None):
+            value=self._name_for_this_ps(value)
         self._store(key,value)
         if key in self.STRUCTURAL:
             self.status() #re-keys the language rows; also drops the examples
@@ -1102,14 +1136,18 @@ class ToneFrameDrafter(ui.Window):
             # scroll frame is simply unreachable. A dropdown is bounded by its
             # widest label instead of by their sum.
             labels=[label for code,label in self.fieldtypes()]
-            pair['var']=var=ui.StringVar(self,self.fieldtypename())
+            # value= BY KEYWORD: tkinter's StringVar is (master, value), the
+            # webview one is (value, name), so a positional `self` became the
+            # VALUE under webview — the drafter itself, which then failed to
+            # serialize and stopped the page after its first row.
+            pair['var']=var=ui.StringVar(value=self.fieldtypename())
             pair['combo']=ui.Combobox(f,textvariable=var,optionlist=labels,
                         width=max([len(i) for i in labels]+[8])+2,
                         command=lambda event=None,k=key,v=var:
                                     self._pick_fieldtype(k,v.get()),
                         row=0,column=0)
         else:
-            pair['var']=var=ui.StringVar(self,self._value(key))
+            pair['var']=var=ui.StringVar(value=self._value(key)) #keyword: see above
             pair['field']=field=ui.EntryField(f,render=True,text=var,
                                             row=0,column=0,sticky='')
             # field.rendered is DELIBERATELY NOT GRIDDED. The old modal showed

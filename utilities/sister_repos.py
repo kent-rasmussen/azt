@@ -335,7 +335,11 @@ def ensure_detail(name):
             if not git:
                 log.info(_("No git executable found; can’t fetch {name}."
                             "").format(name=name))
-                return False
+                # A PAIR, like every other return here: callers unpack it, so a
+                # bare False stopped ensure() for the remaining sister repos
+                # and made Update say "cannot unpack non-iterable bool object"
+                # (pre-workshop audit, 2026-10-12).
+                return False, ''
             log.info(_("{name} not found; cloning {url} to {dest}...").format(
                         name=name, url=spec['url'], dest=dest))
             if spec.get('size_note'):

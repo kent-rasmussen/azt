@@ -27,6 +27,7 @@ import settings
 
 
 from frontend.error_notice import ErrorNotice
+from utilities.error_handler import notify_user
 
 from backend.core.analysis import Analysis
 from backend.core.sorting_engine import Sort
@@ -273,9 +274,61 @@ class SettingsUI(object):
             log.info("could not rebuild check names after the field "
                      "changed (%r)", e)
 
+    def _old_second_form_field(self,ps):
+        """The field `ps`'s second forms were read from before a change, or
+        None if there was none (unset, or the placeholder)."""
+        try:
+            if not self.secondformfieldset(ps):
+                return None
+        except Exception:
+            return None
+        return self.secondformfield.get(ps)
+
+    def _note_data_left_in_old_field(self,ps,old,new):
+        """Tell the user when a renamed second-form field leaves data behind.
+
+        RENAMING ORPHANS THE OLD FIELD'S DATA, BY DESIGN (Kent, 2026-10-12:
+        "a consequence of changing data forms. If someone changes from a field
+        name with lots of data in it, we should probably post a note that they
+        should convert that data manually, if they want to use it under the
+        new field name"). Nothing is moved or deleted: the forms stay in the
+        old LIFT field, and the app simply stops reading them as this
+        category's second forms. So the user is told how many entries that is,
+        and that converting them is theirs to do.
+
+        Counted from each entry's already-loaded fields, so it reads nothing
+        new and creates no field node. Never raises: a settings change must
+        not fail because a count could not be made."""
+        if not old or old == new:
+            return 0
+        try:
+            analang=self.program.params.analang()
+            n=0
+            for entry in self.program.db.entries:
+                field=getattr(entry,'fields',{}).get(old)
+                if field is not None and field.textvaluebylang(analang):
+                    n+=1
+        except Exception as e:
+            log.info("could not count data left in field %r (%r)", old, e)
+            return 0
+        if n:
+            log.info("second form field for %s changed %r → %r; "
+                     "%d entries have data in %r", ps, old, new, n, old)
+            notify_user(_(
+                "You changed the second form field for {ps} from ‘{old}’ to "
+                "‘{new}’.\n\nEntries with data in ‘{old}’: {n}. That data is "
+                "still there, but A−Z+T now reads {ps} second forms from "
+                "‘{new}’ only. If you want to use the old data under ‘{new}’, "
+                "you will need to convert it yourself."
+                ).format(ps=ps, old=old, new=new, n=n),
+                title=_("Data left in ‘{old}’").format(old=old))
+        return n
+
     def setsecondformfieldN(self,choice,window=None):
         if self._refuse_unset_field(self.nominalps,choice):
             return
+        self._note_data_left_in_old_field(self.nominalps,
+                        self._old_second_form_field(self.nominalps),choice)
         self.secondformfield[self.nominalps]=self.pluralname=choice
         self._checknames_follow_the_field()
         if self.statusisup():
@@ -294,6 +347,8 @@ class SettingsUI(object):
     def setsecondformfieldV(self,choice,window=None):
         if self._refuse_unset_field(self.verbalps,choice):
             return
+        self._note_data_left_in_old_field(self.verbalps,
+                        self._old_second_form_field(self.verbalps),choice)
         self.secondformfield[self.verbalps]=self.imperativename=choice
         self._checknames_follow_the_field()
         if self.statusisup():
@@ -335,6 +390,20 @@ class SettingsUI(object):
             window.destroy()
     def setcvt(self,choice,window=None):
         task_base=self.program.task_base()
+        # REFUSE A TIER THIS TASK FAMILY HAS NO TASK FOR, BEFORE SETTING IT.
+        # Setting it first left a Transcribe task running on CV/VC/σ, which
+        # the letter pages cannot handle (KeyError in the alphabet's per-tier
+        # tables), and "go back" then built a task from None (pre-workshop
+        # audit, 2026-10-12).
+        task=getattr(self.program,'task',None)
+        if task is not None and getattr(task,'cvt_sensitive',False):
+            from tasks.tasks import task_for_tier
+            if task_for_tier(task_base,choice) is None:
+                log.info(_("No {task_base} task for {cvt}; not changing the "
+                           "tier.").format(task_base=task_base,cvt=choice))
+                if window:
+                    window.destroy()
+                return
         self.program.params.cvt(choice)
         self.attrschanged.append('cvt')
         if self.statusisup():
@@ -417,11 +486,57 @@ class SettingsUI(object):
         #able to raise (see tasks.transcribe_glyph.setgroup_comparison).
         log.debug(_("group_comparison: {val}").format(
                         val=getattr(self,'group_comparison',None)))
+    def _tone_frame_sets_the_form(self,frame):
+        """Choosing a tone frame built on another form switches to that form.
+
+        A FRAME IS BOUND TO ONE FORM, and its words are sliced, read and
+        verified under it (Kent, 2026-10-12: a plural frame's words grouped
+        by their citation profile "should not be"; verification stored "by
+        actual ftype, i.e., from the T.location being verified"). Every
+        frame of the ps is offered, and picking one on a different form is
+        "an instance where a user choice moving the ftype makes sense".
+
+        So: set the form, rebuild the slices from that form's profiles
+        (the full rebuild — `db.load_ps_profiles` alone leaves the session's
+        slices stale), keep the ps, and let the ftype branch of
+        `refreshattributechanges` settle the check, the group and the page.
+        The profile becomes the new form's first one if the old one is not
+        among them. Returns True if the form changed.
+
+        Never raises: a failed rebuild is logged, and the form still
+        follows the frame, so nothing is read or written under the wrong
+        one."""
+        ps=self.program.slices.ps()
+        form=self.program.params.frame_form(ps,frame)
+        if not form or form == self.program.params.ftype():
+            return False
+        log.info("tone frame %r is built on the %r form; switching to it from "
+                 "%r", frame, form, self.program.params.ftype())
+        self.program.params.ftype(form)
+        try:
+            self.program.profiles.rebuild_slices(form)
+            self.program.slices.ps(ps) #keeps the ps; makes the profile ok for it
+        except Exception as e:
+            log.info("could not rebuild the slices for the %r form (%r)",
+                     form, e)
+        if self.statusisup():
+            for update in ('updatewordcheck','updateprofile'):
+                try:
+                    getattr(self.program.mainwindow.status,update)()
+                except Exception:
+                    pass
+        self.attrschanged.append('ftype')
+        return True
     def setcheck(self,choice=None,window=None,**kwargs):
         if not choice:
             choice=self.program.status.nextcheck(**kwargs)
         self.program.params.check(choice)
         if self.program.params.cvt() == 'T':
+            # `self._tone_frame_sets_the_form(choice)` is WITHHELD until it
+            # is verified with a plural-rich database: it rebuilds the
+            # session's slices from the frame's form, which nothing has
+            # profiled yet, and nothing rebuilds them back for the next
+            # task (pre-workshop audit, 2026-10-12).
             self.program.mainwindow.status.updatetoneframe()
         else:
             self.program.mainwindow.status.updatecvcheck()

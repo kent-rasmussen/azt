@@ -1902,6 +1902,13 @@ class StatusDict(dict):
             if ps not in self._checksdict[cvt]:
                 self._checks=[] #there may be none defined
             else:
+                # EVERY FRAME OF THE PS. Filtering to the current form's
+                # frames (2026-10-12) is WITHHELD until the form switch it
+                # depends on is verified with a plural-rich database (agenda:
+                # "Verify tone frames on another form"): unverified, it hid
+                # other forms' frames from reports and the UF analysis, and
+                # the switch rebuilt the session's slices from a form nobody
+                # had profiled (pre-workshop audit). Back to 1.15.51.
                 self._checks=self._checksdict[cvt][ps]
         else:
             profile=kwargs.get('profile',self.program.slices.profile())
@@ -2125,7 +2132,21 @@ class StatusDict(dict):
         checks and groups across the two stages?" None reads as "All
         groups", which is what a slice with nothing sorted into it means."""
         kwargs=grouptype(**kwargs)
-        groups=self.groups(**kwargs)
+        # NO CHECK, NO GROUPS. makecheckok unsets the check when a slice has
+        # none, then calls this; asking for that check's groups raised
+        # KeyError: None out of task init (log, 2026-10-12, opening the tone
+        # sort on Verb).
+        if 'check' in kwargs:
+            check=kwargs['check']
+        else:
+            try:
+                check=self.program.params.check()
+            except AttributeError:
+                check='' #can't tell; let groups() answer, as before
+        if check is None:
+            groups=[]
+        else:
+            groups=self.groups(**kwargs)
         if not hasattr(self,'_group'):
              self._group=None #define this attr, one way or another
         if groups:
@@ -2135,9 +2156,26 @@ class StatusDict(dict):
             log.info("no groups in this slice; clearing the group (was %r)",
                      self._group)
             self.group(None)
+    def _tone_form_with_frames(self,check=None):
+        """Switch to a form the current ps has tone frames on; True if it did.
+        Prefers the frame already selected, if the ps has it; otherwise the
+        ps's first frame. Never raises."""
+        try:
+            ps=self.program.slices.ps()
+            frames=list((self.program.toneframes or {}).get(ps,{}) or {})
+            if not frames:
+                return False
+            frame=check if check in frames else frames[0]
+            return bool(self.program.settings._tone_frame_sets_the_form(frame))
+        except Exception as e:
+            log.info("could not move to a form with tone frames (%r)",e)
+            return False
     def makecheckok(self, **kwargs): #result None w/no checks
         check=self.program.params.check()
         checks=self.checks(**kwargs)
+        # (The automatic move to a form with tone frames, 2026-10-12, is
+        # withheld with the form switch; see `updatechecksbycvt`.
+        # `_tone_form_with_frames` stays for when it is verified.)
         if check not in checks:
             if checks:
                 self.program.params.check(checks[0])

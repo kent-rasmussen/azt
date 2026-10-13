@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.51' #This is a string...
+__version__='1.15.52' #This is a string...
 # `--help` BEFORE ANYTHING ELSE, and that position is the point: asking a
 # program what its switches are must not build a venv, install packages or
 # trip the duplicate gate, and must work on a machine where the dependencies
@@ -1727,7 +1727,8 @@ class App:
                 t=t+_('\n(Check your internet connection and try again)')
                 button=(_("Try Again"),tryagain)
         elif not self.me:
-            if [i for i in r.values() if 'fatal: ' in i]: #any fatal problem
+            if [i for i in r.values() if i and ('fatal: ' in i
+                                                or 'error: ' in i)]: #any refusal
                 t+='\n'+_("(Problem! You will likely need help with this.)")
             elif [i for i in r.values() if updated(i)]: #anything updated
                 t+='\n'+_("(Restart {name} to use this update)"
@@ -1774,7 +1775,17 @@ class App:
         # two paths differ in ways that matter (`testing` gates the webview
         # devtools panel and the debug window badge, `me` gates the help
         # line, `production` picks the default theme).
-        if self.aztdir.parent.stem == 'AZT' and '--user' not in sys.argv:
+        # NOT BY FOLDER NAME ALONE (pre-workshop audit, 2026-10-12). The
+        # Windows installer puts azt at %LOCALAPPDATA%\Programs\AZT\azt, so
+        # its parent is called 'AZT' too, and every installed copy ran with
+        # dev settings: no data-repo commits, an auto-opened SortV, and —
+        # because `me` makes Update PUSH to local remotes instead of pulling
+        # — an update that could only ever ask for a USB. Dev settings now
+        # need `--dev`, or the dev checkout on the dev machine (hostname
+        # 'karlap', the same test sound.py and file.py already use).
+        dev_machine=(self.aztdir.parent.stem == 'AZT'
+                     and getattr(self,'hostname','') == 'karlap')
+        if ('--dev' in sys.argv or dev_machine) and '--user' not in sys.argv:
             log.info("Running with dev settings")
             self.testing=True #eliminates Error screens and zipped logs and repo commits
             # self.production=True #True for making screenshots (default theme)

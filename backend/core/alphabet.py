@@ -246,8 +246,16 @@ class Alphabet():
         self.distinguished_by_cvt().add(g)
     def undistinguish(self, g, **kwargs):
         self.distinguished_by_cvt().discard(g) #don't throw error on remove
-    def undistinguish_any_with(self,g):
-        d=self.distinguished_by_cvt()
+    def undistinguish_any_with(self,g,cvt=None):
+        """`cvt` is the tier the glyph belongs to. Without it this used the
+        CURRENT tier, so culling over both C and V dropped pairs from the
+        wrong set, and on a T or σ page raised KeyError (pre-workshop audit,
+        2026-10-12)."""
+        if cvt is None:
+            cvt=self.program.params.cvt()
+        if cvt not in self.distinguished():
+            return
+        d=self.distinguished_by_cvt(cvt=cvt)
         for j in [i for i in d if g in i]:
             d.discard(j) #don't throw error on remove
     def predistinguish(self,tuple_set):
@@ -354,13 +362,17 @@ class Alphabet():
         d=self.glyphdict()
         if cvt:
             d[cvt].remove(glyph) #leave cvt in place, even if empty
+            cvts=[cvt]
         else:
-            for cvt in [cvt for cvt,glyphs in d.items() if glyph in glyphs]:
-                d[cvt].remove(glyph)
+            cvts=[c for c,glyphs in d.items() if glyph in glyphs]
+            for c in cvts:
+                d[c].remove(glyph)
         log.info(_("‘{glyph}’ removed from verified list").format(glyph=glyph))
         # Same rule as StatusDict.update: a glyph that loses verification
-        # loses every "distinct from" pair naming it (Kent, 2026-10-02).
-        self.undistinguish_any_with(glyph)
+        # loses every "distinct from" pair naming it (Kent, 2026-10-02) — on
+        # ITS tier, not the page's.
+        for c in cvts:
+            self.undistinguish_any_with(glyph,cvt=c)
         return self.glyphdict(d)
     def cull_glyphdict(self):
         """This limits the verified glyphs to those that actually have members.

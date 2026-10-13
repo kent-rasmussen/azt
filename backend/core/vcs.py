@@ -1102,7 +1102,10 @@ class GitReadOnly(Git):
             log.info(_("remotes: {remotes}").format(remotes=remotes))
             self.fetch(remotes)
             for remote in remotes:
-                r[remote+'/'+self.branch]=method(self,remotes=[remote])
+                # str(): a USB/local remote comes back from findpresentremotes
+                # as a Path, and Path + str raised TypeError, so Update failed
+                # before ever trying GitHub (pre-workshop audit, 2026-10-12).
+                r[str(remote)+'/'+self.branch]=method(self,remotes=[remote])
         return r
         # (Removed 2026-08-31: ~17 lines of unreachable code sat here, after the
         # return — an earlier both-branches implementation using a

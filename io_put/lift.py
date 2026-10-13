@@ -743,7 +743,15 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     checks[check]=verified
                 out[ps][profile]=checks
         return out
-    def tone_values_by_ps_profile(self):
+    def tone_values_by_ps_profile(self,frames=None):
+        """Tone groups per ps / profile / frame, under the profiles currently
+        loaded (load_ps_profiles' form). `frames`, {ps: names}, keeps only the
+        frames built on that form: a frame's words are sliced by ITS form's
+        profile (Kent, 2026-10-12), so bucketing a plural frame's groups by
+        citation profiles files them under slices they do not belong to.
+        None keeps every frame, as before."""
+        def wanted(ps,check):
+            return frames is None or check in frames.get(ps,())
         return {ps:{profile:{check:{v
                             for sense in self.sensesbyps_profile[ps][profile]
                             for c,v in sense.tonevaluedict().items()
@@ -752,6 +760,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                                     }
                             for sense in self.sensesbyps_profile[ps][profile]
                             for check in sense.tonevaluedict().keys()
+                            if wanted(ps,check)
                             }
                     for profile in self.ps_profiles[ps]
                     if profile

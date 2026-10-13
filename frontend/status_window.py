@@ -198,7 +198,17 @@ class StatusWindow(ui.Window):
                 grabber = 'unaskable ({!r})'.format(e)
             log.info("status window: surfacing (was viewable=%s); grab held "
                      "by %r", viewable, grabber)
-            if not viewable:
+            # UNDER WEBVIEW, "VIEWABLE" IS NOT "SHOWN". A webview toplevel
+            # answers winfo_viewable() from its layout, not from whether it
+            # was withdrawn — and this window is built withdrawn. So it read
+            # as already showing, no show was sent, and the page's deferred
+            # replay then re-asserted the construction-time hide: the message
+            # appeared and disappeared (Kent, 2026-10-12, the rename note;
+            # log: "re-asserted hide after the deferred replay"). The
+            # backend's own record of the intent (`_wv_visible`, webview
+            # only) is what to ask; tkinter has no such attribute, and its
+            # `winfo_viewable` already means shown.
+            if not viewable or getattr(self, '_wv_visible', True) is False:
                 self.deiconify()
             self.attributes('-topmost', True)
             self.after(1200, self._release_topmost)

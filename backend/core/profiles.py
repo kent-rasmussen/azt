@@ -857,8 +857,16 @@ class ProfileAnalyzer:
                 for a in self.adhocgroups[ps]:
                     log.debug("Adding {} to {} ps-profile: {}".format(
                         a, ps, self.adhocgroups[ps][a]))
-                    these = [self.program.db.sensedict[i]
-                            for i in self.adhocgroups[ps][a]]
+                    # SKIP IDS THAT ARE GONE. An ad hoc group naming a sense
+                    # since deleted or merged raised KeyError here on EVERY
+                    # boot (pre-workshop audit, 2026-10-12).
+                    ids=self.adhocgroups[ps][a]
+                    these = [self.program.db.sensedict[i] for i in ids
+                             if i in self.program.db.sensedict]
+                    if len(these) != len(ids):
+                        log.info("ad hoc group %r (%s): %d of %d senses no "
+                                 "longer exist; skipped", a, ps,
+                                 len(ids)-len(these), len(ids))
                     setnesteddictval(self.profilesbysense, these, ps, a)
         else:
             self.adhocgroups = {}

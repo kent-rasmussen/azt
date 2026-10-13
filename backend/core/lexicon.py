@@ -2645,17 +2645,30 @@ class Tone(Senses):
             # providing both ftype and frame isn't necessary, but allows check
             # that they align:
             assert check in item.examples
-            f=item.formattedform(self.analang,self.program.params.ftype(),
-                                self.program.toneframes[ps][check])
+            # THE FRAME'S FORM, NOT THE GLOBAL ONE (Kent, 2026-10-12: "make
+            # everything write the location.ftype"). A tone location is built
+            # on one form for good; newexample already formats from it, and
+            # this rewrite of an existing example used params.ftype(), so a
+            # plural frame sorted under the citation-form setting overwrote
+            # its plural examples with citation forms.
+            frame=self.program.toneframes[ps][check]
+            # A CODE, NOT THE FIELD NAME, and NO KeyError PAST THIS POINT: a
+            # KeyError below falls into the new-example branch, which refuses
+            # an example that exists, so the group was never written. The
+            # drafter stores 'Plural' where `ftypes` is keyed 'pl', and a
+            # sense with no such form has no key at all (audit, 2026-10-12).
+            ftype=self.program.params.form_code(frame.get('field'))
+            f=item.formattedform(self.analang,ftype,frame)
             # log.info("Setting form to {}".format(f))
-            item.examples[check].textvaluebylang(
+            if f: #a sense without that form keeps the text it has
+                item.examples[check].textvaluebylang(
                                     lang=self.analang,
                                     value=f)
             log.info("Setting tone sort group to '{}'".format(group))
             item.examples[check].tonevalue(group)
             for g in (set(self.glosslangs)& #selected
                         set(self.program.toneframes[ps][check])& #defined
-                        set(item.ftypes[self.program.params.ftype()])): # form in lexicon
+                        set(item.ftypes.get(ftype) or [])): # form in lexicon
                 for f in item.formattedgloss(g,
                                         self.program.toneframes[ps][check])[:1]:
                     # log.info("Setting {} translation to {}".format(g,f))

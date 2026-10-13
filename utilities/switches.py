@@ -53,11 +53,15 @@ SWITCHES = [
          "Only relevant for Linux, which has a real choice between gtk and qt."),
         ]),
     ("Running it", [
+        ('--dev', None,
+         "Developer settings: no error screens or log zipping, no data "
+         "commits, a test file and an auto-opened task, and Update pushes "
+         "to local remotes instead of pulling. On by default only for the "
+         "development checkout on the development machine."),
         ('--user', None,
          "Run a development copy the way a user's copy runs: real error "
          "screens, log zipping on, no test file and no auto-opened task. "
-         "Otherwise a checkout inside a folder called AZT gets developer "
-         "settings, and this switch is the only way to opt out."),
+         "Overrides --dev and the development-machine default."),
         ('--no-splash', None,
          "Skip the splash screen. Useful when it is in the way."),
         ('--no-install', None,

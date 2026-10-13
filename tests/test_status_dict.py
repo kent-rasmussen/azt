@@ -200,7 +200,10 @@ def test_the_reverify_paths_go_through_update():
         src = _code(fn)
         assert "update(group=group,verified=False)" in src.replace(" ", ""), fn.__qualname__
         assert "done.remove(group)" not in src, fn.__qualname__
-    assert "undistinguish_any_with(glyph)" in _code(alphabet.Alphabet.mark_glyph_not_done)
+    # With the glyph's own tier since the pre-workshop audit (2026-10-12):
+    # the page's tier dropped pairs from the wrong set.
+    assert "undistinguish_any_with(glyph,cvt=c)" in \
+        _code(alphabet.Alphabet.mark_glyph_not_done).replace(' ', '')
 
 
 # ── sense to-sort / sorted bookkeeping ───────────────────────────────────

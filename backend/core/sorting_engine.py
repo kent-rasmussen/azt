@@ -340,6 +340,17 @@ class Sort(Categories):
     def sort_ui(self):
         """Lazy-init presenter; available after task init wires program.sort_ui."""
         return self.program.sort_ui
+    def location_ftype(self,frame=None):
+        """The form a location reads and writes. A tone frame is built on one
+        form for good, so its own `field` wins (Kent, 2026-10-12: "offer all
+        locations for a ps, then read and write correctly by
+        location.ftype"); every other location uses the form being worked
+        on. `sense.formatted` refuses a frame whose form differs from the
+        ftype it is handed, so passing the global form with a plural frame
+        returned nothing at all."""
+        if frame:
+            return self.program.params.form_code(frame.get('field'))
+        return self.program.params.ftype()
     def get_frame(self):
         if self.cvt != 'T': # not for segmental checks
             return 
@@ -1215,7 +1226,8 @@ class Sort(Categories):
     def present_sense(self,sense):
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
         frame=self.get_frame()
-        text=sense.formatted(self.analang, self.glosslangs, self.program.params.ftype(), frame)
+        text=sense.formatted(self.analang, self.glosslangs,
+                             self.location_ftype(frame), frame)
         return self.sort_ui.build_present_sense(
             self.ui.runwindow.frame, self.buttonframe, text, sense)
     def unverify_profile(self,sense,advance=True):
@@ -1905,9 +1917,10 @@ class Sort(Categories):
             # Alphabetical by the word form; for word-final tests, alphabetical
             # from the END of the word (reverse the key) so like endings group.
             if items:
+                _ftype=self.location_ftype(self.get_frame())
                 def _formkey(s):
                     try:
-                        return (s.formattedform(self.analang,self.program.params.ftype())
+                        return (s.formattedform(self.analang,_ftype)
                                 or '').casefold()
                     except Exception:
                         return ''
@@ -2163,7 +2176,8 @@ class Sort(Categories):
         #This should be pulling from the example, as it is there already
         check=self.program.params.check()
         frame=self.get_frame()
-        text=sense.formatted(self.analang, self.glosslangs, self.program.params.ftype(), frame)
+        text=sense.formatted(self.analang, self.glosslangs,
+                             self.location_ftype(frame), frame)
         if self.program.settings.lowverticalspace:
             ipady=0
         else:

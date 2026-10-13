@@ -511,6 +511,14 @@ class Settings(SettingsUI):
                 self.fndict[s](v)
             elif s == 'status' and not hasattr(self.program,'status'): #Only load this once
                 d={k:v[k] for k in v if k != 'DEFAULT'}
+                # MIGRATE HERE TOO. `profiledata` loads the same data.json
+                # BEFORE `status` does, so this branch builds the live status
+                # from the unmigrated dict; the migration in loadsettingsfile
+                # then fixed only the file, and the next status.store() wrote
+                # 'S' straight back (pre-workshop audit, 2026-10-12).
+                if migrate_syllable_tier_code(d):
+                    _log.info("status: migrated the syllable tier key while "
+                              "building the live status")
                 # _log.info(_("makestatus from file: {status}").format(status=d))
                 self.makestatus(d)
             elif s == 'toneframes':
@@ -1194,6 +1202,9 @@ class Settings(SettingsUI):
         _log.info(_("Refreshing tone data from LIFT"))
         start_at=kwargs.get('startat',0)
         end_at=kwargs.get('endat',100)
+        # Every frame, as in 1.15.51. Filing each frame only under its own
+        # form's profiles (frames=…) is withheld with the tone form switch
+        # until that is verified (pre-workshop audit, 2026-10-12).
         t=self.program.db.tone_values_by_ps_profile()
         k={}
         k['cvt']='T'
