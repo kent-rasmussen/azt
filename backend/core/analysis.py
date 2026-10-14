@@ -565,7 +565,7 @@ class SliceDict(dict):
     def nextps(self):
         pss=self.pss()
         try:
-            index=sepss.index(self._ps)
+            index=pss.index(self._ps) #was `sepss`: NameError (2026-10-14)
             if index+1 == len(pss):
                 self.ps(pss[0]) #cycle back
             else:

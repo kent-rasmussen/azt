@@ -2701,7 +2701,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info("Found these morph-type values: {}".format(m))
         return m
         """CONTINUE HERE: Making things work for the new lift.get() paradigm."""
-    def copylctolx(self):
+    def copylctolx(self,**kwargs): #kwargs was read but never taken
         # This is a copy operation, leaving lc in place
         for e in self.getentrynode(**kwargs):
             log.info("Looking at entry w/guid: {}".format(e.guid))

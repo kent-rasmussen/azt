@@ -10,6 +10,7 @@ from backend.core.categories import Categories
 from utilities.utilities import *
 from utilities import file, logsetup, rx
 from io_put import export
+from io_put import lift #set_transcription_fields; was never imported
 from tasks.alphabet_chart import AlphabetChart
 from tasks.alphabet_comparison import AlphabetComparisonPages
 from utilities.i18n import _
@@ -171,7 +172,7 @@ class WordCollectionwRecordings(WordCollection,Record):
             if ftype == 'lx':
                 self.entry.lx=lift.Lexeme(self.entry)
             elif ftype == 'lc':
-                self.entry.lx=lift.Citation(self.entry)
+                self.entry.lc=lift.Citation(self.entry) #was .lx: wrong slot
             else:
                 self.entry.fields[ftype]=lift.Field(self.entry,ftype=ftype)
     def set_transcription_frame(self,**kwargs):

@@ -1523,13 +1523,14 @@ class WordCollection(Segments):
     def getopenclipart(self,event=None,nogui=False):
         log.info(_("Not getting from openclipart.org"))
         return #this isn't really what we want right now
+        from utilities import urls #never imported here; urllib3 stays lazy
         if not self.sense.collectionglosses:
             log.info(_("No English glosses to search OpenClipart.org! ({glosses})").format(glosses=self.sense.glosses))
             if self.sense.imgselectiondir:
                 # logic to pull English terms from folder names
                 self.sense.collectionglosses=[i for i in
                                         str(self.sense.imgselectiondir).split('/')[-1].split('_')
-                                        if not isinteger(i)]
+                                        if not i.isdigit()] #isinteger: undefined
         self.ui.wait(msg=_("Dowloading images from OpenClipart.org\n{glosses}"
                         "").format(glosses=" ".join(self.sense.collectionglosses)),
                     cancellable=True)
@@ -2114,7 +2115,7 @@ class Parse(Segments):
         if self.ui.exitFlag.istrue():
             return
         if not ps:
-            return asksegmentsnops()
+            return self.asksegmentsnops() #was bare: NameError (2026-10-14)
         log.info("asking for second form segments for '{}' ps: {} ({}; {})"
                 "".format(self.parser.entry.lcvalue(),
                             ps,self.parser.sense.id,
@@ -2586,7 +2587,10 @@ class Tone(Senses):
         senses=self.program.slices.senses(ps=ps,profile=profile)
         vts=False
         for sense in senses:
-            if sense.tonevaluebyframe(self,frame):
+            # UNSORTED = no tone value at this frame. Was
+            # `tonevaluebyframe(self,frame)`: an undefined name, and the test
+            # was inverted against the docstring (2026-10-14).
+            if not sense.tonevaluebyframe(check):
                 vts=True
                 break #This is just a True/False for the group, not lists
         self.program.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)

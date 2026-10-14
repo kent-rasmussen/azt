@@ -1841,8 +1841,11 @@ class Sort(Categories):
             for item in selected:
                 self.program.alphabet.remove_item_from_glyph(item, self.group)
         else:
-            raise "This doesn't belong here yet!"# wrong: this should unsort!
-            self.marksortgroup(item, category, nocheck=True) # that marking
+            # Only macrosort calls this. Raising a STRING is itself a
+            # TypeError, and the line after it read undefined names.
+            # Unsorting the selected words here is unbuilt.
+            raise NotImplementedError("verifyselected without macrosort "
+                                      "should unsort; not built yet")
         self.maybewrite()
     def verify(self,menu=False,macrosort=False):
         def updatestatus(verified=False):

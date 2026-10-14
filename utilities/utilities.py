@@ -159,6 +159,18 @@ def nowruntime():
     """Aware-UTC now, for run-duration deltas (start_time=nowruntime();
     … nowruntime()-start_time)."""
     return datetime.datetime.now(datetime.timezone.utc)
+def logfinished(start_time,msg=None):
+    """Log and return how long something took since start_time=nowruntime().
+    MISSING until 2026-10-14: reports and the status refresh called it, and
+    a finished tone report died at its last line with "name 'logfinished'
+    is not defined" (Kent's run). It was once a Theme method."""
+    seconds=(nowruntime()-start_time).total_seconds()
+    minutes,seconds=divmod(seconds,60)
+    text=_("Finished {what} in {minutes} minutes, {seconds:.3f} seconds."
+            ).format(what=msg or '',minutes=int(minutes),seconds=seconds
+            ).replace('  ',' ')
+    log.info(text)
+    return text
 def ifone(l,nt=None):
     if l and not len(l)-1:
         return l[0]

@@ -69,6 +69,51 @@ fixes at 16:00, 1095 passed; in the app, AWAITING VERIFICATION):
   analysed, not the current one; the analysis asks for tone frames
   whatever tier is current; a blank UF name is refused.
 
+Also AWAITING VERIFICATION:
+
+- **VERIFIED 2026-10-14** (Kent: "the report ran OK"; log 07:57: one
+  background tone report, finished, no retry): the three items below, for
+  the single-slice tone report under webview.
+- **Background reports start under webview.** The report button's choice
+  was passed into the report wrapper in place of the report itself:
+  "'str' object is not callable". Test:
+  `tests/test_background_report_command.py`.
+- **A quick background report no longer runs twice.** A report that
+  finished within 0.2 seconds counted as failed, and ran again in the
+  foreground. Now only a report that exits with an error is retried. A
+  background tone report that finds the analysis out of date now exits
+  with an error, so it is still retried in the foreground.
+- **A finished tone report no longer crashes at its last line.** It
+  logged its run time through a helper that existed nowhere ("name
+  'logfinished' is not defined"); the timed status refresh had the same
+  call. Test: `tests/test_no_undefined_globals.py`, which checks the report,
+  analysis, sorting and settings modules for any global a function reads
+  that the module doesn't have. Its first run found eight more, now fixed:
+  - **"Alphabet report by tone group"** read an undefined `analysis` (it
+    now uses the report's own analysis, for the slice reported).
+  - **Moving to the next category** (`nextps`) used a misspelled list.
+  - **Second-form segments** with no category called a method without
+    `self`.
+  - **The tone "any word unsorted?" check** read an undefined frame, and
+    asked the inverted question.
+  - **Verify-selected outside the alphabet chart** raised a string; it now
+    says plainly that it isn't built.
+  - **The OpenClipart image search** (switched off) used two undefined
+    names.
+  - **Word collection with recordings** built a missing word form from a
+    module the task file never imported, and put a new citation form in
+    the lexeme's place.
+  - Dead or script-only code with undefined names is listed in the test,
+    each with its reason, rather than deleted.
+- **Multi-check and multi-slice background reports start.** They had the
+  same button-choice fault as above, and the multi-slice tone ones were
+  wrapped for the background twice, so the report process failed at once.
+- **Quitting under webview no longer closes the main window twice.** The
+  second close printed `KeyError: 'master'` from pywebview at exit.
+- **Two word-element tests check for a missing word, not an empty one**
+  (the tone frame drafter's next word, and the profile sets), ahead of
+  Python's change to element truth values.
+
 # Version 1.15.53 (2026-10-13)
 
 *Verified by Kent, 2026-10-13: "the switching is happening cleanly now."*

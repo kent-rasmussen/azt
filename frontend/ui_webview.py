@@ -9317,14 +9317,19 @@ class Root(_WebviewWidget):
         # log, 2026-10-13). quit() closes them all, with _quitting letting
         # the closes through; the deadline covers a toolkit that still won't.
         _quitting.set()
+        closed_all = False
         if _started.is_set():
             try:
                 self.quit()
+                closed_all = True
             except Exception as e:
                 log.info("quit from on_quit: {!r}".format(e))
             _exit_deadline(10, 'the program quit')
         logsetup.shutdown()
-        if self._wv_window and _started.is_set():
+        # ONLY IF quit() DIDN'T. It already destroyed this window, and a second
+        # destroy runs on pywebview's GTK thread, out of reach of this try:
+        # "KeyError: 'master'" in close_window (Kent, 2026-10-13).
+        if self._wv_window and _started.is_set() and not closed_all:
             try:
                 self._wv_window.destroy()
             except Exception:

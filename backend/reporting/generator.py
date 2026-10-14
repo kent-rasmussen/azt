@@ -169,7 +169,10 @@ class Report(object):
             log.info(_("Sorry, the analysis isn’t good, and we’re running "
                     "in the background. That isn’t going to work, so I’m "
                     "stopping here."))
-            return
+            # EXIT WITH AN ERROR CODE, so background() retries in the
+            # foreground, where the analysis can be redone. A plain return
+            # exits 0, which now reads as success: no report, no notice.
+            raise SystemExit(2)
         else:
             log.info(_("Looks like the analysis isn’t good, but we’re not "
                     "in the background, so I’m doing a new analysis now."))
@@ -411,8 +414,12 @@ class Report(object):
         t.start()
         log.info(_("Starting XLP background report with kwargs {kwargs}"
                     ).format(kwargs=kwargs))
-        time.sleep(0.2) #give it 200ms before checking if it returned already
-        if not t.is_alive():
+        t.join(0.2) #give it 200ms before checking if it returned already
+        # FAILED means it EXITED WITH AN ERROR, not "no longer running". A
+        # small report finishes well inside 200ms (0.024s, Kent's run
+        # 2026-10-14 07:11), exit code 0, and was then run a second time in
+        # the foreground as if it had failed. exitcode None = still running.
+        if t.exitcode not in (None,0):
             msg=_("Looks like that didn’t work; "
                             # "you may need "
                             # "to run a report first, or "
@@ -475,9 +482,12 @@ class Report(object):
         try:
             si=xlp.Section(xlpr,text)
             if self.byUFgroup:
-                self.makeanalysis()
+                # The slice being reported, not the current one; and
+                # self.analysis (bare `analysis` was a NameError, 2026-10-14).
+                self.makeanalysis(**{k:kwargs[k] for k in ('ps','profile')
+                                                    if kwargs.get(k)})
                 self.analysis.donoUFanalysis()
-                ufgroupsnsenses=analysis.sensesbygroup.items()
+                ufgroupsnsenses=self.analysis.sensesbygroup.items()
                 kwargs['sectlevel']=4
                 t=_("{count} checks").format(count=self.program.params.cvtdict()[kwargs['cvt']]['sg'])
                 for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnsenses:

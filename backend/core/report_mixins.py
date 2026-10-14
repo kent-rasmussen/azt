@@ -5,12 +5,27 @@ from utilities import logsetup
 from backend.core.lexicon import Tone
 log=logsetup.getlog(__name__)
 
+def _in_background(task,fn):
+    """fn, wrapped to run in the background — ONCE, and with NO parameters.
+    A CLOSURE, NOT `lambda f=fn:`: the webview button passes its choice to
+    any command with a free slot, which put the string 'Report!' in `f`
+    ("'str' object is not callable", 2026-10-13). And a wrapper is never
+    wrapped again: where Background's init runs after a scope mixin's, the
+    second wrap handed the FIRST wrapper to the child process, which then
+    got `usegui=` it can't take (report audit, 2026-10-14)."""
+    if getattr(fn,'_in_background',False):
+        return fn
+    def do_in_background():
+        return task.background(fn)
+    do_in_background.__name__=getattr(fn,'__name__','do')
+    do_in_background._in_background=True
+    return do_in_background
 def set_do(task,fn):
     """Adopt fn as the task's report function. These scope mixins run OUTSIDE
     Background in the MRO (their assignment lands after Background's wrap ran),
     so re-apply the background wrap here for Background variants."""
     if isinstance(task,Background):
-        fn=lambda f=fn:task.background(f)
+        fn=_in_background(task,fn)
     task.do=fn
 class Multislice(object):
     """This class just triggers which settings are visible to the user, and
@@ -58,5 +73,5 @@ class Background(object):
         super().__init__(**kwargs)
         log.info("Setting up background report, based on {name}"
                 "".format(name=self.do.__name__))
-        self.do=lambda fn=self.do:self.background(fn)
+        self.do=_in_background(self,self.do) #see there: closure, wrap once
         self.status.redofinalbuttons() #because the fns changed
