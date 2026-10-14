@@ -19,7 +19,12 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
-# Unreleased — tone frame drafter, built 2026-10-13, AWAITING VERIFICATION
+# Version 1.15.54 (2026-10-14)
+
+Patch bump when Kent confirmed the report fixes ("the report ran OK").
+**What is verified and what is not:** in the app, only the three report
+items marked VERIFIED below. Everything else in this section is AWAITING
+VERIFICATION in the app; the test suite covers it.
 
 Three faults found by the new drafter tests (`tests/test_tone_frame_drafter.py`):
 
