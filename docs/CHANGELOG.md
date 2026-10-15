@@ -113,6 +113,27 @@ Also AWAITING VERIFICATION:
 - **Multi-check and multi-slice background reports start.** They had the
   same button-choice fault as above, and the multi-slice tone ones were
   wrapped for the background twice, so the report process failed at once.
+- **"Alphabet Report by Tone group" reports by tone group.** Every
+  variant silently produced the plain alphabet report: the report setup
+  switched the by-group setting off after the report type had switched it
+  on. Behind that, the group list:
+  - read the current slice's analysis, not the slice being reported;
+  - didn't ask whether that analysis was current. Now it redoes a stale
+    one, in the foreground only; a background report hands it back to
+    the foreground rather than write the LIFT file from a second process;
+  - leaves out groups under the minimum size on every path, not just one.
+- **Multi-check alphabet reports run** (with or without tone groups).
+  The report type declared its "scope of checks" flag under a different
+  name from the one the page reads, so the scope choice never showed and
+  the report died on "no attribute 'cvtstodo'". The V / C / CV buttons'
+  own choice was also ignored; it is used now. The scope field, which
+  had never run, then crashed the page reading a choice nobody had made
+  yet; it falls back to the task's choice, then vowels. A report window no longer
+  logs an error for drawing its button before the report is ready.
+- **Checking whether the tone analysis is current asks about the right
+  frames.** It used the current category's checks on the current tier, so
+  a report on another category, or an alphabet report, found no analysis
+  and re-analysed every time. Test: `tests/test_report_by_uf_group.py`.
 - **Quitting under webview no longer closes the main window twice.** The
   second close printed `KeyError: 'master'` from pywebview at exit.
 - **Two word-element tests check for a missing word, not an empty one**

@@ -48,7 +48,11 @@ class MultisliceT(Multislice):
         set_do(self,self.tonegroupreportcomprehensive)
         self.status.redofinalbuttons() #buttons capture self.do; rebuild
 class Multicheck(object):
-    multicheckscope=True
+    # The name TaskBase declares and the window reads. This said
+    # `multicheckscope`, so the flag stayed False: no scope choice on the
+    # page, no `cvtstodo`, and every multi-check report crashed with "no
+    # attribute 'cvtstodo'" (Kent's run, 2026-10-14).
+    multicheck_scope=True
     def __init__(self, **kwargs):
         """This should only be used for segmental checks; tone reports are
         always multiple checks"""

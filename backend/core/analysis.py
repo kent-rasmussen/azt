@@ -2255,6 +2255,7 @@ class StatusDict(dict):
         if task in sn['last']:
             return sn['last'][task]
     def isanalysisOK(self,**kwargs):
+        kwargs={**kwargs,'cvt':'T'} #UF analysis is tone's, whatever tier is on
         if 'check' in kwargs:
             a=self.last('analysis',**kwargs)
             s=self.last('sort',**kwargs)
@@ -2265,9 +2266,13 @@ class StatusDict(dict):
             sortl=[]
             ufjoinl=[]
             self.renewchecks()
-            # log.info(f"Working on checks '{self.checks()}'")
-            # log.info(f"Working on updatechecksbycvt '{self.updatechecksbycvt()}'")
-            for check in self.updatechecksbycvt():
+            # The TONE frames of the slice ASKED ABOUT. This read the current
+            # tier's checks for the current ps, so a report on another ps (or
+            # an alphabet report by tone group, run on a segmental tier)
+            # looked up frames that slice doesn't have, never found an
+            # analysis, and re-analysed every time (report audit 2026-10-14).
+            scope={k:kwargs[k] for k in ('cvt','ps','profile') if kwargs.get(k)}
+            for check in self.checks(**scope):
                 log.info(_("Working on check ‘{check}’").format(check=check))
                 analysisl.append(self.last('analysis',**{**kwargs,'check':check}))
                 sortl.append(self.last('sort',**{**kwargs,'check':check}))

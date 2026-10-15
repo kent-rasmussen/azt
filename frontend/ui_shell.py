@@ -1789,7 +1789,8 @@ class StatusFrame(ui.Frame):
         self.labels['multicheckscope']['text'].set(
                                             self.multicheckscopevalue())
     def multicheckscopevalue(self):
-        return str(unlist(self.program.ui_settings.cvtstodoprose()))
+        return str(unlist(self.program.ui_settings.cvtstodoprose(
+                            getattr(self.program.task,'cvtstodo',None))))
     def multicheckscopeoptions(self):
         """Every combination of check types, each ONE pick.
 
@@ -2009,6 +2010,14 @@ class StatusFrame(ui.Frame):
     def finalbuttons(self):
         # self.opts['row']+=6
         if self.is_descendant_of(self.program.taskchooser):
+            return
+        # A report's window is built BEFORE the report sets `do`, so this ran
+        # once with nothing to put on the button and logged an ERROR every
+        # time ("no attribute 'do'"). The report rebuilds the button
+        # (redofinalbuttons) once `do` exists; wait for that.
+        if (getattr(self.program.task,'is_report',False)
+                and not hasattr(self.program.task,'do')):
+            log.info("report button: waiting for the report to set `do`")
             return
         self.newrow()
         # log.info(f"{self.is_descendant_of(self.program.taskchooser)=}")
@@ -5230,10 +5239,17 @@ class Settings(object):
                            optionlist=options,
                            command=self.program.settings.setmulticheckscope)
     def cvtstodoprose(self,cvtstodo=None):
+        # ONE answer, whoever is asked. This read `self.cvtstodo`, which only
+        # exists on this object after a choice was made here; it never ran
+        # until the multi-check flag was fixed (2026-10-14), and then
+        # crashed every multi-check report page: "'Settings' object has no
+        # attribute 'cvtstodo'". It also ignored the list it was given.
         if not cvtstodo:
-            cvtstodo=self.cvtstodo
+            cvtstodo=(getattr(self.program.task,'cvtstodo',None)
+                        or getattr(self,'cvtstodo',None)
+                        or ['V'])
         output=[]
-        for cvt in self.cvtstodo:
+        for cvt in cvtstodo:
             output+=[self.program.params.cvtdict()[cvt]['pl']]
         return output
     # `secondfieldnames` DELETED 2026-09-29 with the chooser it called. Its

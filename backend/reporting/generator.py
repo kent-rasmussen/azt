@@ -28,6 +28,35 @@ from io_put import xlp
 
 class Report(object):
     is_report=True
+    byUFgroup=False #ByUF sets True; never assign it on the instance
+    def ufgroups_to_report(self,ps,profile,xlpr=None):
+        """[(UF group, [senses])] for a by-tone-group report on ps/profile,
+        groups of at least minwords. Reads the analysis in LIFT if it is
+        current; otherwise redoes it, but only in the foreground: a
+        background child would write a LIFT file the parent then overwrites
+        (report audit), so it exits with an error and background() retries
+        in the foreground."""
+        self.makeanalysis(ps=ps,profile=profile)
+        ok,_joined,_times=self.program.status.isanalysisOK(ps=ps,
+                                                           profile=profile)
+        if ok:
+            self.analysis.donoUFanalysis()
+        elif multiprocessing.parent_process() is not None:
+            log.info(_("The tone analysis for {ps} {profile} is out of date, "
+                    "and this is the background; stopping, to redo it in the "
+                    "foreground.").format(ps=ps,profile=profile))
+            if xlpr is not None:
+                xlpr.cleanup() #else its lock blocks the foreground retry
+            raise SystemExit(2)
+        else:
+            self.analysis.do()
+        groups=[(g,s) for g,s in self.analysis.sensesbygroup.items()
+                if len(s) >= self.minwords]
+        if not groups:
+            log.info(_("No tone group in {ps} {profile} has {n} or more "
+                    "words, so this part of the report is empty."
+                    ).format(ps=ps,profile=profile,n=self.minwords))
+        return groups
     def consultantcheck(self):
         for _ in self.program.settings.reloadstatusdata():
             pass
@@ -482,12 +511,10 @@ class Report(object):
         try:
             si=xlp.Section(xlpr,text)
             if self.byUFgroup:
-                # The slice being reported, not the current one; and
-                # self.analysis (bare `analysis` was a NameError, 2026-10-14).
-                self.makeanalysis(**{k:kwargs[k] for k in ('ps','profile')
-                                                    if kwargs.get(k)})
-                self.analysis.donoUFanalysis()
-                ufgroupsnsenses=self.analysis.sensesbygroup.items()
+                # The slice being reported, not the current one (2026-10-14).
+                ufgroupsnsenses=self.ufgroups_to_report(kwargs['ps'],
+                                                        kwargs['profile'],
+                                                        xlpr=xlpr)
                 kwargs['sectlevel']=4
                 t=_("{count} checks").format(count=self.program.params.cvtdict()[kwargs['cvt']]['sg'])
                 for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnsenses:
@@ -957,6 +984,13 @@ class Report(object):
                 self.wordsbypsprofilechecksubcheck(s34,**kwargs)
         #Convert to iterate over local variables
         log.info("basicreport starting with kwargs {kwargs}".format(kwargs=kwargs))
+        # The scope buttons pass cvtstodo=[...]; it was ignored for whatever
+        # self held, and with nothing held this crashed (2026-10-14).
+        if kwargs.get('cvtstodo'):
+            self.cvtstodo=kwargs.pop('cvtstodo')
+        elif not getattr(self,'cvtstodo',None):
+            self.cvtstodo=['V']
+        kwargs.pop('cvtstodo',None)
         instr=_("The data in this report is given by most restrictive test "
                 "first, followed by less restrictive tests (e.g., V1=V2 "
                 "before V1 or V2). Additionally, each word only "
@@ -1022,12 +1056,9 @@ class Report(object):
                         s2=xlp.Section(s1,t,level=2)
                         log.info(t)
                         if self.byUFgroup:
-                            self.makeanalysis(**kwargs)
-                            self.analysis.donoUFanalysis()
-                            ufgroupsnids=[(i,j) for i,j in
-                                        self.analysis.sensesbygroup.items()
-                                        #don't report small groups
-                                        if len(j) >= self.minwords]
+                            ufgroupsnids=self.ufgroups_to_report(
+                                            kwargs['ps'],kwargs['profile'],
+                                            xlpr=xlpr)
                             kwargs['sectlevel']=4
                             for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnids:
                                 if 'ufgroup' in kwargs:
@@ -1226,7 +1257,10 @@ class Report(object):
             self.minwords=self.program.settings.minimumwordstoreportUFgroup
         else: #provide a default, return to settings file for modification
             self.minwords=self.program.settings.minimumwordstoreportUFgroup=3
-        self.byUFgroup=False
+        # NO `self.byUFgroup=False` here: that instance attribute shadowed
+        # ByUF's class attribute, so every "by Tone group" report silently
+        # came out as the plain one (report audit, 2026-10-14). The default
+        # is the class attribute on Report.
         if not isinstance(self,Multicheck) and not self.program.params.check():
             self.getcheck()
 
