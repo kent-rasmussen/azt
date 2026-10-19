@@ -2181,6 +2181,14 @@ class StatusDict(dict):
             groups=[]
         else:
             groups=self.groups(**kwargs)
+            # TONE HAS NO THEORETICAL LIST: flagless groups() is None for it,
+            # so every settings refresh cleared the tone group — the
+            # comparison picker then failed on "x not in list", and the
+            # status line read "(no framed group)" (2026-10-19). A tone
+            # slice's groups are the sorted ones.
+            if groups is None:
+                kwargs['wsorted']=True
+                groups=self.groups(**kwargs)
         if not hasattr(self,'_group'):
              self._group=None #define this attr, one way or another
         if groups:

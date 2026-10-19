@@ -129,6 +129,30 @@ Translation:
   `USE_FUZZY`, and catches a message defined twice.
 - Two strings had a stray narrow no-break space in the source; fixed, and
   their translations kept.
+- **The new-group button on the letters page is one string, "Other
+  letter"**, not "Other" + a translated "Letter".
+- **Transcribe Tone: "Next" and "Done" beside the name** replace the row
+  "Use this name and go to: main screen / next group / next tone frame /
+  next syllable profile / comparison group". Next goes to the next group in
+  the frame (numbered ones first), then the next frame, then the next
+  syllable profile, skipping only groups named since the task opened; when
+  all are done it returns to the main screen. Both refuse a blank or taken
+  name. Awaiting verification.
+  Next and Done are large, right of the Other Groups list.
+- **Transcribe Tone: "Compare with another group" works again.** It asked
+  the letter picker, which has nothing for tone, so nothing opened; then
+  the tone picker opened empty ("x not in list"); then the comparison
+  showed "group … isn't in glyphs!", built as a letter group. Awaiting
+  verification.
+- **A settings refresh no longer clears the tone group.** `makegroupok`
+  asked for the slice's groups with no list type, which tone answers with
+  None, so every refresh dropped the group (status line: "(no framed
+  group)"). Awaiting verification.
+- **webview: a button's text breaks at newlines**, as tkinter's does (the
+  progress table stacked its groups one per line). Awaiting verification.
+- **Glosses on new tone examples no longer read "‘gloss’(translation)"**: a
+  new translation node took its tag as its type (`Translation.ftype`).
+  Awaiting verification.
 - **The unused "Change" menu is removed** (`Menus.change`, `languages`,
   `parameterslice`). Nothing built it, and every choice it offered is on
   the status page's lines.

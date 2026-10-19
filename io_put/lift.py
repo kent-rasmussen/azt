@@ -3101,7 +3101,8 @@ class Form(Node):
             self.annotationvalue(self.ASR_MD5,md5)
     def textquoted(self):
         r=quote(self.textnode.text)
-        shownot=['lc','example','Frame translation']#lx?
+        # A LIFT translation IS the gloss: no label, typed or not.
+        shownot=['lc','example','translation','Frame translation']#lx?
         if hasattr(self.parent,'ftype') and self.parent.ftype not in shownot:
             r+="("+self.parent.ftype+")"
         return r
@@ -3424,6 +3425,10 @@ class Translation(FormParent):
         # kwargs['attrib']={'type':'Frame translation'}
         super(Translation, self).__init__(parent, node, **kwargs)
         self.set('type','Frame translation')
+        # FormParent read ftype before the type above existed, so a NEW node
+        # got its tag ('translation'), and textquoted() showed every gloss
+        # as "‘gloss’(translation)" (2026-10-19).
+        self.ftype='Frame translation'
 class Field(FormParent):
     def consolidate_forms_by_lang(self):
         """Repair a single-form-per-lang field that a collab merge left with

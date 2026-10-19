@@ -167,8 +167,11 @@ class SortButtonFrame(ui.ScrollingFrame):
         else:
             name=self.program.params.cvcheckname(self.check)
             firstOK=_("This word has {name}").format(name=name)
+        # A whole string for the letters page: "Other {check}" + _("Letter")
+        # built a phrase from two translations. On a tone sort {check} is the
+        # frame's name, as intended.
         if self.macrosort:
-            newgroup=_("Other {check}").format(check=_("Letter"))
+            newgroup=_("Other letter")
         else:
             newgroup=_("Other {check}").format(check=self.check)
         skiptext=_("Skip this item")

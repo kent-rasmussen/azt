@@ -1769,15 +1769,6 @@ class Transcribe(Sound,Categories,Task):
         # self.program.settings.setgroup(gc)
         self.ui.runwindow.on_quit()
         self.makewindow() #The other group needs a name, too!
-    def submitandswitch(self):
-        if hasattr(self,'group_comparison'):
-            comparison=self.group_comparison
-        else:
-            self.errorlabel['text'] = _("Sorry, pick a comparison first!")
-            return 1
-        error=self.submitform()
-        if not error:
-            self.switchgroups(comparison)
     def updategroups(self):
         # Update locals group, groups, and othergroups from objects
         # VISIBLE, not membership: self.groups feeds self.othergroups (below) =
@@ -1824,6 +1815,10 @@ class Transcribe(Sound,Categories,Task):
         # only entry was TranscribeCV.done, which nothing wired — so both are
         # gone. (polygraphwarn now lives solely on the helper.)
         newvalue=self.transcriber.formfield.get()
+        # Named on this visit, under its new name (see nextunvisited).
+        if not hasattr(self,'named_here'): #a task built without __init__
+            self.named_here=set()
+        self.named_here.add(self._slice_key()+(newvalue,))
         """updateforms=True doesn't seem to be working for segments"""
         # updatebygroupsense is a GENERATOR: calling it without consuming it
         # ran none of it, so OK renamed the status file and never touched
@@ -1845,46 +1840,67 @@ class Transcribe(Sound,Categories,Task):
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
         self.ui.runwindow.on_quit()
+    def _slice_key(self):
+        return (self.program.slices.ps(),self.program.slices.profile(),
+                self.program.params.check())
+    def _pick_unnamed_group(self):
+        """Make current a group of this frame not named on this visit, numbered
+        ones first (they are the ones still waiting for a name)."""
+        key=self._slice_key()
+        #_visible: NA is not a name-able group on any check (NA audit, rule C).
+        groups=self.program.status.groups_visible(wsorted=True) or []
+        left=[g for g in groups if key+(g,) not in self.named_here]
+        log.info("Next: %s has groups %s; named this visit: %s; left: %s",
+                key,groups,[k[-1] for k in self.named_here if k[:3]==key],left)
+        if not left:
+            return False
+        ints=[g for g in left if str(g).isdigit()]
+        self.program.status.group(str(min(ints,key=int)) if ints else left[0])
+        return True
+    def nextunvisited(self):
+        """ONE "Next" for what were four "go to" buttons (Kent, 2026-10-19):
+        the next group in this frame, then the next frame, then the next
+        syllable profile. "Not yet" means not named on THIS visit to the task
+        (self.named_here), not ever, so nothing named in an earlier session is
+        skipped that should be looked at again. Returns False when everything
+        has been seen."""
+        status=self.program.status
+        if self._pick_unnamed_group():
+            return True
+        profiles=status.profiles(wsorted=True) or []
+        for _p in range(len(profiles) or 1):
+            for _c in range(len(status.checks(wsorted=True) or [])):
+                status.nextcheck(wsorted=True)
+                if self._pick_unnamed_group():
+                    return True
+            if len(profiles) < 2:
+                break
+            status.nextprofile(wsorted=True)
+            status.makecheckok()
+            if self._pick_unnamed_group():
+                return True
+        return False
     def next(self):
-        log.debug("running next group")
-        error=self.submitform()
-        if not error:
-            # log.debug("group: {}".format(group))
-            ints=[i for i in self.program.status.groups(wsorted=True)
-                    if i.isdigit()]
-            if ints:
-                log.info("Found integer groups: {ints}".format(ints=ints))
-                self.program.status.group(str(min(ints)))#Look for integers first
-            else:
-                log.info("Didn't Find integer groups: {groups}".format(
-                    groups=self.program.status.groups(wsorted=True)))
-                #_visible: this advances to the next group to NAME, and NA is not a
-                #name-able group on any check (NA audit, rule C).
-                self.program.status.nextgroup_visible(wsorted=True)
-            # log.debug("group: {}".format(group))
+        if self.updateerror():
+            return
+        self.submitform()
+        if self.nextunvisited():
             self.makewindow()
-    def nextcheck(self):
-        log.debug("running next check")
-        error=self.submitform()
-        if not error:
-            # log.debug("check: {}".format(check))
-            self.program.status.nextcheck(wsorted=True)
-            # log.debug("check: {}".format(check))
-            self.makewindow()
-    def nextprofile(self):
-        log.debug("running next profile")
-        error=self.submitform()
-        if not error:
-            # log.debug("profile: {}".format(profile))
-            self.program.status.nextprofile(wsorted=True)
-            # log.debug("profile: {}".format(profile))
-            self.makewindow()
+        else:
+            log.info("Every tone group in every frame and profile named on "
+                    "this visit; back to the main screen.")
+            self.program.soundsettings.done_audio()
     def setgroup_comparison(self,group=None,**kwargs):
         if group:
             self.program.settings.set('group_comparison',group)
         else:
-            #this returns its window:
-            w=self.getglyph(comparison=True,**kwargs)
+            #these return their window. getglyph is V/C only: on tone it
+            #returned None, so "Compare with another group" did nothing
+            #(Kent, 2026-10-19).
+            if self.program.params.cvt() == 'T':
+                w=self.getgroup(comparison=True,wsorted=True,**kwargs)
+            else:
+                w=self.getglyph(comparison=True,**kwargs)
             if w and w.winfo_exists(): #This window may be already gone
                 log.info("Waiting for {w}".format(w=w))
                 w.wait_window(w)
@@ -1915,7 +1931,11 @@ class Transcribe(Sound,Categories,Task):
                                                 group=self.group_comparison))
             t=_('Compare with another group ({group})').format(
                                                 group=self.group_comparison)
-            self.compframe.bf2=SortGlyphGroupButtonFrame(
+            # Tone groups aren't glyphs: the glyph frame said "group ‘[˥˥ ˨]’
+            # isn't in glyphs!" (2026-10-19). Same frame as the group above.
+            frame=(SortGroupButtonFrame if self.program.params.cvt() == 'T'
+                    else SortGlyphGroupButtonFrame)
+            self.compframe.bf2=frame(
                                     self.compframe.compframeb,
                                     self,
                                     group=self.group_comparison,
@@ -1954,6 +1974,10 @@ class Transcribe(Sound,Categories,Task):
         # `Segments.__init__`'s and `makeeverythingok`'s. All three are gone
         # (2026-09-29); readers ask `params.ftype()`.
         self.mistake=False #track when a user has made a mistake
+        # (ps, profile, frame, group) named since this task opened: what
+        # "Next" has already been through. Each window is rebuilt per group,
+        # so this lives on the task, and dies with it (see nextunvisited).
+        self.named_here=set()
         self.analang=self.program.params.analang()
         self.program.status.makecheckok()
 class TranscribeCV(Transcribe,Segments):
@@ -2043,6 +2067,8 @@ class TranscribeT(Transcribe,Tone):
     taskicon = 'iconTranscribe'
     def done(self):
         log.info("Transcribe done")
+        if self.updateerror(): #no blank or taken name; the page says why
+            return
         self.submitform()
         self.program.soundsettings.done_audio()
     def set_ok_w_form(self):
@@ -2127,6 +2153,18 @@ class TranscribeT(Transcribe,Tone):
         sound_settings_when_ready(self.program, self,
                                   self.transcriber.attach_sound)
         self.transcriber.formfield.bind('<KeyRelease>', self.updateerror)
+        # TWO BUTTONS beside the name (Kent, 2026-10-19), for the row "Use
+        # this name and go to: main screen / next group / next tone frame /
+        # next syllable profile / comparison group". Both keep the name.
+        # Switching with the comparison group is the button beside it below.
+        # Right of the Other Groups info, and big (Kent, 2026-10-19).
+        navframe=ui.Frame(inputfeedbackframe,
+                            row=0,column=2,sticky='ns',padx=padx
+                            )
+        ui.Button(navframe,text=_('Next'),command=self.next,font='title',
+                    row=0,column=0,sticky='ew',pady=pady)
+        ui.Button(navframe,text=_('Done'),command=self.done,font='title',
+                    row=1,column=0,sticky='ew',pady=pady)
         infoframe=ui.Frame(inputfeedbackframe,
                             row=0,column=1,sticky=''
                             )
@@ -2148,36 +2186,8 @@ class TranscribeT(Transcribe,Tone):
                             wraplength=int(self.frame.winfo_screenwidth()/3),
                             row=2,column=1,sticky='nsew'
                             )
-        responseframe=ui.Frame(self.ui.runwindow.frame,
-                                row=3,
-                                column=0,
-                                sticky='',
-                                padx=padx,
-                                pady=pady,
-                                )
-        self.oktext=_('Use this name and go to:')
-        column=0
-        sub_lbl=ui.Label(responseframe,text = self.oktext, font='read',
-                        row=0,column=column,sticky='ns'
-                        )
-        buttons=[
-                (_('main screen'), self.done),
-                (_('next group'), self.next)]
-        if cvt == 'T':
-            buttons+=[(_('next tone frame'), self.nextcheck)]
-        else:
-            buttons+=[(_('next check'), self.nextcheck)]
-        buttons+=[(_('next syllable profile'), self.nextprofile),
-                (_('comparison group'), self.submitandswitch)
-                ]
-        for button in buttons:
-            column+=1
-            ui.Button(responseframe,text = button[0], command = button[1],
-                                anchor ='c',
-                                row=0,column=column,sticky='ns'
-                                )
         examplesframe=ui.Frame(self.ui.runwindow.frame,
-                                row=4,column=0,sticky=''
+                                row=3,column=0,sticky='',pady=pady
                                 )
         b=SortGroupButtonFrame(examplesframe, self,
                                 group=self.group,

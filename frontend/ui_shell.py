@@ -3675,8 +3675,8 @@ class TaskDressing(HasMenus,ui.Window):
             return
         cvt_name=self.program.params.cvtdict()[cvt]['sg']
         if kwargs.get('comparison'):
-            g2=list(groups)
-            g2.remove(self.program.status.group()) #group() is not cvt aware
+            #group() is not cvt aware, and may not be in the list: no .remove
+            g2=[g for g in groups if g != self.program.status.group()]
             if not g2:
                 window.destroy()
                 ErrorNotice(text=_("There don’t seem to be any groups "

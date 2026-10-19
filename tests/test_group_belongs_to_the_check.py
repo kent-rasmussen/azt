@@ -61,6 +61,17 @@ def test_an_empty_slice_with_no_group_stays_quiet():
     assert s.group() is None
 
 
+def test_a_tone_group_survives_a_refresh():
+    """Tone has no theoretical group list (flagless groups() is None), so a
+    refresh cleared every tone group (2026-10-19): the comparison picker
+    died on "x not in list" and the status line read "(no framed group)"."""
+    ns = types.SimpleNamespace(_group='2')
+    ns.groups = lambda **kw: ['1', '2'] if kw.get('wsorted') else None
+    ns.group = analysis.StatusDict.group.__get__(ns)
+    analysis.StatusDict.makegroupok(ns, check='Isolation')
+    assert ns.group() == '2'
+
+
 def test_it_defines_the_attribute_it_reads():
     """Callable before anything has set a group."""
     ns = types.SimpleNamespace()

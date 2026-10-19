@@ -93,6 +93,10 @@ html, body {
     cursor: pointer;
     user-select: none;
     text-align: center;
+    /* A tkinter Button breaks at `\n` like a Label (see .wv-label): the
+       progress table's cells stack their groups one per line, and read as
+       one run without this (2026-10-19). */
+    white-space: pre-wrap;
 }
 .wv-button:hover {
     background: var(--activebackground);
