@@ -4,6 +4,7 @@ run after updating .po files from crowdin."""
 import os
 import subprocess
 import sys
+USE_FUZZY=True
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 print(f"Scanning for .po translation files in: {base_dir}")
@@ -21,8 +22,11 @@ def compile_translations():
             mo=os.path.join(root, 'azt.mo')
             if 'azt.mo' not in files or newer(po,mo):
                 print(f"Compiling {po} -> {mo}...")
+                cmd_list=['msgfmt', '-o', mo, po]
+                if USE_FUZZY:
+                    cmd_list.insert(1,'--use-fuzzy')
                 try:
-                    subprocess.run(['msgfmt', '-o', mo, po], check=True)
+                    subprocess.run(cmd_list, check=True)
                     count += 1
                 except subprocess.CalledProcessError as e:
                     print(f"Error compiling {po}: {e}")

@@ -13,7 +13,7 @@ from io_put import export
 from io_put import lift #set_transcription_fields; was never imported
 from tasks.alphabet_chart import AlphabetChart
 from tasks.alphabet_comparison import AlphabetComparisonPages
-from utilities.i18n import _
+from utilities.i18n import _, N_
 from random import randint
 log = logsetup.getlog(__name__)
 
@@ -29,7 +29,7 @@ class ExportData(ui.Window):
     def tooltip(self):
         return _("This tells you how much data you could export now, and "
                     "allows you to export it.")
-    tasktitle = "Export Data"
+    tasktitle = N_("Export Data")
     def dobuttonkwargs(self):
         text=_("Export Data")
         tttext=_("This tells you how much data you could export now, and "
@@ -460,7 +460,7 @@ class WordCollectionCitationwRecordings(WordCollectionwRecordings,Task):
     def tooltip(self):
         return _("This task helps you collect words in citation form through "
                 "recordings with automatic transcription drafts.")
-    tasktitle = "Add Words with Audio" # for Citation Forms
+    tasktitle = N_("Add Words with Audio") # for Citation Forms
     def __init__(self, **kwargs): #frame, filename=None
         super().__init__(**kwargs)
         log.info("Initializing {}".format(_(self.tasktitle)))
@@ -499,7 +499,7 @@ class ParseWords(Parse,Task):
                 'sticky':'ew',
                 'tttext':tttext
                 }
-    tasktitle = "Parse Words"
+    tasktitle = N_("Parse Words")
     def __init__(self, program, **kwargs): #frame, filename=None
         log.info("Initializing {}".format(_(self.tasktitle)))
         super().__init__(program=program, **kwargs)
@@ -536,7 +536,7 @@ class WordCollectnParse(Parse,WordCollection,Task):
                 'sticky':'ew',
                 'tttext':tttext
                 }
-    tasktitle = "Add and Parse Words" # for Citation Forms
+    tasktitle = N_("Add and Parse Words") # for Citation Forms
     def __init__(self, program, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
         # `self.ftype=program.params.ftype('lc')` was here, BEFORE super() so
@@ -581,7 +581,7 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
                 'sticky':'ew',
                 'tttext':tttext
                 }
-    tasktitle = "Add and Parse Words with Audio" # for Citation Forms
+    tasktitle = N_("Add and Parse Words with Audio") # for Citation Forms
     def __init__(self, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
         super().__init__(**kwargs)
@@ -591,7 +591,7 @@ class WordsParse(Parse,WordCollection,Task):
     taskicon = 'iconWord'
     def tooltip(self):
         return _("This task helps you parse words you collected earlier.")
-    tasktitle = "Parse Already Collected Words" # for Citation Forms
+    tasktitle = N_("Parse Already Collected Words") # for Citation Forms
     def dobuttonkwargs(self):
         pass
     def __init__(self, program, **kwargs):
@@ -619,7 +619,7 @@ class WordsParse(Parse,WordCollection,Task):
             fn=self.getwords()#?
 class ParseSlice(Parse):
     """This task is likely obsolete"""
-    tasktitle = "Parse One Slice"
+    tasktitle = N_("Parse One Slice")
     byslice=True #give me words in a selected slice (make this selectable?)
     def tooltip(self):
         return _("This task will help you parse your citation forms, "
@@ -632,7 +632,7 @@ class ParseSlice(Parse):
         self.dodoneonly=True
 class ParseSliceWords(ParseSlice):
     """This task is likely obsolete"""
-    tasktitle = "Parse One Slice, word by word"
+    tasktitle = N_("Parse One Slice, word by word")
     checkeach=True #confirm each word
     def tooltip(self):
         return _("This task will help you parse your citation forms, "
@@ -663,7 +663,7 @@ class Placeholder(Task):
                 'sticky':'ew',
                 'tttext':tttext
                 }
-    tasktitle = "Placeholder Check2"
+    tasktitle = N_("Placeholder Check2")
     def __init__(self, program, **kwargs): #frame, filename=None
         super().__init__(program=program, **kwargs)
         log.info("Initializing {}".format(_(self.tasktitle)))
@@ -1559,7 +1559,7 @@ class SortSyllables(backend.core.sorting_engine.SyllablePrep,
     # sort/verify/join cycle come from Syllables (lexicon.py). See
     # the syllable-sort redesign and the sort-syllables design.
     taskicon = 'iconWord'
-    tasktitle = "Sort Word Syllables" #Citation Form Sorting in Tone Frames
+    tasktitle = N_("Sort Word Syllables") #Citation Form Sorting in Tone Frames
     cvt='σ' # the syllable tier (was 'S' until 2026-10-02; S alone is the sonorant class)
     def tooltip(self):
         return _("This task helps you sort words in citation form by whole "
@@ -1649,7 +1649,7 @@ class SortCV(Sort,Segments,Task):
             self.deiconify()
 class SortV(Vowels,SortCV):
     taskicon = 'iconV'
-    tasktitle = "Sort Vowels" #Citation Form Sorting in Tone Frames
+    tasktitle = N_("Sort Vowels") #Citation Form Sorting in Tone Frames
     def tooltip(self):
         return _("This task helps you sort words in citation form by vowels.")
     def __init__(self, **kwargs):
@@ -1660,7 +1660,7 @@ class SortV(Vowels,SortCV):
         #     self.runcheck()
 class SortC(Consonants,SortCV):
     taskicon = 'iconC'
-    tasktitle = "Sort Consonants" #Citation Form Sorting in Tone Frames
+    tasktitle = N_("Sort Consonants") #Citation Form Sorting in Tone Frames
     def tooltip(self):
         return _("This task helps you sort words in citation form by consonants.")
     # def dobuttonkwargs(self):
@@ -1677,7 +1677,7 @@ class SortC(Consonants,SortCV):
 class SortT(Sort,Tone,Task):
     is_sort_tone_task=True
     taskicon = 'iconT'
-    tasktitle = "Sort Tone" #Citation Form Sorting in Tone Frames
+    tasktitle = N_("Sort Tone") #Citation Form Sorting in Tone Frames
     def tooltip(self):
         return _("This task helps you sort words in citation form tone frames.")
     # def dobuttonkwargs(self):
@@ -1794,7 +1794,8 @@ class Transcribe(Sound,Categories,Task):
             return
         # log.info("group: {}, groups: {}".format(self.group,self.groups))
         if self.group is None or self.group not in self.groups:
-            w=self.getgroup(wsorted=True, guess=True, intfirst=True)
+            w=self.getgroup(wsorted=True, guess=True, intfirst=True,
+                            purpose='name')
             if w.winfo_exists():
                 w.wait_window(w)
             self.group=self.program.status.group()
@@ -2007,7 +2008,7 @@ class TranscribeCV(Transcribe,Segments):
                             "updates each of them")
         super().__init__(program=program, **kwargs)
 class TranscribeV(TranscribeCV):
-    tasktitle = "Vowel Letters"
+    tasktitle = N_("Vowel Letters")
     def tooltip(self):
         return _("This task helps you decide on your vowel letters.")
     taskicon = 'iconTranscribeV'
@@ -2017,7 +2018,7 @@ class TranscribeV(TranscribeCV):
         self.cvt=program.params.cvt('V')
         super().__init__(program=program, **kwargs)
 class TranscribeC(TranscribeCV):
-    tasktitle = "Consonant Letters"
+    tasktitle = N_("Consonant Letters")
     def tooltip(self):
         return _("This task helps you decide on your consonant letters.")
     taskicon = 'iconTranscribeC'
@@ -2027,7 +2028,7 @@ class TranscribeC(TranscribeCV):
         self.cvt=program.params.cvt('C')
         super().__init__(program=program, **kwargs)
 class TranscribeT(Transcribe,Tone):
-    tasktitle = "Transcribe Tone"
+    tasktitle = N_("Transcribe Tone")
     def tooltip(self):
         return _("This task helps you transcribe your surface groups, giving "
                 "them meaniningful names (e.g., [˥˥ ˨˨]) instead of numbers.")
@@ -2055,7 +2056,7 @@ class TranscribeT(Transcribe,Tone):
         Make another function to switch letters between groups."""
         # log.info("Making transcribe window")
         def changegroupnow(event=None):
-            w=self.program.taskchooser.getgroup(wsorted=True)
+            w=self.program.taskchooser.getgroup(wsorted=True,purpose='name')
             self.ui.runwindow.wait_window(w)
             if not w.exitFlag.istrue():
                 self.ui.runwindow.on_quit()
@@ -2213,7 +2214,7 @@ class TranscribeT(Transcribe,Tone):
         super().__init__(program=program, **kwargs)
 class JoinUFgroups(Tone,Task):
     """docstring for JoinUFgroups."""
-    tasktitle = "Join Underlying Form Groups"
+    tasktitle = N_("Join Underlying Form Groups")
     taskicon = 'iconJoinUF'
     do_not_show_cvt=True
     icon_leaderboard=True
@@ -2409,7 +2410,7 @@ class RecordCitation(Record,Segments,Task):
                 'image':self.program.theme.photo['WordRec'],
                 'sticky':'ew'
                 }
-    tasktitle = "Record Words" #Citation Forms
+    tasktitle = N_("Record Words") #Citation Forms
     taskicon = 'iconWordRec'
     is_record_task=True
     # A WORD-CHECK PAGE BY DEFINITION (Kent, 2026-09-29): you record a whole
@@ -2425,7 +2426,7 @@ class RecordCitation(Record,Segments,Task):
     # are exactly what it does read.
     do_not_show_cvt=True
     whole_word_checks=True
-    word_check_prefix="Recording"
+    word_check_sentence=N_("Recording {form} forms")
     def __init__(self, program, **kwargs): #frame, filename=None
         super().__init__(program=program, **kwargs)
 class RecordCitationT(Record,Tone,Task):
@@ -2440,12 +2441,12 @@ class RecordCitationT(Record,Tone,Task):
                 'sticky':'ew'
                 }
     taskicon = 'iconTRec'
-    tasktitle = "Record Tone" #Citation Form Sorting in Tone Frames
+    tasktitle = N_("Record Tone") #Citation Form Sorting in Tone Frames
     def __init__(self, program, **kwargs): #frame, filename=None
         super().__init__(program=program, **kwargs)
 class ReportCitation(Report,Segments,Task):
     """docstring for ReportCitation."""
-    tasktitle = "Alphabet Report (Not background)" # on One Data Slice
+    tasktitle = N_("Alphabet Report (Not background)") # on One Data Slice
     taskicon = 'iconReport'
     report_image = 'Report'
     def tooltip(self):
@@ -2504,22 +2505,22 @@ class ReportCitation(Report,Segments,Task):
         self.do=self.getresults
         self.program.status.group(None) #default to reports with all groups
 class ReportCitationBackground(Background,ReportCitation):
-    tasktitle = "Alphabet Report" # on One Data Slice
+    tasktitle = N_("Alphabet Report") # on One Data Slice
 class ReportCitationMulticheckBackground(Multicheck,Background,ReportCitation):
-    tasktitle = "Alphabet Report (checks)" # on One Data Slice
+    tasktitle = N_("Alphabet Report (checks)") # on One Data Slice
 class ReportCitationMultichecksliceBackground(Multicheckslice,Background,ReportCitation):
-    tasktitle = "Alphabet Report (slices/checks)" # on One Data Slice
+    tasktitle = N_("Alphabet Report (slices/checks)") # on One Data Slice
 class ReportCitationByUF(ByUF,ReportCitation):
-    tasktitle = "Alphabet Report by Tone group (not background)" # on One Data Slice
+    tasktitle = N_("Alphabet Report by Tone group (not background)") # on One Data Slice
 class ReportCitationByUFMulticheckBackground(Multicheck,Background,ReportCitationByUF):
-    tasktitle = "Alphabet Report by Tone group (checks)" # on One Data Slice
+    tasktitle = N_("Alphabet Report by Tone group (checks)") # on One Data Slice
 class ReportCitationByUFMultichecksliceBackground(Multicheckslice,Background,ReportCitationByUF):
-    tasktitle = "Alphabet Report by Tone Group (slices/checks)" # on One Data Slice
+    tasktitle = N_("Alphabet Report by Tone Group (slices/checks)") # on One Data Slice
 class ReportCitationByUFBackground(ByUF,ReportCitationBackground):
-    tasktitle = "Alphabet Report by Tone group" # on One Data Slice
+    tasktitle = N_("Alphabet Report by Tone group") # on One Data Slice
 class ReportCitationMultislice(MultisliceS,ReportCitation):
     """docstring for ReportCitation."""
-    tasktitle = "Multislice Alphabet Report" # on Citation Forms
+    tasktitle = N_("Multislice Alphabet Report") # on Citation Forms
     report_image = 'VCCVRepcomp'
     def __init__(self, program, **kwargs): #frame, filename=None
         super().__init__(program=program, **kwargs)
@@ -2527,7 +2528,7 @@ class ReportCitationMultislice(MultisliceS,ReportCitation):
 
 class ReportConsultantCheck(Report,Tone,Task):
     """docstring for ReportCitationT."""
-    tasktitle = "Consultant Check"
+    tasktitle = N_("Consultant Check")
     taskicon = 'icontall'
     def tooltip(self):
         return _("This task automates work normally done before a consultant "
@@ -2545,7 +2546,7 @@ class ReportConsultantCheck(Report,Tone,Task):
 
 class ReportCitationT(Report,Tone,Task):
     """docstring for ReportCitationT."""
-    tasktitle = "Tone Report (not backgrounded)"
+    tasktitle = N_("Tone Report (not backgrounded)")
     taskicon = 'iconTRep'
     do_not_show_cvt=True
     report_image = 'TRep'
@@ -2566,7 +2567,7 @@ class ReportCitationT(Report,Tone,Task):
         self.do=self.tonegroupreport
         self.bylocation=False
 class ReportCitationTBackground(Background,ReportCitationT):
-    tasktitle = "Tone Report"
+    tasktitle = N_("Tone Report")
     taskicon = 'iconTRep'
     def tooltip(self):
         return _("This report gives you report for one lexical "
@@ -2574,7 +2575,7 @@ class ReportCitationTBackground(Background,ReportCitationT):
                 "this for all data sorted in tone frames.")
 class ReportCitationTL(ReportCitationT):
     """docstring for ReportCitationT."""
-    tasktitle = "Tone Report (by frames, not backgrounded)"
+    tasktitle = N_("Tone Report (by frames, not backgrounded)")
     def tooltip(self):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
@@ -2583,14 +2584,14 @@ class ReportCitationTL(ReportCitationT):
         super().__init__(program=program, **kwargs)
         self.bylocation=True
 class ReportCitationTLBackground(Background,ReportCitationTL):
-    tasktitle = "Tone Report (by frames)"
+    tasktitle = N_("Tone Report (by frames)")
     taskicon = 'iconTRep'
     def tooltip(self):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
                 "this for all data sorted in tone frames, organized by frame.")
 class ReportCitationMultisliceT(MultisliceT,ReportCitationT):
-    tasktitle = "Multislice Tone Report (not background)"
+    tasktitle = N_("Multislice Tone Report (not background)")
     taskicon = 'iconTRepcomp'
     report_image = 'TRepcomp'
     def tooltip(self):
@@ -2598,7 +2599,7 @@ class ReportCitationMultisliceT(MultisliceT,ReportCitationT):
                 "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
 class ReportCitationMultisliceTL(MultisliceT,ReportCitationTL):
-    tasktitle = "Multislice Tone Report (not background)"
+    tasktitle = N_("Multislice Tone Report (not background)")
     taskicon = 'iconTRepcomp'
     report_image = 'TRepcomp'
     def tooltip(self):
@@ -2606,14 +2607,14 @@ class ReportCitationMultisliceTL(MultisliceT,ReportCitationTL):
                 "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
 class ReportCitationMultisliceTBackground(Background,ReportCitationMultisliceT):
-    tasktitle = "Multislice Tone Report"
+    tasktitle = N_("Multislice Tone Report")
     taskicon = 'iconTRepcomp'
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
 class ReportCitationMultisliceTLBackground(Background,ReportCitationMultisliceTL):
-    tasktitle = "Multislice Tone Report (by location)"
+    tasktitle = N_("Multislice Tone Report (by location)")
     taskicon = 'iconTRepcomp'
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "

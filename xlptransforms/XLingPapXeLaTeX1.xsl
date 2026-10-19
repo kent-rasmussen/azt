@@ -3693,7 +3693,7 @@ xmlns:exsl="http://exslt.org/common">
                 <xsl:when test="collection/collCitation">
                     <xsl:variable name="citation" select="collection/collCitation"/>
                     <xsl:choose>
-                        <xsl:when test="saxon:node-set($collOrProcVolumesToInclude)/refWork[@id=exsl:node-set($citation)/@refToBook]">
+                        <xsl:when test="exsl:node-set($collOrProcVolumesToInclude)/refWork[@id=exsl:node-set($citation)/@refToBook]">
                             <xsl:call-template name="DoRefCitation">
                                 <xsl:with-param name="citation" select="$citation"/>
                             </xsl:call-template>
@@ -4004,7 +4004,7 @@ xmlns:exsl="http://exslt.org/common">
                     <xsl:text>  In </xsl:text>
                     <xsl:variable name="citation" select="proceedings/procCitation"/>
                     <xsl:choose>
-                        <xsl:when test="saxon:node-set($collOrProcVolumesToInclude)/refWork[@id=exsl:node-set($citation)/@refToBook]">
+                        <xsl:when test="exsl:node-set($collOrProcVolumesToInclude)/refWork[@id=exsl:node-set($citation)/@refToBook]">
                             <xsl:call-template name="DoRefCitation">
                                 <xsl:with-param name="citation" select="$citation"/>
                             </xsl:call-template>
@@ -4222,7 +4222,7 @@ xmlns:exsl="http://exslt.org/common">
     <xsl:template name="DoRefWorkPrep">
 <!--        <xsl:variable name="thisAuthor" select="."/>
         <xsl:variable name="works"
-            select="refWork[@id=exsl:node-set($citations)[not(ancestor::comment) and not(ancestor::annotation)][not(ancestor::refWork) or ancestor::refWork[@id=exsl:node-set($citations)[not(ancestor::refWork)]/@ref]]/@ref] | exsl:node-set($refWorks)[@id=saxon:node-set($collOrProcVolumesToInclude)/refWork/@id][parent::refAuthor=$thisAuthor] | refWork[@id=exsl:node-set($citationsInAnnotationsReferredTo)[not(ancestor::comment)]/@ref]"/>
+            select="refWork[@id=exsl:node-set($citations)[not(ancestor::comment) and not(ancestor::annotation)][not(ancestor::refWork) or ancestor::refWork[@id=exsl:node-set($citations)[not(ancestor::refWork)]/@ref]]/@ref] | exsl:node-set($refWorks)[@id=exsl:node-set($collOrProcVolumesToInclude)/refWork/@id][parent::refAuthor=$thisAuthor] | refWork[@id=exsl:node-set($citationsInAnnotationsReferredTo)[not(ancestor::comment)]/@ref]"/>
         <!-\-            <xsl:for-each select="$authors">
             <xsl:variable name="works" select="refWork[@id=//citation[not(ancestor::comment)]/@ref]"/>
         -\->

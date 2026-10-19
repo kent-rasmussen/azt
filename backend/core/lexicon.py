@@ -26,7 +26,7 @@ log=logsetup.getlog(__name__)
 from utilities.error_handler import notify_error as ErrorNotice
 from utilities.error_handler import notify_user as NotifyUser
 
-from utilities.i18n import _
+from utilities.i18n import _, N_
 from utilities import rx
 from io_put.cawl import loadCAWL
 import threading
@@ -867,7 +867,7 @@ class WordCollection(Segments):
     offers_word_check_line=True
     # "Collecting citation forms" — the verb on the word-check line
     # (`StatusFrame.wordcheckline`). Translated at use, not here.
-    word_check_prefix="Collecting"
+    word_check_sentence=N_("Collecting {form} forms")
     do_not_show_slices=True
     no_leaderboard=True
     def run_addCAWLentries(self):

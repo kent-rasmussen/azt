@@ -39,7 +39,7 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:variable>
-    <!--    <xsl:variable name="sChapterLineIndent" select="normalize-space(saxon:node-set($contentsLayout)/contentsLayout/@chapterlineindent)"/>-->
+    <!--    <xsl:variable name="sChapterLineIndent" select="normalize-space(exsl:node-set($contentsLayout)/contentsLayout/@chapterlineindent)"/>-->
     <!--    <xsl:variable name="authorInContentsLayoutInfo" select="exsl:node-set($frontMatterLayoutInfo)/authorLayout[preceding-sibling::*[1][name()='contentsLayout']]"/>-->
     <xsl:variable name="authorInContentsLayoutInfo">
         <xsl:choose>
@@ -1317,7 +1317,7 @@
         <xsl:param name="layout"/>
         <xsl:variable name="sThisRefToBook" select="@refToBook"/>
         <xsl:choose>
-            <xsl:when test="saxon:node-set($collOrProcVolumesToInclude)/refWork[@id=$sThisRefToBook]">
+            <xsl:when test="exsl:node-set($collOrProcVolumesToInclude)/refWork[@id=$sThisRefToBook]">
                 <xsl:call-template name="DoRefCitation">
                     <xsl:with-param name="citation" select="."/>
                 </xsl:call-template>
@@ -1614,7 +1614,7 @@
                 <xsl:variable name="bUseCitationAsLink">
                     <xsl:variable name="sThisRefToBook" select="collCitation/@refToBook"/>
                     <xsl:choose>
-                        <xsl:when test="saxon:node-set($collOrProcVolumesToInclude)/refWork[@id=$sThisRefToBook]">
+                        <xsl:when test="exsl:node-set($collOrProcVolumesToInclude)/refWork[@id=$sThisRefToBook]">
                             <xsl:text>Y</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>N</xsl:otherwise>
@@ -2538,7 +2538,7 @@
                 <xsl:variable name="bUseCitationAsLink">
                     <xsl:variable name="sThisRefToBook" select="procCitation/@refToBook"/>
                     <xsl:choose>
-                        <xsl:when test="saxon:node-set($collOrProcVolumesToInclude)/refWork[@id=$sThisRefToBook]">
+                        <xsl:when test="exsl:node-set($collOrProcVolumesToInclude)/refWork[@id=$sThisRefToBook]">
                             <xsl:text>Y</xsl:text>
                         </xsl:when>
                         <xsl:otherwise>N</xsl:otherwise>
@@ -5427,7 +5427,7 @@
         <xsl:param name="item"/>
         <xsl:variable name="sThisRefToBook" select="exsl:node-set($item)/@refToBook"/>
         <xsl:choose>
-            <xsl:when test="saxon:node-set($collOrProcVolumesToInclude)/refWork[@id=$sThisRefToBook]">
+            <xsl:when test="exsl:node-set($collOrProcVolumesToInclude)/refWork[@id=$sThisRefToBook]">
                 <xsl:call-template name="OutputReferenceItemNode">
                     <xsl:with-param name="item" select="$item"/>
                 </xsl:call-template>

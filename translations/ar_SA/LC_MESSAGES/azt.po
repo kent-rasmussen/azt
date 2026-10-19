@@ -2101,7 +2101,7 @@ msgstr "إذا قمت بإجراء تغييرات، هذا الزر==> \n"
 "سيقوم بإعادة تشغيل البرنامج لإعادة تحليل بياناتك."
 
 #: /home/kentr/bin/raspy/azt/setdefaults.py:41
-msgid "If you’re working on a multilingual dictionary, we need to figure out how to deal with that, later.  :-)"
+msgid "If you’re working on a multilingual dictionary, we need to figure out how to deal with that, later.  :-)"
 msgstr "إذا كنت تعمل على قاموس متعدد اللغات، نحن بحاجة إلى معرفة كيفية التعامل مع ذلك في وقت لاحق. :-)"
 
 #: /home/kentr/bin/raspy/azt/main.py:7755
@@ -3673,7 +3673,7 @@ msgid "Rename {ps} {profile} {noun_sg} group ‘{group}’ in ‘{check}’ fram
 msgstr "إعادة تسمية {ps} {profile} {noun_sg} مجموعة '{group}في '{check}إطار"
 
 #: /home/kentr/bin/raspy/azt/main.py:17745
-msgid "Repo has no branch attribute; assuming main branch."
+msgid "Repo has no branch attribute; assuming main branch."
 msgstr "لا يملك ريبو أي سمة فرعية؛ تولي الفرع الرئيسي."
 
 #: /home/kentr/bin/raspy/azt/main.py:16568

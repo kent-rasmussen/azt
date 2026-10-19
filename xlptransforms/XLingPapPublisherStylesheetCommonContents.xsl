@@ -155,7 +155,7 @@
                 <xsl:call-template name="OutputChapterNumber">
                     <xsl:with-param name="fDoingContents" select="'Y'"/>
                 </xsl:call-template>
-                <xsl:if test="saxon:node-set($contentsLayoutToUse)/@useperiodafterchapternumber='yes'">
+                <xsl:if test="exsl:node-set($contentsLayoutToUse)/@useperiodafterchapternumber='yes'">
                     <xsl:text>.</xsl:text>
                 </xsl:if>
                 <xsl:text>&#xa0; </xsl:text>
@@ -204,7 +204,7 @@
     </xsl:template>
     <xsl:template match="chapterInCollection" mode="contents">
         <xsl:param name="nLevel" select="$nLevel"/>
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:if test="exsl:node-set($contentsLayoutToUse)/@usechapterlabelbeforechapters='yes'">
             <xsl:if test="name()='chapterBeforePart' or count(preceding-sibling::chapterInCollection)=0 and not(//chapterBeforePart)">
                 <xsl:call-template name="DoChapterLabelInContents">
@@ -628,7 +628,7 @@
       DoSpaceBeforeContentsLine
    -->
     <xsl:template name="DoSpaceBeforeContentsLine">
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:choose>
             <xsl:when test="name()='part' and exsl:node-set($contentsLayoutToUse)/@partSpaceBefore">
                 <xsl:value-of select="exsl:node-set($contentsLayoutToUse)/@partSpaceBefore"/>
@@ -647,7 +647,7 @@
     <xsl:template name="OutputAbstractTOCLine">
         <xsl:param name="iPos"/>
         <xsl:param name="text-transform"/>
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:call-template name="OutputTOCLine">
             <xsl:with-param name="sLink">
                 <xsl:call-template name="GetIdToUse">
@@ -680,7 +680,7 @@
     <xsl:template name="OutputGlossaryTOCLine">
         <xsl:param name="iPos"/>
         <xsl:param name="text-transform"/>
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:call-template name="OutputTOCLine">
             <xsl:with-param name="sLink">
                 <xsl:call-template name="GetIdToUse">
@@ -711,7 +711,7 @@
         OutputPartLabelNumberAndTitle
     -->
     <xsl:template name="OutputPartLabelNumberAndTitle">
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:param name="fInContents" select="'N'"/>
         <xsl:call-template name="OutputPartLabel"/>
         <xsl:choose>
@@ -746,7 +746,7 @@
     <xsl:template name="OutputPrefaceTOCLine">
         <xsl:param name="iPos"/>
         <xsl:param name="text-transform"/>
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:call-template name="OutputTOCLine">
             <xsl:with-param name="sLink">
                 <xsl:variable name="sPos" select="$iPos"/>

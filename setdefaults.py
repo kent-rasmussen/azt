@@ -39,7 +39,7 @@ def langs(self):
     log.info('Second Gloss Language: '+self.glosslang2)
     log.info(_("If you don’t like these selections, they can be changed later."))
     log.info(_("If you’re working on a multilingual dictionary, we need to "
-            "figure out how to deal with that, later.  :-)"))
+            "figure out how to deal with that, later.  :-)"))
     self.languagecodes=[self.analangs]+[self.glosslangs]
 def count(self):
     """Return the number of occurrances of subcategories, for a given category.

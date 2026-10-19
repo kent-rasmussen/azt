@@ -440,11 +440,8 @@ class OrderAlphabetUI(ui.Window):
             log.warning("create_chart returned %r, which is not a column count; "
                         "keeping %s columns.",made,self.ncolumns)
 
-        try:
-            from utilities.utilities import open_file
-            open_file(filepath)
-        except Exception as e:
-            log.warning(f"Could not open PDF automatically: {e}")
+        from utilities.utilities import show_finished_pdf
+        show_finished_pdf(filepath)
 
         if made == "using_helvetica":
             q=ui.Window(self,title=_("Helvetica warning"))

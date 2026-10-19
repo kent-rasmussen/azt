@@ -4008,21 +4008,28 @@ xmlns:exsl="http://exslt.org/common">
                         <tex:spec cat="gt"/>
                         <tex:group>
                             <tex:cmd name="centering" gr="0"/>
+                            <tex:cmd name="arraybackslash" gr="0"/>
                         </tex:group>
                     </xsl:when>
                     <xsl:when test="@align='right'">
                         <tex:spec cat="gt"/>
                         <tex:group>
                             <tex:cmd name="raggedleft" gr="0"/>
+                            <tex:cmd name="arraybackslash" gr="0"/>
                         </tex:group>
                     </xsl:when>
                     <xsl:when test="@align='justify'">
                         <!-- do nothing; it defaults to justify -->
                     </xsl:when>
                     <xsl:otherwise>
+                        <!-- A-Z+T 2026-10-19: \arraybackslash after each of these,
+                             or the alignment command takes over \\ and a row whose
+                             last cell is empty never ends ("Extra alignment tab
+                             has been changed to \cr"). -->
                         <tex:spec cat="gt"/>
                         <tex:group>
                             <tex:cmd name="raggedright" gr="0"/>
+                            <tex:cmd name="arraybackslash" gr="0"/>
                         </tex:group>
                     </xsl:otherwise>
                 </xsl:choose>
@@ -7263,7 +7270,7 @@ xmlns:exsl="http://exslt.org/common">
                 </xsl:call-template>
             </words>
         </xsl:variable>
-        <xsl:for-each select="saxon:node-set($words)/descendant::text()">
+        <xsl:for-each select="exsl:node-set($words)/descendant::text()">
             <xsl:sort select="string-length(.)" order="descending"/>
             <xsl:if test="position()=1">
                 <xsl:value-of select="."/>
@@ -7350,7 +7357,7 @@ xmlns:exsl="http://exslt.org/common">
                 </xsl:for-each>
             </lines>
         </xsl:variable>
-        <xsl:for-each select="saxon:node-set($lines)/descendant::*">
+        <xsl:for-each select="exsl:node-set($lines)/descendant::*">
             <xsl:for-each select="line">
                 <xsl:sort select="." order="descending"/>
                 <xsl:if test="position()=1">
@@ -9568,7 +9575,7 @@ xmlns:exsl="http://exslt.org/common">
                                     </xsl:for-each>
                                 </xsl:variable>
                                 <xsl:variable name="iTotalItems" select="count($indexedItems)"/>
-                                <xsl:for-each select="saxon:node-set($items)/item">
+                                <xsl:for-each select="exsl:node-set($items)/item">
                                     <!-- show each reference -->
                                     <xsl:variable name="sThisPage" select="string(page)"/>
                                     <xsl:variable name="itemsBeforeOnThisPage" select="preceding-sibling::item[string(page)=$sThisPage]"/>
@@ -10233,7 +10240,7 @@ xmlns:exsl="http://exslt.org/common">
                                 <tex:cmd name="XLingPaperisocodewidth" gr="0"/>
                             </tex:parm>
                             <tex:parm>
-                                <xsl:copy-of select="saxon:node-set($sISOCodeTeXOutput)"/>
+                                <xsl:copy-of select="exsl:node-set($sISOCodeTeXOutput)"/>
                             </tex:parm>
                         </tex:cmd>
                         <tex:cmd name="hspace*">
@@ -10243,7 +10250,7 @@ xmlns:exsl="http://exslt.org/common">
                         </tex:cmd>
                     </xsl:when>
                     <xsl:otherwise>
-                        <xsl:copy-of select="saxon:node-set($sISOCodeTeXOutput)"/>
+                        <xsl:copy-of select="exsl:node-set($sISOCodeTeXOutput)"/>
                     </xsl:otherwise>
                 </xsl:choose>
                 <xsl:if test="$bCloseOffMultirow='Y'">
@@ -10306,7 +10313,7 @@ xmlns:exsl="http://exslt.org/common">
             </rows>
         </xsl:variable>
         <xsl:variable name="iNumCols">
-            <xsl:for-each select="saxon:node-set($rows)/descendant::*">
+            <xsl:for-each select="exsl:node-set($rows)/descendant::*">
                 <xsl:for-each select="row">
                     <xsl:sort select="." order="descending" data-type="number"/>
                     <xsl:if test="position()=1">
@@ -10333,7 +10340,7 @@ xmlns:exsl="http://exslt.org/common">
                     <xsl:value-of select="count(exsl:node-set($firstRowColumns)[not(number(@colspan) &gt; 0)]) + sum(exsl:node-set($firstRowColumns)[number(@colspan) &gt; 0]/@colspan)"/>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:for-each select="saxon:node-set($rowsall)/descendant::*">
+                    <xsl:for-each select="exsl:node-set($rowsall)/descendant::*">
                         <xsl:for-each select="rowcount">
                             <xsl:sort select="." order="descending" data-type="number"/>
                             <xsl:if test="position()=1">
@@ -10350,7 +10357,7 @@ xmlns:exsl="http://exslt.org/common">
                     <xsl:text>1</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:variable name="rowHasMaxCount" select="saxon:node-set($rowsall)/rows/rowcount[number(.)=number($iNumCols)]"/>
+                    <xsl:variable name="rowHasMaxCount" select="exsl:node-set($rowsall)/rows/rowcount[number(.)=number($iNumCols)]"/>
                     <xsl:for-each select="$rowHasMaxCount">
                         <xsl:if test="position()=1">
                             <xsl:value-of select="count(preceding-sibling::rowcount) + 1"/>

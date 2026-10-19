@@ -38,8 +38,15 @@ def extract_strings():
         'xgettext',
         '--language=Python',
         '--keyword=_',
+        # N_() marks text defined where it can't be translated yet (class
+        # attributes, menu lists); it is translated later with _(value).
+        '--keyword=N_',
+        # "# Translators: …" comments above a string go into azt.pot, to
+        # say what a {slot} will show.
+        '--add-comments=Translators:',
         '--from-code=UTF-8',
-        '--sort-output',
+        # '--sort-output', #deprecated
+        '--sort-by-file', #using this now
         '--output', temp_output_file,
     ] + files_to_scan
 

@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.54' #This is a string...
+__version__='1.15.55' #This is a string...
 # `--help` BEFORE ANYTHING ELSE, and that position is the point: asking a
 # program what its switches are must not build a venv, install packages or
 # trip the duplicate gate, and must work on a machine where the dependencies
@@ -378,7 +378,7 @@ class App:
             branch=self.source_repo.branch
         except AttributeError:
             branch='main'
-            log.info(_("Repo has no branch attribute; assuming main branch."))
+            log.info(_("Repo has no branch attribute; assuming main branch."))
         if branch != 'main':
             self.version+=f" ({branch})"
         self.docsurl=f'https://github.com/kent-rasmussen/azt/blob/{branch}/docs'

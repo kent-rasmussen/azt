@@ -270,7 +270,8 @@ def test_no_task_layer_code_says_self_ftype():
 def test_the_collection_page_declares_the_flag_and_a_verb():
     from backend.core import lexicon
     assert lexicon.WordCollection.whole_word_checks is True
-    assert lexicon.WordCollection.word_check_prefix
+    # A whole sentence with the form's slot (was a bare prefix verb).
+    assert '{form}' in lexicon.WordCollection.word_check_sentence
 
 
 def test_parse_does_not_offer_a_word_check():

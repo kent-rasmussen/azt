@@ -1,7 +1,7 @@
 # coding=UTF-8
 from backend.core.alphabet import AlphabetComparisonData
 from frontend.alphabet_comparison import PageSetupUI
-from utilities.i18n import _
+from utilities.i18n import _, N_
 from utilities import logsetup
 log = logsetup.getlog(__name__)
 
@@ -22,7 +22,7 @@ class AlphabetComparisonPages(AlphabetComparisonData, PageSetupUI):
     def tooltip(self):
         return _("This task helps you compare alphabet letters with example words "
             "and pictures to represent each letter.")
-    tasktitle = "Alphabet Comparison Pages"
+    tasktitle = N_("Alphabet Comparison Pages")
     def save_settings(self):
         for k in self.my_settings:
             value = getattr(self, k)

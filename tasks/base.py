@@ -1,5 +1,5 @@
 # coding=UTF-8
-from utilities.i18n import _
+from utilities.i18n import _, N_
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 from backend.core.lexicon import Tone, Segments #for makecvtok
@@ -60,13 +60,14 @@ class TaskBase:
     glyph_leaderboard=False
     cvt_sensitive=False
     whole_word_checks=False
-    # THE VERB ON THE WORD-CHECK LINE. "Collecting citation forms" on a
-    # collection page, "Sorting citation forms" on the syllable sort — the
+    # THE SENTENCE ON THE WORD-CHECK LINE. "Collecting Citation forms" on a
+    # collection page, "Recording Citation forms" on a record page — the
     # value is the same word check either way, but the sentence it sits in
-    # is the task's. NOT wrapped in `_()` here: a module-level call would
-    # freeze the string in whatever language was live at import, the same
-    # reason `tasktitle` is a bare string and translated at use.
-    word_check_prefix="Working on"
+    # is the task's. {form} is the clickable form name. MARKED with N_(),
+    # not translated with `_()`: a class-level call would freeze the string
+    # in whatever language was live at import; it is translated at use. It
+    # was a bare "Working on" prefix, which xgettext never saw (2026-10-19).
+    word_check_sentence=N_("Working on {form} forms")
     # WHICH WORD FORM THIS TASK WORKS ON, declared rather than assigned
     # (Kent, 2026-09-29). `Task.__init__` applies it, exactly as it applies
     # `cvt` one line earlier — so declaring IS setting, and a task that wants

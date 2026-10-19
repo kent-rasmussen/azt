@@ -2070,7 +2070,7 @@ msgid "If you make changes, this button==> \n"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/setdefaults.py:41
-msgid "If you’re working on a multilingual dictionary, we need to figure out how to deal with that, later.  :-)"
+msgid "If you’re working on a multilingual dictionary, we need to figure out how to deal with that, later.  :-)"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:7755
@@ -3629,7 +3629,7 @@ msgid "Rename {ps} {profile} {noun_sg} group ‘{group}’ in ‘{check}’ fram
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:17745
-msgid "Repo has no branch attribute; assuming main branch."
+msgid "Repo has no branch attribute; assuming main branch."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:16568

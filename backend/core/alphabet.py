@@ -1239,11 +1239,8 @@ class AlphabetComparisonData:
         )
         log.info(f"Generated {filepath}")
 
-        try:
-            from utilities.utilities import open_file
-            open_file(filepath)
-        except Exception as e:
-            log.warning(f"Could not open PDF automatically: {e}")
+        from utilities.utilities import show_finished_pdf
+        show_finished_pdf(filepath)
         if r == 'using_helvetica':
             q = p.window(self, title=_("Using Helvetica"))
             q_text = _("This PDF uses Helvetica because neither Charis nor Andika were found; "

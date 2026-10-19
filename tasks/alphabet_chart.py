@@ -1,7 +1,7 @@
 # coding=UTF-8
 from backend.core.alphabet import AlphabetChartData
 from frontend.alphabet_chart import OrderAlphabetUI
-from utilities.i18n import _
+from utilities.i18n import _, N_
 from utilities import logsetup
 log = logsetup.getlog(__name__)
 
@@ -24,7 +24,7 @@ class AlphabetChart(AlphabetChartData, OrderAlphabetUI):
     def tooltip(self):
         return _("This task helps you organize an alphabet and select words "
             "with pictures to represent each letter.")
-    tasktitle = "Alphabet Chart"
+    tasktitle = N_("Alphabet Chart")
     def save_settings(self):
         for k in self.my_settings:
             value = getattr(self, k)

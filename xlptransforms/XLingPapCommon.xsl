@@ -975,7 +975,7 @@
         <xsl:param name="citations" select="//citation[not(ancestor::chapterInCollection/backMatter/references) and not(ancestor::abbrDefinition)]"/>
         <xsl:variable name="directlyCitedAuthors"
             select="exsl:node-set($refAuthors)[refWork[@id=exsl:node-set($citations)[not(ancestor::comment) and not(ancestor::referencedInterlinearText) and not(ancestor::glossaryTerm) and not(ancestor::abbrDefinition)][not(ancestor::refWork) or ancestor::annotation[@id=//annotationRef/@annotation] or ancestor::refWork[@id=exsl:node-set($citations)[not(ancestor::refWork)]/@ref]]/@ref]]"/>
-        <xsl:variable name="impliedAuthors" select="exsl:node-set($refWorks)[@id=saxon:node-set($collOrProcVolumesToInclude)/refWork/@id]/parent::refAuthor"/>
+        <xsl:variable name="impliedAuthors" select="exsl:node-set($refWorks)[@id=exsl:node-set($collOrProcVolumesToInclude)/refWork/@id]/parent::refAuthor"/>
         <xsl:variable name="gtAuthors" select="//refAuthor[refWork/@id=//citation[ancestor::glossaryTerm[key('GlossaryTermRefs',@id)]]/@ref]"/>
         <xsl:variable name="abbreviations">
             <xsl:choose>
@@ -998,7 +998,7 @@
             </xsl:choose>
         </xsl:variable>
         <xsl:variable name="citationsInUsedAbbreviations"
-            select="saxon:node-set($abbreviations)/abbreviation[saxon:node-set($abbrRefs)/abbrRef[not(ancestor::referencedInterlinearText) or ancestor::interlinear[key('InterlinearRef',@text)]]/@abbr=@id]/descendant::citation[not(ancestor::comment)]"/>
+            select="exsl:node-set($abbreviations)/abbreviation[exsl:node-set($abbrRefs)/abbrRef[not(ancestor::referencedInterlinearText) or ancestor::interlinear[key('InterlinearRef',@text)]]/@abbr=@id]/descendant::citation[not(ancestor::comment)]"/>
         <xsl:variable name="worksCitedInUsedAbbreviationDefinitions" select="exsl:node-set($refWorks)[@id=exsl:node-set($citationsInUsedAbbreviations)/@ref]/parent::refAuthor"/>
         <xsl:choose>
             <xsl:when test="exsl:node-set($lingPaper)/@sortRefsAbbrsByDocumentLanguage='yes'">
@@ -1011,7 +1011,7 @@
                         <xsl:otherwise>en</xsl:otherwise>
                     </xsl:choose>
                 </xsl:variable>
-                <xsl:for-each select="$directlyCitedAuthors | $impliedAuthors | $gtAuthors | saxon:node-set($worksCitedInUsedAbbreviationDefinitions)">
+                <xsl:for-each select="$directlyCitedAuthors | $impliedAuthors | $gtAuthors | exsl:node-set($worksCitedInUsedAbbreviationDefinitions)">
                     <xsl:sort lang="{$sLang}" select="@name"/>
                     <xsl:call-template name="DoRefWorks">
                         <xsl:with-param name="sLang" select="$sLang"/>
@@ -1020,7 +1020,7 @@
                 </xsl:for-each>
             </xsl:when>
             <xsl:otherwise>
-                <xsl:for-each select="$directlyCitedAuthors | $impliedAuthors | $gtAuthors | saxon:node-set($worksCitedInUsedAbbreviationDefinitions)">
+                <xsl:for-each select="$directlyCitedAuthors | $impliedAuthors | $gtAuthors | exsl:node-set($worksCitedInUsedAbbreviationDefinitions)">
                     <xsl:call-template name="DoRefWorks">
                         <xsl:with-param name="citations" select="$citations | $citationsInUsedAbbreviations"/>
                     </xsl:call-template>
@@ -1036,7 +1036,7 @@
         <xsl:param name="citations"/>
         <xsl:variable name="thisAuthor" select="."/>
         <xsl:variable name="works"
-        select="refWork[@id=exsl:node-set($citations)[not(ancestor::comment) and not(ancestor::annotation)][not(ancestor::refWork) or ancestor::refWork[@id=exsl:node-set($citations)[not(ancestor::refWork)]/@ref]]/@ref] | exsl:node-set($refWorks)[@id=saxon:node-set($collOrProcVolumesToInclude)/refWork/@id][parent::refAuthor=$thisAuthor] | refWork[@id=exsl:node-set($citationsInAnnotationsReferredTo)[not(ancestor::comment)]/@ref]"/>
+        select="refWork[@id=exsl:node-set($citations)[not(ancestor::comment) and not(ancestor::annotation)][not(ancestor::refWork) or ancestor::refWork[@id=exsl:node-set($citations)[not(ancestor::refWork)]/@ref]]/@ref] | exsl:node-set($refWorks)[@id=exsl:node-set($collOrProcVolumesToInclude)/refWork/@id][parent::refAuthor=$thisAuthor] | refWork[@id=exsl:node-set($citationsInAnnotationsReferredTo)[not(ancestor::comment)]/@ref]"/>
         <xsl:choose>
             <xsl:when test="string-length($sLang) &gt; 0">
                 <xsl:variable name="sortedWorks">
@@ -1053,7 +1053,7 @@
                     <xsl:call-template name="DoRefWork">
                         <xsl:with-param name="works" select="$works"/>
                         <xsl:with-param name="author" select="$thisAuthor"/>
-                        <xsl:with-param name="sortedWorks" select="saxon:node-set($sortedWorks)"/>
+                        <xsl:with-param name="sortedWorks" select="exsl:node-set($sortedWorks)"/>
                     </xsl:call-template>
                 </xsl:for-each>
             </xsl:when>
@@ -1125,7 +1125,7 @@
                         <xsl:copy-of select="."/>
                     </xsl:for-each>
                 </xsl:variable>
-                <xsl:for-each select="saxon:node-set($citedCollOrProcWithCitation)/collCitation | saxon:node-set($citedCollOrProcWithCitation)/procCitation">
+                <xsl:for-each select="exsl:node-set($citedCollOrProcWithCitation)/collCitation | exsl:node-set($citedCollOrProcWithCitation)/procCitation">
                     <xsl:variable name="thisRefToBook" select="@refToBook"/>
                     <xsl:variable name="precedingSiblings" select="preceding-sibling::*[@refToBook=$thisRefToBook]"/>
                     <!-- to set the required number, use count of preceding is greater than or equal to threshold minus 1 -->

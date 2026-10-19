@@ -19,6 +19,134 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.55 (2026-10-19)
+
+Patch bump at Kent's direction. **What is verified and what is not:** in
+the app, the items marked VERIFIED below; the test suite covers the rest
+(clean apart from the French/Mandarin coverage tests, which wait on the
+latest drafts being merged). Everything not marked VERIFIED is AWAITING
+VERIFICATION in the app.
+
+Reports:
+
+- **"Alphabet Report by Tone group" reports by tone group.** Every
+  variant silently produced the plain alphabet report: the report setup
+  switched the by-group setting off after the report type had switched it
+  on. Behind that, the group list:
+  - read the current slice's analysis, not the slice being reported;
+  - didn't ask whether that analysis was current. Now it redoes a stale
+    one, in the foreground only; a background report hands it back to
+    the foreground rather than write the LIFT file from a second process;
+  - leaves out groups under the minimum size on every path, not just one.
+- **Multi-check alphabet reports run** (with or without tone groups).
+  The report type declared its "scope of checks" flag under a different
+  name from the one the page reads, so the scope choice never showed and
+  the report died on "no attribute 'cvtstodo'". The V / C / CV buttons'
+  own choice was also ignored; it is used now. The scope field, which
+  had never run, then crashed the page reading a choice nobody had made
+  yet; it falls back to the task's choice, then vowels. A report window
+  no longer logs an error for drawing its button before the report is
+  ready.
+- **VERIFIED 2026-10-15** (Kent: "the report compiled fine this time,
+  and tests are OK", for "Alphabet Report by Tone group (checks)"): the
+  two items above.
+- **Checking whether the tone analysis is current asks about the right
+  frames.** It used the current category's checks on the current tier, so
+  a report on another category, or an alphabet report, found no analysis
+  and re-analysed every time. Test: `tests/test_report_by_uf_group.py`.
+- **Report PDFs: the XLingPaper → TeX → PDF path is repaired** (still
+  developer-only, as before: it runs only with dev settings). What stopped
+  it:
+  - The XLingPaper stylesheet and transform folders were looked for in
+    `utilities/`, where they never were, so every report was written
+    unstyled and the PDF step quit at once. This also means **reports are
+    now written with the XLingPaper stylesheet attached**, as designed.
+  - 60 calls to a Saxon-only function remained in the transforms; lxml
+    stops on them. They now use the EXSLT equivalent, as the rest do.
+  - TeX's special characters were escaped across the whole document,
+    markup included, and the tags could not be restored (the next step
+    failed to parse). Now only the text is converted, in one pass.
+  - Ids with characters like ŋ or tone letters are converted for TeX,
+    together with everything that refers to them.
+  - The report is read with the shipped XLingPaper DTD, for its default
+    attribute values.
+  - Contents and index page numbers come in two rounds, as in XLingPaper:
+    transform, xelatex (which writes the page numbers), transform again,
+    xelatex again. The transform's scratch files start empty, since a
+    missing one stopped it.
+  - Each step logs whether it worked and stops the chain if not; xelatex's
+    log is kept when it fails, and a missing xelatex is said plainly.
+  - A table row ending in an empty cell stopped xelatex ("Extra alignment
+    tab"): XLingPaper's column alignment took over the row-ending `\\`.
+    Fixed in the transform (`\arraybackslash`), awaiting a run. That
+    report's summary table was also captioned with the previous table's
+    check ("V1xV2"); it now names the checks it holds.
+  - **VERIFIED** for the tone report (log 2026-10-19 08:46, "PDF
+    written"); the alphabet report by tone group awaits a run with the
+    table fix.
+  Test: `tests/test_xlp_pdf_pipeline.py` (runs the transforms to a .tex
+  file; xelatex is not run there).
+- **Every finished PDF** (reports, alphabet chart, booklet) opens in the
+  system's PDF viewer, through one helper, and only if the file was
+  actually written.
+
+Translation:
+
+- **Every status-page line is one translatable sentence again** (Kent,
+  2026-10-19). Making the values clickable in place had split each line
+  into fragments ("Using", "Meanings in", "and", "words ({count})") that a
+  translator saw out of context and could not reorder, while the old whole
+  sentences sat translated in the catalog, unused. Each line is now one
+  template with a slot per clickable value ("Meanings in {lang} and
+  {lang2}", "Looking at {profile} {ps} words ({count})"); the program cuts
+  it in whatever order the translation puts the values, and punctuation
+  touching a value (a comma, the quotes round a field name) stays tight
+  against it. Where the old sentence still fits it is reused, so its
+  existing translations come back. The nine methods that built the old
+  sentences, with no callers left, are removed.
+- **Task titles, check-type names ("Vowels" …) and the per-task "Working
+  on …" line reach the translation template and are translated.** They
+  were defined as plain text and translated later from a variable, or not
+  at all, which `extract.py` can't see. They are now marked with `N_()`
+  (and `extract.py` collects `N_` and "Translators:" comments). A dialog
+  question built with an f-string inside `_()`, which could never match a
+  translation, is fixed. Test: `tests/test_prose_sentences.py`.
+- **Group and letter pickers ask why, in a whole sentence.** They used to
+  drop an untranslated English word into "What {type} do you want to
+  {purpose}?" ("…want to to work with?", "…want join?"). Now each reason
+  has its own question and title: verify, join, name (transcribing tone
+  groups), compare (the other letter, when naming letters); the status
+  line's chooser keeps a general "Which {type} do you want to work with?".
+- **"Vowels (only)" is one translatable string** (`"{kinds} (only)"`),
+  and the check-scope line now shows exactly the words of the option
+  chosen (it was named by a different function, without "(only)", and in
+  whatever order the choice was stored).
+- **French and Mandarin drafts** for every untranslated string (about
+  650 and 1,280), merged marked fuzzy for a speaker to check
+  (`translations/merge_drafts.py`, which never overwrites a translation;
+  `translations/compile.py`'s `USE_FUZZY` decides whether users see them).
+  The coverage test (`tests/test_translation_coverage.py`) follows
+  `USE_FUZZY`, and catches a message defined twice.
+- Two strings had a stray narrow no-break space in the source; fixed, and
+  their translations kept.
+- **The unused "Change" menu is removed** (`Menus.change`, `languages`,
+  `parameterslice`). Nothing built it, and every choice it offered is on
+  the status page's lines.
+
+Other:
+
+- **Record Tone opens its pages.** It read the number of examples per group
+  from the task instead of the settings, and stopped with "'RecordCitationT'
+  object has no attribute 'examplespergrouptorecord'". Unset, it is 5.
+- **Gloss languages keep the order the user sets.** After any change the
+  two were put in an arbitrary order, so the user couldn't choose which
+  comes first; and choosing the second language as the first dropped the
+  old first one ("second only"). Choosing either language for the other
+  slot now swaps them, and both menus mark that choice "(switch)"; the
+  second-language menu now offers the first language for that. The menus
+  also list languages in the same order every time. Test:
+  `tests/test_glosslangs_order.py`.
+
 # Version 1.15.54 (2026-10-14)
 
 Patch bump when Kent confirmed the report fixes ("the report ran OK").
@@ -113,27 +241,6 @@ Also AWAITING VERIFICATION:
 - **Multi-check and multi-slice background reports start.** They had the
   same button-choice fault as above, and the multi-slice tone ones were
   wrapped for the background twice, so the report process failed at once.
-- **"Alphabet Report by Tone group" reports by tone group.** Every
-  variant silently produced the plain alphabet report: the report setup
-  switched the by-group setting off after the report type had switched it
-  on. Behind that, the group list:
-  - read the current slice's analysis, not the slice being reported;
-  - didn't ask whether that analysis was current. Now it redoes a stale
-    one, in the foreground only; a background report hands it back to
-    the foreground rather than write the LIFT file from a second process;
-  - leaves out groups under the minimum size on every path, not just one.
-- **Multi-check alphabet reports run** (with or without tone groups).
-  The report type declared its "scope of checks" flag under a different
-  name from the one the page reads, so the scope choice never showed and
-  the report died on "no attribute 'cvtstodo'". The V / C / CV buttons'
-  own choice was also ignored; it is used now. The scope field, which
-  had never run, then crashed the page reading a choice nobody had made
-  yet; it falls back to the task's choice, then vowels. A report window no longer
-  logs an error for drawing its button before the report is ready.
-- **Checking whether the tone analysis is current asks about the right
-  frames.** It used the current category's checks on the current tier, so
-  a report on another category, or an alphabet report, found no analysis
-  and re-analysed every time. Test: `tests/test_report_by_uf_group.py`.
 - **Quitting under webview no longer closes the main window twice.** The
   second close printed `KeyError: 'master'` from pywebview at exit.
 - **Two word-element tests check for a missing word, not an empty one**

@@ -1,0 +1,47 @@
+#, fuzzy
+msgid "Vowel"
+msgstr "Voyelle"
+
+#, fuzzy
+msgid "Vowels"
+msgstr "Voyelles"
+
+#, fuzzy
+msgid "Consonant"
+msgstr "Consonne"
+
+#, fuzzy
+msgid "Consonants"
+msgstr "Consonnes"
+
+#, fuzzy
+msgid "Consonant-Vowel combination"
+msgstr "Combinaison consonne-voyelle"
+
+#, fuzzy
+msgid "Consonant-Vowel combinations"
+msgstr "Combinaisons consonne-voyelle"
+
+#, fuzzy
+msgid "Vowel-Consonant combination"
+msgstr "Combinaison voyelle-consonne"
+
+#, fuzzy
+msgid "Vowel-Consonant combinations"
+msgstr "Combinaisons voyelle-consonne"
+
+#, fuzzy
+msgid "Tone"
+msgstr "Ton"
+
+#, fuzzy
+msgid "Tones"
+msgstr "Tons"
+
+#, fuzzy
+msgid "Syllable Profile"
+msgstr "Profil syllabique"
+
+#, fuzzy
+msgid "Syllable Profiles"
+msgstr "Profils syllabiques"

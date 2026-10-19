@@ -26,6 +26,15 @@ replace with exsl:node-set(\1)\2
 inside normalize-space() is OK
 There were a few cases requiring more manual work… but mostly incorporated
 
+2026-10-15: the 60 remaining `saxon:node-set(` calls (in nine files) were
+switched to `exsl:node-set(`. lxml's XSLT engine (libxslt) has no Saxon
+extensions, so any of them that ran stopped the transform.
+
+2026-10-19: `XLingPapXeLaTeXCommon.xsl` column specs `>{\raggedright}`,
+`>{\raggedleft}` and `>{\centering}` gained `\arraybackslash`. Without it the
+alignment command takes over `\\`, and a table row ending in an empty cell
+never ended ("Extra alignment tab has been changed to \cr").
+
 XLingPapPublisherStylesheetXeLaTeX.xsl
 XLingPapXeLaTeXCommon.xsl
 XLingPapPublisherStylesheetXeLaTeXContents.xsl

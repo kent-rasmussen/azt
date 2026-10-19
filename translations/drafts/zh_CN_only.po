@@ -1,0 +1,3 @@
+#, fuzzy, python-brace-format
+msgid "{kinds} (only)"
+msgstr "仅{kinds}"

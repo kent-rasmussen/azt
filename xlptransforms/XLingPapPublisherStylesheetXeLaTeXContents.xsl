@@ -7,7 +7,7 @@ xmlns:exsl="http://exslt.org/common">
     -->
     <xsl:template match="part" mode="contents">
         <xsl:param name="nLevel" select="$nLevel"/>
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:if test="count(preceding-sibling::part)=0">
             <xsl:for-each select="preceding-sibling::*[name()='chapterBeforePart']">
                 <xsl:apply-templates select="." mode="contents">
@@ -107,8 +107,8 @@ xmlns:exsl="http://exslt.org/common">
             <xsl:with-param name="sSpaceBefore">
                 <xsl:choose>
                     <xsl:when
-                        test="saxon:node-set($contentsLayoutToUse)/@spacebeforemainsection and not(ancestor::chapter) and not(ancestor::appendix) and not(ancestor::chapterBeforePart and not(ancestor::chapterInCollection))">
-                        <xsl:value-of select="saxon:node-set($contentsLayoutToUse)/@spacebeforemainsection"/>
+                        test="exsl:node-set($contentsLayoutToUse)/@spacebeforemainsection and not(ancestor::chapter) and not(ancestor::appendix) and not(ancestor::chapterBeforePart and not(ancestor::chapterInCollection))">
+                        <xsl:value-of select="exsl:node-set($contentsLayoutToUse)/@spacebeforemainsection"/>
                     </xsl:when>
                     <xsl:otherwise>
                         <xsl:text>0</xsl:text>
@@ -128,7 +128,7 @@ xmlns:exsl="http://exslt.org/common">
         OutputPartTOCLine
     -->
     <xsl:template name="OutputPartTOCLine">
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:if test="exsl:node-set($contentsLayoutToUse)/@singlespaceeachcontentline='yes'">
             <tex:spec cat="bg"/>
             <tex:cmd name="{$sSingleSpacingCommand}" gr="0" nl2="1"/>
@@ -232,7 +232,7 @@ xmlns:exsl="http://exslt.org/common">
         <xsl:param name="sNumWidth" select="'0pt'"/>
         <xsl:param name="fUseHalfSpacing"/>
         <xsl:param name="text-transform"/>
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:variable name="linkLayout" select="exsl:node-set($pageLayoutInfo)/linkLayout/contentsLinkLayout"/>
         <xsl:if test="number($sSpaceBefore)>0">
             <tex:cmd name="vspace">
@@ -242,7 +242,7 @@ xmlns:exsl="http://exslt.org/common">
                 </tex:parm>
             </tex:cmd>
         </xsl:if>
-        <xsl:if test="saxon:node-set($contentsLayout)/contentsLayout/@singlespaceeachcontentline='yes'">
+        <xsl:if test="exsl:node-set($contentsLayout)/contentsLayout/@singlespaceeachcontentline='yes'">
             <tex:spec cat="bg"/>
             <tex:cmd name="{$sSingleSpacingCommand}" gr="0" nl2="1"/>
         </xsl:if>
@@ -277,7 +277,7 @@ xmlns:exsl="http://exslt.org/common">
             </tex:parm>
         </tex:cmd>
         <xsl:call-template name="DoInternalHyperlinkEnd"/>
-        <xsl:if test="saxon:node-set($contentsLayout)/contentsLayout/@singlespaceeachcontentline='yes'">
+        <xsl:if test="exsl:node-set($contentsLayout)/contentsLayout/@singlespaceeachcontentline='yes'">
             <tex:spec cat="eg"/>
         </xsl:if>
     </xsl:template>

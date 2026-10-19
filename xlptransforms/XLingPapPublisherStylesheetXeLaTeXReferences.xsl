@@ -340,7 +340,7 @@ xmlns:exsl="http://exslt.org/common">
         <xsl:call-template name="DoFormatLayoutInfoTextBefore">
             <xsl:with-param name="layoutInfo" select="."/>
         </xsl:call-template>
-        <xsl:apply-templates select="saxon:node-set($item)"/>
+        <xsl:apply-templates select="exsl:node-set($item)"/>
         <xsl:call-template name="DoFormatLayoutInfoTextAfter">
             <xsl:with-param name="layoutInfo" select="."/>
             <xsl:with-param name="sPrecedingText" select="$item"/>

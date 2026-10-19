@@ -1761,7 +1761,7 @@ class Sort(Categories):
         if glyph is None:
             glyph=self.program.alphabet.glyph()
         if glyph not in done:
-            w=self.getglyph(toverify=True) #assumes system cvt
+            w=self.getglyph(toverify=True,purpose='verify') #assumes system cvt
             w.wait_window(w)
             glyph=self.program.alphabet.glyph()
             if glyph not in done: #i.e., still
@@ -1824,7 +1824,7 @@ class Sort(Categories):
         if group not in done:
             log.info("Group ({group}) not in groups ({done}); asking."
                     "".format(group=group,done=done))
-            w=self.getgroup(wsorted=True)
+            w=self.getgroup(wsorted=True,purpose='verify')
             w.wait_window(w)
             group=self.program.status.group()
             if group not in done: #i.e., still

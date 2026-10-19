@@ -1165,9 +1165,13 @@ class Report(object):
                     #Finally, do all single column tables in one table:
                     if (columncounts and len(list(columncounts)) and
                             len([columncounts[k] for k in columncounts])):
+                        # `check` here was whatever the loop above left in it,
+                        # so this table was captioned (and linked) as e.g.
+                        # "V1xV2" though it holds the single checks.
+                        singles='-'.join(onecolchecks)
                         log.debug("Counts by ({ufg}-{check}) check: {counts}".format(ufg=ufg,
-                                                            check=check,counts=columncounts))
-                        caption=' '.join([ufg,ps,profile,check])
+                                                            check=singles,counts=columncounts))
+                        caption=' '.join([ufg,ps,profile,singles])
                         table=xlp.Table(s3s,caption)
                         self.coocurrencetable(table,'x',columncounts)
     def coocurrencetable(self,table,check,counts):

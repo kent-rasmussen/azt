@@ -1,5 +1,5 @@
 # coding=UTF-8
-from utilities.i18n import _
+from utilities.i18n import _, N_
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 
@@ -27,21 +27,24 @@ from utilities.error_handler import notify_error as ErrorNotice
 from backend.core.lexicon import Tone
 
 class Glosslangs(list):
-    """docstring for Glosslangs."""
+    """The gloss languages, IN THE USER'S ORDER (first is shown first).
+    At most two; no duplicates; no None."""
     def sanitycheck(self):
-        """First, remove any duplicates."""
-        self.langs(list(set(self)))
-        if None in self.langs():
-            self.rm(None)
-        if len(self) > 2:
-            self=self[:2]
-            return
+        # ORDER-PRESERVING: this was list(set(self)), which put the two
+        # languages in hash order after every change, so the user could
+        # not choose which came first (Kent, 2026-10-19).
+        self[:]=[l for l in dict.fromkeys(self) if l is not None]
+        del self[2:] #in place; `self=self[:2]` only rebound a local name
         if len(self) < 1:
             ErrorNotice(_("Hey, you have no gloss languages set!"))
     def lang1(self,lang=False):
         if self and lang is False: #i.e., not specified
             return self[0]
-        if self:
+        if len(self) > 1 and self[1] == lang:
+            # Choosing the second language as first SWAPS them; it used to
+            # overwrite the first, leaving the second language "only".
+            self[0],self[1]=self[1],self[0]
+        elif self:
             self[0]=lang #before others
         else:
             self.append(lang)
@@ -50,10 +53,15 @@ class Glosslangs(list):
         if len(self) >1:
             if not lang:
                 return self[1]
-            elif self[0] != lang:
+            elif self[0] == lang:
+                self[0],self[1]=self[1],self[0] #the first, chosen second: swap
+            else:
                 self[1]=lang
         elif len(self) == 1:
-            self.append(lang)
+            if lang and self[0] == lang:
+                log.debug("Second glosslang is already the first; not adding.")
+            elif lang:
+                self.append(lang)
         else:
             log.debug("Tried to set second glosslang, without first set.")
         self.sanitycheck()
@@ -161,13 +169,19 @@ class CheckParameters(object):
         rerun. This is a convenience wrapper only."""
         return list(self._cvts)
     def cvtdict(self):
-        """This depends on nothing, so can go anywhere, and shouldn't need to
-        rerun. This is a convenience wrapper only."""
-        return self._cvts
+        """The check types' names, TRANSLATED NOW: {cvt: {'sg','pl'}}.
+
+        The names were plain English in `_cvts` and nothing translated
+        them, so "Vowels" stayed "Vowels" on every interface (Kent,
+        2026-10-19). They are marked `N_()` there and translated here, at
+        each call, so they follow the interface language as it changes.
+        A copy: callers can't alter the source names."""
+        return {cvt: {k: _(v) for k, v in names.items()}
+                for cvt, names in self._cvts.items()}
     def cvtname(self,cvt=None,n='sg'):
         if not cvt:
             cvt=self.cvt() #this shouldn't necessarily set current cvt.
-        return self._cvts[cvt][n]
+        return _(self._cvts[cvt][n]) #translated at use; see cvtdict
     # --- syllable PROFILE-CLASS helpers (the cvt='S' slice = Beg+count+End,
     #     DERIVED by composing the three confirmed primitives — NOT a sorted
     #     group-of-groups; contrast the segmental macrogroup/glyph) ---
@@ -1283,15 +1297,16 @@ class CheckParameters(object):
         super(CheckParameters, self).__init__()
         self._analang=self.program.db.analang
         self._audiolang=self.program.db.audiolang
+        # N_(): marked for extraction; `cvtdict()` translates at each call.
         self._cvts={
-                'V':{'sg':'Vowel','pl':'Vowels'},
-                'C':{'sg':'Consonant','pl':'Consonants'},
-                'CV':{'sg':'Consonant-Vowel combination',
-                        'pl':'Consonant-Vowel combinations'},
-                'VC':{'sg':'Vowel-Consonant combination',
-                        'pl':'Vowel-Consonant combinations'},
-                'T':{'sg':'Tone','pl':'Tones'},
-                'σ':{'sg':'Syllable Profile','pl':'Syllable Profiles'},
+                'V':{'sg':N_('Vowel'),'pl':N_('Vowels')},
+                'C':{'sg':N_('Consonant'),'pl':N_('Consonants')},
+                'CV':{'sg':N_('Consonant-Vowel combination'),
+                        'pl':N_('Consonant-Vowel combinations')},
+                'VC':{'sg':N_('Vowel-Consonant combination'),
+                        'pl':N_('Vowel-Consonant combinations')},
+                'T':{'sg':N_('Tone'),'pl':N_('Tones')},
+                'σ':{'sg':N_('Syllable Profile'),'pl':N_('Syllable Profiles')},
                 }
         self.cvchecknamesdict()
         self.checkcodes_by_cvt()

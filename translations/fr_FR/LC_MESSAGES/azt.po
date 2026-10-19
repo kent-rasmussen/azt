@@ -2125,7 +2125,7 @@ msgstr "Si vous apportez des modifications, ce bouton==> \n"
 "redémarrera le programme pour réanalyser vos données."
 
 #: /home/kentr/bin/raspy/azt/setdefaults.py:41
-msgid "If you’re working on a multilingual dictionary, we need to figure out how to deal with that, later.  :-)"
+msgid "If you’re working on a multilingual dictionary, we need to figure out how to deal with that, later.  :-)"
 msgstr "Si vous travaillez sur un dictionnaire multilingue, nous devons comprendre comment gérer cela plus tard. :-)"
 
 #: /home/kentr/bin/raspy/azt/main.py:7755
@@ -3709,7 +3709,7 @@ msgid "Rename {ps} {profile} {noun_sg} group ‘{group}’ in ‘{check}’ fram
 msgstr "Renommer {ps} {profile} {noun_sg} groupe ‘{group}’ dans le cadre ‘{check}’"
 
 #: /home/kentr/bin/raspy/azt/main.py:17745
-msgid "Repo has no branch attribute; assuming main branch."
+msgid "Repo has no branch attribute; assuming main branch."
 msgstr "Le dépôt n'a pas d'attribut de branche; en supposant la branche principale."
 
 #: /home/kentr/bin/raspy/azt/main.py:16568
@@ -6418,6 +6418,11 @@ msgstr "iwascalledby {caller}, mais pas amont."
 msgid "just use {name}"
 msgstr "utilisez juste {name}"
 
+#: frontend/ui_shell.py (_glosslang_option)
+#, python-brace-format
+msgid "{language} (switch)"
+msgstr "{language} (inverser)"
+
 #: /home/kentr/bin/raspy/azt/lift.py:4009
 msgid "langform found!"
 msgstr "formulaire trouvé !"
@@ -7368,3 +7373,3370 @@ msgstr "«{new}» est identique à «{current}»!"
 msgid "‣"
 msgstr "‣"
 
+
+#: /home/kentr/bin/AZT/azt/backend/core/alphabet.py:763
+#, fuzzy, python-brace-format
+msgid "Removing {items} from ‘{glyph}’ to make room for {new}{text}"
+msgstr "Retrait de {items} de ‘{glyph}’ pour faire place à {new}{text}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/alphabet.py:1213
+#, fuzzy
+msgid "Booklet"
+msgstr "Livret"
+
+#: /home/kentr/bin/AZT/azt/backend/core/alphabet.py:1245
+#, fuzzy
+msgid "Using Helvetica"
+msgstr "Utilisation de Helvetica"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis.py:1642
+#, fuzzy, python-brace-format
+msgid "No sorted groups recorded yet for this slice — normal before sorting starts. Groups aren’t what sort needs (it needs a word to sort); verify and join do need one. (using {kwargs} node {sn})"
+msgstr "Aucun groupe trié n’est encore enregistré pour cette tranche — c’est normal avant le début du tri. Le tri n’a pas besoin de groupes (il lui faut un mot à trier) ; la vérification et la jonction, si. (avec {kwargs}, nœud {sn})"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:109
+#: /home/kentr/bin/AZT/azt/tasks/tasks.py:1509
+#, fuzzy
+msgid "Saving toneframes dict to file"
+msgstr "Enregistrement du dictionnaire des cadres de ton dans le fichier"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:856
+#, fuzzy
+msgid "consonant"
+msgstr "consonne"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:856
+#, fuzzy
+msgid "vowel"
+msgstr "voyelle"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:857
+# CHECK: {beg}/{end} are ‘consonne’/‘voyelle’ (feminine); adjust if they are not
+#, fuzzy, python-brace-format
+msgid "{beg}-initial, {end}-final"
+msgstr "{beg} initiale, {end} finale"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:860
+#, fuzzy
+msgid "consonant initial"
+msgstr "consonne initiale"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:860
+#, fuzzy
+msgid "vowel initial"
+msgstr "voyelle initiale"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:862
+#, fuzzy
+msgid "consonant final"
+msgstr "consonne finale"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:862
+#, fuzzy
+msgid "vowel final"
+msgstr "voyelle finale"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:877
+#, fuzzy
+msgid "word-initial sounds"
+msgstr "sons en début de mot"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:878
+#, fuzzy
+msgid "word-final sounds"
+msgstr "sons en fin de mot"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:879
+#, fuzzy
+msgid "syllable counts"
+msgstr "nombres de syllabes"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:888
+#, fuzzy
+msgid "1 syllable"
+msgstr "1 syllabe"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:889
+#, fuzzy, python-brace-format
+msgid "{n} syllables"
+msgstr "{n} syllabes"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:891
+#, fuzzy, python-brace-format
+msgid "{begend} ({count})"
+msgstr "{begend} ({count})"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:984
+#, fuzzy
+msgid "Citation"
+msgstr "Citation"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:986
+#, fuzzy, python-brace-format
+msgid "‘{field}’ ({ps})"
+msgstr "‘{field}’ ({ps})"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1066
+# CHECK: source has typo "Intial"; translated as "Initial"
+#, fuzzy
+msgid "Consonant Intial"
+msgstr "Consonne initiale"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1067
+#, fuzzy
+msgid "Consonant Final"
+msgstr "Consonne finale"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1068
+#, fuzzy
+msgid "Syllable Count"
+msgstr "Nombre de syllabes"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1084
+#, fuzzy
+msgid "Second and Third Same Vowels"
+msgstr "Deuxième et troisième voyelles identiques"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1089
+#, fuzzy
+msgid "Third and Fourth Same Vowels"
+msgstr "Troisième et quatrième voyelles identiques"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1107
+#, fuzzy
+msgid "Correspondence of First Two Consonants"
+msgstr "Correspondance des deux premières consonnes"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1110
+#, fuzzy
+msgid "Second and Third Same Consonants"
+msgstr "Deuxième et troisième consonnes identiques"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1111
+#, fuzzy
+msgid "Correspondence of Second and Third Consonants"
+msgstr "Correspondance des deuxième et troisième consonnes"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1146
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1172
+#, fuzzy
+msgid "Same First/only Four CVs"
+msgstr "Quatre premiers/seuls CV identiques"
+
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1150
+#: /home/kentr/bin/AZT/azt/backend/core/analysis_inputs.py:1176
+#, fuzzy
+msgid "Same First/only Five CVs"
+msgstr "Cinq premiers/seuls CV identiques"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:92
+#, fuzzy
+msgid "azt_collab_client not found (no symlink, no clone beside the azt folder, AZT_COLLAB_DIR unset) — collaboration features unavailable; clone azt-collab beside azt or set AZT_COLLAB_DIR."
+msgstr "azt_collab_client introuvable (pas de lien symbolique, pas de clone à côté du dossier azt, AZT_COLLAB_DIR non défini) — fonctions de collaboration indisponibles ; clonez azt-collab à côté d’azt ou définissez AZT_COLLAB_DIR."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:299
+#, fuzzy, python-brace-format
+msgid "Teammates’ changes were merged with your last save ({n} conflict(s) annotated). Reload to see them; saving remains safe meanwhile."
+msgstr "Les modifications de vos coéquipiers ont été fusionnées avec votre dernier enregistrement ({n} conflit(s) annoté(s)). Rechargez pour les voir ; vous pouvez continuer à enregistrer sans risque en attendant."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:328
+#, fuzzy
+msgid "Saves are not entering project history because no contributor name is set for collaboration; set one in the collaboration settings."
+msgstr "Les enregistrements n’entrent pas dans l’historique du projet car aucun nom de contributeur n’est défini pour la collaboration ; définissez-en un dans les paramètres de collaboration."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:347
+#, fuzzy, python-brace-format
+msgid "Collaboration server reported a problem after storing the file ({codes}); save is safe, history may catch up on the next save."
+msgstr "Le serveur de collaboration a signalé un problème après l’enregistrement du fichier ({codes}) ; l’enregistrement est sûr, l’historique pourra se rattraper au prochain enregistrement."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:358
+#, fuzzy, python-brace-format
+msgid "Collaboration server error detail: {detail}"
+msgstr "Détail de l’erreur du serveur de collaboration : {detail}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:369
+#, fuzzy
+msgid "The collaboration server is busy with another job, so this save went straight to disk. Your work is safe; it will enter project history on the next save that gets through."
+msgstr "Le serveur de collaboration est occupé par une autre tâche, cet enregistrement a donc été écrit directement sur le disque. Votre travail est en sécurité ; il entrera dans l’historique du projet au prochain enregistrement qui passera."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:376
+#, fuzzy, python-brace-format
+msgid "Collaboration server unavailable ({codes}); saving directly to disk (legacy mode) until it returns."
+msgstr "Serveur de collaboration indisponible ({codes}) ; enregistrement direct sur le disque (ancien mode) jusqu’à son retour."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:457
+#, fuzzy
+msgid "saving locally — server unreachable"
+msgstr "enregistrement local — serveur injoignable"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:476
+#, fuzzy, python-brace-format
+msgid "WAN:{wan} LAN:{lan}"
+msgstr "WAN:{wan} LAN:{lan}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:478
+#, fuzzy
+msgid "team changes available"
+msgstr "modifications de l’équipe disponibles"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:535
+#: /home/kentr/bin/AZT/azt/main.py:592
+#, fuzzy
+msgid "(couldn’t tell what changed)"
+msgstr "(impossible de savoir ce qui a changé)"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:543
+#, fuzzy, python-brace-format
+msgid "{count} change(s) from {who}"
+msgstr "{count} modification(s) de {who}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:545
+#, fuzzy, python-brace-format
+msgid "{count} change(s)"
+msgstr "{count} modification(s)"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:576
+#, fuzzy, python-brace-format
+msgid "Collaboration rebased after in-place reload (base {base})."
+msgstr "Collaboration rebasée après le rechargement sur place (base {base})."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:633
+# CHECK: "latch" (internal flag) rendered as "verrou"
+#, fuzzy
+msgid "Team-changes latch cleared: HEAD advanced but the lexicon content is unchanged."
+msgstr "Verrou des modifications d’équipe levé : HEAD a avancé mais le contenu du lexique est inchangé."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:674
+# CHECK: "latch" (internal flag) rendered as "verrou"
+#, fuzzy, python-brace-format
+msgid "Team-changes latch cleared: all {count} change(s) since our base were written by us ({who}) — our own work, not the team’s."
+msgstr "Verrou des modifications d’équipe levé : les {count} modification(s) depuis notre base ont toutes été écrites par nous ({who}) — notre propre travail, pas celui de l’équipe."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:704
+#, fuzzy, python-brace-format
+msgid "Adopting {head} as the session base: we had none (the server was unreachable when this project opened)."
+msgstr "Adoption de {head} comme base de session : nous n’en avions aucune (le serveur était injoignable à l’ouverture de ce projet)."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:795
+#, fuzzy, python-brace-format
+msgid "Not prompting: HEAD advanced by {count} change(s), all written by us ({who}) — our own work, not the team’s."
+msgstr "Pas d’invite : HEAD a avancé de {count} modification(s), toutes écrites par nous ({who}) — notre propre travail, pas celui de l’équipe."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:804
+#, fuzzy, python-brace-format
+msgid "Team changes detected (HEAD {head} != base {base}); reload needed to display them."
+msgstr "Modifications de l’équipe détectées (HEAD {head} != base {base}) ; un rechargement est nécessaire pour les afficher."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:855
+#, fuzzy, python-brace-format
+msgid "Collaboration sync at shutdown failed: {error}"
+msgstr "Échec de la synchronisation de la collaboration à la fermeture : {error}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:868
+#, fuzzy
+msgid "Teammates’ changes were pulled; they will appear the next time this database is opened."
+msgstr "Les modifications de vos coéquipiers ont été récupérées ; elles apparaîtront à la prochaine ouverture de cette base de données."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:925
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1113
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1119
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1469
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1495
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:462
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:467
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:479
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:4944
+#, fuzzy
+msgid "Collaboration"
+msgstr "Collaboration"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:987
+#, fuzzy
+msgid "Sync pulled team changes; reload offer will follow."
+msgstr "La synchronisation a récupéré des modifications de l’équipe ; une proposition de rechargement va suivre."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:997
+#, fuzzy
+msgid "The collaboration server is not responding."
+msgstr "Le serveur de collaboration ne répond pas."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:998
+#, fuzzy, python-brace-format
+msgid "Project: {langcode}"
+msgstr "Projet : {langcode}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1003
+#, fuzzy
+msgid "Backup: local only (not yet published to GitHub)"
+msgstr "Sauvegarde : locale uniquement (pas encore publiée sur GitHub)"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1006
+#, fuzzy
+msgid "Backup: up to date on GitHub"
+msgstr "Sauvegarde : à jour sur GitHub"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1008
+#, fuzzy
+msgid "Backup: finishing (merging on GitHub)…"
+msgstr "Sauvegarde : finalisation (fusion sur GitHub)…"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1010
+#, fuzzy, python-brace-format
+msgid "Backup: {n} commit(s) not yet on GitHub"
+msgstr "Sauvegarde : {n} commit(s) pas encore sur GitHub"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1014
+#, fuzzy, python-brace-format
+msgid "{n} change(s) not yet committed"
+msgstr "{n} modification(s) pas encore validée(s)"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1017
+#, fuzzy
+msgid "Work-offline is ON (nothing will be sent until it is turned off)"
+msgstr "Le travail hors ligne est ACTIVÉ (rien ne sera envoyé tant qu’il ne sera pas désactivé)"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1020
+#, fuzzy
+msgid "Team changes are waiting — reload to see them"
+msgstr "Des modifications de l’équipe attendent — rechargez pour les voir"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1023
+#, fuzzy
+msgid "Server was unreachable earlier; saves are going directly to disk"
+msgstr "Le serveur était injoignable plus tôt ; les enregistrements vont directement sur le disque"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1028
+#, fuzzy, python-brace-format
+msgid "Contributor: {name}"
+msgstr "Contributeur : {name}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1068
+#, fuzzy
+msgid "Your work is safe — this session saves straight to disk, exactly as A-Z+T did before collaboration existed."
+msgstr "Votre travail est en sécurité — cette session enregistre directement sur le disque, exactement comme A-Z+T le faisait avant l’existence de la collaboration."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1087
+#, fuzzy
+msgid "Try the server again now"
+msgstr "Réessayer le serveur maintenant"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1105
+#, fuzzy
+msgid "Collaboration: still not answering"
+msgstr "Collaboration : toujours pas de réponse"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1111
+#, fuzzy, python-brace-format
+msgid "{name} will now restart to reconnect."
+msgstr "{name} va maintenant redémarrer pour se reconnecter."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1117
+#, fuzzy, python-brace-format
+msgid "Please restart {name} to reconnect."
+msgstr "Veuillez redémarrer {name} pour vous reconnecter."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1136
+#, fuzzy
+msgid "The collaboration client software still isn’t installed, so there is nothing to reconnect to."
+msgstr "Le logiciel client de collaboration n’est toujours pas installé ; il n’y a donc rien à quoi se reconnecter."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1139
+#, fuzzy
+msgid "This project has no collaboration project code stored, so there is nothing to reconnect to."
+msgstr "Ce projet n’a aucun code de projet de collaboration enregistré ; il n’y a donc rien à quoi se reconnecter."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1153
+#, fuzzy, python-brace-format
+msgid "The collaboration server is answering; the problem is that it manages a different copy of project “{langcode}”, which still exists. Open that copy instead, or disconnect this file from collaboration."
+msgstr "Le serveur de collaboration répond ; le problème est qu’il gère une autre copie du projet “{langcode}”, qui existe toujours. Ouvrez plutôt cette copie, ou déconnectez ce fichier de la collaboration."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1166
+#, fuzzy
+msgid "The collaboration server is answering again."
+msgstr "Le serveur de collaboration répond de nouveau."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1169
+#, fuzzy, python-brace-format
+msgid "The collaboration server accepted a restart but is still not answering for project “{langcode}”. Give it a few seconds and try again."
+msgstr "Le serveur de collaboration a accepté un redémarrage mais ne répond toujours pas pour le projet “{langcode}”. Attendez quelques secondes et réessayez."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1173
+#, fuzzy, python-brace-format
+msgid "The collaboration server is still not answering for project “{langcode}”. It is either not running, or it started but got stuck before it could serve. Restart the server (or the computer running it) and try again."
+msgstr "Le serveur de collaboration ne répond toujours pas pour le projet “{langcode}”. Soit il ne tourne pas, soit il a démarré mais s’est bloqué avant de pouvoir servir. Redémarrez le serveur (ou l’ordinateur qui l’exécute) et réessayez."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1200
+#, fuzzy
+msgid "settings unreadable"
+msgstr "paramètres illisibles"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1201
+#, fuzzy
+msgid "Collaboration: project settings unreadable"
+msgstr "Collaboration : paramètres du projet illisibles"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1202
+#, fuzzy, python-brace-format
+msgid "A-Z+T could not read this project’s settings, so it cannot tell whether this is a team project:\n{error}\nIf this IS a team project, its saves are NOT reaching your team. Check the project folder is readable, then restart."
+msgstr "A-Z+T n’a pas pu lire les paramètres de ce projet ; il ne peut donc pas savoir s’il s’agit d’un projet d’équipe :\n{error}\nSi c’EST un projet d’équipe, ses enregistrements N’atteignent PAS votre équipe. Vérifiez que le dossier du projet est lisible, puis redémarrez."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1217
+#, fuzzy
+msgid "client software missing"
+msgstr "logiciel client manquant"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1218
+#, fuzzy
+msgid "Collaboration: client software not found"
+msgstr "Collaboration : logiciel client introuvable"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1219
+#, fuzzy
+msgid "This project is set to use collaboration, but the azt_collab_client package could not be found, so A-Z+T cannot reach your team’s server at all.\nFix: clone azt-collab beside the azt folder, or set the AZT_COLLAB_DIR environment variable to point at it, then restart A-Z+T."
+msgstr "Ce projet est configuré pour utiliser la collaboration, mais le paquet azt_collab_client est introuvable ; A-Z+T ne peut donc pas du tout joindre le serveur de votre équipe.\nSolution : clonez azt-collab à côté du dossier azt, ou définissez la variable d’environnement AZT_COLLAB_DIR pour qu’elle pointe dessus, puis redémarrez A-Z+T."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1227
+#, fuzzy
+msgid "no project code"
+msgstr "aucun code de projet"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1228
+#, fuzzy
+msgid "Collaboration: no project code stored"
+msgstr "Collaboration : aucun code de projet enregistré"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1229
+# CHECK: menu path must match the translated menu labels (Advanced / Connect to Collaboration server)
+#, fuzzy
+msgid "This project is set to use collaboration, but no collaboration project code is stored for it, so A-Z+T doesn’t know which team project to join.\nFix: Advanced → Connect to Collaboration server, which re-registers this file and stores the code."
+msgstr "Ce projet est configuré pour utiliser la collaboration, mais aucun code de projet de collaboration n’est enregistré pour lui ; A-Z+T ne sait donc pas quel projet d’équipe rejoindre.\nSolution : Avancé → Se connecter au serveur de collaboration, ce qui réenregistre ce fichier et stocke le code."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1258
+#, fuzzy
+msgid "server not answering"
+msgstr "le serveur ne répond pas"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1259
+#, fuzzy
+msgid "Collaboration: server not answering"
+msgstr "Collaboration : le serveur ne répond pas"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1260
+# CHECK: menu path must match the translated menu labels (Advanced / Reconnect to Collaboration server)
+#, fuzzy, python-brace-format
+msgid "The collaboration server did not answer for project “{langcode}”, so your saves are NOT reaching your team this session.\nUsually it is not running, or it started but got stuck before it could serve. Less often, this project was never registered with it.\nFix: use the button below, or Advanced → Reconnect to Collaboration server. If it keeps failing, restart the server — or the computer running it."
+msgstr "Le serveur de collaboration n’a pas répondu pour le projet “{langcode}” ; vos enregistrements N’atteignent donc PAS votre équipe pendant cette session.\nGénéralement, il ne tourne pas, ou il a démarré mais s’est bloqué avant de pouvoir servir. Plus rarement, ce projet n’y a jamais été enregistré.\nSolution : utilisez le bouton ci-dessous, ou Avancé → Se reconnecter au serveur de collaboration. Si l’échec persiste, redémarrez le serveur — ou l’ordinateur qui l’exécute."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1288
+#, fuzzy
+msgid "project moved"
+msgstr "projet déplacé"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1289
+#, fuzzy
+msgid "Collaboration: project moved?"
+msgstr "Collaboration : projet déplacé ?"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1290
+# CHECK: menu path must match the translated menu labels (Advanced / Reconnect)
+#, fuzzy, python-brace-format
+msgid "This file belongs to collaboration project “{langcode}”, but the folder the collaboration server knows for it no longer exists:\n{theirs}\nYou opened:\n{ours}\nIf you renamed or moved the project folder, use the button below (or Advanced → Reconnect) to point collaboration at this folder. If the old folder is on a drive that is not plugged in, plug it in and restart instead."
+msgstr "Ce fichier appartient au projet de collaboration “{langcode}”, mais le dossier que le serveur de collaboration connaît pour lui n’existe plus :\n{theirs}\nVous avez ouvert :\n{ours}\nSi vous avez renommé ou déplacé le dossier du projet, utilisez le bouton ci-dessous (ou Avancé → Se reconnecter) pour faire pointer la collaboration vers ce dossier. Si l’ancien dossier se trouve sur un disque non branché, branchez-le et redémarrez plutôt."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1299
+#, fuzzy
+msgid "Use this folder for collaboration"
+msgstr "Utiliser ce dossier pour la collaboration"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1302
+#, fuzzy
+msgid "wrong copy open"
+msgstr "mauvaise copie ouverte"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1303
+#, fuzzy
+msgid "Collaboration: wrong copy of the project"
+msgstr "Collaboration : mauvaise copie du projet"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1304
+#, fuzzy, python-brace-format
+msgid "This file says it belongs to collaboration project “{langcode}”, but the collaboration server manages a different copy:\n{theirs}\nYou opened:\n{ours}\nTo avoid splitting the project’s history, collaboration is OFF for this session.\nFix: open the server’s copy instead, or disconnect this file from collaboration."
+msgstr "Ce fichier indique qu’il appartient au projet de collaboration “{langcode}”, mais le serveur de collaboration gère une autre copie :\n{theirs}\nVous avez ouvert :\n{ours}\nPour éviter de scinder l’historique du projet, la collaboration est DÉSACTIVÉE pour cette session.\nSolution : ouvrez plutôt la copie du serveur, ou déconnectez ce fichier de la collaboration."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1333
+#, fuzzy
+msgid "save path not hooked"
+msgstr "chemin d’enregistrement non raccordé"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1334
+#, fuzzy
+msgid "Collaboration: could not hook the save path"
+msgstr "Collaboration : impossible de raccorder le chemin d’enregistrement"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1335
+#, fuzzy, python-brace-format
+msgid "A-Z+T reached the collaboration server for project “{langcode}”, but could not connect its own save path to it, so saves would not reach your team:\n{error}\nFix: restart A-Z+T. Please report this if it happens again."
+msgstr "A-Z+T a joint le serveur de collaboration pour le projet “{langcode}”, mais n’a pas pu y raccorder son propre chemin d’enregistrement ; les enregistrements n’atteindraient donc pas votre équipe :\n{error}\nSolution : redémarrez A-Z+T. Veuillez signaler ce problème s’il se reproduit."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1340
+#, fuzzy, python-brace-format
+msgid "Collaboration active for {langcode} (base {base})."
+msgstr "Collaboration active pour {langcode} (base {base})."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1358
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1466
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1514
+#, fuzzy
+msgid "The collaboration client could not be found; clone azt-collab beside the azt folder, or set AZT_COLLAB_DIR."
+msgstr "Le client de collaboration est introuvable ; clonez azt-collab à côté du dossier azt, ou définissez AZT_COLLAB_DIR."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1367
+#, fuzzy
+msgid "This project’s history is in Mercurial, which collaboration does not support; it stays on the legacy path."
+msgstr "L’historique de ce projet est dans Mercurial, que la collaboration ne prend pas en charge ; il reste sur l’ancien mode de fonctionnement."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1374
+#, fuzzy, python-brace-format
+msgid "This project pushes to a non-GitHub server ({url}); collaboration currently supports GitHub only, so it stays on the legacy path."
+msgstr "Ce projet pousse vers un serveur autre que GitHub ({url}) ; la collaboration ne prend actuellement en charge que GitHub, il reste donc sur l’ancien mode de fonctionnement."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1382
+#, fuzzy, python-brace-format
+msgid "Could not read project settings: {error}"
+msgstr "Impossible de lire les paramètres du projet : {error}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1385
+#, fuzzy
+msgid "No vernacular language code is set for this project yet; open it once and set the language first."
+msgstr "Aucun code de langue vernaculaire n’est encore défini pour ce projet ; ouvrez-le une fois et définissez d’abord la langue."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1396
+#, fuzzy, python-brace-format
+msgid "This folder is already registered to project {langcode}; un-register it first or reuse that code."
+msgstr "Ce dossier est déjà enregistré pour le projet {langcode} ; désenregistrez-le d’abord ou réutilisez ce code."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1401
+#, fuzzy, python-brace-format
+msgid "Could not reach the collaboration server: {error}"
+msgstr "Impossible de joindre le serveur de collaboration : {error}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1404
+#, fuzzy
+msgid "The collaboration server refused the registration; see the daemon log."
+msgstr "Le serveur de collaboration a refusé l’enregistrement ; consultez le journal du démon."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1422
+#, fuzzy, python-brace-format
+msgid "Registered, but could not store the project setting: {error}"
+msgstr "Enregistré, mais impossible de stocker le paramètre du projet : {error}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1425
+#, fuzzy
+msgid "Connected! Saves will now go through the collaboration server."
+msgstr "Connecté ! Les enregistrements passeront désormais par le serveur de collaboration."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1490
+#, fuzzy, python-brace-format
+msgid "Could not open the collaboration settings: {detail}\nThe settings window needs the Kivy package; install it in one of the A-Z+T suite’s Python environments, or set AZT_COLLAB_UI_PYTHON to a python that has it."
+msgstr "Impossible d’ouvrir les paramètres de collaboration : {detail}\nLa fenêtre des paramètres nécessite le paquet Kivy ; installez-le dans l’un des environnements Python de la suite A-Z+T, ou faites pointer AZT_COLLAB_UI_PYTHON vers un python qui l’a."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1544
+#, fuzzy, python-brace-format
+msgid "Could not open the team project picker: {detail}\nThe picker window needs the Kivy package; install it in one of the A-Z+T suite’s Python environments, or set AZT_COLLAB_UI_PYTHON to a python that has it."
+msgstr "Impossible d’ouvrir le sélecteur de projet d’équipe : {detail}\nLa fenêtre du sélecteur nécessite le paquet Kivy ; installez-le dans l’un des environnements Python de la suite A-Z+T, ou faites pointer AZT_COLLAB_UI_PYTHON vers un python qui l’a."
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1601
+#, fuzzy, python-brace-format
+msgid "Could not store the project setting: {error}"
+msgstr "Impossible de stocker le paramètre du projet : {error}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/collab.py:1603
+#, fuzzy
+msgid "Disconnected; this project will save directly to disk again."
+msgstr "Déconnecté ; ce projet enregistrera de nouveau directement sur le disque."
+
+#: /home/kentr/bin/AZT/azt/backend/core/file_parser.py:38
+#, fuzzy, python-brace-format
+msgid "{filename} was read as valid XML, but A−Z+T failed while reading its contents:\n\n{error}\n\nPlease send the log to whoever supports you. I will remove this file as the default, so you can open another."
+msgstr "{filename} a été lu comme du XML valide, mais A−Z+T a échoué en lisant son contenu :\n\n{error}\n\nVeuillez envoyer le journal à la personne qui vous assiste. Je vais retirer ce fichier comme fichier par défaut, pour que vous puissiez en ouvrir un autre."
+
+#: /home/kentr/bin/AZT/azt/backend/core/lexicon.py:127
+#, fuzzy, python-brace-format
+msgid "Hey, you’re not done with {ps} {profile} words by {check}!\nCome back when you have time; restart where you left off by pressing ‘{button}’"
+msgstr "Hé, vous n’avez pas fini les mots {ps} {profile} par {check} !\nRevenez quand vous aurez le temps ; reprenez là où vous vous êtes arrêté en appuyant sur ‘{button}’"
+
+#: /home/kentr/bin/AZT/azt/backend/core/lexicon.py:1278
+#, fuzzy, python-brace-format
+msgid "Parsing needs the second form field for {pss}. Set it above, and this word will go through."
+msgstr "L’analyse nécessite le second champ de forme pour {pss}. Définissez-le ci-dessus, et ce mot passera."
+
+#: /home/kentr/bin/AZT/azt/backend/core/lexicon.py:1343
+#, fuzzy, python-brace-format
+msgid "WordCollection trying to store {value} ({type})"
+msgstr "WordCollection essaie de stocker {value} ({type})"
+
+#: /home/kentr/bin/AZT/azt/backend/core/lexicon.py:1739
+#, fuzzy
+msgid "There are no already-collected words to work on here yet. \nCollect some words first (e.g., through an “Add Words” task), then come back to this task."
+msgstr "Il n’y a pas encore ici de mots déjà collectés sur lesquels travailler. \nCollectez d’abord quelques mots (par ex. avec une tâche “Ajouter des Mots”), puis revenez à cette tâche."
+
+#: /home/kentr/bin/AZT/azt/backend/core/lexicon.py:2015
+# CHECK: {sfname} is a field name (e.g. plural); article/gender unknown
+#, fuzzy, python-brace-format
+msgid "What is the {sfname} of \n‘{lc}’ ({gloss})?"
+msgstr "Quelle est la forme {sfname} de \n‘{lc}’ ({gloss}) ?"
+
+#: /home/kentr/bin/AZT/azt/backend/core/lexicon.py:2465
+#, fuzzy, python-brace-format
+msgid "Parse trying to store {value} ({type})"
+msgstr "Parse essaie de stocker {value} ({type})"
+
+#: /home/kentr/bin/AZT/azt/backend/core/lexicon.py:2807
+#, fuzzy, python-brace-format
+msgid "{n} word(s) had no readable syllable profile; their word-initial/word-final values were read from the spelling instead, and they still need a syllable count."
+msgstr "{n} mot(s) sans profil de syllabe lisible ; leurs valeurs de début/fin de mot ont été lues à partir de l’orthographe, et il leur faut encore un nombre de syllabes."
+
+#: /home/kentr/bin/AZT/azt/backend/core/lexicon.py:2812
+#, fuzzy, python-brace-format
+msgid "{n} word(s) couldn’t be auto-analyzed at all (nothing in the spelling matched a known segment); defaulted word-initial AND word-final to consonant. Review the consonant groups for outliers."
+msgstr "{n} mot(s) n’ont pas du tout pu être analysés automatiquement (rien dans l’orthographe ne correspondait à un segment connu) ; le début ET la fin de mot ont été mis par défaut à consonne. Passez en revue les groupes de consonnes pour repérer les cas aberrants."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:112
+#, fuzzy
+msgid "All the syllable groups are checked! You can now sort the words by syllable profile."
+msgstr "Tous les groupes de syllabes sont vérifiés ! Vous pouvez maintenant trier les mots par profil de syllabe."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:190
+#, fuzzy, python-brace-format
+msgid "{desc} (part {x} of {y})"
+msgstr "{desc} (partie {x} sur {y})"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:193
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1959
+# CHECK: {desc} is a descriptive phrase; sentence shape depends on its content
+#, fuzzy, python-brace-format
+msgid "These are all {desc}"
+msgstr "Ce sont tous des {desc}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:194
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1960
+#, fuzzy, python-brace-format
+msgid "Read this list aloud. Click on any that are NOT {desc}."
+msgstr "Lisez cette liste à voix haute. Cliquez sur ceux qui ne sont PAS {desc}."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:196
+#, fuzzy, python-brace-format
+msgid "Loading the words that are {desc}…"
+msgstr "Chargement des mots qui sont {desc}…"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:328
+#, fuzzy
+msgid "Getting ready to sort…"
+msgstr "Préparation du tri…"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:476
+#, fuzzy
+msgid "Building the ad hoc sort group page"
+msgstr "Construction de la page du groupe de tri ad hoc"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:574
+# CHECK: "affirmed to their machine profile" = confirmed with the automatically computed profile
+#, fuzzy, python-brace-format
+msgid "{n} words here would be affirmed to their machine profile."
+msgstr "{n} mots ici seraient confirmés avec leur profil calculé automatiquement."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:653
+#, fuzzy
+msgid "Some of these words have no syllable profile yet, so they won’t be sorted here either."
+msgstr "Certains de ces mots n’ont pas encore de profil de syllabe ; ils ne seront donc pas triés ici non plus."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:662
+#, fuzzy
+msgid "No word has a confirmed syllable profile yet, so there is nothing to sort here until you either affirm the machine analysis or sort syllable profiles."
+msgstr "Aucun mot n’a encore de profil de syllabe confirmé ; il n’y a donc rien à trier ici tant que vous n’aurez pas confirmé l’analyse automatique ou trié les profils de syllabe."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:873
+#, fuzzy
+msgid "Reloading status data"
+msgstr "Rechargement des données d’état"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1018
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1224
+#, fuzzy
+msgid "Forms are up to date with the letters you’ve named."
+msgstr "Les formes sont à jour avec les lettres que vous avez nommées."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1024
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1209
+#, fuzzy
+msgid "Updating forms..."
+msgstr "Mise à jour des formes..."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1031
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1232
+#, fuzzy
+msgid "Updating annotations..."
+msgstr "Mise à jour des annotations..."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1091
+#, fuzzy
+msgid "Group is on a different CVT; updating to that to sort."
+msgstr "Le groupe est sur un autre CVT ; passage à celui-ci pour trier."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1098
+#, fuzzy, python-brace-format
+msgid "Found a group that needs sorting ({item}); switch to sort on it."
+msgstr "Un groupe à trier a été trouvé ({item}) ; passage au tri de celui-ci."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1155
+#, fuzzy, python-brace-format
+msgid "You have at least one unnamed glyph with ambiguous status as Consonant or Vowel: {cvts}"
+msgstr "Vous avez au moins un glyphe non nommé dont le statut de consonne ou de voyelle est ambigu : {cvts}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1157
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1162
+#, fuzzy
+msgid "Not updating forms yet"
+msgstr "Pas encore de mise à jour des formes"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1160
+#, fuzzy, python-brace-format
+msgid "You have at least one unnamed glyph with NO status as Consonant or Vowel: {cvts}"
+msgstr "Vous avez au moins un glyphe non nommé sans AUCUN statut de consonne ou de voyelle : {cvts}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1177
+#, fuzzy, python-brace-format
+msgid "At least one group still needs sorting ({i}), so its words are left as they are. Everything ready is being updated now."
+msgstr "Au moins un groupe doit encore être trié ({i}) ; ses mots sont donc laissés tels quels. Tout ce qui est prêt est en cours de mise à jour."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1180
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1187
+#, fuzzy
+msgid "Updating what’s ready"
+msgstr "Mise à jour de ce qui est prêt"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1182
+#, fuzzy, python-brace-format
+msgid "{n} letter(s) still need names ({glyphs}), so their words are left as they are. Everything ready is being updated now; name those letters to finish the job."
+msgstr "{n} lettre(s) doivent encore être nommées ({glyphs}) ; leurs mots sont donc laissés tels quels. Tout ce qui est prêt est en cours de mise à jour ; nommez ces lettres pour terminer."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1200
+#, fuzzy
+msgid "Some groups can’t take their glyph name yet — another group in the same slice is still using that name. We’ll try again later:"
+msgstr "Certains groupes ne peuvent pas encore prendre leur nom de glyphe — un autre groupe de la même tranche utilise encore ce nom. Nous réessaierons plus tard :"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1203
+#, fuzzy
+msgid "Some letters renamed later"
+msgstr "Certaines lettres seront renommées plus tard"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1205
+#, fuzzy
+msgid "Glyph annotations updated OK"
+msgstr "Annotations de glyphes mises à jour"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1716
+#, fuzzy
+msgid "Setting up the sort page…"
+msgstr "Préparation de la page de tri…"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1768
+#, fuzzy
+msgid "I asked for a glyph, but didn’t get one "
+msgstr "J’ai demandé un glyphe, mais je n’en ai pas reçu "
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1962
+#, fuzzy, python-brace-format
+msgid "{desc}"
+msgstr "{desc}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2033
+#, fuzzy, python-brace-format
+msgid "Preparing the {item_name} ‘{group}’ to verify…"
+msgstr "Préparation de la vérification : {item_name} ‘{group}’…"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2036
+#, fuzzy, python-brace-format
+msgid "On the next page, you will verify all the words that are {desc}."
+msgstr "Sur la page suivante, vous vérifierez tous les mots qui sont {desc}."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2039
+#, fuzzy, python-brace-format
+msgid "On the next page, you will verify the words that do NOT have {checkname}."
+msgstr "Sur la page suivante, vous vérifierez les mots qui n’ont PAS {checkname}."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2042
+#, fuzzy, python-brace-format
+msgid "On the next page, you will verify the {checkname} words."
+msgstr "Sur la page suivante, vous vérifierez les mots {checkname}."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2223
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:229
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:434
+#, fuzzy, python-brace-format
+msgid "Not {profile}"
+msgstr "Pas {profile}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2291
+#, fuzzy, python-brace-format
+msgid "Now we’re going to move group ‘{group1}’ into ‘{group2}’, removing ‘{group1}’ and marking ‘{group2}’ unverified."
+msgstr "Nous allons maintenant déplacer le groupe ‘{group1}’ dans ‘{group2}’, en supprimant ‘{group1}’ et en marquant ‘{group2}’ comme non vérifié."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sound.py:127
+#, fuzzy
+msgid "32 bit integer"
+msgstr "entier 32 bits"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sound.py:128
+#, fuzzy
+msgid "16 bit integer"
+msgstr "entier 16 bits"
+
+#: /home/kentr/bin/AZT/azt/backend/core/sound.py:1148
+#, fuzzy
+msgid "A-Z+T could not check the sample rates on this microphone — the room was too quiet while it tried. Try again with some ordinary background sound, or speak while it runs."
+msgstr "A-Z+T n’a pas pu vérifier les fréquences d’échantillonnage de ce microphone — la pièce était trop silencieuse pendant l’essai. Réessayez avec un bruit de fond ordinaire, ou parlez pendant l’opération."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sound.py:1164
+#, fuzzy, python-brace-format
+msgid "A-Z+T will record at {best} Hz. This microphone offers up to {offered} Hz, but the higher rates were checked and found to be upsampled: the files would be larger with no more sound in them."
+msgstr "A-Z+T enregistrera à {best} Hz. Ce microphone propose jusqu’à {offered} Hz, mais les fréquences plus élevées ont été vérifiées et se sont révélées suréchantillonnées : les fichiers seraient plus gros sans contenir davantage de son."
+
+#: /home/kentr/bin/AZT/azt/backend/core/sound.py:1169
+#, fuzzy, python-brace-format
+msgid "A-Z+T will record at {best} Hz, the highest this microphone offers. Nothing suggested it is being upsampled."
+msgstr "A-Z+T enregistrera à {best} Hz, la fréquence la plus élevée proposée par ce microphone. Rien n’indique qu’elle soit suréchantillonnée."
+
+#: /home/kentr/bin/AZT/azt/backend/core/templates.py:28
+#, fuzzy
+msgid "self.analang_obj didn’t parse."
+msgstr "self.analang_obj n’a pas pu être analysé."
+
+#: /home/kentr/bin/AZT/azt/backend/core/templates.py:30
+#, fuzzy, python-brace-format
+msgid "self.analang_obj didn’t parse ({e})."
+msgstr "self.analang_obj n’a pas pu être analysé ({e})."
+
+#: /home/kentr/bin/AZT/azt/backend/core/templates.py:51
+#, fuzzy
+msgid "Problem creating file name from {dir=}, {filename_code=}"
+msgstr "Problème lors de la création du nom de fichier à partir de {dir=}, {filename_code=}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/templates.py:61
+#, fuzzy, python-brace-format
+msgid "Going to write to {newfile}"
+msgstr "Écriture prévue dans {newfile}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/templates.py:67
+#, fuzzy
+msgid "Preparing word list for writing"
+msgstr "Préparation de la liste de mots pour l’écriture"
+
+#: /home/kentr/bin/AZT/azt/backend/core/templates.py:72
+#, fuzzy
+msgid "Word list initialized"
+msgstr "Liste de mots initialisée"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:80
+#, fuzzy, python-brace-format
+msgid "Could not check out ‘{branch}’: it already exists and cannot be deleted (checked out elsewhere, or not fully merged). Giving up after {n} attempts rather than renaming indefinitely."
+msgstr "Impossible d’extraire ‘{branch}’ : elle existe déjà et ne peut pas être supprimée (extraite ailleurs, ou pas entièrement fusionnée). Abandon après {n} tentatives plutôt que de renommer indéfiniment."
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:130
+# CHECK: {why} is an English phrase inserted at runtime
+#, fuzzy, python-brace-format
+msgid "Refusing to delete ‘{branch}’: it is {why}. Nothing deletes it; continuing. THIS CALL SHOULD NOT HAPPEN — called by {caller}; stack:\n{chain}"
+msgstr "Refus de supprimer ‘{branch}’ : elle est {why}. Rien ne la supprime ; on continue. CET APPEL NE DEVRAIT PAS SE PRODUIRE — appelé par {caller} ; pile :\n{chain}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:351
+#, fuzzy, python-brace-format
+msgid "Pulled from {repo} {branch} ; {result}"
+msgstr "Récupéré depuis {repo} {branch} ; {result}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:391
+#, fuzzy, python-brace-format
+msgid "Automatic merge failed again after moving to a work branch; giving up rather than retrying. Result: {result}"
+msgstr "La fusion automatique a encore échoué après le passage sur une branche de travail ; abandon plutôt que de réessayer. Résultat : {result}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:864
+#, fuzzy, python-brace-format
+msgid "No {repo} executable found!"
+msgstr "Aucun exécutable {repo} trouvé !"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1025
+#, fuzzy, python-brace-format
+msgid "Mark_safe: {directory} already safe"
+msgstr "Mark_safe : {directory} déjà marqué comme sûr"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1030
+#, fuzzy, python-brace-format
+msgid "Mark_safe returned {result} for {directory}"
+msgstr "Mark_safe a renvoyé {result} pour {directory}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1037
+#, fuzzy, python-brace-format
+msgid "get_all_safe returned {result}"
+msgstr "get_all_safe a renvoyé {result}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1084
+#, fuzzy
+msgid "No local remotes to publish to; skipping the both-branches push and leaving the branch alone."
+msgstr "Aucun dépôt distant local vers lequel publier ; l’envoi des deux branches est ignoré et la branche reste telle quelle."
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1138
+#, fuzzy, python-brace-format
+msgid "Could not read {remote}: {error}"
+msgstr "Impossible de lire {remote} : {error}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1143
+#, fuzzy, python-brace-format
+msgid "Offline: updating from the local copy at {remote}"
+msgstr "Hors ligne : mise à jour depuis la copie locale à {remote}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1146
+#, fuzzy, python-brace-format
+msgid "The local copy at {remote} is not newer than this one; not using it"
+msgstr "La copie locale à {remote} n’est pas plus récente que celle-ci ; elle n’est pas utilisée"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1152
+#, fuzzy
+msgid "Could not reach the published version."
+msgstr "Impossible d’atteindre la version publiée."
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1159
+#, fuzzy, python-brace-format
+msgid "Updated {branch}."
+msgstr "{branch} mise à jour."
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1231
+# CHECK: gender of {start} unknown (likely a branch ref such as origin/testing); "le" assumed
+#, fuzzy, python-brace-format
+msgid "No {start} (and could not fetch it: {why}); switching to the existing local ‘{branch}’ WITHOUT resetting it to the published version."
+msgstr "Pas de {start} (et impossible de le récupérer : {why}) ; passage sur la branche locale existante ‘{branch}’ SANS la réinitialiser à la version publiée."
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1235
+#, fuzzy
+msgid "no reason given"
+msgstr "aucune raison donnée"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1246
+#, fuzzy, python-brace-format
+msgid "Could not switch to ‘{branch}’.\n\n{why}\n\nThere is no local ‘{branch}’ to fall back to either, so nothing was changed — you are still on ‘{now}’."
+msgstr "Impossible de passer à ‘{branch}’.\n\n{why}\n\nIl n’y a pas non plus de branche locale ‘{branch}’ sur laquelle se rabattre, donc rien n’a été modifié — vous êtes toujours sur ‘{now}’."
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1250
+# CHECK: gender of {start} unknown; masculine assumed
+#, fuzzy, python-brace-format
+msgid "There is no published {start} to take it from."
+msgstr "Il n’y a pas de {start} publié à partir duquel le prendre."
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1298
+#, fuzzy, python-brace-format
+msgid "Could not list remotes to fetch ‘{branch}’: {error}"
+msgstr "Impossible de lister les dépôts distants pour récupérer ‘{branch}’ : {error}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1311
+#, fuzzy, python-brace-format
+msgid "No usable remote in settings; falling back to the URL this clone came from: {url}"
+msgstr "Aucun dépôt distant utilisable dans les paramètres ; repli sur l’URL d’origine de ce clone : {url}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1333
+#, fuzzy, python-brace-format
+msgid "No {start} yet; fetching ‘{branch}’ from {remote}."
+msgstr "Pas encore de {start} ; récupération de ‘{branch}’ depuis {remote}."
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1342
+#, fuzzy, python-brace-format
+msgid "Fetching ‘{branch}’ from {remote} failed: {error}"
+msgstr "La récupération de ‘{branch}’ depuis {remote} a échoué : {error}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1347
+#, fuzzy
+msgid "No internet remote to fetch it from. A-Z+T knows of no published address for this copy, so nothing was tried."
+msgstr "Aucun dépôt distant sur Internet d’où le récupérer. A-Z+T ne connaît aucune adresse publiée pour cette copie, donc rien n’a été tenté."
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1355
+#, fuzzy, python-brace-format
+msgid "The published repository has no branch called ‘{branch}’. If the test version was renamed, A-Z+T is looking for the old name.{tail}"
+msgstr "Le dépôt publié n’a pas de branche nommée ‘{branch}’. Si la version de test a été renommée, A-Z+T cherche l’ancien nom.{tail}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1360
+#, fuzzy, python-brace-format
+msgid "Could not reach the published repository to fetch ‘{branch}’. This is usually temporary — try again when you are online.{tail}"
+msgstr "Impossible d’atteindre le dépôt publié pour récupérer ‘{branch}’. C’est généralement temporaire — réessayez quand vous serez en ligne.{tail}"
+
+#: /home/kentr/bin/AZT/azt/backend/core/vcs.py:1392
+#, fuzzy, python-brace-format
+msgid "No url provided to {class_name} and program has no aztdir"
+msgstr "Aucune URL fournie à {class_name} et le programme n’a pas d’aztdir"
+
+#: /home/kentr/bin/AZT/azt/backend/reporting/generator.py:45
+#, fuzzy, python-brace-format
+msgid "The tone analysis for {ps} {profile} is out of date, and this is the background; stopping, to redo it in the foreground."
+msgstr "L’analyse de ton pour {ps} {profile} n’est pas à jour, et nous sommes en arrière-plan ; arrêt, pour la refaire au premier plan."
+
+#: /home/kentr/bin/AZT/azt/backend/reporting/generator.py:56
+#, fuzzy, python-brace-format
+msgid "No tone group in {ps} {profile} has {n} or more words, so this part of the report is empty."
+msgstr "Aucun groupe de ton dans {ps} {profile} n’a {n} mots ou plus, donc cette partie du rapport est vide."
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_chart.py:371
+#, fuzzy
+msgid "PDF"
+msgstr "PDF"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_chart.py:447
+#, fuzzy
+msgid "Helvetica warning"
+msgstr "Avertissement Helvetica"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_chart.py:478
+#, fuzzy
+msgid "Printed chart examples"
+msgstr "Exemples du tableau imprimé"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_chart.py:479
+#, fuzzy
+msgid "Printed chart with these examples:"
+msgstr "Tableau imprimé avec ces exemples :"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_chart.py:710
+#, fuzzy, python-brace-format
+msgid "Loading words for ‘{glyph}’…"
+msgstr "Chargement des mots pour ‘{glyph}’…"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_chart.py:734
+#, fuzzy, python-brace-format
+msgid "Can’t determine verified words for ‘{glyph}’ — no sort data is loaded. Sort and verify this letter’s group(s) first."
+msgstr "Impossible de déterminer les mots vérifiés pour ‘{glyph}’ — aucune donnée de tri n’est chargée. Triez et vérifiez d’abord le(s) groupe(s) de cette lettre."
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_chart.py:738
+# CHECK: "macrosort" rendered as "macro-trier"; confirm the preferred term
+#, fuzzy, python-brace-format
+msgid "No sort members are recorded for ‘{glyph}’ yet (unexpected if you’ve macrosorted it). Sort/macrosort this letter first."
+msgstr "Aucun membre de tri n’est encore enregistré pour ‘{glyph}’ (inattendu si vous l’avez macro-triée). Triez/macro-triez d’abord cette lettre."
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_chart.py:742
+#, fuzzy, python-brace-format
+msgid "‘{glyph}’ has {n} sorted group(s), but none is verified yet. Verify the group(s), then come back."
+msgstr "‘{glyph}’ a {n} groupe(s) trié(s), mais aucun n’est encore vérifié. Vérifiez le(s) groupe(s), puis revenez."
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_chart.py:746
+#, fuzzy, python-brace-format
+msgid "‘{glyph}’ has {n} verified word(s), but none has a picture."
+msgstr "‘{glyph}’ a {n} mot(s) vérifié(s), mais aucun n’a d’image."
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:60
+#, fuzzy
+msgid "Select Image File"
+msgstr "Sélectionner un fichier image"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:141
+#, fuzzy
+msgid "Browse for other file..."
+msgstr "Parcourir pour un autre fichier..."
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:144
+#, fuzzy
+msgid "No images found."
+msgstr "Aucune image trouvée."
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:176
+#, fuzzy
+msgid "Edit Description"
+msgstr "Modifier la description"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:179
+# CHECK: "imprint page" (booklet credits/copyright page) rendered as "page des mentions"
+#, fuzzy
+msgid "Enter descriptive text for the imprint page:"
+msgstr "Saisissez le texte descriptif pour la page des mentions :"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:186
+#, fuzzy
+msgid "Save"
+msgstr "Enregistrer"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:215
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:541
+#, fuzzy
+msgid "Contributors"
+msgstr "Contributeurs"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:223
+#, fuzzy
+msgid "Add"
+msgstr "Ajouter"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:225
+#, fuzzy
+msgid "Names cannot be removed once added."
+msgstr "Les noms ne peuvent pas être retirés une fois ajoutés."
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:327
+#, fuzzy
+msgid "Glyph Frequency"
+msgstr "Fréquence des glyphes"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:329
+#, fuzzy
+msgid "verified words (all words in database)"
+msgstr "mots vérifiés (tous les mots de la base de données)"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:335
+#, fuzzy
+msgid "Redo pages by these stats"
+msgstr "Refaire les pages selon ces statistiques"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:339
+#, fuzzy
+msgid "Replace the page order with a fresh proposal from your current verified letters (frequency + similar sounds facing). Your hand-picked example words are kept."
+msgstr "Remplacer l’ordre des pages par une nouvelle proposition fondée sur vos lettres vérifiées actuelles (fréquence + sons similaires en vis-à-vis). Les mots d’exemple que vous avez choisis vous-même sont conservés."
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:409
+#, fuzzy
+msgid "Select Cover Image"
+msgstr "Sélectionner l’image de couverture"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:428
+#, fuzzy
+msgid "Select Cover"
+msgstr "Sélectionner la couverture"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:434
+#, fuzzy
+msgid "Select Logo File"
+msgstr "Sélectionner le fichier du logo"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:462
+#, fuzzy
+msgid "Error"
+msgstr "Erreur"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:475
+#, fuzzy
+msgid "Select Logo"
+msgstr "Sélectionner le logo"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:517
+#, fuzzy
+msgid "Title:"
+msgstr "Titre :"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:544
+#, fuzzy
+msgid "Description Text"
+msgstr "Texte de description"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:550
+#, fuzzy
+msgid "Show Frequencies"
+msgstr "Afficher les fréquences"
+
+#: /home/kentr/bin/AZT/azt/frontend/alphabet_comparison.py:554
+#, fuzzy
+msgid "© "
+msgstr "© "
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:136
+#, fuzzy, python-brace-format
+msgid "Making changes will restart {name} and trigger another syllable profile analysis. \nIf you don’t want that, click ‘{btn}’."
+msgstr "Faire des modifications redémarrera {name} et déclenchera une nouvelle analyse des profils syllabiques. \nSi vous ne voulez pas cela, cliquez sur ‘{btn}’."
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:328
+#, fuzzy, python-brace-format
+msgid "You changed the second form field for {ps} from ‘{old}’ to ‘{new}’.\n\nEntries with data in ‘{old}’: {n}. That data is still there, but A−Z+T now reads {ps} second forms from ‘{new}’ only. If you want to use the old data under ‘{new}’, you will need to convert it yourself."
+msgstr "Vous avez changé le champ de deuxième forme pour {ps} de ‘{old}’ à ‘{new}’.\n\nEntrées avec des données dans ‘{old}’ : {n}. Ces données sont toujours là, mais A−Z+T lit désormais les deuxièmes formes de {ps} uniquement depuis ‘{new}’. Si vous voulez utiliser les anciennes données sous ‘{new}’, vous devrez les convertir vous-même."
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:338
+#, fuzzy, python-brace-format
+msgid "Tone frames built on ‘{old}’ stay on it: {frames}."
+msgstr "Les cadres de ton construits sur ‘{old}’ y restent : {frames}."
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:342
+#, fuzzy, python-brace-format
+msgid "Data left in ‘{old}’"
+msgstr "Données restantes dans ‘{old}’"
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:376
+#, fuzzy, python-brace-format
+msgid "‘{old}’ has no data left, so it may have been renamed to ‘{new}’.\n\nThese tone frames are built on ‘{old}’: {frames}.\nIf ‘{new}’ is the same field under a new name, move them to it. If it is a different field, leave them: a frame that suits one field may not suit another."
+msgstr "‘{old}’ n’a plus de données, il a donc peut-être été renommé en ‘{new}’.\n\nCes cadres de ton sont construits sur ‘{old}’ : {frames}.\nSi ‘{new}’ est le même champ sous un nouveau nom, déplacez-les vers celui-ci. S’il s’agit d’un champ différent, laissez-les : un cadre qui convient à un champ peut ne pas convenir à un autre."
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:382
+#, fuzzy, python-brace-format
+msgid "Move tone frames to ‘{new}’?"
+msgstr "Déplacer les cadres de ton vers ‘{new}’ ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:383
+#, fuzzy, python-brace-format
+msgid "Move them to ‘{new}’"
+msgstr "Les déplacer vers ‘{new}’"
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:491
+# CHECK: "tier" (CV/tone tier) rendered as "niveau"
+#, fuzzy, python-brace-format
+msgid "No {task_base} task for {cvt}; not changing the tier."
+msgstr "Pas de tâche {task_base} pour {cvt} ; le niveau n’est pas modifié."
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:514
+#, fuzzy, python-brace-format
+msgid "No {task_base} task for {cvt}; staying put."
+msgstr "Pas de tâche {task_base} pour {cvt} ; aucun changement."
+
+#: /home/kentr/bin/AZT/azt/frontend/config/settings_ui.py:518
+#, fuzzy, python-brace-format
+msgid "Switching {task_base} tasks"
+msgstr "Changement de tâches {task_base}"
+
+#: /home/kentr/bin/AZT/azt/frontend/error_notice.py:33
+#, fuzzy
+msgid "Parent window is exiting; error message follows"
+msgstr "La fenêtre parente se ferme ; le message d’erreur suit"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:199
+#, fuzzy, python-brace-format
+msgid "Other {cls} profile"
+msgstr "Autre profil {cls}"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:273
+#, fuzzy, python-brace-format
+msgid "Which {cls} profile?"
+msgstr "Quel profil {cls} ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:274
+#, fuzzy
+msgid "Which profile fits this word?"
+msgstr "Quel profil convient à ce mot ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:293
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:599
+#, fuzzy
+msgid "(every simple profile here is already used)"
+msgstr "(tous les profils simples ici sont déjà utilisés)"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:296
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:601
+#, fuzzy
+msgid "Other… (set a profile by hand)"
+msgstr "Autre… (définir un profil à la main)"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:300
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:606
+#, fuzzy
+msgid "Cancel — go back"
+msgstr "Annuler — revenir"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:351
+#, fuzzy, python-brace-format
+msgid "Set a {cls} profile by hand"
+msgstr "Définir un profil {cls} à la main"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:354
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:638
+#, fuzzy
+msgid "⚠ Setting a profile by hand is a linguist’s call — work with your language team."
+msgstr "⚠ Définir un profil à la main relève du linguiste — travaillez avec votre équipe linguistique."
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:356
+#, fuzzy
+msgid "A wrong profile mis-describes the word’s syllable structure."
+msgstr "Un profil erroné décrit mal la structure syllabique du mot."
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:358
+#, fuzzy, python-brace-format
+msgid "This one must be {beg}-initial, {end}-final, and {n} syllable(s)"
+msgstr "Celui-ci doit commencer par {beg}, finir par {end} et avoir {n} syllabe(s)"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:360
+#, fuzzy, python-brace-format
+msgid "(use C and V, e.g. {eg})."
+msgstr "(utilisez C et V, p. ex. {eg})."
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:375
+# CHECK: relies on {isare} being translated as "n’est"/"ne sont" (see "is"/"are" entries) so the negation reads correctly
+#, fuzzy, python-brace-format
+msgid "‘{p}’ isn’t made of profile symbols: {bad} {isare} not C or V. Please use only C and V (for example {eg})."
+msgstr "‘{p}’ n’est pas composé de symboles de profil : {bad} {isare} pas C ou V. Veuillez n’utiliser que C et V (par exemple {eg})."
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:380
+# CHECK: fills {isare} in "{bad} {isare} not C or V"; French needs the negation particle here
+#, fuzzy
+msgid "are"
+msgstr "ne sont"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:380
+# CHECK: fills {isare} in "{bad} {isare} not C or V"; French needs the negation particle here
+#, fuzzy
+msgid "is"
+msgstr "n’est"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:397
+#, fuzzy
+msgid "nothing entered"
+msgstr "rien n’a été saisi"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:400
+#, fuzzy, python-brace-format
+msgid "it starts with {got}, not {want}"
+msgstr "il commence par {got}, pas par {want}"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:403
+#, fuzzy, python-brace-format
+msgid "it ends with {got}, not {want}"
+msgstr "il finit par {got}, pas par {want}"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:407
+#, fuzzy, python-brace-format
+msgid "it is {lo} syllable(s), not {want}"
+msgstr "il a {lo} syllabe(s), pas {want}"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:410
+#, fuzzy, python-brace-format
+msgid "it is {lo}–{hi} syllables, not {want}"
+msgstr "il a {lo}–{hi} syllabes, pas {want}"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:412
+#, fuzzy, python-brace-format
+msgid "‘{p}’ doesn’t fit {cls}: {why}. Try again."
+msgstr "‘{p}’ ne convient pas à {cls} : {why}. Réessayez."
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:414
+#, fuzzy
+msgid "it doesn’t fit"
+msgstr "il ne convient pas"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:419
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:656
+#, fuzzy
+msgid "Use this profile"
+msgstr "Utiliser ce profil"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:421
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:659
+#, fuzzy
+msgid "← Back"
+msgstr "← Retour"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:436
+#, fuzzy
+msgid "Already in play here —\ndon’t re-enter these:"
+msgstr "Déjà utilisés ici —\nne les saisissez pas à nouveau :"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:439
+#, fuzzy
+msgid "(none yet)"
+msgstr "(aucun pour l’instant)"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:593
+#, fuzzy
+msgid "Gathering groups"
+msgstr "Rassemblement des groupes"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:594
+#, fuzzy
+msgid "On the next screen, you will sort groups of words into letter groups"
+msgstr "Sur l’écran suivant, vous trierez des groupes de mots en groupes de lettres"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:598
+#, fuzzy
+msgid "Verifying groups"
+msgstr "Vérification des groupes"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:599
+#, fuzzy
+msgid "On the next screen, you will verify groups of words as belonging together"
+msgstr "Sur l’écran suivant, vous vérifierez que des groupes de mots vont bien ensemble"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:603
+#, fuzzy
+msgid "Sorting words"
+msgstr "Tri des mots"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:604
+#, fuzzy, python-brace-format
+msgid "On the next screen, you will sort words into groups by {cvt}"
+msgstr "Sur l’écran suivant, vous trierez les mots en groupes selon {cvt}"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:845
+#, fuzzy, python-brace-format
+msgid "Reverify this group (‘{group}’)"
+msgstr "Revérifier ce groupe (‘{group}’)"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1111
+#, fuzzy
+msgid "Only one example word in this group"
+msgstr "Un seul mot d’exemple dans ce groupe"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1317
+#, fuzzy
+msgid "Only one group here"
+msgstr "Un seul groupe ici"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1318
+#, fuzzy
+msgid "Click to change group; right click to go back"
+msgstr "Cliquez pour changer de groupe ; clic droit pour revenir"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1379
+#, fuzzy, python-brace-format
+msgid "group ‘{group}’ isn’t in glyphs! ({members})"
+msgstr "le groupe ‘{group}’ n’est pas dans les glyphes ! ({members})"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1412
+#, fuzzy, python-brace-format
+msgid "Reverify this letter (‘{glyph}’)"
+msgstr "Revérifier cette lettre (‘{glyph}’)"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:344
+#, fuzzy
+msgid "Set up syllable profiles?"
+msgstr "Configurer les profils syllabiques ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:359
+#, fuzzy
+msgid "Trust machine analysis; \nmaybe correct later"
+msgstr "Faire confiance à l’analyse automatique ; \ncorriger plus tard si besoin"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:362
+#, fuzzy
+msgid "Sort syllable profiles manually; \ncome back here later"
+msgstr "Trier les profils syllabiques à la main ; \nrevenir ici plus tard"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:365
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1090
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:121
+#, fuzzy
+msgid "Cancel"
+msgstr "Annuler"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:548
+#, fuzzy, python-brace-format
+msgid "These words aren’t {group}…"
+msgstr "Ces mots ne sont pas {group}…"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:569
+#, fuzzy
+msgid "What is this group really?"
+msgstr "Qu’est-ce que ce groupe, en réalité ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:570
+#, fuzzy, python-brace-format
+msgid "These words are all marked {group}. What should they be?"
+msgstr "Ces mots sont tous marqués {group}. Que devraient-ils être ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:636
+#, fuzzy
+msgid "Set a profile by hand"
+msgstr "Définir un profil à la main"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:640
+#, fuzzy, python-brace-format
+msgid "This renames EVERY word marked {group}."
+msgstr "Ceci renomme CHAQUE mot marqué {group}."
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:641
+#, fuzzy, python-brace-format
+msgid "It must be {beg}-initial, {end}-final, and {n} syllable(s)"
+msgstr "Il doit commencer par {beg}, finir par {end} et avoir {n} syllabe(s)"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:652
+#, fuzzy, python-brace-format
+msgid "‘{p}’ doesn’t fit this class."
+msgstr "‘{p}’ ne convient pas à cette classe."
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:697
+#, fuzzy
+msgid "This is a duplicate group"
+msgstr "Ceci est un groupe en double"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1072
+#, fuzzy
+msgid "How many syllables?"
+msgstr "Combien de syllabes ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1084
+#, fuzzy, python-brace-format
+msgid "Shorter ({n})"
+msgstr "Plus court ({n})"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1087
+#, fuzzy, python-brace-format
+msgid "Longer ({n})"
+msgstr "Plus long ({n})"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1155
+#, fuzzy
+msgid "Shorter"
+msgstr "Plus court"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1156
+#, fuzzy
+msgid "Longer"
+msgstr "Plus long"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1314
+#, fuzzy
+msgid "Which profile is correct?"
+msgstr "Quel profil est correct ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1316
+#, fuzzy
+msgid "We are joining these profiles; which is correct?"
+msgstr "Nous joignons ces profils ; lequel est correct ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1336
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2530
+#, fuzzy, python-brace-format
+msgid "{n} words"
+msgstr "{n} mots"
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:1338
+#, fuzzy
+msgid "← Back (don’t join these)"
+msgstr "← Retour (ne pas joindre ceux-ci)"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:227
+#, fuzzy
+msgid "Set all sound card settings\n(Do|Recording|Sound Settings)\nand a record button will be here."
+msgstr "Définissez tous les paramètres de la carte son\n(Faire|Enregistrement|Réglages du son)\net un bouton d’enregistrement apparaîtra ici."
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:644
+#, fuzzy
+msgid "Speakers:"
+msgstr "Haut-parleurs :"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:645
+#, fuzzy
+msgid "Microphone:"
+msgstr "Microphone :"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:646
+#, fuzzy
+msgid "Recording Rate:"
+msgstr "Fréquence d’enregistrement :"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:647
+# CHECK: "Recording Detail" presumably means bit depth/sample format; rendered as "Précision"
+#, fuzzy
+msgid "Recording Detail:"
+msgstr "Précision d’enregistrement :"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:845
+#, fuzzy, python-brace-format
+msgid "{name} — upsampled from {real}"
+msgstr "{name} — suréchantillonné depuis {real}"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:852
+#, fuzzy, python-brace-format
+msgid "{name} — upsampled"
+msgstr "{name} — suréchantillonné"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:859
+#, fuzzy, python-brace-format
+msgid "{name} — not upsampled"
+msgstr "{name} — non suréchantillonné"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:927
+#, fuzzy
+msgid "Checking which sound cards are available…"
+msgstr "Vérification des cartes son disponibles…"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:1031
+#, fuzzy
+msgid "Done"
+msgstr "Terminé"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:1260
+#, fuzzy
+msgid "Include more languages"
+msgstr "Inclure plus de langues"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:1262
+#, fuzzy
+msgid "Include fewer languages"
+msgstr "Inclure moins de langues"
+
+#: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:1391
+#, fuzzy
+msgid "Run Bulk ASR"
+msgstr "Lancer l’ASR en lot"
+
+#: /home/kentr/bin/AZT/azt/frontend/status_window.py:57
+#, fuzzy
+msgid "Messages"
+msgstr "Messages"
+
+#: /home/kentr/bin/AZT/azt/frontend/transcriber.py:100
+#, fuzzy
+msgid "Tone Playback"
+msgstr "Lecture des tons"
+
+#: /home/kentr/bin/AZT/azt/frontend/transcriber.py:106
+#, fuzzy
+msgid "pitch"
+msgstr "hauteur"
+
+#: /home/kentr/bin/AZT/azt/frontend/transcriber.py:107
+# CHECK: L/H = Low/High; rendered B↔H (Bas/Haut), but tone notation often keeps L/H
+#, fuzzy
+msgid "L↔H"
+msgstr "B↔H"
+
+#: /home/kentr/bin/AZT/azt/frontend/transcriber.py:108
+#, fuzzy
+msgid "speed"
+msgstr "vitesse"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:306
+#, fuzzy
+msgid "Consultant check"
+msgstr "Vérification par le consultant"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:309
+#, fuzzy
+msgid "Report by tone group"
+msgstr "Rapport par groupe de ton"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:311
+#, fuzzy
+msgid "Comprehensive report"
+msgstr "Rapport complet"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:313
+#, fuzzy
+msgid "Report by location in word"
+msgstr "Rapport par position dans le mot"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:317
+#, fuzzy
+msgid "Summary report (Vowels)"
+msgstr "Rapport récapitulatif (Voyelles)"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:319
+#, fuzzy
+msgid "Summary report (Consonants)"
+msgstr "Rapport récapitulatif (Consonnes)"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:321
+#, fuzzy
+msgid "Summary report (Segments)"
+msgstr "Rapport récapitulatif (Segments)"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:333
+#, fuzzy
+msgid "Record entries for CAWL tags"
+msgstr "Enregistrer les entrées pour les balises CAWL"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:335
+#, fuzzy
+msgid "Record meanings for CAWL tags"
+msgstr "Enregistrer les significations pour les balises CAWL"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:393
+#, fuzzy
+msgid "Synchronize with your team now"
+msgstr "Synchroniser avec votre équipe maintenant"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:396
+#, fuzzy
+msgid "Collaboration status"
+msgstr "État de la collaboration"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:399
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:418
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:425
+#, fuzzy
+msgid "Collaboration settings"
+msgstr "Paramètres de collaboration"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:402
+#, fuzzy
+msgid "Disconnect from Collaboration server"
+msgstr "Se déconnecter du serveur de collaboration"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:411
+#, fuzzy, python-brace-format
+msgid "Reconnect to Collaboration server ({why})"
+msgstr "Se reconnecter au serveur de collaboration ({why})"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:415
+#, fuzzy
+msgid "Why is collaboration off?"
+msgstr "Pourquoi la collaboration est-elle désactivée ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:422
+#, fuzzy
+msgid "Connect to Collaboration server"
+msgstr "Se connecter au serveur de collaboration"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:434
+#, fuzzy
+msgid "Collaboration is off for this session."
+msgstr "La collaboration est désactivée pour cette session."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:435
+#, fuzzy
+msgid "Collaboration is off"
+msgstr "La collaboration est désactivée"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:465
+#, fuzzy, python-brace-format
+msgid "{name} will now restart to apply this."
+msgstr "{name} va maintenant redémarrer pour appliquer ce changement."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:474
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:4101
+#, fuzzy
+msgid "Synchronizing with your team"
+msgstr "Synchronisation avec votre équipe"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:612
+#, fuzzy
+msgid "Email log"
+msgstr "Envoyer le journal par e-mail"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:860
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1712
+# CHECK: label fragment shown before an interface language name; wording depends on layout
+#, fuzzy
+msgid "Using"
+msgstr "Utilisation de"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:897
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:913
+# CHECK: label fragment shown before the analysis language name; wording depends on layout
+#, fuzzy
+msgid "Studying"
+msgstr "Étude de"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:935
+#, fuzzy
+msgid "and"
+msgstr "et"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:998
+#, fuzzy
+msgid "Meanings in"
+msgstr "Significations en"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1124
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1421
+#, fuzzy
+msgid "change which form of the word you are working on"
+msgstr "changer la forme du mot sur laquelle vous travaillez"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1130
+#, fuzzy
+msgid "forms"
+msgstr "formes"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1165
+# CHECK: label fragment; existing catalog renders "second form field" as "deuxième champ de formulaire", here "champ de deuxième forme"
+#, fuzzy
+msgid "Using second form field"
+msgstr "Champ de deuxième forme utilisé"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1184
+#, fuzzy, python-brace-format
+msgid "({ps})"
+msgstr "({ps})"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1276
+#, fuzzy
+msgid "Sorting whole words by syllable profile"
+msgstr "Tri des mots entiers par profil syllabique"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1318
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1983
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2007
+#, fuzzy
+msgid "all words"
+msgstr "tous les mots"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1369
+#, fuzzy, python-brace-format
+msgid "words ({count})"
+msgstr "mots ({count})"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1416
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1432
+#, fuzzy
+msgid "Looking at"
+msgstr "En train de regarder"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1436
+#, fuzzy
+msgid "change this syllable profile class"
+msgstr "modifier cette classe de profil syllabique"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1442
+#, fuzzy
+msgid "words"
+msgstr "mots"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1503
+#, fuzzy
+msgid "Checking"
+msgstr "Vérification de"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1605
+#, fuzzy
+msgid "working on"
+msgstr "travail sur"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1630
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1654
+#, fuzzy
+msgid "All groups"
+msgstr "Tous les groupes"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1699
+#, fuzzy
+msgid "1 column"
+msgstr "1 colonne"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1699
+#, fuzzy, python-brace-format
+msgid "{n} columns"
+msgstr "{n} colonnes"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1717
+#, fuzzy
+msgid "change the number of columns used for sort buttons"
+msgstr "modifier le nombre de colonnes utilisées pour les boutons de tri"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1739
+#, fuzzy
+msgid "Showing"
+msgstr "Affichage de"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1744
+#, fuzzy
+msgid "change how many words appear per page when sorting syllables — fewer means each page appears faster but there are more of them; tune to this machine"
+msgstr "modifier le nombre de mots affichés par page lors du tri des syllabes — moins de mots signifie que chaque page s’affiche plus vite, mais qu’il y en a davantage ; à ajuster selon cet ordinateur"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1749
+#, fuzzy
+msgid "words per page"
+msgstr "mots par page"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1783
+#, fuzzy
+msgid "Max profiles:"
+msgstr "Profils max. :"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1788
+#, fuzzy
+msgid "change how many syllable profiles to report"
+msgstr "modifier le nombre de profils syllabiques à inclure dans le rapport"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1793
+#, fuzzy
+msgid "Max lexical categories:"
+msgstr "Catégories lexicales max. :"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1798
+#, fuzzy
+msgid "change how many lexical categories to report (2 = Noun and Verb)"
+msgstr "modifier le nombre de catégories lexicales à inclure dans le rapport (2 = Nom et Verbe)"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1840
+#, fuzzy
+msgid "Run all checks for"
+msgstr "Exécuter toutes les vérifications pour"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1846
+#, fuzzy
+msgid "change which kinds of check to run"
+msgstr "modifier les types de vérification à exécuter"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1894
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1963
+#, fuzzy
+msgid "…loading"
+msgstr "…chargement"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1925
+#, fuzzy
+msgid "Parse with confirmation at"
+msgstr "Analyser avec confirmation à"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1934
+#, fuzzy
+msgid "Parse automatically at"
+msgstr "Analyser automatiquement à"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2014
+#, fuzzy
+msgid "Parsing"
+msgstr "Analyse de"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2127
+#, fuzzy
+msgid "Syllable profile progress"
+msgstr "Progression par profil syllabique"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2316
+#, fuzzy
+msgid "Word-final"
+msgstr "En fin de mot"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2316
+#, fuzzy
+msgid "Word-initial"
+msgstr "En début de mot"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2317
+#, fuzzy
+msgid "Syllables"
+msgstr "Syllabes"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2368
+#, fuzzy
+msgid "Verified"
+msgstr "Vérifié"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2369
+#, fuzzy, python-brace-format
+msgid "{n} words to verify (part {x})"
+msgstr "{n} mots à vérifier (partie {x})"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2478
+# CHECK: column-header abbreviation of "Syllables"; keep short
+#, fuzzy
+msgid "Syls"
+msgstr "Syll."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2515
+# CHECK: compact table cell; "exs" = examples
+#, fuzzy, python-brace-format
+msgid "< 3 exs +({n})"
+msgstr "< 3 ex. +({n})"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2517
+#, fuzzy, python-brace-format
+msgid "< 3 exs ({n})"
+msgstr "< 3 ex. ({n})"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2519
+#, fuzzy, python-brace-format
+msgid "[X] {n} to sort"
+msgstr "[X] {n} à trier"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2534
+#, fuzzy, python-brace-format
+msgid "{k} profiles to verify"
+msgstr "{k} profils à vérifier"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2830
+#, fuzzy, python-brace-format
+msgid "{count} group pair(s) to compare (same or different?)"
+msgstr "{count} paire(s) de groupes à comparer (pareils ou différents ?)"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:2834
+#, fuzzy
+msgid "Sorted, verified and distinguished!"
+msgstr "Trié, vérifié et distingué !"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3000
+#, fuzzy
+msgid "Data Collection"
+msgstr "Collecte de données"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3001
+#, fuzzy
+msgid "Analysis & Decisions"
+msgstr "Analyse & Décisions"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3118
+#, fuzzy, python-brace-format
+msgid "Task {task} doesn’t seem to have a tooltip."
+msgstr "La tâche {task} ne semble pas avoir d’infobulle."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3332
+#, fuzzy, python-brace-format
+msgid "{type} StatusFrame created"
+msgstr "StatusFrame {type} créé"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3428
+#, fuzzy
+msgid "Getting that word ready..."
+msgstr "Préparation de ce mot..."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3502
+#, fuzzy, python-brace-format
+msgid "You don’t seem to have any tone frames set up.\nClick ‘{button}’ below to define a tone frame. \nPlease pay attention to the instructions, and if \nthere’s anything you don’t understand, or if you’re not \nsure what a tone frame is, please ask for help. \nWhen you are done making frames, click ‘Exit’ to continue."
+msgstr "Vous ne semblez avoir défini aucun cadre de ton.\nCliquez sur ‘{button}’ ci-dessous pour définir un cadre de ton. \nVeuillez lire attentivement les instructions, et s’il y a \nquelque chose que vous ne comprenez pas, ou si vous n’êtes pas \nsûr de ce qu’est un cadre de ton, demandez de l’aide. \nQuand vous avez fini de créer des cadres, cliquez sur ‘Quitter’ pour continuer."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3511
+#, fuzzy, python-brace-format
+msgid "I can’t find any checks for kwargs {kwargs}. Probably that means there is a problem with your  settings, or with your syllable profile analysis"
+msgstr "Je ne trouve aucune vérification pour les kwargs {kwargs}. Cela signifie probablement qu’il y a un problème avec vos paramètres, ou avec votre analyse des profils syllabiques"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3641
+#, fuzzy, python-brace-format
+msgid "It looks like you don’t have {ps}-{profile} lexemes grouped in the ‘{check}’ check yet \n({kwargs})."
+msgstr "Il semble que vous n’ayez pas encore groupé de lexèmes {ps}-{profile} dans la vérification ‘{check}’ \n({kwargs})."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3757
+#, fuzzy, python-brace-format
+msgid "Which {type}?"
+msgstr "Quel {type} ?"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3758
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3765
+#, fuzzy
+msgid "Select Group"
+msgstr "Sélectionner un groupe"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:3931
+#, fuzzy
+msgid "Getting the next page ready…"
+msgstr "Préparation de la page suivante…"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:4103
+#, fuzzy
+msgid "Done with collaboration shutdown sync"
+msgstr "Synchronisation de collaboration à la fermeture terminée"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:4133
+#, fuzzy, python-brace-format
+msgid "Initializing TaskDressing for {task}"
+msgstr "Initialisation de TaskDressing pour {task}"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:4714
+#, fuzzy, python-brace-format
+msgid "There doesn’t seem to be an ethnologue code ({code})"
+msgstr "Il ne semble pas y avoir de code Ethnologue ({code})"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:4866
+#, fuzzy, python-brace-format
+msgid "Setting up {lang} for use..."
+msgstr "Préparation de {lang} pour utilisation..."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:4976
+#, fuzzy
+msgid "Get a project from your team (GitHub)"
+msgstr "Récupérer un projet de votre équipe (GitHub)"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:5286
+#, fuzzy
+msgid "Asking for words per page (syllable slice size)..."
+msgstr "Demande du nombre de mots par page (taille des tranches de syllabes)..."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:5288
+#, fuzzy
+msgid "Select Words Per Page"
+msgstr "Sélectionner le nombre de mots par page"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:5289
+#, fuzzy
+msgid "How many words per page when sorting syllables? Fewer = each page appears faster, but more pages; more = fewer pages. Tune to this machine."
+msgstr "Combien de mots par page lors du tri des syllabes ? Moins = chaque page s’affiche plus vite, mais il y a plus de pages ; plus = moins de pages. À ajuster selon cet ordinateur."
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:5358
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:5365
+#, fuzzy, python-brace-format
+msgid "Changed to value ({new}) doesn’t match current setting for ‘{setting}’: {current}"
+msgstr "La nouvelle valeur ({new}) ne correspond pas au paramètre actuel pour ‘{setting}’ : {current}"
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_webview.py:7983
+#, fuzzy
+msgid "Please Wait…"
+msgstr "Veuillez patienter…"
+
+#: /home/kentr/bin/AZT/azt/frontend/vcs_ui.py:48
+#, fuzzy, python-brace-format
+msgid "you don’t seem to have the {repo} executable installed in your computer’s PATH."
+msgstr "vous ne semblez pas avoir l’exécutable {repo} installé dans le PATH de votre ordinateur."
+
+#: /home/kentr/bin/AZT/azt/frontend/visibility.py:294
+# CHECK: menu path "Help ▸ Email my log to support" — must match the translated menu labels
+#, fuzzy, python-brace-format
+msgid "A page had nothing on it, so {name} did not show it. Your work and your data are fine.\n\nIf you were expecting something here, please send your log (Help ▸ Email my log to support) — what happened is recorded in it."
+msgstr "Une page était vide, donc {name} ne l’a pas affichée. Votre travail et vos données ne sont pas affectés.\n\nSi vous attendiez quelque chose ici, veuillez envoyer votre journal (Aide ▸ Envoyer mon journal au support) — ce qui s’est passé y est enregistré."
+
+#: /home/kentr/bin/AZT/azt/frontend/visibility.py:298
+#, fuzzy
+msgid "A-Z+T"
+msgstr "A-Z+T"
+
+#: /home/kentr/bin/AZT/azt/frontend/visibility.py:299
+#, fuzzy
+msgid "An empty page was skipped"
+msgstr "Une page vide a été ignorée"
+
+#: /home/kentr/bin/AZT/azt/frontend/visibility.py:510
+#, fuzzy
+msgid "Please wait…"
+msgstr "Veuillez patienter…"
+
+#: /home/kentr/bin/AZT/azt/io_put/cawl.py:25
+#, fuzzy
+msgid "Done loading stock LIFT file, parsed to tree/nodes."
+msgstr "Chargement du fichier LIFT par défaut terminé, analysé en arbre/nœuds."
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1492
+#, fuzzy, python-brace-format
+msgid "Your lexicon wouldn’t open: {n} attribute value(s) contained quotes that hadn’t been escaped (line(s) {lines}). A-Z+T has repaired them and kept the original at {keep}. Nothing was lost."
+msgstr "Votre lexique ne s’ouvrait pas : {n} valeur(s) d’attribut contenai(en)t des guillemets non échappés (ligne(s) {lines}). A-Z+T les a réparées et a conservé l’original à {keep}. Rien n’a été perdu."
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1500
+#, fuzzy
+msgid "Lexicon repaired"
+msgstr "Lexique réparé"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1540
+#, fuzzy, python-brace-format
+msgid "it isn’t there ({e})"
+msgstr "il est absent ({e})"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1542
+#, fuzzy
+msgid "it is empty"
+msgstr "il est vide"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1548
+#, fuzzy, python-brace-format
+msgid "it can’t be read back ({e})"
+msgstr "il ne peut pas être relu ({e})"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1550
+#, fuzzy
+msgid "it is cut off — no closing tag at the end"
+msgstr "il est tronqué — pas de balise de fermeture à la fin"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1556
+#, fuzzy, python-brace-format
+msgid "it is {n} bytes, replacing {old} — a collapse, not an edit"
+msgstr "il fait {n} octets et en remplace {old} — un effondrement, pas une modification"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1570
+#, fuzzy, python-brace-format
+msgid " at line {ln}, column {col}"
+msgstr " à la ligne {ln}, colonne {col}"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1572
+#, fuzzy, python-brace-format
+msgid "it isn’t valid XML{at}: {e}"
+msgstr "ce n’est pas du XML valide{at} : {e}"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1694
+#, fuzzy, python-brace-format
+msgid "There was a problem writing to partial file: {tmp} ({e})"
+msgstr "Il y a eu un problème lors de l’écriture du fichier partiel : {tmp} ({e})"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1712
+#, fuzzy, python-brace-format
+msgid "Refusing to save {name}: the file just written looks corrupt ({why}). Your previous file has NOT been touched, so nothing already saved is lost — but THIS SESSION’S CHANGES ARE NOT SAVED. The bad file is kept at {kept} in case it can be recovered."
+msgstr "Enregistrement de {name} refusé : le fichier qui vient d’être écrit semble corrompu ({why}). Votre fichier précédent n’a PAS été modifié, donc rien de ce qui était déjà enregistré n’est perdu — mais LES MODIFICATIONS DE CETTE SESSION NE SONT PAS ENREGISTRÉES. Le fichier défectueux est conservé à {kept} au cas où il pourrait être récupéré."
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1723
+#, fuzzy
+msgid "Save refused"
+msgstr "Enregistrement refusé"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1818
+#, fuzzy, python-brace-format
+msgid "There was a problem writing {name} file to {parent} directory. This is what’s here: {listing}"
+msgstr "Il y a eu un problème lors de l’écriture du fichier {name} dans le répertoire {parent}. Voici son contenu : {listing}"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1837
+#, fuzzy, python-brace-format
+msgid "Invalid codes found in data: {langs}"
+msgstr "Codes invalides trouvés dans les données : {langs}"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1895
+#, fuzzy
+msgid "Found file name base in the data’s languages; assuming that and moving on. To select another analysis language for this database, change it in the settings."
+msgstr "Base du nom de fichier trouvée parmi les langues des données ; on la retient et on continue. Pour choisir une autre langue d’analyse pour cette base de données, modifiez-la dans les paramètres."
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1900
+# CHECK: LWC = language of wider communication; abbreviation kept as is
+#, fuzzy, python-brace-format
+msgid "Using ‘{a}’ — the language of the recordings/transcriptions — as the analysis language (the text forms look like LWC glosses). Change it in settings if this is wrong."
+msgstr "Utilisation de ‘{a}’ — la langue des enregistrements/transcriptions — comme langue d’analyse (les formes textuelles ressemblent à des gloses en LWC). Modifiez-la dans les paramètres si c’est incorrect."
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1908
+#, fuzzy, python-brace-format
+msgid "No valid language-encoded data yet: extrapolating analysis language from file name ({tryname})."
+msgstr "Pas encore de données valides avec code de langue : langue d’analyse déduite du nom de fichier ({tryname})."
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1913
+#, fuzzy, python-brace-format
+msgid "I can’t find a plausible analang! {analangs} {filename} {tryname}"
+msgstr "Je ne trouve pas d’analang plausible ! {analangs} {filename} {tryname}"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1922
+#, fuzzy
+msgid "No analang found; can’t find other langs."
+msgstr "Aucune analang trouvée ; impossible de trouver les autres langues."
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4770
+#, fuzzy
+msgid "LiftURL is trying to make a lift node; this should never happen"
+msgstr "LiftURL essaie de créer un nœud lift ; cela ne devrait jamais arriver"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4808
+#, fuzzy, python-brace-format
+msgid "last level {target} (of {parents}) not in {level}"
+msgstr "dernier niveau {target} (de {parents}) absent de {level}"
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4938
+#, fuzzy, python-brace-format
+msgid "Ambiguous target head {head}; it appears in too many places"
+msgstr "Tête de cible ambiguë {head} ; elle apparaît à trop d’endroits"
+
+#: /home/kentr/bin/AZT/azt/io_put/pdf_fonts.py:100
+#, fuzzy, python-brace-format
+msgid "no file found for the {face} face"
+msgstr "aucun fichier trouvé pour la variante {face}"
+
+#: /home/kentr/bin/AZT/azt/io_put/pdf_fonts.py:175
+#, fuzzy
+msgid "This PDF uses Helvetica: neither Charis nor Andika could be found on this computer. Accented and special letters may not print correctly. Install Charis (free from software.sil.org) and make the PDF again."
+msgstr "Ce PDF utilise Helvetica : ni Charis ni Andika n’ont été trouvées sur cet ordinateur. Les lettres accentuées et spéciales risquent de ne pas s’imprimer correctement. Installez Charis (gratuite sur software.sil.org) et refaites le PDF."
+
+#: /home/kentr/bin/AZT/azt/io_put/pdf_fonts.py:180
+#, fuzzy, python-brace-format
+msgid "This PDF uses {replacement} because {wanted} could not be found on this computer."
+msgstr "Ce PDF utilise {replacement} parce que {wanted} est introuvable sur cet ordinateur."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:511
+#, fuzzy
+msgid "No sound reached A-Z+T at all — not even silence."
+msgstr "Aucun son n’est parvenu à A-Z+T — pas même du silence."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:512
+#, fuzzy
+msgid "The microphone is almost certainly muted. Check the mute button on the microphone or headset itself, and the microphone's level in your system's sound settings. This is different from a quiet recording: nothing arrived."
+msgstr "Le microphone est presque certainement coupé. Vérifiez le bouton de sourdine sur le microphone ou le casque lui-même, ainsi que le niveau du microphone dans les paramètres de son de votre système. Ce n’est pas un simple enregistrement trop faible : rien n’est arrivé."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:521
+#, fuzzy
+msgid "This recording contains no sound at all."
+msgstr "Cet enregistrement ne contient aucun son."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:522
+#, fuzzy
+msgid "The file will be saved but there is nothing in it. Check that the right microphone is selected in Sound Settings, that it is plugged in, and that it is not muted — then record this word again."
+msgstr "Le fichier sera enregistré, mais il est vide. Vérifiez que le bon microphone est sélectionné dans les Réglages du son, qu’il est branché et qu’il n’est pas coupé — puis enregistrez de nouveau ce mot."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:530
+#, fuzzy, python-brace-format, python-format
+msgid "This recording is very quiet (loudest point only {peak:.1f}% of what the microphone can capture)."
+msgstr "Cet enregistrement est très faible (le point le plus fort n’atteint que {peak:.1f}% de ce que le microphone peut capter)."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:533
+#, fuzzy
+msgid "It may be hard to hear and hard to analyse. Move the microphone closer to the speaker, or raise the recording level in your system's sound settings."
+msgstr "Il risque d’être difficile à entendre et à analyser. Rapprochez le microphone du locuteur, ou augmentez le niveau d’enregistrement dans les paramètres de son de votre système."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:547
+#, fuzzy
+msgid "This recording will play back at the wrong speed and pitch."
+msgstr "Cet enregistrement sera lu à une vitesse et une hauteur incorrectes."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:549
+#, fuzzy, python-brace-format
+msgid "The microphone delivered about {got:.0f} samples a second while the file says {asked}. Choose a different sample rate in Sound Settings — {got_r} Hz is what this microphone is really doing."
+msgstr "Le microphone a fourni environ {got:.0f} échantillons par seconde alors que le fichier indique {asked}. Choisissez une autre fréquence d’échantillonnage dans les Réglages du son — {got_r} Hz est ce que ce microphone fournit réellement."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:559
+#, fuzzy, python-brace-format
+msgid "Parts of this recording are missing: the computer could not keep up ({n} time(s))."
+msgstr "Des parties de cet enregistrement manquent : l’ordinateur n’a pas pu suivre ({n} fois)."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:561
+#, fuzzy
+msgid "There are small gaps in the audio. Choose a lower sample rate in Sound Settings, or close other programs, and record this word again."
+msgstr "Il y a de petites coupures dans l’audio. Choisissez une fréquence d’échantillonnage plus basse dans les Réglages du son, ou fermez d’autres programmes, puis enregistrez de nouveau ce mot."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:588
+#, fuzzy, python-brace-format
+msgid "This recording has {ms:.0f} ms of complete silence in it where sound is missing."
+msgstr "Cet enregistrement contient {ms:.0f} ms de silence complet là où le son manque."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:591
+#, fuzzy
+msgid "The computer could not keep up. Choose a lower sample rate in Sound Settings, or close other programs, and record this word again."
+msgstr "L’ordinateur n’a pas pu suivre. Choisissez une fréquence d’échantillonnage plus basse dans les Réglages du son, ou fermez d’autres programmes, puis enregistrez de nouveau ce mot."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:595
+#, fuzzy, python-brace-format
+msgid "Something is removing the quiet parts of this recording: {ms:.0f} ms of it is completely silent."
+msgstr "Quelque chose supprime les parties calmes de cet enregistrement : {ms:.0f} ms en sont complètement silencieuses."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:598
+# CHECK: 'default' is a device name shown by the system; left untranslated
+#, fuzzy
+msgid "Your computer is applying noise removal to this microphone. That deletes exactly what you need — breathy releases, quiet consonants, the ends of words — and the recording still sounds normal. In Sound Settings, choose the microphone's own entry rather than 'default', or turn off noise suppression in your system's sound settings."
+msgstr "Votre ordinateur applique une réduction de bruit à ce microphone. Elle supprime exactement ce dont vous avez besoin — relâchements soufflés, consonnes faibles, fins de mots — alors que l’enregistrement semble normal. Dans les Réglages du son, choisissez l’entrée propre au microphone plutôt que 'default', ou désactivez la suppression du bruit dans les paramètres de son de votre système."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:684
+#, fuzzy, python-brace-format
+msgid "This recording is stored as {asked} Hz, but the top of its frequency range is empty."
+msgstr "Cet enregistrement est stocké à {asked} Hz, mais le haut de sa plage de fréquences est vide."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:690
+#, fuzzy
+msgid "Something between A-Z+T and the microphone upsampled it. Nothing is wrong with the sound you hear and nothing has been changed — the file is simply bigger than its content needs. If that matters to you, choose a lower sample rate in Sound Settings; the recording will sound the same."
+msgstr "Un élément entre A-Z+T et le microphone l’a suréchantillonné. Le son que vous entendez n’a aucun problème et rien n’a été modifié — le fichier est simplement plus gros que nécessaire pour son contenu. Si cela vous importe, choisissez une fréquence d’échantillonnage plus basse dans les Réglages du son ; l’enregistrement sonnera de la même façon."
+
+#: /home/kentr/bin/AZT/azt/io_put/sound.py:743
+#, fuzzy
+msgid "About the recording just made:"
+msgstr "À propos de l’enregistrement qui vient d’être fait :"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:42
+#, fuzzy
+msgid "the program argument to xlp.Report needs a ‘name’ attribute"
+msgstr "l’argument program de xlp.Report doit avoir un attribut ‘name’"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:60
+#, fuzzy
+msgid "Clearing stale report lock {} (left by a crashed run)."
+msgstr "Suppression du verrou de rapport périmé {} (laissé par une exécution interrompue)."
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:151
+#, fuzzy
+msgid "No PDF: {}"
+msgstr "Pas de PDF : {}"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:199
+#, fuzzy
+msgid "Reading the report with its DTD failed ({}); reading it without defaults"
+msgstr "La lecture du rapport avec sa DTD a échoué ({}) ; lecture sans les valeurs par défaut"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:204
+#, fuzzy
+msgid "No PDF: the report XML doesn’t parse: {}"
+msgstr "Pas de PDF : le XML du rapport ne peut pas être analysé : {}"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:221
+#, fuzzy, python-brace-format
+msgid "No PDF: {xslt} failed: {e}"
+msgstr "Pas de PDF : {xslt} a échoué : {e}"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:239
+#, fuzzy
+msgid "No PDF: TeXMLLike.xsl failed: {}"
+msgstr "Pas de PDF : TeXMLLike.xsl a échoué : {}"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:243
+#, fuzzy
+msgid "Wrote TeX file {}"
+msgstr "Fichier TeX {} écrit"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:253
+#, fuzzy
+msgid "No PDF: xelatex didn’t run: {}"
+msgstr "Pas de PDF : xelatex ne s’est pas exécuté : {}"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:256
+#, fuzzy, python-brace-format
+msgid "No PDF: xelatex stopped (round {round}, exit {code}). Its log is kept at {log}. Last lines:\n{tail}"
+msgstr "Pas de PDF : xelatex s’est arrêté (passe {round}, code de sortie {code}). Son journal est conservé à {log}. Dernières lignes :\n{tail}"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:267
+#, fuzzy
+msgid "No PDF: xelatex isn’t installed, or isn’t on the PATH. The TeX file is at {}"
+msgstr "Pas de PDF : xelatex n’est pas installé, ou n’est pas dans le PATH. Le fichier TeX se trouve à {}"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:275
+#, fuzzy
+msgid "No PDF: xelatex finished but wrote no {}"
+msgstr "Pas de PDF : xelatex a terminé mais n’a écrit aucun {}"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:279
+#, fuzzy
+msgid "PDF written: {}"
+msgstr "PDF écrit : {}"
+
+#: /home/kentr/bin/AZT/azt/io_put/xlp.py:365
+#, fuzzy
+msgid "No stylesheet directory; writing report unstyled."
+msgstr "Pas de répertoire de feuilles de style ; rapport écrit sans mise en forme."
+
+#: /home/kentr/bin/AZT/azt/main.py:396
+#, fuzzy
+msgid "Collaboration active; legacy VCS disengaged for this project."
+msgstr "Collaboration active ; l’ancien système de gestion de versions est désactivé pour ce projet."
+
+#: /home/kentr/bin/AZT/azt/main.py:507
+#, fuzzy
+msgid "The collaboration server has stopped answering. Sync status will be out of date until it responds."
+msgstr "Le serveur de collaboration ne répond plus. L’état de synchronisation ne sera pas à jour tant qu’il ne répondra pas."
+
+#: /home/kentr/bin/AZT/azt/main.py:512
+#, fuzzy, python-brace-format
+msgid "The collaboration server is answering again (after {mins:.0f} minutes)."
+msgstr "Le serveur de collaboration répond de nouveau (après {mins:.0f} minutes)."
+
+#: /home/kentr/bin/AZT/azt/main.py:560
+#, fuzzy
+msgid "Offering reload for team changes"
+msgstr "Proposition de recharger les modifications de l’équipe"
+
+#: /home/kentr/bin/AZT/azt/main.py:573
+#, fuzzy
+msgid "Your team made changes to this database. Press ‘Load now’ to load them — or OK to keep working and load them later. Your saves are safe either way, and will be combined with your team’s."
+msgstr "Votre équipe a modifié cette base de données. Appuyez sur ‘Charger maintenant’ pour charger ces modifications — ou sur OK pour continuer à travailler et les charger plus tard. Vos enregistrements sont en sécurité dans les deux cas, et seront combinés avec ceux de votre équipe."
+
+#: /home/kentr/bin/AZT/azt/main.py:578 /home/kentr/bin/AZT/azt/main.py:591
+#, fuzzy, python-brace-format
+msgid "What changed: {summary}"
+msgstr "Ce qui a changé : {summary}"
+
+#: /home/kentr/bin/AZT/azt/main.py:600
+#, fuzzy
+msgid "Team changes available"
+msgstr "Modifications de l’équipe disponibles"
+
+#: /home/kentr/bin/AZT/azt/main.py:601
+#, fuzzy
+msgid "Load now"
+msgstr "Charger maintenant"
+
+#: /home/kentr/bin/AZT/azt/main.py:655
+#, fuzzy
+msgid "Transcription is switched off on this computer:"
+msgstr "La transcription est désactivée sur cet ordinateur :"
+
+#: /home/kentr/bin/AZT/azt/main.py:658
+#, fuzzy
+msgid "Recording, playback, sorting and reports all work normally. Only the automatic transcription drafts are unavailable — you can still type transcriptions yourself."
+msgstr "L’enregistrement, la lecture, le tri et les rapports fonctionnent normalement. Seuls les brouillons de transcription automatique sont indisponibles — vous pouvez toujours saisir les transcriptions vous-même."
+
+#: /home/kentr/bin/AZT/azt/main.py:662
+#, fuzzy
+msgid "On some computers this cannot be fixed: the transcription engine is not published for every processor. The log says which component is missing."
+msgstr "Sur certains ordinateurs, cela ne peut pas être corrigé : le moteur de transcription n’est pas publié pour tous les processeurs. Le journal indique quel composant manque."
+
+#: /home/kentr/bin/AZT/azt/main.py:668
+#, fuzzy
+msgid "Transcription is not available"
+msgstr "La transcription n’est pas disponible"
+
+#: /home/kentr/bin/AZT/azt/main.py:670
+#, fuzzy
+msgid "This computer’s sound support is BROKEN, and A-Z+T couldn’t repair it automatically:"
+msgstr "La prise en charge du son sur cet ordinateur est DÉFECTUEUSE, et A-Z+T n’a pas pu la réparer automatiquement :"
+
+#: /home/kentr/bin/AZT/azt/main.py:680
+#, fuzzy, python-brace-format
+msgid "On Linux, {name} needs the system PortAudio runtime for sound. Install it with your package manager (e.g. ˋsudo apt install libportaudio2ˊ) and restart {name}. Nothing needs to be compiled."
+msgstr "Sous Linux, {name} a besoin de la bibliothèque système PortAudio pour le son. Installez-la avec votre gestionnaire de paquets (par ex. ˋsudo apt install libportaudio2ˊ) et redémarrez {name}. Rien n’a besoin d’être compilé."
+
+#: /home/kentr/bin/AZT/azt/main.py:684
+#, fuzzy
+msgid "You can sort and run reports, but recording, playback and/or transcription will NOT work until this is fixed. Fix the problem (see the log for details), or ask for help, before collecting data on this machine."
+msgstr "Vous pouvez trier et lancer des rapports, mais l’enregistrement, la lecture et/ou la transcription NE fonctionneront PAS tant que ce n’est pas corrigé. Corrigez le problème (voir le journal pour les détails), ou demandez de l’aide, avant de collecter des données sur cette machine."
+
+#: /home/kentr/bin/AZT/azt/main.py:688
+#, fuzzy, python-brace-format
+msgid "Restarting {name} retries the automatic repair."
+msgstr "Redémarrer {name} relance la réparation automatique."
+
+#: /home/kentr/bin/AZT/azt/main.py:690
+#, fuzzy
+msgid "Sound is not working!"
+msgstr "Le son ne fonctionne pas !"
+
+#: /home/kentr/bin/AZT/azt/main.py:701
+#, fuzzy, python-brace-format
+msgid "{name} couldn’t finish setting itself up on this computer:"
+msgstr "{name} n’a pas pu terminer sa configuration sur cet ordinateur :"
+
+#: /home/kentr/bin/AZT/azt/main.py:705
+#, fuzzy
+msgid "It will run with whatever modules are already installed, so some features may fail or behave oddly, and updates won’t reach this machine. Fix this (see the log for details), or ask for help, before relying on this computer for real work."
+msgstr "Il fonctionnera avec les modules déjà installés, donc certaines fonctions peuvent échouer ou se comporter bizarrement, et les mises à jour n’atteindront pas cette machine. Corrigez cela (voir le journal pour les détails), ou demandez de l’aide, avant de compter sur cet ordinateur pour un vrai travail."
+
+#: /home/kentr/bin/AZT/azt/main.py:710
+#, fuzzy, python-brace-format
+msgid "Restarting {name} retries the automatic setup."
+msgstr "Redémarrer {name} relance la configuration automatique."
+
+#: /home/kentr/bin/AZT/azt/main.py:712
+#, fuzzy
+msgid "Setup did not finish!"
+msgstr "La configuration n’est pas terminée !"
+
+#: /home/kentr/bin/AZT/azt/main.py:724
+#, fuzzy, python-brace-format
+msgid "{name} can’t find the font(s) it lays its screens out with on this computer:"
+msgstr "{name} ne trouve pas sur cet ordinateur la ou les polices qu’il utilise pour la mise en page de ses écrans :"
+
+#: /home/kentr/bin/AZT/azt/main.py:726
+#, fuzzy, python-brace-format
+msgid "• {wanted} — your computer used ‘{got}’ instead"
+msgstr "• {wanted} — votre ordinateur a utilisé ‘{got}’ à la place"
+
+#: /home/kentr/bin/AZT/azt/main.py:728
+#, fuzzy, python-brace-format
+msgid "Text will be a different size here than on other machines, so words may wrap oddly and buttons may look wrong. Install the missing font(s) and restart {name} — they are free from software.sil.org."
+msgstr "Le texte n’aura pas ici la même taille que sur d’autres machines : les mots peuvent passer à la ligne bizarrement et les boutons mal s’afficher. Installez la ou les polices manquantes et redémarrez {name} — elles sont gratuites sur software.sil.org."
+
+#: /home/kentr/bin/AZT/azt/main.py:733
+#, fuzzy
+msgid "Missing font!"
+msgstr "Police manquante !"
+
+#: /home/kentr/bin/AZT/azt/main.py:759
+#, fuzzy, python-brace-format
+msgid "{name} could not use the screens you asked for:"
+msgstr "{name} n’a pas pu utiliser les écrans que vous avez demandés :"
+
+#: /home/kentr/bin/AZT/azt/main.py:771
+#, fuzzy, python-brace-format
+msgid "{name} is running its standard tkinter screens instead."
+msgstr "{name} utilise à la place ses écrans tkinter standard."
+
+#: /home/kentr/bin/AZT/azt/main.py:774
+#, fuzzy, python-brace-format
+msgid "{name} is running the webview screens, with the substitute named above."
+msgstr "{name} utilise les écrans webview, avec le substitut indiqué ci-dessus."
+
+#: /home/kentr/bin/AZT/azt/main.py:776
+#, fuzzy
+msgid "Everything works: sorting, recording, reports and all your data are unaffected."
+msgstr "Tout fonctionne : le tri, l’enregistrement, les rapports et toutes vos données ne sont pas affectés."
+
+#: /home/kentr/bin/AZT/azt/main.py:778
+#, fuzzy, python-brace-format
+msgid "To get the screens you asked for, fix the problem above and start {name} again with the same option."
+msgstr "Pour obtenir les écrans demandés, corrigez le problème ci-dessus et relancez {name} avec la même option."
+
+#: /home/kentr/bin/AZT/azt/main.py:784
+#, fuzzy
+msgid "Not the screens you asked for"
+msgstr "Ce ne sont pas les écrans demandés"
+
+#: /home/kentr/bin/AZT/azt/main.py:948
+#, fuzzy
+msgid "Not starting up help line"
+msgstr "Pas de démarrage de la ligne d’aide"
+
+#: /home/kentr/bin/AZT/azt/main.py:1000
+#, fuzzy, python-brace-format
+msgid "Please help with {name}"
+msgstr "Aide demandée pour {name}"
+
+#: /home/kentr/bin/AZT/azt/main.py:1007
+#, fuzzy
+msgid "IMPORTANT: please attach the file named below. It is the only thing that says what went wrong."
+msgstr "IMPORTANT : veuillez joindre le fichier indiqué ci-dessous. C’est la seule chose qui dit ce qui s’est mal passé."
+
+#: /home/kentr/bin/AZT/azt/main.py:1025
+#, fuzzy, python-brace-format
+msgid "This computer has no email program set up, so {name} could not start a message for you.\n\nPlease send this file to {addr} yourself — it is in the folder that just opened:\n\n{bundle}"
+msgstr "Aucun programme de messagerie n’est configuré sur cet ordinateur, donc {name} n’a pas pu préparer un message pour vous.\n\nVeuillez envoyer vous-même ce fichier à {addr} — il se trouve dans le dossier qui vient de s’ouvrir :\n\n{bundle}"
+
+#: /home/kentr/bin/AZT/azt/main.py:1031
+#, fuzzy
+msgid "No email program"
+msgstr "Pas de programme de messagerie"
+
+#: /home/kentr/bin/AZT/azt/main.py:1056
+#, fuzzy, python-brace-format
+msgid "Could not prepare your log to send ({error}). Your log files are in {dir}."
+msgstr "Impossible de préparer votre journal pour l’envoi ({error}). Vos fichiers journaux se trouvent dans {dir}."
+
+#: /home/kentr/bin/AZT/azt/main.py:1059
+#, fuzzy
+msgid "Couldn’t send the log"
+msgstr "Impossible d’envoyer le journal"
+
+#: /home/kentr/bin/AZT/azt/main.py:1083
+#, fuzzy
+msgid "Starting up help line (with translation)..."
+msgstr "Démarrage de la ligne d’aide (avec traduction)..."
+
+#: /home/kentr/bin/AZT/azt/main.py:1139
+#, fuzzy, python-brace-format
+msgid "\n\nIf this information doesn’t help you fix this, click this text to Email me your log (to {addr}). Your log file will also be shown in a folder window — please attach it to the message."
+msgstr "\n\nSi ces informations ne vous aident pas à résoudre le problème, cliquez sur ce texte pour m’envoyer votre journal par e-mail (à {addr}). Votre fichier journal sera aussi affiché dans une fenêtre de dossier — veuillez le joindre au message."
+
+#: /home/kentr/bin/AZT/azt/main.py:1259
+#, fuzzy
+msgid "Loading your team’s changes…"
+msgstr "Chargement des modifications de votre équipe…"
+
+#: /home/kentr/bin/AZT/azt/main.py:1359
+#, fuzzy
+msgid "Restarting from App"
+msgstr "Redémarrage depuis l’application"
+
+#: /home/kentr/bin/AZT/azt/main.py:1386
+#, fuzzy, python-brace-format
+msgid "Restarting {name}…"
+msgstr "Redémarrage de {name}…"
+
+#: /home/kentr/bin/AZT/azt/main.py:1424
+#, fuzzy, python-brace-format
+msgid "Could not start a new copy of {name}. Your work is saved and this window is still usable."
+msgstr "Impossible de lancer une nouvelle copie de {name}. Votre travail est enregistré et cette fenêtre reste utilisable."
+
+#: /home/kentr/bin/AZT/azt/main.py:1469
+#, fuzzy, python-brace-format
+msgid "{name} could not restart: the new copy stopped before it opened. Your work is saved and this window is still usable."
+msgstr "{name} n’a pas pu redémarrer : la nouvelle copie s’est arrêtée avant de s’ouvrir. Votre travail est enregistré et cette fenêtre reste utilisable."
+
+#: /home/kentr/bin/AZT/azt/main.py:1553
+#, fuzzy
+msgid "Restart failed"
+msgstr "Échec du redémarrage"
+
+#: /home/kentr/bin/AZT/azt/main.py:1647
+#, fuzzy, python-brace-format
+msgid "Marshaling status message from thread {name}: {text}"
+msgstr "Transfert d’un message d’état depuis le thread {name} : {text}"
+
+#: /home/kentr/bin/AZT/azt/main.py:1732
+#, fuzzy
+msgid "Restarting the collaboration service…"
+msgstr "Redémarrage du service de collaboration…"
+
+#: /home/kentr/bin/AZT/azt/main.py:1745
+#, fuzzy
+msgid "(Collaboration service restarted with its update)"
+msgstr "(Service de collaboration redémarré avec sa mise à jour)"
+
+#: /home/kentr/bin/AZT/azt/main.py:1750
+#, fuzzy
+msgid "Insert USB with A−Z+T source"
+msgstr "Insérez la clé USB contenant la source d’A−Z+T"
+
+#: /home/kentr/bin/AZT/azt/main.py:1751
+#, fuzzy
+msgid "USB inserted"
+msgstr "Clé USB insérée"
+
+#: /home/kentr/bin/AZT/azt/main.py:1860
+#, fuzzy, python-brace-format
+msgid "Module loading failed! {error}"
+msgstr "Échec du chargement des modules ! {error}"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:571
+#, fuzzy, python-brace-format
+msgid "Stored {setting} settings in new {domain} domain"
+msgstr "Paramètres {setting} enregistrés dans le nouveau domaine {domain}"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:606
+#, fuzzy, python-brace-format
+msgid "Fallback check for {setting} settings in {file}"
+msgstr "Recherche de repli des paramètres {setting} dans {file}"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:616
+#, fuzzy, python-brace-format
+msgid "makestatus legacy: {status}"
+msgstr "makestatus (ancien format) : {status}"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:779
+#, fuzzy
+msgid "Set Alphabet Copyright!"
+msgstr "Définissez le copyright de l’alphabet !"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:790
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:801
+#, fuzzy, python-brace-format
+msgid "Looking for any of {opts} in {pss}"
+msgstr "Recherche de l’un de {opts} dans {pss}"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:812
+#, fuzzy, python-brace-format
+msgid "Found nominal ps {ps} in settings"
+msgstr "Catégorie nominale {ps} trouvée dans les paramètres"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:816
+#, fuzzy, python-brace-format
+msgid "Found verbal ps {ps} in settings"
+msgstr "Catégorie verbale {ps} trouvée dans les paramètres"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:1119
+#, fuzzy
+msgid "Refreshing annotations from LIFT"
+msgstr "Actualisation des annotations depuis LIFT"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:1202
+#, fuzzy
+msgid "Refreshing tone data from LIFT"
+msgstr "Actualisation des données de ton depuis LIFT"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:1392
+#, fuzzy, python-brace-format
+msgid "Could not refresh checks after the second form field changed: {error}"
+msgstr "Impossible d’actualiser les vérifications après le changement du second champ de forme : {error}"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:1429
+#, fuzzy, python-brace-format
+msgid "Could not reload after the word check changed: {error}"
+msgstr "Impossible de recharger après le changement de la vérification des mots : {error}"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:1496
+#, fuzzy, python-brace-format
+msgid "Setting up language names {langs}"
+msgstr "Définition des noms de langue {langs}"
+
+#: /home/kentr/bin/AZT/azt/settings/__init__.py:1557
+#, fuzzy
+msgid "Settings migrated to new format."
+msgstr "Paramètres migrés vers le nouveau format."
+
+#: /home/kentr/bin/AZT/azt/tasks/alphabet_chart.py:36
+#: /home/kentr/bin/AZT/azt/tasks/alphabet_comparison.py:34
+#, fuzzy, python-brace-format
+msgid "Didn’t find ‘{key}’ ui.Variable: {value}"
+msgstr "ui.Variable ‘{key}’ introuvable : {value}"
+
+#: /home/kentr/bin/AZT/azt/tasks/alphabet_chart.py:64
+#, fuzzy, python-brace-format
+msgid "There is no alphabet to chart for {lang} yet.\n\nThe chart is built from the letters found in your words, so it appears once some words have been entered and sorted. Nothing is wrong with this database."
+msgstr "Il n’y a pas encore d’alphabet à présenter en tableau pour {lang}.\n\nLe tableau est construit à partir des lettres trouvées dans vos mots ; il apparaît donc une fois que des mots ont été saisis et triés. Cette base de données n’a aucun problème."
+
+#: /home/kentr/bin/AZT/azt/tasks/alphabet_chart.py:70
+#, fuzzy
+msgid "Nothing to chart yet"
+msgstr "Rien à présenter en tableau pour l’instant"
+
+#: /home/kentr/bin/AZT/azt/tasks/alphabet_comparison.py:23
+#, fuzzy
+msgid "This task helps you compare alphabet letters with example words and pictures to represent each letter."
+msgstr "Cette tâche vous aide à comparer les lettres de l’alphabet avec des mots d’exemple et des images pour représenter chaque lettre."
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:67
+#, fuzzy
+msgid "No recorded audio found to transcribe."
+msgstr "Aucun enregistrement audio trouvé à transcrire."
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:85
+#, fuzzy
+msgid "ASR is not available or not enabled."
+msgstr "L’ASR n’est pas disponible ou pas activée."
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:93
+#, fuzzy
+msgid "Could not load the ASR model(s)."
+msgstr "Impossible de charger le(s) modèle(s) ASR."
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:111
+#, fuzzy
+msgid "Bulk transcription"
+msgstr "Transcription en lot"
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:113
+#, fuzzy, python-brace-format
+msgid "Transcribing {n} recordings…"
+msgstr "Transcription de {n} enregistrements…"
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:116
+#, fuzzy
+msgid "Preparing…"
+msgstr "Préparation…"
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:126
+#, fuzzy
+msgid "Cancelling — finishing the current file…"
+msgstr "Annulation — fin du fichier en cours…"
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:136
+#, fuzzy, python-brace-format
+msgid "Model {i} of {n}:  {model}"
+msgstr "Modèle {i} sur {n} :  {model}"
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:141
+#, fuzzy, python-brace-format
+msgid "    recording {i} of {n} (this model)"
+msgstr "    enregistrement {i} sur {n} (ce modèle)"
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:238
+#, fuzzy, python-brace-format
+msgid "Saved drafts for {n} recording(s) so far…"
+msgstr "Brouillons enregistrés pour {n} enregistrement(s) jusqu’ici…"
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:300
+#, fuzzy, python-brace-format
+msgid "Error: {e}"
+msgstr "Erreur : {e}"
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:303
+#, fuzzy, python-brace-format
+msgid "Cancelled after {n} of {a} this run ({t} total)."
+msgstr "Annulé après {n} sur {a} lors de cette exécution ({t} au total)."
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:307
+#, fuzzy, python-brace-format
+msgid "Done. Transcribed {n} of {a} this run ({t} recordings total)."
+msgstr "Terminé. {n} sur {a} transcrits lors de cette exécution ({t} enregistrements au total)."
+
+#: /home/kentr/bin/AZT/azt/tasks/bulk_asr.py:311
+#, fuzzy
+msgid "Return to menu"
+msgstr "Retour au menu"
+
+#: /home/kentr/bin/AZT/azt/tasks/chooser.py:108
+#, fuzzy
+msgid "Getting your task list…"
+msgstr "Préparation de votre liste de tâches…"
+
+#: /home/kentr/bin/AZT/azt/tasks/chooser.py:165
+#, fuzzy, python-brace-format
+msgid "No task, apparently; not destroying {e}."
+msgstr "Aucune tâche, apparemment ; {e} n’est pas détruit."
+
+#: /home/kentr/bin/AZT/azt/tasks/chooser.py:174
+#, fuzzy
+msgid "No task to make; showing the task list instead."
+msgstr "Aucune tâche à créer ; affichage de la liste des tâches à la place."
+
+#: /home/kentr/bin/AZT/azt/tasks/chooser.py:239
+#, fuzzy, python-brace-format
+msgid "Tasks available for ‘{category}’ ({count}): {tasks}"
+msgstr "Tâches disponibles pour ‘{category}’ ({count}) : {tasks}"
+
+#: /home/kentr/bin/AZT/azt/tasks/chooser.py:495
+#, fuzzy, python-brace-format
+msgid "Couldn’t hide {opener}; moving on ({e})"
+msgstr "Impossible de masquer {opener} ; on continue ({e})"
+
+#: /home/kentr/bin/AZT/azt/tasks/chooser.py:509
+#, fuzzy, python-brace-format
+msgid "LiftChooser already closed; not waiting ({e})"
+msgstr "LiftChooser déjà fermé ; pas d’attente ({e})"
+
+#: /home/kentr/bin/AZT/azt/tasks/sound.py:401
+#, fuzzy
+msgid "Getting the next group…"
+msgstr "Préparation du groupe suivant…"
+
+#: /home/kentr/bin/AZT/azt/tasks/tasks.py:744
+#, fuzzy
+msgid "Which dictionary field this frame applies to"
+msgstr "Le champ du dictionnaire auquel ce cadre s’applique"
+
+#: /home/kentr/bin/AZT/azt/tasks/tasks.py:1215
+#, fuzzy, python-brace-format
+msgid "Separate this text from the word with a space. Shown as ‘{mark}’ when set."
+msgstr "Séparer ce texte du mot par un espace. Affiché comme ‘{mark}’ quand c’est activé."
+
+#: /home/kentr/bin/AZT/azt/tasks/tasks.py:1421
+#, fuzzy, python-brace-format
+msgid "There is already a {ps} tone frame called ‘{name}’. Please give this one a different name."
+msgstr "Il existe déjà un cadre de ton {ps} appelé ‘{name}’. Veuillez donner un autre nom à celui-ci."
+
+#: /home/kentr/bin/AZT/azt/tasks/tasks.py:2095
+#, fuzzy, python-brace-format
+msgid "What new name do you want to call this {sg} group?"
+msgstr "Quel nouveau nom voulez-vous donner à ce groupe {sg} ?"
+
+#: /home/kentr/bin/AZT/azt/tasks/transcribe_glyph.py:336
+#, fuzzy, python-brace-format
+msgid "Switching groups; using ‘{comp}’ for ‘{group}’"
+msgstr "Échange des groupes ; utilisation de ‘{comp}’ pour ‘{group}’"
+
+#: /home/kentr/bin/AZT/azt/utilities/encodings.py:34
+#, fuzzy, python-brace-format
+msgid "Can’t decode {this} (in {encoding}; {error}):"
+msgstr "Impossible de décoder {this} (en {encoding} ; {error}) :"
+
+#: /home/kentr/bin/AZT/azt/utilities/executables.py:46
+#, fuzzy
+msgid "Trying to call Praat at {}..."
+msgstr "Tentative d’appel de Praat à {}..."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:169
+#, fuzzy
+msgid "If you see errors mentioning ˋportaudioˊ above, install the system PortAudio runtime with your package manager (libportaudio2 on Debian/Ubuntu). A-Z+T uses sounddevice, which needs that library present but does not build it."
+msgstr "Si vous voyez ci-dessus des erreurs mentionnant ˋportaudioˊ, installez la bibliothèque d’exécution PortAudio du système avec votre gestionnaire de paquets (libportaudio2 sur Debian/Ubuntu). A-Z+T utilise sounddevice, qui a besoin de cette bibliothèque mais ne la compile pas."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:417
+#, fuzzy, python-brace-format
+msgid "This python can’t make a virtual environment because its ˋensurepipˊ is missing (on Debian/Ubuntu that lives in the ˋ{pkg}ˊ package). Building the environment without pip and installing pip into it instead..."
+msgstr "Ce python ne peut pas créer d’environnement virtuel car son ˋensurepipˊ est absent (sur Debian/Ubuntu, il se trouve dans le paquet ˋ{pkg}ˊ). Création de l’environnement sans pip, puis installation de pip dans celui-ci..."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:432
+#, fuzzy
+msgid "pip is now working in the new environment."
+msgstr "pip fonctionne maintenant dans le nouvel environnement."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:453
+#, fuzzy, python-brace-format
+msgid "This python ({have}) is older than A-Z+T needs ({need}). Install a newer python (the python.org installer), delete this env folder, and restart."
+msgstr "Ce python ({have}) est plus ancien que ce dont A-Z+T a besoin ({need}). Installez un python plus récent (l’installateur de python.org), supprimez ce dossier env, puis redémarrez."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:482
+#, fuzzy
+msgid "its python doesn’t run — was the python it was made from uninstalled or moved?"
+msgstr "son python ne s’exécute pas — le python à partir duquel il a été créé a-t-il été désinstallé ou déplacé ?"
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:487
+#, fuzzy
+msgid "its python isn’t actually a virtual environment (creation half-failed?)"
+msgstr "son python n’est pas vraiment un environnement virtuel (création à moitié échouée ?)"
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:490
+#, fuzzy, python-brace-format
+msgid "python {old} < {need}"
+msgstr "python {old} < {need}"
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:496
+#, fuzzy, python-brace-format
+msgid "Rebuilding {dir} ({why})..."
+msgstr "Reconstruction de {dir} ({why})..."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:504
+#, fuzzy, python-brace-format
+msgid "The env at {dir} is broken ({why}); leaving it alone and using {child} instead. Delete or fix {dir} to use it again."
+msgstr "L’env dans {dir} est cassé ({why}) ; on n’y touche pas et on utilise {child} à la place. Supprimez ou réparez {dir} pour l’utiliser à nouveau."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:510
+#, fuzzy, python-brace-format
+msgid "The env at {dir} runs python {old}; A-Z+T wants {need}+. It may still work, but plan to recreate it from a newer python."
+msgstr "L’env dans {dir} utilise python {old} ; A-Z+T demande {need}+. Il peut encore fonctionner, mais prévoyez de le recréer à partir d’un python plus récent."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:517
+#, fuzzy, python-brace-format
+msgid "This python ({have}) is older than A-Z+T needs ({need}); install a newer one (the python.org installer) and restart. Trying to continue anyway..."
+msgstr "Ce python ({have}) est plus ancien que ce dont A-Z+T a besoin ({need}) ; installez-en un plus récent (l’installateur de python.org) et redémarrez. Tentative de continuer malgré tout..."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:527
+#, fuzzy, python-brace-format
+msgid "Clearing the broken env at {dir} before recreating..."
+msgstr "Nettoyage de l’env cassé dans {dir} avant de le recréer..."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:532
+#, fuzzy, python-brace-format
+msgid "First run: creating a python virtual environment at {dir} (dependencies will install there)..."
+msgstr "Premier lancement : création d’un environnement virtuel python dans {dir} (les dépendances y seront installées)..."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:543
+#, fuzzy, python-brace-format
+msgid " On Debian/Ubuntu Linux, install python’s ˋensurepipˊ with ˋsudo apt install {pkg}ˊ (and check the log for what else the attempt reported), then restart A-Z+T."
+msgstr " Sous Linux Debian/Ubuntu, installez ˋensurepipˊ pour python avec ˋsudo apt install {pkg}ˊ (et consultez le journal pour voir ce que la tentative a signalé d’autre), puis redémarrez A-Z+T."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:547
+#, fuzzy
+msgid "virtual environment"
+msgstr "environnement virtuel"
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:548
+#, fuzzy, python-brace-format
+msgid "A-Z+T couldn’t create its python environment at {dir}, so it cannot install or update the modules it needs on this computer.{hint}"
+msgstr "A-Z+T n’a pas pu créer son environnement python dans {dir} ; il ne peut donc pas installer ni mettre à jour les modules dont il a besoin sur cet ordinateur.{hint}"
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:566
+#, fuzzy, python-brace-format
+msgid "Relaunching inside the virtual environment: {py}"
+msgstr "Relancement dans l’environnement virtuel : {py}"
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:665
+#, fuzzy
+msgid "Requirements changed (or first run in this env); synchronizing python packages — this can take a while..."
+msgstr "Les dépendances ont changé (ou premier lancement dans cet env) ; synchronisation des paquets python — cela peut prendre un moment..."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:667
+#, fuzzy
+msgid "A−Z+T is installing the software it needs.\nOn a slow connection this can take a long time — sometimes an hour.\nPlease leave this window open. A−Z+T will start by itself when it is done."
+msgstr "A−Z+T installe les logiciels dont il a besoin.\nAvec une connexion lente, cela peut prendre longtemps — parfois une heure.\nVeuillez laisser cette fenêtre ouverte. A−Z+T démarrera tout seul une fois terminé."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:690
+#, fuzzy, python-brace-format
+msgid "Python packages synchronized ({mode}): {what}"
+msgstr "Paquets python synchronisés ({mode}) : {what}"
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:696
+#, fuzzy
+msgid "The software A−Z+T needs is installed. Continuing…"
+msgstr "Les logiciels nécessaires à A−Z+T sont installés. On continue…"
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:708
+#, fuzzy
+msgid "Not everything installed in one go — usually a slow or interrupted connection.\nA−Z+T will now try the missing pieces one at a time. This is slower, but it is still working.\nPlease keep this window open."
+msgstr "Tout ne s’est pas installé d’un coup — généralement à cause d’une connexion lente ou interrompue.\nA−Z+T va maintenant essayer les éléments manquants un par un. C’est plus lent, mais ça fonctionne toujours.\nVeuillez garder cette fenêtre ouverte."
+
+#: /home/kentr/bin/AZT/azt/utilities/py_modules.py:729
+#, fuzzy, python-brace-format
+msgid "Sister repo {name} unavailable (see above); continuing without it."
+msgstr "Dépôt associé {name} indisponible (voir ci-dessus) ; on continue sans lui."
+
+#: /home/kentr/bin/AZT/azt/utilities/rx.py:426
+# CHECK: "polygraph settings" = digraph/trigraph settings; confirm wording
+#, fuzzy, python-brace-format
+msgid "NOTICE: ‘{match}’ was removed from this form. Remove it from the polygraph settings once it is gone altogether."
+msgstr "AVIS : ‘{match}’ a été retiré de cette forme. Retirez-le des paramètres de polygraphes une fois qu’il aura complètement disparu."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:74
+#, fuzzy
+msgid "(the CAWL image set is a few hundred MB; the first clone can take a while)"
+msgstr "(le jeu d’images CAWL fait quelques centaines de Mo ; le premier clonage peut prendre un moment)"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:206
+#, fuzzy, python-brace-format
+msgid "{dir} is missing. That directory is part of A-Z+T itself, not something we fetch, so this working copy is incomplete — check the branch and whether the files arrived. Nothing can be linked into it until it is back."
+msgstr "{dir} est absent. Ce répertoire fait partie d’A-Z+T lui-même, ce n’est pas quelque chose que nous téléchargeons ; cette copie de travail est donc incomplète — vérifiez la branche et si les fichiers sont bien arrivés. Rien ne peut y être lié tant qu’il n’est pas revenu."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:225
+#, fuzzy, python-brace-format
+msgid "Fixing link {link} (was {old}, now {new})"
+msgstr "Correction du lien {link} (était {old}, maintenant {new})"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:246
+#, fuzzy, python-brace-format
+msgid "{link} already resolves to {target}; leaving it."
+msgstr "{link} pointe déjà vers {target} ; on le laisse."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:250
+#, fuzzy, python-brace-format
+msgid "{link} is its own clone rather than the managed one. It can still be updated, just not by us; leaving it alone."
+msgstr "{link} est un clone indépendant plutôt que le clone géré. Il peut toujours être mis à jour, mais pas par nous ; on n’y touche pas."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:254
+#, fuzzy, python-brace-format
+msgid "{link} is a detached copy — not the managed clone and not a repository, so NOTHING WILL EVER UPDATE IT. It works today and will silently fall behind. Move it aside and restart to have it managed."
+msgstr "{link} est une copie détachée — ni le clone géré ni un dépôt, donc RIEN NE LA METTRA JAMAIS À JOUR. Elle fonctionne aujourd’hui mais prendra du retard sans bruit. Déplacez-la ailleurs et redémarrez pour qu’elle soit gérée."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:263
+#, fuzzy, python-brace-format
+msgid "Linked {link} -> {target}"
+msgstr "Lien créé {link} -> {target}"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:269
+# CHECK: "junction" is the Windows NTFS directory-junction term
+#, fuzzy, python-brace-format
+msgid "Junctioned {link} -> {target}"
+msgstr "Jonction créée {link} -> {target}"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:329
+#, fuzzy, python-brace-format
+msgid "{link} is a real directory, not a link to a managed clone of {name}. It works, but {name} can never be updated this way. Move it aside and restart to have {name} managed properly."
+msgstr "{link} est un vrai répertoire, pas un lien vers un clone géré de {name}. Cela fonctionne, mais {name} ne pourra jamais être mis à jour ainsi. Déplacez-le ailleurs et redémarrez pour que {name} soit géré correctement."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:344
+#, fuzzy, python-brace-format
+msgid "{dest} exists but doesn’t look like {name}; not touching it. Move it aside (or fix it) and restart."
+msgstr "{dest} existe mais ne ressemble pas à {name} ; on n’y touche pas. Déplacez-le ailleurs (ou réparez-le) et redémarrez."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:350
+#, fuzzy, python-brace-format
+msgid "No git executable found; can’t fetch {name}."
+msgstr "Aucun exécutable git trouvé ; impossible de récupérer {name}."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:357
+#, fuzzy, python-brace-format
+msgid "{name} not found; cloning {url} to {dest}..."
+msgstr "{name} introuvable ; clonage de {url} vers {dest}..."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:362
+#, fuzzy, python-brace-format
+msgid "A−Z+T is downloading {name}, which it needs beside it.{note}\nPlease leave this window open."
+msgstr "A−Z+T télécharge {name}, dont il a besoin à côté de lui.{note}\nVeuillez laisser cette fenêtre ouverte."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:396
+#, fuzzy, python-brace-format
+msgid "Fetching {name} timed out; will try again next start."
+msgstr "Délai dépassé pour la récupération de {name} ; nouvel essai au prochain démarrage."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:398
+#, fuzzy, python-brace-format
+msgid "Downloading {name} took too long, so A−Z+T is starting without it.\nIt will try again the next time A−Z+T starts."
+msgstr "Le téléchargement de {name} a pris trop de temps, donc A−Z+T démarre sans lui.\nIl réessaiera au prochain démarrage d’A−Z+T."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:413
+#, fuzzy, python-brace-format
+msgid "Couldn’t set up {name}: {error}.{guess} Will try again next start."
+msgstr "Impossible d’installer {name} : {error}.{guess} Nouvel essai au prochain démarrage."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:416
+#, fuzzy
+msgid " Maybe no internet?"
+msgstr " Peut-être pas d’internet ?"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:445
+#, fuzzy, python-brace-format
+msgid "Updating {dir}..."
+msgstr "Mise à jour de {dir}..."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:456
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:465
+#, fuzzy, python-brace-format
+msgid "Pull failed ({error}); continuing with the existing clone."
+msgstr "Échec du pull ({error}) ; on continue avec le clone existant."
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:483
+#, fuzzy
+msgid "found on this computer and linked (not downloaded)"
+msgstr "trouvé sur cet ordinateur et lié (non téléchargé)"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:484
+#, fuzzy
+msgid "already in place (not a managed copy, so it can’t be updated)"
+msgstr "déjà en place (ce n’est pas une copie gérée, donc pas de mise à jour possible)"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:486
+#, fuzzy
+msgid "updated (restart to use)"
+msgstr "mis à jour (redémarrez pour l’utiliser)"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:487
+#, fuzzy
+msgid "already up to date"
+msgstr "déjà à jour"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:488
+#, fuzzy
+msgid "could not update; keeping the current copy"
+msgstr "mise à jour impossible ; la copie actuelle est conservée"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:489
+#, fuzzy
+msgid "newly installed"
+msgstr "nouvellement installé"
+
+#: /home/kentr/bin/AZT/azt/utilities/sister_repos.py:490
+#, fuzzy
+msgid "not available (no internet?)"
+msgstr "indisponible (pas d’internet ?)"
+
+#: /home/kentr/bin/AZT/azt/utilities/utilities.py:72
+#, fuzzy, python-brace-format
+msgid "{item} is not a list!"
+msgstr "{item} n’est pas une liste !"
+
+#: /home/kentr/bin/AZT/azt/utilities/utilities.py:74
+#, fuzzy, python-brace-format
+msgid "The first element of {list} is not a list!"
+msgstr "Le premier élément de {list} n’est pas une liste !"
+
+#: /home/kentr/bin/AZT/azt/utilities/utilities.py:169
+#, fuzzy, python-brace-format
+msgid "Finished {what} in {minutes} minutes, {seconds:.3f} seconds."
+msgstr "{what} terminé en {minutes} minutes, {seconds:.3f} secondes."
+
+#: /home/kentr/bin/AZT/azt/utilities/utilities.py:199
+#, fuzzy, python-brace-format
+msgid "Sorry, something other than one list item found: {list}\nDid you mean to use “othersOK=True”?"
+msgstr "Désolé, autre chose qu’un seul élément de liste trouvé : {list}\nVouliez-vous utiliser “othersOK=True” ?"
+
+#: /home/kentr/bin/AZT/azt/utilities/utilities.py:290
+#, fuzzy, python-brace-format
+msgid "I can’t tell what operating system you’re running ({os})!"
+msgstr "Je n’arrive pas à déterminer votre système d’exploitation ({os}) !"
+
+#: /home/kentr/bin/AZT/azt/utilities/utilities.py:477
+#, fuzzy
+msgid "ˋ{}ˊ contains single and double quotes!"
+msgstr "ˋ{}ˊ contient des guillemets simples et doubles !"
+
+#: /home/kentr/bin/AZT/azt/utilities/utilities.py:546
+#, fuzzy, python-brace-format
+msgid "you’re trying to add {val} ({vtype}) to {dk} ({dktype}), but one is a set and the other isn’t"
+msgstr "vous essayez d’ajouter {val} ({vtype}) à {dk} ({dktype}), mais l’un est un ensemble (set) et l’autre non"
+
+#: /home/kentr/bin/AZT/azt/utilities/utilities.py:570
+#, fuzzy, python-brace-format
+msgid "problem with iteration value type ({vtype}) or index type ({itype})"
+msgstr "problème avec le type de valeur d’itération ({vtype}) ou le type d’index ({itype})"
+
+#: /home/kentr/bin/AZT/azt/utilities/utilities.py:780
+#, fuzzy, python-brace-format
+msgid "unlist should only be used on text (not node) lists ({list})\nElement[0] text: {text}"
+msgstr "unlist ne doit être utilisé que sur des listes de texte (pas de nœuds) ({list})\nTexte de Element[0] : {text}"
+
+
+#, fuzzy
+msgid "Alphabet Comparison Pages"
+msgstr "Pages de comparaison d’alphabets"
+
+#, fuzzy
+msgid "Analysis language Name"
+msgstr "Nom de la langue d’analyse"
+
+#, fuzzy
+msgid "Analysis language"
+msgstr "Langue d’analyse"
+
+#, fuzzy
+msgid "Another gloss language"
+msgstr "Une autre langue de glose"
+
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on {check} = {group}"
+msgstr "Vérification de {cvt}, travail sur {check} = {group}"
+
+# CHECK: {group} shows "All groups" (Tous les groupes) here
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on {check} {group}"
+msgstr "Vérification de {cvt}, travail sur {check} {group}"
+
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on {check}"
+msgstr "Vérification de {cvt}, travail sur {check}"
+
+#, fuzzy
+msgid "Choose"
+msgstr "Choisir"
+
+# CHECK: {form} is a form name such as Citation or Plural
+#, fuzzy, python-brace-format
+msgid "Collecting {form} forms"
+msgstr "Collecte des formes {form}"
+
+#, fuzzy
+msgid "Consonant-Vowel-Tone"
+msgstr "Consonne-Voyelle-Ton"
+
+#, fuzzy
+msgid "Gloss language"
+msgstr "Langue de glose"
+
+#, fuzzy
+msgid "Interface/computer language"
+msgstr "Langue de l’interface/de l’ordinateur"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {form} {profile} words"
+msgstr "Regarde les mots {form} {profile}"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {form} {profile} {ps} words ({count})"
+msgstr "Regarde {form} {profile}, mots {ps} ({count})"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {profile} words"
+msgstr "Regarde les mots {profile}"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {profile} {ps} words ({count})"
+msgstr "Regarde {profile}, mots {ps} ({count})"
+
+#, fuzzy, python-brace-format
+msgid "Max profiles: {profiles}; Max lexical categories: {pss}"
+msgstr "Profils max. : {profiles} ; catégories lexicales max. : {pss}"
+
+#, fuzzy, python-brace-format
+msgid "Meanings in {lang} and {lang2}"
+msgstr "Significations en {lang} et {lang2}"
+
+# CHECK: {lang2} shows "seulement" (clickable, to add a second language)
+#, fuzzy, python-brace-format
+msgid "Meanings in {lang} {lang2}"
+msgstr "Significations en {lang} {lang2}"
+
+#, fuzzy
+msgid "Part of speech"
+msgstr "Partie du discours"
+
+#, fuzzy, python-brace-format
+msgid "Recording {form} forms"
+msgstr "Enregistrement des formes {form}"
+
+#, fuzzy, python-brace-format
+msgid "Run all checks for {kinds}"
+msgstr "Exécuter toutes les vérifications pour {kinds}"
+
+#, fuzzy, python-brace-format
+msgid "Showing {n} words per page"
+msgstr "Affichage de {n} mots par page"
+
+#, fuzzy, python-brace-format
+msgid "Using {columns}"
+msgstr "Utiliser {columns}"
+
+# CHECK: gender of {type} (voyelle, consonne…) — "quel(le)" avoided by rewording
+#, fuzzy, python-brace-format
+msgid "Which other {type} do you want to compare it with?"
+msgstr "Avec quel autre élément ({type}) voulez-vous le comparer ?"
+
+# CHECK: gender of {type}
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to join?"
+msgstr "Quel élément ({type}) voulez-vous joindre ?"
+
+# CHECK: gender of {type}
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to name?"
+msgstr "Quel élément ({type}) voulez-vous nommer ?"
+
+# CHECK: gender of {type}
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to verify?"
+msgstr "Quel élément ({type}) voulez-vous vérifier ?"
+
+# CHECK: gender of {type}
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to work with?"
+msgstr "Avec quel élément ({type}) voulez-vous travailler ?"
+
+#, fuzzy, python-brace-format
+msgid "Working on {form} forms"
+msgstr "Travail sur les formes {form}"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Compare"
+msgstr "{title} à comparer"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Join"
+msgstr "{title} à joindre"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Name"
+msgstr "{title} à nommer"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Verify"
+msgstr "{title} à vérifier"
+
+#, fuzzy
+msgid "Vowel"
+msgstr "Voyelle"
+
+#, fuzzy
+msgid "Vowels"
+msgstr "Voyelles"
+
+#, fuzzy
+msgid "Consonant"
+msgstr "Consonne"
+
+#, fuzzy
+msgid "Consonants"
+msgstr "Consonnes"
+
+#, fuzzy
+msgid "Consonant-Vowel combination"
+msgstr "Combinaison consonne-voyelle"
+
+#, fuzzy
+msgid "Consonant-Vowel combinations"
+msgstr "Combinaisons consonne-voyelle"
+
+#, fuzzy
+msgid "Vowel-Consonant combination"
+msgstr "Combinaison voyelle-consonne"
+
+#, fuzzy
+msgid "Vowel-Consonant combinations"
+msgstr "Combinaisons voyelle-consonne"
+
+#, fuzzy
+msgid "Tone"
+msgstr "Ton"
+
+#, fuzzy
+msgid "Tones"
+msgstr "Tons"
+
+#, fuzzy
+msgid "Syllable Profile"
+msgstr "Profil syllabique"
+
+#, fuzzy
+msgid "Syllable Profiles"
+msgstr "Profils syllabiques"
+
+#, fuzzy, python-brace-format
+msgid "{kinds} (only)"
+msgstr "{kinds} (seulement)"

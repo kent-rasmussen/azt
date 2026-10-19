@@ -582,6 +582,25 @@ def open_file(path):
         os.startfile(path)
     else:                                   # linux variants
         subprocess.Popen(('xdg-open', path))
+def show_finished_pdf(path):
+    """Every PDF the program finishes is shown, in whatever the system opens
+    PDFs with, so the user sees that it worked (Kent, 2026-10-19: "make
+    this general"). Only a file that is actually there: the alphabet chart
+    and booklet used to try to open one even when making it had bailed.
+    Never raises; True if a viewer was asked to open it."""
+    thislog=logsetup.getlog(__name__)
+    import os
+    if not path or not os.path.isfile(str(path)):
+        thislog.info("No PDF at {}, so nothing to show".format(path))
+        return False
+    try:
+        open_file(str(path))
+        thislog.info("Showing PDF {}".format(path))
+        return True
+    except Exception as e:
+        thislog.warning("Couldn't open the PDF ({}); it is at {}".format(
+                                                                    e,path))
+        return False
 def mailto_configured():
     """Is a mail client registered for mailto:? True / False / None (unknown).
 

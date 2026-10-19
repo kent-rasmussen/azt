@@ -1,0 +1,47 @@
+#, fuzzy
+msgid "Vowel"
+msgstr "元音"
+
+#, fuzzy
+msgid "Vowels"
+msgstr "元音"
+
+#, fuzzy
+msgid "Consonant"
+msgstr "辅音"
+
+#, fuzzy
+msgid "Consonants"
+msgstr "辅音"
+
+#, fuzzy
+msgid "Consonant-Vowel combination"
+msgstr "辅音-元音组合"
+
+#, fuzzy
+msgid "Consonant-Vowel combinations"
+msgstr "辅音-元音组合"
+
+#, fuzzy
+msgid "Vowel-Consonant combination"
+msgstr "元音-辅音组合"
+
+#, fuzzy
+msgid "Vowel-Consonant combinations"
+msgstr "元音-辅音组合"
+
+#, fuzzy
+msgid "Tone"
+msgstr "声调"
+
+#, fuzzy
+msgid "Tones"
+msgstr "声调"
+
+#, fuzzy
+msgid "Syllable Profile"
+msgstr "音节模式"
+
+#, fuzzy
+msgid "Syllable Profiles"
+msgstr "音节模式"

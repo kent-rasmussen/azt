@@ -3938,7 +3938,7 @@
         DoAuthorOfChapterInCollectionInContents
     -->
     <xsl:template name="DoAuthorOfChapterInCollectionInContents">
-        <xsl:if test="saxon:node-set($authorInContentsLayoutInfo)/authorLayout">
+        <xsl:if test="exsl:node-set($authorInContentsLayoutInfo)/authorLayout">
             <xsl:if test="frontMatter/author">
                 <xsl:if test="count(preceding-sibling::chapterInCollection)=0">
                     <tex:cmd name="settowidth">
@@ -3953,7 +3953,7 @@
                     </tex:cmd>
                 </xsl:if>
                 <xsl:call-template name="DoSpaceBefore">
-                    <xsl:with-param name="layoutInfo" select="saxon:node-set($authorInContentsLayoutInfo)/authorLayout"/>
+                    <xsl:with-param name="layoutInfo" select="exsl:node-set($authorInContentsLayoutInfo)/authorLayout"/>
                 </xsl:call-template>
                 <!-- do author(s) -->
                 <xsl:call-template name="OutputPlainTOCLine">
@@ -3962,18 +3962,18 @@
                     </xsl:with-param>
                     <xsl:with-param name="sLabel">
                         <xsl:call-template name="OutputFontAttributes">
-                            <xsl:with-param name="language" select="saxon:node-set($authorInContentsLayoutInfo)/authorLayout"/>
+                            <xsl:with-param name="language" select="exsl:node-set($authorInContentsLayoutInfo)/authorLayout"/>
                         </xsl:call-template>
-                        <xsl:value-of select="saxon:node-set($authorInContentsLayoutInfo)/authorLayout/@textbefore"/>
+                        <xsl:value-of select="exsl:node-set($authorInContentsLayoutInfo)/authorLayout/@textbefore"/>
                         <xsl:call-template name="GetAuthorsAsCommaSeparatedList"/>
-                        <xsl:value-of select="saxon:node-set($authorInContentsLayoutInfo)/authorLayout/@textafter"/>
+                        <xsl:value-of select="exsl:node-set($authorInContentsLayoutInfo)/authorLayout/@textafter"/>
                         <xsl:call-template name="OutputFontAttributesEnd">
-                            <xsl:with-param name="language" select="saxon:node-set($authorInContentsLayoutInfo)/authorLayout"/>
+                            <xsl:with-param name="language" select="exsl:node-set($authorInContentsLayoutInfo)/authorLayout"/>
                         </xsl:call-template>
                     </xsl:with-param>
                 </xsl:call-template>
                 <xsl:call-template name="DoSpaceAfter">
-                    <xsl:with-param name="layoutInfo" select="saxon:node-set($authorInContentsLayoutInfo)/authorLayout"/>
+                    <xsl:with-param name="layoutInfo" select="exsl:node-set($authorInContentsLayoutInfo)/authorLayout"/>
                 </xsl:call-template>
             </xsl:if>
         </xsl:if>
@@ -4328,7 +4328,7 @@
         DoChapterLabelInContents
     -->
     <xsl:template name="DoChapterLabelInContents">
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:variable name="sLabel" select="normalize-space(exsl:node-set($contentsLayoutToUse)/@chapterlabel)"/>
         <tex:spec cat="bg"/>
         <tex:cmd name="{$sSingleSpacingCommand}"/>
@@ -5418,7 +5418,7 @@
     <xsl:template name="DoBookMark">
         <xsl:param name="id"/>
         <xsl:param name="sTitle"/>
-        <xsl:if test="saxon:node-set($contentsLayout)/contentsLayout/@showbookmarks!='no'">
+        <xsl:if test="exsl:node-set($contentsLayout)/contentsLayout/@showbookmarks!='no'">
             <xsl:apply-templates select="." mode="bookmarks">
                 <xsl:with-param name="id" select="$id"/>
                 <xsl:with-param name="sTitle" select="$sTitle"/>
@@ -6029,7 +6029,7 @@
 <!--    <xsl:template name="DoRefWorks">
         <xsl:variable name="thisAuthor" select="."/>
         <xsl:variable name="works"
-            select="refWork[@id=exsl:node-set($citations)[not(ancestor::comment) and not(ancestor::annotation)][not(ancestor::refWork) or ancestor::refWork[@id=exsl:node-set($citations)[not(ancestor::refWork)]/@ref]]/@ref] | exsl:node-set($refWorks)[@id=saxon:node-set($collOrProcVolumesToInclude)/refWork/@id][parent::refAuthor=$thisAuthor] | refWork[@id=exsl:node-set($citationsInAnnotationsReferredTo)[not(ancestor::comment)]/@ref]"/>
+            select="refWork[@id=exsl:node-set($citations)[not(ancestor::comment) and not(ancestor::annotation)][not(ancestor::refWork) or ancestor::refWork[@id=exsl:node-set($citations)[not(ancestor::refWork)]/@ref]]/@ref] | exsl:node-set($refWorks)[@id=exsl:node-set($collOrProcVolumesToInclude)/refWork/@id][parent::refAuthor=$thisAuthor] | refWork[@id=exsl:node-set($citationsInAnnotationsReferredTo)[not(ancestor::comment)]/@ref]"/>
         <xsl:for-each select="$works">
             <xsl:call-template name="DoRefWork">
                 <xsl:with-param name="works" select="$works"/>
@@ -7611,7 +7611,7 @@
                         <xsl:when test="$fDoTextAfterLetter='Y'">
                             <xsl:value-of select="exsl:node-set($appLayout)/appendixTitleLayout/@textafterletter"/>
                         </xsl:when>
-                        <xsl:when test="saxon:node-set($contentsLayoutToUse)/@useperiodafterappendixletter='yes'">
+                        <xsl:when test="exsl:node-set($contentsLayoutToUse)/@useperiodafterappendixletter='yes'">
                             <xsl:text>.&#xa0; </xsl:text>
                         </xsl:when>
                         <xsl:otherwise>
@@ -8555,7 +8555,7 @@
         <xsl:call-template name="OutputSectionNumber">
             <xsl:with-param name="layoutInfo" select="$layoutInfo"/>
             <xsl:with-param name="sContentsPeriod">
-                <xsl:if test="saxon:node-set($contentsLayoutToUse)/@useperiodaftersectionnumber='yes'">
+                <xsl:if test="exsl:node-set($contentsLayoutToUse)/@useperiodaftersectionnumber='yes'">
                     <xsl:text>.</xsl:text>
                 </xsl:if>
             </xsl:with-param>
@@ -8739,7 +8739,7 @@
         SetChapterNumberWidth
     -->
     <xsl:template name="SetChapterNumberWidth" priority="10">
-        <xsl:param name="contentsLayoutToUse" select="saxon:node-set($contentsLayout)/contentsLayout"/>
+        <xsl:param name="contentsLayoutToUse" select="exsl:node-set($contentsLayout)/contentsLayout"/>
         <xsl:call-template name="SetTeXCommand">
             <xsl:with-param name="sTeXCommand" select="'settowidth'"/>
             <xsl:with-param name="sCommandToSet" select="'levelonewidth'"/>

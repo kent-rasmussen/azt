@@ -1,6 +1,6 @@
 # coding=UTF-8
 """This module is an interface to the base frontend classes."""
-from utilities.i18n import _
+from utilities.i18n import _, N_
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 import sys
@@ -222,13 +222,11 @@ class Menus(ui.Menu):
             parent.add_cascade(label=label, menu=getattr(self,newmenuname))
     # def setmenus(self):
     #     self.menubar = ui.Menu(self)
-    def change(self):
-        self.cascade(self,_("Change"),'changemenu')
-        # changemenu = ui.Menu(self.menubar, tearoff=0)
-        # self.menubar.add_cascade(label=_("Change"), menu=changemenu)
-        self.languages()
-        if getattr(self.parent,'is_sort_task',False):
-            self.parameterslice()
+    # THE "CHANGE" MENU (change/languages/parameterslice) WAS REMOVED
+    # 2026-10-19: nothing built it — `__init__` builds only Advanced and Help
+    # — and every choice it offered (languages, part of speech, check type,
+    # syllable profile, tone frame, check, group) is on the status page's
+    # prose lines. Kent: "drop the change menu".
     def fill_db_images(self):
         # No do_wait kwarg: Lift.fill_db_images takes none, so passing it raised
         # TypeError and Advanced ▸ Fill CAWL Images did nothing at all (field
@@ -237,67 +235,6 @@ class Menus(ui.Menu):
         self.program.tk_root.wait(msg=_("Filling images..."))
         self.program.tk_root.drive_work(
             self.program.db.fill_db_images())
-    def languages(self):
-        """Language stuff"""
-        self.cascade(self.changemenu,_("Languages"),'languagemenu')
-        for m in [("Interface/computer language", self.program.ui_settings.getinterfacelang),
-                    ("Analysis language",self.program.ui_settings.getanalang),
-                    ("Analysis language Name",self.program.ui_settings.getanalangname),
-                    ("Gloss language",self.program.ui_settings.getglosslang),
-                    ("Another gloss language",self.program.ui_settings.getglosslang2)]:
-            self.command(self.languagemenu,
-                        label=_(m[0]),
-                        cmd=m[1]
-                        )
-        """Word/data choice stuff"""
-    def parameterslice(self):
-        for m in [("Part of speech", self.program.ui_settings.getps),
-                    ("Consonant-Vowel-Tone", self.program.ui_settings.getcvt),
-                    ]:
-            self.command(self.changemenu,
-                        label=_(m[0]),
-                        cmd=m[1]
-                        )
-        self.cascade(self.changemenu,_("Syllable profile"),'profilemenu')
-        for m in [("Next", self.parent.status.nextprofile),
-                    ("Choose", self.program.ui_settings.getprofile),
-                    ]:
-            self.command(self.profilemenu,
-                        label=_(m[0]),
-                        cmd=m[1]
-                        )
-        """What to check stuff"""
-        cvt=self.parent.params.cvt()
-        ps=self.parent.slices.ps()
-        profile=self.parent.slices.profile()
-        if None not in [ps, profile, cvt]:
-            if cvt == 'T':
-                self.changemenu.add_separator()
-                self.cascade(self.changemenu,_("Tone Frame"),'framemenu')
-                self.checkmenus=[
-                            ("Choose", self.parent.getcheck),
-                            ]
-                # if isinstance(parent,Check):
-                #     checkmenus.append(("Next to Sort", self.parent.nextcheck,
-                #                                             tosort=True))
-                # elif isinstance(parent,Record):
-                #     checkmenus.append(("Next to Record", self.parent.nextcheck,
-                #                                             wsorted=True))
-                # else:
-                #     checkmenus.append(("Next to Record", self.parent.nextcheck))
-                for m in self.checkmenus:
-                    self.command(self.framemenu,
-                                label=_(m[0]),
-                                cmd=m[1]
-                                )
-            else:
-                self.changemenu.add_separator()
-                self.command(self.changemenu, label=_("Location in word"),
-                        cmd=self.parent.getcheck)
-                if self.parent.params.check() is not None:
-                    self.command(self.changemenu, label=_("Segment(s) to check"),
-                        cmd=lambda: self.parent.getgroup(tosort=True))
-        """Do"""
     def do(self):
         domenu = ui.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label=_("Do"), menu=domenu)
@@ -768,6 +705,124 @@ class StatusFrame(ui.Frame):
                             'prefix': prefix_var}
         return field
 
+    # ── Prose SENTENCES: one translated string, values clicked in place ──
+    # WHY (Kent, 2026-10-19): converting these lines from dialogs to
+    # click-to-edit values split each sentence into fragments — "Using",
+    # "Meanings in", "and", "words ({count})" — that a translator sees with
+    # no idea what follows and no way to move the value, while the whole
+    # sentences ("Using {lang}") sat translated in the catalog, unused. Now
+    # each line is ONE msgid with a named slot per clickable value; it is cut
+    # at the slots in whatever ORDER the translation puts them, and the
+    # fields are made in that order.
+    #   Punctuation touching a slot — the comma after "Checking Vowels", the
+    # quotes round a field name — becomes that field's delimiter, so it
+    # renders tight against the value (a separate label sits in its own
+    # padded cell: "Vowels ,").
+    _CLOSING_PUNCT = ',;:.!?)]’”»、，。：；！？）'
+    _OPENING_PUNCT = '‘“«([（'
+    _SLOT = re.compile(r'\{(\w+)\}')
+
+    def _sentence_parts(self, template, slots, fmt=None):
+        """Cut `template` at the named `slots`.
+
+        Returns (order, texts, delims): the slots in the template's order;
+        texts[0] before the first slot … texts[-1] after the last (other
+        placeholders filled from `fmt`, delimiter punctuation removed); and
+        delims[slot] = (opening, closing) punctuation that touches it."""
+        fmt = fmt or {}
+        order, texts, last = [], [], 0
+        for m in self._SLOT.finditer(template):
+            if m.group(1) in slots:
+                texts.append(template[last:m.start()])
+                order.append(m.group(1))
+                last = m.end()
+        texts.append(template[last:])
+
+        def fill(t):
+            def one(m):
+                v = fmt.get(m.group(1))
+                return m.group(0) if v is None else str(v)
+            return self._SLOT.sub(one, t)
+        texts = [fill(t) for t in texts]
+        delims = {s: ['', ''] for s in order}
+        for i, s in enumerate(order):
+            before, after = texts[i], texts[i + 1]
+            while before and before[-1] in self._OPENING_PUNCT:
+                delims[s][0] = before[-1] + delims[s][0]
+                before = before[:-1]
+            while after and after[0] in self._CLOSING_PUNCT:
+                delims[s][1] += after[0]
+                after = after[1:]
+            texts[i], texts[i + 1] = before, after
+        return order, [t.strip() for t in texts], \
+            {s: tuple(d) for s, d in delims.items()}
+
+    def prose_sentence(self, key, template, fields, parent=None,
+                       template_fn=None, fmt_fn=None):
+        """A prose line from ONE translated `template`, with a clickable
+        field per `{slot}`.
+
+        `fields` maps each slot name to `prosefield` keyword arguments
+        (`key`, `var`, `options_fn`, `setter`, `tt`, plus any of
+        `prosefield`'s optional ones). Slots absent from the template are
+        not drawn. `template_fn`, if given, is re-read whenever a value
+        changes (e.g. "… and {lang2}" vs "… {lang2}"), and `fmt_fn` supplies
+        the other placeholders (e.g. {count}); both refresh the text between
+        the fields. Its slot ORDER is fixed when the line is built."""
+        tmpl = template_fn() if template_fn else template
+        fmt = fmt_fn() if fmt_fn else {}
+        order, texts, delims = self._sentence_parts(tmpl, set(fields), fmt)
+        dynamic = template_fn is not None or fmt_fn is not None
+        if parent is None and len(order) > 1:
+            parent = ui.Frame(self.proseframe, row=self.irow, column=0,
+                              columnspan=3, sticky='w')
+        textvars = []
+
+        def text_for(t):
+            if dynamic:
+                v = ui.StringVar(value=t)
+                textvars.append(v)
+                return v
+            textvars.append(None)
+            return t or None
+        for i, slot in enumerate(order):
+            kw = dict(fields[slot])
+            kw.setdefault('delimit', delims[slot]
+                          if any(delims[slot]) else None)
+            prefix = text_for(texts[i])
+            suffix = text_for(texts[-1]) if i == len(order) - 1 else None
+            self.prosefield(kw.pop('key'), prefix, kw.pop('var'),
+                            kw.pop('options_fn'), kw.pop('setter'),
+                            kw.pop('tt'), parent=parent, suffix=suffix, **kw)
+        if dynamic:
+            self.sentences[key] = {'template': template,
+                                   'template_fn': template_fn,
+                                   'fmt_fn': fmt_fn, 'slots': set(fields),
+                                   'order': order, 'vars': textvars}
+        return parent
+
+    def refresh_sentences(self):
+        """Re-read every dynamic sentence's template and placeholders, and
+        reset the text between its fields."""
+        for key, s in list(getattr(self, 'sentences', {}).items()):
+            try:
+                tmpl = s['template_fn']() if s['template_fn'] else \
+                    s['template']
+                fmt = s['fmt_fn']() if s['fmt_fn'] else {}
+                order, texts, _d = self._sentence_parts(tmpl, s['slots'],
+                                                        fmt)
+                if order != s['order']:
+                    log.info("sentence %s: the translation orders its "
+                             "values %s here but %s when built; keeping "
+                             "the built order", key, order, s['order'])
+                # prefixes in order, then the suffix after the last field
+                for var, text in zip(s['vars'], texts[:len(order)]
+                                     + texts[-1:]):
+                    if var is not None:
+                        var.set(text)
+            except Exception as e:
+                log.info("couldn't refresh sentence %s (%r)", key, e)
+
     def _setlang(self, chosen, options_fn, setter, value_fn=None, var=None,
                  allow_new=False, prefix_fn=None, prefix_var=None):
         """Map the name the user picked back to the code the setter wants,
@@ -811,6 +866,9 @@ class StatusFrame(ui.Frame):
                 prefix_var.set(prefix_fn())
             except Exception as e:
                 log.info("couldn't re-read the line's prefix (%r)", e)
+        # The words between the fields may depend on what was just chosen
+        # ("… and French" vs "… only").
+        self.refresh_sentences()
     def button(self,text,fn,**kwargs): #=opts['labelcolumn']
         """cmd overrides the standard button command system."""
         ttt=kwargs.pop('tttext',None)
@@ -835,9 +893,10 @@ class StatusFrame(ui.Frame):
     # around one choice. The sentence now ends in a click-to-edit value, so
     # the chooser opens where the word is
     # (the settings-prompts-in-one-window item, 2026-09-15).
-    #   `…label()` still returns the whole sentence: the log and the stored
-    # `*_label` UI variables use it, and so does anything that wants the line
-    # as prose. `…value()` is the half that is now editable.
+    #   `…value()` is the part that is editable; the sentence around it is
+    # one translated template, cut by `prose_sentence`. (The `…label()`
+    # methods that built the old whole-line text had no callers left and
+    # were removed 2026-10-19; their sentences live on as the templates.)
     def interfacelangvalue(self):
         return str(self.program.settings.languagenames[
                                         self.program.interfacelang()])
@@ -851,19 +910,15 @@ class StatusFrame(ui.Frame):
         if 'interfacelang' not in self.labels:
             return
         self.labels['interfacelang']['text'].set(self.interfacelangvalue())
-    def interfacelanglabel(self):
-        # for l in self.program.taskchooser.interfacelangs:
-        #     if l['code']==self.program.interfacelang():
-        #         interfacelanguagename=l['name']
-        return (_("Using {lang}").format(lang=self.program.settings.languagenames[self.program.interfacelang()]))
     def interfacelangline(self):
-        self.prosefield('interfacelang', _("Using"),
-                        self.program.settings.get_ui_var(
-                            'interfacelang_label', self.interfacelangvalue()),
-                        self.interfacelangoptions,
-                        self.program.settings.interfacelangwrapper,
-                        _("change the interface language"),
-                        value_fn=self.interfacelangvalue)
+        self.prose_sentence('interfacelang', _("Using {lang}"), {
+            'lang': dict(key='interfacelang',
+                         var=self.program.settings.get_ui_var(
+                             'interfacelang_label', self.interfacelangvalue()),
+                         options_fn=self.interfacelangoptions,
+                         setter=self.program.settings.interfacelangwrapper,
+                         tt=_("change the interface language"),
+                         value_fn=self.interfacelangvalue)})
     def analangvalue(self):
         return str(self.program.settings.languagenames[
                                         self.program.params.analang()])
@@ -877,10 +932,6 @@ class StatusFrame(ui.Frame):
         if 'analangline' not in self.labels:
             return
         self.labels['analangline']['text'].set(self.analangvalue())
-    def analanglabel(self):
-        analang=self.program.params.analang()
-        langname=self.program.settings.languagenames[analang]
-        return (_("Studying {lang}").format(lang=langname))
     def analangline(self):
         self.newrow()
         var=self.program.settings.get_ui_var('analang_label',
@@ -893,12 +944,14 @@ class StatusFrame(ui.Frame):
         # The old line picked its handler by whether the language had a name,
         # and then that handler picked again by the count, so the name test
         # only ever decided the tooltip.
+        template=_("Studying {lang}")
         if len(self.program.db.analangs or []) > 1:
-            self.prosefield('analangline', _("Studying"), var,
-                            self.analangoptions,
-                            self.program.settings.setanalang,
-                            _("Change analysis language"),
-                            value_fn=self.analangvalue)
+            self.prose_sentence('analangline', template, {
+                'lang': dict(key='analangline', var=var,
+                             options_fn=self.analangoptions,
+                             setter=self.program.settings.setanalang,
+                             tt=_("Change analysis language"),
+                             value_fn=self.analangvalue)})
         else:
             # ITS OWN FRAME, like `prosefield`'s — straight into `proseframe`
             # it shared columns with "Using second form field ‘Plural’
@@ -907,13 +960,22 @@ class StatusFrame(ui.Frame):
             # others came right).
             holder=ui.Frame(self.proseframe, row=self.irow,
                             column=self.opts['labelcolumn'], sticky='w')
+            # The same sentence as the chooser line, cut at {lang}; an entry
+            # field takes only a label before it, so text a translation puts
+            # AFTER the name follows as a plain label.
+            _order,texts,_d=self._sentence_parts(template,{'lang'})
             self.labels['analangline']={'text':var,
                     'field':composites.entry_field(
                         holder, var,
-                        label=_("Studying"), label_anchor='w',
+                        label=texts[0] or None, label_anchor='w',
                         font='report',
                         on_commit=self.program.ui_settings.setanalangname,
                         row=0, column=0)}
+            if texts[-1]:
+                ui.Label(holder, text=texts[-1], font='report', anchor='w',
+                         row=0, column=getattr(
+                             self.labels['analangline']['field'],
+                             'endcolumn', 2), sticky='w')
             ui.ToolTip(self.labels['analangline']['field'].shown,
                        _("Set analysis language Name"))
     def glosslangvalue(self):
@@ -926,27 +988,46 @@ class StatusFrame(ui.Frame):
                                 self.program.settings.glosslangs.lang2()])
         return _("only")
 
-    def glosslangprefix2(self):
-        """"and" only when there IS a second language.
+    def glosslangtemplate(self):
+        """The whole gloss-language sentence, for the current settings.
 
-        With none the line reads "Meanings in X only", not "and only" (Kent,
-        2026-09-16) — the word "only" does the joining itself."""
+        "and" only when there IS a second language: with none the line reads
+        "Meanings in X only", not "and only" (Kent, 2026-09-16) — the word
+        "only" does the joining itself, and it is the clickable {lang2}."""
         if len(self.program.settings.glosslangs) > 1:
-            return _("and")
-        return ''
+            return _("Meanings in {lang} and {lang2}")
+        # Translators: {lang2} shows the word "only" (clicking it adds a
+        # second gloss language), e.g. "Meanings in French only".
+        return _("Meanings in {lang} {lang2}")
+
+    def _glosslang_choices(self):
+        """Every gloss language on offer, in a STABLE order: the database's,
+        then any chosen one it lacks. Was a set, so the menus reordered
+        from run to run."""
+        return list(dict.fromkeys(list(self.program.db.glosslangs or [])
+                                  +list(self.program.settings.glosslangs)))
+    def _glosslang_option(self,lang,switch=False):
+        # " (switch)" marks the choice that SWAPS the two languages rather
+        # than replacing one (Kent, 2026-10-19: "just so we're clear").
+        name=self.program.settings.languagenames[lang]
+        if switch:
+            name=_("{language} (switch)").format(language=name)
+        return {'code': lang, 'name': name}
 
     def glosslangoptions(self):
-        return [{'code': lang,
-                 'name': self.program.settings.languagenames[lang]}
-                for lang in set(self.program.db.glosslangs)
-                            | set(self.program.settings.glosslangs[1:])]
+        gl=self.program.settings.glosslangs
+        second=gl[1] if len(gl) > 1 else None
+        return [self._glosslang_option(lang,switch=lang == second)
+                for lang in self._glosslang_choices()]
 
     def glosslangoptions2(self):
-        langs=[{'code': lang,
-                'name': self.program.settings.languagenames[lang]}
-               for lang in set(self.program.db.glosslangs)
-                           | set(self.program.settings.glosslangs[:1])
-               if lang != self.program.settings.glosslangs[0]]
+        gl=self.program.settings.glosslangs
+        first=gl[0] if gl else None
+        # The first language is offered here only when there IS a second to
+        # swap it with; with none, choosing it would mean nothing.
+        langs=[self._glosslang_option(lang,switch=lang == first)
+               for lang in self._glosslang_choices()
+               if lang != first or len(gl) > 1]
         # "just use X" is how you say NO SECOND LANGUAGE — it has to be on
         # the list, because a list you cannot decline is one you cannot undo.
         langs.append({'code': None,
@@ -960,42 +1041,29 @@ class StatusFrame(ui.Frame):
             return
         self.labels['glosslang']['text'].set(self.glosslangvalue())
         self.labels['glosslang2']['text'].set(self.glosslangvalue2())
-        if self.labels['glosslang2'].get('prefix') is not None:
-            self.labels['glosslang2']['prefix'].set(self.glosslangprefix2())
-    def glosslanglabel(self):
-        lang=self.program.settings.glosslangs.lang1()
-        return (_("Meanings in {lang}").format(lang=self.program.settings.languagenames[lang]))
-    def glosslanglabel2(self):
-        if len(self.program.settings.glosslangs) >1:
-            glosslang2=self.program.settings.glosslangs.lang2()
-            return (_("and {lang}").format(lang=self.program.settings.languagenames[glosslang2]))
-        else:
-            return _("only")
+        self.refresh_sentences()
     def glosslangline(self):
         self.newrow()
-        line=ui.Frame(self.proseframe,row=self.irow,column=0,
-                        columnspan=3,sticky='w') #3 cols is the width of frame
-        # BOTH GLOSS LANGUAGES ON ONE LINE, as before: "Meanings in X and Y".
-        # `parent=line` puts each pair in the next free columns of that one
-        # row, so the four widgets (two prefixes, two values) read as a
-        # sentence rather than stacking.
-        self.prosefield('glosslang', _("Meanings in"),
-                        self.program.settings.get_ui_var(
-                            'glosslang_label', self.glosslangvalue()),
-                        self.glosslangoptions,
-                        self.program.settings.setglosslang,
-                        _("change this gloss language")
+        # BOTH GLOSS LANGUAGES ON ONE LINE, as before: "Meanings in X and Y",
+        # now from one translated sentence (see `prose_sentence`).
+        self.prose_sentence('glosslang', None, {
+            'lang': dict(key='glosslang',
+                         var=self.program.settings.get_ui_var(
+                             'glosslang_label', self.glosslangvalue()),
+                         options_fn=self.glosslangoptions,
+                         setter=self.program.settings.setglosslang,
+                         tt=_("change this gloss language")
                             if len(self.program.settings.glosslangs) > 1
                             else _("change this glosslang"),
-                        parent=line, value_fn=self.glosslangvalue)
-        self.prosefield('glosslang2', None,
-                        self.program.settings.get_ui_var(
-                            'glosslang2_label', self.glosslangvalue2()),
-                        self.glosslangoptions2,
-                        self.program.settings.setglosslang2,
-                        _("add another gloss language"),
-                        parent=line, value_fn=self.glosslangvalue2,
-                        prefix_fn=self.glosslangprefix2)
+                         value_fn=self.glosslangvalue),
+            'lang2': dict(key='glosslang2',
+                          var=self.program.settings.get_ui_var(
+                              'glosslang2_label', self.glosslangvalue2()),
+                          options_fn=self.glosslangoptions2,
+                          setter=self.program.settings.setglosslang2,
+                          tt=_("add another gloss language"),
+                          value_fn=self.glosslangvalue2)},
+            template_fn=self.glosslangtemplate)
     def updatefields(self):
         for ps in [self.program.settings.nominalps, self.program.settings.verbalps]:
             if 'fields'+ps in self.labels:
@@ -1098,20 +1166,22 @@ class StatusFrame(ui.Frame):
                      type(self.program.task).__name__)
             return
         self.newrow()
-        self.prosefield('wordcheck',
-                        _(getattr(self.program.task,'word_check_prefix',
-                                  "Working on")),
-                        self.program.settings.get_ui_var(
-                            'wordcheck_label', self.wordcheckvalue()),
-                        self.wordcheckoptions,
-                        self.program.settings.setwordcheck,
-                        _("change which form of the word you are working on"),
-                        value_fn=self.wordcheckvalue,
-                        # The noun: `word_checks` names are adjectival now,
-                        # so this line reads "Collecting Citation forms"
-                        # and the slice line reads "Looking at Citation C1C
-                        # words" off the same list.
-                        suffix=_("forms"))
+        # The task's own sentence ("Collecting {form} forms"): `word_checks`
+        # names are adjectival, so the line reads "Collecting Citation
+        # forms" and the slice line "Looking at Citation C1C words" off the
+        # same list.
+        self.prose_sentence('wordcheck',
+                            _(getattr(self.program.task,'word_check_sentence',
+                                      "Working on {form} forms")),
+                            {'form': dict(
+                                key='wordcheck',
+                                var=self.program.settings.get_ui_var(
+                                    'wordcheck_label', self.wordcheckvalue()),
+                                options_fn=self.wordcheckoptions,
+                                setter=self.program.settings.setwordcheck,
+                                tt=_("change which form of the word you are "
+                                     "working on"),
+                                value_fn=self.wordcheckvalue)})
 
     def fieldsline(self):
         # log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
@@ -1140,32 +1210,32 @@ class StatusFrame(ui.Frame):
             # An editable combo is all three: the existing names are offered,
             # and anything else can be typed. Kent, 2026-09-15: "second forms
             # combo/entry".
-            # THE QUOTES ARE WIDGETS, not text. `delimit` puts them either
-            # side of the value, so the line still reads "Using second form
-            # field ‘Plural’ (Noun)" while every translatable string stays a
-            # whole phrase — a msgid ending in a lone ‘ is not something a
-            # translator can work with (Kent, 2026-09-16).
-            self.prosefield('fields'+ps,
-                            _("Using second form field"),
-                            self.program.settings.get_ui_var(
-                                'fields'+ps+'_label', self.fieldsvalue(ps)),
-                            lambda ps=ps: self.fieldsoptions(ps),
-                            (self.program.settings.setsecondformfieldN
-                             if ps == self.program.settings.nominalps
-                             else self.program.settings.setsecondformfieldV),
-                            _("change this field"),
-                            editable=True, allow_new=True,
-                            value_fn=lambda ps=ps: self.fieldsvalue(ps),
-                            delimit=('‘','’'),
-                            # SHOWN, NEVER OFFERED. `fieldsvalue` says
-                            # `<unset>` when no field is defined; the combo
-                            # opened with that word in it as though it were
-                            # the current field name, and committing it is
-                            # how the string reached `project.json` (Kent,
-                            # 2026-09-17: "we don't want that value to show
-                            # in the editor at all").
-                            placeholder=self.program.settings.UNSETFIELD,
-                            suffix=_("({ps})").format(ps=ps))
+            # ONE WHOLE SENTENCE, the quotes in it. `prose_sentence` turns
+            # the quotes that touch {field} into the field's delimiters, so
+            # they still render tight ("‘Plural’", not "‘ Plural ’") while
+            # the translator sees the whole phrase — not one ending in a
+            # lone ‘ (Kent, 2026-09-16), and not three fragments either.
+            self.prose_sentence('fields'+ps,
+                _("Using second form field ‘{field}’ ({ps})"),
+                {'field': dict(
+                    key='fields'+ps,
+                    var=self.program.settings.get_ui_var(
+                        'fields'+ps+'_label', self.fieldsvalue(ps)),
+                    options_fn=lambda ps=ps: self.fieldsoptions(ps),
+                    setter=(self.program.settings.setsecondformfieldN
+                            if ps == self.program.settings.nominalps
+                            else self.program.settings.setsecondformfieldV),
+                    tt=_("change this field"),
+                    editable=True, allow_new=True,
+                    value_fn=lambda ps=ps: self.fieldsvalue(ps),
+                    # SHOWN, NEVER OFFERED. `fieldsvalue` says `<unset>`
+                    # when no field is defined; the combo opened with that
+                    # word in it as though it were the current field name,
+                    # and committing it is how the string reached
+                    # `project.json` (Kent, 2026-09-17: "we don't want that
+                    # value to show in the editor at all").
+                    placeholder=self.program.settings.UNSETFIELD)},
+                fmt_fn=lambda ps=ps: {'ps': ps})
     def assure_second_forms(self, then=None):
         """Every second-form field defined? If not, open the first one.
 
@@ -1253,37 +1323,19 @@ class StatusFrame(ui.Frame):
         # count in one place rather than two.
         self.labels['profile']['text'].set(self.profilevalue())
         self.updateps()
-    def profilelabel(self):
-        if self.program.params.cvt()=='σ':
-            # 'S' sorts the whole ps across all profiles; the per-profile label
-            # doesn't apply (the sentinel 'whole-word' profile would be shown).
-            return _("Sorting whole words by syllable profile")
-        profile=self.program.slices.profile()
-        if not profile:
-            profile=_("<no syllable profile>")
-        return (_("Looking at {profile}").format(profile=profile))
     def updateps(self):
         if 'ps' not in self.labels:
             return
-        # THE VALUE AND ITS TAIL ARE NOW TWO WIDGETS, so both are set: the
-        # field shows the category, the suffix carries the word count that
-        # used to be part of the same sentence.
+        # The field shows the category; the word count is in the sentence's
+        # text after it ("… {ps} words ({count})"), refreshed here.
         self.labels['ps']['text'].set(self.psvalue())
-        if 'ps_suffix' in self.labels:
-            self.labels['ps_suffix'].set(self.pssuffix())
+        self.refresh_sentences()
         self.makesliceattrs()
-    def pslabel(self):
-        count=self.program.slices.count()
-        ps=self.program.slices.ps()
-        if not ps:
-            ps=_("<no grammatical category>")
-        return (_("{ps} words ({count})").format(ps=ps, count=count))
     def profilevalue(self):
         """The syllable profile alone — the part the field edits.
 
-        `profilelabel()` returns the whole sentence, which was right while
-        the line was one clickable label. A click-to-edit field needs the
-        VALUE by itself, with "Looking at" as its own prefix."""
+        A click-to-edit field needs the VALUE by itself; the sentence round
+        it ("Looking at {profile} …") is the slice line's template."""
         if self.program.params.cvt()=='σ':
             # THE PROFILE CLASS, which is what 'S' slices by — `C2V`, not a
             # cvprofile. This returned '' with the note "'S' sorts the whole
@@ -1343,15 +1395,6 @@ class StatusFrame(ui.Frame):
     def psvalue(self):
         return self.program.slices.ps() or _("<no grammatical category>")
 
-    def pssuffix(self):
-        """"words (N)" — the tail of the ps half of the line.
-
-        A VARIABLE, not a fixed string, because N changes with the slice.
-        `prosefield` puts the suffix in a Label, and a Label takes a
-        Variable as its text in both backends, so the count stays live
-        without the line being rebuilt."""
-        return _("words ({count})").format(count=self.program.slices.count())
-
     def psoptions(self):
         """Lexical categories, as the old `getps` window offered them."""
         pss=list(self.program.db.pss)
@@ -1395,54 +1438,51 @@ class StatusFrame(ui.Frame):
         #   Only where the task can act on a change — `reload_for_word_check`
         # is that contract. The record page has a slice line and no reload,
         # and needs no chooser anyway (a button per form).
-        if hasattr(self.program.task,'reload_for_word_check'):
-            self.prosefield('sliceftype',
-                            _("Looking at"),
-                            self.program.settings.get_ui_var(
-                                'sliceftype_label', self.wordcheckvalue()),
-                            self.wordcheckoptions,
-                            self.program.settings.setwordcheck,
-                            _("change which form of the word you are "
-                              "working on"),
-                            parent=line,
-                            value_fn=self.wordcheckvalue)
+        # ONE SENTENCE PER CASE, each whole for the translator. The form
+        # field only where the task can act on a change; no category on the
+        # syllable sort; {count} is the slice's word count, kept live.
+        withform=hasattr(self.program.task,'reload_for_word_check')
+        if syllables:
+            template=(_("Looking at {form} {profile} words") if withform
+                      else _("Looking at {profile} words"))
+        else:
+            template=(_("Looking at {form} {profile} {ps} words ({count})")
+                      if withform
+                      else _("Looking at {profile} {ps} words ({count})"))
         profile_var=self.program.settings.get_ui_var('profile_label',
                                                      self.profilevalue())
-        self.prosefield('profile',
-                        # "Looking at" belongs to the form when there is
-                        # one; this field then just continues the sentence.
-                        None if hasattr(self.program.task,
-                                        'reload_for_word_check')
-                        else _("Looking at"),
-                        profile_var,
-                        self.profileoptions,
-                        self.program.settings.setprofile,
-                        _("change this syllable profile class") if syllables
-                        else _("change this syllable profile"),
-                        parent=line,
-                        value_fn=self.profilevalue,
-                        # "Looking at C2V words" — the noun the ps field
-                        # carries on every other page.
-                        suffix=_("words") if syllables else None)
+        fields={
+            'form': dict(key='sliceftype',
+                         var=self.program.settings.get_ui_var(
+                             'sliceftype_label', self.wordcheckvalue()),
+                         options_fn=self.wordcheckoptions,
+                         setter=self.program.settings.setwordcheck,
+                         tt=_("change which form of the word you are "
+                              "working on"),
+                         value_fn=self.wordcheckvalue),
+            'profile': dict(key='profile', var=profile_var,
+                            options_fn=self.profileoptions,
+                            setter=self.program.settings.setprofile,
+                            tt=_("change this syllable profile class")
+                               if syllables
+                               else _("change this syllable profile"),
+                            value_fn=self.profilevalue),
+            'ps': dict(key='ps',
+                       var=self.program.settings.get_ui_var('ps_label',
+                                                            self.psvalue()),
+                       options_fn=self.psoptions,
+                       setter=self.program.settings.setps,
+                       tt=_("change this grammatical category"),
+                       value_fn=self.psvalue)}
+        self.prose_sentence('slice', template, fields, parent=line,
+                            fmt_fn=lambda: {'count':
+                                            self.program.slices.count()})
         # THE TRACE STAYS. The board's current-cell marker follows this
         # variable (`update_active_cell`), and it fires on any write —
         # including the one `_setlang` makes after the setter has run,
         # which is what keeps the marker and the working slice from
         # diverging.
         profile_var.trace_add("write", self.update_active_cell)
-        if syllables:
-            return
-        self.labels['ps_suffix']=ui.StringVar(value=self.pssuffix())
-        self.prosefield('ps',
-                        None,
-                        self.program.settings.get_ui_var('ps_label',
-                                                         self.psvalue()),
-                        self.psoptions,
-                        self.program.settings.setps,
-                        _("change this grammatical category"),
-                        parent=line,
-                        value_fn=self.psvalue,
-                        suffix=self.labels['ps_suffix'])
     def updatecvt(self):
         if 'cvt' not in self.labels:
             return
@@ -1480,26 +1520,63 @@ class StatusFrame(ui.Frame):
         # labels with `ipadx: 0`, which is why the field-name quotes come
         # out as ‘Plural’ and not ‘ Plural ’. Empty opening delimiter,
         # comma closing.
+        #   NOW ONE SENTENCE (2026-10-19): the comma is in the translated
+        # text, and `prose_sentence` makes it the field's closing delimiter.
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
-        self.prosefield('cvt',
-                        _("Checking"),
-                        self.program.settings.get_ui_var('cvt_label',
-                                                         self.cvtvalue()),
-                        self.cvtoptions,
-                        self.program.settings.setcvt,
-                        _("change to other check types"),
-                        parent=line,
-                        value_fn=self.cvtvalue,
-                        delimit=('',','))
-        #this continues on the same line:
+        fields={'cvt': dict(key='cvt',
+                            var=self.program.settings.get_ui_var(
+                                'cvt_label', self.cvtvalue()),
+                            options_fn=self.cvtoptions,
+                            setter=self.program.settings.setcvt,
+                            tt=_("change to other check types"),
+                            value_fn=self.cvtvalue)}
         if self.cvt == 'T':
+            # The tone frame and group follow as their own (whole) labels.
+            self.prose_sentence('cvt', _("Checking {cvt},"), fields,
+                                parent=line)
             self.toneframe(line)
             self.tonegroup(line)
+            return
+        cvcheck_var=self.program.settings.get_ui_var('cvcheck_label',
+                                                     self.cvcheckvalue())
+        fields['check']=dict(key='cvcheck', var=cvcheck_var,
+                             options_fn=self.cvcheckoptions,
+                             setter=self.program.settings.setcheck,
+                             tt=_("change this check"),
+                             value_fn=self.cvcheckvalue)
+        # NO GROUP FIELD ON AN x-CHECK: no group applies to a correspondence
+        # check, and the old label returned '' for it — which left a
+        # clickable empty string. Drawing nothing is the honest version.
+        check=self.program.params.check()
+        if check and 'x' not in check:
+            fields['group']=dict(key='cvgroup',
+                                 var=self.program.settings.get_ui_var(
+                                     'cvgroup_label', self.cvgroupvalue()),
+                                 options_fn=self.cvgroupoptions,
+                                 setter=self.program.settings.setgroup,
+                                 tt=_("change this group")
+                                    if self.program.status.group()
+                                    else _("specify one group"),
+                                 value_fn=self.cvgroupvalue)
+            self.prose_sentence('cvt', None, fields, parent=line,
+                                template_fn=self.cvttemplate)
         else:
-            self.cvcheck(line)
-            self.cvgroup(line)
+            self.prose_sentence('cvt', _("Checking {cvt}, working on {check}"),
+                                fields, parent=line)
+        # THE TRACE STAYS, for the reason it stays on the profile field: the
+        # board's current-cell marker follows this variable, and it fires on
+        # any write — including the one `_setlang` makes after the setter has
+        # run, which keeps the marker and the working slice together.
+        cvcheck_var.trace_add("write", self.update_active_cell)
+    def cvttemplate(self):
+        """The checking sentence for the current group: "= C" when there is
+        one, nothing in front of "All groups"."""
+        if self.program.status.group():
+            return _("Checking {cvt}, working on {check} = {group}")
+        # Translators: {group} shows "All groups" here.
+        return _("Checking {cvt}, working on {check} {group}")
     def updatetoneframe(self):
         if 'toneframe' not in self.labels:
             return
@@ -1580,34 +1657,11 @@ class StatusFrame(ui.Frame):
         checks=self.program.status.checks() or []
         return [{'code':c,'name':self.program.params.cvcheckname(c) or c}
                 for c in checks]
-    def cvcheck(self,line):
-        # Was a label bound to `task.getcheck`, which raised a window
-        # ('What check do you want to do?') around one choice.
-        cvcheck_var=self.program.settings.get_ui_var('cvcheck_label',
-                                                     self.cvcheckvalue())
-        self.prosefield('cvcheck',
-                        _("working on"),
-                        cvcheck_var,
-                        self.cvcheckoptions,
-                        self.program.settings.setcheck,
-                        _("change this check"),
-                        parent=line,
-                        value_fn=self.cvcheckvalue)
-        # THE TRACE STAYS, for the reason it stays on the profile field: the
-        # board's current-cell marker follows this variable, and it fires on
-        # any write — including the one `_setlang` makes after the setter has
-        # run, which keeps the marker and the working slice together.
-        cvcheck_var.trace_add("write", self.update_active_cell)
     def updatecvgroup(self):
         if 'cvgroup' not in self.labels:
             return
         self.labels['cvgroup']['text'].set(self.cvgroupvalue())
-        prefix=self.labels['cvgroup'].get('prefix')
-        if prefix is not None:
-            prefix.set(self.cvgroupprefix())
-    def cvgroupprefix(self):
-        # "= C" when there is one, nothing in front of "All groups".
-        return '=' if self.program.status.group() else ''
+        self.refresh_sentences() #"= C" or nothing before "All groups"
     def cvgroupvalue(self):
         group=self.program.status.group()
         if not group:
@@ -1637,37 +1691,14 @@ class StatusFrame(ui.Frame):
             groups=[]
         return ([{'code':None,'name':_("All groups")}]
                 +[{'code':g,'name':self.cvgroupnames(g)} for g in groups])
-    def cvgroup(self,line):
-        # Was a label bound to `task.getgroup`, which raised a window per
-        # cvt — 'Select Vowel', 'Select Consonant', 'Select Framed Tone
-        # Group'. Kent, 2026-09-30: "getgroups should be composite. any
-        # given page is asking for one set, right? what's the problem?"
-        # Right: `_getgroup` builds ONE list, `groups_visible(cvt=…)`, and
-        # the per-cvt branching is only the window's title.
-        #   THE EXCEPTION IS THE CxV PATH, which asks twice ("for
-        # kwargs['cvt'] in ['C','V']") and is not converted — it is already
-        # tracked as dead (`cv_group_selection_dead.md`) and `getcvt` hides
-        # CV/VC from sort tasks, so no live page reaches it. `getgroup`
-        # stays for whatever still calls it.
-        #   NO FIELD AT ALL ON AN x-CHECK: no group applies to a
-        # correspondence check, and the old label returned '' for it —
-        # which left a clickable empty string. Drawing nothing is the
-        # honest version.
-        check=self.program.params.check()
-        if not check or 'x' in check:
-            return
-        self.prosefield('cvgroup',
-                        self.cvgroupprefix(),
-                        self.program.settings.get_ui_var(
-                            'cvgroup_label', self.cvgroupvalue()),
-                        self.cvgroupoptions,
-                        self.program.settings.setgroup,
-                        _("change this group")
-                        if self.program.status.group()
-                        else _("specify one group"),
-                        parent=line,
-                        value_fn=self.cvgroupvalue,
-                        prefix_fn=self.cvgroupprefix)
+    # The group field (in `cvtline`) was a label bound to `task.getgroup`,
+    # which raised a window per cvt — 'Select Vowel', 'Select Consonant',
+    # 'Select Framed Tone Group'. Kent, 2026-09-30: "getgroups should be
+    # composite. any given page is asking for one set, right?" Right:
+    # `_getgroup` builds ONE list, `groups_visible(cvt=…)`, and the per-cvt
+    # branching was only the window's title. THE EXCEPTION IS THE CxV PATH,
+    # which asks twice and is not converted — tracked as dead
+    # (`cv_group_selection_dead.md`); `getgroup` stays for whatever calls it.
     def updatebuttoncolumns(self):
         if 'buttoncolumns' not in self.labels:
             return
@@ -1692,15 +1723,17 @@ class StatusFrame(ui.Frame):
         # option NAMES and "Not using multiple button columns" becomes the
         # honest "Using 1 column".
         self.newrow()
-        self.prosefield('buttoncolumns',
-                        _("Using"),
-                        self.program.settings.get_ui_var(
-                            'buttoncolumns_label', self.buttoncolumnsvalue()),
-                        self.buttoncolumnsoptions,
-                        self.program.settings.setbuttoncolumns,
-                        _("change the number of columns used for sort "
-                          "buttons"),
-                        value_fn=self.buttoncolumnsvalue)
+        # Translators: {columns} is e.g. "2 columns" (of sort buttons).
+        self.prose_sentence('buttoncolumns', _("Using {columns}"), {
+            'columns': dict(key='buttoncolumns',
+                            var=self.program.settings.get_ui_var(
+                                'buttoncolumns_label',
+                                self.buttoncolumnsvalue()),
+                            options_fn=self.buttoncolumnsoptions,
+                            setter=self.program.settings.setbuttoncolumns,
+                            tt=_("change the number of columns used for "
+                                 "sort buttons"),
+                            value_fn=self.buttoncolumnsvalue)})
     def updatemaxslice(self):
         if 'maxslice' not in self.labels:
             return
@@ -1719,18 +1752,17 @@ class StatusFrame(ui.Frame):
         # Page'). The explanation the window carried in its body has nowhere
         # to go on a prose line, so it is the tooltip.
         self.newrow()
-        self.prosefield('maxslice',
-                        _("Showing"),
-                        self.program.settings.get_ui_var(
-                            'maxslice_label', self.maxslicevalue()),
-                        self.maxsliceoptions,
-                        self.program.settings.setmaxslice,
-                        _("change how many words appear per page when "
-                          "sorting syllables — fewer means each page "
-                          "appears faster but there are more of them; tune "
-                          "to this machine"),
-                        value_fn=self.maxslicevalue,
-                        suffix=_("words per page"))
+        self.prose_sentence('maxslice', _("Showing {n} words per page"), {
+            'n': dict(key='maxslice',
+                      var=self.program.settings.get_ui_var(
+                          'maxslice_label', self.maxslicevalue()),
+                      options_fn=self.maxsliceoptions,
+                      setter=self.program.settings.setmaxslice,
+                      tt=_("change how many words appear per page when "
+                           "sorting syllables — fewer means each page "
+                           "appears faster but there are more of them; tune "
+                           "to this machine"),
+                      value_fn=self.maxslicevalue)})
     # THREE DEAD UPDATERS, FIXED WITH THE CONVERSION (2026-09-30). Both
     # `maxes` updaters guarded on `'maxes' in self.labels` and wrote
     # `labels['maxes']` — a key `maxes()` never creates; it makes
@@ -1761,36 +1793,48 @@ class StatusFrame(ui.Frame):
         # comma is: a suffix sits in its own padded cell and renders
         # "Max profiles: 5 ;".
         self.newrow()
-        line=ui.Frame(self.proseframe,row=self.irow,column=0,
-                        columnspan=3,sticky='w')
-        self.prosefield('maxprofiles',
-                        _("Max profiles:"),
-                        self.program.settings.get_ui_var(
-                            'maxprofiles_label', self.maxprofilesvalue()),
-                        self.maxoptions,
-                        self.program.settings.setmaxprofiles,
-                        _("change how many syllable profiles to report"),
-                        parent=line,
-                        value_fn=self.maxprofilesvalue,
-                        delimit=('',';'))
-        self.prosefield('maxpss',
-                        _("Max lexical categories:"),
-                        self.program.settings.get_ui_var(
+        self.prose_sentence('maxes',
+            _("Max profiles: {profiles}; Max lexical categories: {pss}"), {
+            'profiles': dict(key='maxprofiles',
+                             var=self.program.settings.get_ui_var(
+                                 'maxprofiles_label', self.maxprofilesvalue()),
+                             options_fn=self.maxoptions,
+                             setter=self.program.settings.setmaxprofiles,
+                             tt=_("change how many syllable profiles to "
+                                  "report"),
+                             value_fn=self.maxprofilesvalue),
+            'pss': dict(key='maxpss',
+                        var=self.program.settings.get_ui_var(
                             'maxpss_label', self.maxpssvalue()),
-                        self.maxoptions,
-                        self.program.settings.setmaxpss,
-                        _("change how many lexical categories to report "
-                          "(2 = Noun and Verb)"),
-                        parent=line,
-                        value_fn=self.maxpssvalue)
+                        options_fn=self.maxoptions,
+                        setter=self.program.settings.setmaxpss,
+                        tt=_("change how many lexical categories to report "
+                             "(2 = Noun and Verb)"),
+                        value_fn=self.maxpssvalue)})
     def updatemulticheckscope(self):
         if 'multicheckscope' not in self.labels:
             return
         self.labels['multicheckscope']['text'].set(
                                             self.multicheckscopevalue())
+    def multicheckscopename(self,cvts):
+        """The name of one scope choice — the SAME words on the line and in
+        its option list. The line used `cvtstodoprose`, the list added
+        "(only)", so the two read differently, and could drift apart in a
+        translation (Kent, 2026-10-19). Named in ONE order (the app's cvt
+        order), so ['C','V'] and ['V','C'] read the same."""
+        order=list(self.program.params.cvts())
+        cvts=sorted(cvts, key=lambda c: order.index(c) if c in order
+                                        else len(order))
+        name=unlist([self.program.params.cvtdict()[i]['pl'] for i in cvts])
+        if len(cvts) == 1:
+            # One sentence, not name + ' ' + "(only)" (2026-10-19).
+            # Translators: {kinds} is one kind of check, e.g. "Vowels".
+            name=_("{kinds} (only)").format(kinds=name)
+        return str(name)
     def multicheckscopevalue(self):
-        return str(unlist(self.program.ui_settings.cvtstodoprose(
-                            getattr(self.program.task,'cvtstodo',None))))
+        cvts=(getattr(self.program.task,'cvtstodo',None)
+              or getattr(self.program.ui_settings,'cvtstodo',None) or ['V'])
+        return self.multicheckscopename(list(cvts))
     def multicheckscopeoptions(self):
         """Every combination of check types, each ONE pick.
 
@@ -1808,51 +1852,33 @@ class StatusFrame(ui.Frame):
                    if i[0] not in j
                    if set(j+i) not in [set(k) for k in done]]
         done+=[[i[0] for i in cvts]]
-        options=[]
-        for opt in done:
-            name=unlist([self.program.params.cvtdict()[i]['pl'] for i in opt])
-            if len(opt) == 1:
-                name+=' '+_("(only)")
-            options.append({'code':opt,'name':name})
-        return options
+        return [{'code':opt,'name':self.multicheckscopename(opt)}
+                for opt in done]
     def multicheckscope(self):
         # Was a label raising 'Select Scope of Checks'.
         if not hasattr(self.program.task,'cvtstodo'):
             self.program.task.cvtstodo=['V']
         self.newrow()
-        self.prosefield('multicheckscope',
-                        _("Run all checks for"),
-                        self.program.settings.get_ui_var(
-                            'multicheckscope_label',
-                            self.multicheckscopevalue()),
-                        self.multicheckscopeoptions,
-                        self.program.settings.setmulticheckscope,
-                        _("change which kinds of check to run"),
-                        value_fn=self.multicheckscopevalue)
+        # Translators: {kinds} is e.g. "Vowels" or "Consonants and Vowels".
+        self.prose_sentence('multicheckscope', _("Run all checks for {kinds}"),
+            {'kinds': dict(key='multicheckscope',
+                           var=self.program.settings.get_ui_var(
+                               'multicheckscope_label',
+                               self.multicheckscopevalue()),
+                           options_fn=self.multicheckscopeoptions,
+                           setter=self.program.settings.setmulticheckscope,
+                           tt=_("change which kinds of check to run"),
+                           value_fn=self.multicheckscopevalue)})
     def updateparserasklevel(self):
         if 'parserasklevel' not in self.labels:
             return
         self.labels['parserasklevel']['text'].set(
                                             self.parserlevelvalue('ask'))
-    def parserasklevellabel(self):
-        try:
-            ls=self.program.task.parser.levels() # we need this anyway, and a parser test
-            return (_("Parse with confirmation at {parser_levels}").format(parser_levels=ls[self.program.task.parser.ask]))
-        except AttributeError as e:
-            log.info(f"Error loading parser levels: {e}")
-            return
     def updateparserautolevel(self):
         if 'parserautolevel' not in self.labels:
             return
         self.labels['parserautolevel']['text'].set(
                                             self.parserlevelvalue('auto'))
-    def parserautolevellabel(self):
-        try:
-            ls=self.program.task.parser.levels()
-            return (_("Parse automatically at {parser_levels}").format(parser_levels=ls[self.program.task.parser.auto]))
-        except AttributeError as e:
-            log.info(f"Error loading parser levels: {e}")
-            return
     def parserlevelvalue(self, which):
         """The name of the level currently set for `which` ('ask' or 'auto').
 
@@ -1906,23 +1932,27 @@ class StatusFrame(ui.Frame):
         # there is nothing sensible to type. Kent, 2026-09-15: "others are
         # strict lists".
         self.newrow()
-        self.prosefield('parserasklevel', _("Parse with confirmation at"),
-                        self.program.settings.get_ui_var(
-                            'parserasklevel_label',
-                            self.parserlevelvalue('ask')),
-                        self.parserleveloptions,
-                        self.program.settings.setparserasklevel,
-                        _("change this confirmed parse level"),
-                        value_fn=lambda: self.parserlevelvalue('ask'))
+        self.prose_sentence('parserasklevel',
+            _("Parse with confirmation at {parser_levels}"),
+            {'parser_levels': dict(
+                key='parserasklevel',
+                var=self.program.settings.get_ui_var(
+                    'parserasklevel_label', self.parserlevelvalue('ask')),
+                options_fn=self.parserleveloptions,
+                setter=self.program.settings.setparserasklevel,
+                tt=_("change this confirmed parse level"),
+                value_fn=lambda: self.parserlevelvalue('ask'))})
         self.newrow()
-        self.prosefield('parserautolevel', _("Parse automatically at"),
-                        self.program.settings.get_ui_var(
-                            'parserautolevel_label',
-                            self.parserlevelvalue('auto')),
-                        self.parserleveloptions,
-                        self.program.settings.setparserautolevel,
-                        _("change this auto parse level"),
-                        value_fn=lambda: self.parserlevelvalue('auto'))
+        self.prose_sentence('parserautolevel',
+            _("Parse automatically at {parser_levels}"),
+            {'parser_levels': dict(
+                key='parserautolevel',
+                var=self.program.settings.get_ui_var(
+                    'parserautolevel_label', self.parserlevelvalue('auto')),
+                options_fn=self.parserleveloptions,
+                setter=self.program.settings.setparserautolevel,
+                tt=_("change this auto parse level"),
+                value_fn=lambda: self.parserlevelvalue('auto'))})
         self._reread_parser_levels()
 
     def _reread_parser_levels(self, tries=6):
@@ -1954,12 +1984,6 @@ class StatusFrame(ui.Frame):
         if 'sensetodo' not in self.labels:
             return
         self.labels['sensetodo']['text'].set(self.sensetodovalue())
-    def sensetodolabel(self):
-        t=self.program.task
-        if hasattr(t,'sensetodo') and t.sensetodo is not None:
-            return _("Parsing {sense}").format(sense=t.sensetodo.formatted(t.analang,t.glosslangs))
-        else:
-            return _("Parsing all words")
     def sensetodovalue(self):
         t=self.program.task
         if getattr(t,'sensetodo',None) is not None:
@@ -1995,14 +2019,16 @@ class StatusFrame(ui.Frame):
         # EDITABLE SO IT CAN BE SEARCHED, but `allow_new=False`: the codes
         # here are sense objects, so a typed string that matches nothing is
         # a search that found nothing rather than a new sense.
-        self.prosefield('sensetodo', _("Parsing"),
-                        self.program.settings.get_ui_var(
-                            'sensetodo_label', self.sensetodovalue()),
-                        self.sensetodooptions,
-                        self.program.task.setsensetodo,
-                        _("change this sense to do"),
-                        editable=True, allow_new=False,
-                        value_fn=self.sensetodovalue)
+        # Translators: {sense} is one word with its gloss, or "all words".
+        self.prose_sentence('sensetodo', _("Parsing {sense}"), {
+            'sense': dict(key='sensetodo',
+                          var=self.program.settings.get_ui_var(
+                              'sensetodo_label', self.sensetodovalue()),
+                          options_fn=self.sensetodooptions,
+                          setter=self.program.task.setsensetodo,
+                          tt=_("change this sense to do"),
+                          editable=True, allow_new=False,
+                          value_fn=self.sensetodovalue)})
     def redofinalbuttons(self):
         if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
             self.bigbutton.destroy()
@@ -2847,6 +2873,7 @@ class StatusFrame(ui.Frame):
         # self.task=program.task #this is the window that called it; task or chooser
         self.mainrelief=kwargs.pop('relief',None) #not for frame
         self.labels={} #make a place to store these
+        self.sentences={} #prose lines whose text between fields can change
         kwargs['padx']=25
         kwargs['gridwait']=True
         super(StatusFrame, self).__init__(parent, **kwargs)
@@ -3371,8 +3398,8 @@ class TaskDressing(HasMenus,ui.Window):
     def setsensetodo(self,choice,window=None):  # None: set in place, no dialog
         # SET THESE ON THE TASK, NOT ON THE WINDOW. Both readers look at the
         # task — `getword` tests `getattr(self,'sensetodo',None)`
-        # (lexicon.py:1352) and `sensetodolabel` tests
-        # `self.program.task.sensetodo` (:1083) — and the task OWNS the
+        # (lexicon.py:1352) and `sensetodovalue` tests
+        # `self.program.task.sensetodo` — and the task OWNS the
         # attribute rather than borrowing it: `initsensetodo`
         # (lexicon.py:1921-1932) treats it as a one-shot token and does
         # `self.sensetodo=None` on the task while the to-do list is being
@@ -3545,9 +3572,12 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             glyphs=self.program.alphabet.glyphs()
         glyph=self.program.alphabet.glyph()
-        purpose=kwargs.get('purpose','to work with')
-        text=[_("What"),self.program.params.cvtdict()[cvt]['sg'],
-                _("do you want {purpose}?").format(purpose=purpose)]
+        # One whole question (see PICKER_QUESTIONS); it was assembled from
+        # "What" + type + "do you want {purpose}?", with "other" spliced in.
+        purpose=('compare' if kwargs.get('comparison')
+                 else kwargs.get('purpose'))
+        text=self.picker_question(purpose,
+                                  self.program.params.cvtdict()[cvt]['sg'])
         if kwargs.get('comparison'):
             g2=list(glyphs)[:]
             g2.remove(self.program.alphabet.glyph())
@@ -3559,12 +3589,11 @@ class TaskDressing(HasMenus,ui.Window):
                 return
             optionlist=g2
             command=self.program.settings.setgroup_comparison
-            text.insert(1,_("other"))
         else:
             optionlist=glyphs
             command=self.program.alphabet.glyph
         ui.Label(window.frame,
-                      text=' '.join(text),
+                      text=text,
                       column=0, row=0)
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                  optionlist=optionlist,
@@ -3576,7 +3605,7 @@ class TaskDressing(HasMenus,ui.Window):
     def _getgroup(self,window,event=None, **kwargs):
         """Window is called in getgroup"""
         log.info(_("Asking for a group (_getgroup kwargs: {kwargs})").format(kwargs=kwargs))
-        purpose=kwargs.get('purpose','to work with')
+        purpose=kwargs.get('purpose') #see PICKER_QUESTIONS
         ps=kwargs.get('ps',self.program.slices.ps())
         cvt=kwargs.get('cvt',self.program.params.cvt())
         profile=kwargs.get('profile',self.program.slices.profile())
@@ -3657,7 +3686,7 @@ class TaskDressing(HasMenus,ui.Window):
                 self.program.settings.setgroup_comparison(g2[0],window)
                 return
             ui.Label(window.frame,
-                      text=_(f"What {cvt_name} do you want to {purpose}?"),
+                      text=self.picker_question('compare',cvt_name),
                       column=0, row=0)
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                             optionlist=g2,
@@ -3667,7 +3696,7 @@ class TaskDressing(HasMenus,ui.Window):
                             )
         else:
             ui.Label(window.frame,
-                      text=_("What {type} do you want to {purpose}?").format(type=cvt_name,purpose=purpose),
+                      text=self.picker_question(purpose,cvt_name),
                       column=0, row=0)
             # window.scroll=ui.ScrollingFrame(window.frame)
             # window.scroll.grid(column=0, row=1)
@@ -3680,33 +3709,58 @@ class TaskDressing(HasMenus,ui.Window):
                                      column=0, row=4
                                      )
         log.info("Done making _getgroup buttonframe")
+    # WHAT THE GROUP OR LETTER IS PICKED FOR, as whole sentences (Kent,
+    # 2026-10-19). `purpose` used to be an English word dropped into "What
+    # {type} do you want to {purpose}?" untranslated — 'join', or by default
+    # 'to work with' ("…want to to work with?"). A group is never picked for
+    # "work" in general: these are the reasons a page asks. No purpose is
+    # the status line's chooser, which serves whatever the page does next.
+    PICKER_QUESTIONS={
+        None: N_("Which {type} do you want to work with?"),
+        'verify': N_("Which {type} do you want to verify?"),
+        'join': N_("Which {type} do you want to join?"),
+        'name': N_("Which {type} do you want to name?"),
+        'compare': N_("Which other {type} do you want to compare it with?"),
+        }
+    PICKER_TITLES={
+        # Translators: {title} is a window title such as "Select Vowel".
+        'verify': N_("{title} to Verify"),
+        'join': N_("{title} to Join"),
+        'name': N_("{title} to Name"),
+        'compare': N_("{title} to Compare"),
+        }
+    def picker_question(self,purpose,type_name):
+        t=self.PICKER_QUESTIONS.get(purpose)
+        if t is None:
+            log.warning("no picker question for purpose %r; using the "
+                        "general one", purpose)
+            t=self.PICKER_QUESTIONS[None]
+        return _(t).format(type=type_name)
+    def picker_title(self,purpose,title):
+        t=self.PICKER_TITLES.get(purpose)
+        return _(t).format(title=title) if t else title
     def getglyph(self,event=None,**kwargs): #guess=False,
-        def title_mod(x):
-            if purpose_title:
-                return ' '.join([x,_("to"),purpose_title])
-            else:
-                return x
         cvt=kwargs.get('cvt',self.program.params.cvt())
         if cvt in ['V','C']:
-            purpose_title=kwargs.get('purpose','').capitalize()
+            purpose=('compare' if kwargs.get('comparison')
+                     else kwargs.get('purpose'))
             cvt_name=self.program.params.cvtdict()[cvt]['sg']
-            w=ui.Window(self, title=title_mod(_('Select {type} Glyph').format(type=cvt_name)))
+            w=ui.Window(self, title=self.picker_title(purpose,
+                        _('Select {type} Glyph').format(type=cvt_name)))
             self._getglyph(w,**kwargs)
             # w.wait_window(window=w)
             return w #so others can wait for this
     def getgroup(self,event=None,**kwargs): #guess=False,
-        def title_mod(x):
-            if purpose_title:
-                return ' '.join([x,_("to"),purpose_title])
-            else:
-                return x
         """I need to think though how to get this to wait appropriately
         both for single C/V selection, and for CxV selection"""
         # log.info("this sets the group")
         kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
         # log.info("getgroup kwargs: {}".format(kwargs))
         self.program.settings.refreshattributechanges()
-        purpose_title=kwargs.get('purpose','').capitalize()
+        purpose=('compare' if kwargs.get('comparison')
+                 else kwargs.get('purpose'))
+        def title_mod(x):
+            return self.picker_title(purpose,x)
         cvt=kwargs.get('cvt',self.program.params.cvt())
         if cvt == 'V':
             w=ui.Window(self,title=title_mod(_('Select Vowel')))
@@ -5232,7 +5286,7 @@ class Settings(object):
                     ]
             for opt in options:
                 if len(opt['code']) == 1:
-                    opt['name']+=' '+_("(only)")
+                    opt['name']=_("{kinds} (only)").format(kinds=opt['name'])
             _option_dialog(self.dialogparent(),
                            title=_('Select Scope of Checks'),
                            text=_('What kinds of checks to you want to run?'),

@@ -491,12 +491,22 @@ class Record(BackendRecord, Sound):
             self.showtonegroupexs()
             return
         skip = False
-        for i in range(self.examplespergrouptorecord):
+        # THE SETTING LIVES ON program.settings (Advanced → "Number of Examples
+        # to Record" writes it there); this read it off the task, which never
+        # has it: "'RecordCitationT' object has no attribute
+        # 'examplespergrouptorecord'" (Kent, 2026-10-19). Unset, it is 5 —
+        # the "Some, but not all, of most groups" choice in that dialog.
+        try:
+            nexamples = int(getattr(self.program.settings,
+                                    'examplespergrouptorecord', None) or 5)
+        except (TypeError, ValueError):
+            nexamples = 5
+        for i in range(nexamples):
             for ufgroup in torecord:
                 if len(torecord[ufgroup]) > i:
                     sense = torecord[ufgroup][i]
                     exited = self.showsenseswithexamplestorecord([sense],
-                                                                 (ufgroup, i + 1, self.examplespergrouptorecord),
+                                                                 (ufgroup, i + 1, nexamples),
                                                                  skip=skip)
                     if exited == 'skip':
                         skip = True

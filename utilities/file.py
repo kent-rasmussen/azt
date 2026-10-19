@@ -167,15 +167,20 @@ def getreldir(origin,dest):
     # return getfile(dest).relative_to(getfile(origin))
 def getreldirposix(origin,dest):
     return getfile(os.path.relpath(dest,origin))
+# The XLingPaper folders sit at the top of the program (azt/xlpstylesheets,
+# azt/xlptransforms). These looked beside THIS file, which has lived in
+# utilities/ since the module split, so neither was ever found: reports were
+# written unstyled, and the PDF step stopped before it began (2026-10-15).
+_programdir=pathlib.Path(__file__).resolve().parent.parent
 def getstylesheetdir(filename):
     dir=pathlib.Path.joinpath(getfilenamedir(filename),'xlpstylesheets')
     if not os.path.exists(dir):
-        dir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'xlpstylesheets')
+        dir=pathlib.Path.joinpath(_programdir,'xlpstylesheets')
         if not os.path.exists(dir):
             return ("{} not there, not using a stylesheet!".format(dir))
     return dir
 def gettransformsdir():
-    dir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'xlptransforms')
+    dir=pathlib.Path.joinpath(_programdir,'xlptransforms')
     if not os.path.exists(dir):
         return "HELP! not sure why {} is not there!".format(dir)
     return dir

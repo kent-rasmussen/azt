@@ -1,0 +1,142 @@
+#, fuzzy
+msgid "Alphabet Comparison Pages"
+msgstr "字母表对比页"
+
+#, fuzzy
+msgid "Analysis language Name"
+msgstr "分析语言名称"
+
+#, fuzzy
+msgid "Analysis language"
+msgstr "分析语言"
+
+#, fuzzy
+msgid "Another gloss language"
+msgstr "另一种释义语言"
+
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on {check} = {group}"
+msgstr "检查{cvt}，正在处理{check} = {group}"
+
+# CHECK: {group} shows "All groups" (所有组) here
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on {check} {group}"
+msgstr "检查{cvt}，正在处理{check} {group}"
+
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on {check}"
+msgstr "检查{cvt}，正在处理{check}"
+
+#, fuzzy, python-brace-format
+msgid "Checking {cvt},"
+msgstr "检查{cvt}，"
+
+#, fuzzy
+msgid "Choose"
+msgstr "选择"
+
+# CHECK: {form} is a form name such as Citation or Plural
+#, fuzzy, python-brace-format
+msgid "Collecting {form} forms"
+msgstr "正在收集{form}形式"
+
+#, fuzzy
+msgid "Consonant-Vowel-Tone"
+msgstr "辅音-元音-声调"
+
+#, fuzzy
+msgid "Gloss language"
+msgstr "释义语言"
+
+#, fuzzy
+msgid "Interface/computer language"
+msgstr "界面/电脑语言"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {form} {profile} words"
+msgstr "正在查看{form} {profile}词"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {form} {profile} {ps} words ({count})"
+msgstr "正在查看{form} {profile} {ps}词（{count}）"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {profile} words"
+msgstr "正在查看{profile}词"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {profile} {ps} words ({count})"
+msgstr "正在查看{profile} {ps}词（{count}）"
+
+#, fuzzy, python-brace-format
+msgid "Max profiles: {profiles}; Max lexical categories: {pss}"
+msgstr "最多音节模式数：{profiles}；最多词类数：{pss}"
+
+#, fuzzy, python-brace-format
+msgid "Meanings in {lang} and {lang2}"
+msgstr "{lang}和{lang2}释义"
+
+# CHECK: {lang2} shows "仅限" (clickable, to add a second language); word order
+#, fuzzy, python-brace-format
+msgid "Meanings in {lang} {lang2}"
+msgstr "{lang}释义 {lang2}"
+
+#, fuzzy
+msgid "Part of speech"
+msgstr "词性"
+
+#, fuzzy, python-brace-format
+msgid "Recording {form} forms"
+msgstr "正在录制{form}形式"
+
+#, fuzzy, python-brace-format
+msgid "Run all checks for {kinds}"
+msgstr "对{kinds}运行全部检查"
+
+#, fuzzy, python-brace-format
+msgid "Showing {n} words per page"
+msgstr "每页显示{n}个词"
+
+#, fuzzy, python-brace-format
+msgid "Using {columns}"
+msgstr "使用{columns}"
+
+#, fuzzy, python-brace-format
+msgid "Which other {type} do you want to compare it with?"
+msgstr "您想与哪个其他{type}进行比较？"
+
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to join?"
+msgstr "您想合并哪个{type}？"
+
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to name?"
+msgstr "您想命名哪个{type}？"
+
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to verify?"
+msgstr "您想验证哪个{type}？"
+
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to work with?"
+msgstr "您想处理哪个{type}？"
+
+#, fuzzy, python-brace-format
+msgid "Working on {form} forms"
+msgstr "正在处理{form}形式"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Compare"
+msgstr "{title}（用于比较）"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Join"
+msgstr "{title}（用于合并）"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Name"
+msgstr "{title}（用于命名）"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Verify"
+msgstr "{title}（用于验证）"

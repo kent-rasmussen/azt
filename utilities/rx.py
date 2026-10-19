@@ -137,6 +137,45 @@ def texmllike(x):
     """Confirm that r is correct here"""
     x=re.sub(r'\\\\textless{}(([\?!/]|tex:)[^\\\\]*)\\\\textgreater{}',"<\\1>",x)
     return x
+_TEXMLLIKE_CHARS=str.maketrans({
+    '\\': "\\textbackslash{}",
+    '{': "\\{",
+    '}': "\\}",
+    '$': "\\textdollar{}",
+    '[': "{[}",
+    ']': "{]}",
+    '&': "\\&",
+    '#': "\\#",
+    '^': "\\^{}",
+    '_': "\\_",
+    '~': "\\textasciitilde{}",
+    '%': "\\%",
+    '|': "\\textbar{}",
+    '<': "\\textless{}",
+    '>': "\\textgreater{}",
+    })
+def texmllike_text(x):
+    """TeXMLLikeCharacterConversion for ONE TEXT NODE's (unescaped) text.
+
+    texmllike() above ran over the whole serialized document, markup and
+    all, then tried to put the tags back with a regex that looked for TWO
+    backslashes where it had written one, so no tag came back and the next
+    parse failed ("this is where this currently breaks"). It also replaced
+    one character at a time, so the braces of '\\textbackslash{}' were
+    themselves escaped. Here: text only, one pass (2026-10-15)."""
+    if not x:
+        return x
+    x=x.translate(_TEXMLLIKE_CHARS)
+    for y,z in (('.​ ',".\\  "),('‌ ',".\\ \\ "),('‍ ',".~")):
+        x=x.replace(y,z)
+    return x
+def texmllike_tree(root):
+    """Apply texmllike_text to every text and tail in an lxml/ET tree."""
+    for el in root.iter():
+        if isinstance(el.tag,str): #elements; a comment's text is not output
+            el.text=texmllike_text(el.text)
+        el.tail=texmllike_text(el.tail)
+    return root
 def noparenscontent(x): #pull all content in parentheses
     if isinstance(x,str):
         """Confirm that r is correct here"""

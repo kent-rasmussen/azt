@@ -1,0 +1,143 @@
+#, fuzzy
+msgid "Alphabet Comparison Pages"
+msgstr "Pages de comparaison d’alphabets"
+
+#, fuzzy
+msgid "Analysis language Name"
+msgstr "Nom de la langue d’analyse"
+
+#, fuzzy
+msgid "Analysis language"
+msgstr "Langue d’analyse"
+
+#, fuzzy
+msgid "Another gloss language"
+msgstr "Une autre langue de glose"
+
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on {check} = {group}"
+msgstr "Vérification de {cvt}, travail sur {check} = {group}"
+
+# CHECK: {group} shows "All groups" (Tous les groupes) here
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on {check} {group}"
+msgstr "Vérification de {cvt}, travail sur {check} {group}"
+
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on {check}"
+msgstr "Vérification de {cvt}, travail sur {check}"
+
+#, fuzzy
+msgid "Choose"
+msgstr "Choisir"
+
+# CHECK: {form} is a form name such as Citation or Plural
+#, fuzzy, python-brace-format
+msgid "Collecting {form} forms"
+msgstr "Collecte des formes {form}"
+
+#, fuzzy
+msgid "Consonant-Vowel-Tone"
+msgstr "Consonne-Voyelle-Ton"
+
+#, fuzzy
+msgid "Gloss language"
+msgstr "Langue de glose"
+
+#, fuzzy
+msgid "Interface/computer language"
+msgstr "Langue de l’interface/de l’ordinateur"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {form} {profile} words"
+msgstr "Regarde les mots {form} {profile}"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {form} {profile} {ps} words ({count})"
+msgstr "Regarde {form} {profile}, mots {ps} ({count})"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {profile} words"
+msgstr "Regarde les mots {profile}"
+
+#, fuzzy, python-brace-format
+msgid "Looking at {profile} {ps} words ({count})"
+msgstr "Regarde {profile}, mots {ps} ({count})"
+
+#, fuzzy, python-brace-format
+msgid "Max profiles: {profiles}; Max lexical categories: {pss}"
+msgstr "Profils max. : {profiles} ; catégories lexicales max. : {pss}"
+
+#, fuzzy, python-brace-format
+msgid "Meanings in {lang} and {lang2}"
+msgstr "Significations en {lang} et {lang2}"
+
+# CHECK: {lang2} shows "seulement" (clickable, to add a second language)
+#, fuzzy, python-brace-format
+msgid "Meanings in {lang} {lang2}"
+msgstr "Significations en {lang} {lang2}"
+
+#, fuzzy
+msgid "Part of speech"
+msgstr "Partie du discours"
+
+#, fuzzy, python-brace-format
+msgid "Recording {form} forms"
+msgstr "Enregistrement des formes {form}"
+
+#, fuzzy, python-brace-format
+msgid "Run all checks for {kinds}"
+msgstr "Exécuter toutes les vérifications pour {kinds}"
+
+#, fuzzy, python-brace-format
+msgid "Showing {n} words per page"
+msgstr "Affichage de {n} mots par page"
+
+#, fuzzy, python-brace-format
+msgid "Using {columns}"
+msgstr "Utiliser {columns}"
+
+# CHECK: gender of {type} (voyelle, consonne…) — "quel(le)" avoided by rewording
+#, fuzzy, python-brace-format
+msgid "Which other {type} do you want to compare it with?"
+msgstr "Avec quel autre élément ({type}) voulez-vous le comparer ?"
+
+# CHECK: gender of {type}
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to join?"
+msgstr "Quel élément ({type}) voulez-vous joindre ?"
+
+# CHECK: gender of {type}
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to name?"
+msgstr "Quel élément ({type}) voulez-vous nommer ?"
+
+# CHECK: gender of {type}
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to verify?"
+msgstr "Quel élément ({type}) voulez-vous vérifier ?"
+
+# CHECK: gender of {type}
+#, fuzzy, python-brace-format
+msgid "Which {type} do you want to work with?"
+msgstr "Avec quel élément ({type}) voulez-vous travailler ?"
+
+#, fuzzy, python-brace-format
+msgid "Working on {form} forms"
+msgstr "Travail sur les formes {form}"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Compare"
+msgstr "{title} à comparer"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Join"
+msgstr "{title} à joindre"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Name"
+msgstr "{title} à nommer"
+
+#, fuzzy, python-brace-format
+msgid "{title} to Verify"
+msgstr "{title} à vérifier"

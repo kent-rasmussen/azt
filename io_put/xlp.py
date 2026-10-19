@@ -7,6 +7,32 @@ from xml.etree import ElementTree as ET
 from utilities import xmlfns,rx,file,times
 
 import subprocess
+import pathlib
+import os
+def ascii_id(x):
+    """XLingPaper's NonASCIIIDandIDREFConversion: each character above 127
+    becomes its code point in upper-case hex, as TeX labels need."""
+    return ''.join(c if ord(c)<128 else '{:X}'.format(ord(c)) for c in x)
+def ascii_ids(root):
+    """Convert every id, and every attribute that refers to one, the same
+    way, so references still land. A value counts as a reference when it
+    (or each word of it) is an id in this document."""
+    # The ID attributes this program writes: sections' id, examples' num,
+    # list words' letter (see Section, Example, ListWord below).
+    ids={el.get(a) for el in root.iter() if isinstance(el.tag,str)
+                   for a in ('id','num','letter') if el.get(a)}
+    bad={i for i in ids if ascii_id(i)!=i}
+    if not bad:
+        return root
+    for el in root.iter():
+        if not isinstance(el.tag,str):
+            continue
+        for k,v in el.attrib.items():
+            words=v.split()
+            if words and all(w in ids for w in words) \
+                    and any(w in bad for w in words):
+                el.set(k,' '.join(ascii_id(w) for w in words))
+    return root
 # from utilities.utilities import LazyGlobal
 # globals()['_'] = LazyGlobal('_')
 class Report(object):
@@ -110,86 +136,154 @@ class Report(object):
 
         note the need to explicitely deallocate documents with freeDoc() except for the stylesheet document which is freed when its compiled form is garbage collected.
         """
+        # EVERY STEP SAYS WHETHER IT WORKED, and stops the chain if not. This
+        # used to swallow a failed step and hand the step before's output to
+        # the next one, so a failure surfaced (if at all) several steps
+        # later; and it deleted xelatex's .log whether or not it worked.
+        import shutil
+        etree=lxml.etree
+        def xslt_errors(t):
+            for e in (getattr(t,'error_log',None) or []):
+                log.error("XSLT {}: {} (line {}, {})".format(
+                            e.level_name,e.message,e.line,e.filename))
         self.transformsdir=file.gettransformsdir()
-        if isinstance(self.transformsdir, str) and not file.exists(self.transformsdir):
-            log.error(self.transformsdir)
+        if not file.exists(self.transformsdir):
+            log.error(_("No PDF: {}").format(self.transformsdir))
             return
-        dom = lxml.etree.parse(self.filename)
-        log.info(self.filename)
-        # xslt = lxml.etree.parse(xsl_filename)
-        # transform = lxml.etree.XSLT(xslt)
-        transform={}
-        outfile=self.filename #base for multiple files, below
-        xslts=[
-            (1,'XLingPapRemoveAnyContent.xsl'),
-            (2,'XLingPapXeLaTeX1.xsl'),
-            (3,'XLingPapPublisherStylesheetXeLaTeX.xsl'),
-            (4,'TeXMLLike.xsl')
-            ]
-        for n,xslt in xslts:
+        outfile=str(self.filename) #base for the intermediate files, below
+        outdir=str(file.getfilenamedir(outfile))
+        stem=outfile[:-len('.xml')] if outfile.endswith('.xml') else outfile
+        texfile=stem+'.tex'
+        # A styled paper (publisher stylesheet attached, see stylesheet())
+        # goes through the publisher transform; a plain one through the plain
+        # XeLaTeX transform. This always used the publisher one, which needs
+        # the stylesheet that was never found (file.getstylesheetdir).
+        styled=getattr(self,'styled',None) is not None
+        steps=[('XLingPapRemoveAnyContent.xsl','a'),
+               ('XLingPapPublisherStylesheetXeLaTeX.xsl' if styled
+                    else 'XLingPapXeLaTeX1.xsl','b')]
+        # Where XLingPaper keeps its table-of-contents and index scratch; the
+        # defaults are paths on the XLingPaper author's machine.
+        params={'sMainSourcePath':etree.XSLT.strparam(outdir),
+                'sMainSourceFile':etree.XSLT.strparam(
+                                                pathlib.Path(stem).name)}
+        # THE CONTENTS AND INDEX TAKE TWO ROUNDS, as in XLingPaper. The
+        # transform READS <outdir>/XLingPaperPDFTemp/<name>.toc and .idx for
+        # page numbers; the TeX it writes has xelatex WRITE those same files
+        # (XML: <toc><tocline ref= page=/></toc>, \jobname.toc) into its
+        # output directory. So: transform, xelatex into XLingPaperPDFTemp,
+        # transform again with the real files, xelatex again. Before the
+        # first round there are none, and a missing one stops the transform
+        # ("Cannot resolve URI", 2026-10-16), so it starts with empty ones.
+        name=pathlib.Path(stem).name
+        pdftemp=pathlib.Path(outdir,'XLingPaperPDFTemp')
+        pdftemp.mkdir(exist_ok=True)
+        for ext,root_tag in (('.toc','toc'),('.idx','idx')):
+            (pdftemp/(name+ext)).write_text('<{}/>'.format(root_tag),
+                                             encoding='utf-8')
+        # WITH THE DTD'S DEFAULT ATTRIBUTES, which the transforms test for
+        # (XXE supplies them in XLingPaper proper). The report names
+        # "XLingPap.dtd" relative to itself; the copy is in transformsdir.
+        transformsdir=pathlib.Path(self.transformsdir)
+        class _ShippedDTDs(etree.Resolver):
+            def resolve(self,url,pubid,context):
+                p=transformsdir/str(url).replace('\\','/').rsplit('/',1)[-1]
+                if p.exists():
+                    return self.resolve_filename(str(p),context)
+        parser=etree.XMLParser(load_dtd=True,attribute_defaults=True,
+                               no_network=True)
+        parser.resolvers.add(_ShippedDTDs())
+        try:
+            dom=etree.parse(outfile,parser)
+        except etree.XMLSyntaxError as e:
+            log.info(_("Reading the report with its DTD failed ({}); reading "
+                        "it without defaults").format(e))
             try:
-                trans=lxml.etree.parse(str(self.transformsdir)+'/'+xslt)
-            except lxml.etree.XMLSyntaxError as e:
-                for entry in e.error_log:
-                    log.error("{}: {} ({})".format(entry.domain_name,
-                                            entry.type_name, entry.filename))
-            transform[n] = lxml.etree.XSLT(trans)
-            for error in transform[n].error_log:
-                log.error("XSLT Error {}: {} ({})".format(error.message,
-                                                    error.line,
-                                                    error.filename))
-        newdom = transform[1](dom)
-        newdom.write_output(outfile+'a')
-        # newdom2 = transform[2](newdom1) #not used; always using stylesheets!
-        dom=newdom
-        try:
-            newdom = transform[3](dom)
-            newdom.write_output(outfile+'b')
-        except Exception:
-            for error in transform[3].error_log:
-                log.error("XSLT Error {}: {} ({})".format(error.message,
-                                                    error.line,
-                                                    error.filename))
-        dom=newdom
-        # Convert this to pure XeLaTeX form *here*, using converted java classes
-        # A Java class that reads the input and changes certain sequences to
-        # what they need to be for XeLaTeX .  The class name is
-        # TeXMLLikeCharacterConversion (and it's in the file named
-        # TeXMLLikeCharacterConversion.java).
-        newdom=rx.texmllike(str(dom))
-        with open(outfile+'c', 'wb') as f:
-            f.write(newdom.encode('utf_8'))
-        dom = lxml.etree.parse(outfile+'c') #this is where this currently breaks
-        try:
-            texfile=outfile.replace('.xml','.tex')
-            outdir=file.getfilenamedir(outfile)
-            newdom = transform[4](dom)
-            log.info(_("writing to tex file {}").format(texfile))
-            newdom.write_output(texfile)
-        except Exception:
-            for error in transform[4].error_log:
-                log.error("XSLT Error {}: {} ({})".format(error.message,
-                                                    error.line,
-                                                    error.filename))
-        xetexargs=[
-                    # "/usr/texbinxlingpaper/xelatex",
-                    # "/usr/local/xlingpapertexbin/xelatex",
-                    "xelatex",
-                    "--interaction=nonstopmode","-output-directory",
-                    outdir, texfile]
-        try:
-            subprocess.run(xetexargs,shell=False) # was call
-            # subprocess.call(xetexargs,shell=False) #does twice help?
-            exts=[
-                'tex',
-                'out','aux','log',
-                'xmla','xmlb','xmlc'
-                ]
-            # exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
-            for ext in exts:
-                file.remove(outfile.replace('.xml', '.'+ext))
-        except Exception as e:
-            log.info(_("The call to xelatex didn’t work: {}").format(e))
+                dom=etree.parse(outfile)
+            except etree.XMLSyntaxError as e:
+                log.error(_("No PDF: the report XML doesn’t parse: {}"
+                            ).format(e))
+                return
+        ascii_ids(dom.getroot())
+        source=dom
+        def to_tex():
+            """The report → TeX, reading whatever .toc/.idx are in
+            XLingPaperPDFTemp now. True if texfile was written."""
+            dom=source
+            for n,(xslt,ext) in enumerate(steps):
+                t=None
+                try:
+                    t=etree.XSLT(etree.parse(
+                                str(pathlib.Path(self.transformsdir,xslt))))
+                    dom=t(dom,**(params if n else {}))
+                except (etree.XSLTParseError,etree.XSLTApplyError,
+                        etree.XMLSyntaxError) as e:
+                    log.error(_("No PDF: {xslt} failed: {e}").format(
+                                                            xslt=xslt,e=e))
+                    xslt_errors(t)
+                    return False
+                xslt_errors(t) #warnings, if it ran
+                dom.write_output(outfile+ext)
+            # TeXMLLikeCharacterConversion: TeX's special characters in the
+            # TEXT only (the stylesheets write real specials as tex:spec).
+            root=dom.getroot()
+            rx.texmllike_tree(root)
+            with open(outfile+'c','wb') as f:
+                f.write(etree.tostring(root,encoding='utf-8'))
+            t=None
+            try:
+                t=etree.XSLT(etree.parse(
+                        str(pathlib.Path(self.transformsdir,'TeXMLLike.xsl'))))
+                tex=t(root)
+            except (etree.XSLTParseError,etree.XSLTApplyError) as e:
+                log.error(_("No PDF: TeXMLLike.xsl failed: {}").format(e))
+                xslt_errors(t)
+                return False
+            tex.write_output(texfile)
+            log.info(_("Wrote TeX file {}").format(texfile))
+            return True
+        def run_xelatex(round):
+            """xelatex into XLingPaperPDFTemp. True if it finished."""
+            args=[xelatex,"-interaction=nonstopmode","-halt-on-error",
+                  "-output-directory",str(pdftemp),texfile]
+            try:
+                r=subprocess.run(args,shell=False,capture_output=True,
+                                 text=True,errors='replace',timeout=600)
+            except (OSError,subprocess.TimeoutExpired) as e:
+                log.error(_("No PDF: xelatex didn’t run: {}").format(e))
+                return False
+            if r.returncode:
+                log.error(_("No PDF: xelatex stopped (round {round}, exit "
+                            "{code}). Its log is kept at {log}. Last lines:\n"
+                            "{tail}").format(round=round,code=r.returncode,
+                                log=pdftemp/(name+'.log'),
+                                tail='\n'.join(r.stdout.splitlines()[-25:])))
+                return False #keep every intermediate file, to see why
+            return True
+        if not to_tex():
+            return
+        xelatex=shutil.which('xelatex')
+        if not xelatex:
+            log.error(_("No PDF: xelatex isn’t installed, or isn’t on the "
+                        "PATH. The TeX file is at {}").format(texfile))
+            return
+        # Round 1 writes the page numbers; round 2 uses them.
+        if not (run_xelatex(1) and to_tex() and run_xelatex(2)):
+            return
+        pdf=pdftemp/(name+'.pdf')
+        if not pdf.exists():
+            log.error(_("No PDF: xelatex finished but wrote no {}"
+                        ).format(pdf))
+            return
+        os.replace(str(pdf),stem+'.pdf')
+        log.info(_("PDF written: {}").format(stem+'.pdf'))
+        from utilities.utilities import show_finished_pdf
+        show_finished_pdf(stem+'.pdf')
+        for ext in ('.tex','.xmla','.xmlb','.xmlc'):
+            file.remove(stem+ext)
+        shutil.rmtree(str(pdftemp),ignore_errors=True)
+        # NOT DONE (the old pipeline's last line, kept as found:) # was call
+        # DONE NOW as ascii_ids(), on the source ids and their references:
         # Another Java class that reads the output of that transform and makes
         # sure all IDs are in a form that XeLaTeX can handle.  The class name
         # is NonASCIIIDandIDREFConversion (and it's in the file named

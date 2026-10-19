@@ -21,7 +21,8 @@ def test_sigma_is_a_tier_and_S_is_not():
     """The `_cvts` table is built in __init__, which needs a live program;
     read the literal instead, comments stripped."""
     src = _code(analysis_inputs.CheckParameters.__init__)
-    assert "'σ':{'sg':'Syllable Profile'" in src
+    # the names are N_()-marked since 2026-10-19 (translated in cvtdict)
+    assert "'σ':{'sg':N_('Syllable Profile')" in src
     assert "'S':{'sg'" not in src
     assert analysis_inputs.CheckParameters.SYLLABLE_CVT == 'σ'
     assert analysis_inputs.CheckParameters.LEGACY_SYLLABLE_CVT == 'S'

@@ -3,7 +3,7 @@
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
-from utilities.i18n import _
+from utilities.i18n import _, N_
 import threading
 
 from frontend import ui, composites
@@ -1088,7 +1088,7 @@ class SoundSettingsWindow(ui.Window):
     # "Sound Settings", not "Sound Card Settings" (Kent, 2026-09-15). The page
     # is about how recording sounds — rate, detail, which microphone and
     # speakers — and only two of those four are cards.
-    tasktitle = "Sound Settings"
+    tasktitle = N_("Sound Settings")
     def __init__(self,task,**kwargs):
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow
         self.program=task.program #needed to find praat
