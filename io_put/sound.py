@@ -36,7 +36,8 @@ from utilities import logsetup, file
 from utilities.i18n import _   # user-facing text lives here too (the wedge notice)
 from utilities.error_handler import notify_user
 from backend.core.sound import (AudioInterface, SoundSettings, AUDIO_OK,
-                                spectral_ceiling, zero_runs, rate_is_fake,
+                                spectral_ceiling, interior_zero_runs,
+                                rate_is_fake,
                                 format_bits, quietest_window_db)
 # (The transitional `PYAUDIO_OK = AUDIO_OK` alias that stood here is gone: the
 # streaming layer below is sounddevice now, so nothing is left to be
@@ -351,6 +352,7 @@ class SoundFileRecorder(object):
         self._zeros=0
         self._zrun_max=0
         self._zrun_cur=0
+        self._zlive=False #live audio seen yet (see interior_zero_runs)
 
         def _incoming(indata,frames,time_info,status):
             # Runs on PortAudio's thread. Keep it short and never raise:
@@ -378,13 +380,16 @@ class SoundFileRecorder(object):
                     p=float(numpy.abs(indata).max())/scale
                     if p>self._peak:
                         self._peak=p
-                    # Zero runs, carried ACROSS blocks by zero_runs()'s
-                    # carry/trailing pair — a gate's silence is far longer
-                    # than one callback. The counting lives in
-                    # backend.core.sound so it can be TESTED against known
+                    # Zero runs, carried ACROSS blocks by the carry/trailing
+                    # pair — a gate's silence is far longer than one
+                    # callback. INTERIOR runs only: the stream's own lead-in
+                    # and tail (about a buffer of zeros) are not a gate, and
+                    # warned on every take (2026-10-22). The counting lives
+                    # in backend.core.sound so it can be TESTED against known
                     # input instead of inferred from a log.
-                    found,longest,self._zrun_cur=zero_runs(indata,
-                                                           self._zrun_cur)
+                    found,longest,self._zrun_cur,self._zlive=\
+                        interior_zero_runs(indata,self._zrun_cur,
+                                           self._zlive)
                     self._zeros+=found
                     if longest>self._zrun_max:
                         self._zrun_max=longest

@@ -10703,3 +10703,25 @@ msgstr "音节模式"
 #, fuzzy, python-brace-format
 msgid "{kinds} (only)"
 msgstr "仅{kinds}"
+
+#, fuzzy, python-brace-format
+msgid ""
+"Checking {cvt}, working on ‘{check}’ tone frame (framed group: ‘{group}’)"
+msgstr "检查{cvt}，正在处理“{check}”声调框架（框架组：“{group}”）"
+
+# CHECK: {group} shows "没有框架组" here
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on ‘{check}’ tone frame ({group})"
+msgstr "检查{cvt}，正在处理“{check}”声调框架（{group}）"
+
+#, fuzzy
+msgid "no tone frame selected"
+msgstr "没有选择声调框架"
+
+#, fuzzy
+msgid "no framed group"
+msgstr "没有框架组"
+
+#, fuzzy
+msgid "Other letter"
+msgstr "其他字母"

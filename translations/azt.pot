@@ -4952,6 +4952,30 @@ msgstr ""
 msgid "All groups"
 msgstr ""
 
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1583
+#, python-brace-format
+msgid ""
+"Checking {cvt}, working on ‘{check}’ tone frame (framed group: ‘{group}’)"
+msgstr ""
+
+#. Translators: {group} shows "no framed group" here.
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1586
+#, python-brace-format
+msgid "Checking {cvt}, working on ‘{check}’ tone frame ({group})"
+msgstr ""
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1664
+msgid "no tone frame selected"
+msgstr ""
+
+#: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1717
+msgid "no framed group"
+msgstr ""
+
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:174
+msgid "Other letter"
+msgstr ""
+
 #: /home/kentr/bin/AZT/azt/frontend/ui_shell.py:1778
 msgid "1 column"
 msgstr ""

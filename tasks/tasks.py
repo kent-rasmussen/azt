@@ -1818,7 +1818,7 @@ class Transcribe(Sound,Categories,Task):
         # Named on this visit, under its new name (see nextunvisited).
         if not hasattr(self,'named_here'): #a task built without __init__
             self.named_here=set()
-        self.named_here.add(self._slice_key()+(newvalue,))
+        self.named_here.add(Transcribe._slice_key(self)+(newvalue,))
         """updateforms=True doesn't seem to be working for segments"""
         # updatebygroupsense is a GENERATOR: calling it without consuming it
         # ran none of it, so OK renamed the status file and never touched

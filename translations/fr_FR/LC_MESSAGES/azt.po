@@ -10740,3 +10740,27 @@ msgstr "Profils syllabiques"
 #, fuzzy, python-brace-format
 msgid "{kinds} (only)"
 msgstr "{kinds} (seulement)"
+
+#, fuzzy, python-brace-format
+msgid ""
+"Checking {cvt}, working on ‘{check}’ tone frame (framed group: ‘{group}’)"
+msgstr ""
+"Vérification de {cvt}, travail sur le cadre de ton ‘{check}’ (groupe "
+"encadré : ‘{group}’)"
+
+# CHECK: {group} shows "pas de groupe encadré" here
+#, fuzzy, python-brace-format
+msgid "Checking {cvt}, working on ‘{check}’ tone frame ({group})"
+msgstr "Vérification de {cvt}, travail sur le cadre de ton ‘{check}’ ({group})"
+
+#, fuzzy
+msgid "no tone frame selected"
+msgstr "aucun cadre de ton sélectionné"
+
+#, fuzzy
+msgid "no framed group"
+msgstr "pas de groupe encadré"
+
+#, fuzzy
+msgid "Other letter"
+msgstr "Autre lettre"

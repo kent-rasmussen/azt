@@ -313,6 +313,39 @@ def zero_runs(block, carry=0):
     return count, max(longest, trailing), trailing
 
 
+def interior_zero_runs(block, carry=0, live_seen=False):
+    """`zero_runs`, counting only runs WITH LIVE AUDIO ON BOTH SIDES.
+    (count, longest_closed_run, trailing_run, live_seen)
+
+    A take's lead-in and tail are not the gate this detector is for. The
+    stream starts on, and may end on, a buffer of exact zeros — about one
+    buffer long, 20–27 ms at 44.1 kHz, on every take — and counting those
+    put "something is removing the quiet parts of this recording" on
+    healthy takes (Kent, 2026-10-22: "sound like there was a problem,
+    though the recording was made"). A gate cuts silence INTO the speech, so
+    a run is measured only once live audio closes it, and the run before the
+    first live sample of the stream never counts. `count` still counts every
+    zero; it is the share, not the run.
+
+    `carry` and `live_seen` are carried from the previous block by the
+    caller, as `zero_runs`' carry is."""
+    if numpy is None or block is None or not len(block):
+        return 0, 0, carry, live_seen
+    flat = block.reshape(-1) if getattr(block, 'ndim', 1) > 1 else block
+    zero = (flat == 0)
+    count = int(zero.sum())
+    live = numpy.flatnonzero(~zero)
+    if not len(live):
+        return count, 0, carry + len(flat), live_seen
+    longest = carry + int(live[0]) if live_seen else 0
+    if len(live) > 1:
+        gaps = numpy.diff(live) - 1
+        if gaps.size:
+            longest = max(longest, int(gaps.max()))
+    trailing = len(flat) - 1 - int(live[-1])
+    return count, longest, trailing, True
+
+
 def rate_is_fake(block, rate, margin_db=100.0):
     """Is `block` PROVABLY not sampled at `rate`? True / None (can't tell).
 

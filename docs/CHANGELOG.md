@@ -152,6 +152,18 @@ Translation:
   "Exists") is no longer taken for a correspondence check there. With no
   frames defined, the old label (which leads to defining one) stays.
   Awaiting verification.
+- **Right-click works on run windows** — the recording pages included —
+  with the same menu as the task's window (Sound Settings; Transcription
+  settings on Record). Only the task window had one, and the run window
+  covers it. The "Sound Settings" entry is now translated. Sound Settings
+  opened from a run window hides that window and returns to it, not to the
+  task window behind it. Awaiting verification.
+- **No more "something is removing the quiet parts" on healthy takes.**
+  The gate detector counted the stream's own lead-in and tail — about one
+  buffer of exact zeros, 21–27 ms at 44.1 kHz, over its 20 ms line — so
+  most takes drew an "About the recording just made" notice. It now
+  measures only silence with sound on both sides, which is what a gate
+  makes. Awaiting verification.
 - **Record Tone waits on each word for "Done/Next".** It showed each
   word's page and moved straight on, so it ran through every word in
   seconds and landed on "All done!" with nothing recorded. Awaiting

@@ -3976,10 +3976,38 @@ class TaskDressing(HasMenus,ui.Window):
                      "({!r})".format(e))
         self.runwindow.takekioskscreen()
         self.runwindow.cleanup=self.runwindowcleanup
+        self._give_runwindow_context(self.runwindow)
         self._cover_run_window(self.runwindow, msg)
         self.withdraw() #this is the parent of the runwindow, the task
         self.guardvisible()
         return self.runwindow
+
+    def _give_runwindow_context(self, rw):
+        """A RIGHT-CLICK MENU ON THE RUN WINDOW TOO. Only the task window had
+        one, and the run window covers it, so the recording pages (Record
+        Tone's among them) had no route to Sound Settings (Kent, 2026-10-22:
+        "right click to get settings isn't working on the tone recording
+        page"; "add that wherever we have a record button").
+        THE SAME MENU AS THE TASK WINDOW'S: this window's setcontext (and the
+        task mixins' it walks — Sound Settings, Record's transcription
+        entries) writes to `self.context`, so point that at the run window's
+        menu while it builds."""
+        def setcontext():
+            mine=self.__dict__.get('context')
+            self.__dict__['context']=rw.context
+            try:
+                self.setcontext()
+            finally:
+                if mine is None:
+                    self.__dict__.pop('context',None)
+                else:
+                    self.__dict__['context']=mine
+        try:
+            rw.setcontext=setcontext
+            ui.ContextMenu(rw)
+            setcontext()
+        except Exception as e:
+            log.info("run window gets no context menu ({!r})".format(e))
 
     def _runwindow_default_msg(self):
         """What a run window says while it builds, absent a caller's own.

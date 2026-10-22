@@ -3,6 +3,7 @@ from frontend import sound_ui, ui
 from utilities import logsetup
 from utilities.error_handler import notify_user
 from io_put import lift
+from utilities.i18n import _
 
 log = logsetup.getlog(__name__)
 
@@ -100,7 +101,7 @@ class Sound(object):
 
     def setcontext(self):
         super().setcontext()
-        self.context.menuitem("Sound settings", self._configure_sound)
+        self.context.menuitem(_("Sound Settings"), self._configure_sound)
 
     def soundcheck(self):
         # TIMED 2026-09-28. A screencast put a 6.47s gap between the task page

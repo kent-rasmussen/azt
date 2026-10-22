@@ -536,3 +536,38 @@ def test_zero_runs_handles_multichannel_blocks():
     count, longest, trailing = sound.zero_runs(block)
     assert count == 16
     assert longest == 16
+
+
+def _interior(blocks):
+    """Run interior_zero_runs over blocks as the recorder does."""
+    carry, live, longest, count = 0, False, 0, 0
+    for b in blocks:
+        n, run, carry, live = sound.interior_zero_runs(b, carry, live)
+        count += n
+        longest = max(longest, run)
+    return count, longest
+
+
+def test_interior_zero_runs_ignores_the_stream_lead_in():
+    """Every take started on a buffer of zeros (~23 ms at 44.1 kHz) and
+    warned of noise removal on healthy recordings (Kent, 2026-10-22)."""
+    numpy = pytest.importorskip('numpy')
+    lead = numpy.zeros(1024)
+    speech = numpy.full(100, 0.2)
+    count, longest = _interior([lead, speech])
+    assert longest == 0, "the lead-in is not a gate"
+    assert count == 1024, "its zeros still count toward the share"
+
+
+def test_interior_zero_runs_ignores_the_tail():
+    numpy = pytest.importorskip('numpy')
+    count, longest = _interior([numpy.full(100, 0.2), numpy.zeros(1024)])
+    assert longest == 0, "a run no live audio closes is the stream's end"
+
+
+def test_interior_zero_runs_measures_a_gate_inside_speech_across_blocks():
+    numpy = pytest.importorskip('numpy')
+    blocks = [numpy.full(50, 0.2), numpy.zeros(600), numpy.zeros(600),
+              numpy.array([0.0, 0.0, 0.3])]
+    count, longest = _interior(blocks)
+    assert longest == 1202, "600 + 600 + 2, closed by the live sample"

@@ -1081,10 +1081,25 @@ class SoundSettingsWindow(ui.Window):
         withdraws a window owns revealing it.**
         """
         try:
-            self.task.deiconify()
+            behind=getattr(self,'_behind',None)
+            (behind or self.task).deiconify()
         except Exception as e:
-            log.info("couldn't bring the task window back ({})".format(e))
+            log.info("couldn't bring the window behind back ({})".format(e))
         return super().on_quit(**kwargs)
+    def _window_behind(self):
+        """The window the user was ON: a live run window over the task when
+        there is one (the recording pages), else the task's. Giving back the
+        task window when Sound Settings was opened from a run window's menu
+        dropped the user out of the page they were on (Kent, 2026-10-22)."""
+        rw=getattr(getattr(self.task,'ui',None),'runwindow',None)
+        try:
+            if (rw is not None and rw.winfo_exists()
+                    and not rw.exitFlag.istrue()
+                    and getattr(rw,'winfo_viewable',lambda: True)()):
+                return rw
+        except Exception as e:
+            log.info("couldn't read the run window's state ({})".format(e))
+        return None
     # "Sound Settings", not "Sound Card Settings" (Kent, 2026-09-15). The page
     # is about how recording sounds — rate, detail, which microphone and
     # speakers — and only two of those four are cards.
@@ -1102,8 +1117,11 @@ class SoundSettingsWindow(ui.Window):
         self.task=task
         self.soundsettings=self.program.soundsettings
         self.soundcheckrefresh()
+        # Read BEFORE withdrawing anything: hidden, the run window would not
+        # read as the one the user was on.
+        self._behind=self._window_behind()
         if not kwargs.get("withdrawn"):
-            self.task.withdraw()
+            (self._behind or self.task).withdraw()
             self.deiconify()
         self.protocol("WM_DELETE_WINDOW", self.on_quit)
 class ASRModelSelectionWindow(ui.Window):
