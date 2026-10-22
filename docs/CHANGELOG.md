@@ -144,6 +144,18 @@ Translation:
   the tone picker opened empty ("x not in list"); then the comparison
   showed "group … isn't in glyphs!", built as a letter group. Awaiting
   verification.
+- **Status page, tone: the frame and the framed group are choosers on the
+  line**, like every other check's, instead of labels that each opened a
+  window. The line reads "Checking Tones, working on ‘Isolation’ tone frame
+  (framed group: ‘[˥˥ ˨]’)"; the no-group choice reads "no framed group" in
+  both the line and its list. A frame whose name has an "x" in it (e.g.
+  "Exists") is no longer taken for a correspondence check there. With no
+  frames defined, the old label (which leads to defining one) stays.
+  Awaiting verification.
+- **Record Tone waits on each word for "Done/Next".** It showed each
+  word's page and moved straight on, so it ran through every word in
+  seconds and landed on "All done!" with nothing recorded. Awaiting
+  verification.
 - **A settings refresh no longer clears the tone group.** `makegroupok`
   asked for the slice's groups with no list type, which tone answers with
   None, so every refresh dropped the group (status line: "(no framed

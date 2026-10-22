@@ -1532,13 +1532,17 @@ class StatusFrame(ui.Frame):
                             setter=self.program.settings.setcvt,
                             tt=_("change to other check types"),
                             value_fn=self.cvtvalue)}
-        if self.cvt == 'T':
-            # The tone frame and group follow as their own (whole) labels.
+        if self.cvt == 'T' and not self.program.status.checks():
+            # No frames to choose from: the label's window is where they get
+            # defined, so this one stays a label.
             self.prose_sentence('cvt', _("Checking {cvt},"), fields,
                                 parent=line)
             self.toneframe(line)
-            self.tonegroup(line)
             return
+        # TONE TOO, since 2026-10-19 (Kent: "tone frame label still calls a
+        # dialog"): the frame and group were labels opening a window each;
+        # they are now this sentence's fields like every other check's —
+        # cvttemplate words them for a frame.
         cvcheck_var=self.program.settings.get_ui_var('cvcheck_label',
                                                      self.cvcheckvalue())
         fields['check']=dict(key='cvcheck', var=cvcheck_var,
@@ -1550,7 +1554,8 @@ class StatusFrame(ui.Frame):
         # check, and the old label returned '' for it — which left a
         # clickable empty string. Drawing nothing is the honest version.
         check=self.program.params.check()
-        if check and 'x' not in check:
+        # (a tone frame is user-named: 'Exists' is not an x-check)
+        if check and ('x' not in check or self.cvt == 'T'):
             fields['group']=dict(key='cvgroup',
                                  var=self.program.settings.get_ui_var(
                                      'cvgroup_label', self.cvgroupvalue()),
@@ -1573,6 +1578,13 @@ class StatusFrame(ui.Frame):
     def cvttemplate(self):
         """The checking sentence for the current group: "= C" when there is
         one, nothing in front of "All groups"."""
+        if self.cvt == 'T':
+            if self.program.status.group():
+                return _("Checking {cvt}, working on ‘{check}’ tone frame "
+                         "(framed group: ‘{group}’)")
+            # Translators: {group} shows "no framed group" here.
+            return _("Checking {cvt}, working on ‘{check}’ tone frame "
+                     "({group})")
         if self.program.status.group():
             return _("Checking {cvt}, working on {check} = {group}")
         # Translators: {group} shows "All groups" here.
@@ -1644,7 +1656,13 @@ class StatusFrame(ui.Frame):
             return
         self.labels['cvcheck']['text'].set(self.cvcheckvalue())
     def cvcheckvalue(self):
-        return self.program.params.cvcheckname()
+        return self.checkname(self.program.params.check())
+    def checkname(self,c):
+        # cvcheckname names a TONE check by its type ('T'), not its frame;
+        # a frame's name is its code.
+        if self.program.params.cvt() == 'T':
+            return c or _("no tone frame selected")
+        return self.program.params.cvcheckname(c)
     def cvcheckoptions(self):
         """The checks available in this slice, named.
 
@@ -1655,8 +1673,7 @@ class StatusFrame(ui.Frame):
         after the current form, so a two-entry list read the same twice
         (Kent, 2026-09-29: "I see whole citation twice?")."""
         checks=self.program.status.checks() or []
-        return [{'code':c,'name':self.program.params.cvcheckname(c) or c}
-                for c in checks]
+        return [{'code':c,'name':self.checkname(c) or c} for c in checks]
     def updatecvgroup(self):
         if 'cvgroup' not in self.labels:
             return
@@ -1665,7 +1682,7 @@ class StatusFrame(ui.Frame):
     def cvgroupvalue(self):
         group=self.program.status.group()
         if not group:
-            return _("All groups")
+            return self.nogroupname()
         # For syllable prep the bare code ('C'/'V'/'2') is cryptic; show the
         # human group name (e.g. 'consonant initial', '2 syllables').
         if self.program.params.cvt()=='σ' and \
@@ -1684,13 +1701,21 @@ class StatusFrame(ui.Frame):
 
         `groups_visible` is the same list the window used (`_getgroup`), and
         it is the one that drops NA — which is never a selectable group."""
+        # Tone has no theoretical list (flagless groups() is None): its
+        # groups are the sorted ones.
+        kwargs={'wsorted':True} if self.program.params.cvt() == 'T' else {}
         try:
-            groups=self.program.status.groups_visible() or []
+            groups=self.program.status.groups_visible(**kwargs) or []
         except Exception as e:
             log.info("no groups to offer: %s",e)
             groups=[]
-        return ([{'code':None,'name':_("All groups")}]
+        return ([{'code':None,'name':self.nogroupname()}]
                 +[{'code':g,'name':self.cvgroupnames(g)} for g in groups])
+    def nogroupname(self):
+        """The no-group choice, worded the same in the line and the list."""
+        if self.program.params.cvt() == 'T':
+            return _("no framed group")
+        return _("All groups")
     # The group field (in `cvtline`) was a label bound to `task.getgroup`,
     # which raised a window per cvt — 'Select Vowel', 'Select Consonant',
     # 'Select Framed Tone Group'. Kent, 2026-09-30: "getgroups should be

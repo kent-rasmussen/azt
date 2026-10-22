@@ -473,6 +473,13 @@ class Record(BackendRecord, Sound):
             d.grid(row=row, column=0)
             self.ui.runwindow.frame.scroll.reflow()  # grow canvas to cover examples
             self.ui.runwindow.waitdone()
+            # WAIT FOR "Done/Next" (it destroys entryframe). waitdone() only
+            # reveals the page, so without this the loop built every word's
+            # page in turn and finished in seconds — Record Tone "doesn't
+            # find anything" (Kent, 2026-10-21; log: a page per word ~0.3s
+            # apart, 16:39:44–48).
+            if not self.ui.runwindow.exitFlag.istrue():
+                entryframe.wait_window(entryframe)
             if self.ui.runwindow.exitFlag.istrue():
                 return 1
             if self.ui.runwindow.frame.skip == True:
