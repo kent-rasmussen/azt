@@ -61,7 +61,12 @@ class ExportData(ui.Window):
         for i in self.export.export():
             self.progress(i*100)
         self.progress(100)
-        self.done_notice['text']=_("Done!\n(saved to {dir})").format(dir=self.export.save_dir)
+        save_dir=self.export.save_dir
+        self.done_notice['text']=_("Done!\n(saved to {dir})").format(dir=save_dir)
+        from utilities.utilities import open_file
+        self.done_notice.bind('<Button-1>', lambda e: open_file(str(save_dir)))
+        self.done_notice.tt=ui.ToolTip(self.done_notice,
+                                text=_("open {dir}").format(dir=save_dir))
     def report_data(self,check=None,event=None):
         if hasattr(self,'button') and isinstance(self.button,dict):
             for i in self.button.values():

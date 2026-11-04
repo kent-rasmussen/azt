@@ -7,6 +7,24 @@ import soundfile
 # No import cycle: file.py pulls file_sound in lazily (inside a function).
 from utilities.file import (escapecommas, exists, getfilenamefrompath,
                             findexecutable)
+def _ffmpeg_to_wav(src,hz=16000):
+    """Decode src to a mono WAV temp file at hz; returns its path, or None."""
+    import subprocess, tempfile
+    fd,out=tempfile.mkstemp(suffix='.wav')
+    os.close(fd)
+    try:
+        subprocess.run(['ffmpeg','-y','-v','error','-i',src,
+                        '-ac','1','-ar',str(hz),out],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                       check=True)
+        return out
+    except Exception as e:
+        print(f"Skipping '{src}': couldn't decode it via ffmpeg ({e})")
+        try:
+            os.remove(out)
+        except OSError:
+            pass
+        return None
 class Buffered():
     def towavbuffer(self,hz=16000):
             with soundfile.SoundFile(self.buffer, mode='wb',
@@ -49,10 +67,12 @@ class SoundFile(soundfile.SoundFile,Buffered):
                                  int(self.samplerate)//g)
         else:
             return self.read()
-    def __init__(self,file): # file name or object
+    def __init__(self,file,archivename=None): # file name or object
         super().__init__(file)
         Buffered.__init__(self)
-        if os.path.exists(file):#keep name if file
+        if archivename:
+            self.archivename=archivename
+        elif os.path.exists(file):#keep name if file
             self.archivename=os.path.basename(file)
         else:
             print(f"Problem with nonexistent file ({file})")
@@ -89,10 +109,32 @@ class TarBall(Buffered):
         self.writebuffertotar(sf)
         sf.closebuffer()
     def addsoundfile(self,file):
-        sf=SoundFile(file) # <= open from disk; no downsample here
-        sf.towavbuffer() # make another SoundFile to write to, downsampled
-        self.writebuffertotar(sf)
-        sf.closebuffer()
+        """Returns the name the file got in the archive, or None if it
+        couldn't be read (skipped, so one bad file doesn't kill the export)."""
+        tmp=None
+        try:
+            sf=SoundFile(file) # <= open from disk; no downsample here
+        except RuntimeError: # soundfile.LibsndfileError subclasses this
+            # libsndfile doesn't read m4a/aac (phone recordings from
+            # azt_recorder): decode via ffmpeg, as io_put/sound.py does for
+            # playback. Archived as .wav, since that's what the content is.
+            tmp=_ffmpeg_to_wav(file,self.hz)
+            if not tmp:
+                return None
+            sf=SoundFile(tmp,archivename=os.path.splitext(
+                                        os.path.basename(file))[0]+'.wav')
+        try:
+            sf.towavbuffer() # make another SoundFile to write to, downsampled
+            self.writebuffertotar(sf)
+            sf.closebuffer()
+            return sf.archivename
+        finally:
+            sf.close()
+            if tmp:
+                try:
+                    os.remove(tmp)
+                except OSError:
+                    pass
     def writebuffertotar(self,fileobj):
         info = tarfile.TarInfo(fileobj.archivename)
         info.size = fileobj.bufferlen()
@@ -104,9 +146,10 @@ class TarBall(Buffered):
         self.metadata.add(','.join(line_elements))
     def add_soundfile_w_metadata(self,t):
         if exists(t[0]) and len(t[1]): #actual file and some translation
-            self.addsoundfile(t[0])
-            self.add_to_metadata(*t)
-            return True
+            name=self.addsoundfile(t[0])
+            if name:
+                self.add_to_metadata(name,*t[1:])
+                return True
     def open_metadata(self):
         if not (hasattr(self,'metadata') and isinstance(self.metadata,TextFile)):
             self.metadata=TextFile(self.metadata_header)
