@@ -53,6 +53,44 @@ except NameError:
         return x
 
 
+# Playback caches, shared by every SoundFilePlayer (see _playable_wav and
+# SoundFilePlayer._load). Module level because each word button makes its
+# own player, while a text's words all point into one recording.
+_DECODED={}     # source path -> decoded temp WAV path (ffmpeg)
+_LOADED={}      # ONE file in memory: key=(path,mtime,dtype), data, rate
+
+
+def _mtime(path):
+    """A file's modification time, or None if it can't be read."""
+    try:
+        import os
+        return os.path.getmtime(path)
+    except Exception:
+        return None
+
+
+def stop_playback():
+    """Stop whatever any SoundFilePlayer is playing (sounddevice plays one
+    sound at a time, process-wide). For callers holding no player — play-all's
+    Stop."""
+    try:
+        if sounddevice is not None:
+            sounddevice.stop()
+    except Exception as e:
+        log.info("nothing to stop ({})".format(e))
+
+
+def span_frames(nframes,rate,start=None,end=None):
+    """Sample indices (a, b) for the span `start`..`end` seconds of a clip of
+    `nframes` samples at `rate` Hz; either end may be None (from the start /
+    to the end). Cut at round(seconds * rate), the rule the text-clause cuts
+    use, and clamped so a span past the end (a stale time, a shortened file)
+    yields an empty or shortened slice rather than an error. b >= a always."""
+    a=max(0,min(nframes,round((start or 0)*rate)))
+    b=nframes if end is None else max(0,min(nframes,round(end*rate)))
+    return a,max(a,b)
+
+
 class SoundFilePlayer(object):
     """Play one sound file, without blocking the UI and without owning a
     stream that can wedge.
@@ -157,11 +195,16 @@ class SoundFilePlayer(object):
         just not the patent-encumbered formats a phone produces."""
         if src.lower().endswith('.wav'):
             return src
-        cache=getattr(self,'_decoded_cache',None)
-        if cache is None:
-            cache=self._decoded_cache={}
+        # SHARED BY EVERY PLAYER (module level), not per player: a text's
+        # words each get their own player but all point into ONE long
+        # recording, and a per-player cache re-ran ffmpeg over the whole
+        # recording for every word clicked. Reused only while the source
+        # is unchanged (a re-recorded file must not play the old decode).
+        cache=_DECODED
         out=cache.get(src)
-        if out and file.exists(out):
+        if (out and file.exists(out)
+                and _mtime(out) is not None
+                and (_mtime(src) or 0) <= _mtime(out)):
             return out
         import subprocess, tempfile, os
         out=os.path.join(tempfile.gettempdir(),
@@ -179,25 +222,71 @@ class SoundFilePlayer(object):
             return None
         cache[src]=out
         return out
-    def play(self,event=None):
-        log.debug("I'm playing the recording now ({})".format(self.filenameURL))
+    def _load(self,playURL):
+        """(data, rate) for a playable WAV, from the one-file memory cache
+        when it holds this file, else read (and cached in place of whatever
+        was there). None if it can't be read.
+
+        WHY A CACHE: a text's words are SPANS of one long recording, and
+        play-all walks them one after another. Reading and decoding the whole
+        story for every half-second word made each click cost the whole
+        file. ONE file only, so memory stays bounded by the largest single
+        recording; keyed on path, modification time and dtype so a
+        re-recorded file is read afresh."""
+        dtype=self._dtype_for(playURL)
+        key=(playURL,_mtime(playURL),dtype)
+        if _LOADED.get('key') == key:
+            return _LOADED['data'],_LOADED['rate']
+        try:
+            data,rate=soundfile.read(playURL,dtype=dtype)
+        except Exception as e:
+            log.error("Couldn't read '{}' to play it: {}".format(playURL,e))
+            return None
+        _LOADED.clear()
+        _LOADED.update(key=key,data=data,rate=rate)
+        return data,rate
+    def play(self,event=None,start=None,end=None):
+        """Play the file, or just the span from `start` to `end` seconds
+        (either may be None: from the beginning / to the end). A span is cut
+        at samples round(seconds * rate), the same rule every text-clause cut
+        uses (backend/core/texts.py), so a clause plays exactly what was
+        transcribed — at the recording's own quality, not the ASR copy's.
+
+        With neither given, the player's own `span` (from the form's media
+        fragment, e.g. 'story.ogg#t=12.340,12.810') applies, so a button
+        wired as `cmd=player.play` plays just its word.
+
+        RETURNS the duration in seconds of what it started (None if nothing
+        started), so a caller can chain the next play after it — play-all on
+        the verify page. sounddevice.play() returns at once, so this is the
+        only way a caller learns when the sound will end."""
+        span=getattr(self,'span',None)
+        if start is None and end is None and span:
+            start,end=span
+        log.debug("I'm playing the recording now ({}{})".format(
+                    self.filenameURL,
+                    "" if start is None and end is None
+                    else " from {} to {} s".format(start,end)))
         playURL=self._playable_wav(str(self.filenameURL))
         if playURL is None:
             log.error("Can't play '{}': couldn't decode it to WAV.".format(
                                                             self.filenameURL))
-            return
+            return None
         if sounddevice is None or soundfile is None:
             log.error("no audio backend; can't play {}".format(
                                                         self.filenameURL))
-            return
-        # Read the whole clip, then hand it over. These are single words, so
-        # RAM is not a consideration, and reading it here means the callback
-        # thread never touches a file.
-        try:
-            data,rate=soundfile.read(playURL,dtype=self._dtype_for(playURL))
-        except Exception as e:
-            log.error("Couldn't read '{}' to play it: {}".format(playURL,e))
-            return
+            return None
+        # Read the clip (or reuse the recording already in memory), then
+        # hand it over: reading here means the callback thread never touches
+        # a file.
+        loaded=self._load(playURL)
+        if loaded is None:
+            return None
+        data,rate=loaded
+        if start is not None or end is not None:
+            a,b=span_frames(len(data),rate,start,end)
+            data=data[a:b]
+        duration=(len(data)/float(rate)) if rate else None
         device=getattr(self.settings,'audio_card_out',None)
         log.debug("playing {}: {} frames at {} Hz as {} on device {}".format(
                     playURL,len(data),rate,data.dtype,device))
@@ -208,7 +297,7 @@ class SoundFilePlayer(object):
         # counter, and no abandoned streams leaking device handles.
         try:
             sounddevice.play(data,samplerate=rate,device=device)
-            return
+            return duration
         except Exception as e:
             log.info("couldn't play on device {} ({}); trying this machine's "
                      "default output".format(device,e))
@@ -223,9 +312,11 @@ class SoundFilePlayer(object):
             log.info("couldn't pick a default output ({})".format(e))
         try:
             sounddevice.play(data,samplerate=rate)
+            return duration
         except Exception as e:
             log.error("Couldn't play '{}' at all: {}".format(playURL,e))
-    def __init__(self,filenameURL,audio,settings):
+            return None
+    def __init__(self,filenameURL,audio,settings,span=None):
         # Renamed from `pyaudio` 2026-09-09: this module imported a module of
         # that name, which a parameter so called shadowed for the whole
         # method. `self.pa` keeps its name — "pa" is PortAudio, which stays
@@ -233,6 +324,9 @@ class SoundFilePlayer(object):
         self.pa=audio
         self.filenameURL=filenameURL
         self.settings=settings
+        # (start_s, end_s) of a longer recording, or None for the whole file
+        # — the form's `audiospan` (io_put/lift.py FormParent.hassoundfile).
+        self.span=span
 
 
 class SoundFileRecorder(object):

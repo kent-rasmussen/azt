@@ -139,8 +139,12 @@ class ExampleDict(dict):
             return
         # log.info("exampletypeok looking at node={node}".format(node=node))
         if kwargs['wglosses'] and not self.hasglosses(node):
-            log.info("Gloss check failed for {sense_id}".format(sense_id=node.sense.id))
-            return
+            # No gloss to show: listening is the way to tell which word it is,
+            # so a playable sound file stands in for one (Kent, 2026-11-05).
+            # Without either, the example fails as before.
+            if not self.hassoundfile(node):
+                log.info("Gloss check failed for {sense_id}".format(sense_id=node.sense.id))
+                return
         if not self.hassoundfile(node) and kwargs['wsoundfile']:
             # log.info("Audio file check failed for {}".format(node.sense.id))
             return
@@ -292,6 +296,10 @@ class ExampleDict(dict):
             'count': n,
             'text': text,
             'audio_url': node.audiofileURL if node.audiofileisthere else None,
+            # (start_s, end_s) when the sound is a SPAN of a longer recording
+            # (a text word's 'story.ogg#t=12.340,12.810'); None = whole file.
+            'audio_span': (getattr(node,'audiospan',None)
+                            if node.audiofileisthere else None),
             'sense': node.sense,
         }
     def __init__(self,program):
@@ -1196,6 +1204,13 @@ class SyllableSliceDict(object):
             return str(params.syllable_count(profile))
         return None
     def move_misfit(self,sense,check,target=None):
+        """For `sense` and every sense in its sameSort set (samesort.py); the
+        result is `sense`'s."""
+        from backend.core import samesort
+        for other in samesort.members(self.program,sense)[1:]:
+            self._move_misfit(other,check,target)
+        return self._move_misfit(sense,check,target)
+    def _move_misfit(self,sense,check,target=None):
         """Move a flagged word to group B. Binary checks: B is the other value.
         Count check: B is the caller-supplied target (Shorter/Longer). Place it by
         recompute-and-compare — natural slice if its spelling matches B, else B's

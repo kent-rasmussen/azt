@@ -19,6 +19,68 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.56 (2026-11-06)
+
+Patch bump at Kent's direction. **Everything below is AWAITING
+VERIFICATION in the app.** Test run 2026-11-06 21:00: 1215 passed, 26
+skipped, 1 failed. The failure is the translation template missing this
+release's new strings; extraction is deferred. That run came before the
+"Same word" Play all, the 0.1 s word padding and the right-click fixes.
+Their tests (in `test_play_spans.py` and `test_webview_context_menus.py`)
+have not been run yet.
+
+Texts:
+
+- **A Texts board replaces the clause page's whole-text buttons.** It
+  lists one row per recording in `<project>/texts/`, with columns Length
+  | Clauses | ASR | Parsed (words) | Transcribed by you.
+  - Each row has "Transcribe", "Find words" (which also updates the word
+    lexicon), and "Transcribe and find words".
+  - "Process all" at the top runs every text in turn. Progress windows
+    close themselves on success. Cancel stops the whole run; a failure
+    skips to the next text, and a note says what happened.
+  - The "Transcribed by you" cell opens the text clause by clause.
+  - The table scrolls once it doesn't fit the page.
+  - ASR has a tooltip ("Automatically transcribed by AI models").
+- **One word lexicon for all texts:**
+  `texts/<project>_text_words.lift`, reached by "Sort words from these
+  texts" at the foot of the board.
+  - The old per-text lexicons are taken into it on first build.
+  - Its audio lives in `texts/`; careful-speech takes go to
+    `texts/audio/`.
+- **Text recordings live in `<project>/texts/`.** A recording that has
+  moved is still found (by content), and its words' spans follow it,
+  keeping their times.
+- **"Find words" no longer fails on long clauses** ("Python integer 202
+  out of bounds for int8", NumPy 2) — a fix in `azt_asr/wordbreaks.py`.
+
+Playing words:
+
+- **The play buttons are now ▶ (word) and [▶] (word in its phrase).**
+  The row Play all is playing is marked ♪, and its border thickens.
+- **[▶] plays the word with at most 1 s of its phrase on each side,** not
+  the whole phrase (some were 15 s+).
+- **▶ plays a word's span with 0.1 s more on each side,** clipped to its
+  phrase, so it doesn't sound cut off.
+- **Sort page: each group button gets ▶ / [▶] for its example word,**
+  plus a "Play all" beside the instructions that works as the verify
+  page's does. It stops when the next word comes up or you leave the
+  page.
+- **The "Same word" window (×N, to split one off) has its own "Play
+  all".**
+
+Right-click (webview):
+
+- **Per-widget right-click menus open again,** for example the sort
+  page's "Not {profile}" on the word being sorted. The webview event and
+  menu lacked `x_root` and `winfo_exists`.
+- **A widget's own right-click no longer also posts the page's menu over
+  it.** This affected the play buttons' "open in Praat", among others.
+
+Agenda: segmental sorting across comparable profiles (C1 over
+CV/CVC/CVCV…) added as a planned item, with research and the merge
+decision recorded.
+
 # Version 1.15.55 (2026-10-19)
 
 Patch bump at Kent's direction. **What is verified and what is not:** in

@@ -17,6 +17,7 @@ from tasks.tasks import (Sound, SortV,
     SortSyllables, SortC, SortT, RecordCitationT,
     WordsParse, TranscribeV, TranscribeC, TranscribeT,
     JoinUFgroups, ReportConsultantCheck)
+from tasks.texts import TranscribeTexts
 from frontend.ui_shell import LiftChooser
 from utilities.utilities import sysrestart, sysshutdown, openweburl, nowruntime
 from utilities.i18n import _
@@ -219,7 +220,7 @@ class TaskChooser(Task):
                 if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
         else: # analysis
-            tasks=[WordsParse]
+            tasks=[WordsParse, TranscribeTexts]
             if self.doneenough['sort']:
                 tasks.append(TranscribeV)
                 tasks.append(TranscribeC)
@@ -460,7 +461,10 @@ class TaskChooser(Task):
         for lang in citationsdone:
             if nentries-citationsdone[lang] < 50 and not len(self.cawlmissing):
                 self.donew['collectionlc']=True
-            if citationsdone[lang] > 200: #was 705
+            # The 200 minimum is for a list still being filled out; a lexicon
+            # with a citation form on every entry (words from a text) has
+            # nothing left to collect, whatever its size (Kent, 2026-11-05).
+            if citationsdone[lang] > 200 or citationsdone[lang] >= nentries: #was 705
                 self.doneenough['collectionlc']=True#I need to think through this
             # log.info("checking '{}'".format(f))
         for f in [i for j in self.program.db.sensefieldnames.values() for i in j]:

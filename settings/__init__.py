@@ -1,5 +1,5 @@
 from contextlib import ExitStack, contextmanager
-from .manager import read_ini
+from .manager import read_ini, ConfigManager
 from .project import ProjectConfig
 from .ui import UIConfig
 from .audio import AudioConfig
@@ -47,23 +47,35 @@ class AppSettingsManager:
     def ui_theme(self, value):
         self.app.set_ui_lang(value)
 
+LETTER_ATTRS = ('distinguish', 'interpret', 'polygraphs')  # in 'data', but the project's in any lexicon
+
+
 class SettingsManager:
     """
     Centralized settings manager that provides access to all domains.
     Use get(attr)/set(attr, value) for routing to the correct domain.
     """
-    def __init__(self, base_path, hostname=None, user=None):
+    def __init__(self, base_path, hostname=None, user=None, lexicon_base=None):
+        """lexicon_base: where per-lexicon state goes (status and the rest of
+        'data', and 'lexicon': ps/profile/cvt/check) when the lexicon in use is
+        not the project's own LIFT — a text's words, <prj>/texts/<stem>.lift,
+        keep theirs as <prj>/<stem>.* (Kent, 2026-11-05). Everything else is
+        the project's, from base_path."""
+        lexicon_base = lexicon_base or base_path
+        self.separate_lexicon = str(lexicon_base) != str(base_path)
         self.project = ProjectConfig(base_path, hostname, user)
         self.ui = UIConfig(base_path, hostname, user)
         self.audio = AudioConfig(base_path, hostname, user)
         self.alphabet = AlphabetConfig(base_path, hostname, user)
         self.contributors = ContributorsConfig(base_path, hostname, user)
-        self.data = DataConfig(base_path, hostname, user)
+        self.data = DataConfig(lexicon_base, hostname, user)
+        self.lexicon = ConfigManager('lexicon', lexicon_base, hostname, user)
         self.tone_frames = ToneFramesConfig(base_path, hostname, user)
         self.reports = ReportsConfig(base_path, hostname, user)
         self._domains = {
             'project': self.project,
             'ui': self.ui,
+            'lexicon': self.lexicon,
             'audio': self.audio,
             'alphabet': self.alphabet,
             'contributors': self.contributors,
@@ -71,6 +83,12 @@ class SettingsManager:
             'tone_frames': self.tone_frames,
             'reports': self.reports,
         }
+        # The letter decisions are the LANGUAGE's, not a lexicon's (Kent,
+        # 2026-11-06): a text lexicon reads and writes the project's.
+        self.letters = self.data
+        if self.separate_lexicon:
+            self.letters = DataConfig(base_path, hostname, user)
+            self._domains['letters'] = self.letters
         # One-time relocation: toneframes briefly landed in the data domain
         # (1.10.1); move any such key to its own file so the two can't diverge.
         if 'toneframes' in self.data.data:
@@ -82,6 +100,8 @@ class SettingsManager:
     def domain_for(self, attr):
         """Return the ConfigManager instance that owns the given attribute."""
         from migration.converters import Converter
+        if attr in LETTER_ATTRS:
+            return self.letters
         domain_name = Converter.domain_for_attr(attr)
         if domain_name and domain_name in self._domains:
             return self._domains[domain_name]
@@ -184,7 +204,7 @@ class Settings(SettingsUI):
     pluralname=None
     imperativename=None
     domain_mapping = {
-            'defaults': ['project', 'ui'],
+            'defaults': ['project', 'ui', 'lexicon'],
             'soundsettings': ['audio'],
             'alphabet': ['alphabet'],
             'contributors': ['contributors'],
@@ -564,6 +584,13 @@ class Settings(SettingsUI):
                 # We need to filter and update the domain data
                 domain_attrs = migration.converters.Converter.DOMAIN_MAPPING[domain_name]
                 domain_data = {k: v for k, v in d.items() if k in domain_attrs}
+                if domain_name == 'data' and self.mgr.separate_lexicon:
+                    letters = {k: domain_data.pop(k) for k in LETTER_ATTRS
+                               if k in domain_data}
+                    if letters:
+                        current_data = self.mgr.letters.load()
+                        current_data.update(letters)
+                        self.mgr.letters.save(current_data)
                 if domain_data:
                     current_data = domain_mgr.load()
                     current_data.update(domain_data)
@@ -579,6 +606,17 @@ class Settings(SettingsUI):
             for domain_name in self.domain_mapping[setting]:
                 domain_mgr = getattr(self.mgr, domain_name)
                 data = domain_mgr.load()
+                if domain_name == 'project' and self.mgr.separate_lexicon:
+                    # ps/profile/cvt/check once lived here; they are the MAIN
+                    # lexicon's place, not this one's (see 'lexicon' domain)
+                    lexattrs=migration.converters.Converter.DOMAIN_MAPPING['lexicon']
+                    data={k:v for k,v in data.items() if k not in lexattrs}
+                if domain_name == 'data' and self.mgr.separate_lexicon:
+                    # the letter decisions are the project's (LETTER_ATTRS)
+                    shared=self.mgr.letters.load()
+                    data={k:v for k,v in data.items() if k not in LETTER_ATTRS}
+                    data.update({k:shared[k] for k in LETTER_ATTRS
+                                 if k in shared})
                 if data:
                     if (setting == 'status'
                             and migrate_syllable_tier_code(data.get('status'))):
@@ -703,6 +741,9 @@ class Settings(SettingsUI):
                         self.statusfile,
                         self.profiledatafile,
                         self.adhocgroupsfile,
+                        # Transcribe Texts' file (tasks/texts.py), once it exists
+                        file.getdiredurl(self.directory,
+                                        f"{self.liftnamebase}.texts.flextext"),
                         ]
         self.program.tk_root.update() #update GUI before threading
         r='git' #only look for this; don't duplicate repos unnecessarily
@@ -713,11 +754,20 @@ class Settings(SettingsUI):
                 _log.info(_("working on {file}").format(file=file.getfile(f)))
                 if file.exists(f):
                     self.program.data_repo[r].add(file.getreldirposix(self.program.data_repo[r].url,f))
-            audiohere=set([file.getreldirposix(self.program.data_repo[r].url,i)
-                    for i in file.getfilesofdirectory(self.audiodir,
-                                                        '*.wav')])
+            # Every audio type, not just wav: texts (tasks/texts.py) are often
+            # .ogg/.m4a, and so are phone recordings (Kent, 2026-11-04).
+            # Matched without regard to case (.M4A, .WAV), which a glob can't do.
+            import os
+            from backend.core.texts import AUDIO_EXTENSIONS
+            try:
+                names=os.listdir(str(self.audiodir))
+            except OSError:
+                names=[]
+            audiohere=set([file.getreldirposix(self.program.data_repo[r].url,
+                                        os.path.join(str(self.audiodir),i))
+                    for i in names if i.lower().endswith(AUDIO_EXTENSIONS)])
             audio=audiohere-present
-            _log.info(_("{wav_count} wav files to check for the {repo} repo (of {total_count} files total "
+            _log.info(_("{wav_count} audio files to check for the {repo} repo (of {total_count} files total "
                     "here)").format(wav_count=len(audio),repo=r,total_count=len(audiohere)))
             for f in audio:
                 self.program.data_repo[r].add(f)
@@ -1322,6 +1372,10 @@ class Settings(SettingsUI):
         else:
             self.glosslangs=Glosslangs()
     def checkglosslangs(self):
+        if not self.program.db.glosslangs:
+            # A lexicon with no glosses (a text's words) says nothing about
+            # which gloss languages the PROJECT uses; keep the setting as it is.
+            return
         if self.glosslangs:
             for lang in self.glosslangs:
                 if lang not in self.program.db.glosslangs:
@@ -1556,8 +1610,15 @@ class Settings(SettingsUI):
         if migrator.migrate():
             _log.info(_("Settings migrated to new format."))
 
-        # Initialize new modular SettingsManager
-        self.mgr = SettingsManager(basename)
+        # Initialize new modular SettingsManager. A text's word lexicon in use
+        # (program.lexicon_filename) keeps its own place and status beside the
+        # project's files, under its own name; the rest is the project's.
+        lexicon_base=None
+        lexfile=getattr(self.program,'lexicon_filename',None)
+        if lexfile and str(lexfile) != str(self.liftfilename):
+            lexicon_base=file.getdiredurl(self.directory,
+                            rx.pymoduleable(file.getfilenamebase(lexfile)))
+        self.mgr = SettingsManager(basename, lexicon_base=lexicon_base)
 
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.settingsinit() #init, clear, fields

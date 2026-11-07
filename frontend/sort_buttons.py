@@ -786,6 +786,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             log.error(_("SortGroupButtonFrame.getexample returned None for {group} {kwargs}").format(group=self.group, kwargs=kwargs))
             return
         self._filenameURL=data['audio_url']
+        self._span=data.get('audio_span') #(start,end) of a longer recording
         self._sense=data['sense']
         self._text=data['text']
         self._illustration=None
@@ -822,6 +823,12 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if (self.check and self.kwargs.get('show_check') and
             not isinstance(self.parent, SortGlyphGroupButtonFrame)):
             self.make_check_button()
+        # ▶ / [▶] for the example word, and its place in play-all, on the
+        # sort page (the presenter decides whether this button is on it)
+        try:
+            self.program.sort_ui.group_play_buttons(self)
+        except Exception as e:
+            log.info("group play buttons skipped for %s: %s",self.group,e)
     def maybe_reverify_menu(self):
         """Right-click → reverify THIS group. Only on the pages that show a group
         the user may need to fix BEFORE they can answer the page's question: the
@@ -934,65 +941,16 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         doesn't validate. A sort board must never do that mid-sort, so an
         unusable OUTPUT config degrades to a label here instead.
 
-        Never raises: no audio is a label, not a traceback."""
-        # attribute, not a key: main.py sets program['nosound'] on the dict before
-        # App absorbs it, and consumers read it as self.program.nosound
-        # (tasks/chooser.py:525).
-        if sound is None or getattr(self.program,'nosound',False):
+        Never raises: no audio is a label, not a traceback.
+
+        THE BODY MOVED to ``frontend.play_buttons.playback`` (2026-11-05), so
+        the word/phrase play buttons (`|>` / `[|>]`) get their player by the
+        same accessor and cannot drift from this one. The history of every
+        fallback in it is kept there."""
+        if sound is None:
             return None,None
-        # PERMISSIVE ON PURPOSE (Kent 2026-07-31: "buttons doesn't work for sort
-        # groups, at least not in tone"). Every failure here downgrades the
-        # button to an inert LABEL, which reads as "the buttons are broken" —
-        # so only give up when there is genuinely nothing to play with. An
-        # earlier draft also refused when check_missing_attrs() said the output
-        # settings didn't validate; that gate is gone. A play that fails at
-        # CLICK time is recoverable and says so; a label is a dead control.
-        ss=None
-        try:
-            from backend.core.sound import SoundSettings
-            try:
-                # Pass the analang, so that a FIRST ensure landing here still
-                # seeds ASR for the right language: ensure() only applies
-                # analang_obj when it constructs, so whoever gets there first
-                # decides. tasks/sound.py:25 resolves it the same way.
-                analang_obj=self.program.languages.get_obj(self.task.analang)
-            except Exception:
-                analang_obj=None
-            ss=SoundSettings.ensure(self.program, analang_obj=analang_obj)
-        except Exception as e:
-            # e.g. a machine with speakers but no mic: makedefaultifnot ->
-            # default_in raises AttributeError even though playback needs no
-            # input card (backend/core/sound.py:126-128). Fall back to whatever
-            # a Sound task already built rather than losing the button.
-            log.info("SoundSettings.ensure failed for %s (%s); falling back to "
-                    "an existing settings object.",type(self.task).__name__,e)
-            ss=(getattr(self.task,'soundsettings',None)
-                or getattr(self.program,'soundsettings',None)
-                or getattr(getattr(self.program,'settings',None),
-                           'soundsettings',None))
-        if ss is None:
-            return None,None
-        # ONE OWNER FOR THE HANDLE (2026-09-11). This used to read
-        # `ss.audio or task.audio or program.audio` — three places to look for
-        # one object, under the comment above recording the attribute being
-        # missed three times in one evening. A fourth fallback was never the
-        # answer: `SoundSettings.confirm_audio()` is the accessor that OWNS
-        # `program.audio` (backend/core/sound.py:1299) and is guarded by tests
-        # (test_sound_units.py:83-105). Ask it. `ensure` already ran it in
-        # __init__, so the call matters only on the fallback path above, where
-        # `ss` came from a hunt and may predate a handle.
-        audio=getattr(ss,'audio',None)
-        if audio is None:
-            try:
-                ss.confirm_audio()
-                audio=ss.audio
-            except Exception as e:
-                # No handle to be had (sounddevice absent, or the device went
-                # away). A label, not a traceback — as the docstring promises.
-                log.info("no audio handle for %s (%s); the button becomes a "
-                        "label.",type(self.task).__name__,e)
-                return None,None
-        return audio,ss
+        from frontend.play_buttons import playback
+        return playback(self.program, self.task)
     def playbutton(self):
         """A play button, or a plain LABEL when this machine can't play at all.
         Returns True only when a player was made (makebuttons keys _playable on
@@ -1007,8 +965,11 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                     type(self.task).__name__, self._text)
             self.labelbutton()
             return
+        # The span (if any) rides on the player, so `cmd=self.player.play`
+        # and again()'s autoplay both play just this word.
+        span=getattr(self,'_span',None)
         self.player=sound.SoundFilePlayer(self._filenameURL,audio,
-                                            soundsettings)
+                                            soundsettings,span=span)
         b=self._display=ui.Button(self, text=self._text,
                     cmd=self.player.play,
                     column=1, row=0,
@@ -1022,8 +983,15 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                 and not str(self._filenameURL).lower().endswith('.m4a')):
             # praat can't read m4a: no bind, and no tooltip advertising it
             bttext+='; '+_("right click to open in praat")
-            b.bind('<Button-3>',
-                    lambda x: executables.praatopen(self.program, self._filenameURL))
+            def praat(event=None):
+                # A span opens the WHOLE recording (Praat isn't asked to
+                # select it); the times go to the log.
+                if span is not None:
+                    log.info("opening the whole of {} in praat; this word is "
+                             "{} to {} s of it".format(self._filenameURL,
+                                                       *span))
+                executables.praatopen(self.program, self._filenameURL)
+            b.bind('<Button-3>',praat)
         bt=ui.ToolTip(b,bttext)
         return True #a real player exists; see makebuttons' _playable
     def selectbutton(self):

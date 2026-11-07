@@ -58,7 +58,7 @@ class ConfigManager:
         self.load()
 
     def _get_filename(self):
-        if self.domain in ['audio', 'project', 'ui', 'preproject']:
+        if self.domain in ['audio', 'project', 'ui', 'preproject', 'lexicon']:
             return self.base_path.with_suffix(f'.{self.user}.{self.hostname}.{self.domain}.json')
         return self.base_path.with_suffix(f'.{self.domain}.json')
 

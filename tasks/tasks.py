@@ -46,11 +46,13 @@ class ExportData(ui.Window):
     def on_quit(self):
         ui.Window.on_quit(self)
         self.program.taskchooser.gettask()
+    # Lexicon -> Examples -> Texts -> Lexicon; the switch button names the next.
+    exportcycle=[export.Lexicon,export.Examples,export.Texts]
+    def nextexportclass(self):
+        cycle=self.exportcycle
+        return cycle[(cycle.index(self.exportclass)+1)%len(cycle)]
     def switch(self,event=None):
-        if self.exportclass == export.Lexicon:
-            self.exportclass=export.Examples
-        else:
-            self.exportclass=export.Lexicon
+        self.exportclass=self.nextexportclass()
         self.report_data()
     def do_export(self,event=None):
         self.done_notice=ui.Label(self.frame,
@@ -86,6 +88,9 @@ class ExportData(ui.Window):
                 audiolang=self.program.params.audiolang(),
                 audiodir=self.program.settings.audiodir,
                 save_dir=self.program.settings.exportsdir,
+                texts_path=file.getdiredurl(self.program.settings.directory,
+                            f"{self.program.settings.liftnamebase}.texts.flextext"),
+                project_dir=self.program.settings.directory,
                 check=check,
                 max_rows_total=self.max_rows_total,
                 max_rows_per_file=self.max_rows_per_file,
@@ -107,12 +112,15 @@ class ExportData(ui.Window):
                 anchor='c',padx=50,
                 row=0,column=1,sticky='we'
         )
+        switch_text={export.Lexicon:_("Check Lexicon"),
+                    export.Examples:_("Check Examples"),
+                    export.Texts:_("Check Texts")}[self.nextexportclass()]
+        self.switch_button=ui.Button(self.button_frame,
+                text=switch_text,
+                anchor='c',padx=50,
+                row=0,column=0,sticky='w'
+        )
         if self.exportclass == export.Lexicon:
-            self.switch_button=ui.Button(self.button_frame,
-                    text=_("Check Examples"),
-                    anchor='c',padx=50,
-                    row=0,column=0,sticky='w'
-            )
             if self.slices:
                 allchecks=self.program.status.allcheckswCVdata()
                 self.button={c:ui.Button(self.button_frame,
@@ -126,13 +134,6 @@ class ExportData(ui.Window):
                 for c in self.button:
                     self.button[c].bind("<Button-1>",
                                         lambda event,x=c: self.report_data(x))
-
-        else:
-            self.switch_button=ui.Button(self.button_frame,
-                    text=_("Check Lexicon"),
-                    anchor='c',padx=50,
-                    row=0,column=0,sticky='w'
-            )
         self.export_button.bind("<Button-1>",self.do_export)
         self.switch_button.bind("<Button-1>",self.switch)
     def __init__(self, program):

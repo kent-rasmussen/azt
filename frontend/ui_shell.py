@@ -290,8 +290,11 @@ class Menus(ui.Menu):
     def advanced(self,index=False):
         self.cascade(self,_("Advanced"),'advancedmenu',index=index)
         options=[(_("Change to another Database (Restart)"),
-                            self.program.taskchooser.changedatabase),
-                (_("Digraph and Trigraph settings"),
+                            self.program.taskchooser.changedatabase)]
+        if getattr(self.program,'lexicon_filename',None):
+            options.append((_("Back to the main lexicon"),
+                            lambda event=None: self.program.use_lexicon(None)))
+        options+=[(_("Digraph and Trigraph settings"),
                             self.program.settings.askaboutpolygraphs),
                 (_("Segment Interpretation Settings"),
                             self.program.ui_settings.setSdistinctions),
@@ -2077,6 +2080,8 @@ class StatusFrame(ui.Frame):
             # assert not self.program.mainwindow.is_chooser
             # log.info(f"{self.program.task=}")
             kwargs=self.program.task.dobuttonkwargs()
+            if kwargs is None: # no big button (Transcribe Texts: its board's rows)
+                return
             self.bigbutton=self.button(**kwargs)
         # except AssertionError:
         #     pass
@@ -2106,6 +2111,11 @@ class StatusFrame(ui.Frame):
         # that is what the branch was missing in the first place.
         if self.program.task.no_leaderboard:
             log.info("maybeboard: task wants no leaderboard; empty board")
+            return
+        if hasattr(self.program.task,'buildboard'): # a task's own board (Transcribe Texts)
+            scroll=self.program.task.buildboard(self.leaderboard)
+            if scroll is not None: # its ScrollingFrame: sized only on reflow
+                self._reflow_board_soon(scroll)
             return
         if self.program.task.icon_leaderboard or not self.program.taskchooser.doneenough['collectionlc']:
             self.makenoboard()
@@ -3256,6 +3266,10 @@ class TaskDressing(HasMenus,ui.Window):
         if self.program.me:
             self.context.menuitem(_("Change to another Database (Restart)"),
                             self.program.taskchooser.changedatabase)
+        if getattr(self.program,'lexicon_filename',None):
+            # sorting a text's words (Transcribe Texts' "Sort this text’s words")
+            self.context.menuitem(_("Back to the main lexicon"),
+                            lambda event=None: self.program.use_lexicon(None))
         if 'git' in self.program.data_repo:
             self.context.menuitem(_("Share data to USB"),
                                 self.program.data_repo['git'].share)
@@ -5038,6 +5052,7 @@ class LiftChooser(ui.Window,HasMenus):
         log.info(_("Running setfilenameandcontinue with "
                     "name={name} and restart={restart}").format(name=name, restart=restart))
         self.program.filename=name
+        self.program.lexicon_filename=None #a new project opens its own lexicon
         file.writefilename(name)
         self.destroy()
         if (hasattr(self.program,'taskchooser') and 

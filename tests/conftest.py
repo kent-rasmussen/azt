@@ -50,3 +50,37 @@ def _read_text_utf8(self, encoding=None, errors=None, newline=None):
 
 
 pathlib.Path.read_text = _read_text_utf8
+
+
+# ── Localization: one failure is enough ────────────────────────────────────
+# While the code is still moving, new strings fail every catalog check at
+# once (template, each language, each draft), and five F's hide whether any
+# OTHER test failed (Kent, 2026-11-06). After the first localization failure
+# the rest are skipped, saying why; the run still fails. --all-localization
+# runs them all.
+LOCALIZATION = ('test_translation_', 'test_translations_')
+_localization_failed = []
+
+
+def pytest_addoption(parser):
+    parser.addoption('--all-localization', action='store_true',
+                     help='run every localization check, not just up to '
+                          'the first that fails')
+
+
+def _is_localization(item):
+    return item.path.name.startswith(LOCALIZATION)
+
+
+def pytest_runtest_setup(item):
+    import pytest
+    if (_localization_failed and _is_localization(item)
+            and not item.config.getoption('--all-localization')):
+        pytest.skip(f'localization already failing ({_localization_failed[0]}); '
+                    '--all-localization to run this too')
+
+
+def pytest_runtest_logreport(report):
+    if (report.failed and not _localization_failed
+            and pathlib.Path(report.fspath).name.startswith(LOCALIZATION)):
+        _localization_failed.append(report.nodeid)

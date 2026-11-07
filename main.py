@@ -9,7 +9,7 @@
 # __main__. Defined after that import, it was still unset, so the first-run venv
 # relaunch — the one producer where a failure is hardest to diagnose — recorded
 # `'version': None` (observed on a fresh clone, 2026-09-01).
-__version__='1.15.55' #This is a string...
+__version__='1.15.56' #This is a string...
 # `--help` BEFORE ANYTHING ELSE, and that position is the point: asking a
 # program what its switches are must not build a venv, install packages or
 # trip the duplicate gate, and must work on a machine where the dependencies
@@ -172,6 +172,7 @@ from backend.reporting.generator import Report
 from backend.core.lexicon import Senses, Segments, WordCollection, Parse, Tone
 from backend.core.sorting_engine import Sort
 from backend.core.profiles import ProfileAnalyzer
+from backend.core.samesort import SameSort
 from frontend.ui_shell import (HasMenus, Menus, StatusFrame, TaskDressing,
     LiftChooser, ImageFrame, Splash, ResultWindow, Settings as UISettings)
 from utilities.error_handler import notify_error as ErrorNotice
@@ -885,6 +886,7 @@ class App:
         self.settings.post_lift_init()
         self.splash.progress(45)
         ProfileAnalyzer(self) #registers as self.profiles
+        SameSort(self) #registers as self.samesort; needs db
         ExampleDict(self) #needed for makestatus, needs params,slices,data
         Alphabet(self) #after slicedict is up; needs params
         # langtags.Languages(self)
@@ -1232,7 +1234,27 @@ class App:
         if not self.task:
             return "No task"
         return getattr(self.task,'task_family',self.task.__class__.__name__)
-    def reload_database(self):
+    def use_lexicon(self,filename=None):
+        """Switch the lexicon in use, in place: a text's word lexicon
+        (<prj>/texts/<stem>.lift, from Transcribe Texts), or None for the
+        project's own LIFT. The project — its settings, audio and repository —
+        doesn't change; only what is sorted does, with its own place and status
+        (Settings, SettingsManager lexicon_base). Not remembered: the project's
+        own lexicon is what opens next time (Kent, 2026-11-05)."""
+        if filename and str(filename) == str(self.filename):
+            filename=None
+        if str(filename or '') == str(getattr(self,'lexicon_filename',None) or ''):
+            return
+        if self.towrite:
+            self.maybewrite(definitely=True)
+        log.info("Switching lexicon to %s", filename or self.filename)
+        self.lexicon_filename=filename
+        # to the chooser: the task that asked (Transcribe Texts, say) isn't the
+        # one wanted on a different lexicon
+        self.reload_database(msg=_("Opening {name}…").format(
+                    name=file.getfilenamebase(filename or self.filename)),
+                    to_chooser=True)
+    def reload_database(self,msg=None,to_chooser=False):
         """A5 (in-place reload): re-read the LIFT from disk and rebuild
         everything derived from it — no process restart. Used when the
         collab daemon merged team changes under us.
@@ -1256,7 +1278,7 @@ class App:
         w=None
         try: #cover the seconds of synchronous rebuild with a wait dialog
             w=self.taskchooser.ui
-            w.wait(_("Loading your team’s changes…"))
+            w.wait(msg or _("Loading your team’s changes…"))
             w.update() #paint it NOW: the rebuild blocks the event loop, so
             #           without one draining update() it stays black (2026-07-11)
         except Exception as e:
@@ -1279,7 +1301,9 @@ class App:
             # chain (same constructors, same order; presenters/root/
             # theme/langtags/TaskChooser are process-lifetime and stay).
             FileParser(self)
-            if getattr(self,'collab',None):
+            if getattr(self,'collab',None) and not getattr(self,'lexicon_filename',None):
+                # collab syncs the project's own LIFT; a text's word lexicon
+                # in use isn't it (and is written to disk directly)
                 self.collab.adopt_reloaded_db()
             # Make the rebuild BOOT-LIKE for the settings push (2026-07-11
             # DATA-WIPE root cause): moveattrstoobjects pushes each stored
@@ -1299,6 +1323,7 @@ class App:
             CheckParameters(self)
             self.settings.post_lift_init()
             ProfileAnalyzer(self)
+            SameSort(self)
             ExampleDict(self)
             Alphabet(self)
             UISettings(self)
@@ -1346,7 +1371,7 @@ class App:
             except Exception as e:
                 log.info("reload: old task dismiss: %s",e)
         self.task=None
-        if prev_task_class is not None:
+        if prev_task_class is not None and not to_chooser:
             self.taskchooser.maketask(prev_task_class)
         else:
             self.taskchooser.gettask() #re-present the chooser

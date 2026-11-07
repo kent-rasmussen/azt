@@ -12,6 +12,7 @@ from frontend import ui
 from frontend.presenter_base import PresenterBase
 from frontend.sort_buttons import (SortButtonFrame, SortGroupButtonFrame,
                                    SortGlyphGroupButtonFrame)
+from frontend import play_buttons
 from utilities.i18n import _
 from utilities import logsetup
 
@@ -389,6 +390,17 @@ class SortPresenter(PresenterBase):
                 l['image'] = scaled
                 l['compound'] = 'left'
         l.wrap()
+        # `|>` / `[|>]` beside the word being sorted (Kent 2026-11-05). A
+        # verify page's play-all ends here: its page is gone.
+        self._stop_playall()
+        try:
+            program = buttonframe.program
+            play_buttons.play_buttons(sortitem, sense, program,
+                        node=self._word_sound_node(program, sense),
+                        task=getattr(buttonframe, 'task', None),
+                        row=0, column=1, padx=4)
+        except Exception as e:
+            log.info("sort-page play buttons skipped: %s", e)
         buttonframe.sortitem = sortitem
         # The class escape was a button at the BOTTOM of the page until Kent
         # 2026-08-21 — now it is a right-click on the word, matching the verify
@@ -473,6 +485,9 @@ class SortPresenter(PresenterBase):
         f.columnconfigure(1, weight=1)
         ui.Label(groupsFrame, text=instructions, font='instructions',
                 anchor='c', sticky='sew')
+        # BEFORE the group buttons, which register with it as they are built
+        # (group_play_buttons).
+        self._start_sort_playall(runwindow, groupsFrame, sort_obj)
         buttonframe = SortButtonFrame(groupsFrame, sort_obj, groups,
                                      macrosort=macrosort,
                                      joinable=True,
@@ -525,6 +540,7 @@ class SortPresenter(PresenterBase):
         # and the row's own chrome without any of them being estimated — which
         # is what stops the labelled and unlabelled variants needing different
         # numbers. `reserve` is only the right-hand allowance.
+        self._sortplay_scroller = buttonframe
         ui.wrap_to_container(runwindow,cols=1,reserve=120,
                         targets_parent=buttonframe,maxdepth=5)
         return groupsFrame, buttonframe
@@ -663,6 +679,139 @@ class SortPresenter(PresenterBase):
                     sticky='ew')
         return w
 
+    # -- Word/phrase play buttons and play-all (Kent 2026-11-05) --
+    # A lexicon built from text recordings has no glosses or images: the user
+    # knows a word only by hearing it and its phrase. See frontend/
+    # play_buttons.py for the buttons and the PlayAll controller.
+
+    def _stop_playall(self):
+        """Stop (and forget) the current page's play-all, if any. Called when
+        another page is built, so play-all never outlives its page."""
+        pa=getattr(self,'_playall',None)
+        self._playall=None
+        if pa is not None:
+            pa.stop()
+        # the sort page's stops too (a new word, or another page), but stays:
+        # its group buttons are still there
+        sp=getattr(self,'_sortplayall',None)
+        if sp is not None:
+            sp.stop()
+
+    def _start_verify_playall(self, runwindow, header, sort_obj, macrosort,
+                              scroller, canary_alive):
+        """A "Play all" for this verify page, put in `header` once the first
+        row with a playable word registers (build_verify_button). Not on the
+        macrosort page: its rows are groups, not words. `scroller` and
+        `canary_alive` are functions because the page makes its scroller and
+        canary after its header."""
+        self._stop_playall()
+        self._play_program=getattr(sort_obj,'program',None)
+        self._play_task=sort_obj
+        self._play_pair=None    # playback() result, asked once per page
+        if macrosort:
+            return
+        def alive():
+            if runwindow.exitFlag.istrue():
+                return False
+            return canary_alive()
+        self._playall=play_buttons.PlayAll(header, scroller=scroller,
+                                           alive=alive, row=0, column=2,
+                                           sticky='w', padx=10)
+
+    def _start_sort_playall(self, runwindow, groupsFrame, sort_obj):
+        """The sort page's "Play all", over its group buttons' example words
+        (Kent 2026-11-06: as the verify page's — the same PlayAll). Its button
+        goes beside the instructions once the first group registers."""
+        old = getattr(self, '_sortplayall', None)
+        if old is not None:
+            old.stop()
+        self._sortplay_root = groupsFrame
+        self._sortplay_scroller = None   # the group buttons' frame, once made
+        self._sortplay_pair = None       # playback() result, asked once per page
+        def alive():
+            try:
+                return (groupsFrame.winfo_exists()
+                        and not runwindow.exitFlag.istrue())
+            except Exception:
+                return False
+        self._sortplayall = play_buttons.PlayAll(
+                        groupsFrame,
+                        scroller=lambda: getattr(self, '_sortplay_scroller', None),
+                        alive=alive, row=0, column=1, sticky='se', padx=10)
+
+    def group_play_buttons(self, gbf):
+        """`▶` / `[▶]` on a sort-page group button (SortGroupButtonFrame), for
+        its example word, and its place in the page's play-all. Only under the
+        sort page's group buttons; nothing when the button itself plays."""
+        pa = getattr(self, '_sortplayall', None)
+        root = getattr(self, '_sortplay_root', None)
+        sense = getattr(gbf, '_sense', None)
+        if pa is None or root is None or sense is None:
+            return
+        if getattr(gbf, '_playable', False):
+            return
+        def up(o):   # tkinter's `master`; `parent` where a backend lacks it
+            return getattr(o, 'master', None) or getattr(o, 'parent', None)
+        w = gbf
+        while w is not None and w is not root:   # under this page's groups?
+            w = up(w)
+        if w is None:
+            return
+        program = gbf.program
+        if self._sortplay_pair is None:
+            self._sortplay_pair = play_buttons.playback(program, gbf.task)
+        if self._sortplay_pair[0] is None:
+            return
+        pb = play_buttons.play_buttons(gbf, sense, program,
+                        node=self._word_sound_node(program, sense),
+                        row=0, column=11, pair=self._sortplay_pair, padx=2)
+        if pb.frame is None or not pb.can_play_word:
+            return
+        marker = ui.Label(gbf, text=' ', column=10, row=0, sticky='w')
+        # Reading order: the button's place in the group-button list (index ==
+        # grid position; it re-grids as groups come and go), read at start.
+        def key(b=gbf):
+            groups = getattr(getattr(self, '_sortplay_scroller', None),
+                             'groupbuttonlist', [])
+            o = b
+            while o is not None and not any(o is g for g in groups):
+                o = up(o)
+            return next((i for i, g in enumerate(groups) if g is o), len(groups))
+        pa.add(key, gbf, pb.play_word, marker=marker)
+
+    def _word_sound_node(self, program, sense):
+        """The node whose sound IS the word on this page: the tone frame's
+        example on a tone page, else the form being sorted."""
+        try:
+            params=program.params
+            if params.cvt()=='T':
+                return sense.examples.get(params.check())
+            return sense.ftypes.get(params.ftype())
+        except Exception:
+            return play_buttons.word_node(sense)
+
+    def _verify_play_column(self, bf, sense, row, column):
+        """`|>` / `[|>]` inside a verify row, and the row's place in
+        play-all. Columns 10/11 of the row frame, clear of whatever else the
+        row carries (empty grid columns take no space)."""
+        program=getattr(self,'_play_program',None)
+        if program is None:
+            return
+        if getattr(self,'_play_pair',None) is None:
+            self._play_pair=play_buttons.playback(
+                                program,getattr(self,'_play_task',None))
+        if self._play_pair[0] is None:
+            return
+        pb=play_buttons.play_buttons(bf, sense, program,
+                        node=self._word_sound_node(program,sense),
+                        row=0, column=11, pair=self._play_pair, padx=2)
+        pa=getattr(self,'_playall',None)
+        if pb.frame is None or not pb.can_play_word or pa is None:
+            return
+        # Where play-all shows, by SHAPE, which row is playing.
+        marker=ui.Label(bf, text=' ', column=10, row=0, sticky='w')
+        pa.add((row,column), bf, pb.play_word, marker=marker)
+
     def build_verify_layout(self, runwindow, title, page_icon, instructions,
                            prog_text, img_mod, group,
                            items, sort_obj, macrosort, oktext,
@@ -670,6 +819,7 @@ class SortPresenter(PresenterBase):
                            verifybutton_fn, join_fn, prep=None):
         """Build the verify window layout.
         Returns (buttonframe, verifycanary)."""
+        self._vpage=None # set below for a page of word rows
         f = runwindow.frame
         # Let the content area expand to fill the kiosk screen
         # Override the centering spacers (rows 0,2 weight=3 from Window.post_tk_init)
@@ -682,6 +832,9 @@ class SortPresenter(PresenterBase):
         # "(last group)"); supplied by the caller as prog_text, blank if None.
         ui.Label(titles, text=(prog_text or ''), anchor='w', padx=10,
                 column=1, row=0, sticky='ew')
+        self._start_verify_playall(runwindow, titles, sort_obj, macrosort,
+                                   lambda: buttonframe,
+                                   lambda: verifycanary.winfo_exists())
         ui.Label(f, image=page_icon, text='', row=0, column=0, sticky='nw')
         i = ui.Label(titles, text=instructions,
                     row=1, column=0, columnspan=2, sticky='wns')
@@ -772,6 +925,12 @@ class SortPresenter(PresenterBase):
             verifycanary=ui.Frame(f)
             reveal=min(24, ntotal) # first screenful shown before the rest streams
             nav_row=(ntotal+bc-1)//bc # row just past the last item
+            # What a sameSort split needs to add a row after the build: the
+            # next free slot, and the OK row to move below it (_add_verify_row).
+            self._vpage={'scroller':buttonframe, 'bc':bc, 'nslots':ntotal,
+                         'nav_row':nav_row, 'navframe':None,
+                         'verifybutton_fn':verifybutton_fn, 'rows':[],
+                         'runwindow':runwindow}
             # Instrumentation (to answer "what's limited at N items"): time the
             # build and log RSS before/after. Read these in the log as
             # "verify build: N items in Ts, RSS A→B MB".
@@ -794,6 +953,7 @@ class SortPresenter(PresenterBase):
                 # other sort); clicking it ends the verify (destroys the canary).
                 navframe=ui.Frame(buttonframe.content, sticky='ew')
                 navframe.grid(row=nav_row, column=0, columnspan=bc, sticky='ew')
+                self._vpage['navframe']=navframe
                 okbutton=ui.Button(navframe, text=oktext, font='instructions',
                          cmd=verifycanary.destroy,
                          column=0, row=0, sticky='ew', padx=4)
@@ -1164,13 +1324,162 @@ class SortPresenter(PresenterBase):
         return [(label,lambda c=check,v=value:apply(c,v))
                     for label,check,value in moves]
 
+    # -- sameSort on the verify page (Kent 2026-08-25, 2026-11-06) --
+    # A row may stand for a SET of senses that are one word for sorting
+    # (backend/core/samesort.py). Its "×N" opens the members, each with
+    # its play pair and a "Split off"; dragging one row onto another joins
+    # them. `sameset` is the backend's (Sort.samesort_page): members, text,
+    # join, split. Design: agenda/azt/verify_page_join_same_word.md.
+
+    def _samesort_mark(self, entry):
+        """Show, update or remove the row's ×N control: a button of its own,
+        so a left click on the word still means "this one is different"."""
+        n=len(entry['sameset']['members'](entry['sense']))
+        m=entry.get('mark')
+        if n<2:
+            if m is not None and m.winfo_exists():
+                m.destroy()
+            entry['mark']=None
+            return
+        if m is not None and m.winfo_exists():
+            m['text']=f"×{n}"
+            return
+        entry['mark']=m=ui.Button(entry['bf'], text=f"×{n}", font='read',
+                    cmd=lambda e=entry:self._samesort_members(e),
+                    column=9, row=0, sticky='nsw', padx=2)
+        try:
+            ui.ToolTip(m,_("The same word, {n} times: click to see each, "
+                           "or to split one off").format(n=n))
+        except Exception as e:
+            log.info("×N tooltip skipped (%s)",e)
+
+    def _samesort_refresh(self):
+        """Drop rows whose widgets are gone; re-read every remaining ×N."""
+        vp=getattr(self,'_vpage',None)
+        if not vp:
+            return
+        vp['rows']=[e for e in vp['rows'] if e['bf'].winfo_exists()]
+        for e in vp['rows']:
+            self._samesort_mark(e)
+
+    def _samesort_members(self, entry):
+        """The members of a row's set, each with ▶ / [▶] and "Split off",
+        and a "Play all" over them."""
+        sameset=entry['sameset']
+        program=getattr(self,'_play_program',None)
+        vp=getattr(self,'_vpage',None) or {}
+        w=ui.Window(vp.get('runwindow') or entry['bf'],
+                    title=_("Same word"), exit=False)
+        f=w.frame
+        if getattr(self,'_play_pair',None) is None and program is not None:
+            self._play_pair=play_buttons.playback(
+                                program,getattr(self,'_play_task',None))
+        def split(member, line):
+            new=sameset['split'](member)
+            line.destroy()
+            for s in new:
+                self._add_verify_row(s)
+            self._samesort_refresh()
+            if len(sameset['members'](entry['sense']))<2:
+                close()
+        # Its own "Play all", as the verify page's (Kent 2026-11-06); the
+        # button goes in row 0, above the members, once one can play.
+        def alive():
+            try:
+                return bool(f.winfo_exists())
+            except Exception:
+                return False
+        pa=play_buttons.PlayAll(f, alive=alive, row=0, column=0, sticky='w')
+        def close():
+            pa.stop()
+            w.destroy()
+        for r,member in enumerate(sameset['members'](entry['sense']),start=1):
+            line=ui.Frame(f, row=r, column=0, sticky='ew', border=True)
+            ui.Label(line, text=(sameset['text'](member) or '').replace(
+                                                                '\xa0',' '),
+                     font='read', row=0, column=0, sticky='w')
+            if program is not None and self._play_pair[0] is not None:
+                try:
+                    pb=play_buttons.play_buttons(line, member, program,
+                            node=self._word_sound_node(program,member),
+                            row=0, column=1, pair=self._play_pair, padx=2)
+                    if pb.frame is not None and pb.can_play_word:
+                        marker=ui.Label(line, text=' ', row=0, column=3,
+                                        sticky='w')
+                        pa.add(r, line, pb.play_word, marker=marker)
+                except Exception as e:
+                    log.info("members list play buttons skipped: %s",e)
+            b=ui.Button(line, text=_("Split off"), font='instructions',
+                        cmd=lambda m=member,l=line:split(m,l),
+                        row=0, column=2, sticky='e', padx=4)
+            try:
+                ui.ToolTip(b,_("Not the same word: sort this one on its own"))
+            except Exception as e:
+                log.info("split tooltip skipped (%s)",e)
+        ui.Button(f, text=_("OK"), cmd=close, font='instructions',
+                  row=r+1, column=0, sticky='ew')
+        return w
+
+    def _samesort_droppable(self, entry):
+        """Drag this row's word onto another's: "the same word". Wired as the
+        sort page's group join is (sort_buttons.maybe_join_dnd), on both
+        backends: `dragthreshold` keeps the click (this one is different)
+        and the right-click menu working; the target's `dnd_commit` acts."""
+        w=entry['b']
+        try:
+            w.draggable=w.droppable=True
+            w.dragthreshold=8
+            w.draggable_bindings()
+            w.dnd_bindings()
+            w.samesort_entry=entry
+            def dnd_commit(source,event,target=w):
+                other=getattr(source,'samesort_entry',None)
+                if other is None or other is target.samesort_entry:
+                    return #dropped on itself, or on something that isn't a word
+                log.info("sameSort drag-join: %s onto %s",
+                         other['sense'].id,target.samesort_entry['sense'].id)
+                gone=entry['sameset']['join'](other['sense'],
+                                              target.samesort_entry['sense'])
+                for e in list(getattr(self,'_vpage',None) and
+                              self._vpage['rows'] or []):
+                    if any(e['sense'] is g for g in gone or []):
+                        e['bf'].destroy()
+                self._samesort_refresh()
+            w.dnd_commit=dnd_commit
+        except Exception as e:
+            log.info("sameSort drag-join skipped for %s: %s",
+                     entry['sense'].id,e)
+
+    def _add_verify_row(self, sense):
+        """A row for `sense` after the page is built (a split left it a set,
+        or a lone word, of its own): the next free slot, with OK moved below."""
+        vp=getattr(self,'_vpage',None)
+        if not vp:
+            return
+        slot=vp['nslots']
+        vp['nslots']+=1
+        bc=vp['bc']
+        row=slot//bc
+        if row>=vp['nav_row']:
+            vp['nav_row']=row+1
+            if vp['navframe'] is not None and vp['navframe'].winfo_exists():
+                vp['navframe'].grid(row=vp['nav_row'], column=0,
+                                    columnspan=bc, sticky='ew')
+        vp['verifybutton_fn'](vp['scroller'].content, sense,
+                              row=row, column=slot % bc, label=False)
+        try:
+            vp['scroller'].reflow()
+        except Exception as e:
+            log.info("verify page reflow after a new row skipped: %s",e)
+
     def build_verify_button(self, parent, text, sense, is_label,
                            notok_fn, row, column, ipady, menu_items=None,
-                           **kwargs):
+                           sameset=None, **kwargs):
         """Build a single verify button or label. Returns (widget, frame_or_None).
         menu_items (see attach_context_menu) hangs a right-click menu on the
         word — the verify page's escape hatches, which the left click can't
-        carry (it already means "this one is different")."""
+        carry (it already means "this one is different"). sameset: the
+        backend's sameSort handles for the row (×N, split, drag-join)."""
         # A non-breaking space (\xa0) in the text — e.g. an untranslated "?\xa0?"
         # gloss — can blank the WHOLE label on this Tk/font, leaving the row
         # showing only its illustration. Normalise it to a plain space for
@@ -1234,6 +1543,23 @@ class SortPresenter(PresenterBase):
                 log.info("DIAG-rowheight failed: %s", e)
         if menu_items:
             self.attach_context_menu(b, menu_items)
+        # `|>` / `[|>]` beside the word, in the row's own frame. A LABEL row
+        # (bf None) has no frame of its own to put them in — its cell is the
+        # page grid's — so it gets none (no caller builds one today).
+        if bf is not None:
+            try:
+                self._verify_play_column(bf, sense, row, column)
+            except Exception as e:
+                log.info("verify row play buttons skipped: %s", e)
+        vp=getattr(self,'_vpage',None)
+        if bf is not None and sameset is not None and vp is not None:
+            entry={'sense':sense,'b':b,'bf':bf,'sameset':sameset,'mark':None}
+            vp['rows'].append(entry)
+            try:
+                self._samesort_mark(entry)
+                self._samesort_droppable(entry)
+            except Exception as e:
+                log.info("verify row sameSort controls skipped: %s", e)
         return b, bf
 
     def build_join_layout(self, runwindow, title, page_icon, img_mod):

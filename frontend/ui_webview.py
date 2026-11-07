@@ -82,6 +82,18 @@ def _next_wid():
         _wid_counter += 1
         return _wid_counter
 
+
+def _event_from(data):
+    """A bound handler's event: the JS data as attributes, plus `x_root`/
+    `y_root`. Tk callers post menus at `event.x_root` (sort_ui's per-word
+    menu raised "'Event' object has no attribute 'x_root'", Kent's log
+    2026-11-06); here the page IS the screen a menu is posted on, so the
+    page coordinates are the root ones."""
+    data = dict(data or {})
+    data.setdefault('x_root', data.get('x', 0))
+    data.setdefault('y_root', data.get('y', 0))
+    return type('Event', (), data)()
+
 # ── ExitFlag ──────────────────────────────────────────────────────────
 class ExitFlag:
     def __init__(self):
@@ -2493,7 +2505,8 @@ class _WebviewWidget:
         if not add:
             self._bindings[event] = []
         self._bindings[event].append(handler)
-        _api.register(self._wid, event, lambda data, h=handler: h(type('Event', (), data)()))
+        _api.register(self._wid, event,
+                      lambda data, h=handler: h(_event_from(data)))
         wv = getattr(self, '_wv_window', None)
         _js(wv, f'bindEvent({self._wid}, {json.dumps(event)})')
 
@@ -4369,6 +4382,39 @@ class ListBox(_WebviewWidget):
     def curselection(self):
         return self._selection
 
+    def _span(self, first, last):
+        """Tk's (first, last) row range, `'end'` included, as a range."""
+        n = len(self._items)
+        first = n - 1 if first in (END, 'end') else int(first)
+        if last is None:
+            last = first
+        last = n - 1 if last in (END, 'end') else int(last)
+        return range(max(first, 0), min(last, n - 1) + 1)
+
+    def select_set(self, first, last=None):
+        """Tk's `selection_set`: add rows to the selection, from code. Fires
+        no command, as in Tk (the sound settings' sister list restores a saved
+        choice this way)."""
+        rows = set(self._selection) | set(self._span(first, last))
+        if not self._multiple:
+            rows = set(list(self._span(first, last))[-1:]) or set(self._selection)
+        self._selection = tuple(sorted(rows))
+        self._push_selection()
+
+    def select_clear(self, first, last=None):
+        """Tk's `selection_clear`: drop rows from the selection."""
+        drop = set(self._span(first, last))
+        self._selection = tuple(i for i in self._selection if i not in drop)
+        self._push_selection()
+
+    selection_set = select_set
+    selection_clear = select_clear
+
+    def _push_selection(self):
+        wv = getattr(self, '_wv_window', None)
+        _js(wv, f'updateProp({self._wid}, "selection", '
+                f'{json.dumps(list(self._selection))})')
+
     def get(self, first, last=None):
         """Tk's `Listbox.get`: one row's text, or a TUPLE of rows.
 
@@ -4753,6 +4799,19 @@ class Menu:
             self._wid, json.dumps(self.spec()), int(x), int(y),
             'true' if self._sticky else 'false'))
 
+    # The Tk calls sort_ui.attach_context_menu makes on a posted menu; their
+    # absence ("'Menu' object has no attribute 'winfo_exists'", Kent's log
+    # 2026-11-06) killed the per-word menu on the sort and verify pages.
+    def winfo_exists(self):
+        return self._exists
+
+    def unpost(self):
+        wv = getattr(self, '_wv_window', None)
+        _js(wv, f'destroyWidget({self._wid})')
+
+    def grab_release(self):
+        pass    # no grab is taken here; a click elsewhere dismisses (postMenu)
+
     def destroy(self):
         self._exists = False
         wv = getattr(self, '_wv_window', None)
@@ -4881,6 +4940,17 @@ class ScrollingFrame(Frame):
         wv = getattr(self, '_wv_window', None)
         _js(wv, 'var e=_widgets.get({}); if(e) e.scrollTop=0;'
                 ''.format(self._wid))
+
+    def see(self, widget):
+        """Scroll the least needed to show `widget` (play-all on the verify
+        page follows the row being played). 'nearest' leaves an already
+        visible row where it is, so the list doesn't jump on every word."""
+        wv = getattr(self, '_wv_window', None)
+        wid = getattr(widget, '_wid', None)
+        if wid is None:
+            return
+        _js(wv, 'var e=_widgets.get({}); if(e && e.scrollIntoView) '
+                'e.scrollIntoView({{block:"nearest"}});'.format(wid))
 
     # ACCEPTED AND IGNORED, deliberately — not "not written yet".
     # tkinter suspends its <Configure> handler around a bulk update because

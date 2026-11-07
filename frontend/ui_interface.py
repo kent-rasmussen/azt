@@ -318,6 +318,14 @@ class ScrollingFrameInterface(FrameInterface):
     def tobottom(self): ...
     @abstractmethod
     def totop(self): ...
+    @abstractmethod
+    def see(self, widget):
+        """Scroll as little as needed for `widget` (anywhere inside
+        `content`) to be in view — the browser's
+        scrollIntoView({block:'nearest'}). Must work for a row the verify
+        page has virtualized (unmapped), so the scroll can come first and
+        the virtualizer then map the row."""
+        ...
 
 # ── ButtonFrame ──────────────────────────────────────────────────────────
 class ButtonFrameInterface(FrameInterface):

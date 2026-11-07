@@ -4837,6 +4837,49 @@ class ScrollingFrame(Frame):
     def totop(self):
         self.update_idletasks()
         self.canvas.yview_moveto(0)
+    def see(self, widget):
+        """Scroll the least needed to show `widget` (anywhere inside
+        `content`), like a browser's scrollIntoView({block:'nearest'}).
+
+        WORKS ON AN UNMAPPED ROW, which is the point: the verify page
+        virtualizes (grid_remove) rows away from the viewport
+        (SortPresenter._virtualize_verify), and an unmapped widget's own
+        winfo_y is stale or zero. So the position comes from the GRID CELL of
+        the content-level ancestor — `content.grid_bbox(col,row)`, which the
+        virtualizer's pinned row minsizes keep honest — using the row/column
+        the widget was created with when grid_remove has made grid_info()
+        empty. Scrolling first is all a virtualized row needs: the
+        virtualizer's poll then maps the rows around the new view.
+
+        No update_idletasks here (the XWayland flush trap, see reflow)."""
+        try:
+            top=widget
+            while top is not None and top.master is not self.content:
+                top=top.master
+            if top is None:
+                return
+            info=top.grid_info() or {}
+            row=info.get('row',getattr(top,'row',None))
+            col=info.get('column',getattr(top,'column',0))
+            if row is None:
+                return
+            bbox=self.content.grid_bbox(int(col),int(row))
+            if not bbox:
+                return
+            y,h=bbox[1],bbox[3]
+            try:
+                total=float(str(self.canvas.cget('scrollregion')).split()[3])
+            except Exception:
+                total=float(self.content.winfo_reqheight())
+            if total<=0:
+                return
+            first,last=self.canvas.yview()
+            if y < first*total:
+                self.canvas.yview_moveto(y/total)
+            elif y+h > last*total:
+                self.canvas.yview_moveto(max(0.0,(y+h)/total-(last-first)))
+        except Exception as e:
+            log.info("ScrollingFrame.see(%s) failed: %s",widget,e)
     def __init__(self, parent, xscroll=False, *args, **kwargs):
         self.ignore_maxwidth=kwargs.pop('ignore_maxwidth',False)
         """Make this a Frame, with all the inheritances, I need"""

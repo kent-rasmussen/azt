@@ -1562,6 +1562,13 @@ class SoundSettings(object):
         self.getactual(test=False)          # free: names and directions only
         self.resolve_cards()                # stored names → today's indices
         self.getactual(only=self.narrow_indices())
+        if not self.cards['in'] or not self.cards['out']:
+            # Nothing to narrow to: PortAudio named no default and no stored
+            # card resolved (an index stored without its name is dropped), so
+            # the narrow probe checked nothing ("narrow: []") and the defaults
+            # below had no card to pick (min() of empty, Kent 2026-11-04).
+            log.info("narrow probe left a direction empty; probing all devices")
+            self.getactual()
         self.makedefaultifnot()
 
     def device_fingerprint(self):
@@ -2134,7 +2141,10 @@ class Record(object):
     """
 
     def audioURL(self, relfilename):
-        return str(file.getdiredurl(self.program.settings.audiodir, relfilename))
+        # the texts' word lexicon has an audio folder of its own (file_parser)
+        base = (getattr(getattr(self.program, 'db', None), 'lexicon_audiodir', None)
+                or self.program.settings.audiodir)
+        return str(file.getdiredurl(base, relfilename))
 
     def audioexists(self, relfilename):
         return file.exists(self.audioURL(relfilename))
@@ -2184,7 +2194,9 @@ class Record(object):
                         if legacy == '_':
                             wavfilename += '_'
                         wavfilename = rx.urlok(wavfilename)
-                        filenames += [wavfilename + '.wav']
+                        # 'audio/' in the texts' word lexicon (file_parser)
+                        filenames += [getattr(getattr(self.program, 'db', None), 'record_subdir', '')
+                                      + wavfilename + '.wav']
         return filenames
 
     def makeaudiofilename(self, node):

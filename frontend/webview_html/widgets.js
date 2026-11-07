@@ -1376,6 +1376,18 @@ function updateProp(wid, prop, value) {
             { const cb = el.querySelector('input[type="checkbox"]');
               if (cb) cb.checked = !!value; }
             break;
+        case 'selection':
+            // Listbox rows selected FROM PYTHON (select_set/select_clear): value
+            // is the full array of selected indices; the anchor follows the
+            // last, as a click would leave it.
+            if (el.classList.contains('wv-listbox')) {
+                const want = new Set((value || []).map(Number));
+                el.querySelectorAll('.wv-listbox-item').forEach(d =>
+                    d.classList.toggle('selected',
+                                       want.has(parseInt(d.dataset.index))));
+                if (want.size) el.dataset.anchor = Math.max(...want);
+            }
+            break;
         case 'items':
             // For listbox: value is an array of strings
             if (el.classList.contains('wv-listbox')) {
@@ -1854,7 +1866,16 @@ function bindEvent(wid, eventName) {
                         && el.classList.contains('wv-disabled'))))
             return;
         // A right-click that opens OUR menu must not also open the engine's.
-        if (domEvent === 'contextmenu') e.preventDefault();
+        if (domEvent === 'contextmenu') {
+            e.preventDefault();
+            // A WIDGET'S OWN RIGHT-CLICK IS THE WHOLE ANSWER. Bubbling on to
+            // `document` also posted the window's page menu (ContextMenu
+            // binds <<ContextMenu>> there), which landed over the widget's
+            // own action — the play button's praat open, the sort page's
+            // per-word menu (Kent, 2026-11-06: "just the page defaults in
+            // each case"). Capture-phase dismissers on document still run.
+            if (el !== document) e.stopPropagation();
+        }
         // auxclick covers every non-primary button; only the middle one is
         // tkinter's Button-2.
         if (domEvent === 'auxclick' && e.button !== 1) return;

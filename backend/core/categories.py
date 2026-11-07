@@ -5,6 +5,7 @@ pulling in sort presentation, verification UI, or check navigation."""
 from utilities import logsetup
 from utilities.error_handler import notify_error as ErrorNotice
 from utilities.i18n import _
+from backend.core import samesort
 
 log=logsetup.getlog(__name__)
 
@@ -129,6 +130,15 @@ class Categories:
                         "current sort group ({})."
                         "".format(curvalue, annogroup))
     def marksortgroup(self,sense,group,**kwargs):
+        """Sort `sense` into `group` — and every sense in its sameSort set with
+        it, so each member keeps its own copy (backend/core/samesort.py). The
+        once-per-call parts (write, thread bookkeeping) run once, on `sense`."""
+        once=('write','thread_name')
+        for other in samesort.members(self.program,sense)[1:]:
+            self._marksortgroup(other,group,
+                                **{k:v for k,v in kwargs.items() if k not in once})
+        return self._marksortgroup(sense,group,**kwargs)
+    def _marksortgroup(self,sense,group,**kwargs):
         check=kwargs.get('check',self.program.params.check())
         profile=kwargs.get('profile',self.program.slices.profile())
         nocheck=kwargs.get('nocheck',False)
@@ -205,6 +215,12 @@ class Categories:
         if not nocheck:
             return newgroup
     def removeitemfromgroup(self,item,**kwargs):
+        """Take `item` out of its group, with every sense in its sameSort set
+        (see marksortgroup); the write happens once, on `item`."""
+        for other in samesort.members(self.program,item)[1:]:
+            self._removeitemfromgroup(other,**{**kwargs,'write':False})
+        return self._removeitemfromgroup(item,**kwargs)
+    def _removeitemfromgroup(self,item,**kwargs):
         #leave these in kwargs for use below:
         check=kwargs.get('check',self.program.params.check())
         group=kwargs.get('group',self.program.status.group())
@@ -283,7 +299,9 @@ class Categories:
         check=self.program.params.check()
         lst2=self.getsensesingroup(check,x) #by annotations, for C/V
         profile=self.program.slices.profile()
-        senses=self.program.slices.inslice(lst2)
+        # one per sameSort set: marksortgroup writes to the whole set
+        senses=samesort.representatives(self.program,
+                                        self.program.slices.inslice(lst2))
         ftype=self.program.params.ftype()
         if not senses:
             log.info("No senses for {check}={value}".format(check=check,value=x))

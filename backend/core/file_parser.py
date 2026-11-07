@@ -1,4 +1,5 @@
 # coding=UTF-8
+import os
 from utilities.utilities import *
 from utilities.i18n import _
 from utilities import logsetup, file
@@ -69,15 +70,31 @@ class FileParser(object):
             log.info("Using {analang} db already loaded from {filename}"
                     "".format(analang=self.program.db.analang,
                             filename=self.program.db.filename))
-        self.filename=self.program.filename
         """I think an ad hoc settings goes here, to load analang.
         Everyone should have this, if available in settings."""
-        mgr=settings.SettingsManager(self.filename)
+        mgr=settings.SettingsManager(self.program.filename)
         self.program.analang=mgr.project.get('analang',None)
+        # The lexicon in use: the project's own LIFT, unless a text's word
+        # lexicon (<prj>/texts/<stem>.lift) was switched to (Kent, 2026-11-05).
+        # The project — settings, audio, repository — stays program.filename.
+        self.filename=(getattr(self.program,'lexicon_filename',None)
+                       or self.program.filename)
         log.info(f"Ready to load {self.filename} with {self.program.analang=}")
         # self.analang=self.program.analang
         # splash.progress(15)
         self.loaddatabase()
+        if str(self.filename) != str(self.program.filename):
+            # The texts' word lexicon sits in <prj>/texts with the recordings
+            # its words are spans of, so its audio folder is its own folder
+            # ('story.ogg#t=…'); takes recorded in it (careful speech) go in
+            # texts/audio, stored as 'audio/…' (Kent, 2026-11-06), so they
+            # aren't listed as texts. Record.audioURL/filenameoptions use these.
+            lexdir=file.getfilenamedir(self.filename)
+            self.program.db.audiodir=self.program.db.lexicon_audiodir=lexdir
+            self.program.db.record_subdir='audio/'
+            os.makedirs(os.path.join(str(lexdir),'audio'),exist_ok=True)
+            projectdir=file.getfilenamedir(self.program.filename)
+            self.program.db.imgdir=file.getimagesdir(projectdir)
         # splash.progress(25)
         # if self.program.tk_root.exitFlag.istrue():
         #     return

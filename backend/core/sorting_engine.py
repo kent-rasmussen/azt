@@ -27,6 +27,7 @@ from utilities.i18n import _
 from backend.core.lexicon import Tone
 from backend.core.categories import Categories
 from backend.core.analysis import SyllableSliceDict
+from backend.core import samesort
 
 
 class SyllablePrep(object):
@@ -178,7 +179,9 @@ class SyllablePrep(object):
         reused window — no Wait dialog, no wait_window). Flag-outs move via the
         misfit rule (verifybutton.notok reads self._prep_verify); OK destroys the
         canary, which marks the slice verified and advances."""
-        items=sl.members_in_slice(check,group,idx)
+        # one row per sameSort set (a verdict on it goes to the whole set)
+        items=samesort.representatives(self.program,
+                                       sl.members_in_slice(check,group,idx))
         items.sort(key=lambda s:sl.slice_key(check,s))
         nslices=len(sl.slices_of(check,group))
         if len(items)<=1:
@@ -1240,11 +1243,16 @@ class Sort(Categories):
     def present_sense(self,sense):
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
         frame=self.get_frame()
-        text=sense.formatted(self.analang, self.glosslangs,
-                             self.location_ftype(frame), frame)
+        text=samesort.marked(self.program,sense,
+                             sense.formatted(self.analang, self.glosslangs,
+                                             self.location_ftype(frame), frame))
         return self.sort_ui.build_present_sense(
             self.ui.runwindow.frame, self.buttonframe, text, sense)
     def unverify_profile(self,sense,advance=True):
+        """For `sense` and every sense in its sameSort set (samesort.py)."""
+        for s in samesort.members(self.program,sense):
+            self._unverify_profile(s,advance)
+    def _unverify_profile(self,sense,advance=True):
         """'Not {profile}' — DEFER, don't disrupt. Clear the word's CONFIRMED
         profile DATA (plain …-x-cvprofile) and its profile sort-group annotation
         so it leaves this profile and gets re-profiled later. Then:
@@ -1346,6 +1354,10 @@ class Sort(Categories):
         self.program.status_dirty=True
         self.maybewrite()
     def escape_profile_class(self,sense,check,value):
+        """For `sense` and every sense in its sameSort set (samesort.py)."""
+        for s in samesort.members(self.program,sense):
+            self._escape_profile_class(s,check,value)
+    def _escape_profile_class(self,sense,check,value):
         """"This word doesn’t belong in this {class} at all" — write ONE primitive
         (#C, C# or syls), which re-buckets the word into a different, fully-named
         profile class. The DATA half of the class escape; the UI half (the four
@@ -1502,7 +1514,11 @@ class Sort(Categories):
             tosort=self.program.alphabet.itemstosort()
         else:
             tosort=self.program.status.sensestosort()
-        return self.first_sort+[i for i in tosort if i not in self.first_sort]
+        tosort=self.first_sort+[i for i in tosort if i not in self.first_sort]
+        if macrosort:
+            return tosort
+        # one per sameSort set: sorting it sorts the whole set (marksortgroup)
+        return samesort.representatives(self.program,tosort)
     def presenttosort(self,item,macrosort=False):
         # log.info("presenting to sort {item}".format(item=item))
         #Keep the same total throughout a given sort:
@@ -1927,7 +1943,9 @@ class Sort(Categories):
                          "so the flow picks a real group.",check)
                 return 1
             _t0=time.perf_counter()
-            self.currentsortitems=items=self.program.examples.sensesinslicegroup(group,check)
+            # one row per sameSort set; a row's verdict goes to the whole set
+            self.currentsortitems=items=samesort.representatives(self.program,
+                    self.program.examples.sensesinslicegroup(group,check) or [])
             log.info("verify: sensesinslicegroup(%s,%s) → %d items in %.2fs",
                      check, group, len(items or []), time.perf_counter()-_t0)
             # Present the list in a sensible order, not a random pile of words.
@@ -2091,6 +2109,38 @@ class Sort(Categories):
     # back. Flip to True to restore the old behaviour. Lives on Sort, so it
     # covers SortCV/SortV/SortT alike — verifybutton is shared by all of them.
     REMOVE_REMAINDER_AT_PENULTIMATE=False
+    def samesort_join(self,dragged,target):
+        """Verify page: `dragged` was dropped on `target`, "same word". Their
+        sets become one (samesort.py), and `target`'s row stands for it.
+        Returns the senses whose rows the page drops.
+
+        Nothing to copy across: both rows are on this page, so both sets are
+        already in this group for this check. Other checks keep each member's
+        own data, as leaving a set does (the replicate rule in
+        agenda/azt/verify_page_join_same_word.md); the next write fans out."""
+        samesort.join(self.program,dragged,target)
+        self.maybewrite()
+        gone=[s for s in samesort.covered_by(self.program,[target],
+                                             self.currentsortitems)
+                if s is not target]
+        self.currentsortitems[:]=[s for s in self.currentsortitems
+                                    if not any(s is g for g in gone)]
+        return gone
+    def samesort_split(self,sense):
+        """Verify page, the members list behind ×N: `sense` is not the same
+        word. It keeps its sort data, so it is still in this group: returns
+        the senses that now need rows of their own (samesort.split)."""
+        new=samesort.split(self.program,sense,self.currentsortitems)
+        self.maybewrite()
+        self.currentsortitems.extend(new)
+        return new
+    def samesort_page(self,display):
+        """What a verify row needs for its sameSort set: its members, how to
+        show one, and the join/split above. `display(sense)` is the row text."""
+        return {'members':lambda s:samesort.members(self.program,s),
+                'text':display,
+                'join':self.samesort_join,
+                'split':self.samesort_split}
     def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
         """This should maybe take examples as input, rather than senses"""
         # This must run one subcheck at a time. If the subcheck changes,
@@ -2193,8 +2243,12 @@ class Sort(Categories):
         #This should be pulling from the example, as it is there already
         check=self.program.params.check()
         frame=self.get_frame()
-        text=sense.formatted(self.analang, self.glosslangs,
-                             self.location_ftype(frame), frame)
+        def display(s):
+            return s.formatted(self.analang, self.glosslangs,
+                               self.location_ftype(frame), frame)
+        # No ×N in the text: the row carries it as a control of its own, which
+        # opens the set's members (sort_ui.build_verify_button).
+        text=display(sense)
         if self.program.settings.lowverticalspace:
             ipady=0
         else:
@@ -2224,7 +2278,8 @@ class Sort(Categories):
                                 notprofile))
         b, bf = self.sort_ui.build_verify_button(
             parent, text, sense, label, notok, row, column, ipady,
-            menu_items=menu_items, **kwargs)
+            menu_items=menu_items, sameset=self.samesort_page(display),
+            **kwargs)
     def reset_selected(self):
         for k in self.groupvars:
             self.groupvars[k].set(False)

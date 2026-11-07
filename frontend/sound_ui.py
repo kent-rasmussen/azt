@@ -23,6 +23,10 @@ class RecordButtonFrame(ui.Frame):
     """This is not implemented yet!!"""
     def _start(self, event=None):
         log.log(3,"Asking PA to record now")
+        if getattr(self.recorder,'filenameURL','') is None:
+            log.error("not recording: this word has no file of its own to "
+                      "record into (see __init__)")
+            return
         self.recorder.start()
     def _stop(self, event=None):
         try:
@@ -32,10 +36,32 @@ class RecordButtonFrame(ui.Frame):
             log.info("Couldn't stop recorder; was it on? ({})".format(e))
         """This is done in advance of recording now:"""
         if self.recorder.file_write_OK:
+            if getattr(self,'_span',None) is not None:
+                # A take of a word whose audio is a SPAN of a text: the span
+                # stays the word's own audio (Kent, 2026-11-06); the take
+                # goes on the sense's careful-speech example (addlink below
+                # links it there), which |> plays when there.
+                log.info("careful-speech take for a word that is a span ({}) "
+                         "of {}: {}".format(self._span,self._filenameURL,
+                                            self.recorder.filenameURL))
+                node=self.node
+                sense=getattr(node,'sense',None) or node.entry.sense
+                self.node=sense.newcareful(self.program.params.analang(),
+                                           self.program.params.audiolang())
+                self.filename=self._record_filename
+                self._filenameURL=self.recorder.filenameURL
+                self.player.filenameURL=self._filenameURL
+                self.player.span=self._span=None
             self.b.destroy()
             self.makeplaybutton()
             self.makedeletebutton()
             self.addlink()
+            node=getattr(self,'node',None)
+            if node is not None and node is getattr(
+                            getattr(node,'sense',None),'careful',None):
+                # addlink wrote raw XML; let hassoundfile() see the new form
+                node.getforms()
+                node.hassoundfile(recheck=True)
         # THE TAKE CAN CHANGE THE SETTINGS, so re-read them onto the labels.
         # `_report_take` proves a rate upsampled and `note_fake_rate` re-picks
         # immediately — correct, and invisible: the window still said 192khz
@@ -104,10 +130,15 @@ class RecordButtonFrame(ui.Frame):
                 and not str(self._filenameURL).lower().endswith('.m4a')):
             # praat can't read m4a: no bind, and no tooltip advertising it
             pttext+='; '+_("right click to open in praat")
-            self.p.bind('<Button-3>',
-                        lambda x: executables.praatopen(
-                                                    self.program,
-                                                    self._filenameURL))
+            def praat(event=None):
+                # A span opens the WHOLE recording; Praat isn't asked to
+                # select it, so the times go to the log for the user to find.
+                if getattr(self,'_span',None) is not None:
+                    log.info("opening the whole of {} in praat; this word is "
+                             "{} to {} s of it".format(self._filenameURL,
+                                                       *self._span))
+                executables.praatopen(self.program,self._filenameURL)
+            self.p.bind('<Button-3>',praat)
         self.pt=ui.ToolTip(self.p,pttext)
     def makedeletebutton(self):
         self.r=ui.Button(self,text='×',font='read',command=self.function,
@@ -204,11 +235,29 @@ class RecordButtonFrame(ui.Frame):
         else:
             t=_("No framed value, nor testing; can’t continue...")
             log.error(t)
+        # A SPAN OF A LONGER RECORDING ('story.ogg#t=12.340,12.810': a text
+        # word). Play just the span — and NEVER record over the recording it
+        # is cut from: a re-take goes to a new file, linked on a
+        # careful-speech example once a take succeeds (see _stop).
+        self._span=(getattr(node,'audiospan',None)
+                    if node is not None and not self.test else None)
+        record_url=self._filenameURL
+        self._record_filename=None
+        if self._span is not None:
+            try:
+                self._record_filename=task.filenameoptions(node)[-1]
+                record_url=task.audioURL(self._record_filename)
+            except Exception as e:
+                log.error("no file of its own to record this word into "
+                          "({}); recording is off for it, so that '{}' is "
+                          "not overwritten".format(e,self._filenameURL))
+                record_url=None
         # Just do these each once, since their dependencies don't change
-        self.recorder=sound.SoundFileRecorder(self._filenameURL,self.pa,
+        self.recorder=sound.SoundFileRecorder(record_url,self.pa,
                                         self.soundsettings)
         self.player=sound.SoundFilePlayer(self._filenameURL,self.pa,
-                                            self.soundsettings)
+                                            self.soundsettings,
+                                            span=self._span)
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""

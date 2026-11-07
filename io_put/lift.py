@@ -30,6 +30,10 @@ import ast #For string list interpretation
 import copy
 import collections
 from backend import langtags
+# Text words (one entry per occurrence in a text; backend/core/text_lexicon.py):
+PHRASE_TRAIT='text-phrase'  # on the example holding the word's phrase; value: phrase guid
+CAREFUL_TRAIT='careful-speech'  # on the example holding the word said again on its own; value: date recorded
+SAMESORT_TRAIT='sameSort'   # on a sense; value: the id of the set it sorts with
 """This returns the root node of an ElementTree tree (the entire tree as
 nodes), to edit the XML."""
 class Object(object):
@@ -1936,8 +1940,10 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         d=self.get('definition/form').get('lang')
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {langs}").format(langs=self.glosslangs))
-        self.annotationlang=self.glosslangs[0]
-        log.info(_("Using first gloss language for new annotations: {lang}").format(lang=self.glosslangs[0]))
+        # A lexicon with no glosses at all (words cut from a text) is fine;
+        # annotations still need a language, so use English there.
+        self.annotationlang=self.glosslangs[0] if self.glosslangs else 'en'
+        log.info(_("Using first gloss language for new annotations: {lang}").format(lang=self.annotationlang))
     def getfieldnames(self,guid=None,lang=None): # all field types in a given entry
         self.fieldnames={l:set([k
                                     for i in self.entries
@@ -2066,9 +2072,11 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.nfields={}
         # for l in self.fieldnames:
         #     del self.fieldnames[l] #for testing cases without fields!
-        fieldopts={k:k for k in ['sense/example',
-                                'citation',
-                                'lexical-unit']}
+        # sense/example: frame examples only (they have a location field), not
+        # a text word's phrase (Sense.getphrase)
+        fieldopts={'sense/example':'sense/example[field]'}
+        fieldopts.update({k:k for k in ['citation',
+                                'lexical-unit']})
         fieldopts.update(
                             {f:'field[@type="{}"]'.format(f)
                                     for l in self.analangs
@@ -3394,9 +3402,15 @@ class FormParent(Node):
         """"These attributes are not stored in lift; they depend on the work
         environment, so are set on each use. audiodir should be the
         fully qualified filesystem path, not a relative one (e.g., 'audio')"""
+        """A value 'story.ogg#t=12.340,12.810' (W3C media fragment) is a span of
+        a longer recording, as text words have (one recording, no cut files):
+        audiofileURL is then the recording and audiospan (start, end) in
+        seconds; audiospan is None for a whole file."""
         if hasattr(self,'audiofileisthere') and not recheck:
             return self.audiofileisthere
+        self.audiospan=None
         if rel:=self.textvaluebylang(self.db.audiolang):
+            rel,span=split_media_fragment(rel)
             # try: #get audiofileURL or fail
             abs=file.getdiredurl(self.db.audiodir,rel)
                                 # self.textvaluebylang(self.db.audiolang))
@@ -3404,6 +3418,7 @@ class FormParent(Node):
             if bool(abs) and file.exists(abs):
                 self.audiofileisthere=True
                 self.audiofileURL=abs
+                self.audiospan=span
                 return True
         self.audiofileisthere=False #If not in lift *and* file system
     def __init__(self, parent, node=None, **kwargs):
@@ -3797,6 +3812,37 @@ class Sense(Node,FieldParent):
                     raise
         # only make location keys with examples where found
         self.examples={loc:Example(self, exs[loc][0]) for loc in locations}
+    def getphrase(self):
+        """A text word's phrase: the example marked with a PHRASE_TRAIT trait
+        (value: the phrase's guid in the texts file), with the phrase text and
+        its audio span. It has no location field, so it is never a tone frame
+        example (getexamples), and isn't counted as one (getfieldswsoundfiles).
+        None for an ordinary sense."""
+        node=self.find(f'example/trait[@name="{PHRASE_TRAIT}"]/..')
+        self.phrase=Example(self,node) if node is not None else None
+    def getcareful(self):
+        """A text word said again on its own: the example marked with a
+        CAREFUL_TRAIT trait. The word's own audio stays its span of the text
+        (Kent, 2026-11-06); this is extra, and what |> plays when there.
+        None until recorded."""
+        node=self.find(f'example/trait[@name="{CAREFUL_TRAIT}"]/..')
+        self.careful=Example(self,node) if node is not None else None
+    def newcareful(self,analang,audiolang=None):
+        """Make (or return) the careful-speech example, its form a copy of
+        the citation form; the recording's audio form goes on it after. A
+        new take replaces the old: its `audiolang` form is removed here."""
+        if self.careful is not None and audiolang:
+            for f in self.careful.findall(f"form[@lang='{audiolang}']"):
+                self.careful.remove(f)
+            self.careful.getforms()
+        if self.careful is None:
+            self.careful=Example(self)
+            lc=getattr(self.entry,'lc',None)
+            text=lc.textvaluebylang(analang) if lc is not None else None
+            if text:
+                self.careful.textvaluebylang(lang=analang,value=text)
+            Trait(self.careful,name=CAREFUL_TRAIT).set('value',getnow())
+        return self.careful
     def getpssubclass(self):
         for n in self.findall('trait[@name="{}-infl-class"]'
                                 ''.format(self.psvalue())):
@@ -3849,6 +3895,20 @@ class Sense(Node,FieldParent):
         Kent, 2026-10-13 (D3): "put our analysis into machine codes, then the
         joined and renamed forms into data fields"."""
         return self.uftonevalue() or self.uftonevalue(machine=True)
+    def samesortvalue(self,value=None):
+        """The id of the sameSort set this sense belongs to, or None. value='':
+        leave the set (the trait goes). Only the trait is stored here; what a
+        set means for sorting is the sort engine's (backend/core/samesort.py)."""
+        found=self.find(f'trait[@name="{SAMESORT_TRAIT}"]')
+        if value == '':
+            if found is not None:
+                self.remove(found)
+            return None
+        if value:
+            if found is None:
+                found=Trait(self,name=SAMESORT_TRAIT)
+            found.set('value',value)
+        return found.get('value') if found is not None else None
     def pssubclassvalue(self,value=None):
         try:
             assert isinstance(self.pssubclass,et.Element)
@@ -4151,6 +4211,10 @@ class Sense(Node,FieldParent):
         # log.info("1 forms: {}".format(l))
         t=self.formattedform(analang,ftype,frame)
         l.append(t)
+        if not self.glosses:
+            # No glosses at all (a text word, say: heard, not glossed): the form
+            # is all there is, not a missing-gloss problem to report.
+            return t
         # l.append(t+':') this or the above
         l.append('—') #this is just a visual break between the form and glosses
         # l.append(' ')
@@ -4304,7 +4368,9 @@ class Sense(Node,FieldParent):
     def examplesforASRtraining(self):
         for location in self.examples: # each location should be here.
             example=self.examples[location]
-            if example.hassoundfile():
+            # a span of a longer recording isn't a training file of its own
+            if (example.hassoundfile()
+                    and not getattr(example,'audiospan',None)):
                 # log.info(f"Found soundfile {example.audiofileURL}")
                 translation=example.textvaluebylang(self.db.analang)
                 if translation:
@@ -4322,7 +4388,9 @@ class Sense(Node,FieldParent):
     def lexicalformsforASRtraining(self, no_verify_check=False, check=None):
         for ftype in self.ftypes: #includes pl and imp if there
             i=()
-            if self.ftypes[ftype].hassoundfile():
+            # a span of a longer recording isn't a training file of its own
+            if (self.ftypes[ftype].hassoundfile()
+                    and not getattr(self.ftypes[ftype],'audiospan',None)):
                 if check:# e.g., V1=?
                     value=self.cvverificationforcheck(ftype,check)
                 else: #word form
@@ -4394,7 +4462,9 @@ class Sense(Node,FieldParent):
         self.getglosses()
         self.getdefinitions()
         self.getexamples()
-        self.image=None #make this booleanable, in any case 
+        self.getphrase()
+        self.getcareful()
+        self.image=None #make this booleanable, in any case
         self.illustrationvalue() #set if there
         # log.info([i.textvalue() for i in self.glosses['en']])
         # log.info("Initialized sense for {}".format(self))
@@ -5505,6 +5575,20 @@ def textornone(x):
         return x.text
     except AttributeError:
         return x
+MEDIA_FRAGMENT=re.compile(r'#t=([0-9.]*),([0-9.]*)$')
+def split_media_fragment(value):
+    """'story.ogg#t=12.340,12.810' -> ('story.ogg', (12.34, 12.81));
+    'word.wav' -> ('word.wav', None). Either time may be empty (from the
+    start / to the end), as in W3C media fragments."""
+    m=MEDIA_FRAGMENT.search(value)
+    if not m:
+        return value,None
+    start,end=(float(x) if x else None for x in m.groups())
+    return value[:m.start()],(start,end)
+def media_fragment(filename,start,end):
+    """The inverse of split_media_fragment, in milliseconds' precision (as the
+    texts file stores times)."""
+    return f"{filename}#t={start:.3f},{end:.3f}"
 def setlistsofanykey(dict):
     #This reduces a dictionary with lists as values to one list, without dups
     return set([i for l in dict for i in dict[l]])

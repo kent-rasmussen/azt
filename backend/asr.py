@@ -6,7 +6,7 @@ logsetup.setlevel('INFO',log) #for this file
 import numpy
 # import soundfile
 import torch
-import datetime, copy
+import datetime, copy, contextlib, threading
 from data import whisper_codes_names
 from data import ethnologue_macrolanguages_members
 _MACRO_MEMBERS = ethnologue_macrolanguages_members.dict  # {macro: [member codes]}
@@ -146,6 +146,9 @@ class ASRtoText(object):
         if not hasattr(self,'_adapter_failures'):
             self._adapter_failures=set()
         code=self._mms_lang()
+        with self.mms_lock:
+            self._load_ctc_adaptor(code)
+    def _load_ctc_adaptor(self,code):
         for repo in [i for i in self.models
                         if i in self.language_adaptor_models]:
             try:
@@ -429,17 +432,19 @@ class ASRtoText(object):
                                         'AutomaticSpeechRecognitionPipeline'
                                             ]:
             _slang=self._mms_lang()
-            if (self.sister_language and 'facebook/' in self.repo and
-            self.model.model.target_lang != _slang):
-                log.info(f"Model lang {self.model.model.target_lang} != "
-                    f"sister lang {self.sister_language} (→{_slang}); "
-                    "not inferring.")
-                return self.do_not_return_data()
-            self.lang=None
-            # data,samplerate=soundfile.read(input_file)
-            # self.raw = self.model(data, batch_size=8)['text']
-            #above two or below
-            self.raw = self.model(input_file, batch_size=8)['text']
+            with (self.mms_lock if 'facebook/' in self.repo
+                  else contextlib.nullcontext()):
+                if (self.sister_language and 'facebook/' in self.repo and
+                self.model.model.target_lang != _slang):
+                    log.info(f"Model lang {self.model.model.target_lang} != "
+                        f"sister lang {self.sister_language} (→{_slang}); "
+                        "not inferring.")
+                    return self.do_not_return_data()
+                self.lang=None
+                # data,samplerate=soundfile.read(input_file)
+                # self.raw = self.model(data, batch_size=8)['text']
+                #above two or below
+                self.raw = self.model(input_file, batch_size=8)['text']
             if self.repo in self.models_that_give_IPA:
                 self.ipa=self.raw
         else:
@@ -851,6 +856,12 @@ class ASRtoText(object):
         kwargs['return_ipa']=True #always, for now
         self.languages=program.languages
         self.models=dict()
+        # Held while anything uses the MMS models: an inference or adapter
+        # load here, or Find words borrowing mms-1b-all to align with
+        # (backend/core/texts.py loaded_mms), which swaps its head. A plain
+        # Lock, not RLock: Find words takes it on the main thread and gives
+        # it back from its worker.
+        self.mms_lock=threading.Lock()
         self.do_not_return=[] #models that should not return transcriptions
         log.info(f"Loading ASR with kwargs {kwargs}")
         self.whisper_sizes=WHISPER_SIZES

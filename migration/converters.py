@@ -11,9 +11,15 @@ class Converter:
             'analang', 'glosslangs', 'audiolang', 'additionalps', 'entriestoshow', 
             'additionalprofiles', 'adnlangnames', 'maxpss', 'maxprofiles', 
             'menu', 'secondformfield', 'giturls', 'hgurls', 'aztrepourls', 
-            'minimumwordstoreportUFgroup', 'askedlxtolc', 'start_at_entry', 
-            'end_at_entry', 'writeeverynwrites', 'ps', 'profile', 'cvt', 
-            'check', 'regexCV'
+            'minimumwordstoreportUFgroup', 'askedlxtolc', 'start_at_entry',
+            'end_at_entry', 'writeeverynwrites', 'regexCV'
+        ],
+        # Where the user is in THIS lexicon: per lexicon, so sorting a text's
+        # words (<prj>/texts/<stem>.lift) keeps its own place apart from the
+        # main lexicon's (Kent, 2026-11-05). Was in 'project' until then; a
+        # value still there is read first and overridden by this domain.
+        'lexicon': [
+            'ps', 'profile', 'cvt', 'check'
         ],
         'ui': [
             'interfacelang', 'mainrelief', 'fontthemesmall', 'buttoncolumns',
@@ -57,7 +63,7 @@ class Converter:
 
     # Maps old settingsbyfile group names to lists of new domain names
     LEGACY_FILE_MAPPING = {
-        'defaults': ['project', 'ui'],
+        'defaults': ['project', 'ui', 'lexicon'],
         'soundsettings': ['audio'],
         'alphabet': ['alphabet'],
         'contributors': ['contributors'],
@@ -117,6 +123,7 @@ class Converter:
             'file': 'defaultfile',
             'attributes': (
                 DOMAIN_MAPPING['project'] + DOMAIN_MAPPING['ui']
+                + DOMAIN_MAPPING['lexicon']
                 # soundsettingsok was listed in defaults but belongs to audio
                 + ['soundsettingsok']
             )

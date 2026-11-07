@@ -87,7 +87,7 @@ def test_no_other_button_for_a_non_open_location():
 
 def test_the_flip_and_the_repair_read_the_type_not_the_letters():
     from backend.core import analysis
-    flip = _code(analysis.SyllableSliceDict.move_misfit)
+    flip = _code(analysis.SyllableSliceDict._move_misfit)  # move_misfit fans it out over a sameSort set
     assert "other_label(check,cur)" in flip.replace(' ', '')
     assert "'V' if cur=='C' else 'C'" not in flip
     seed = _code(analysis_inputs.CheckParameters.seed_sense_primitives)

@@ -110,6 +110,47 @@ class Examples(Exporter):
         return sense.examplesforASRtraining()
     def __init__(self, *args, **kwargs):
         super(Examples, self).__init__(*args, **kwargs)
+class Texts(Exporter):
+    """This exports transcribed text clauses: each clause with a final transcription, cut from its
+    recording (16 kHz wav, as the models hear it), with its text in metadata.csv. The project's texts
+    file (.flextext) is copied beside the archive, so the whole texts stay reconstructible.
+    Needs `texts_path` and `project_dir` beyond the usual exporter arguments."""
+    def report(self):
+        import tempfile
+        from backend.core import texts
+        self.data=[]
+        if not file.exists(self.texts_path):
+            self.info=_("No texts transcribed yet.")
+            log.info(f"no texts file at {self.texts_path}; nothing to export")
+            yield 1
+            return
+        db=texts.TextsDB(self.texts_path,self.project_dir,self.analang)
+        alltexts=db.texts()
+        folder=tempfile.mkdtemp(prefix='azt_text_export_')
+        for n,t in enumerate(alltexts):
+            done=[p for p in t.phrases() if p.final()]
+            if done:
+                try:
+                    audio=texts.load_audio(t.path())
+                except Exception as e:
+                    log.error(f"couldn't read {t.path()} for export: {e}")
+                    continue
+                files=texts.chunk_files(t,audio,done,folder)
+                self.data.extend((path,p.final()) for path,p in files.items())
+            yield (n+1)/len(alltexts)
+        text=_("Ready to export {n} transcribed clauses from {t} texts").format(
+                                                    n=len(self.data),t=len(alltexts))
+        log.info(text)
+        self.info='\n'.join([i for i in [text,self.checkmax()] if i])
+    def export(self):
+        if self.data:
+            yield from super().export()
+        import shutil
+        if file.exists(self.texts_path):
+            shutil.copy(self.texts_path,self.save_dir)
+        yield 1
+    def __init__(self, *args, **kwargs):
+        super(Texts, self).__init__(*args, **kwargs)
 if __name__ == '__main__':
     try: #Allow this module to be used without translation
         _
