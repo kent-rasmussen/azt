@@ -10725,3 +10725,299 @@ msgstr "没有框架组"
 #, fuzzy
 msgid "Other letter"
 msgstr "其他字母"
+
+#, fuzzy
+msgid "(none)"
+msgstr "（无）"
+
+#, fuzzy
+msgid "ASR only"
+msgstr "仅语音识别"
+
+#, fuzzy
+msgid "ASR"
+msgstr "语音识别"
+
+#, fuzzy
+msgid "Automatically transcribed by AI models"
+msgstr "由人工智能模型自动转写"
+
+#, fuzzy
+msgid "Back to the main lexicon"
+msgstr "返回主词库"
+
+#, fuzzy
+msgid "Cancelling — finishing the current clause…"
+msgstr "正在取消——先完成当前小句…"
+
+#, fuzzy
+msgid "Check Texts"
+msgstr "检查文本"
+
+#, fuzzy, python-brace-format
+msgid "Clause {n} of {total}"
+msgstr "第 {n} 个小句，共 {total} 个"
+
+#, fuzzy
+msgid "Clauses"
+msgstr "小句"
+
+#, fuzzy
+msgid "Click to hear this word in its phrase (up to a second each side)"
+msgstr "点击收听该词在短语中的读音（前后各最多一秒）"
+
+#, fuzzy
+msgid "Click to hear this word"
+msgstr "点击收听该词"
+
+#, fuzzy
+msgid "Close"
+msgstr "关闭"
+
+#, fuzzy, python-brace-format
+msgid "Couldn’t make the word lexicon: {e}"
+msgstr "无法生成词库：{e}"
+
+#, fuzzy, python-brace-format
+msgid "Couldn’t open {name}: {e}"
+msgstr "无法打开 {name}：{e}"
+
+#, fuzzy, python-brace-format
+msgid "Find the words of {name}, first transcribing with MMS (for the languages in Transcription settings) any clause it hasn’t done"
+msgstr "找出 {name} 中的词：先用 MMS（针对转写设置中的语言）转写尚未转写的小句"
+
+#, fuzzy
+msgid "Find words"
+msgstr "找出词语"
+
+#, fuzzy, python-brace-format
+msgid "Finding the words of clause {n} of {total}…"
+msgstr "正在找出第 {n} 个小句（共 {total} 个）中的词…"
+
+#, fuzzy
+msgid "Length"
+msgstr "长度"
+
+#, fuzzy, python-brace-format
+msgid "Loading the alignment model ({adapter})…"
+msgstr "正在加载对齐模型（{adapter}）…"
+
+#, fuzzy, python-brace-format
+msgid "No recordings in {folder}: put the texts’ recordings there."
+msgstr "{folder} 中没有录音：请把文本的录音放在那里。"
+
+#, fuzzy, python-brace-format
+msgid "No speech found in {name}."
+msgstr "在 {name} 中没有找到语音。"
+
+#, fuzzy
+msgid "No text has words yet: click “Parse” first."
+msgstr "还没有任何文本有词语：请先点击“解析”。"
+
+#, fuzzy
+msgid "No texts transcribed yet."
+msgstr "还没有转写任何文本。"
+
+#, fuzzy
+msgid "Not opened yet: it is cut into clauses the first time"
+msgstr "尚未打开：第一次打开时会切分为小句"
+
+#, fuzzy
+msgid "Not the same word: sort this one on its own"
+msgstr "不是同一个词：单独为它排序"
+
+#, fuzzy
+msgid "Open in Praat"
+msgstr "在 Praat 中打开"
+
+#, fuzzy, python-brace-format
+msgid "Opening {name}…"
+msgstr "正在打开 {name}…"
+
+#, fuzzy
+msgid "Other voices:"
+msgstr "其他发音人："
+
+#, fuzzy
+msgid "Parse each text, one after another: transcribe with MMS any clause it hasn’t done, then find the words"
+msgstr "逐个解析每个文本：用 MMS 转写尚未转写的小句，然后找出其中的词"
+
+#, fuzzy
+msgid "Parse"
+msgstr "解析"
+
+#, fuzzy
+msgid "Parsed (words)"
+msgstr "已解析（词语）"
+
+#, fuzzy
+msgid "Pick a text on the board first."
+msgstr "请先在面板上选择一个文本。"
+
+#, fuzzy, python-brace-format
+msgid "Pick this one: {group}"
+msgstr "选择这一组：{group}"
+
+#, fuzzy
+msgid "Play all"
+msgstr "全部播放"
+
+#, fuzzy
+msgid "Play clause"
+msgstr "播放小句"
+
+#, fuzzy
+msgid "Play each word in turn, from the top; click again to stop"
+msgstr "从上到下依次播放每个词；再次点击即停止"
+
+#, fuzzy
+msgid "Play with context"
+msgstr "连同上下文播放"
+
+#, fuzzy
+msgid "Process all"
+msgstr "全部处理"
+
+#, fuzzy
+msgid "Put the words found in all these texts into one word lexicon, and switch to it to sort them"
+msgstr "把在这些文本中找到的词放进一个词库，并切换到该词库进行排序"
+
+#, fuzzy, python-brace-format
+msgid "Ready to export {n} transcribed clauses from {t} texts"
+msgstr "准备导出 {t} 个文本中已转写的 {n} 个小句"
+
+#, fuzzy
+msgid "Reverify group (select)"
+msgstr "重新核实组（选择）"
+
+#, fuzzy
+msgid "Same word"
+msgstr "同一个词"
+
+#, fuzzy
+msgid "Sort words from these texts"
+msgstr "为这些文本中的词排序"
+
+#, fuzzy
+msgid "Speaker:"
+msgstr "发音人："
+
+#, fuzzy
+msgid "Split off"
+msgstr "分出"
+
+#, fuzzy
+msgid "Stop"
+msgstr "停止"
+
+#, fuzzy
+msgid "Text"
+msgstr "文本"
+
+#, fuzzy
+msgid "Texts"
+msgstr "文本"
+
+#, fuzzy, python-brace-format
+msgid "That’s the end of {title} ({done} of {total} clauses transcribed).\nPick another text on the main screen to keep going."
+msgstr "{title} 到此结束（{total} 个小句中已转写 {done} 个）。\n请在主界面选择另一个文本继续。"
+
+#, fuzzy, python-brace-format
+msgid "The same word, {n} times: click to see each, or to split one off"
+msgstr "同一个词，共 {n} 次：点击查看每一个，或分出其中一个"
+
+#, fuzzy
+msgid "The texts’ word lexicon is open for sorting; go back to the main lexicon (on the task list) before adding to it."
+msgstr "文本词库正在排序中；添加内容之前，请先（在任务列表中）返回主词库。"
+
+#, fuzzy
+msgid "This task helps you transcribe longer recordings (texts) clause by clause, starting from what the speech recognition models give."
+msgstr "此任务帮助您以语音识别模型的结果为起点，逐个小句转写较长的录音（文本）。"
+
+#, fuzzy
+msgid "Transcribe Texts"
+msgstr "转写文本"
+
+#, fuzzy
+msgid "Transcribe this clause"
+msgstr "转写此小句"
+
+#, fuzzy, python-brace-format
+msgid "Transcribe {name} clause by clause"
+msgstr "逐个小句转写 {name}"
+
+#, fuzzy, python-brace-format
+msgid "Transcribe {name} with every model in Transcription settings, where it hasn’t been; no words found"
+msgstr "用转写设置中的每个模型转写 {name} 尚未转写的部分；不找出词语"
+
+#, fuzzy, python-brace-format
+msgid "Transcribe {title}"
+msgstr "转写 {title}"
+
+#, fuzzy
+msgid "Transcribed by you"
+msgstr "由您转写"
+
+#, fuzzy, python-brace-format
+msgid "Transcribing {n} clauses…"
+msgstr "正在转写 {n} 个小句…"
+
+#, fuzzy, python-brace-format
+msgid "cancelled: {words} words found in {worded} of {total} clauses so far"
+msgstr "已取消：到目前为止在 {total} 个小句中的 {worded} 个里找到 {words} 个词"
+
+#, fuzzy, python-brace-format
+msgid "couldn’t find words: {e}"
+msgstr "无法找出词语：{e}"
+
+#, fuzzy, python-brace-format
+msgid "group {group}"
+msgstr "组 {group}"
+
+#, fuzzy
+msgid "no clause has candidates from an MMS model, and words are aligned with one: transcribe it first, with MMS chosen in Transcription settings"
+msgstr "没有任何小句有来自 MMS 模型的候选结果，而词语需要用 MMS 模型对齐：请先在转写设置中选择 MMS 并进行转写"
+
+#, fuzzy, python-brace-format
+msgid "open {dir}"
+msgstr "打开 {dir}"
+
+#, fuzzy, python-brace-format
+msgid "syllable profile {profile}"
+msgstr "音节结构 {profile}"
+
+#, fuzzy
+msgid "the speech recognition models couldn’t be loaded"
+msgstr "无法加载语音识别模型"
+
+#, fuzzy
+msgid "transcribing cancelled"
+msgstr "转写已取消"
+
+#, fuzzy, python-brace-format
+msgid "transcribing failed: {e}"
+msgstr "转写失败：{e}"
+
+#, fuzzy, python-brace-format
+msgid "{done} of {total} clauses transcribed"
+msgstr "{total} 个小句中已转写 {done} 个"
+
+#, fuzzy, python-brace-format
+msgid "{name}: couldn’t open it: {e}"
+msgstr "{name}：无法打开：{e}"
+
+#, fuzzy, python-brace-format
+msgid "{n} of {total} clauses transcribed"
+msgstr "{total} 个小句中已转写 {n} 个"
+
+#, fuzzy, python-brace-format
+msgid "{title} (text {i} of {n})"
+msgstr "{title}（第 {i} 个文本，共 {n} 个）"
+
+#, fuzzy, python-brace-format
+msgid "{wav_count} audio files to check for the {repo} repo (of {total_count} files total here)"
+msgstr "{repo} 仓库有 {wav_count} 个音频文件需要检查（此处共有 {total_count} 个文件）"
+
+#, fuzzy, python-brace-format
+msgid "{words} words found in {worded} of {total} clauses ({timed} with times)"
+msgstr "在 {total} 个小句中的 {worded} 个里找到 {words} 个词（其中 {timed} 个有时间）"

@@ -138,6 +138,7 @@ class RecordButtonFrame(ui.Frame):
                              "{} to {} s of it".format(self._filenameURL,
                                                        *self._span))
                 executables.praatopen(self.program,self._filenameURL)
+                return 'break' # not the window's <<ContextMenu>> as well
             self.p.bind('<Button-3>',praat)
         self.pt=ui.ToolTip(self.p,pttext)
     def makedeletebutton(self):

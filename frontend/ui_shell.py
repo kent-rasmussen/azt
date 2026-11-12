@@ -447,15 +447,19 @@ class Menus(ui.Menu):
         if getattr(self.parent,'is_sort_tone_task',False):
             options.extend([(_("Add Tone frame"), self.parent.addframe)])
         group=self.program.status.group()
-        if not group:
-            group=_("Select")
         glyph=self.program.alphabet.glyph()
         if not glyph:
             glyph=_("Select")
         options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
-                        (_("Presort this group again"), self.parent.re_presort),
-                        (_("Reverify current group ({group})").format(group=group),
-                                                        self.parent.reverify),
+                        (_("Presort this group again"), self.parent.re_presort)])
+        # Kent 2026-11-11: "current" never asks (it asked whenever the current
+        # group wasn't verified); choosing a group is its own item. The group
+        # is the one the label names, so the item does what it says.
+        if group:
+            options.append((_("Reverify current group ({group})").format(group=group),
+                            lambda g=group: self.parent.reverify_group(g)))
+        options.extend([(_("Reverify group (select)"),
+                                    lambda: self.parent.reverify(ask=True)),
                         (_("Join Sort Groups"), self.parent.redo_join),
                         (_("Reverify Glyph (Letters; {glyph})").format(glyph=glyph), 
                                                     self.parent.reverify_glyph),
@@ -2263,12 +2267,23 @@ class StatusFrame(ui.Frame):
             self.makeglyphbutton(k)
         self.glyphscroll.reflow()  # grow canvas to cover the (re)built glyph buttons
     def activate_cell(self,cell):
-        cell.inactive_background=cell['background'] #store for deactivate
+        if getattr(cell,'is_active_cell',False): #again: would store active as inactive
+            self._active_cell=cell
+            return
+        # Not cell['background']: a cell is clicked while hovered, and tkinter's
+        # hover colour is in there then (Kent 2026-11-11: the highlight stayed
+        # on an earlier cell). resting_background is the colour off hover.
+        rest=getattr(cell,'resting_background',None)
+        cell.inactive_background=rest() if rest else cell['background'] #for deactivate
         cell.inactive_command=cell['command'] #store for deactivate
+        cell.rest_background=cell['activebackground'] #hover's Leave restores this
         cell.configure(background=cell['activebackground'])
         cell.configure(command=donothing)
+        cell.is_active_cell=True
         self._active_cell=cell
     def deactivate_cell(self,cell):
+        cell.rest_background=None
+        cell.is_active_cell=False
         cell.configure(background=cell.inactive_background)
         cell.configure(command=cell.inactive_command)
     def update_active_cell(self,*args):

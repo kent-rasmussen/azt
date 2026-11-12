@@ -167,10 +167,7 @@ class BulkASR:
     def _worker(self):
         files = [url for url, _node in self.pairs]
         prior = self._prior_drafts()   # skip (file, model) pairs already done
-        keep = None                    # 'top models only' keep-set (None == all)
-        ss = getattr(self.program, 'soundsettings', None)
-        if ss is not None and hasattr(ss, 'top_asr_keys'):
-            keep = ss.top_asr_keys()
+        keep = self._keep_keys()
         try:
             self.results = self.asr.transcribe_files_bulk(
                 files,
@@ -186,6 +183,14 @@ class BulkASR:
             self.q.put(('error', str(e)))
             return
         self.q.put(('done', None))
+
+    def _keep_keys(self):
+        """The draft keys this run may produce: the 'top models only' keep-set,
+        or None (all)."""
+        ss = getattr(self.program, 'soundsettings', None)
+        if ss is not None and hasattr(ss, 'top_asr_keys'):
+            return ss.top_asr_keys()
+        return None
 
     def _track_units(self, todo=None, done=None):
         """Maintain audio.json's top-level asr_in_process {'todo': [...],

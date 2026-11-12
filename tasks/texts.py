@@ -3,10 +3,10 @@
 
 The task's board (on the main screen) has a row per recording there: how many of its clauses the
 models have transcribed, how many have their words found, how many the person has transcribed, and buttons for
-the steps that work on a whole text — "Transcribe" (the ASR models in Transcription settings, over every
-clause), "Find words" (word breaks by consensus over the candidates, timed by forced alignment:
-azt_asr/wordbreaks.py) and "Transcribe and find words" (both, so a long run needs no click halfway). "Process
-all" does both for every recording, one after another. These come first, before any clause-by-clause work
+the steps that work on a whole text — "Parse" (MMS, for each language in Transcription settings, over any
+clause it hasn't done, then word breaks by consensus over the candidates, timed by forced alignment:
+azt_asr/wordbreaks.py) and "ASR only" (every model in settings, where it hasn't run). "Process all" parses every
+recording, one after another (Kent, 2026-11-07). These come first, before any clause-by-clause work
 (Kent, 2026-11-06). A recording is cut at pauses and added to the project's texts file
 (backend/core/texts.py) the first time anything opens it.
 
@@ -57,14 +57,25 @@ class TextBulkASR(BulkASR):
     already transcribed are skipped for that model. on_done(outcome, note) runs when its window closes, which
     it does by itself when the run ends well."""
 
-    def __init__(self, program, text, audio, phrases, on_done, heading=None):
+    def __init__(self, program, text, audio, phrases, on_done, heading=None, mms_only=False):
         super().__init__(program)
         self.text = text
         self.audio = audio
         self.phrases = phrases
         self.on_done = on_done
         self.heading = heading
+        self.mms_only = mms_only   # Parse: only the MMS adapters, as words are aligned with one
         self.outcome = self.note = None
+
+    def _keep_keys(self):
+        if not self.mms_only:
+            return super()._keep_keys()
+        # The MMS-1b-all adapter for each language in Transcription settings, wherever a clause lacks its
+        # candidate (prior drafts skip the rest); nothing else (Kent 2026-11-07).
+        asr = self.asr
+        return {f"{repo} ({asr._mms_lang(lang)}!)"
+                for repo in getattr(asr, 'language_adaptor_models', ()) if repo in asr.models
+                for lang in asr.effective_sister_languages()}
 
     def _collect(self):
         folder = os.path.join(tempfile.gettempdir(), 'azt_text_chunks')
@@ -282,7 +293,10 @@ class TextRun:
         heading = (_("{title} (text {i} of {n})").format(title=self.text.title, i=self.i, n=self.n)
                    if self.n > 1 else self.text.title)
         if step == ASR:
-            TextBulkASR(self.program, self.text, self.audio, self.text.phrases(), self._done, heading).run()
+            # Parse (ASR then WORDS): the MMS adapters only, where a clause lacks one; "ASR only" runs every
+            # model in settings (Kent 2026-11-07). Clauses a model has done are skipped either way.
+            TextBulkASR(self.program, self.text, self.audio, self.text.phrases(), self._done, heading,
+                        mms_only=WORDS in self.steps).run()
         else:
             TextFindWords(self.program, self.text, self.audio, self._done, heading).run()
 
@@ -355,7 +369,8 @@ class TranscribeTexts(Sound, Task):
             return
         b = ui.Button(parent, text=_("Process all"), row=1, column=0, sticky='w', padx=10, pady=5,
                       command=lambda: self.run_steps([p for p, _s in recordings], (ASR, WORDS)))
-        ui.ToolTip(b, _("Transcribe each text with the models, then find its words, one text after another"))
+        ui.ToolTip(b, _("Parse each text, one after another: transcribe with MMS any clause it hasn’t done, "
+                        "then find the words"))
         scroll = ui.ScrollingFrame(parent, row=2, column=0, sticky='w')
         table = scroll.content
         # Clause counts, the total given once (Kent, 2026-11-06)
@@ -394,10 +409,17 @@ class TranscribeTexts(Sound, Task):
                 if text is None:
                     ui.ToolTip(label, _("Not opened yet: it is cut into clauses the first time"))
             steps = ui.Frame(table, row=row, column=6, sticky='w', padx=5)
-            for column, (label, which) in enumerate(((_("Transcribe"), (ASR,)), (_("Find words"), (WORDS,)),
-                                                     (_("Transcribe and find words"), (ASR, WORDS)))):
-                ui.Button(steps, text=label, font='small', row=0, column=column, padx=2,
-                          command=lambda p=path, w=which: self.run_steps([p], w))
+            # named as the columns they fill (Kent 2026-11-07)
+            for column, (label, which, tip) in enumerate((
+                    (_("Parse"), (ASR, WORDS),
+                     _("Find the words of {name}, first transcribing with MMS (for the languages in "
+                       "Transcription settings) any clause it hasn’t done")),
+                    (_("ASR only"), (ASR,),
+                     _("Transcribe {name} with every model in Transcription settings, where it hasn’t been; "
+                       "no words found")))):
+                b = ui.Button(steps, text=label, font='small', row=0, column=column, padx=2,
+                              command=lambda p=path, w=which: self.run_steps([p], w))
+                ui.ToolTip(b, tip.format(name=name))
         row = 3
         note = getattr(self, 'boardnote', None)
         if note:
@@ -420,7 +442,8 @@ class TranscribeTexts(Sound, Task):
         TextRun(self, paths, steps).start()
 
     def sort_texts(self):
-        """All the texts' words into the one word lexicon (only those not in it yet), then switch to it (the
+        """All the texts' words into the one word lexicon (new ones added, changed ones updated, gone ones
+        removed: text_lexicon.make_lexicon), then switch to it (the
         project, its settings and audio stay; see App.use_lexicon) and go to the task list to sort them."""
         from backend.core import text_lexicon
         path = self.lexicon_path()
@@ -432,16 +455,18 @@ class TranscribeTexts(Sound, Task):
             return
         text_list = [t for t in self.db.texts() if os.path.exists(t.path())]
         try:
-            # spans are named from the lexicon's own folder, its audio folder when open (file_parser)
+            # spans are named from the lexicon's own folder, its audio folder when open (file_parser);
+            # all_texts, so a text whose recording is missing keeps its words' entries
             result = text_lexicon.make_texts_lexicon(path, text_list, os.path.dirname(path),
                                                      self.program.params.analang(),
-                                                     self.program.params.audiolang())
+                                                     self.program.params.audiolang(),
+                                                     all_texts=self.db.texts())
         except Exception as e:
             log.error(f"couldn't make the texts' word lexicon: {e}", exc_info=True)
             ErrorNotice(_("Couldn’t make the word lexicon: {e}").format(e=e))
             return
         if result is None:
-            ErrorNotice(_("No text has words yet: click “Find words” first."))
+            ErrorNotice(_("No text has words yet: click “Parse” first."))
             return
         self.program.use_lexicon(path)
 

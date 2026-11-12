@@ -51,7 +51,7 @@ class Converter:
         ],
         'data': [
             'status', 'adhocgroups', 'scount', 'sextracted',
-            'distinguish', 'interpret', 'polygraphs'
+            'distinguish', 'interpret', 'polygraphs', 'last_trust'
         ],
         'tone_frames': [
             'toneframes'

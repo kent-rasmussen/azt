@@ -615,6 +615,15 @@ class Sort(Categories):
         offered."""
         if self.program.params.cvt()=='σ': # the syllable sort has its own flow
             return None
+        # Words created since the last Trust (all, on a first open) are trusted
+        # without asking (Kent 2026-11-11), so what's left to offer is what
+        # Trust already passed over: words sent back, or newly profilable.
+        try:
+            if (self.program.profiles.auto_trust_new()
+                    and at_open and getattr(self,'status',None)):
+                self.status.maybeboard()
+        except Exception as e:
+            log.error("auto-trust of new words failed: %s",e,exc_info=True)
         # Once-per-batch gate: set when we offer (below), cleared by
         # unverify_profile when a word is sent back via 'Not {profile}'.
         if getattr(self,'_offered_profile_setup',False):
@@ -695,6 +704,8 @@ class Sort(Categories):
                 # not lose the LIFT changes.
                 self.program.maybewrite(definitely=True)
                 self.program.profiles.rebuild_slices()
+            # words created after this are trusted without asking
+            self.program.profiles.note_trust()
             if at_open and getattr(self,'status',None):
                 self.status.maybeboard() # refresh the now-populated profile board
         # 'sort' no longer launches here; the caller tears down this task first,
@@ -1814,7 +1825,7 @@ class Sort(Categories):
             self.program.params.check(check)
         self.program.status.group(group)
         check=self.program.params.check()
-        log.info("Reverifying group at user request (context menu): "
+        log.info("Reverifying group at user request (menu): "
                 "{check}-{group} (ps={ps}, profile={profile})".format(
                     check=check,group=group,ps=self.program.slices.ps(),
                     profile=self.program.slices.profile()))
@@ -1829,15 +1840,19 @@ class Sort(Categories):
                     "check anyway.".format(group=group))
         self.reverifying=True
         self.runcheck()
-    def reverify(self):
+    def reverify(self,ask=False):
+        """Unverify a group and re-run the check. ask: choose the group in a
+        dialog (Advanced → Reverify group (select)); else the current one,
+        asking only when it isn't a verified one. ("Reverify current group"
+        is reverify_group, which never asks.)"""
         group=self.program.status.group()
         check=self.program.params.check()
-        log.info("Reverifying a framed tone group, at user request: {check}-{group}"
-                    "".format(check=check,group=group))
+        log.info("Reverifying a group, at user request: {check}-{group} (ask={ask})"
+                    "".format(check=check,group=group,ask=ask))
         if check not in self.program.status.checks(wsorted=True):
             self.getcheck() #guess=True
         done=self.program.status.verified()
-        if group not in done:
+        if ask or group not in done:
             log.info("Group ({group}) not in groups ({done}); asking."
                     "".format(group=group,done=done))
             w=self.getgroup(wsorted=True,purpose='verify')

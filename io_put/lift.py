@@ -1585,6 +1585,46 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info("Done reading LIFT file.")
         """This returns the root node of an ElementTree tree (the entire
         tree as nodes), to edit the XML."""
+    def stamp_dates_now(self):
+        """Set every dateCreated/dateModified in the file to now. For a
+        template (CAWL): its entries are new to the project made or filled
+        from it, and kept the template's 2008/2011 dates, which make them look
+        older than everything a project has done (Kent 2026-11-11). Returns
+        the number of nodes stamped."""
+        now=getnow()
+        n=0
+        for node in self.nodes.iter():
+            stamped=False
+            for attr in ('dateCreated','dateModified'):
+                if attr in node.attrib:
+                    node.attrib[attr]=now
+                    stamped=True
+            n+=stamped
+        return n
+    def regenerate_ids(self):
+        """New guids for every entry and sense, for a template (CAWL): each
+        project made or filled from it got the template's, so every CAWL
+        project shared them (Kent 2026-11-11: "just stamp real GUIDs"). An id
+        ending in '_<guid>' ('???_…', 'body_…') keeps its prefix; any other id
+        becomes the new guid. The template has no relations (nothing refers to
+        these ids), and CAWL entries are found by their SILCAWL number, not
+        by guid. Returns the number of nodes given new ones."""
+        import uuid
+        guidrx=re.compile('_?[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$')
+        n=0
+        for node in self.nodes.iter():
+            if node.tag not in ('entry','sense'):
+                continue
+            new=str(uuid.uuid4())
+            if 'guid' in node.attrib:
+                node.attrib['guid']=new
+            old=node.get('id')
+            if old is not None:
+                m=guidrx.search(old)
+                node.attrib['id']=(old[:m.start()]+'_'+new
+                                    if m and m.start() else new)
+            n+=1
+        return n
     def writegzip(self,dir=None,filename=None):
         import gzip
         if filename is None:

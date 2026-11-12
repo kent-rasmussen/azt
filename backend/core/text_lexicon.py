@@ -30,12 +30,17 @@ join; sets are preloaded only for identical transcriptions.
 
 Audio is a span of the recording (W3C media fragment), relative to the project's audio folder; nothing is cut.
 
-RERUN-SAFE: entries already in the file are never changed (they may carry sorting), except that a new
-occurrence identical to an existing singleton puts both in a new set, which adds the trait to the old one, and
-that a recording that moved has its new name put in the spans (_follow_moves).
+RERUN: an entry follows its word (by guid; wordbreaks keeps a word's guid when its breaks move, write_words).
+Kent, 2026-11-11:
+  - a word whose spelling or times changed has its entry UPDATED, and its verification removed: the sorting
+    stays, to be verified again (_update). Its 'Same word' set goes too, if its spelling changed: it is put in a
+    set with its new spelling's occurrences, as a new word would be;
+  - a word no longer in the texts is REMOVED: not in the text, not in the lexicon of text words.
+Otherwise an entry isn't changed (it may carry sorting), except that a new occurrence identical to an existing
+singleton puts both in a new set, which adds the trait to the old one, and that a recording that moved has its
+new name put in the spans (times kept).
 The recording's name is relative to the lexicon's own folder, <project>/texts/, which is its audio folder when
 it is open (backend/core/file_parser.py): 'story.ogg'. Takes recorded in it go in texts/audio/ ('audio/…').
-Words no longer in the texts (another "Find words" changed their forms, so their guids) are counted, not deleted.
 """
 import os
 import unicodedata
@@ -94,40 +99,95 @@ def _fragment(recording, begin_ms, end_ms):
     return lift.media_fragment(recording, begin_ms / 1000, end_ms / 1000)
 
 
-def _follow_moves(entries, phrases, recording, audiolang):
-    """Point existing entries' text spans at their recording's current name, when it has moved (texts' audio went
-    from audio/ to texts/, and spans are named from texts/, 2026-11-06): only the file part of the citation's and the phrase example's audio form
-    changes, never the times. Returns the number of entries changed."""
-    where = {w[0]: p.get('recording', recording) for p in phrases for w in p['words']}
-    n = 0
-    for guid, entry in entries.items():
-        now = where.get(guid)
-        if not now:
+def _put(parent, lang, value):
+    """Make parent's form in `lang` say `value` (None: no such form). Returns the old value."""
+    form = parent.find(f"form[@lang='{lang}']")
+    old = form.findtext('text') if form is not None else None
+    if old == value:
+        return old
+    if value is None:
+        parent.remove(form)
+    elif form is None:
+        _form(parent, lang, value)
+    else:
+        text = form.find('text')
+        if text is None:
+            text = ET.SubElement(form, 'text')
+        text.text = value
+    return old
+
+
+def _times(fragment):
+    """A media fragment without its file name: what says when, wherever the recording now is."""
+    if not fragment:
+        return None
+    name, _span = lift.split_media_fragment(fragment)
+    return fragment[len(name):]
+
+
+def _unverify(entry):
+    """Remove the entry's verification (sense fields '<profile> <ftype> verification', lift.addverificationnode);
+    its sorting stays."""
+    for sense in entry.findall('sense'):
+        for field in sense.findall('field'):
+            if (field.get('type') or '').endswith(' verification'):
+                sense.remove(field)
+
+
+def _drop_set(entry):
+    for sense in entry.findall('sense'):
+        for trait in sense.findall(f"trait[@name='{lift.SAMESORT_TRAIT}']"):
+            sense.remove(trait)
+
+
+def _update(entry, phrase, word, recording, analang, audiolang, now):
+    """Make an existing entry say what its word now does. Returns the set of what changed, of 'spelling',
+    'times' (both remove the verification), 'recording' (it moved: new name, same times) and 'phrase'."""
+    _guid, form, begin_ms, end_ms = word
+    changed = set()
+    citation = entry.find('citation')
+    if citation is None:
+        citation = ET.Element('citation')
+        entry.insert(0, citation)
+    if _key(_put(citation, analang, form)) != _key(form):
+        changed.add('spelling')
+    audio = _fragment(recording, begin_ms, end_ms) if begin_ms is not None and end_ms is not None else None
+    old = _put(citation, audiolang, audio)
+    if _times(old) != _times(audio):
+        changed.add('times')
+    elif old != audio:
+        changed.add('recording')
+    for ex in entry.findall('sense/example'):
+        trait = ex.find(f"trait[@name='{lift.PHRASE_TRAIT}']")
+        if trait is None:
             continue
-        changed = False
-        for form in (entry.findall(f"citation/form[@lang='{audiolang}']")
-                     + [f for ex in entry.findall('sense/example')
-                        if ex.find(f"trait[@name='{lift.PHRASE_TRAIT}']") is not None
-                        for f in ex.findall(f"form[@lang='{audiolang}']")]):
-            text = form.find('text')
-            if text is None or not text.text:
-                continue
-            name, span = lift.split_media_fragment(text.text)
-            if span is not None and name != now:
-                text.text = now + text.text[len(name):]
-                changed = True
-        if changed:
-            entry.set('dateModified', lift.getnow())
-            n += 1
-    return n
+        if _put(ex, analang, phrase['text']) != phrase['text'] or trait.get('value') != phrase['guid']:
+            changed.add('phrase')
+        trait.set('value', phrase['guid'])
+        span = _fragment(recording, phrase['begin_ms'], phrase['end_ms'])
+        old = _put(ex, audiolang, span)
+        if _times(old) != _times(span):
+            changed.add('phrase')
+        elif old != span:
+            changed.add('recording')
+    if changed & {'spelling', 'times'}:
+        _unverify(entry)
+    if 'spelling' in changed:
+        _drop_set(entry)
+    if changed:
+        entry.set('dateModified', now)
+    return changed
 
 
-def make_lexicon(path, phrases, recording, analang, audiolang=None):
-    """Write (or add to) the word lexicon at `path` from `phrases` (as text_phrases gives them); `recording` is
+def make_lexicon(path, phrases, recording, analang, audiolang=None, known=None):
+    """Write (or update) the word lexicon at `path` from `phrases` (as text_phrases gives them); `recording` is
     the media name the audio forms use (recording_name), unless a phrase has its own 'recording' (phrases from
-    several texts). Returns {'path', 'added', 'existing' (entries already there), 'missing' (of those, guids no
-    longer among the phrases' words), 'sets' (sets the new entries are in), 'untimed' (new entries with no
-    times, so no audio)}."""
+    several texts). known: the guids of every word in the texts, when `phrases` aren't all of them (a text whose
+    recording is missing); an entry whose word is neither there nor in `phrases` is removed.
+    Returns {'path', 'added', 'existing' (entries already there, removed ones included), 'updated' (of those,
+    changed), 'unverified' (of those, their spelling or times changed), 'removed', 'moved' (entries whose
+    recording's name changed), 'sets' (sets the new and respelled entries are in), 'untimed' (new entries with
+    no times, so no audio)}."""
     audiolang = audiolang or analang + langtags.audio_code
     if os.path.exists(path):
         tree = ET.parse(path)
@@ -136,19 +196,38 @@ def make_lexicon(path, phrases, recording, analang, audiolang=None):
         root = ET.Element('lift', {'version': LIFT_VERSION, 'producer': PRODUCER})
         tree = ET.ElementTree(root)
     entries = {e.get('guid'): e for e in root.findall('entry')}
-    by_form = {}   # existing entries, by transcription
-    for e in entries.values():
-        by_form.setdefault(_key(e.findtext(f"citation/form[@lang='{analang}']/text")), []).append(e)
-    text_guids = {w[0] for p in phrases for w in p['words']}
-    new = [(p, w) for p in phrases for w in p['words'] if w[0] not in entries and w[1] and w[1].strip()]
+    existing = len(entries)
+    current = {w[0]: (p, w) for p in phrases for w in p['words'] if w[1] and w[1].strip()}
+    keep = set(current) | set(known or ())
+    removed = [g for g in entries if g not in keep]
+    for guid in removed:
+        root.remove(entries.pop(guid))
     now = lift.getnow()
+    updated = unverified = moved = 0
+    respelled = []   # entries to set again, as new ones are
+    for guid, entry in entries.items():
+        if guid not in current:
+            continue
+        phrase, word = current[guid]
+        changed = _update(entry, phrase, word, phrase.get('recording', recording), analang, audiolang, now)
+        updated += bool(changed)
+        unverified += bool(changed & {'spelling', 'times'})
+        moved += 'recording' in changed
+        if 'spelling' in changed:
+            respelled.append(entry)
+    by_form = {}   # existing entries, by transcription (respelled ones are set below, as new)
+    for e in entries.values():
+        if e not in respelled:
+            by_form.setdefault(_key(e.findtext(f"citation/form[@lang='{analang}']/text")), []).append(e)
+    new = [(p, w) for guid, (p, w) in current.items() if guid not in entries]
+    joining = [w[1] for _p, w in new] + [e.findtext(f"citation/form[@lang='{analang}']/text") for e in respelled]
 
     # One set id per transcription with two or more occurrences, old and new together. An existing set is
     # joined (the biggest, if the user split identical forms into several); else an existing singleton gets
     # the new set's trait (the one change made to an existing entry).
     counts = {}
-    for _p, w in new:
-        counts[_key(w[1])] = counts.get(_key(w[1]), 0) + 1
+    for form in joining:
+        counts[_key(form)] = counts.get(_key(form), 0) + 1
     set_ids = {}
     for key, n in counts.items():
         old = by_form.get(key, [])
@@ -186,18 +265,23 @@ def make_lexicon(path, phrases, recording, analang, audiolang=None):
         set_id = set_ids.get(_key(form))
         if set_id:
             ET.SubElement(sense, 'trait', {'name': lift.SAMESORT_TRAIT, 'value': set_id})
+    for entry in respelled:
+        set_id = set_ids.get(_key(entry.findtext(f"citation/form[@lang='{analang}']/text")))
+        sense = entry.find('sense')
+        if set_id and sense is not None:
+            ET.SubElement(sense, 'trait', {'name': lift.SAMESORT_TRAIT, 'value': set_id})
 
-    moved = _follow_moves(entries, phrases, recording, audiolang)
-    missing = len(set(entries) - text_guids)
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     ET.indent(tree)
     tmp = path + '.tmp'
     tree.write(tmp, encoding='utf-8', xml_declaration=True)
     os.replace(tmp, path)
-    result = {'path': path, 'added': len(new), 'existing': len(entries), 'missing': missing, 'moved': moved,
-              'sets': len({set_ids[_key(w[1])] for _p, w in new if _key(w[1]) in set_ids}), 'untimed': untimed}
-    log.info(f"word lexicon {path}: {result['added']} entries added ({untimed} without times), "
-             f"{result['existing']} already there, {missing} of those no longer in the text (kept)")
+    result = {'path': path, 'added': len(new), 'existing': existing, 'updated': updated,
+              'unverified': unverified, 'removed': len(removed), 'moved': moved,
+              'sets': len({set_ids[_key(f)] for f in joining if _key(f) in set_ids}), 'untimed': untimed}
+    log.info(f"word lexicon {path}: {result['added']} entries added ({untimed} without times); of {existing} "
+             f"already there, {updated} updated ({unverified} to verify again), {len(removed)} removed "
+             f"(no longer in the texts)")
     return result
 
 
@@ -232,9 +316,10 @@ def absorb(path, old_paths):
     return len(seen)
 
 
-def make_texts_lexicon(path, text_list, audiodir, analang, audiolang=None):
-    """The word lexicon of these texts.Texts, at `path` (lexicon_path). Returns make_lexicon's result, or None
-    if no text has words yet ("Find words" first)."""
+def make_texts_lexicon(path, text_list, audiodir, analang, audiolang=None, all_texts=None):
+    """The word lexicon of these texts.Texts, at `path` (lexicon_path). all_texts: every text, when text_list
+    leaves some out (no recording): their words' entries are kept, not removed. Returns make_lexicon's result,
+    or None if no text has words yet ("Find words" first)."""
     if not os.path.exists(path):
         old = [t.output_path('.lift') for t in text_list]
         absorb(path, [p for p in old if os.path.exists(p)])
@@ -244,4 +329,5 @@ def make_texts_lexicon(path, text_list, audiodir, analang, audiolang=None):
         phrases += [dict(p, recording=recording) for p in text_phrases(text)]
     if not word_count(phrases):
         return None
-    return make_lexicon(path, phrases, None, analang, audiolang)
+    known = {w[0] for text in (all_texts or ()) for p in text.phrases() for w in p.words()}
+    return make_lexicon(path, phrases, None, analang, audiolang, known)

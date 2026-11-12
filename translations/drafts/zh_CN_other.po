@@ -1,3 +1,0 @@
-#, fuzzy
-msgid "Other letter"
-msgstr "其他字母"

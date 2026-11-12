@@ -2,7 +2,7 @@
 
 translations/drafts/<lang>_*.po are merged into the catalogs by
 translations/merge_drafts.py, marked fuzzy. Before that, each draft must
-parse, name a string that is in azt.pot, and keep the source's
+parse, have a translation, and keep the source's
 {placeholders} exactly: a missing or renamed one makes .format() raise
 in the running program.
 """
@@ -30,22 +30,16 @@ def md():
     return _merge_module()
 
 
-@pytest.fixture(scope='module')
-def pot_ids(md):
-    return {(e.get('msgctxt'), e['msgid'])
-            for e in md.parse((TR / 'azt.pot').read_text('utf-8'))[0]}
-
-
 @pytest.mark.skipif(not DRAFTS, reason='no drafts waiting')
 @pytest.mark.parametrize('path', DRAFTS, ids=lambda p: p.name)
-def test_a_draft_file_is_usable(path, md, pot_ids):
+def test_a_draft_file_is_usable(path, md):
+    # A string missing from azt.pot is NOT a problem: the merge keeps its
+    # translation in case the string is used again (Kent 2026-11-12).
     entries = md.parse(path.read_text('utf-8'))[0]
     assert entries, f'{path.name}: no entries parsed'
     bad = []
     for e in entries:
         why = md.problems(e)
-        if not why and (e.get('msgctxt'), e['msgid']) not in pot_ids:
-            why = 'not in azt.pot'
         if why:
             bad.append(f'{why}: {e["msgid"][:80]!r}')
     assert not bad, f'{path.name}: {len(bad)} unusable\n' + '\n'.join(bad)
@@ -80,4 +74,42 @@ def test_merging_fills_gaps_and_never_overwrites(md, tmp_path, monkeypatch):
     assert got['b'] == ('kept', False), "a translation is never touched"
     assert got['c'] == ('C', True)
     assert got['a {n}'] == ('A {n}', True)
-    assert 'gone' not in got and appended == 1 and filled == 1
+    # A string no longer in azt.pot is still kept: it may be used again
+    # (Kent 2026-11-12).
+    assert got['gone'] == ('G', True) and appended == 2 and filled == 1
+    gone = next(e for e in po if e['msgid'] == 'gone')
+    assert any('Not in azt.pot' in c for c in gone['comments'])
+
+
+def test_a_merged_draft_is_deleted(md, tmp_path):
+    """Drafts used to stay for good, and a string later removed from the
+    code failed a draft merged weeks before (Kent 2026-11-12). "gone"
+    (not in azt.pot) is in the catalog now too, so the draft holds
+    nothing the catalog lacks."""
+    f = tmp_path / 'xx_XX_done.po'
+    f.write_text('#, fuzzy\nmsgid "a"\nmsgstr "A"\n\n'
+                 'msgid "gone"\nmsgstr "G"\n', encoding='utf-8')
+    assert md.retire(f) == []
+    assert not f.exists()
+
+
+def test_a_draft_keeps_only_what_still_needs_a_person(md, tmp_path):
+    f = tmp_path / 'xx_XX_part.po'
+    f.write_text('msgid "a"\nmsgstr "A"\n\n'
+                 '# CHECK: n is a count\n'
+                 'msgid "b {n}"\nmsgstr "B {m}"\n\n'
+                 'msgid "c"\nmsgstr ""\n', encoding='utf-8')
+    kept = md.retire(f)
+    assert [e['msgid'] for e in kept] == ['b {n}', 'c']
+    left = md.parse(f.read_text('utf-8'))[0]
+    assert [(e['msgid'], e['msgstr']) for e in left] == \
+        [('b {n}', 'B {m}'), ('c', '')]
+    assert '# CHECK: n is a count' in f.read_text('utf-8')
+
+
+def test_a_dry_run_changes_no_draft(md, tmp_path):
+    f = tmp_path / 'xx_XX_done.po'
+    text = 'msgid "a"\nmsgstr "A"\n'
+    f.write_text(text, encoding='utf-8')
+    md.retire(f, dry_run=True)
+    assert f.read_text('utf-8') == text

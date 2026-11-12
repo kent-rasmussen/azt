@@ -170,7 +170,13 @@ class SortPresenter(PresenterBase):
                 self.dismiss_context_menu() # never two posted at once
                 m=held.get('menu')
                 if m is None or not m.winfo_exists():
-                    m=held['menu']=ui.Menu(widget._root(), tearoff=0)
+                    # Parented to the WIDGET, not widget._root(): under webview
+                    # a menu draws in its parent's window, and _root() is the
+                    # main window — hidden behind the run window — so the menu
+                    # posted where nobody could see it (Kent 2026-11-11, GTK).
+                    # Tk posts a menu as its own toplevel whatever its parent,
+                    # so tkinter is unchanged; `gone` reaps it either way.
+                    m=held['menu']=ui.Menu(widget, tearoff=0)
                     for label, cmd in items:
                         m.add_command(label=label,
                                       command=self._context_invoke(cmd))
@@ -188,6 +194,12 @@ class SortPresenter(PresenterBase):
                 # A context menu is a convenience: never take the page down
                 # with it (a destroyed widget mid-list is the likely cause).
                 log.info("context menu failed: %s", e)
+            # The same right-click is the window's <<ContextMenu>> (bound on
+            # the toplevel by ui.ContextMenu), whose do_popup then posted the
+            # page menu over this one (Kent 2026-11-11: "just the page
+            # defaults"). 'break' ends the event at this widget. webview
+            # stops it in widgets.js instead.
+            return 'break'
         def gone(event=None):
             """The word (or group) this menu belongs to was destroyed — the page
             advanced, or the action the menu itself offered removed the row — so
@@ -370,10 +382,51 @@ class SortPresenter(PresenterBase):
         w.lift()
         parent.wait_window(w)
         return result['choice']
+    @staticmethod
+    def _hold_place(parent, sortitem, row=1):
+        """Keep the presented item's row at its height after it is destroyed,
+        until the next item is built: the page went word > empty > word and
+        bounced up and down on every selection (Kent 2026-11-11, webview: "I
+        just don't want to go A>0>B>0>C>0"). The next item resets the floor, so
+        a smaller word may still shrink the row; only the empty step is gone.
+        Wraps the instance's destroy, since several callers destroy it.
+
+        The floor is NOT dropped as soon as the next item is created: that
+        item draws in pieces (frame, then its label, image and buttons), and
+        dropping the floor first still flashed an empty row (Kent 2026-11-11:
+        "still a quick bounce to zero"). Instead, once the new item has drawn,
+        the floor becomes the new item's own height."""
+        def refloor(tries=5):
+            try:
+                if not sortitem.winfo_exists():
+                    return  # already gone; held_destroy set the floor
+                h = sortitem.winfo_height()
+                if h > 1:
+                    parent.rowconfigure(row, minsize=h)
+                elif tries:
+                    parent.after(100, lambda: refloor(tries - 1))
+            except Exception as e:
+                log.info("sort item place not reset: %s", e)
+        try:
+            parent.after(150, refloor)
+        except Exception as e:
+            log.info("sort item place not reset: %s", e)
+        destroy = sortitem.destroy
+        def held_destroy():
+            try:
+                h = sortitem.winfo_height()
+                if h > 1:
+                    parent.rowconfigure(row, minsize=h)
+            except Exception as e:  # the page itself may be going
+                log.info("sort item place not held: %s", e)
+            destroy()
+        sortitem.destroy = held_destroy
+
     def build_present_sense(self, runwindow_frame, buttonframe, text, sense):
         """Build the sort item display for a single sense. Returns the frame."""
         sortitem = ui.Frame(runwindow_frame, column=1, row=1,
                            sticky='nw', border=True)
+        self._hold_place(runwindow_frame, sortitem)
         l = ui.Label(sortitem, text=text, font='readbig', sticky='w')
         img = getattr(sense, 'image', None)
         if img:
@@ -462,6 +515,7 @@ class SortPresenter(PresenterBase):
                                            reverifiable=True,
                                            sticky='', **kwargs)
         if tosort_frame.hasexample:
+            self._hold_place(runwindow_frame, sortitem)
             buttonframe.sortitem = sortitem
             return sortitem
         else:
@@ -561,9 +615,12 @@ class SortPresenter(PresenterBase):
                 return
             if params.is_syllable_primitive_check(params.check()):
                 return
-            items=[(_("These words aren’t {group}…").format(group=group),
+            # The whole group's one-axis moves first (Kent 2026-11-11), then
+            # the rename within the class.
+            items=self.group_escape_items(task, group, on_applied=on_renamed)
+            items.append((_("These words aren’t {group}…").format(group=group),
                     lambda: self.ask_group_rename(parent, task, group,
-                                                on_renamed=on_renamed))]
+                                                on_renamed=on_renamed)))
             for w in widgets:
                 if w is not None:
                     self.attach_context_menu(w, items)
@@ -810,7 +867,9 @@ class SortPresenter(PresenterBase):
             return
         # Where play-all shows, by SHAPE, which row is playing.
         marker=ui.Label(bf, text=' ', column=10, row=0, sticky='w')
-        pa.add((row,column), bf, pb.play_word, marker=marker)
+        # A function, read at play: rows shift when a split inserts one.
+        pa.add(lambda bf=bf,rc=(row,column):self._slot_key(bf,rc),
+               bf, pb.play_word, marker=marker)
 
     def build_verify_layout(self, runwindow, title, page_icon, instructions,
                            prog_text, img_mod, group,
@@ -926,7 +985,8 @@ class SortPresenter(PresenterBase):
             reveal=min(24, ntotal) # first screenful shown before the rest streams
             nav_row=(ntotal+bc-1)//bc # row just past the last item
             # What a sameSort split needs to add a row after the build: the
-            # next free slot, and the OK row to move below it (_add_verify_row).
+            # slots (filled by _note_slot), and the OK row to move below
+            # (_add_verify_row puts the new row right after its group).
             self._vpage={'scroller':buttonframe, 'bc':bc, 'nslots':ntotal,
                          'nav_row':nav_row, 'navframe':None,
                          'verifybutton_fn':verifybutton_fn, 'rows':[],
@@ -1162,6 +1222,19 @@ class SortPresenter(PresenterBase):
         if rowH<10: rowH=80
         for r in range(nrows):
             content.rowconfigure(r, minsize=rowH)
+        # THE VIEWPORT ONLY WIDENS, while rows come and go. Unmapped rows don't
+        # count toward the content's width, so it was the widest MAPPED row's
+        # (including the buffer rows off screen): it changed as rows scrolled in
+        # and out (925↔1141px in the log), the scroller resized its viewport to
+        # it, and the centred page jumped left and right every few wheel clicks
+        # (Kent 2026-11-11: "visually jarring"). ScrollingFrame._no_shrink holds
+        # the viewport's width, NOT the content's: pinning the content's columns
+        # (the first try) fed an unwrapped row's 1519px into wrap_to_container's
+        # measurement, which then never saw anything fit and wrapped every row
+        # at its 200px floor. Reset per page: the run window is reused.
+        buttonframe._no_shrink=True
+        buttonframe._width_floor=0
+        buttonframe._box_floor=0
         # DIAG-virt (2026-07-27, grep to remove): the numbers that discriminate
         # the "big verify page shows only its title" failure. Two candidates,
         # both in this function: (a) rowH inflated by a tall UNSCALED image in
@@ -1184,9 +1257,23 @@ class SortPresenter(PresenterBase):
         # its title.
         try: canvas.yview_moveto(0)
         except Exception: pass
-        state={'win':None}
+        state={'win':None,'nrows':nrows} # nrows grows when a split adds a row
+        pending={} # id(widget) -> (row, column) it moves to when next mapped
+        def place(w, old_row, row, column):
+            """Move `w` from `old_row` to (row, column): now if either row is
+            in the mapped window, else when window() next maps it. A shift
+            moved all 345 rows after a split one by one, ~26ms each on
+            webview: 9s (log 2026-11-12 11:03:35). Returns True if deferred."""
+            win=state['win']
+            if win is None or win[0]<=old_row<win[1] or win[0]<=row<win[1]:
+                pending.pop(id(w),None)
+                w.grid(row=row, column=column)
+                return False
+            pending[id(w)]=(row,column)
+            return True
         def window():
             if not canvas.winfo_exists(): return
+            nrows=state['nrows']
             ch_raw=canvas.winfo_height()
             ch=ch_raw
             if ch<=1: ch=canvas.winfo_screenheight() # not mapped yet → estimate
@@ -1212,11 +1299,43 @@ class SortPresenter(PresenterBase):
             for r,ws in rowmap.items():
                 vis=lo<=r<hi
                 for w in ws:
-                    try: (w.grid() if vis else w.grid_remove())
+                    try:
+                        pos=pending.pop(id(w),None) if vis else None
+                        if pos: w.grid(row=pos[0], column=pos[1])
+                        elif vis: w.grid()
+                        else: w.grid_remove()
                     except Exception: pass
         def poll():
             if not canvas.winfo_exists(): return
             window(); canvas.after(150, poll)
+        def remap():
+            """Rows moved (_add_verify_row put a split-off word right after its
+            group and shifted the rest down a slot): re-read rows from the
+            page's slots, since grid_info can't find the unmapped ones."""
+            vp=getattr(self,'_vpage',None)
+            if not vp: return
+            slots=vp.get('slots') or []
+            nav=vp.get('navframe')
+            moved={id(w) for w in slots if w is not None}
+            if nav is not None: moved.add(id(nav))
+            kept={r:[w for w in ws if id(w) not in moved]
+                    for r,ws in rowmap.items()}
+            rowmap.clear()
+            for r,ws in kept.items():
+                if ws: rowmap[r]=ws
+            for k,w in enumerate(slots):
+                if w is not None: rowmap.setdefault(k//bc,[]).append(w)
+            if nav is not None: rowmap.setdefault(vp['nav_row'],[]).append(nav)
+            n=max(rowmap)+1
+            for r in range(state['nrows'],n):
+                content.rowconfigure(r, minsize=rowH)
+            state['nrows']=n
+            state['win']=None # force the grid()/grid_remove() pass
+            window()
+        vp=getattr(self,'_vpage',None)
+        if vp is not None:
+            vp['remap']=remap
+            vp['place']=place
         window()              # initial unmap, BEFORE waitdone renders the slice
         canvas.after(150, poll)
 
@@ -1298,6 +1417,38 @@ class SortPresenter(PresenterBase):
         beg=av(ftype,analang,'#C')
         end=av(ftype,analang,'C#')
         syls=av(ftype,analang,'syls')
+        def apply(check,value):
+            task.escape_profile_class(sense,check,value)
+            if on_applied:
+                on_applied()
+        return self._class_moves(params,beg,end,syls,apply)
+
+    def group_escape_items(self, task, group, on_applied=None):
+        """The same one-axis moves for a whole profile GROUP, for the profile
+        verify page's title/instructions/OK (Kent 2026-11-11): "These words
+        aren't {group}…" renames within the class and so can't say that they
+        ALL have a wrong primitive. Each word gets the primitive, exactly as the
+        single-word move writes it; the class comes from the current slice."""
+        params=task.program.params
+        beg,syls,end=params.parse_profile_class(task.program.slices.profile())
+        if beg is None:
+            return []
+        def apply(check,value):
+            # (each move fans out to the word's sameSort set: a set's members
+            # may be written twice here, which writes the same value)
+            senses=list(task.getsensesingroup(params.check(),group))
+            log.info("Moving all %d word(s) of %s: %s=%s",
+                     len(senses),group,check,value)
+            for s in senses:
+                task.escape_profile_class(s,check,value)
+            if on_applied:
+                on_applied()
+        return self._class_moves(params,beg,end,syls,apply)
+
+    def _class_moves(self, params, beg, end, syls, apply):
+        """[(label, cmd)] for the one-axis moves out of the class beg/syls/end:
+        flip word-initial, flip word-final, Shorter (not from one syllable),
+        Longer. apply(check, value) does the move."""
         try:
             n=int(syls)
         except (TypeError,ValueError):
@@ -1314,10 +1465,6 @@ class SortPresenter(PresenterBase):
         if n>1:
             moves.append((_("Shorter"),'syls',str(n-1)))
         moves.append((_("Longer"),'syls',str(n+1)))
-        def apply(check,value):
-            task.escape_profile_class(sense,check,value)
-            if on_applied:
-                on_applied()
         # No "this word is currently marked …" header any more: the menu is posted
         # on the word itself, so the context is the gesture. attach_context_menu
         # takes (label, cmd) pairs and has no disabled-header entry.
@@ -1377,11 +1524,16 @@ class SortPresenter(PresenterBase):
         def split(member, line):
             new=sameset['split'](member)
             line.destroy()
-            for s in new:
-                self._add_verify_row(s)
-            self._samesort_refresh()
+            # Close BEFORE the page rows are rebuilt: on webview that took
+            # ~7s (log 2026-11-12 10:55:55→10:56:02), with the dialog still
+            # up and nothing left in it to do (Kent 2026-11-12). members() is
+            # this slice's part of the set; other ps' members don't keep it open.
             if len(sameset['members'](entry['sense']))<2:
                 close()
+            prev=entry['bf']
+            for s in new: # each right after the last: group, then its splits
+                prev=self._add_verify_row(s, after=prev) or prev
+            self._samesort_refresh()
         # Its own "Play all", as the verify page's (Kent 2026-11-06); the
         # button goes in row 0, above the members, once one can play.
         def alive():
@@ -1450,27 +1602,104 @@ class SortPresenter(PresenterBase):
             log.info("sameSort drag-join skipped for %s: %s",
                      entry['sense'].id,e)
 
-    def _add_verify_row(self, sense):
-        """A row for `sense` after the page is built (a split left it a set,
-        or a lone word, of its own): the next free slot, with OK moved below."""
+    def _note_slot(self, row, column, cell):
+        """Record which widget fills a verify-page slot (row*bc+column), so a
+        split-off word can go in right after its group (_add_verify_row)."""
         vp=getattr(self,'_vpage',None)
         if not vp:
             return
-        slot=vp['nslots']
-        vp['nslots']+=1
+        slots=vp.setdefault('slots',[])
+        slot=row*vp['bc']+column
+        if len(slots)<=slot:
+            slots.extend([None]*(slot+1-len(slots)))
+        slots[slot]=cell
+
+    def _slot_key(self, cell, default):
+        """(row, column) of `cell` now — rows shift when a split inserts one;
+        play-all reads this so it keeps reading order."""
+        vp=getattr(self,'_vpage',None)
+        if vp:
+            for k,w in enumerate(vp.get('slots') or []):
+                if w is cell:
+                    return (k//vp['bc'],k%vp['bc'])
+        return default
+
+    def _add_verify_row(self, sense, after=None):
+        """A row for `sense` after the page is built (a split left it a set,
+        or a lone word, of its own), with OK moved below. Goes in the slot
+        right AFTER `after` (the group row it was split from), shifting later
+        rows down one, so it doesn't look like the word vanished (Kent
+        2026-11-11: it went to the bottom of the list). Without `after`, or if
+        that row isn't found, the next free slot at the end. Returns the new
+        row's widget."""
+        vp=getattr(self,'_vpage',None)
+        if not vp:
+            return None
+        # Timed: a split took ~9s in here on webview, with the log silent
+        # (2026-11-12 10:58:31→10:58:39); each phase is logged below.
+        t0=time.monotonic()
+        deferred=0
         bc=vp['bc']
-        row=slot//bc
-        if row>=vp['nav_row']:
-            vp['nav_row']=row+1
+        slots=vp.setdefault('slots',[])
+        if len(slots)<vp['nslots']:
+            slots.extend([None]*(vp['nslots']-len(slots)))
+        slot=None
+        if after is not None:
+            slot=next((k+1 for k,w in enumerate(slots) if w is after),None)
+        if slot is None:
+            slot=vp['nslots']
+        else:
+            # Shift everything from `slot` on down one, last first. On a
+            # virtualized page (tk), place() moves only rows near the screen
+            # now; the rest move when scrolled to. webview isn't virtualized
+            # (no canvas), so there every move goes, but in ONE batch: one
+            # round trip each was ~26ms, 9-12s for a 346-row page.
+            place=vp.get('place')
+            with ui.batched():
+                for k in range(len(slots)-1,slot-1,-1):
+                    w=slots[k]
+                    if w is None:
+                        continue
+                    try:
+                        if not w.winfo_exists():
+                            continue
+                        if place is not None:
+                            if place(w, k//bc, (k+1)//bc, (k+1)%bc):
+                                deferred+=1
+                        else:
+                            w.grid(row=(k+1)//bc, column=(k+1)%bc)
+                    except Exception as e:
+                        log.info("verify row shift skipped: %s",e)
+            slots.insert(slot,None)
+        t_shift=time.monotonic()
+        vp['nslots']+=1
+        lastrow=(vp['nslots']-1)//bc
+        if lastrow>=vp['nav_row']:
+            vp['nav_row']=lastrow+1
             if vp['navframe'] is not None and vp['navframe'].winfo_exists():
                 vp['navframe'].grid(row=vp['nav_row'], column=0,
                                     columnspan=bc, sticky='ew')
         vp['verifybutton_fn'](vp['scroller'].content, sense,
-                              row=row, column=slot % bc, label=False)
+                              row=slot//bc, column=slot % bc, label=False)
+        t_build=time.monotonic()
+        remap=vp.get('remap')
+        if remap is not None:
+            try:
+                remap()
+            except Exception as e:
+                log.info("verify page remap after a new row skipped: %s",e)
+        t_remap=time.monotonic()
         try:
             vp['scroller'].reflow()
         except Exception as e:
             log.info("verify page reflow after a new row skipped: %s",e)
+        t_end=time.monotonic()
+        log.info("verify row added at slot %s of %s: shift %.2fs (%s moved, "
+                 "%s of them deferred until scrolled to), build %.2fs, remap "
+                 "%.2fs, reflow %.2fs",slot,vp['nslots'],t_shift-t0,
+                 max(0,len(slots)-1-slot),deferred,t_build-t_shift,
+                 t_remap-t_build,t_end-t_remap)
+        return slots[slot] if slot<len(slots) else None
 
     def build_verify_button(self, parent, text, sense, is_label,
                            notok_fn, row, column, ipady, menu_items=None,
@@ -1541,6 +1770,7 @@ class SortPresenter(PresenterBase):
                          b['pady'], ipady, self.theme.scale)
             except Exception as e:
                 log.info("DIAG-rowheight failed: %s", e)
+        self._note_slot(row, column, bf if bf is not None else b)
         if menu_items:
             self.attach_context_menu(b, menu_items)
         # `|>` / `[|>]` beside the word, in the row's own frame. A LABEL row

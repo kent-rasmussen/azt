@@ -1426,7 +1426,39 @@ def _get_window_owner(wv_window):
         return _window_owners.get(wv_window)
 
 # ── JS execution helper ──────────────────────────────────────────────
-def _js(window, code):
+# Inside `batched()`, layout calls (`fire=True`: grid, grid_remove) are held
+# per window and sent together on exit, instead of one synchronous round trip
+# each (~26ms: a split on a 346-row verify page moved every later row, 9-12s,
+# log 2026-11-12 11:38). Any other `_js` call — one whose result someone may
+# read — sends what is held FIRST, so order is never changed.
+_js_batch = threading.local()
+
+
+@contextmanager
+def batched():
+    """Send the layout calls made inside this block in one go (per window).
+    Nests; only the outermost block sends. tkinter's is a no-op."""
+    outer = getattr(_js_batch, 'held', None) is None
+    if outer:
+        _js_batch.held = {}
+    try:
+        yield
+    finally:
+        if outer:
+            _send_held()
+            _js_batch.held = None
+
+
+def _send_held():
+    held = getattr(_js_batch, 'held', None)
+    if not held:
+        return
+    _js_batch.held = {}
+    for window, codes in held.items():
+        _eval_batched(window, codes)
+
+
+def _js(window, code, fire=False):
     """Evaluate JS in the webview window. Queues if webview hasn't started yet,
     or if the specific window hasn't finished loading.
 
@@ -1458,6 +1490,12 @@ def _js(window, code):
             if not owner._wv_loaded.is_set():
                 owner._wv_js_queue.append(code)
                 return None
+    held = getattr(_js_batch, 'held', None)
+    if held is not None:
+        if fire:
+            held.setdefault(window, []).append(code)
+            return None
+        _send_held() # a call that may be read: what was held goes first
     if not getattr(window, '_destroyed', False):
         try:
             return window.evaluate_js(code)
@@ -1910,7 +1948,7 @@ class _WebviewWidget:
             self._has_grid = True
         wv = getattr(self, '_wv_window', None)
         opts = json.dumps(self._grid_opts)
-        _js(wv, f'gridWidget({self._wid}, {opts})')
+        _js(wv, f'gridWidget({self._wid}, {opts})', fire=True)
         # `getattr`: the base sets `_grid_visible` in `__init__`, but the
         # grid-spans test drives this method on a bare stand-in, and a
         # widget that never said it was hidden is not being revealed.
@@ -1938,7 +1976,7 @@ class _WebviewWidget:
 
     def grid_remove(self):
         wv = getattr(self, '_wv_window', None)
-        _js(wv, f'gridRemove({self._wid})')
+        _js(wv, f'gridRemove({self._wid})', fire=True)
         self._grid_visible = False
 
     def grid_info(self):
@@ -4780,6 +4818,9 @@ class Menu:
         `textContent`."""
         wv = getattr(self, '_wv_window', None)
         if not wv:
+            # SAID: a menu with no window to draw in did nothing, silently.
+            log.info("menu not posted: its parent %s has no window",
+                     type(self.parent).__name__)
             return
 
         def on_menuclick(data):

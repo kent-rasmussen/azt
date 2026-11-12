@@ -38,8 +38,12 @@ def praatopen(program,file,newpraat=False,event=None):
             t=stouttostr(o)
         except Exception:
             t=o
-        if t == 'sendpraat: Program praat not running.':
-            praatopen(file,newpraat=True)
+        # `in`, not ==: the message can come back with a trailing newline. And
+        # `program` first: without it this retry raised a TypeError, so with
+        # sendpraat present and no Praat running, nothing opened (2026-11-11).
+        if 'not running' in str(t):
+            log.info("sendpraat: no Praat running; starting one")
+            praatopen(program,file,newpraat=True)
         else:
             log.info("praatoutput: {}".format(t))
     elif program.praat:

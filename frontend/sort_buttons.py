@@ -851,9 +851,16 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                                     check=self.check,
                                     ps=self.kwargs.get('ps'),
                                     profile=self.kwargs.get('profile'))
-        self.program.sort_ui.attach_context_menu(w,
-                [(_("Reverify this group (‘{group}’)").format(group=self.group),
-                    reverify)])
+        items=[(_("Reverify this group (‘{group}’)").format(group=self.group),
+                    reverify)]
+        praat=getattr(self,'_praat',None)
+        if praat is not None and getattr(self,'_display',None) is w:
+            # One right-click, one owner: Praat's binding on this play button
+            # ends the event ('break'), so the menu would never post. Both go
+            # in the menu instead.
+            w.unbind('<Button-3>')
+            items.append((_("Open in Praat"), praat))
+        self.program.sort_ui.attach_context_menu(w, items)
     def maybe_join_dnd(self):
         """Drag one group button onto another to JOIN the two (Kent 2026-08-24).
 
@@ -978,7 +985,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if hasattr(self,'_illustration'):
             b['image']=self._illustration
             b['compound']='left'
-        bttext=_("Click to hear this utterance")
+        bttext=self.grouptip()+'\n'+_("Click to hear this utterance")
         if (self.program.praat
                 and not str(self._filenameURL).lower().endswith('.m4a')):
             # praat can't read m4a: no bind, and no tooltip advertising it
@@ -991,7 +998,9 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                              "{} to {} s of it".format(self._filenameURL,
                                                        *span))
                 executables.praatopen(self.program, self._filenameURL)
+                return 'break' # not the window's <<ContextMenu>> as well
             b.bind('<Button-3>',praat)
+            self._praat=praat # maybe_reverify_menu folds it into its menu
         bt=ui.ToolTip(b,bttext)
         return True #a real player exists; see makebuttons' _playable
     def selectbutton(self):
@@ -1010,7 +1019,17 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if hasattr(self,'_illustration'):
             b['image']=self._illustration
             b['compound']='left'
-        bt=ui.ToolTip(b,_("Pick this group ({group})").format(group=self.group))
+        bt=ui.ToolTip(b,_("Pick this one: {group}").format(group=self.grouptip()))
+    def grouptip(self):
+        """What the group IS, for its tooltip: on the syllable-profile sort a
+        group is a profile, and the button face shows only an example word
+        (Kent 2026-11-11: "tooltips giving the profile of each group")."""
+        try:
+            if self.program.params.cvt()=='σ':
+                return _("syllable profile {profile}").format(profile=self.group)
+        except Exception as e:
+            log.info("group tooltip: no cvt (%s)",e)
+        return _("group {group}").format(group=self.group)
     def refresh(self):
         log.info("SGBF refresh called")
         # Same guard as `backup`, for the same reason: the command route is
@@ -1069,6 +1088,9 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                         sticky='nsew',
                         **tinyfontkwargs)
         self.refreshbutton.bind('<ButtonRelease-3>',self.backup)
+        # The press is the window's <<ContextMenu>>: without this its page menu
+        # posts over the button whose release backs up.
+        self.refreshbutton.bind('<Button-3>',lambda e:'break')
         # KEPT, so its text can follow the button's state (refresh_button_state).
         # It was a local named `bct` and dropped on return, which is part of why
         # the text could never be corrected.
@@ -1250,7 +1272,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                 # otherwise clicking the thing you are reading does nothing.
                 for w in [row]+list(row.winfo_children()):
                     w.bind('<Button-1>', self.next_item, add='+')
-                    w.bind('<Button-3>', self.prev_item, add='+')
+                    w.bind('<Button-3>', self._prev_item_only, add='+')
                 return
         self.check_label['text']=item.check
     def make_refresh(self):
@@ -1281,8 +1303,13 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         for w in [self.refresh_frame,self.check_label]:#,self.group_count]:
             self.checktips.append(ui.ToolTip(w,self.checktiptext()))
             # w.bind('<Button-1>', self.next_item)
-            w.bind('<Button-3>', self.prev_item, add='+') #nothing on n=1
+            w.bind('<Button-3>', self._prev_item_only, add='+') #nothing on n=1
         self.check_button_state()
+    def _prev_item_only(self,event=None):
+        """Right-click → back one, and nothing else: 'break' keeps the window's
+        <<ContextMenu>> (the same right-click) from posting the page menu too."""
+        self.prev_item(event)
+        return 'break'
     def checktiptext(self):
         if not self.cycleable():
             return _("Only one group here")

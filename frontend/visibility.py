@@ -48,7 +48,6 @@ import traceback
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 from utilities.i18n import _
-from utilities.error_handler import notify_user as NotifyUser
 from frontend import ui
 
 
@@ -174,7 +173,6 @@ def anything_viewable(*extra):
 
 
 _detailed_empty=set() #(site,callpath) → one WARNING-with-stack each
-_notified_empty=set() #site → one USER notice each
 
 
 def _callers(keep=6):
@@ -207,7 +205,11 @@ def _callers(keep=6):
 
 
 def report_empty_page(where,window=None,outcome='',detail=''):
-    """An empty page was detected. Log it, and TELL THE USER WE NOTICED.
+    """An empty page was detected. Log it.
+
+    LOG ONLY, since 2026-11-11 (Kent: "Let's not send this to UserNotice
+    anymore; just log"). The user notice described below is gone; the log
+    lines are what turns an instance into the "noticed" kind now.
 
     Kent's framing (2026-09-03), which is the reason this exists rather than
     just more log lines: neither NBQ ("nothing but Quit") nor NWAA ("no window
@@ -288,15 +290,6 @@ def report_empty_page(where,window=None,outcome='',detail=''):
         _detailed_empty.add(key)
         bits.append('called from: '+callers)
         log.warning(' | '.join(bits))
-        if where in _notified_empty:
-            return
-        _notified_empty.add(where)
-        NotifyUser(text=_("A page had nothing on it, so {name} did not show "
-                    "it. Your work and your data are fine.\n\nIf you were "
-                    "expecting something here, please send your log (Help "
-                    "▸ Email my log to support) — what happened is recorded "
-                    "in it.").format(name=_("A-Z+T")),
-                    title=_("An empty page was skipped"))
     except Exception as e:
         try:
             log.info("report_empty_page failed: %s",e)

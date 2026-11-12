@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""This just updates azt.pot"""
 import os
 import subprocess
 import sys
@@ -73,10 +74,10 @@ def extract_strings():
                 return
             else:
                 print("Changes detected.")
-        
+
         os.replace(temp_output_file, output_file)
         print(f"Successfully updated {output_file}")
-        
+
     except subprocess.CalledProcessError as e:
         print(f"Error running xgettext: {e}")
         if os.path.exists(temp_output_file):

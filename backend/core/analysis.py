@@ -689,6 +689,27 @@ class SliceDict(dict):
             # return list(self._profilesbysense[ps][profile]) #specified slice
         else:
             return []
+    def in_current(self,sense):
+        """Is `sense` in the current slice? What a sameSort set is narrowed by
+        (samesort.SameSort.members): where the data is sliced by ps (and
+        profile), a set's members outside the slice are other words for that
+        sort — a noun and a verb aren't sorted together for C/V or tone — and
+        where it isn't (the syllable sort's whole wordlist), all of them count
+        (Kent 2026-11-11: intrinsic to the slicing, not a setting). Cheap per
+        call: the syllable test is per sense, the others a cached id set."""
+        params=self.program.params
+        if params.cvt()=='σ':
+            profile=self.profile()
+            return (not profile or profile==params.SYLLABLE_SLICE_SENTINEL
+                    or params.profile_class_of_sense(sense)==profile)
+        senses=getattr(self,'_senses',None)
+        if senses is None:
+            return True # no slice yet: nothing to narrow by
+        key=(id(senses),len(senses))
+        if getattr(self,'_in_current_key',None)!=key:
+            self._in_current_ids={id(s) for s in senses}
+            self._in_current_key=key
+        return id(sense) in self._in_current_ids
     def makesensesbyps(self):
         """These are not distinguished by profile, just ps"""
         self._sensesbyps={}

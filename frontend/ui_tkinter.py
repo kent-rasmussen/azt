@@ -990,8 +990,12 @@ class Gridded():
             self.bind("<ButtonRelease-1>", self._disarm_drag, add='+')
         else:
             self.bind("<ButtonPress-1>", self.on_drag_start)
-        self.bind("<Enter>", self.dnd_focus_on)
-        self.bind("<Leave>", self.dnd_focus_off)
+        # ADDITIVE, like ToolTip's: bare binds replaced the widget's own
+        # <Enter>/<Leave>, so a joinable sort-group button (made draggable
+        # after its tooltip and hover colour were bound) lost both (Kent
+        # 2026-11-11: no tooltips on the profile sort's groups).
+        self.bind("<Enter>", self.dnd_focus_on, add='+')
+        self.bind("<Leave>", self.dnd_focus_off, add='+')
     def _arm_drag(self,event):
         self._drag_origin=(event.x_root,event.y_root)
     def _disarm_drag(self,event=None):
@@ -2629,6 +2633,11 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
         log.info("wrap_to_container: could not schedule the settled-geometry "
                 "pass (%s)",e)
     return _apply
+@contextmanager
+def batched():
+    """webview sends layout calls made inside this block together; Tk's grid
+    calls are local and cheap, so here it does nothing."""
+    yield
 def default_root():
     """Return the application's main themed ui.Root — the real program's root,
     carrying the full image theme (.theme/.photo) — or None if none currently
@@ -3560,9 +3569,15 @@ class Button(Childof,GridinGridded,Text,UI,tkinter.Button):
             self.bind("<Enter>", func=lambda e: self.config(
                 background=self.theme.activebackground))
             self.bind("<Leave>", func=lambda e: self.config(
-                background=self.theme.background))
+                background=self.resting_background()))
         except tkinter.TclError as e:
             log.info(f"Error in binding enter and leave: {e}")
+    def resting_background(self):
+        """The background off hover: the theme's, unless the button was set
+        to show another (rest_background: StatusFrame.activate_cell). Leave
+        used to put the theme's back regardless, so a status cell clicked
+        (always while hovered) lost its highlight on leaving."""
+        return getattr(self,'rest_background',None) or self.theme.background
     def nofn(self):
         pass
     def __init__(self, parent, **kwargs):
@@ -4392,6 +4407,14 @@ class ScrollingFrame(Frame):
         # uses, so the viewport and the text agree about how much room exists.
         capw,caph,cellw,cellh,winw=self._caps()
         wantcanvas=min(size[0],capw)
+        if getattr(self,'_no_shrink',False):
+            # Opt-in (the virtualized verify page, sort_ui._virtualize_verify):
+            # rows mapped and unmapped on scroll change the content's width, and
+            # following it made the page jump sideways. Hold the widest viewport
+            # this page has needed; never past capw, which wantcanvas already
+            # respects. The CONTENT is untouched, so wrapping measures true.
+            wantcanvas=max(wantcanvas,getattr(self,'_width_floor',0) or 0)
+            self._width_floor=wantcanvas
         canvasnow=self.canvas.winfo_width()
         if wantcanvas and wantcanvas!=canvasnow:
             self.canvas.config(width=wantcanvas)
@@ -4685,6 +4708,13 @@ class ScrollingFrame(Frame):
             width=capw
         else:
             width=contentrw #hug: it fits, so take only what it needs
+        if getattr(self,'_no_shrink',False):
+            # Same opt-in as the canvas floor in _do_configure_interior: the BOX
+            # must hold its width too. Flooring only the canvas left this frame
+            # following the mapped rows (box 1233↔901 in the log, canvas held at
+            # 1244), so the centred page still jumped (Kent 2026-11-11, "poison").
+            width=max(width,getattr(self,'_box_floor',0) or 0)
+            self._box_floor=width
         #scrolling window height
         if contentrh > caph:
             height=caph

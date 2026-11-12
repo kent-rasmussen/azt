@@ -265,6 +265,7 @@ class Settings(SettingsUI):
                                     # 'profilecounts',
                                     'scount',
                                     'sextracted',
+                                    'last_trust',
                                     ]},
             'status':{
                                 'file':'statusfile',
@@ -306,7 +307,9 @@ class Settings(SettingsUI):
                                             'alphabet_pagesize',
                                             'glyph_members',
                                             'glyphs_distinguished',
-                                            'alphabet_copyright'
+                                            'alphabet_copyright',
+                                            'alphabet_casing',
+                                            'glyph_capitals'
                                         ]},
             'contributors':{
                                 'file':'contributorsfile',
@@ -441,6 +444,7 @@ class Settings(SettingsUI):
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
         self.fndict=fns={}
+        fns['last_trust']=self.trust_dates #no object needed
         try: #these objects may not exist yet
             fns['cvt']=self.program.params.cvt
             fns['check']=self.program.params.check
@@ -459,6 +463,8 @@ class Settings(SettingsUI):
             fns['alphabet_chart_title']=self.alpha_chart_title
             fns['alphabet_copyright']=self.alpha_copyright
             fns['alphabet_pagesize']=self.alpha_pagesize
+            fns['alphabet_casing']=self.alpha_casing
+            fns['glyph_capitals']=self.alpha_glyph_capitals
             fns['contributors']=self.alphabet_contributors
             fns['ps']=self.program.slices.ps
             fns['profile']=self.program.slices.profile
@@ -833,6 +839,41 @@ class Settings(SettingsUI):
         return getattr(self,'_contributors',[])
     def alpha_pagesize(self,value=''):
         return self._alpha('pagesize',value,'A4')
+    def alpha_casing(self,value=''):
+        """The orthography's capitals rule: 'full', 'title' or 'none'
+        (backend/core/casing.py)."""
+        from backend.core import casing
+        if value and value not in casing.RULES:
+            # never stop a settings load over it: say so, keep what was there
+            _log.error("alphabet_casing must be one of {}, not {!r}; ignored"
+                       "".format(casing.RULES,value))
+            value=''
+        return self._alpha('casing',value,casing.DEFAULT_RULE)
+    def trust_dates(self,value=None):
+        """{ftype: when Trust last ran on this lexicon} (profiles.note_trust),
+        stored as 'last_trust' with the lexicon's profile data. Not named
+        last_trust: moveattrstoobjects deletes that attr once moved here."""
+        if isinstance(value,dict):
+            self._trust_dates=dict(value)
+        return dict(getattr(self,'_trust_dates',{}))
+    def alpha_glyph_capitals(self,value=None):
+        """Per-glyph capital overrides, {glyph: capital or None}, sparse
+        (backend/core/casing.py). Stored under its own name, as decided
+        (agenda: alphabet_chart_capitals.md), not 'alphabet_'-prefixed.
+        The method must not share that name: moveattrstoobjects deletes the
+        attr after moving it, and would find (and fail to delete) the method.
+        Same read order as _alpha: what is set, else the store, else {}."""
+        if isinstance(value,dict):
+            self._glyph_capitals=dict(value)
+        if hasattr(self,'_glyph_capitals'):
+            return self._glyph_capitals
+        try:
+            stored=self.mgr.get('glyph_capitals',None)
+        except Exception as e:
+            _log.info("glyph_capitals not readable from the domain store "
+                      "({}); none".format(e))
+            stored=None
+        return dict(stored) if isinstance(stored,dict) else {}
     def guess_nominalps(self):
         topn=3 #just in case N and V aren't the first two, finish with top
         n_opts=['N','n','Noun','noun', 'Nom','nom','S','s',

@@ -22,5 +22,9 @@ def loadCAWL():
         return text
     except Exception as e:
         log.info(_("Error: {error}").format(error=e))
+    # Both uses (a new project, and filling out an established one) take these
+    # entries in as new: not with the template's 2008/2011 dates, nor its guids.
+    log.info("CAWL: %d nodes' dates set to now",cawldb.stamp_dates_now())
+    log.info("CAWL: %d entries/senses given new guids",cawldb.regenerate_ids())
     log.info(_("Done loading stock LIFT file, parsed to tree/nodes."))
     return cawldb

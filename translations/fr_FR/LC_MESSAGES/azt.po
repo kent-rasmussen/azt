@@ -10764,3 +10764,299 @@ msgstr "pas de groupe encadré"
 #, fuzzy
 msgid "Other letter"
 msgstr "Autre lettre"
+
+#, fuzzy
+msgid "(none)"
+msgstr "(aucun)"
+
+#, fuzzy
+msgid "ASR only"
+msgstr "RAP seulement"
+
+#, fuzzy
+msgid "ASR"
+msgstr "RAP"
+
+#, fuzzy
+msgid "Automatically transcribed by AI models"
+msgstr "Transcrit automatiquement par des modèles d’IA"
+
+#, fuzzy
+msgid "Back to the main lexicon"
+msgstr "Retour au lexique principal"
+
+#, fuzzy
+msgid "Cancelling — finishing the current clause…"
+msgstr "Annulation — fin de la proposition en cours…"
+
+#, fuzzy
+msgid "Check Texts"
+msgstr "Vérifier les textes"
+
+#, fuzzy, python-brace-format
+msgid "Clause {n} of {total}"
+msgstr "Proposition {n} sur {total}"
+
+#, fuzzy
+msgid "Clauses"
+msgstr "Propositions"
+
+#, fuzzy
+msgid "Click to hear this word in its phrase (up to a second each side)"
+msgstr "Cliquez pour entendre ce mot dans sa phrase (jusqu’à une seconde de chaque côté)"
+
+#, fuzzy
+msgid "Click to hear this word"
+msgstr "Cliquez pour entendre ce mot"
+
+#, fuzzy
+msgid "Close"
+msgstr "Fermer"
+
+#, fuzzy, python-brace-format
+msgid "Couldn’t make the word lexicon: {e}"
+msgstr "Impossible de créer le lexique des mots : {e}"
+
+#, fuzzy, python-brace-format
+msgid "Couldn’t open {name}: {e}"
+msgstr "Impossible d’ouvrir {name} : {e}"
+
+#, fuzzy, python-brace-format
+msgid "Find the words of {name}, first transcribing with MMS (for the languages in Transcription settings) any clause it hasn’t done"
+msgstr "Trouver les mots de {name}, en transcrivant d’abord avec MMS (pour les langues des paramètres de transcription) toute proposition qu’il n’a pas encore faite"
+
+#, fuzzy
+msgid "Find words"
+msgstr "Trouver les mots"
+
+#, fuzzy, python-brace-format
+msgid "Finding the words of clause {n} of {total}…"
+msgstr "Recherche des mots de la proposition {n} sur {total}…"
+
+#, fuzzy
+msgid "Length"
+msgstr "Longueur"
+
+#, fuzzy, python-brace-format
+msgid "Loading the alignment model ({adapter})…"
+msgstr "Chargement du modèle d’alignement ({adapter})…"
+
+#, fuzzy, python-brace-format
+msgid "No recordings in {folder}: put the texts’ recordings there."
+msgstr "Aucun enregistrement dans {folder} : mettez-y les enregistrements des textes."
+
+#, fuzzy, python-brace-format
+msgid "No speech found in {name}."
+msgstr "Aucune parole trouvée dans {name}."
+
+#, fuzzy
+msgid "No text has words yet: click “Parse” first."
+msgstr "Aucun texte n’a encore de mots : cliquez d’abord sur « Analyser »."
+
+#, fuzzy
+msgid "No texts transcribed yet."
+msgstr "Aucun texte transcrit pour l’instant."
+
+#, fuzzy
+msgid "Not opened yet: it is cut into clauses the first time"
+msgstr "Pas encore ouvert : il est découpé en propositions la première fois"
+
+#, fuzzy
+msgid "Not the same word: sort this one on its own"
+msgstr "Pas le même mot : trier celui-ci à part"
+
+#, fuzzy
+msgid "Open in Praat"
+msgstr "Ouvrir dans Praat"
+
+#, fuzzy, python-brace-format
+msgid "Opening {name}…"
+msgstr "Ouverture de {name}…"
+
+#, fuzzy
+msgid "Other voices:"
+msgstr "Autres voix :"
+
+#, fuzzy
+msgid "Parse each text, one after another: transcribe with MMS any clause it hasn’t done, then find the words"
+msgstr "Analyser chaque texte, l’un après l’autre : transcrire avec MMS toute proposition qu’il n’a pas encore faite, puis trouver les mots"
+
+#, fuzzy
+msgid "Parse"
+msgstr "Analyser"
+
+#, fuzzy
+msgid "Parsed (words)"
+msgstr "Analysé (mots)"
+
+#, fuzzy
+msgid "Pick a text on the board first."
+msgstr "Choisissez d’abord un texte sur le tableau."
+
+#, fuzzy, python-brace-format
+msgid "Pick this one: {group}"
+msgstr "Choisir celui-ci : {group}"
+
+#, fuzzy
+msgid "Play all"
+msgstr "Tout écouter"
+
+#, fuzzy
+msgid "Play clause"
+msgstr "Écouter la proposition"
+
+#, fuzzy
+msgid "Play each word in turn, from the top; click again to stop"
+msgstr "Écouter chaque mot à tour de rôle, depuis le haut ; cliquez à nouveau pour arrêter"
+
+#, fuzzy
+msgid "Play with context"
+msgstr "Écouter avec le contexte"
+
+#, fuzzy
+msgid "Process all"
+msgstr "Tout traiter"
+
+#, fuzzy
+msgid "Put the words found in all these texts into one word lexicon, and switch to it to sort them"
+msgstr "Mettre les mots trouvés dans tous ces textes dans un seul lexique de mots, et y passer pour les trier"
+
+#, fuzzy, python-brace-format
+msgid "Ready to export {n} transcribed clauses from {t} texts"
+msgstr "Prêt à exporter {n} propositions transcrites de {t} textes"
+
+#, fuzzy
+msgid "Reverify group (select)"
+msgstr "Revérifier un groupe (choisir)"
+
+#, fuzzy
+msgid "Same word"
+msgstr "Même mot"
+
+#, fuzzy
+msgid "Sort words from these texts"
+msgstr "Trier les mots de ces textes"
+
+#, fuzzy
+msgid "Speaker:"
+msgstr "Locuteur :"
+
+#, fuzzy
+msgid "Split off"
+msgstr "Séparer"
+
+#, fuzzy
+msgid "Stop"
+msgstr "Arrêter"
+
+#, fuzzy
+msgid "Text"
+msgstr "Texte"
+
+#, fuzzy
+msgid "Texts"
+msgstr "Textes"
+
+#, fuzzy, python-brace-format
+msgid "That’s the end of {title} ({done} of {total} clauses transcribed).\nPick another text on the main screen to keep going."
+msgstr "C’est la fin de {title} ({done} propositions transcrites sur {total}).\nChoisissez un autre texte sur l’écran principal pour continuer."
+
+#, fuzzy, python-brace-format
+msgid "The same word, {n} times: click to see each, or to split one off"
+msgstr "Le même mot, {n} fois : cliquez pour voir chacun, ou pour en séparer un"
+
+#, fuzzy
+msgid "The texts’ word lexicon is open for sorting; go back to the main lexicon (on the task list) before adding to it."
+msgstr "Le lexique des mots des textes est ouvert pour le tri ; revenez au lexique principal (dans la liste des tâches) avant d’y ajouter."
+
+#, fuzzy
+msgid "This task helps you transcribe longer recordings (texts) clause by clause, starting from what the speech recognition models give."
+msgstr "Cette tâche vous aide à transcrire des enregistrements plus longs (textes) proposition par proposition, à partir de ce que donnent les modèles de reconnaissance de la parole."
+
+#, fuzzy
+msgid "Transcribe Texts"
+msgstr "Transcrire des textes"
+
+#, fuzzy
+msgid "Transcribe this clause"
+msgstr "Transcrire cette proposition"
+
+#, fuzzy, python-brace-format
+msgid "Transcribe {name} clause by clause"
+msgstr "Transcrire {name} proposition par proposition"
+
+#, fuzzy, python-brace-format
+msgid "Transcribe {name} with every model in Transcription settings, where it hasn’t been; no words found"
+msgstr "Transcrire {name} avec chaque modèle des paramètres de transcription, là où ce n’est pas encore fait ; aucun mot n’est cherché"
+
+#, fuzzy, python-brace-format
+msgid "Transcribe {title}"
+msgstr "Transcrire {title}"
+
+#, fuzzy
+msgid "Transcribed by you"
+msgstr "Transcrit par vous"
+
+#, fuzzy, python-brace-format
+msgid "Transcribing {n} clauses…"
+msgstr "Transcription de {n} propositions…"
+
+#, fuzzy, python-brace-format
+msgid "cancelled: {words} words found in {worded} of {total} clauses so far"
+msgstr "annulé : {words} mots trouvés dans {worded} propositions sur {total} jusqu’ici"
+
+#, fuzzy, python-brace-format
+msgid "couldn’t find words: {e}"
+msgstr "impossible de trouver les mots : {e}"
+
+#, fuzzy, python-brace-format
+msgid "group {group}"
+msgstr "groupe {group}"
+
+#, fuzzy
+msgid "no clause has candidates from an MMS model, and words are aligned with one: transcribe it first, with MMS chosen in Transcription settings"
+msgstr "aucune proposition n’a de candidats d’un modèle MMS, et les mots sont alignés avec l’un d’eux : transcrivez-la d’abord, avec MMS choisi dans les paramètres de transcription"
+
+#, fuzzy, python-brace-format
+msgid "open {dir}"
+msgstr "ouvrir {dir}"
+
+#, fuzzy, python-brace-format
+msgid "syllable profile {profile}"
+msgstr "profil syllabique {profile}"
+
+#, fuzzy
+msgid "the speech recognition models couldn’t be loaded"
+msgstr "les modèles de reconnaissance de la parole n’ont pas pu être chargés"
+
+#, fuzzy
+msgid "transcribing cancelled"
+msgstr "transcription annulée"
+
+#, fuzzy, python-brace-format
+msgid "transcribing failed: {e}"
+msgstr "échec de la transcription : {e}"
+
+#, fuzzy, python-brace-format
+msgid "{done} of {total} clauses transcribed"
+msgstr "{done} propositions transcrites sur {total}"
+
+#, fuzzy, python-brace-format
+msgid "{name}: couldn’t open it: {e}"
+msgstr "{name} : impossible de l’ouvrir : {e}"
+
+#, fuzzy, python-brace-format
+msgid "{n} of {total} clauses transcribed"
+msgstr "{n} propositions transcrites sur {total}"
+
+#, fuzzy, python-brace-format
+msgid "{title} (text {i} of {n})"
+msgstr "{title} (texte {i} sur {n})"
+
+#, fuzzy, python-brace-format
+msgid "{wav_count} audio files to check for the {repo} repo (of {total_count} files total here)"
+msgstr "{wav_count} fichiers audio à vérifier pour le dépôt {repo} (sur {total_count} fichiers au total ici)"
+
+#, fuzzy, python-brace-format
+msgid "{words} words found in {worded} of {total} clauses ({timed} with times)"
+msgstr "{words} mots trouvés dans {worded} propositions sur {total} ({timed} avec des temps)"

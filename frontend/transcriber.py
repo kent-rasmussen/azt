@@ -220,7 +220,10 @@ class Transcriber(ui.Frame):
                             font='tiny',
                             sticky='ns',
                             row=0, column=1)
-        self.formfieldplay.bind('<Button-3>', self.configurebeeps)
+        # 'break': the same right-click is the window's <<ContextMenu>>, whose
+        # page menu would otherwise post over the beep settings
+        self.formfieldplay.bind('<Button-3>',
+                                lambda e: (self.configurebeeps(e), 'break')[1])
         tt=_("Left click to play, \nRight click to configure")
         ui.ToolTip(self.formfieldplay, text=tt)
         self.formfieldplay.grid_remove()

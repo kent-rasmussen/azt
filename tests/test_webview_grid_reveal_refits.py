@@ -28,7 +28,7 @@ def _widget(visible):
 
 def _grid(monkeypatch, widget):
     asked = []
-    monkeypatch.setattr(ui_webview, '_js', lambda wv, code: None)
+    monkeypatch.setattr(ui_webview, '_js', lambda wv, code, fire=False: None)
     monkeypatch.setattr(ui_webview, '_request_refit',
                         lambda win, trigger, delay=0.4: asked.append((win, trigger)))
     ui_webview._WebviewWidget.grid(widget)
@@ -54,7 +54,7 @@ def test_the_request_is_short_fused_like_the_tab_switch(monkeypatch):
     cropped page, so the delay is the notebook's 0.05, not the build's 0.4."""
     w, _ = _widget(visible=False)
     seen = {}
-    monkeypatch.setattr(ui_webview, '_js', lambda wv, code: None)
+    monkeypatch.setattr(ui_webview, '_js', lambda wv, code, fire=False: None)
     monkeypatch.setattr(ui_webview, '_request_refit',
                         lambda win, trigger, delay=0.4: seen.setdefault('delay', delay))
     ui_webview._WebviewWidget.grid(w)

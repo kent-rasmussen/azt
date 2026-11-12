@@ -207,6 +207,9 @@ def _button(frame, text, player, src, tip, program, column):
                 log.info("opening the whole of {} in praat; this sound is "
                          "{} to {} s of it".format(url,*span))
             executables.praatopen(program,url)
+            # the window's own <<ContextMenu>> (ui.ContextMenu) is the same
+            # right-click: 'break' keeps its menu from posting over this
+            return 'break'
         try:
             b.bind('<Button-3>',praat)
         except Exception as e:

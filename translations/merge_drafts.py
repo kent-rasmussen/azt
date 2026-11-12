@@ -7,14 +7,27 @@
 Each draft file holds .po entries for ONE language (the file name starts
 with the language folder's name, e.g. fr_FR_part1.po). For each entry:
 
-  * the msgid must be in azt.pot (else it is skipped: the string is gone);
-  * if the catalog has no entry for it, the entry is APPENDED;
+  * if the catalog has no entry for it, the entry is APPENDED — even when
+    its msgid is not in azt.pot (no longer used): a string once translated
+    may be used again, so the catalog keeps it (Kent 2026-11-12). Nothing
+    here ever removes a catalog entry;
   * if the catalog's entry has an EMPTY msgstr, the draft fills it;
   * a catalog entry that already has a translation is NEVER touched.
 
 Every merged entry is marked `fuzzy`. msgfmt (translations/compile.py)
 leaves fuzzy entries out of the .mo, so nothing unchecked reaches users;
 a checker accepts an entry by removing "fuzzy" from its "#," line.
+
+A DRAFT IS RETIRED ONCE MERGED (Kent 2026-11-12). Drafts used to stay in
+drafts/ for good, so every test run re-checked old ones against today's
+azt.pot, and a string removed from the code failed a draft merged weeks
+before. Now, after the catalogs are written, each draft keeps only the
+entries that still need a person (empty translation, placeholders that
+differ); a draft with none left is deleted. --dry-run says what it would do.
+
+A cycle is extract > draft > merge, each step taking what the last gave
+it. This does NOT extract: new strings mean a new draft first, never a
+straight move from extraction to merging (Kent 2026-11-12).
 """
 import argparse
 import ast
@@ -107,19 +120,22 @@ def merge(lang, drafts, dry_run=False):
                for e in parse((HERE / 'azt.pot').read_text('utf-8'))[0]}
     entries, lines = parse(po_path.read_text('utf-8'))
     by_key = {(e.get('msgctxt'), e['msgid']): e for e in entries}
-    appended, filled, skipped = [], 0, []
+    appended, filled, skipped, unused = [], 0, [], 0
     replace = {}  # start line -> (end line, new lines)
     for d in drafts:
         key = (d.get('msgctxt'), d['msgid'])
         why = problems(d)
-        if key not in pot_ids:
-            why = why or 'not in azt.pot'
         if why:
             skipped.append((d['msgid'], why))
             continue
         d['flags'] = set(d['flags']) | {'fuzzy'}
         have = by_key.get(key)
         if have is None:
+            if key not in pot_ids:  # kept for if the string comes back
+                d['comments'] = list(d['comments']) + [
+                    '# Not in azt.pot when merged; kept in case it is '
+                    'used again.']
+                unused += 1
             appended.append(d)
             by_key[key] = d
         elif not have.get('msgstr'):
@@ -142,7 +158,8 @@ def merge(lang, drafts, dry_run=False):
     for d in appended:
         out.append('')
         out.extend(render(d))
-    print(f'{lang}: {len(appended)} appended, {filled} filled, '
+    print(f'{lang}: {len(appended)} appended ({unused} of them not in '
+          f'azt.pot, kept for later use), {filled} filled, '
           f'{len(skipped)} skipped')
     for msgid, why in skipped:
         print(f'  skipped ({why}): {msgid[:70]!r}')
@@ -151,12 +168,36 @@ def merge(lang, drafts, dry_run=False):
     return len(appended), filled, skipped
 
 
+def retire(path, dry_run=False):
+    """After its language is merged: keep in `path` only the entries that
+    still need a person (problems()); delete the file if none are left.
+    Returns the entries kept."""
+    entries, lines = parse(path.read_text('utf-8'))
+    keep = [e for e in entries if problems(e)]
+    if keep:
+        out = []
+        for e in keep:  # the entry's own lines, untouched
+            out.extend(lines[e['start']:e['end']])
+            out.append('')
+        print(f'{path.name}: {len(keep)} entries still need fixing; '
+              f'{len(entries) - len(keep)} '
+              + ('would be ' if dry_run else '') + 'removed')
+        if not dry_run:
+            path.write_text('\n'.join(out), encoding='utf-8')
+    else:
+        print(f'{path.name}: all merged; ' + ('would be ' if dry_run else '')
+              + 'deleted')
+        if not dry_run:
+            path.unlink()
+    return keep
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--dry-run', action='store_true',
                     help='report what would change; write nothing')
     args = ap.parse_args()
-    by_lang = {}
+    by_lang, files = {}, {}
     for f in sorted(DRAFTS.glob('*.po')):
         lang = next((d.name for d in HERE.iterdir()
                      if d.is_dir() and f.name.startswith(d.name + '_')), None)
@@ -164,8 +205,13 @@ def main():
             print(f'{f.name}: no language folder matches its name; skipped')
             continue
         by_lang.setdefault(lang, []).extend(parse(f.read_text('utf-8'))[0])
+        files.setdefault(lang, []).append(f)
     for lang, drafts in sorted(by_lang.items()):
+        # merge() raises if the catalog can't be read or written; then the
+        # drafts stay, since nothing of theirs was saved.
         merge(lang, drafts, dry_run=args.dry_run)
+        for f in files[lang]:
+            retire(f, dry_run=args.dry_run)
 
 
 if __name__ == '__main__':

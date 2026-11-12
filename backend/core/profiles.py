@@ -8,6 +8,7 @@ from utilities import logsetup, rx
 from utilities.utilities import setnesteddictval
 from utilities.i18n import _
 from backend.core.analysis import SliceDict, SyllableSliceDict
+from backend.core import casing
 
 log = logsetup.getlog(__name__)
 
@@ -234,12 +235,35 @@ class ProfileAnalyzer:
             fresh = {g for g in glyphs_present[cvt]
                         if SyllableSliceDict.SEP not in g}
             self.s[analang][cvt].extend(fresh - set(there))
+        # Capitals are their glyphs (backend/core/casing.py; Kent 2026-11-07):
+        # an inventory 'F' beside 'f' is folded away, and every glyph's
+        # capitals match as it in the regexes below.
+        overrides = self._glyph_capitals()
+        # a copy: for a language with no data this dict IS db.hypotheticals
+        self.s[analang] = dict(self.s[analang])
+        for sclass, glyphs in self.s[analang].items():
+            folded = casing.fold(glyphs, overrides)
+            if len(folded) != len(glyphs):
+                log.info("Capitals folded into their glyphs in %s: %s", sclass,
+                         sorted(set(glyphs) - set(folded)))
+                self.s[analang][sclass] = folded
         self.rxdict = rx.RegexDict(distinguish=self.distinguish,
                                 interpret=self.interpret,
                                 sdict=self.s[self.program.db.analang],
                                 profilelegit=self.profilelegit,
                                 invalidchars=self.invalidchars,
-                                profilesegments=self.profilesegments)
+                                profilesegments=self.profilesegments,
+                                capitals=lambda g: casing.matching_capitals(
+                                                                g, overrides))
+
+    def _glyph_capitals(self):
+        """The project's per-glyph capital overrides, or {} (settings
+        glyph_capitals)."""
+        try:
+            return self.program.settings.alpha_glyph_capitals() or {}
+        except Exception as e:
+            log.info("no glyph_capitals setting (%s); deriving capitals", e)
+            return {}
 
     def addtoCVrxs(self, s):
         """Add a new grapheme while running, so we don't have to restart
@@ -251,6 +275,7 @@ class ProfileAnalyzer:
         if cvt in ['C', 'V'] and s not in self.s[analang][cvt]:
             self.s[analang][cvt] += [s]
             self.rxdict.makeglyphregex(cvt)
+            self.rxdict._capitals_rx = None  # rebuilt with the new glyph's capitals
 
     # ------------------------------------------------------------------
     # Profile extraction
@@ -607,7 +632,59 @@ class ProfileAnalyzer:
         the live one, like every other method here."""
         self.program.db.load_ps_profiles(ftype or self.program.params.ftype())
         self.run()
-    def affirm_machine_profiles(self, ftype=None, rebuild=True, write=True):
+    def note_trust(self, ftype=None):
+        """Record that Trust ran now, for this lexicon and form (the whole
+        lexicon: Trust isn't per ps). Words created after it are trusted
+        without asking (auto_trust_new)."""
+        from io_put import lift
+        ftype = ftype or self.program.params.ftype()
+        settings = self.program.settings
+        settings.trust_dates({**settings.trust_dates(), ftype: lift.getnow()})
+        settings.storesettingsfile(setting='profiledata')
+
+    def created_since_trust(self, ftype=None):
+        """The senses whose entry was created after the last Trust (note_trust)
+        — all of them when Trust has never run on a lexicon with no confirmed
+        profile yet (its first open). None when Trust has no record but some
+        word has a confirmed profile: work from before the record was kept,
+        where a missing profile may be one the user sent back ('Not CVC'), so
+        it's asked about, not trusted."""
+        ftype = ftype or self.program.params.ftype()
+        senses = self.program.db.senses
+        last = self.program.settings.trust_dates().get(ftype)
+        if last is None:
+            if any(s.cvprofilevalue(ftype) for s in senses):
+                return None
+            return list(senses)
+
+        def created(s):
+            entry = getattr(s, 'entry', None)
+            return (entry.get('dateCreated') if entry is not None else None) or ''
+        return [s for s in senses if created(s) > last]
+
+    def auto_trust_new(self, ftype=None):
+        """Kent 2026-11-11: trust, without asking, every word created since the
+        last Trust (or every word, on a lexicon's first open). Then the "Set up
+        syllable profiles?" offer only asks about words Trust already passed
+        over: sent back, or newly profilable. Records the trust, so a word sent
+        back after this is never re-trusted behind the user's back. Returns the
+        number of words trusted."""
+        ftype = ftype or self.program.params.ftype()
+        new = self.created_since_trust(ftype)
+        if new is None:
+            return 0
+        n = self.affirm_machine_profiles(ftype, rebuild=False, write=False,
+                                         senses=new)
+        log.info("Auto-trust: %d of %d word(s) created since the last Trust "
+                 "given their machine profile", n, len(new))
+        if n:  # (affirm writes each word's primitives with its profile)
+            self.program.maybewrite(definitely=True)
+            self.rebuild_slices(ftype)
+        self.note_trust(ftype)
+        return n
+
+    def affirm_machine_profiles(self, ftype=None, rebuild=True, write=True,
+                                senses=None):
         """Accept the straight machine CV analysis as the (confirmed) profile DATA:
         copy each sense's …-x-cvprofile_MT into the plain …-x-cvprofile form, which
         the segmental/tone sorts read. For languages where syllable-profile sorting
@@ -618,10 +695,11 @@ class ProfileAnalyzer:
         write=False for a caller running several passes in one action: a write is
         the WHOLE LIFT file (a whole-file submit under collab), so it costs the
         same whether 15 words changed or 1500 — the caller writes once at the end
-        instead of once per pass (Kent 2026-07-28). Same bargain as rebuild."""
+        instead of once per pass (Kent 2026-07-28). Same bargain as rebuild.
+        senses: only these (auto_trust_new); default, the whole lexicon."""
         ftype = ftype or self.program.params.ftype()
         n = 0
-        for s in self.program.db.senses:
+        for s in (self.program.db.senses if senses is None else senses):
             # Fill HOLES only — never rewrite an existing profile (it may be
             # hand-verified good data; affirm must not clobber it). To repair
             # already-written bad profiles, use reconcile_profiles_to_primitives.
@@ -813,6 +891,7 @@ class ProfileAnalyzer:
         return withforms
 
     def extractsegmentsfromform(self, form, ps):
+        form = self.rxdict.uncapitalized(form)  # a capital counts as its glyph
         for s in set(self.profilelegit) & set(self.rxdict.rx):
             for i in [j for j in self.rxdict.rx[s][0].findall(form) if j]:
                 i = ''.join(i).lower()

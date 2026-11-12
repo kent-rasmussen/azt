@@ -19,6 +19,47 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.57 (2026-11-12)
+
+Patch bump at Kent's direction. Test run 2026-11-12 11:42: 1255 passed,
+22 skipped, 4 failed. Three of the failures were test stand-ins for
+webview's `_js` that lacked the new `fire=` argument; those are updated
+but not yet re-run. The fourth was a stale translation draft (below).
+
+Confirmed by Kent (2026-11-12):
+
+- **The "Same word" window closes as soon as a split leaves one member**
+  in this slice. It used to wait for the page to redraw, 7-13 s on
+  webview.
+- **A split no longer takes ~12 s on a big verify page (webview).**
+  Moving the later rows down one went one browser round trip per row
+  (~26 ms each, 346 rows). They now go in one batch, through the new
+  `ui.batched()`: 0.17 s for 344 rows. On tkinter, only rows near the
+  screen move at once; the rest move when scrolled to (AWAITING
+  VERIFICATION). Each added row logs its timings.
+
+AWAITING VERIFICATION:
+
+- **A split-off word goes right after its group,** not at the bottom of
+  the verify page.
+- **The verify page no longer jumps left and right** as long rows scroll
+  in and out (tkinter).
+- **The sort page no longer drops to zero height** between one
+  presented word and the next.
+- **The presented word's right-click menu appears under webview on GTK.**
+- **"An empty page was skipped" is logged only,** no longer shown in
+  Messages.
+- **French and Mandarin drafts for the Texts strings** (74 each, fuzzy,
+  for a speaker to check), in `translations/drafts/*_texts.po`.
+- **`merge_drafts.py` retires drafts once merged:** a draft keeps only
+  entries that still need a person, and is deleted when none are left.
+  Old drafts were re-checked against each new `azt.pot`, so a string
+  removed from the code failed a draft merged long before. A drafted
+  string no longer in `azt.pot` is now merged anyway, with a note, since
+  it may be used again; it was skipped before. Nothing removes catalogue
+  entries. It does not extract: a cycle is extract, then draft, then
+  merge.
+
 # Version 1.15.56 (2026-11-06)
 
 Patch bump at Kent's direction. **Everything below is AWAITING
@@ -34,9 +75,11 @@ Texts:
 - **A Texts board replaces the clause page's whole-text buttons.** It
   lists one row per recording in `<project>/texts/`, with columns Length
   | Clauses | ASR | Parsed (words) | Transcribed by you.
-  - Each row has "Transcribe", "Find words" (which also updates the word
-    lexicon), and "Transcribe and find words".
-  - "Process all" at the top runs every text in turn. Progress windows
+  - Each row has "Parse" and "ASR only". Parse runs MMS, for each
+    language in Transcription settings, on any clause that lacks it,
+    then finds the words and updates the word lexicon. ASR only runs
+    every model in settings, wherever it hasn't run yet.
+  - "Process all" at the top parses every text in turn. Progress windows
     close themselves on success. Cancel stops the whole run; a failure
     skips to the next text, and a note says what happened.
   - The "Transcribed by you" cell opens the text clause by clause.

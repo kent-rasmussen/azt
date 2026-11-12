@@ -8,6 +8,16 @@ is minted here and means nothing outside A−Z+T. Design: ~/.ontrack/agenda/azt/
   own full copy of the sorting data: leaving a set loses nothing.
 - Pages show one item per set (`representatives`), with the set's size beside it.
 - A sense in no set is a set of one: `members(sense)` is `[sense]`, so call sites never branch.
+- Within the current slice: a set's members outside it (another ps, on a C/V or tone sort) are left
+  alone there, and sorted in their own slice (members; Kent 2026-11-11).
+
+THE ONE EXCEPTION, AND IT IS DELIBERATE (Kent 2026-11-11): sets are JOINED on the unsliced lexicon.
+Everything else — sorting writes, rows, ×N, split, and every sort-group function — respects the
+slicing of the page you are on; `join` alone uses whole sets (members(whole=True)). On the Noun page,
+dragging A ({A, Z-verb}) onto B ({B, C, D, E-verb, F-verb, G-verb}) gives {B…G, A, Z}: E, F, G stay
+where they are, and Z comes with A, because A was already the same word as Z, so "A is B" makes Z B
+too. Joining only what the page shows would also have left the index disagreeing with the traits
+(B's verbs dropped from it, Z's set forgotten).
 """
 import uuid
 
@@ -30,12 +40,26 @@ class SameSort:
         log.info("sameSort: {n} sets, {m} senses".format(
                     n=len(self.sets), m=sum(len(v) for v in self.sets.values())))
 
-    def members(self, sense):
-        """Every sense sorted with this one, this one first; [sense] if it is in no set."""
+    def members(self, sense, whole=False):
+        """Every sense sorted with this one, this one first; [sense] if it is in no set.
+
+        Narrowed to the current slice when `sense` is in it (SliceDict.in_current): where the data is
+        sliced by ps (C/V, tone) a set's nouns and verbs are sorted apart; where it isn't (syllable
+        profiles) they sort together (Kent 2026-11-11). The set itself is one set either way. whole: the
+        whole set, for changing the set (join)."""
         setid = sense.samesortvalue()
         if not setid or setid not in self.sets:
             return [sense]
-        return [sense] + [s for s in self.sets[setid] if s is not sense]
+        full = [sense] + [s for s in self.sets[setid] if s is not sense]
+        if whole:
+            return full
+        inside = getattr(getattr(self.program, 'slices', None), 'in_current', None)
+        try:
+            if inside is not None and inside(sense):
+                return [s for s in full if s is sense or inside(s)]
+        except Exception as e:  # never lose a write over the narrowing
+            log.info("sameSort: not narrowed to the slice ({e})".format(e=e))
+        return full
 
     def size(self, sense):
         return len(self.members(sense))
@@ -54,9 +78,10 @@ class SameSort:
         return out
 
     def join(self, a, b):
-        """Put a's set and b's set together. The larger keeps its id, so the fewest senses are
-        rewritten. Returns the set id."""
-        ma, mb = self.members(a), self.members(b)
+        """Put a's set and b's set together — the WHOLE sets, whatever the current slice: the one
+        sameSort function that doesn't respect slicing (module docstring). The larger keeps its id,
+        so the fewest senses are rewritten. Returns the set id."""
+        ma, mb = self.members(a, whole=True), self.members(b, whole=True)
         if any(s in mb for s in ma):
             return a.samesortvalue()
         keep, move = (ma, mb) if len(ma) >= len(mb) else (mb, ma)

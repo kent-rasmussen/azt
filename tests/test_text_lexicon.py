@@ -72,7 +72,7 @@ def test_written_to_texts_folder(project):
     result = _make(project)
     assert result['path'] == _path(prj)
     assert (prj / 'texts' / 'proj_text_words.lift').exists()
-    assert result['added'] == 4 and result['existing'] == 0 and result['missing'] == 0
+    assert result['added'] == 4 and result['existing'] == 0 and result['removed'] == 0
 
 
 def test_one_lexicon_for_several_texts(project):
@@ -169,7 +169,7 @@ def test_phrase_example(project):
     assert ex2.find(f"trait[@name='{lift.PHRASE_TRAIT}']").get('value') == p2.guid
 
 
-def test_rerun_adds_only_new_and_joins_sets(project):
+def test_rerun_adds_new_removes_gone_and_joins_sets(project):
     _prj, _audiodir, text = project
     first = _make(project)
     before = _entries(first)
@@ -187,15 +187,79 @@ def test_rerun_adds_only_new_and_joins_sets(project):
     second = _make(project)
     assert second['added'] == 3
     assert second['existing'] == 4
-    assert second['missing'] == 1                                      # w4: counted, not deleted
+    assert second['removed'] == 1                                      # w4: not in the text, not in the lexicon
     after = _entries(second)
-    assert set(after) == {'w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7'}
+    assert set(after) == {'w1', 'w2', 'w3', 'w5', 'w6', 'w7'}
     assert _set(after['w6']) == kalo_set                               # joins the existing set
     assert _set(after['w5']) and _set(after['w5']) == _set(after['w2'])   # joins the singleton: a new set
     assert after['w2'].find("sense/field[@type='sorted-here']") is not None
     assert _set(after['w7']) is None
     root = ET.parse(second['path']).getroot()
     assert ET.tostring(root.find("entry[@guid='w1']")).split() == w1_before.split()
+
+
+def _verify(path, guid):
+    """Sorting and its verification on an entry, as sorting writes them."""
+    tree = ET.parse(path)
+    sense = tree.getroot().find(f"entry[@guid='{guid}']").find('sense')
+    ET.SubElement(sense, 'field', {'type': 'sorted-here'})
+    ET.SubElement(sense, 'field', {'type': 'CVC lc verification'})
+    tree.write(path, encoding='utf-8', xml_declaration=True)
+
+
+def test_a_respelled_word_is_updated_and_verified_again(project):
+    """Kent, 2026-11-11: a word whose breaks moved keeps its entry, updated; the sorting stays, the verification
+    goes. Respelled, it leaves its old 'Same word' set for its new spelling's."""
+    _prj, _audiodir, text = project
+    first = _make(project)
+    _verify(first['path'], 'w2')
+    _verify(first['path'], 'w1')
+    p1, _p2, _p3 = text.phrases()
+    _put_words(p1, [('w1', 'kalo', 0, 400), ('w2', 'tamu', 400, 950)])   # w2 respelled and retimed
+    second = _make(project)
+    assert second['updated'] == 2 and second['unverified'] == 1 and second['added'] == 0
+    after = _entries(second)
+    w2 = after['w2']
+    assert w2.findtext(f"citation/form[@lang='{ANALANG}']/text") == 'tamu'
+    assert w2.findtext(f"citation/form[@lang='{AUDIO}']/text") == 'story.ogg#t=0.400,0.950'
+    assert w2.find("sense/field[@type='sorted-here']") is not None
+    assert w2.find("sense/field[@type='CVC lc verification']") is None
+    w1 = after['w1']                                                    # same word: only its phrase changed
+    assert w1.findtext('sense/example/form/text') == 'kalo tamu'
+    assert w1.find("sense/field[@type='CVC lc verification']") is not None
+
+
+def test_retimed_alone_is_verified_again(project):
+    _prj, _audiodir, text = project
+    first = _make(project)
+    _verify(first['path'], 'w2')
+    p1, _p2, _p3 = text.phrases()
+    _put_words(p1, [('w1', 'kalo', 0, 400), ('w2', 'tama', 350, 1000)])
+    second = _make(project)
+    assert second['unverified'] == 1
+    assert _entries(second)['w2'].find("sense/field[@type='CVC lc verification']") is None
+
+
+def test_a_respelled_word_changes_set(project):
+    _prj, _audiodir, text = project
+    first = _make(project)
+    kalo_set = _set(_entries(first)['w1'])
+    _p1, p2, _p3 = text.phrases()
+    _put_words(p2, [('w3', 'tama', 2000, 2450), ('w4', 'sibe', 2450, 3000)])   # kalo -> tama
+    after = _entries(_make(project))
+    assert _set(after['w3']) != kalo_set
+    assert _set(after['w3']) and _set(after['w3']) == _set(after['w2'])        # with the other tama
+
+
+def test_a_text_left_out_keeps_its_entries(project):
+    """sort_texts leaves out texts whose recording is missing; their words aren't gone from the texts."""
+    prj, audiodir, text = project
+    other = text.db.add(str(audiodir / 'song.ogg'), 'md5-of-song', [(0, 1000)], 'song')
+    _put_words(other.phrases()[0], [('s1', 'kalo', 100, 500)])
+    _make(project, [other])
+    result = text_lexicon.make_texts_lexicon(_path(prj), [text], audiodir, ANALANG, AUDIO,
+                                             all_texts=[text, other])
+    assert result['removed'] == 0 and 's1' in _entries(result)
 
 
 def test_identical_means_nfc_equal(tmp_path):

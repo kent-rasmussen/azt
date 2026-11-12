@@ -647,11 +647,42 @@ class RegexDict(object):
         kwargs.setdefault('pattern_for',CVs_ori) #DIAG: name the profile if slow
         self.setrx(CVs_ori, CVs, **kwargs)
         return self.getrx(CVs_ori, **kwargs)
+    def uncapitalized(self,form):
+        """`form` with each capital of a glyph written as the glyph ("This" →
+        "this" where th is a glyph; Kent 2026-11-07). The capitals come from
+        `capitals` (glyph -> set of capital forms: backend/core/casing.
+        matching_capitals with the project's overrides), given by the caller;
+        without it, `form` as it is.
+          DONE ON THE FORM, NOT BY ADDING CAPITALS TO THE CLASS REGEXES:
+        profileofform writes class letters into the string as it goes, and the
+        capitals of v, n, s, g, d ARE class letters — a C regex matching 'V'
+        would turn the V just written into C (CVC → CCC)."""
+        capitals=getattr(self,'capitals',None)
+        if not capitals or not form:
+            return form
+        rx=getattr(self,'_capitals_rx',None)
+        if rx is None:
+            glyphs={g for v in self.sdict.values() for g in v
+                     if isinstance(g,str)}
+            self._capital_glyph={}
+            for g in glyphs:
+                for c in capitals(g):
+                    if c not in glyphs:  # a capital listed as its own letter stays one
+                        self._capital_glyph.setdefault(c,g)
+            if not self._capital_glyph:
+                self._capitals_rx=False
+                return form
+            self._capitals_rx=rx=re.compile('|'.join(
+                re.escape(c) for c in sorted(self._capital_glyph,
+                                             key=len,reverse=True)))
+        if rx is False:
+            return form
+        return rx.sub(lambda m:self._capital_glyph[m.group(0)],form)
     def profileofform(self,form,ps,diag=False):
         if not form or not ps:
             # log.info("Either no form ({}) or no ps ({}); returning".format(form,ps))
             return 'Invalid'
-        profile=form
+        profile=form=self.uncapitalized(form)
         classes=set(self.profilelegit) & set(self.rx)
         # ONE-SHOT class-set report (Kent 2026-08-28: en-x-cvprofile_MT coming
         # out all-C — CVC>CCC, CVCVC>CCCCC). Per-form diag is thousands of lines

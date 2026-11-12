@@ -51,6 +51,10 @@ Python), there are a couple things we should all pay attention to:
 *After marking new strings for translation, or whenever untranslated strings are noticed in the UI (or after any extensive coding)*:
 - run _extract.py_ to pull strings from the code for translation. This will update the _azt.pot_ file. If there are no updates, you can stop here.
     - check and resolve errors, re-run as necessary.
+- get translations drafted by Claude or Crowdin.
+- If drafted by Claude, _merge_drafts.py_ will bring the appropriate translations/drafts po files into the base.
+
+<!--
 - commit and push to github, which will trigger _upload-strings.yml_, pushing the new _azt.pot_ (and locally corrected translations?) to Crowdin.
 - in Crowdin, run pre-translation with machine translation, just to have something.
 
@@ -58,6 +62,7 @@ Python), there are a couple things we should all pay attention to:
 - trigger _download-translations.yml_ manually (from github.com), which will pull the new .po files from Crowdin, and create a pull request.
 - evaluate and approve the pull request 
 - pull the updated repo to local machine.
+-->
 - run _compile.py_ to compile the .po files into .mo files.
     - check and resolve errors, re-run as necessary.
 - commit and push the updated .mo files to github.
