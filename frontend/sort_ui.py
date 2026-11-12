@@ -1023,9 +1023,12 @@ class SortPresenter(PresenterBase):
                 # group is misnamed" is available wherever the name is (Kent
                 # 2026-08-24). Renaming ends the page: the group the user was
                 # verifying no longer exists under that name.
+                def _renamed():
+                    # Not OK: verify() must not record the old name verified.
+                    sort_obj._verify_ended_by='group renamed or moved'
+                    verifycanary.destroy()
                 self.attach_group_rename([titlelabel, i, okbutton], runwindow,
-                            sort_obj, group,
-                            on_renamed=verifycanary.destroy)
+                            sort_obj, group, on_renamed=_renamed)
                 # WRAP THE ROWS TO THE PAGE, before the reflow that sizes it.
                 # These rows carried NO wraplength at all, so each was as wide as
                 # its string — a form plus two glosses ran ~1350px, off the right

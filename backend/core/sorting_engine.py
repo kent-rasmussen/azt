@@ -597,6 +597,14 @@ class Sort(Categories):
             else:
                 b=e=y='?'
             groups.setdefault((trusted,b,e,y),[]).append(form)
+        # Every group, whether or not the dialog lists them: past 10 it shows
+        # only the count, and the log is then the only place to see them.
+        log.info("Trust scope: %d word(s) in %d group(s)%s: %s",n,len(groups),
+                 ' (10+: the dialog shows only the count)'
+                    if len(groups)>=10 else '',
+                 ' | '.join("{m} #C={b} C#={e} syls={y} ×{k}: {f}".format(
+                        m=m,b=b,e=e,y=y,k=len(forms),f=', '.join(forms))
+                        for (m,b,e,y),forms in groups.items()))
         if len(groups)>=10:
             return _("{n} words here would be affirmed to their machine profile."
                     ).format(n=n)
@@ -2100,6 +2108,7 @@ class Sort(Categories):
         """Move this to bool vars, like for sort"""
         if hasattr(self,'groupselected'): #so it doesn't get in way later.
             delattr(self,'groupselected')
+        self._verify_ended_by=None # set when the page ends without OK
         if group in groups:
             if len(groups)-1:
                 prog_text=_("({count} remaining)").format(count=len(groups))
@@ -2125,7 +2134,14 @@ class Sort(Categories):
         if self.ui.runwindow.exitFlag.istrue(): #user exited, not hit OK
             return
         log.debug("User selected '{selection}', moving on.".format(selection=oktext))
-        if macrosort:
+        ended=getattr(self,'_verify_ended_by',None)
+        if ended:
+            # No row left, or the group renamed or moved: nothing here for OK
+            # to have confirmed. The next pass finds the group empty, or under
+            # its new name.
+            log.info("verify page for %s ended without OK (%s); not marking "
+                     "it verified", group, ended)
+        elif macrosort:
             self.verifyselected(macrosort=True)
             if len(self.buttonframe.groupbuttonlist) > 1:
                 updatestatus(True)
@@ -2180,6 +2196,21 @@ class Sort(Categories):
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
+        def drop_row(why):
+            """Take this word's row off the page. The page ends only when NO
+            row is left: every path here used to end it at one word left, so
+            fixing one word closed a page that still had a word to verify, and
+            verify() then recorded the group verified (Kent 2026-11-12). The
+            OK button is what confirms; `_verify_ended_by` tells verify() it
+            wasn't pressed."""
+            if sense in self.currentsortitems:
+                self.currentsortitems.remove(sense)
+            log.info("verify row dropped (%s): %s; %d left", why, sense.id,
+                     len(self.currentsortitems))
+            if not self.currentsortitems:
+                self._verify_ended_by=why
+                self.verifycanary.destroy()
+            (bf or b).destroy()
         def notok():
             # Syllable PREP (Task 1): a flagged word doesn't belong in this group;
             # MOVE it to its correct group (the misfit rule) instead of just
@@ -2211,12 +2242,8 @@ class Sort(Categories):
                     sl.move_misfit(sense,check,target=str(new))
                 else:
                     sl.move_misfit(sense,check)
-                if sense in self.currentsortitems:
-                    self.currentsortitems.remove(sense)
-                if len(self.currentsortitems) < 2:
-                    self.verifycanary.destroy()
                 self.maybewrite()
-                bf.destroy()
+                drop_row('moved to its other prep group')
                 return
             if self.REMOVE_REMAINDER_AT_PENULTIMATE and len(
                         self.currentsortitems) <= 2:
@@ -2225,16 +2252,10 @@ class Sort(Categories):
                 self.currentsortitems.clear()
             else:
                 self.removeitemfromgroup(sense,sorting=True,write=False)
-                self.currentsortitems.remove(sense)
-            # The close-and-move-on half is KEPT, and only for the LAST member:
-            # with nothing left there is no group to verify, so end the page —
-            # WITHOUT confirming it verified, since the OK button is what
-            # confirms. Removing the penultimate member now just leaves a group
-            # of one, which the user may keep or clear as they like.
-            if not self.currentsortitems:
-                self.verifycanary.destroy()
+            # Removing the penultimate member just leaves a group of one, which
+            # the user may keep or clear as they like.
             self.maybewrite()
-            bf.destroy()
+            drop_row('not in this group')
         def class_escape():
             """Right-click on the syllable PROFILE verify page → the same four
             one-axis moves the sort page offers (flip word-initial / flip
@@ -2243,14 +2264,7 @@ class Sort(Categories):
             follows it could not, though that is where you see the misfit.
             Advancing here means dropping the row, exactly as notprofile does —
             NOT _notprofile_advance, since nothing is mid-sort on this page."""
-            def gone():
-                if sense in self.currentsortitems:
-                    self.currentsortitems.remove(sense)
-                # Under two words there's no group left to verify as a group.
-                if len(self.currentsortitems) < 2:
-                    self.verifycanary.destroy()
-                (bf or b).destroy()
-            return gone
+            return lambda: drop_row('moved out of its profile class')
         def notprofile():
             """Right-click → 'Not {profile}': this word doesn't belong to this CV
             profile at all. The sort page has had this escape hatch as a button
@@ -2263,13 +2277,7 @@ class Sort(Categories):
             syllable-misfit path above does."""
             log.info("Not-profile (verify page) for %s", sense.id)
             self.unverify_profile(sense,advance=False)
-            if sense in self.currentsortitems:
-                self.currentsortitems.remove(sense)
-            # Under two words there's no group left to verify as a group; end the
-            # page (the OK semantics verify() already applies at one item).
-            if len(self.currentsortitems) < 2:
-                self.verifycanary.destroy()
-            (bf or b).destroy()
+            drop_row('not this profile')
         if 'font' not in kwargs:
             kwargs['font']='read'
         if 'anchor' not in kwargs:
