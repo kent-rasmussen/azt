@@ -363,8 +363,10 @@ class SortPresenter(PresenterBase):
         if scope:
             # Show the SCOPE of the trust decision (which words, their primitives,
             # and the machine profile they'd get) so it isn't made blind.
-            ui.Label(w.frame, text=scope, font='small', anchor='w', justify='left',
-                    row=1, column=0, columnspan=3, sticky='w', padx=10, pady=4)
+            sl=ui.Label(w.frame, text=scope, font='small', anchor='w',
+                    justify='left', row=1, column=0, columnspan=3, sticky='w',
+                    padx=10, pady=4)
+            sl.wrap() # a group line lists all its words (_affirm_scope_text)
             brow=2
         def choose(c):
             result['choice']=c

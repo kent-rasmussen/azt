@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-12 11:41-0600\n"
+"POT-Creation-Date: 2026-11-12 12:42-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1308,7 +1308,7 @@ msgid "Apparently we’ve run this before today; not backing up again."
 msgstr ""
 
 #: /home/kentr/bin/AZT/azt/backend/core/lexicon.py:126
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2529
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2545
 #: /home/kentr/bin/AZT/azt/tasks/tasks.py:1547
 msgid "Sort!"
 msgstr ""
@@ -1996,19 +1996,19 @@ msgid "{desc} (part {x} of {y})"
 msgstr ""
 
 #: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:194
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1909
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1925
 #, python-brace-format
 msgid "Verify {language}"
 msgstr ""
 
 #: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:196
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1992
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2008
 #, python-brace-format
 msgid "These are all {desc}"
 msgstr ""
 
 #: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:197
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1993
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2009
 #, python-brace-format
 msgid "Read this list aloud. Click on any that are NOT {desc}."
 msgstr ""
@@ -2188,184 +2188,189 @@ msgstr ""
 msgid "Glyph annotations updated OK"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1625
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1359
+#, python-brace-format
+msgid "Renaming {old} to {new}…"
+msgstr ""
+
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1641
 #, python-brace-format
 msgid "More than one group selected: {groups}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1705
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1721
 msgid "tone melody"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1706
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1722
 #, python-brace-format
 msgid "in ‘{check}’ frame"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1709
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1725
 #, python-brace-format
 msgid "by {check}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1710
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1726
 msgid "...belongs in which group?"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1723
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1739
 #, python-brace-format
 msgid "(by {context})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1743
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1759
 msgid "Setting up the sort page…"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1795
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1811
 msgid "I asked for a glyph, but didn’t get one "
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1911
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1927
 msgid "Letter"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1917
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1933
 msgid "letter group"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1919
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1935
 #, python-brace-format
 msgid "letter ‘{group}’"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1922
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1938
 msgid "These all should use the same letter"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1924
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1940
 #, python-brace-format
 msgid " (currently ‘{group}’)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1925
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1941
 #, python-brace-format
 msgid ""
 "Read this list aloud. Note where each was sorted ({checks}).\n"
 "Click on any with a different {cvtname} sound in that place."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1943
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1959
 #, python-brace-format
 msgid "{check} Group"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1982
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1998
 #, python-brace-format
 msgid "These all DO NOT have {checkname}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1984
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2000
 #, python-brace-format
 msgid "Read this list aloud, and click on any that DOES have ‘{checkname}’."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1986
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2002
 #, python-brace-format
 msgid "for ‘{check}’ (NOT {checkname})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1995
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2011
 #, python-brace-format
 msgid "{desc}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1997
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2013
 #, python-brace-format
 msgid "These all have the same {checkname} ({check})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:1999
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2015
 #, python-brace-format
 msgid "Read this list aloud. Click on any with a different {checkname} sound."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2001
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2017
 #, python-brace-format
 msgid "for ‘{check}’ ({checkname})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2003
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2019
 #, python-brace-format
 msgid "‘{group}’ already verified, continuing."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2006
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2022
 msgid "Not verifying tone examples which don’t exist."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2055
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2071
 #, python-brace-format
 msgid ""
 "Group ‘{group}’ only has {count} example; marking verified and continuing."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2066
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2082
 #, python-brace-format
 msgid "Preparing the {item_name} ‘{group}’ to verify…"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2069
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2085
 #, python-brace-format
 msgid "On the next page, you will verify all the words that are {desc}."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2072
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2088
 #, python-brace-format
 msgid ""
 "On the next page, you will verify the words that do NOT have {checkname}."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2075
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2091
 #, python-brace-format
 msgid "On the next page, you will verify the {checkname} words."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2086
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2102
 #, python-brace-format
 msgid "({count} remaining)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2088
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2104
 msgid "(last group)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2292
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:232
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2308
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:245
 #: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:499
 #, python-brace-format
 msgid "Not {profile}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2361
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2377
 #, python-brace-format
 msgid ""
 "Now we’re going to move group ‘{group1}’ into ‘{group2}’, removing "
 "‘{group1}’ and marking ‘{group2}’ unverified."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2479
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2495
 msgid "These are each different from the other(s)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2489
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2505
 #, python-brace-format
 msgid "Review {title} Groups{mod}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2528
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2544
 msgid "Resetting unSorted items"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2530
+#: /home/kentr/bin/AZT/azt/backend/core/sorting_engine.py:2546
 msgid "Not Trying Again; set a tone frame first!"
 msgstr ""
 
@@ -3844,7 +3849,7 @@ msgid "Error!"
 msgstr ""
 
 #: /home/kentr/bin/AZT/azt/frontend/play_buttons.py:204
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:992
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1025
 #: /home/kentr/bin/AZT/azt/frontend/sound_ui.py:132
 msgid "right click to open in praat"
 msgstr ""
@@ -3873,271 +3878,271 @@ msgstr ""
 msgid "Stop"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:166
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:179
 msgid "This word fits in this frame"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:169
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:182
 #, python-brace-format
 msgid "This word has {name}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:174
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:187
 msgid "Other letter"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:176
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:189
 #, python-brace-format
 msgid "Other {check}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:177
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:190
 msgid "Skip this item"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:202
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:215
 #, python-brace-format
 msgid "Other {cls} profile"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:276
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:289
 #, python-brace-format
 msgid "Which {cls} profile?"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:277
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:290
 msgid "Which profile fits this word?"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:296
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:309
 #: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:672
 msgid "(every simple profile here is already used)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:299
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:312
 #: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:674
 msgid "Other… (set a profile by hand)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:303
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:316
 #: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:679
 msgid "Cancel — go back"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:354
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:367
 #, python-brace-format
 msgid "Set a {cls} profile by hand"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:357
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:370
 #: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:711
 msgid ""
 "⚠ Setting a profile by hand is a linguist’s call — work with your language "
 "team."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:359
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:372
 msgid "A wrong profile mis-describes the word’s syllable structure."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:361
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:374
 #, python-brace-format
 msgid "This one must be {beg}-initial, {end}-final, and {n} syllable(s)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:363
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:376
 #, python-brace-format
 msgid "(use C and V, e.g. {eg})."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:378
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:391
 #, python-brace-format
 msgid ""
 "‘{p}’ isn’t made of profile symbols: {bad} {isare} not C or V. Please use "
 "only C and V (for example {eg})."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:383
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:396
 msgid "are"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:383
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:396
 msgid "is"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:400
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:413
 msgid "nothing entered"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:403
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:416
 #, python-brace-format
 msgid "it starts with {got}, not {want}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:406
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:419
 #, python-brace-format
 msgid "it ends with {got}, not {want}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:410
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:423
 #, python-brace-format
 msgid "it is {lo} syllable(s), not {want}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:413
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:426
 #, python-brace-format
 msgid "it is {lo}–{hi} syllables, not {want}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:415
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:428
 #, python-brace-format
 msgid "‘{p}’ doesn’t fit {cls}: {why}. Try again."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:417
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:430
 msgid "it doesn’t fit"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:422
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:435
 #: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:729
 msgid "Use this profile"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:424
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:437
 #: /home/kentr/bin/AZT/azt/frontend/sort_ui.py:732
 msgid "← Back"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:439
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:452
 msgid ""
 "Already in play here —\n"
 "don’t re-enter these:"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:442
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:455
 msgid "(none yet)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:596
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:609
 msgid "Gathering groups"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:597
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:610
 msgid "On the next screen, you will sort groups of words into letter groups"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:601
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:614
 msgid "Verifying groups"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:602
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:615
 msgid ""
 "On the next screen, you will verify groups of words as belonging together"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:606
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:619
 msgid "Sorting words"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:607
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:620
 #, python-brace-format
 msgid "On the next screen, you will sort words into groups by {cvt}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:786
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:819
 #, python-brace-format
 msgid "SortGroupButtonFrame.getexample returned None for {group} {kwargs}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:854
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:887
 #, python-brace-format
 msgid "Reverify this group (‘{group}’)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:862
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:895
 msgid "Open in Praat"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:988
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1021
 msgid "Click to hear this utterance"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1022
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1055
 #, python-brace-format
 msgid "Pick this one: {group}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1029
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1062
 #, python-brace-format
 msgid "syllable profile {profile}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1032
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1065
 #, python-brace-format
 msgid "group {group}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1104
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1137
 msgid "Only one example word in this group"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1105
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1138
 msgid "Change example word; Right click to back up"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1122
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1155
 msgid "<= resort *this* *word*"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1214
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1247
 #, python-brace-format
 msgid "Ready to build SortGroupButtonFrame with {kwargs}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1216
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1249
 #, python-brace-format
 msgid "Built SGBF for {item} ({items})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1252
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1285
 #, python-brace-format
 msgid "Showing item with {code}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1315
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1348
 msgid "Only one group here"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1316
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1349
 msgid "Click to change group; right click to go back"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1353
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1386
 #, python-brace-format
 msgid "Not setting non-existant canary {canary}; "
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1364
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1397
 #, python-brace-format
 msgid "Building SortGlyphGroupButtonFrame for {group}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1377
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1410
 #, python-brace-format
 msgid "group ‘{group}’ isn’t in glyphs! ({members})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1410
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1443
 #, python-brace-format
 msgid "Reverify this letter (‘{glyph}’)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1419
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1452
 #, python-brace-format
 msgid "Making Glyph member {item} button"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1424
+#: /home/kentr/bin/AZT/azt/frontend/sort_buttons.py:1457
 #, python-brace-format
 msgid "Built SortGlyphGroupButtonFrame for {group}"
 msgstr ""
@@ -6436,11 +6441,11 @@ msgstr ""
 msgid "found ‘{current}’, and not ‘{new}’ in langs={langs}."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:942
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:950
 msgid "Adding values (in lift.py) : {}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1496
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1504
 #, python-brace-format
 msgid ""
 "Your lexicon wouldn’t open: {n} attribute value(s) contained quotes that "
@@ -6448,49 +6453,49 @@ msgid ""
 "original at {keep}. Nothing was lost."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1504
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1512
 msgid "Lexicon repaired"
-msgstr ""
-
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1544
-#, python-brace-format
-msgid "it isn’t there ({e})"
-msgstr ""
-
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1546
-msgid "it is empty"
 msgstr ""
 
 #: /home/kentr/bin/AZT/azt/io_put/lift.py:1552
 #, python-brace-format
-msgid "it can’t be read back ({e})"
+msgid "it isn’t there ({e})"
 msgstr ""
 
 #: /home/kentr/bin/AZT/azt/io_put/lift.py:1554
-msgid "it is cut off — no closing tag at the end"
+msgid "it is empty"
 msgstr ""
 
 #: /home/kentr/bin/AZT/azt/io_put/lift.py:1560
 #, python-brace-format
+msgid "it can’t be read back ({e})"
+msgstr ""
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1562
+msgid "it is cut off — no closing tag at the end"
+msgstr ""
+
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1568
+#, python-brace-format
 msgid "it is {n} bytes, replacing {old} — a collapse, not an edit"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1574
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1582
 #, python-brace-format
 msgid " at line {ln}, column {col}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1576
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1584
 #, python-brace-format
 msgid "it isn’t valid XML{at}: {e}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1738
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1746
 #, python-brace-format
 msgid "There was a problem writing to partial file: {tmp} ({e})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1756
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1764
 #, python-brace-format
 msgid ""
 "Refusing to save {name}: the file just written looks corrupt ({why}). Your "
@@ -6499,35 +6504,35 @@ msgid ""
 "it can be recovered."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1767
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1775
 msgid "Save refused"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1862
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1870
 #, python-brace-format
 msgid ""
 "There was a problem writing {name} file to {parent} directory. This is "
 "what’s here: {listing}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1881
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1889
 #, python-brace-format
 msgid "Invalid codes found in data: {langs}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1936
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1944
 #, python-brace-format
 msgid "Using analang={analang} from settings."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1939
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1947
 msgid ""
 "Found file name base in the data’s languages; assuming that and moving on. "
 "To select another analysis language for this database, change it in the "
 "settings."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1944
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1952
 #, python-brace-format
 msgid ""
 "Using ‘{a}’ — the language of the recordings/transcriptions — as the "
@@ -6535,48 +6540,48 @@ msgid ""
 "settings if this is wrong."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1952
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1960
 #, python-brace-format
 msgid ""
 "No valid language-encoded data yet: extrapolating analysis language from "
 "file name ({tryname})."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1957
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1965
 #, python-brace-format
 msgid "I can’t find a plausible analang! {analangs} {filename} {tryname}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1966
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1974
 msgid "No analang found; can’t find other langs."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1982
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1990
 #, python-brace-format
 msgid "gloss languages found: {langs}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:1986
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:1994
 #, python-brace-format
 msgid "Using first gloss language for new annotations: {lang}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:2719
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:2727
 #, python-brace-format
 msgid ""
 "Your regular expressions look OK for {lang} (there are no segments in your "
 "{lang} data that are not in a regex). "
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3419
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3427
 msgid " (pl)"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3425
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3433
 msgid "This entry doesn’t seem to have a sense."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3427
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3435
 #, python-brace-format
 msgid ""
 "This doesn’t seem to be called on a child of entry ({entry} child of "
@@ -6584,17 +6589,17 @@ msgid ""
 "({glosses})."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3586
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3594
 #, python-brace-format
 msgid "We normally shouldn’t create empty fields: {lang}/{value}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3589
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3597
 #, python-brace-format
 msgid "There is already a {type} field here! ({fields})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3611
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3619
 #, python-brace-format
 msgid ""
 "This should never happen; somehow an XML field was not picked up on boot, "
@@ -6602,19 +6607,19 @@ msgid ""
 "{parent}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3618
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3626
 #, python-brace-format
 msgid ""
 "This should definitely never happen; somehow multiple XML fields are found "
 "with type {type}."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3802
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3810
 #, python-brace-format
 msgid "There is already a {location} example here! ({examples})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3846
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3854
 #, python-brace-format
 msgid ""
 "{tag} node in entry {guid} has multiple examples with location {loc}. While "
@@ -6622,255 +6627,255 @@ msgid ""
 "behavior."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3850
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3858
 #, python-brace-format
 msgid ""
 "{tag} node in entry {guid} has no examples with location {loc}? This is a "
 "logical error in A−Z+T "
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3903
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3911
 #, python-brace-format
 msgid "setting {id} to {type} = {value}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3907
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3915
 #, python-brace-format
 msgid "returning {id} {type} value: {value}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3970
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3978
 #, python-brace-format
 msgid "psnode {ps} not found in sense {sense} ({id})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:3976
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:3984
 #, python-brace-format
 msgid "pssubclass {subclass} not found in sense {sense} ({id})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4179
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4187
 #, python-brace-format
 msgid "No {type} type ({ftypes})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4188
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4196
 #, python-brace-format
 msgid "No {lang} gloss found!"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4190
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4198
 #, python-brace-format
 msgid "No {lang} field in frame!"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4220
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4244
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4228
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4252
 #, python-brace-format
 msgid "ftype mismatch! ({val}/{type})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4224
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4232
 #, python-brace-format
 msgid "Found glosses {glosses}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4225
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4233
 #, python-brace-format
 msgid "asked for glosslangs {langs}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4226
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4234
 #, python-brace-format
 msgid "looking for langs {langs}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4272
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4280
 #, python-brace-format
 msgid "{langs} gloss languages not in frame!"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4521
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4529
 #, python-brace-format
 msgid "Removing entry with no senses: {guid}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4545
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4553
 #, python-brace-format
 msgid "phonetic form is correct type ({type})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4547
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4555
 #, python-brace-format
 msgid "Asked for ftype {type}, but found phonetic field which is {val}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4567
 #: /home/kentr/bin/AZT/azt/io_put/lift.py:4575
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4583
 #, python-brace-format
 msgid "Exception: ({error}; guid={guid})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4589
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4597
 msgid "Stopping here b/c no senses found."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4618
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4626
 #, python-brace-format
 msgid "found: {val} (x{n}), looking for {what}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4658
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4666
 #, python-brace-format
 msgid "Path so far: {url}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4735
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4743
 #, python-brace-format
 msgid "Kwargs: {kwargs}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4741
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4749
 #, python-brace-format
 msgid "Attrs: {attrs}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4780
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4788
 msgid ""
 "You asked for a field, without specifying ftype or lang; not adding form "
 "fields."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4821
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4829
 msgid "Making CAWL field"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4852
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4860
 msgid ""
 "Sorry, I can’t tell what form to pass to this field;\n"
 "What is its parent?"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4862
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4870
 #, python-brace-format
 msgid "show arg: {arg}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4885
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4893
 msgid "LiftURL is trying to make a lift node; this should never happen"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4919
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4927
 #, python-brace-format
 msgid "last level {target} (of {parents}) not in {level}; this is a problem!"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4921
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4929
 #, python-brace-format
 msgid ""
 "this is where we’re at: {kwargs}\n"
 "  {url}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4923
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4931
 #, python-brace-format
 msgid "last level {target} (of {parents}) not in {level}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4929
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4937
 #, python-brace-format
 msgid "Maybeshowtarget: {parent} (family: {family})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4932
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4940
 #, python-brace-format
 msgid "Maybeshowtarget: leveling up to {parent}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4935
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4943
 #, python-brace-format
 msgid "Maybeshowtarget: showing {parent}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4940
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4948
 #, python-brace-format
 msgid "Running showtargetinlowestancestry for {head}/{tail} on {node}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4950
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4958
 #, python-brace-format
 msgid "Trying generation {g}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4960
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4968
 #, python-brace-format
 msgid ""
 "Hey, I’ve looked back {g} generations, and I don’t see an ancestor of {head} "
 "(target) which is also an ancestor of {node} (current node)."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4964
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4972
 #, python-brace-format
 msgid "Running showtargetinhighestdecendance for {head} on {node}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4969
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4977
 #, python-brace-format
 msgid "Node {node} has no children, so not looking further for descendance."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4990
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:4998
 #, python-brace-format
 msgid "Looking for {head} in children of {node}: {children}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4992
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5000
 #, python-brace-format
 msgid "Grandchildren of {node}: {grandchildren}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4994
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5002
 #, python-brace-format
 msgid "Greatgrandchildren of {node}: {greatgrandchildren}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:4997
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5005
 #, python-brace-format
 msgid "Showing ‘{head}’, child of {node}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5001
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5009
 #, python-brace-format
 msgid "Found target ({head}) in grandchildren of {node}: {grandchildren}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5005
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5014
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5024
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5013
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5022
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5032
 #, python-brace-format
 msgid "Showing ‘{c}’, nearest ancenstor"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5009
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5017
 #, python-brace-format
 msgid "Found target ({head}) in gr8grandchildren of {node}: {grandchildren}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5018
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5026
 #, python-brace-format
 msgid "Found target ({head}) in gggrandchildren of {node}: {grandchildren}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5028
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5036
 msgid "Target not found in children, grandchildren, or greatgrandchildren!"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5040
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5048
 #, python-brace-format
 msgid "{target} : {bits}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5049
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5057
 #, python-brace-format
 msgid ""
 "Looking for {head} as the head of a target is going to cause problems, as it "
@@ -6878,12 +6883,12 @@ msgid ""
 "Fix this, and try again. (whole target: {target})"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5053
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5061
 #, python-brace-format
 msgid "Ambiguous target head {head}; it appears in too many places"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5138
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5146
 msgid ""
 "Basic usage of this class includes the following kwargs:\n"
 "\tbase: node from which we are pulling (should be supplied)\n"
@@ -6904,29 +6909,29 @@ msgid ""
 "\ttonevalue: value of an example tone group (from sorting)\n"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5333
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5341
 msgid "Making Target now."
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5336
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5344
 #, python-brace-format
 msgid "Final URL: {url}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5646
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5654
 msgid "langform found!"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5648
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5656
 msgid "No langform found!"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5652
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5660
 #, python-brace-format
 msgid "BaseURL: {url}"
 msgstr ""
 
-#: /home/kentr/bin/AZT/azt/io_put/lift.py:5654
+#: /home/kentr/bin/AZT/azt/io_put/lift.py:5662
 #, python-brace-format
 msgid "Arguments: {args}"
 msgstr ""

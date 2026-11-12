@@ -569,15 +569,14 @@ class Sort(Categories):
         """Human summary of WHAT 'Trust' would affirm, so the choice isn't blind:
         each unprofiled+affirmable word with the machine profile that would become
         its trusted profile and the primitives (#C/C#/syls) recorded with it.
-        Lists them when fewer than 10; otherwise just the count, to keep the
-        dialog legible."""
+        GROUPED: words that would get the same profile and primitives share a
+        line, so ten words that all behave alike are one thing to scan and
+        agree to (Kent 2026-11-12). Lists the lines when fewer than 10 (it was
+        10 WORDS); otherwise just the count, to keep the dialog legible."""
         analang=self.program.db.analang
         n=len(affirmable)
-        if n>=10:
-            return _("{n} words here would be affirmed to their machine profile."
-                    ).format(n=n)
         params=self.program.params
-        lines=[]
+        groups={} # (trusted, b, e, y) -> [forms], in first-seen order
         for s in affirmable:
             form=s.textvaluebyftypelang(ftype,analang) or '—'
             machine=s.cvprofilemachinevalue(ftype)
@@ -597,9 +596,13 @@ class Sort(Categories):
                         str(params.syllable_count(trusted)))
             else:
                 b=e=y='?'
-            lines.append("{f}  → {m}  (#C={b} C#={e} syls={y})".format(
-                f=form, m=trusted, b=b, e=e, y=y))
-        return '\n'.join(lines)
+            groups.setdefault((trusted,b,e,y),[]).append(form)
+        if len(groups)>=10:
+            return _("{n} words here would be affirmed to their machine profile."
+                    ).format(n=n)
+        return '\n'.join("{f}  → {m}  (#C={b} C#={e} syls={y})".format(
+                            f=', '.join(forms), m=m, b=b, e=e, y=y)
+                         for (m,b,e,y),forms in groups.items())
     def offer_profile_setup(self,at_open=False):
         """A segmental/tone sort works on syllable-profile DATA. If a word in this
         ps lacks a confirmed profile but HAS an affirmable machine analysis, warn —
@@ -1352,7 +1355,13 @@ class Sort(Categories):
         if not new or new==old:
             return
         log.info("Renaming profile group %s > %s", old, new)
-        self.rename_group(old,new)
+        # A WAIT, because this is slow and the page behind it stays live:
+        # rename_group refreshes every annotation from LIFT, ~19s on 1700
+        # words (log 2026-11-12 12:13:07→12:13:26), with nothing on screen
+        # to say so, and the verify page's buttons still clickable (Kent).
+        with self.ui.waiting(_("Renaming {old} to {new}…").format(
+                                                        old=old,new=new)):
+            self.rename_group(old,new)
         # Come back to the SAME group under its real name, rather than moving on
         # to another one (Kent 2026-08-24: "minimally confusing, if not wrong").
         # The user renamed THIS group and has not yet verified it; reverify_group
@@ -1570,6 +1579,16 @@ class Sort(Categories):
         # unscrollable. Recompute here, when reqheight is final.
         if hasattr(self,'buttonframe') and hasattr(self.buttonframe,'reflow'):
             self.buttonframe.reflow()
+        # A CLICK BETWEEN WORDS MUST NOT COUNT FOR THE NEXT ONE. The second
+        # click of a double-click landed on CVVCC after it had sorted the
+        # previous word, its selection stayed set, and the next word's CVC
+        # click read as TWO groups: "More than one group selected", which
+        # ends the page with "Not done!" (log 2026-11-12 12:15:55→12:16:03,
+        # Kent). The selection was only cleared AFTER being read.
+        try:
+            self.buttonframe.reset_selected()
+        except Exception as e:
+            log.info("could not clear a stale group selection: %s", e)
         try:
             self.ui.runwindow.wait_window(window=self.sortitem)
         except Exception as e:

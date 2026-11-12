@@ -695,19 +695,32 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.slicebyps()
         self.slicebyps_profile(ftype)
         self.get_ps_profiles(ftype)
+    @staticmethod
+    def _values_by_check(senses,keys,values):
+        """{check: {non-empty values}} over `senses`, for every check that
+        keys(sense) names on any of them (a check with no values gets an empty
+        set; a value under a check no sense names is left out).
+        ONE PASS. The comprehensions this replaces re-scanned every sense in
+        the slice for each (sense, check) pair — quadratic in the slice — and
+        the full status refresh after a profile rename spent ~19s there on
+        1700 words (log 2026-11-12 12:13:07). Same result: compared against
+        the old form in tests/test_values_by_ps_profile.py."""
+        checks=set()
+        found={}
+        for sense in senses:
+            checks.update(keys(sense))
+            for c,v in values(sense).items():
+                if v:
+                    found.setdefault(c,set()).add(v)
+        return {check:found.get(check,set()) for check in checks}
     def annotation_values_by_ps_profile(self,ftype='lc'):
         # sort out cvt (e.g., V1 is 'V') later
-        return {ps:{profile:{check:{v
-                            for sense in self.sensesbyps_profile[ps][profile]
-                            for c,v in sense.annotationvaluedictbyftypelang(
-                                            ftype,self.analang).items()
-                            if v
-                            if c==check
-                                    }
-                            for sense in self.sensesbyps_profile[ps][profile]
-                            for check in sense.annotationkeysbyftypelang(
-                                                    ftype,self.analang)
-                            }
+        # LiftXML., not self.: tests call these with a stand-in `self`.
+        return {ps:{profile:LiftXML._values_by_check(
+                    self.sensesbyps_profile[ps][profile],
+                    lambda s:s.annotationkeysbyftypelang(ftype,self.analang),
+                    lambda s:s.annotationvaluedictbyftypelang(ftype,
+                                                            self.analang))
                     for profile in self.ps_profiles[ps]
                     if profile
                     }
@@ -758,16 +771,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         None keeps every frame, as before."""
         def wanted(ps,check):
             return frames is None or check in frames.get(ps,())
-        return {ps:{profile:{check:{v
-                            for sense in self.sensesbyps_profile[ps][profile]
-                            for c,v in sense.tonevaluedict().items()
-                            if v
-                            if c==check
-                                    }
-                            for sense in self.sensesbyps_profile[ps][profile]
-                            for check in sense.tonevaluedict().keys()
-                            if wanted(ps,check)
-                            }
+        # One pass per slice (_values_by_check), as annotation_values_by_ps_profile.
+        return {ps:{profile:LiftXML._values_by_check(
+                    self.sensesbyps_profile[ps][profile],
+                    lambda s,ps=ps:[c for c in s.tonevaluedict().keys()
+                                    if wanted(ps,c)],
+                    lambda s:s.tonevaluedict())
                     for profile in self.ps_profiles[ps]
                     if profile
                     }

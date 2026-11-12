@@ -139,15 +139,28 @@ class SortButtonFrame(ui.ScrollingFrame):
         indicate that the word/frame combo doesn't work (skip).
         This happens only on init; it doesn't need to respond to changing
         groups."""
+        def waiting():
+            """A word is presented: else a click (a double-click's second)
+            would carry over to the next word (_GroupButtonFrame._word_waiting)."""
+            try:
+                return bool(self.sortitem.winfo_exists())
+            except Exception:
+                return False
         def firstok():
+            if not waiting():
+                return
             vardict['ok'].set(True)
             remove(okb) #use this button exactly once
             differentbutton()
             sortnext()
         def different():
+            if not waiting():
+                return
             vardict['NONEOFTHEABOVE'].set(True)
             sortnext()
         def skip():
+            if not waiting():
+                return
             vardict['skip'].set(True)
             sortnext()
         def remove(x):
@@ -702,10 +715,30 @@ class _GroupButtonFrame(object):
         self._var.set(True)
     def sortnext(self):
         self.canary.destroy()
+    def _word_waiting(self):
+        """Is a word presented, waiting for this click? Choosing a group IS
+        moving on (Kent 2026-11-12), so a click with no word waiting — the
+        second click of a double-click, landing before the next word is up —
+        must do nothing. It used to set this group's flag, which the NEXT
+        word then read as a second choice: "More than one group selected",
+        and the page ended with "Not done!" (log 2026-11-12 12:15:55)."""
+        c=getattr(self,'canary',None)
+        try:
+            return c is not None and bool(c.winfo_exists())
+        except Exception:
+            return False
     def selectnsortnext(self):
+        if not self._word_waiting():
+            log.info("group click with no word waiting (%s); ignored",
+                     getattr(self,'group',None))
+            return
         self.select()
         self.sortnext()
     def selectnlabelize(self):
+        if not self._word_waiting():
+            log.info("group click with no word waiting (%s); ignored",
+                     getattr(self,'group',None))
+            return
         self.select()
         self.labelize()
         # self.kwargs['label']=True
