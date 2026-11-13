@@ -86,6 +86,41 @@ def test_the_new_profile_options_read_the_sentinel_node():
     assert 'slices.ps()' not in src
 
 
+class _FakeStatus:
+    """Just enough of StatusDict for its slice-defaulting methods."""
+    status_ps = analysis.StatusDict.status_ps
+    checkslicetypecurrent = analysis.StatusDict.checkslicetypecurrent
+
+    def __init__(self, cvt):
+        class P:
+            SYLLABLE_PREP_PS = '*'
+            def cvt(self): return cvt
+            def check(self): return 'lc'
+        class S:
+            def ps(self): return 'Noun'
+            def profile(self): return 'C1C'
+        class Prog:
+            params = P()
+            slices = S()
+        self.program = Prog()
+
+
+@pytest.mark.parametrize('given', [{}, {'ps': 'Noun'}, {'ps': 'Verb'}])
+def test_syllable_status_defaults_never_key_on_a_ps(given):
+    """Everything reaching status through checkslicetypecurrent took the
+    current ps (Noun), while the board and the 'done' rebuild keyed σ on the
+    sentinel: the group dropdown and reverify found nothing, and a rebuild
+    restored 'done' where the sort flow didn't look (Kent 2026-11-13)."""
+    k = _FakeStatus('σ').checkslicetypecurrent(**given)
+    assert k['ps'] == '*'
+
+
+def test_segmental_status_still_keys_on_the_ps():
+    k = _FakeStatus('V').checkslicetypecurrent()
+    assert k['ps'] == 'Noun'
+    assert _FakeStatus('V').checkslicetypecurrent(ps='Verb')['ps'] == 'Verb'
+
+
 @pytest.mark.parametrize('name', ['makeSyllableprogresstable', 'boardtitle',
                                   'sliceline', 'profilevalue'])
 def test_the_board_and_the_slice_line_dropped_ps(name):

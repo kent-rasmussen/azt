@@ -201,6 +201,7 @@ class SyllablePrep(object):
         self.program.status.group(group)
         self.group=group
         self._prep_verify=(sl,check,group,idx)
+        self._verify_ended_by=None # set when the page ends without OK
         rw=self._prep_runwindow()
         if rw is None or rw.exitFlag.istrue():
             self._prep_verify=None
@@ -213,11 +214,24 @@ class SyllablePrep(object):
         if self.verifycanary is None or rw.exitFlag.istrue():
             self._prep_verify=None
             return
-        # OK (canary.destroy) or a window-close both fire <Destroy>; defer so we
-        # don't act mid-teardown, then advance unless the user quit.
-        self.verifycanary.bind('<Destroy>',
-            lambda e=None,c=check,g=group,i=idx:
-                self.after(10,lambda:self._finish_prep_slice(sl,c,g,i)))
+        # OK (canary.destroy) or a window-close both fire <Destroy> ON TK;
+        # defer so we don't act mid-teardown, then advance unless the user
+        # quit. WEBVIEW FIRES NO <Destroy> (no DOM event for it), so OK did
+        # nothing there (Kent 2026-11-13: "'These are all Vowel final' button
+        # does nothing?"): the canary's destroy() runs it too. Once only, as
+        # tk does both.
+        fired=[]
+        def finish(e=None,c=check,g=group,i=idx):
+            if fired:
+                return
+            fired.append(1)
+            self.after(10,lambda:self._finish_prep_slice(sl,c,g,i))
+        self.verifycanary.bind('<Destroy>',finish)
+        _destroy=self.verifycanary.destroy
+        def destroy_and_finish():
+            finish()
+            _destroy()
+        self.verifycanary.destroy=destroy_and_finish
         # This slice is now up and the user is reading it aloud — a window during
         # which the next slices' images can be decoded+resized off the Tk thread,
         # so their build is just the cheap PhotoImage compile. (The I/O-bound
@@ -238,7 +252,13 @@ class SyllablePrep(object):
             # other sort checks fire (e.g. sorting_engine.py nextcheck path).
             self.status.maybeboard()
             return #user closed the window → pause prep (no advance)
-        sl.mark_slice(check,group,idx,verified=True)
+        ended=getattr(self,'_verify_ended_by',None)
+        if ended:
+            # The last row was moved off the page; nothing was confirmed.
+            log.info("prep slice %s %s/%s ended without OK (%s); not marking "
+                     "it verified", check, group, idx, ended)
+        else:
+            sl.mark_slice(check,group,idx,verified=True)
         self.maybewrite()
         # Reuse the SAME window for the next slice (no on_quit/recreate churn).
         self.after(10,self.maybeverifysyllables)
@@ -1458,6 +1478,15 @@ class Sort(Categories):
                         self.program.params.SYLLABLE_SLICE_SENTINEL,ftype)
         except Exception as e:
             log.info("class escape profile-unverify skipped: %s", e)
+        # …and the SORT itself. The word's profile group was sorted under the
+        # old primitive, so it can't belong to the class this one names; left
+        # sorted, it became a group of the new class, and joins paired V-final
+        # with C-final profiles (Kent 2026-11-13). Unsort it, so it is sorted
+        # again in its new class.
+        try:
+            self.program.profiles.unsort_if_out_of_class(sense,ftype)
+        except Exception as e:
+            log.info("class escape unsort skipped: %s", e)
         try:
             tosort=self.program.status.sensestosort()
             if tosort and sense in tosort:
@@ -1876,7 +1905,12 @@ class Sort(Categories):
         check=self.program.params.check()
         log.info("Reverifying a group, at user request: {check}-{group} (ask={ask})"
                     "".format(check=check,group=group,ask=ask))
-        if check not in self.program.status.checks(wsorted=True):
+        if self.program.params.cvt()=='σ':
+            # The check here is the form ('lc'), nothing to choose, and the
+            # profile class is the current one (chosen on the status table;
+            # Kent 2026-11-13). It asked for the check, an ftype.
+            pass
+        elif check not in self.program.status.checks(wsorted=True):
             self.getcheck() #guess=True
         done=self.program.status.verified()
         if ask or group not in done:

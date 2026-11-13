@@ -19,6 +19,35 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.58 (2026-11-13)
+
+Confirmed by Kent (2026-11-13):
+
+- **Syllable profile status no longer depends on part of speech.** The
+  board and the 'done' rebuild kept it under the wordlist-wide slot
+  (`SYLLABLE_PREP_PS`), while every lookup that defaulted to the current
+  ps read and wrote under that ps (Noun). `StatusDict.status_ps` now keys
+  all σ status on the shared slot; segmental and tone still key on ps.
+- **Advanced → Reverify group (select) / (current group)** work on
+  syllable profile sorts: (select) no longer asks for a check (the check
+  is the form), and asks for a group of the current profile class.
+- **The status panel's group dropdown lists the sorted groups** of the
+  current profile class (it showed only "All groups").
+- **Clicking a profile class on the board updates the status panel**
+  ("Looking at … words" and the group field had kept the old class).
+
+AWAITING VERIFICATION:
+
+- Messages on syllable sorts no longer name a part of speech ("not done
+  with … words", "don't have … lexemes grouped").
+- A verify page closes only when no word is left on it, and a page that
+  ends without OK isn't recorded as verified (`drop_row`,
+  `_verify_ended_by`). A "verify page ending:" log line names whatever
+  else closes it.
+- Renaming a syllable profile group no longer un-verifies every syllable
+  profile group (`updatebygroupsense` rebuilds 'done' from LIFT).
+- WebKit "Unsupported result type" after batched JS (`0;` completion).
+
 # Version 1.15.57 (2026-11-12)
 
 Patch bump at Kent's direction. Test run 2026-11-12 11:42: 1255 passed,

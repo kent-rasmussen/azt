@@ -124,7 +124,14 @@ class Senses(object):
         return self.program.status.group(value,**kwargs)
     def notdonewarning(self):
         buttontxt=_("Sort!")
-        text=_("Hey, you’re not done with {ps} {profile} words by {check}!"
+        if self.program.params.cvt()=='σ':
+            # No ps: syllable sorting carries none (Kent 2026-11-13).
+            text=_("Hey, you’re not done with {profile} words by {check}!"
+                "\nCome back when you have time; restart where you left "
+                "off by pressing ‘{button}’").format(profile=self.profile,
+                                    check=self.check,button=buttontxt)
+        else:
+            text=_("Hey, you’re not done with {ps} {profile} words by {check}!"
                 "\nCome back when you have time; restart where you left "
                 "off by pressing ‘{button}’").format(ps=self.ps,profile=self.profile,check=self.check,
                                                 button=buttontxt)

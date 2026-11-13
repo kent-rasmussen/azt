@@ -329,6 +329,12 @@ class Categories:
             if getattr(self,'cvt',None)=='σ' and hasattr(
                                         self,'rebuild_syllable_profile_done'):
                 self.rebuild_syllable_profile_done()
+                # The reload also emptied the PREP checks' groups (#C/C#/syls),
+                # so prep read incomplete and the board fell back to the
+                # primitive stage after a join (Kent 2026-11-13). build()
+                # restores their groups and 'done' from LIFT.
+                if hasattr(self,'syllable_slices'):
+                    self.syllable_slices(rebuild=True)
         for t in list(self.program.status.distinguished()):
             if x in t:
                 self.program.status.undistinguish(t)

@@ -1089,6 +1089,9 @@ class SyllableSliceDict(object):
         self.program.status.store()
     # --- per-sense confirmation, durable in the LIFT (status 'done' is its cache) --
     def _confirmed(self,sense,check):
+        # Any code for the check counts. Requiring it to match the sort value
+        # (2026-11-13) sent a finished prep stage back to verify on open —
+        # Kent: "the primitive sorting page was fine" — so it was reverted.
         return any(c.split('=')[0]==check
                    for c in sense.primitiveverification(self.ftype))
     def _set_confirmed(self,sense,check,group,verified=True):
@@ -1251,6 +1254,12 @@ class SyllableSliceDict(object):
         else:
             idx=self._last_slice_idx(check,B) #only B by ear → all such at the end
         sense.annotationvaluebyftypelang(self.ftype,self.analang,check,B)
+        # …and drop its verification code for this check: it confirmed the
+        # value just replaced. Left in place it read as verified in B, and
+        # once the word reached profile sorting its old code let a profile
+        # that doesn't fit its class pass (Kent 2026-11-13). A prep move is a
+        # SORT; the word is verified again with B's slice.
+        self._set_confirmed(sense,check,B,verified=False)
         self._set_slice_idx(sense,check,idx)
         self.mark_for_reverify(check,B,idx) #B gained a member → re-verify it
         return (B,idx)
@@ -1273,7 +1282,7 @@ class StatusDict(dict):
     def checktosort(self,**kwargs):
         check=kwargs.get('check',self.program.params.check())
         cvt=kwargs.get('cvt',self.program.params.cvt())
-        ps=kwargs.get('ps',self.program.slices.ps())
+        ps=self.status_ps(cvt,kwargs.get('ps',self.program.slices.ps()))
         profile=kwargs.get('profile',self.program.slices.profile())
         if (cvt not in self or
                 ps not in self[cvt] or
@@ -1284,7 +1293,7 @@ class StatusDict(dict):
     def checktojoin(self,**kwargs):
         check=kwargs.get('check',self.program.params.check())
         cvt=kwargs.get('cvt',self.program.params.cvt())
-        ps=kwargs.get('ps',self.program.slices.ps())
+        ps=self.status_ps(cvt,kwargs.get('ps',self.program.slices.ps()))
         profile=kwargs.get('profile',self.program.slices.profile())
         if (cvt in self and
                 ps in self[cvt] and
@@ -1296,7 +1305,7 @@ class StatusDict(dict):
     def profiletojoin(self,**kwargs):
         profile=kwargs.get('profile',self.program.slices.profile())
         cvt=kwargs.get('cvt',self.program.params.cvt())
-        ps=kwargs.get('ps',self.program.slices.ps())
+        ps=self.status_ps(cvt,kwargs.get('ps',self.program.slices.ps()))
         checks=self.checks()
         for check in checks: #any check
             if (cvt in self and
@@ -1309,7 +1318,7 @@ class StatusDict(dict):
     def profiletosort(self,**kwargs):
         profile=kwargs.get('profile',self.program.slices.profile())
         cvt=kwargs.get('cvt',self.program.params.cvt())
-        ps=kwargs.get('ps',self.program.slices.ps())
+        ps=self.status_ps(cvt,kwargs.get('ps',self.program.slices.ps()))
         checks=self.checks()
         for check in checks: #any check
             if (cvt not in self or
@@ -1462,7 +1471,7 @@ class StatusDict(dict):
                                 for i in j])))
     def allcheckswdata(self, **kwargs): #needs cvt and ps
         cvt=kwargs.get('cvt',self.program.params.cvt())
-        ps=kwargs.get('ps',self.program.slices.ps())
+        ps=self.status_ps(cvt,kwargs.get('ps',self.program.slices.ps()))
         return self._drop_foreign(
                         list(set([i for j in [self.program.status[cvt][ps][profile]
                                     for profile in self.program.status[cvt][ps]
@@ -1719,7 +1728,10 @@ class StatusDict(dict):
             if kwargs['cvt'] in ['CV','VC','T']:
                 return None
             """This is organized class:(segment,count)"""
-            thispsdict=self.program.slices.scount()[kwargs['ps']]
+            if kwargs['cvt'] in ['V','C']:
+                # Only the segment inventory is by ps; σ's ps is '*', which
+                # scount has no entry for (KeyError, Kent 2026-11-13).
+                thispsdict=self.program.slices.scount()[kwargs['ps']]
             if kwargs['cvt'] == 'V': #There is so far only one V grouping
                 todo=[i[0] for i in thispsdict['V']] #that's all that's there, for now.
             elif kwargs['cvt'] == 'C':
@@ -2269,6 +2281,18 @@ class StatusDict(dict):
     def toneframedefn(self):
         d=self.program.toneframes[self.program.slices.ps()][self.program.params.check()]
         return d
+    def status_ps(self,cvt,ps):
+        """The ps a status node is keyed on. Syllable status has none: it
+        all sits under SYLLABLE_PREP_PS, whatever ps is current or passed.
+        The board and rebuild_syllable_profile_done keyed it there while
+        everything defaulting to the current ps read and wrote under that
+        (Noun), so the group dropdown and reverify found nothing, and a
+        rebuild restored 'done' where the sort flow didn't look (Kent
+        2026-11-13: ps "shouldn't impact syllable profile sorting in any
+        way")."""
+        if cvt=='σ':
+            return self.program.params.SYLLABLE_PREP_PS
+        return ps
     def checkslicetypecurrent(self,**kwargs):
         """This fills in current values; it shouldn't leave None anywhere."""
         i=kwargs.copy()
@@ -2276,7 +2300,8 @@ class StatusDict(dict):
             if v is None:
                 del kwargs[k]
         kwargs['cvt']=kwargs.get('cvt',self.program.params.cvt())
-        kwargs['ps']=kwargs.get('ps',self.program.slices.ps())
+        kwargs['ps']=self.status_ps(kwargs['cvt'],
+                                    kwargs.get('ps',self.program.slices.ps()))
         kwargs['profile']=kwargs.get('profile',self.program.slices.profile())
         kwargs['check']=kwargs.get('check',self.program.params.check())
         log.log(4,_("Returning checkslicetypecurrent kwargs {kwargs}").format(kwargs=kwargs))

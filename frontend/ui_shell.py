@@ -461,7 +461,7 @@ class Menus(ui.Menu):
         options.extend([(_("Reverify group (select)"),
                                     lambda: self.parent.reverify(ask=True)),
                         (_("Join Sort Groups"), self.parent.redo_join),
-                        (_("Reverify Glyph (Letters; {glyph})").format(glyph=glyph), 
+                        (_("Reverify Glyph (Letters; {glyph})").format(glyph=glyph),
                                                     self.parent.reverify_glyph),
                         (_("Join Glyphs (Letters)"), self.parent.redo_joinglyphs),
                         (_("Update Forms"), self.parent.manual_form_update)
@@ -1709,8 +1709,12 @@ class StatusFrame(ui.Frame):
         `groups_visible` is the same list the window used (`_getgroup`), and
         it is the one that drops NA — which is never a selectable group."""
         # Tone has no theoretical list (flagless groups() is None): its
-        # groups are the sorted ones.
-        kwargs={'wsorted':True} if self.program.params.cvt() == 'T' else {}
+        # groups are the sorted ones. Nor does a syllable profile check: its
+        # groups are the profiles sorted in this class (Kent 2026-11-13).
+        params=self.program.params
+        sorted_only=(params.cvt() == 'T' or (params.cvt() == 'σ'
+                            and not params.is_syllable_primitive_check()))
+        kwargs={'wsorted':True} if sorted_only else {}
         try:
             groups=self.program.status.groups_visible(**kwargs) or []
         except Exception as e:
@@ -2650,6 +2654,8 @@ class StatusFrame(ui.Frame):
         slice (so its profile sort can be worked) and move the highlight."""
         self.program.slices.profile(pc)
         self.update_active_cell()
+        self.updateprofile() # the "Looking at … words" line named the old class
+        self.updatecvgroup()
     def makeprogresstable(self):
         def groupfn(x):
             for i in x:
@@ -3381,7 +3387,13 @@ class TaskDressing(HasMenus,ui.Window):
             self.makeeverythingok()
         if self.exitFlag.istrue():
             return
-        hidewhileworking=self.winfo_viewable()
+        # state() too: a webview window answers winfo_viewable() from its
+        # layout, so a task window built withdrawn read viewable and the
+        # deiconify below SHOWED it, behind the syllable-profile offer that
+        # was meant to come first (Kent 2026-11-13: "the trust dialog should
+        # be a gateway to the other").
+        hidewhileworking=(self.winfo_viewable()
+                          and self.state()!='withdrawn')
         status=StatusFrame(self.frame, self.program,
                             relief=self.mainrelief,
                             row=1, column=0, sticky='nw')
@@ -3704,10 +3716,15 @@ class TaskDressing(HasMenus,ui.Window):
         groups=self.program.status.groups_visible(cvt=cvt,**kwargs)
         advance=self.program.status.nextgroup_visible
         if not groups:
-            ErrorNotice(parent=window.frame,
-                          text=_("It looks like you don’t have {ps}-{profile} lexemes "
+            if cvt == 'σ': # no ps: syllable sorting carries none
+                text=_("It looks like you don’t have {profile} lexemes "
                           "grouped in the ‘{check}’ check yet \n({kwargs})."
-                          "").format(ps=ps,profile=profile,check=check,kwargs=kwargs), column=0, row=0)
+                          "").format(profile=profile,check=check,kwargs=kwargs)
+            else:
+                text=_("It looks like you don’t have {ps}-{profile} lexemes "
+                          "grouped in the ‘{check}’ check yet \n({kwargs})."
+                          "").format(ps=ps,profile=profile,check=check,kwargs=kwargs)
+            ErrorNotice(parent=window.frame, text=text, column=0, row=0)
             return
         if kwargs.get('intfirst') and kwargs.get('guess'):
             l=[int(i) for i in self.program.status.groups(cvt=cvt,**kwargs)

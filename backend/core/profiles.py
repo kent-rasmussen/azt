@@ -824,6 +824,20 @@ class ProfileAnalyzer:
                     cleared_verif += 1
                 fixed_sort += 1
                 continue
+            # (1c) OUT OF ITS CLASS: the sort group doesn't fit the class the
+            # word's primitives now name (a primitive changed after it was
+            # sorted). UNSORT it, so it is sorted again in its class — not
+            # constrained into some profile (Kent 2026-11-13: "we need to
+            # unsort these, so they can be sorted correctly"; an ad hoc
+            # presort waits until the machine analysis is sane). These sat in
+            # their new class's group list and joins paired them across
+            # classes (V-final against C-final). (2) below reads the primitive
+            # VERIFICATION CODES; class membership reads the annotations, and
+            # the two can disagree (a stale code).
+            if self.unsort_if_out_of_class(s, ftype, anno):
+                fixed_sort += 1
+                cleared_verif += 1
+                continue
             legal = self.constrain_presort_profile(s, anno, ftype)  # (2)
             if legal and legal != 'Invalid' and legal != anno:
                 s.annotationvaluebyftypelang(ftype, analang, ftype, legal)
@@ -839,6 +853,36 @@ class ProfileAnalyzer:
                      "the (legal) sort.", fixed_sort, cleared_verif)
             self.program.maybewrite(definitely=True)
         return fixed_sort, cleared_verif
+
+    def unsort_if_out_of_class(self, sense, ftype=None, anno=None):
+        """Clear `sense`'s profile sort group and confirmed profile when the
+        group doesn't fit the profile class its primitives name. True if it
+        did. A word with no class (a primitive unset) or no sort is left
+        alone. Writes nothing to disk; the caller does."""
+        params = self.program.params
+        ftype = ftype or params.ftype()
+        analang = self.program.db.analang
+        if anno is None:
+            anno = sense.annotationvaluebyftypelang(ftype, analang, ftype)
+        if not anno or anno in ('NA', 'Invalid'):
+            return False
+        pc = params.profile_class_of_sense(sense, ftype=ftype)
+        beg, syls, end = params.parse_profile_class(pc)
+        if not beg or params.profile_fits_class(anno, beg, syls, end):
+            return False
+        # The codes too: the scrub's constraint reads THEM, the class reads
+        # the annotations, so a disagreement here is why it let this pass.
+        try:
+            codes = sense.primitiveverification(ftype)
+        except Exception:
+            codes = '?'
+        log.info("Unsorting %s: profile %r doesn't fit its class %s "
+                 "(primitive verification codes: %s)",
+                 getattr(sense, 'id', '?'), anno, pc, codes)
+        sense.annotationvaluebyftypelang(ftype, analang, ftype, '') # '' clears
+        if sense.cvprofilevalue(ftype):
+            sense.cvprofilevalue(ftype, False)
+        return True
 
     def migrate_cvprofiles_to_machine_form(self):
         """One-time migration. Old code wrote the machine analysis into the

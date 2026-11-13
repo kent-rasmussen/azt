@@ -377,7 +377,10 @@ class SortPresenter(PresenterBase):
         ui.Button(w.frame, text=_("Sort syllable profiles manually; \ncome back here later"),
                  cmd=lambda:choose('sort'), font='instructions',
                  row=brow, column=1, sticky='ew', padx=4)
-        ui.Button(w.frame, text=_("Cancel"), cmd=lambda:choose('cancel'),
+        # Says what it does: the sort goes on, without the unprofiled words
+        # (Kent 2026-11-13).
+        ui.Button(w.frame, text=_("Continue without these words"),
+                 cmd=lambda:choose('cancel'),
                  font='small', row=brow, column=2, sticky='ew', padx=4)
         w.update_idletasks() #lay out widgets before showing
         w.deiconify()
@@ -927,7 +930,8 @@ class SortPresenter(PresenterBase):
                                          row=1, sticky='nsew', columnspan=2)
             verifycanary = ui.Frame(buttonframe.content, sticky='ew')
             verifycanary.grid(row=buttonframe.content.nrows(),column=0,sticky='ew')
-            ui.Button(verifycanary, text=oktext, cmd=verifycanary.destroy,
+            ui.Button(verifycanary, text=oktext,
+                     cmd=lambda: verifycanary.destroy(), # click-time lookup
                      anchor='w', font='instructions',
                      column=0, row=0, sticky='ew')
             # Reveal the kiosk run window. SortButtonFrame built itself behind its
@@ -1029,8 +1033,11 @@ class SortPresenter(PresenterBase):
                 navframe=ui.Frame(buttonframe.content, sticky='ew')
                 navframe.grid(row=nav_row, column=0, columnspan=bc, sticky='ew')
                 self._vpage['navframe']=navframe
+                # Looked up at CLICK time: the prep page (verify_slice) wraps
+                # the canary's destroy after this is built, to finish the
+                # slice on webview, which fires no <Destroy> (2026-11-13).
                 okbutton=ui.Button(navframe, text=oktext, font='instructions',
-                         cmd=verifycanary.destroy,
+                         cmd=lambda: verifycanary.destroy(),
                          column=0, row=0, sticky='ew', padx=4)
                 # The profile name is shown in all three of these, so "this
                 # group is misnamed" is available wherever the name is (Kent
@@ -1540,13 +1547,17 @@ class SortPresenter(PresenterBase):
             self._play_pair=play_buttons.playback(
                                 program,getattr(self,'_play_task',None))
         def split(member, line):
+            rest=[m for m in sameset['members'](member) if m is not member]
             new=sameset['split'](member)
             line.destroy()
             # Close BEFORE the page rows are rebuilt: on webview that took
             # ~7s (log 2026-11-12 10:55:55→10:56:02), with the dialog still
             # up and nothing left in it to do (Kent 2026-11-12). members() is
             # this slice's part of the set; other ps' members don't keep it open.
-            if len(sameset['members'](entry['sense']))<2:
+            #   Ask about what is LEFT, not the row's word: splitting off the
+            # row's own word (first in the list) left it alone, so the dialog
+            # closed with the rest still together (Kent 2026-11-13).
+            if not rest or len(sameset['members'](rest[0]))<2:
                 close()
             prev=entry['bf']
             for s in new: # each right after the last: group, then its splits
