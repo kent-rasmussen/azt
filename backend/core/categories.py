@@ -322,6 +322,13 @@ class Categories:
             yield i * 50 // n  # 0-50 for marksortgroup phase
         if updatestatus:
             yield from self.program.settings.reloadstatusdata() # 0-100 mapped to ~50 already
+            # The reload clears every group's 'done' and restores it only for
+            # segmental checks, so each profile rename un-verified every
+            # syllable profile group in every class (Kent 2026-11-12: "why am
+            # I verifying CVC words right now?"). Restore it from LIFT here.
+            if getattr(self,'cvt',None)=='σ' and hasattr(
+                                        self,'rebuild_syllable_profile_done'):
+                self.rebuild_syllable_profile_done()
         for t in list(self.program.status.distinguished()):
             if x in t:
                 self.program.status.undistinguish(t)

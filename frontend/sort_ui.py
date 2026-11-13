@@ -984,6 +984,19 @@ class SortPresenter(PresenterBase):
             # so wait_window(verifycanary) returns only on the final OK. The
             # visible OK button lives at the END of the word list.
             verifycanary=ui.Frame(f)
+            # WHO ENDED THE PAGE. It closed with 14 words still on it, after
+            # a drop that did not end it (Kent's log 2026-11-12 17:05): some
+            # other caller destroyed the canary. Log the calling frames on
+            # every ending until that caller is found.
+            _end=verifycanary.destroy
+            def _logged_end():
+                import traceback
+                where=' <- '.join('{}:{} {}'.format(
+                            fs.filename.rsplit('/',1)[-1],fs.lineno,fs.name)
+                            for fs in reversed(traceback.extract_stack()[-8:-1]))
+                log.info("verify page ending: %s", where)
+                _end()
+            verifycanary.destroy=_logged_end
             reveal=min(24, ntotal) # first screenful shown before the rest streams
             nav_row=(ntotal+bc-1)//bc # row just past the last item
             # What a sameSort split needs to add a row after the build: the

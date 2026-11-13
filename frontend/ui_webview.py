@@ -1528,6 +1528,12 @@ def _eval_batched(window, codes):
         wrapped = ''.join(
             'try{%s}catch(e){console.error("azt js:", e, %s)}\n'
             % (code, json.dumps(code[:120])) for code in batch)
+        # End on a plain number: the script's value is its last statement's,
+        # and a DOM node from e.g. gridWidget is a result WebKitGTK can't hand
+        # back — "WebKitJavascriptError: Unsupported result type", printed by
+        # pywebview's callback once per batch (Kent 2026-11-12, since the
+        # ui.batched() row shifts made batches common).
+        wrapped += '0;'
         try:
             window.evaluate_js(wrapped)
         except Exception as e:
