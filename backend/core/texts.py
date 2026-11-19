@@ -235,8 +235,9 @@ def span(audio, begin_ms, end_ms, rate=SR):
     return audio[round(begin_ms * rate / 1000):round(end_ms * rate / 1000)]
 
 
-def segment(audio, rate=SR, min_pause=0.25, silence_db=25.0, max_chunk=15.0, min_chunk=0.3, pad=0.1):
-    """Pause-delimited chunks, as [(begin_ms, end_ms)]."""
+def segment(audio, rate=SR, min_pause=0.2, silence_db=25.0, max_chunk=15.0, min_chunk=0.3, pad=0.1):
+    """Pause-delimited chunks, as [(begin_ms, end_ms)]. min_pause 0.2 s (was 0.25; Kent, 2026-11-19: "a more
+    linguistically real value")."""
     frame = rate // 100
     n = len(audio) // frame
     if n == 0:
@@ -269,8 +270,25 @@ def segment(audio, rate=SR, min_pause=0.25, silence_db=25.0, max_chunk=15.0, min
         x, y = max(inner, key=lambda r: (r[1] - r[0], -abs((r[0] + r[1]) / 2 - (b - a) / 2)))
         return split_long((a, a + x)) + split_long((a + y, b))
 
+    def merge_short(chunks):
+        """A chunk shorter than min_chunk joins its neighbour across the SHORTER of its two pauses (the left one
+        on a tie); alone, it stays. Short ones used to be dropped, so a short word between two pauses ('mm',
+        'yes') was in no phrase at all (Kent, 2026-11-19: every sounding stretch belongs somewhere)."""
+        chunks = list(chunks)
+        while len(chunks) > 1:
+            k = next((k for k, (a, b) in enumerate(chunks) if (b - a) / fps < min_chunk), None)
+            if k is None:
+                break
+            left = chunks[k][0] - chunks[k - 1][1] if k > 0 else None
+            right = chunks[k + 1][0] - chunks[k][1] if k < len(chunks) - 1 else None
+            if right is None or (left is not None and left <= right):
+                chunks[k - 1:k + 1] = [(chunks[k - 1][0], chunks[k][1])]
+            else:
+                chunks[k:k + 2] = [(chunks[k][0], chunks[k + 1][1])]
+        return chunks
+
     total_ms = round(len(audio) * 1000 / rate)
-    chunks = [c for s in spans for c in split_long(s) if (c[1] - c[0]) / fps >= min_chunk]
+    chunks = merge_short(c for s in spans for c in split_long(s))
     return [(max(0, round((a / fps - pad) * 1000)), min(total_ms, round((b / fps + pad) * 1000)))
             for a, b in chunks]
 

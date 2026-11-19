@@ -1218,11 +1218,11 @@ class ASRModelSelectionWindow(ui.Window):
             return
         self.lang_display_var.set(display)
         # The other languages the input could mean, to help while typing a
-        # name. Not when it already IS a code (it standardizes to itself, as
-        # the analang does on boot): the fuzzy name lookup behind get_codes
+        # name. Not when it already IS a code (it is among the codes found, as
+        # the analang is on boot): the fuzzy name lookup behind get_codes
         # then lists hundreds of names containing 'en', which pushed the rest
         # of the window off the screen (Kent, 2026-11-13). Capped either way.
-        if possibles and possibles[0]==self.lang_cur:
+        if self.lang_cur in (possibles or ()):   # get_codes gives a set
             displays=[]
         more=len(displays)-self.MAX_POSSIBLES
         displays=displays[:self.MAX_POSSIBLES]

@@ -19,6 +19,30 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.59 (2026-11-19)
+
+Confirmed by Kent (2026-11-19):
+
+- **Select ASR Settings saves its checkboxes as they change.** The window
+  has no OK button, so a toggle followed by closing was lost. Models still
+  load on "Reload Model", or by themselves when a bulk ASR run starts.
+- **The list under "Language:" no longer pushes the window off the
+  screen.** It is empty when the input is already a language code (for
+  'en' it listed hundreds of name matches), otherwise at most 8 plus
+  "…and N more".
+
+AWAITING VERIFICATION:
+
+- Text clause splitting (`texts.segment`, recordings opened from now on):
+  a pause is 0.2 s or more (was 0.25); a sounding stretch shorter than
+  0.3 s joins its neighbour across the shorter pause instead of being
+  dropped (it was in no phrase at all).
+- The ▶ word button plays the word's span with no padding (was 0.1 s each
+  side), for now.
+- Tests: after a localization failure, that test's other languages still
+  run (`conftest.py`); padding test takes its pad explicitly; new
+  `test_segment.py`. fr_FR and zh_CN drafts for 5 new strings.
+
 # Version 1.15.58 (2026-11-13)
 
 Confirmed by Kent (2026-11-13):
