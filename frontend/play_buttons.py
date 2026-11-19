@@ -48,8 +48,9 @@ PLAYING_MARK='♪'
 # (Kent, 2026-11-06: whole phrases ran to 15 s and more).
 CONTEXT_S=1.0
 # `▶` plays a word's span with this much more on each side: cut strictly
-# at the word boundaries it sounds clipped (Kent, 2026-11-06).
-WORD_PAD_S=0.1
+# at the word boundaries it sounds clipped (Kent, 2026-11-06). Set to 0
+# "for now" (Kent, 2026-11-13) while sorting the text lexicon; was 0.1.
+WORD_PAD_S=0.0
 
 
 def playback(program, task=None):

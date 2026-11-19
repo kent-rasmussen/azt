@@ -58,8 +58,18 @@ pathlib.Path.read_text = _read_text_utf8
 # OTHER test failed (Kent, 2026-11-06). After the first localization failure
 # the rest are skipped, saying why; the run still fails. --all-localization
 # runs them all.
+# EXCEPT the failing test's other parameters (its other languages): once a
+# catalog check fails, every language is checked, so all the gaps show in
+# one run — zh_CN's went unseen behind fr_FR's (Kent, 2026-11-19).
 LOCALIZATION = ('test_translation_', 'test_translations_')
 _localization_failed = []
+_failed_functions = set()   # (file, test function) of the first failure
+
+
+def _function(item_or_report_nodeid):
+    """'tests/x.py::test_y[fr_FR]' → ('tests/x.py', 'test_y')."""
+    path, _sep, name = item_or_report_nodeid.partition('::')
+    return path, name.split('[', 1)[0]
 
 
 def pytest_addoption(parser):
@@ -75,6 +85,7 @@ def _is_localization(item):
 def pytest_runtest_setup(item):
     import pytest
     if (_localization_failed and _is_localization(item)
+            and _function(item.nodeid) not in _failed_functions
             and not item.config.getoption('--all-localization')):
         pytest.skip(f'localization already failing ({_localization_failed[0]}); '
                     '--all-localization to run this too')
@@ -84,3 +95,4 @@ def pytest_runtest_logreport(report):
     if (report.failed and not _localization_failed
             and pathlib.Path(report.fspath).name.startswith(LOCALIZATION)):
         _localization_failed.append(report.nodeid)
+        _failed_functions.add(_function(report.nodeid))

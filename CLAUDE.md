@@ -15,8 +15,8 @@ The user will manage running the program; switches are documented in --help.
 A pytest suite lives in `tests/` (started 2026-06-06; see `tests/README.md`).
 
 You write tests, the user runs them. If you want a test run, ask politely. You can find the most recent results 
-in pytest_results.txt in the repository root. That file has a timestamp on the top from when it ran, which can 
-be correlated with those found in logs.
+in `pytest_results.txt` in the repository root. That file has a timestamp on the top from when it ran, which can 
+be correlated with those found in logs. pylint similarly outputs to `pylint_results.txt`.
 
 Careful, when writing tests, to not write scans that can't tell code from the prose describing it.
 

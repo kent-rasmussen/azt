@@ -363,12 +363,21 @@ def test_phrase_is_the_word_with_a_second_each_side():
     assert pb.in_context(('/p/texts/song.ogg', (1.0, 2.0)), phrase) == phrase
 
 
-def test_word_plays_a_tenth_of_a_second_past_each_boundary():
+def test_word_plays_its_pad_past_each_boundary():
+    """padded()'s clamping, at a pad of 0.1 s. The default (WORD_PAD_S) is a
+    setting Kent changes (0.1 → 0 on 2026-11-13), so it is passed here."""
     pb = pytest.importorskip('frontend.play_buttons')
     word = ('/p/texts/story.ogg', (12.3, 12.8))
     phrase = ('/p/texts/story.ogg', (12.25, 20.0))
-    assert pb.padded(word)[1] == pytest.approx((12.2, 12.9))
-    assert pb.padded(word, phrase)[1] == pytest.approx((12.25, 12.9))   # not before the phrase
-    assert pb.padded(('/p/t.ogg', (0.05, 0.5)))[1] == pytest.approx((0.0, 0.6))
+    assert pb.padded(word, pad=0.1)[1] == pytest.approx((12.2, 12.9))
+    assert pb.padded(word, phrase, pad=0.1)[1] == pytest.approx((12.25, 12.9))   # not before the phrase
+    assert pb.padded(('/p/t.ogg', (0.05, 0.5)), pad=0.1)[1] == pytest.approx((0.0, 0.6))
     whole = ('/p/audio/take.wav', None)                          # careful take: no span
-    assert pb.padded(whole, phrase) == whole
+    assert pb.padded(whole, phrase, pad=0.1) == whole
+
+
+def test_word_plays_the_default_pad():
+    pb = pytest.importorskip('frontend.play_buttons')
+    word = ('/p/texts/story.ogg', (12.3, 12.8))
+    pad = pb.WORD_PAD_S
+    assert pb.padded(word)[1] == pytest.approx((12.3 - pad, 12.8 + pad))

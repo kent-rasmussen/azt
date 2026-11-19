@@ -1175,6 +1175,7 @@ class SoundSettingsWindow(ui.Window):
             self.deiconify()
         self.protocol("WM_DELETE_WINDOW", self.on_quit)
 class ASRModelSelectionWindow(ui.Window):
+    MAX_POSSIBLES=8   # other languages the typed input could mean, at most
     def language_entry(self):
         self.language_frame=ui.Frame(self.languages_frame,
                                     row=0,column=0,
@@ -1216,6 +1217,17 @@ class ASRModelSelectionWindow(ui.Window):
             self.sisters_listbox.delete(0, "end")
             return
         self.lang_display_var.set(display)
+        # The other languages the input could mean, to help while typing a
+        # name. Not when it already IS a code (it standardizes to itself, as
+        # the analang does on boot): the fuzzy name lookup behind get_codes
+        # then lists hundreds of names containing 'en', which pushed the rest
+        # of the window off the screen (Kent, 2026-11-13). Capped either way.
+        if possibles and possibles[0]==self.lang_cur:
+            displays=[]
+        more=len(displays)-self.MAX_POSSIBLES
+        displays=displays[:self.MAX_POSSIBLES]
+        if more>0:
+            displays.append(_("…and {n} more").format(n=more))
         self.langs_possible_var.set('\n'.join(displays))
         self.get_sister_options()
     def get_sister_options(self,*args):
@@ -1361,6 +1373,9 @@ class ASRModelSelectionWindow(ui.Window):
             log.info("Saved sound settings (asr_kwargs) to file.")
         except Exception as e:
             log.error(f"couldn't persist sound settings: {e}")
+    def _save_toggle(self,k):
+        self.save_kwarg_to_soundsettings(k,self.kwarg_vars[k])
+        self._persist_soundsettings()
     def save_kwarg_to_soundsettings(self,k,v):
         if isinstance(v,ui.Variable):
             value=v.get()
@@ -1431,6 +1446,12 @@ class ASRModelSelectionWindow(ui.Window):
                                         row=buttons//columns,
                                         column=buttons%columns
                                         )
+            # Save each toggle as it changes: the window has no OK button, so
+            # a toggle followed by closing was lost (Kent, 2026-11-13). Only
+            # asr_kwargs is written; Reload Model still compares it against
+            # the loaded ASR, so nothing loads until that is clicked.
+            self.kwarg_vars[k].trace_add('write',
+                                lambda *_a,k=k:self._save_toggle(k))
         for frame in self.boolean_frame.winfo_children():
             for c in range(columns):
                 frame.grid_columnconfigure(c, weight=1, uniform="uniwide")

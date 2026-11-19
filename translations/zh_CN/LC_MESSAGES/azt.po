@@ -11021,3 +11021,25 @@ msgstr "{repo} 仓库有 {wav_count} 个音频文件需要检查（此处共有 
 #, fuzzy, python-brace-format
 msgid "{words} words found in {worded} of {total} clauses ({timed} with times)"
 msgstr "在 {total} 个小句中的 {worded} 个里找到 {words} 个词（其中 {timed} 个有时间）"
+
+#, fuzzy, python-brace-format
+msgid "Hey, you’re not done with {profile} words by {check}!\nCome back when you have time; restart where you left off by pressing ‘{button}’"
+msgstr "嘿，您还没有完成按 {check} 处理 {profile} 词的工作！\n有空时请回来；按“{button}”即可从中断处继续。"
+
+#, fuzzy, python-brace-format
+msgid "It looks like you don’t have {profile} lexemes grouped in the ‘{check}’ check yet \n({kwargs})."
+msgstr "看起来你还没有在“{check}”检查中对 {profile} 词位进行分组\n（{kwargs}）。"
+
+#, fuzzy, python-brace-format
+msgid "Renaming {old} to {new}…"
+msgstr "正在将 {old} 重命名为 {new}…"
+
+# A button: the sort goes on, leaving out the words that have no syllable profile.
+#, fuzzy
+msgid "Continue without these words"
+msgstr "不包括这些词，继续"
+
+# CHECK: after a short list of language names, the count of those not shown.
+#, fuzzy, python-brace-format
+msgid "…and {n} more"
+msgstr "……还有 {n} 个"

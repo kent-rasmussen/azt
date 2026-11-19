@@ -11060,3 +11060,25 @@ msgstr "{wav_count} fichiers audio à vérifier pour le dépôt {repo} (sur {tot
 #, fuzzy, python-brace-format
 msgid "{words} words found in {worded} of {total} clauses ({timed} with times)"
 msgstr "{words} mots trouvés dans {worded} propositions sur {total} ({timed} avec des temps)"
+
+#, fuzzy, python-brace-format
+msgid "Hey, you’re not done with {profile} words by {check}!\nCome back when you have time; restart where you left off by pressing ‘{button}’"
+msgstr "Hé, vous n’avez pas fini les mots {profile} par {check} !\nRevenez quand vous aurez le temps ; reprenez là où vous vous êtes arrêté en appuyant sur ‘{button}’"
+
+#, fuzzy, python-brace-format
+msgid "It looks like you don’t have {profile} lexemes grouped in the ‘{check}’ check yet \n({kwargs})."
+msgstr "Il semble que vous n’ayez pas encore groupé de lexèmes {profile} dans la vérification ‘{check}’ \n({kwargs})."
+
+#, fuzzy, python-brace-format
+msgid "Renaming {old} to {new}…"
+msgstr "Renommage de {old} en {new}…"
+
+# A button: the sort goes on, leaving out the words that have no syllable profile.
+#, fuzzy
+msgid "Continue without these words"
+msgstr "Continuer sans ces mots"
+
+# CHECK: after a short list of language names, the count of those not shown.
+#, fuzzy, python-brace-format
+msgid "…and {n} more"
+msgstr "…et {n} de plus"
