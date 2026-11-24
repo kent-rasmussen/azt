@@ -19,6 +19,23 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.15.60 (2026-11-24)
+
+Confirmed by Kent (2026-11-24):
+
+- **A clause's careful take is the source for its ASR and word cuts.** Once a
+  clause has a careful-speech take, Parse/ASR transcribe the take, words are
+  cut and timed in it, and the text-word lexicon plays words from it.
+  Recording a take drops the clause's old candidates.
+- **Clauses can be joined.** "Join with next" after the split buttons on the
+  clause page; on the split screen each piece has "Split in two" and "Join
+  with next".
+- **A whole-text page**, opened from the text's title on the texts board:
+  every clause a line (▶, times, careful take), 2|3|4|5 to split a line at
+  once, "Join with next" per line; the page scrolls and draws only the lines
+  in view. Careful takes use record → ‣ play + × delete.
+- **Splits and joins show a wait message** saying what is being done.
+
 # Version 1.15.59 (2026-11-19)
 
 Confirmed by Kent (2026-11-19):
