@@ -91,7 +91,7 @@ import collections
 from random import randint
 import os
 import urllib.parse #mailto: on the error page must be properly encoded
-# Stack dumper for diagnosing freezes: when the UI hangs, run `kill -USR1 <pid>`
+# Stack dumper for diagnosing freezes: when the UI hangs, run `kill -USR2 <pid>`
 # (pid logged just below) and the Python stacks of all threads are written to
 # /tmp/azt_stacks.txt — works even when stuck in a C-level Tk/X call, so it
 # names the exact blocked call instead of us guessing. Dumps to a FILE (not
@@ -100,9 +100,9 @@ import faulthandler, signal as _signal
 try:
     _stackfile = open('/tmp/azt_stacks.txt', 'w')
     all_threads=True
-    faulthandler.register(_signal.SIGUSR1, file=_stackfile, all_threads=all_threads)
+    faulthandler.register(_signal.SIGUSR2, file=_stackfile, all_threads=all_threads)
     log.info("faulthandler armed (all_threads=%s): if it hangs, run "
-             "`kill -USR1 %s` then send "
+             "`kill -USR2 %s` then send "
              "/tmp/azt_stacks.txt", all_threads, os.getpid())
 except (AttributeError, ValueError, OSError) as e:
     log.info("faulthandler not armed: %s", e)  # e.g. Windows

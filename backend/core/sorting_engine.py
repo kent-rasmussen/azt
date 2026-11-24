@@ -1669,6 +1669,14 @@ class Sort(Categories):
             self._resort_advance=False
             self.buttonframe.reset_selected()
             return
+        # 'Reverify this group' on a group button of a LIVE sort page
+        # (reverify_group → _restart_from_sort_page) closed the item unsorted:
+        # end this page and let THIS loop's maybesort pick up the group to
+        # verify, rather than a second, nested loop competing for the window.
+        if getattr(self,'_restart_advance',False):
+            self._restart_advance=False
+            self.buttonframe.reset_selected()
+            return 'restart'
         # Syllable 'Other {profile class} profile' picker resolved to a real,
         # primitive-consistent profile P (ADR 0003 / the CV-group creation-and-merging item).
         # Mark the current word into P via the normal NEW-group path — NOT
@@ -1813,6 +1821,7 @@ class Sort(Categories):
             """Stuff that changes by lexical entry
             The second frame, for the other two buttons, which also scroll"""
             self.sort_next=[]   # items unsorted from a group on this page
+            self._sort_live=True # see _restart_from_sort_page
             while current_list_fn():
                 if self.ui.runwindow.exitFlag.istrue():
                     return
@@ -1828,10 +1837,13 @@ class Sort(Categories):
                 # log.info("presenttosort done")
                 if not self.ui.runwindow.exitFlag.istrue() and item is not None:
                     r=self.sortselected(item, macrosort=macrosort)
+                    if r=='restart': # page ended for a reverify: finish as
+                        break        # a done page does; maybesort goes on
                     if r: #on restarting to maybesort
                         return
                     self.buttonframe.updatecounts()
         finally:
+            self._sort_live=False
             # presenttosort normally closes the wait, but it can return before
             # reaching its waitdone() (exitFlag, or an empty sortitem), and the
             # returns above leave by other doors. A dialog left up over the
@@ -1912,7 +1924,32 @@ class Sort(Categories):
             log.info("Group ‘{group}’ wasn’t marked verified; re-running the "
                     "check anyway.".format(group=group))
         self.reverifying=True
+        if self._restart_from_sort_page():
+            return
         self.runcheck()
+    def _restart_from_sort_page(self):
+        """From a sort page whose loop is running (e.g. macrosort), hand the
+        work back to THAT loop, as 'Resort' does: close the item on show,
+        unsorted, and sortselected ends the page so maybesort re-runs on the
+        new state. Starting runcheck here instead nested a second loop on a
+        new thread, and both parked on verify pages over one window — only
+        one answerable (hang, 2026-11-24). False when no sort page is live
+        (Advanced menu, distinguish page): the caller runs the check itself."""
+        if not getattr(self,'_sort_live',False):
+            return False
+        shown=getattr(self,'sortitem',None)
+        try:
+            if shown is None or not shown.winfo_exists():
+                return False
+            self._restart_advance=True
+            shown.destroy()
+            log.info("Ending the live sort page so its loop goes on to verify")
+            return True
+        except Exception as e:
+            self._restart_advance=False
+            log.info("could not end the live sort page (%s); running the "
+                     "check instead", e)
+            return False
     def reverify(self,ask=False):
         """Unverify a group and re-run the check. ask: choose the group in a
         dialog (Advanced → Reverify group (select)); else the current one,
