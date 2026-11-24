@@ -2674,9 +2674,27 @@ class _WebviewWidget:
             _api.register(self._wid, 'dnd_enter', lambda d: self.dnd_focus_on())
             _api.register(self._wid, 'dnd_leave', lambda d: self.dnd_focus_off())
 
+    def _dnd_name(self):
+        """What a drag log line calls this widget: its join group if it has one
+        (the sort page's group buttons), else its text, and its wid."""
+        name = getattr(self, 'joingroup', None)
+        if not name:
+            try:
+                name = self.cget('text')
+            except Exception:
+                name = ''
+        return f"{name!r} (wid {self._wid})"
+
     def _on_dnd_start(self, data):
+        # LOGGED, with the drop and the end, so a drag that "just didn't work"
+        # says which step went missing (Kent, 2026-11-24: group drags on the sort
+        # page worked twice, crashed once, and once did nothing, with nothing
+        # in the log either time).
+        log.info("drag start: %s", self._dnd_name())
         self.initial_widget = True
-        self.dnd_focus_on()
+        # No background change here, nor on enter/leave: the page outlines the
+        # dragged and hovered widgets itself (widgets.js wv-dragging and
+        # wv-drop-target), without a round trip to Python on every crossing.
 
     def _on_dnd_end(self, data):
         """The SOURCE's end-of-drag call, which tkinter makes and this did not.
@@ -2695,6 +2713,9 @@ class _WebviewWidget:
         """
         global _dnd_last_target
         target, _dnd_last_target = _dnd_last_target, None
+        log.info("drag end: %s landed on %s", self._dnd_name(),
+                 target._dnd_name() if target is not None
+                 else "nothing that takes a drop")
         self.initial_widget = False
         self.dnd_end(target, data)
 
@@ -2704,9 +2725,17 @@ class _WebviewWidget:
         source_wid = data.get('source_wid')
         # Find the source widget by wid
         source = self._find_widget_by_wid(source_wid)
-        if source:
-            _dnd_last_target = self
-            self.dnd_commit(source, data)
+        if not source:
+            # Silent until 2026-11-24, and a candidate for the drag that did
+            # nothing: a source rebuilt during the drag (a group's buttons are
+            # remade when its example changes) has a new wid, so the old one
+            # finds nothing here.
+            log.warning("drop on %s: its source (wid %s) is no longer on the "
+                        "page; nothing done", self._dnd_name(), source_wid)
+            return
+        log.info("drop: %s onto %s", source._dnd_name(), self._dnd_name())
+        _dnd_last_target = self
+        self.dnd_commit(source, data)
 
     def _find_widget_by_wid(self, wid):
         """Walk up to root, then search all descendants for matching _wid."""

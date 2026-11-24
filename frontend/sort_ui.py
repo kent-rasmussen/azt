@@ -839,7 +839,8 @@ class SortPresenter(PresenterBase):
             while o is not None and not any(o is g for g in groups):
                 o = up(o)
             return next((i for i, g in enumerate(groups) if g is o), len(groups))
-        pa.add(key, gbf, pb.play_word, marker=marker)
+        pa.add(key, gbf, pb.play_word, marker=marker,
+               context=pb.play_phrase if pb.phrase_player else None)
 
     def _word_sound_node(self, program, sense):
         """The node whose sound IS the word on this page: the tone frame's
@@ -874,7 +875,8 @@ class SortPresenter(PresenterBase):
         marker=ui.Label(bf, text=' ', column=10, row=0, sticky='w')
         # A function, read at play: rows shift when a split inserts one.
         pa.add(lambda bf=bf,rc=(row,column):self._slot_key(bf,rc),
-               bf, pb.play_word, marker=marker)
+               bf, pb.play_word, marker=marker,
+               context=pb.play_phrase if pb.phrase_player else None)
 
     def build_verify_layout(self, runwindow, title, page_icon, instructions,
                            prog_text, img_mod, group,
@@ -1082,13 +1084,26 @@ class SortPresenter(PresenterBase):
                 # runwindow.frame is the shallowest widget whose width comes
                 # from the LAYOUT, and the all-1s case is what the <Configure>
                 # binding is for.
-                #   KNOWN IMPRECISION: the frame also holds the group-button
-                # column as a grid sibling (~200px), so this overestimates the
+                #   KNOWN IMPRECISION (until 2026-11-24, when `less` began
+                # taking it off): the frame also holds the group-button
+                # column as a grid sibling (~200px), so this overestimated the
                 # list's share by roughly that much. Deliberate — an over-wide
                 # label is visible and reportable, an under-wide one looks like
                 # a font bug and has cost days — and `reserve` is the dial.
+                #   THE ROW'S OWN CONTROLS COUNT TOO, AND THE GROUP COLUMN IS
+                # NOT THE LIST'S. Since the ▶/[▶] pair (2026-11-05) and the ×N
+                # same-word mark (2026-11-06) joined the word in each row, the
+                # content ran 2141px in a 1479px view with two columns (log
+                # 2026-11-24 09:21) and the right column's ×2 was cut off, so a
+                # set could neither be seen nor split (Kent, 2026-11-24). Both
+                # are now MEASURED rather than reserved: wrap_to_container takes
+                # each word's row-mates off its own budget (none on a page
+                # without them), and `less` takes off the page icon and group
+                # buttons beside the list (the "KNOWN IMPRECISION" below).
                 ui.wrap_to_container(runwindow.frame,cols=bc,reserve=96,
-                                targets_parent=buttonframe.content)
+                                targets_parent=buttonframe.content,
+                                less=lambda: self._beside_px(runwindow.frame,
+                                                             buttonframe))
                 # DIAG verify_wrap_container: WHICH widget has an honest width?
                 # Two guesses have now been wrong, and the second failed for a
                 # structural reason worth writing down: ScrollingFrame sizes its
@@ -1503,6 +1518,25 @@ class SortPresenter(PresenterBase):
     # them. `sameset` is the backend's (Sort.samesort_page): members, text,
     # join, split. Design: agenda/azt/verify_page_join_same_word.md.
 
+    @staticmethod
+    def _beside_px(frame, scroller):
+        """Width of `frame`'s grid columns other than the one(s) `scroller`
+        is in: what sits beside the list (page icon, group buttons). Their
+        widths come from their own contents, not the list's, so reading them
+        is not circular."""
+        info=scroller.grid_info()
+        first=int(info.get('column',0))
+        span=int(info.get('columnspan',1) or 1)
+        ncols,nrows=frame.grid_size()
+        total=0
+        for c in range(ncols):
+            if first<=c<first+span:
+                continue
+            bbox=frame.grid_bbox(c,0,c,max(nrows-1,0))
+            if bbox:
+                total+=bbox[2]
+        return total
+
     def _samesort_mark(self, entry):
         """Show, update or remove the row's ×N control: a button of its own,
         so a left click on the word still means "this one is different"."""
@@ -1587,7 +1621,9 @@ class SortPresenter(PresenterBase):
                     if pb.frame is not None and pb.can_play_word:
                         marker=ui.Label(line, text=' ', row=0, column=3,
                                         sticky='w')
-                        pa.add(r, line, pb.play_word, marker=marker)
+                        pa.add(r, line, pb.play_word, marker=marker,
+                               context=pb.play_phrase
+                                       if pb.phrase_player else None)
                 except Exception as e:
                     log.info("members list play buttons skipped: %s",e)
             b=ui.Button(line, text=_("Split off"), font='instructions',

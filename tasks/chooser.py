@@ -3,7 +3,7 @@ import sys
 import threading
 import time
 from frontend import ui
-from tasks.base import Task
+from tasks.base import Task, lexicon_kind, title_for_lexicon
 from tasks.tasks import (Sound, SortV,
     ExportData, AlphabetChart, AlphabetComparisonPages,
     ReportCitationBackground, ReportCitationMulticheckBackground,
@@ -17,7 +17,7 @@ from tasks.tasks import (Sound, SortV,
     SortSyllables, SortC, SortT, RecordCitationT,
     WordsParse, TranscribeV, TranscribeC, TranscribeT,
     JoinUFgroups, ReportConsultantCheck)
-from tasks.texts import TranscribeTexts
+from tasks.texts import TranscribeTexts, BackToMainLexicon
 from frontend.ui_shell import LiftChooser
 from utilities.utilities import sysrestart, sysshutdown, openweburl, nowruntime
 from utilities.i18n import _
@@ -131,10 +131,17 @@ class TaskChooser(Task):
         # OCCLUDED and its surface comes back blank and input-deaf. Apply the
         # proven XWayland rule — after mapping, DRAIN (update(), not
         # update_idletasks) so the surface commits.
-        try:
-            self.ui.update()
-        except Exception as e:
-            log.info("chooser post-deiconify drain: %s",e)
+        #   ONLY AFTER A VIEWER OPENED, the one case it was for. Done every
+        # time, the drain itself hung the app for good on the way back to the
+        # task list (py-spy, Kent 2026-11-24: idle in tkinter update() at this
+        # line, 0% CPU for 20 minutes) — the same update() deadlock that
+        # waitdone() already avoids ("update() here has deadlocked twice").
+        from utilities import utilities as _utilities
+        if _utilities.viewer_opened():
+            try:
+                self.ui.update()
+            except Exception as e:
+                log.info("chooser post-deiconify drain: %s",e)
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
@@ -220,7 +227,8 @@ class TaskChooser(Task):
                 if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
         else: # analysis
-            tasks=[WordsParse, TranscribeTexts]
+            # one or the other shows, by the lexicon open (TaskBase.lexicons)
+            tasks=[WordsParse, TranscribeTexts, BackToMainLexicon]
             if self.doneenough['sort']:
                 tasks.append(TranscribeV)
                 tasks.append(TranscribeC)
@@ -230,11 +238,16 @@ class TaskChooser(Task):
                 tasks.append(JoinUFgroups)
             if self.program.me:
                 tasks.append(ReportConsultantCheck)
+        # only the tasks for the lexicon that is open (TaskBase.lexicons)
+        kind=lexicon_kind(self.program)
+        tasks=[t for t in tasks if kind in getattr(t,'lexicons',('main','texts'))]
         tasktuples=[]
         photos=self.program.theme.photo
         for task in tasks:
             title=_(task.tasktitle) if task.tasktitle else _("Unnamed {name} Task ({type})"
                     ).format(name=self.program.name,type=task.__name__)
+            if getattr(task,'mark_texts',True):
+                title=title_for_lexicon(title,self.program)
             icon=photos.get(task.taskicon) if task.taskicon else None
             tasktuples.append((task,title,icon))
         log.info(_("Tasks available for \u2018{category}\u2019 ({count}): {tasks}").format(

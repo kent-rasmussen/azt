@@ -114,6 +114,17 @@ SWITCHES = [
         ('--gtk-theme=', 'NAME',
          "Force a GTK theme, to test whether a theme is causing flicker."),
         ]),
+    ("Texts", [
+        ('--segmenter=', 'NAME',
+         "How a new text recording is cut into clauses: silero (the "
+         "default; Silero VAD, if the silero-vad package is installed), "
+         "energy (pauses from loudness) or prosody (Silero's pauses, "
+         "less short ones the pitch carries on across, plus cuts where the "
+         "level dips and the pitch resets; needs parselmouth). One that "
+         "can't run falls back to energy. Either way every "
+         "detector that can run is also written to <recording>"
+         "_segments.TextGrid in the texts folder, a tier each, to compare."),
+        ]),
     ("Diagnostics", [
         ('--log-resizes', None,
          "Log every resize sample with the window's frame and client boxes. "

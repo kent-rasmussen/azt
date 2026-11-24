@@ -570,10 +570,24 @@ def iteratelistitem(l,item,val,circular=False):
         return (_("problem with iteration value type "
                 "({vtype}) or index type ({itype})").format(
                     vtype=type(val),itype=type(initindex)))
+_viewer_opened=False   # a viewer may now be over our windows (see viewer_opened)
+
+
+def viewer_opened():
+    """True once after open_file has handed a file to an outside viewer: the
+    chooser's one reason to drain the event loop on its way back
+    (tasks/chooser.py gettask), and only then."""
+    global _viewer_opened
+    was, _viewer_opened = _viewer_opened, False
+    return was
+
+
 def open_file(path):
     """Opens a file with the default application in a cross-platform way."""
     import subprocess, os, platform
-    
+    global _viewer_opened
+    _viewer_opened = True
+
     # Never BLOCK the UI thread on the viewer (2026-07-13): xdg-open can sit
     # on a desktop portal for a long time; Popen dispatches and returns.
     if platform.system() == 'Darwin':       # macOS

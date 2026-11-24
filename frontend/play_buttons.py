@@ -287,7 +287,12 @@ class PlayAll(object):
     THREADS: under webview `after()` runs on a timer thread, so a step and a
     Stop click can interleave. A generation counter retires every pending
     step on stop(), and one lock keeps a step from re-highlighting a row a
-    concurrent stop() just cleared."""
+    concurrent stop() just cleared.
+
+    WITH CONTEXT (Kent, 2026-11-23): a row added with `context` (its `[▶]`,
+    the word in its phrase) gets a second button beside the first, "Play all
+    with context", which plays that for each row instead (a row without one
+    plays its word)."""
     GAP_MS=400
 
     def __init__(self, header, scroller=None, alive=None, row=0, column=0,
@@ -298,8 +303,11 @@ class PlayAll(object):
         self.scroller=scroller
         self.alive=alive            # () -> bool: is the page still up?
         self._grid=dict(row=row,column=column,**gridkwargs)
-        self.rows=[]                # {'key','frame','marker','play'}
+        self.rows=[]                # {'key','frame','marker','play','context'}
         self.button=None
+        self.context_button=None    # "Play all with context", once a row has context
+        self._box=None              # the two buttons' frame, at the grid place given
+        self._mode='word'           # what the current run plays: 'word' or 'context'
         self._gen=0
         self._playing=False
         self._timer=None
@@ -308,12 +316,14 @@ class PlayAll(object):
         self._nrows=0
         self._lock=threading.RLock()
 
-    def add(self, key, frame, play, marker=None):
+    def add(self, key, frame, play, marker=None, context=None):
         """Register a row. `key` orders play (the verify page passes
         (row, column), i.e. reading order); `frame` is the row's widget —
         its existence is how a removed row is noticed, and it is what gets
         scrolled to and outlined; `play` returns a duration or None;
-        `marker` is a Label whose text shows PLAYING_MARK while playing.
+        `marker` is a Label whose text shows PLAYING_MARK while playing;
+        `context` plays the word in its phrase (duration or None), for "Play
+        all with context".
         `key` may be a function, read at start, for rows that move (the sort
         page's group buttons re-grid). A frame added again replaces its old
         row (a group button rebuilds its insides when its example changes),
@@ -324,19 +334,40 @@ class PlayAll(object):
             self.rows=[r for r in self.rows
                        if r['frame'] is not frame and self._exists(r['frame'])]
             self.rows.append({'key':key,'frame':frame,'marker':marker,
-                              'play':play})
+                              'play':play,'context':context})
         if self.button is None:
             self._make_button()
+        if context is not None and self.context_button is None:
+            self._make_context_button()
+
+    def _make_box(self):
+        if self._box is None:
+            self._box=ui.Frame(self.header, **self._grid)
+        return self._box
 
     def _make_button(self):
         try:
-            self.button=ui.Button(self.header, text=_("Play all"),
-                                  cmd=self.toggle, **self._grid)
+            self.button=ui.Button(self._make_box(), text=_("Play all"),
+                                  cmd=self.toggle, row=0, column=0,
+                                  sticky='w')
             ui.ToolTip(self.button,_("Play each word in turn, from the "
                                      "top; click again to stop"))
         except Exception as e:
             log.info("no play-all button (%s)",e)
             self.button=None
+
+    def _make_context_button(self):
+        try:
+            self.context_button=ui.Button(self._make_box(),
+                                  text=_("Play all with context"),
+                                  cmd=self.toggle_context, row=0, column=1,
+                                  sticky='w', padx=(5,0))
+            ui.ToolTip(self.context_button,_("Play each word in turn in its "
+                                     "phrase (up to a second each side), "
+                                     "from the top; click again to stop"))
+        except Exception as e:
+            log.info("no play-all-with-context button (%s)",e)
+            self.context_button=None
 
     @staticmethod
     def _exists(w):
@@ -362,7 +393,13 @@ class PlayAll(object):
         else:
             self.start()
 
-    def start(self):
+    def toggle_context(self, event=None):
+        if self._playing:
+            self.stop()
+        else:
+            self.start(mode='context')
+
+    def start(self, mode='word'):
         with self._lock:
             rows=sorted(self._live(),key=lambda r:(r['key']()
                                     if callable(r['key']) else r['key']))
@@ -372,10 +409,12 @@ class PlayAll(object):
             self._gen+=1
             gen=self._gen
             self._playing=True
+            self._mode=mode
             self._queue=rows
             self._nrows=len(self.rows)
             self._set_label(_("Stop"))
-        log.info("play-all: %d rows",len(rows))
+        log.info("play-all%s: %d rows",
+                 " with context" if mode=='context' else '',len(rows))
         self._step(gen,0)
 
     def _changed(self):
@@ -411,8 +450,11 @@ class PlayAll(object):
                     sc.see(row['frame'])
             except Exception as e:
                 log.info("play-all: couldn't scroll to row (%s)",e)
+            play=row['play']
+            if self._mode=='context' and row.get('context') is not None:
+                play=row['context']
             try:
-                duration=row['play']()
+                duration=play()
             except Exception as e:
                 log.info("play-all: row %s didn't play (%s)",row['key'],e)
                 duration=None
@@ -441,12 +483,17 @@ class PlayAll(object):
             if was:
                 if sound is not None:
                     sound.stop_playback()
-                self._set_label(_("Play all"))
+                self._set_label(None)
 
     def _set_label(self, text):
-        if self.button is not None and self._exists(self.button):
+        """The playing button reads `text` ("Stop"); None puts both back."""
+        playing=self.context_button if self._mode=='context' else self.button
+        for b,face in ((self.button,_("Play all")),
+                       (self.context_button,_("Play all with context"))):
+            if b is None or not self._exists(b):
+                continue
             try:
-                self.button['text']=text
+                b['text']=text if (text is not None and b is playing) else face
             except Exception as e:
                 log.info("play-all label not set (%s)",e)
 

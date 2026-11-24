@@ -1661,6 +1661,14 @@ class Sort(Categories):
             self._notprofile_advance=False
             self.buttonframe.reset_selected()
             return
+        # 'Resort this word/group' on a group button (sort_buttons.unsort_item)
+        # put that item on sort_next and closed the one on show, unsorted, so the
+        # resorted one is presented NOW (Kent, 2026-11-24: "keep attention on the
+        # one word"). The one it replaced is still to sort, and comes back.
+        if getattr(self,'_resort_advance',False):
+            self._resort_advance=False
+            self.buttonframe.reset_selected()
+            return
         # Syllable 'Other {profile class} profile' picker resolved to a real,
         # primitive-consistent profile P (ADR 0003 / the CV-group creation-and-merging item).
         # Mark the current word into P via the normal NEW-group path — NOT
@@ -1804,10 +1812,19 @@ class Sort(Categories):
             # log.info("Sort SBF done macrosort={macrosort}".format(macrosort=macrosort))
             """Stuff that changes by lexical entry
             The second frame, for the other two buttons, which also scroll"""
+            self.sort_next=[]   # items unsorted from a group on this page
             while current_list_fn():
                 if self.ui.runwindow.exitFlag.istrue():
                     return
-                item=self.presenttosort(current_list_fn()[0], macrosort=macrosort)
+                pending=current_list_fn()
+                # AN ITEM UNSORTED HERE COMES NEXT (Kent, 2026-11-24), after the
+                # one being answered: "Unsort this word/sort group" on a group
+                # button puts it on sort_next (sort_buttons.unsort_item).
+                nxt=next((i for i in self.sort_next if i in pending),None)
+                self.sort_next=[i for i in self.sort_next
+                                if i in pending and i is not nxt]
+                item=self.presenttosort(nxt if nxt is not None else pending[0],
+                                        macrosort=macrosort)
                 # log.info("presenttosort done")
                 if not self.ui.runwindow.exitFlag.istrue() and item is not None:
                     r=self.sortselected(item, macrosort=macrosort)

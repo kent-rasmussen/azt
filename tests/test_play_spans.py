@@ -292,6 +292,30 @@ def test_playall_plays_in_reading_order_on_durations(playall):
     assert t.pa.button['text'] == t.pb._("Play all")
 
 
+def test_play_all_with_context_plays_each_rows_phrase(monkeypatch):
+    """Kent, 2026-11-23: beside "Play all", "Play all with context" plays each word in its phrase; a row
+    with no phrase plays its word."""
+    pb = pytest.importorskip('frontend.play_buttons')
+    monkeypatch.setattr(pb, 'sound', types.SimpleNamespace(stop_playback=lambda: None))
+    pa = pb.PlayAll(FakeWidget())
+    pa.button, pa.context_button = FakeWidget(), FakeWidget()   # skip building real buttons
+    played = []
+    pa.add(0, FakeWidget(), lambda: played.append('word0') or 1.0,
+           context=lambda: played.append('phrase0') or 2.0)
+    pa.add(1, FakeWidget(), lambda: played.append('word1') or 1.0)
+    pa.toggle_context()
+    assert played == ['phrase0']
+    assert pa.context_button['text'] == pb._("Stop") and pa.button['text'] == pb._("Play all")
+    ms, fn = pa.button.scheduled[-1]                # the next step is timed on the first button
+    assert ms == 2000 + pa.GAP_MS
+    fn()
+    assert played == ['phrase0', 'word1']
+    pa.stop()
+    assert pa.context_button['text'] == pb._("Play all with context")
+    pa.toggle()                                     # plain "Play all" still plays the words
+    assert played[-1] == 'word0'
+
+
 def test_stop_retires_the_pending_step(playall):
     t = playall
     t.pa.start()

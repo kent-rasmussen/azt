@@ -202,6 +202,11 @@ class Theme(object):
             file.makedir(scaledalreadydir) #in case not there
         def mkimg(name,filename):
             imgurl = getattr(self.program,'aztdir',file.cwd()) / 'images' / filename
+            if not file.exists(imgurl):
+                # a missing file is a blank icon, not a failed start (webview
+                # already treats it so); theme.photo.get(name) then gives None
+                log.error(f"Image {name} not found at {imgurl}; its icon will be blank")
+                return
             # log.info("scale: {}".format(scale))
             # log.info(f"making image {name} ({filename}) with imgurl {imgurl}")
             if scale-1: #x != y:
@@ -2079,7 +2084,7 @@ def _floored_summary(attr):
             attr,d['n'],d['worst'],d['total'],d['sib'][0],d['sib'][1])
 _app_root = None  # the application's main themed ui.Root (set in Root.post_tk_init)
 def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
-                    targets_parent=None):
+                    targets_parent=None,less=None):
     """Keep descendant labels'/buttons' `wraplength` matched to the container's
     REAL width, recomputed on <Configure>.
 
@@ -2120,6 +2125,12 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
       * NO update()/update_idletasks() anywhere in here: this runs on Wayland,
         where a synchronous round-trip during a layout change is the documented
         deadlock (see the Wayland freeze audit).
+
+    `less` = a function giving the px of `container` that is NOT the targets'
+    to share, read on every pass: what sits beside them in its grid (the
+    verify page's group column, Kent 2026-11-24 — counting it as the list's
+    pushed the right column's ×2 past the view). A measured width, where
+    `reserve` can only be an estimate.
 
     Returns the apply function, so a caller that knows a build has finished can
     call it once more."""
@@ -2273,6 +2284,12 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
             return
         if width<=1: #not laid out yet; a later <Configure> will carry the size
             return
+        if less is not None:
+            try:
+                width=max(1,width-int(less() or 0))
+            except Exception as e:
+                log.log(2,"wrap: the width beside the targets is unavailable "
+                        "(%s); dividing the whole container",e)
         targets=[]
         _collect(targets_parent,targets)
         # ALSO WATCH THE TEXT. Width and target-count miss the case that matters
@@ -2479,12 +2496,27 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
             # is nonsense. That is what made rows render ~845px of text from a
             # 686px container with a 256px budget (Kent's DIAG, 2026-09-03):
             # the budget being reported was not the budget being applied.
+            #   THE ROW, NOT THE TARGET, IS WHAT SITS IN THAT GRID when the
+            # targets are wrapped inside `targets_parent` (the verify page: a
+            # word button inside its row frame inside the scroller's content).
+            # So the span is read from the target's ancestor directly under
+            # `targets_parent` (or `container`). The verify page's OK button
+            # spans every column through its nav frame, and read as span 1 it
+            # was squeezed into one column's share (Kent 2026-11-24).
+            row=t
             try:
                 span=1
-                if t.winfo_parent()==str(container):
-                    span=int(t.grid_info().get('columnspan',1) or 1)
+                grids={str(container),str(targets_parent)}
+                for _hop in range(maxdepth+1):
+                    if row.winfo_parent() in grids:
+                        span=int(row.grid_info().get('columnspan',1) or 1)
+                        break
+                    row=row.master
+                else:
+                    row=t
             except Exception:
                 span=1
+                row=t
             extra=reserve
             try:
                 if str(t.cget('compound')) in ('left','right'):
@@ -2493,6 +2525,25 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                         extra+=int(t.tk.call('image','width',im))
             except Exception:
                 pass
+            # WHAT SITS BESIDE IT IN ITS ROW, MEASURED: the verify row's ×N mark
+            # and ▶/[▶] pair (Kent 2026-11-24). reqwidth needs no mapping, so
+            # every row can be read, and a row without them costs nothing —
+            # where a fixed `reserve` for them took ~220px off every word on a
+            # page that had none, and a 3-column page wrapped every gloss.
+            # Not capped below: a measured width is not an estimate.
+            beside=0
+            try:
+                if row is not t and t.master is not None:
+                    for sib in t.master.winfo_children():
+                        if sib is t:
+                            continue
+                        try:
+                            if sib.winfo_manager()=='grid':
+                                beside+=sib.winfo_reqwidth()
+                        except Exception:
+                            continue
+            except Exception:
+                beside=0
             # RESERVE CANNOT DOMINATE THE CELL. `reserve` is a caller's estimate
             # of row chrome it cannot measure from where it stands, so on a
             # narrow or not-yet-settled container it can EXCEED the whole cell —
@@ -2538,7 +2589,7 @@ def wrap_to_container(container,cols=1,reserve=0,minimum=60,maxdepth=2,
                 # nothing but the window's own width.
                 budget=max(width-reserve,minimum)
             else:
-                budget=max(cell*span-extra,minimum)
+                budget=max(cell*span-extra-beside,minimum)
             try:
                 t.config(wraplength=0) #unwrapped: what does it actually want?
                 natural=t.winfo_reqwidth()

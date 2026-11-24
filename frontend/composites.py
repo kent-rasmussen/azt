@@ -194,6 +194,11 @@ def _cancel_on_click_away(event=None):
         return
     if _click_landed_inside(event, field):
         return
+    # Logged to diagnose fields that stop opening after a try or two (texts
+    # clause page, Kent 2026-11-23): a field closed by the very click that
+    # opened it shows here as "closed … by a click on <its own label>".
+    log.info("click-to-edit: closed %r by a click on %r", field.var.get(),
+             getattr(event, 'widget', None))
     close_open_field()
 
 
@@ -435,6 +440,8 @@ class ClickToEdit:
     def edit(self, event=None):
         """Show the editor in the label's place."""
         global _editing
+        log.info("click-to-edit: opening %r (another open: %s)",
+                 self.var.get(), _editing is not None and _editing is not self)
         # ONE AT A TIME. Opening this closes whatever else was open, so a
         # page never accumulates editors — see `close_open_field`.
         close_open_field(exceptfor=self)

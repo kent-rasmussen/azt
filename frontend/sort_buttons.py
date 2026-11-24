@@ -676,6 +676,123 @@ class _GroupButtonFrame(object):
                 'ipady',
                 'border',
                 ]
+    # ── Drag one group's button onto another's to join them ─────────────
+    # THE WHOLE BUTTON, BOTH ENDS (Kent, 2026-11-24): a drag used to start only
+    # from the word button inside a group's frame, and to land only on another
+    # one — a drag from, or a release on, the frame's border, picture, letter
+    # or cycle button did nothing ("landed on nothing that takes a drop", with
+    # the pointer inside the target's button). So every part is wired, each
+    # naming the same group.
+    @staticmethod
+    def join_parts(frame, skip=()):
+        """`frame`'s widgets, all the way down, except inside those in `skip`
+        (a letter's word buttons, which wire themselves)."""
+        out=[]
+        try:
+            kids=frame.winfo_children()
+        except Exception:
+            return out
+        for w in kids:
+            if any(w is s for s in skip):
+                continue
+            out.append(w)
+            out+=_GroupButtonFrame.join_parts(w)
+        return out
+    def join_dnd_on(self, widgets):
+        """Make each of `widgets` a drag source and a drop target for joining
+        this group. `dragthreshold` keeps a click a click: these buttons sort a
+        word on click, cycle on the refresh button, and may carry a right-click
+        menu, and the dnd layer otherwise starts the drag on ButtonPress."""
+        for w in widgets:
+            if getattr(w,'_join_wired',False):
+                continue    # the frame survives a cycle to the next example; its
+                            # handlers must not be bound twice
+            try:
+                w._join_wired=True
+                w.draggable=w.droppable=True
+                w.dragthreshold=8
+                w.draggable_bindings()
+                w.dnd_bindings()
+                w.joingroup=self.group
+                w.dnd_commit=lambda source,event,_self=self: \
+                    _self.join_dropped(source)
+            except Exception as e:
+                log.info("join drag-and-drop not on a part of %s (%s): %s",
+                         self.group,type(w).__name__,e)
+    def join_dropped(self, source):
+        """Something was dropped on this group's button: join its group into
+        this one. Dropping A onto B keeps B (Kent 2026-08-24): a deliberate drop
+        is the user's intent, which the segmental tiebreak only guesses at.
+        Syllable PROFILES still get `choose_join_direction` (join_groups)."""
+        other=getattr(source,'joingroup',None)
+        if not other or other==self.group:
+            return #dropped on itself, or on something that isn't a group
+        log.info("Drag-join: %s onto %s",other,self.group)
+        def repair():
+            # A is gone and B has grown: drop A's button and refresh B, rather
+            # than quitting the page (right for the join PAGE, whose job ends
+            # with the join) or rebuilding the whole frame. Kent 2026-08-24.
+            try:
+                bf=getattr(self,'buttonframe',None)
+                if isinstance(self,SortGlyphGroupButtonFrame):
+                    # a letter lists its words as built: rebuilt in its place
+                    self._rebuild_glyph_button(bf,self.group,other)
+                    return
+                exs=self.program.examples
+                for g in (other,self.group):
+                    exs.clear_cache(group=g) #both memberships changed
+                if bf is not None:
+                    bf.removegroupbutton(other)
+                self.refresh()
+            except Exception as e:
+                log.info("drag-join repair failed: %s",e)
+        self.task.join_groups([other,self.group],
+                              macrosort=self._page_macrosort(),
+                              keep=self.group, on_done=repair)
+    def _page_macrosort(self):
+        """Is this group on a macrosort page? The page's SortButtonFrame knows;
+        a word button's parent is only the inner frame that holds the buttons.
+        Read from the parent alone, a drag-join on the macrosort page ran as an
+        ordinary one and looked for the group under the current check only
+        ('No senses for V2=ee'), so it moved nothing and both groups stayed
+        (Kent, 2026-11-24). So: the page frame, else the first ancestor that
+        says."""
+        bf=getattr(self,'buttonframe',None)
+        if bf is not None and hasattr(bf,'macrosort'):
+            return bool(bf.macrosort)
+        w=getattr(self,'parent',None)
+        for _hop in range(8):
+            if w is None:
+                break
+            if hasattr(w,'macrosort'):
+                return bool(w.macrosort)
+            w=getattr(w,'parent',None) or getattr(w,'master',None)
+        return bool(getattr(self,'macrosort',False))
+    @staticmethod
+    def _rebuild_glyph_button(bf,keep,gone):
+        """After a drag-join on the macrosort page: remove letter `gone`'s
+        button, and rebuild letter `keep`'s where it was (its words now include
+        `gone`'s), with the word being sorted handed to it again."""
+        if bf is None:
+            log.info("drag-join repair: no page frame to update")
+            return
+        if gone is not None:    # None: only `keep` changed (an item unsorted)
+            bf.removegroupbutton(gone)
+        at=next((i for i,b in enumerate(bf.groupbuttonlist) if b.group==keep),
+                None)
+        bf.removegroupbutton(keep)
+        bf.addgroupbutton(keep)
+        if at is not None and bf.groupbuttonlist and \
+                bf.groupbuttonlist[-1].group==keep:
+            bf.groupbuttonlist.insert(at,bf.groupbuttonlist.pop())
+            bf.regrid_group_buttons()
+        canary=getattr(bf,'sortitem',None)
+        if canary is not None:
+            try:
+                bf.set_canary(canary)
+            except Exception as e:
+                log.info("drag-join repair: word to sort not handed on (%s)",e)
+        log.info("drag-join repair: glyph %s removed, %s rebuilt",gone,keep)
     def check_segments_row(self,parent,check,profile,**gridkwargs):
         """The profile on ONE line with the check's own segment(s) bold+underlined
         — C**V**CC for V1 on CVCC, **C**V**C**V for C1=C2 on CVCV — or None when
@@ -804,6 +921,69 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
     def unsort(self):
         self.task.removeitemfromgroup(self._sense,sorting=False)
         self.refresh()
+    def unsort_item(self):
+        """Right-click → "Unsort this item", on the sort page (Kent, 2026-11-24).
+        The ITEM is what this button shows as a member of its group:
+          - on the macrosort page, a sort group (this word stands for it) in a
+            letter: it leaves the letter and is marked to macrosort again
+            (alphabet.remove_item_from_glyph, as a click on the macrosort
+            verify page does); the letter's button is rebuilt without it;
+          - otherwise, the word itself: it leaves this group and is marked to
+            sort again (removeitemfromgroup, with this button's own group and
+            check — not the page's current ones, which it defaults to).
+        It is presented AT ONCE (Kent, 2026-11-24: "keep attention on the one
+        word"): put first on the sort loop's `sort_next`, and the item on show
+        closed unsorted (`_resort_advance`, Sort.sortselected), so the loop
+        presents it now; the one it replaced is still to sort."""
+        glyph=self.parent if isinstance(self.parent,SortGlyphGroupButtonFrame) \
+            else None
+        def up_next(item):
+            task=self.task
+            try:
+                task.sort_next=[item]+[i for i in
+                        getattr(task,'sort_next',[]) if i!=item]
+            except Exception as e:
+                log.info("resorted item not put next (%s); it comes up in turn",
+                         e)
+                return
+            shown=getattr(task,'sortitem',None)
+            try:
+                if shown is not None and shown.winfo_exists():
+                    task._resort_advance=True
+                    shown.destroy()   # ends the wait on it: the loop moves on
+            except Exception as e:
+                task._resort_advance=False
+                log.info("couldn't present the resorted item now (%s); it "
+                         "comes up next",e)
+        if glyph is not None:
+            code=getattr(self,'code',None)
+            log.info("Unsort item %s from letter %s",code,glyph.group)
+            self.program.alphabet.remove_item_from_glyph(code,glyph.group)
+            self.program.alphabet.save_settings()
+            bf=getattr(glyph,'buttonframe',None)
+            self._rebuild_glyph_button(bf,glyph.group,None)
+            up_next(code)   # last: it closes the item on show
+            return
+        if self._sense is None:
+            return
+        log.info("Unsort item %s from %s=%s",self._sense.id,self.check,
+                 self.group)
+        self.task.removeitemfromgroup(self._sense,group=self.group,
+                                      check=self.check,
+                                      profile=self.kwargs.get('profile'),
+                                      sorting=True)
+        sense=self._sense
+        self.program.examples.clear_cache(group=self.group,check=self.check)
+        self.updatecount()
+        if self._n.get()<1:
+            bf=getattr(self,'buttonframe',None)
+            if bf is not None:
+                bf.removegroupbutton(self.group)
+        else:
+            self.kwargs['renew']=True   # show another member, as a cycle does
+            self.getexample(**self.kwargs)
+            self.again()
+        up_next(sense)   # last: it closes the item on show
     def setcanary(self,canary):
         if canary.winfo_exists():
             self.canary=canary
@@ -851,7 +1031,6 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if self.kwargs['unsortable']:
             self.unsortbutton()
         self.maybe_reverify_menu()
-        self.maybe_join_dnd()
         self.makerefreshbutton()
         if (self.check and self.kwargs.get('show_check') and
             not isinstance(self.parent, SortGlyphGroupButtonFrame)):
@@ -862,6 +1041,8 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             self.program.sort_ui.group_play_buttons(self)
         except Exception as e:
             log.info("group play buttons skipped for %s: %s",self.group,e)
+        # LAST, so every part of the button is there to take the drag
+        self.maybe_join_dnd()
     def maybe_reverify_menu(self):
         """Right-click → reverify THIS group. Only on the pages that show a group
         the user may need to fix BEFORE they can answer the page's question: the
@@ -872,7 +1053,12 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         group is the ANSWER rather than the subject. Kent 2026-07-28: previously
         only reachable through Advanced → Reverify current group, which acts on
         whatever group happens to be current."""
-        if not self.kwargs.get('reverifiable'):
+        # …AND "Unsort this item" on the sort page (Kent, 2026-11-24), the one
+        # place a group's member couldn't be sent back. The sort page is where
+        # group buttons are joinable and don't remove on click.
+        unsortable=(self.kwargs.get('joinable')
+                    and not self.kwargs.get('remove_on_click'))
+        if not self.kwargs.get('reverifiable') and not unsortable:
             return
         w=getattr(self,'_display',None)
         if w is None:
@@ -884,8 +1070,18 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                                     check=self.check,
                                     ps=self.kwargs.get('ps'),
                                     profile=self.kwargs.get('profile'))
-        items=[(_("Reverify this group (‘{group}’)").format(group=self.group),
-                    reverify)]
+        items=[]
+        if self.kwargs.get('reverifiable'):
+            items.append((_("Reverify this group (‘{group}’)").format(
+                                                group=self.group), reverify))
+        if unsortable:
+            # SAYS WHICH (Kent, 2026-11-24): on the macrosort page the item is a
+            # SORT GROUP (this word stands for it), elsewhere the WORD itself
+            if isinstance(self.parent,SortGlyphGroupButtonFrame):
+                label=_("Resort this group")
+            else:
+                label=_("Resort this word")
+            items.append((label, self.unsort_item))
         praat=getattr(self,'_praat',None)
         if praat is not None and getattr(self,'_display',None) is w:
             # One right-click, one owner: Praat's binding on this play button
@@ -896,54 +1092,18 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self.program.sort_ui.attach_context_menu(w, items)
     def maybe_join_dnd(self):
         """Drag one group button onto another to JOIN the two (Kent 2026-08-24).
-
-        Dropping A onto B keeps B (Kent 2026-08-24): the segmental tiebreak
-        exists only because there was never a way to know the user's intent, and
-        a deliberate drop IS that intent. Syllable PROFILES still get
-        `choose_join_direction` regardless — there one direction corrupts real
-        data, so the drop opens the question rather than answering it.
-
-        `dragthreshold` is what makes this safe on these buttons: they already
-        sort a word into the group on click and may carry a right-click menu, and
-        the dnd layer otherwise starts the drag on ButtonPress and eats both."""
-        w=getattr(self,'_display',None)
-        if not self.kwargs.get('joinable') or w is None:
+        THE WHOLE BUTTON takes the drag, not just the word in it (Kent,
+        2026-11-24: grabbing the inner word button "has been a hard thing"):
+        every part of this frame, wired by _GroupButtonFrame.join_dnd_on. On the
+        macrosort page the group is the LETTER whose button this word is in, so
+        that is the owner (its own frame, letter and cycle button are wired when
+        it is built: SortGlyphGroupButtonFrame.__init__)."""
+        if not self.kwargs.get('joinable'):
             return
-        try:
-            w.draggable=w.droppable=True
-            w.dragthreshold=8
-            w.draggable_bindings()
-            w.dnd_bindings()
-            w.joingroup=self.group
-            w.groupframe=self
-            def dnd_commit(source,event,target=w):
-                other=getattr(source,'joingroup',None)
-                if not other or other==target.joingroup:
-                    return #dropped on itself, or on something that isn't a group
-                log.info("Drag-join: %s onto %s",other,target.joingroup)
-                def repair():
-                    # A is gone and B has grown: drop A's button and refresh B,
-                    # rather than quitting the page (which is right for the join
-                    # PAGE, whose job ends with the join) or rebuilding the whole
-                    # frame. Kent 2026-08-24.
-                    try:
-                        exs=self.program.examples
-                        for g in (other,target.joingroup):
-                            exs.clear_cache(group=g) #both memberships changed
-                        bf=getattr(self,'buttonframe',None)
-                        if bf is not None:
-                            bf.removegroupbutton(other)
-                        self.refresh()
-                    except Exception as e:
-                        log.info("drag-join repair failed: %s",e)
-                self.task.join_groups([other,target.joingroup],
-                            macrosort=bool(getattr(self.parent,'macrosort',
-                                        getattr(self,'macrosort',False))),
-                            keep=target.joingroup,
-                            on_done=repair)
-            w.dnd_commit=dnd_commit
-        except Exception as e:
-            log.info("join drag-and-drop skipped for %s: %s",self.group,e)
+        glyph=self.parent if isinstance(self.parent,SortGlyphGroupButtonFrame) \
+            else None
+        (glyph if glyph is not None else self).join_dnd_on(
+                                    [self]+self.join_parts(self))
     """buttons"""
     def labelbutton(self):
         # 'nsew', matching `playbutton` — the three ways of showing the word
@@ -1454,4 +1614,8 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if self.items:
             self.updatecount()
             self.show_one()
+        if kwargs.get('joinable'):
+            # the letter's own parts (its frame, the letter, its cycle button);
+            # its word buttons wire themselves to it (maybe_join_dnd)
+            self.join_dnd_on([self]+self.join_parts(self,skip=self.items))
         log.info(_("Built SortGlyphGroupButtonFrame for {group}").format(group=self.group))

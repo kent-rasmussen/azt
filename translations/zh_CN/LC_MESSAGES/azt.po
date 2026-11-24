@@ -11043,3 +11043,45 @@ msgstr "不包括这些词，继续"
 #, fuzzy, python-brace-format
 msgid "…and {n} more"
 msgstr "……还有 {n} 个"
+
+# A task title, marked when the word lexicon of the project's texts is open.
+#, fuzzy, python-brace-format
+msgid "{title} — text words"
+msgstr "{title} — 文本词"
+
+# Tooltip of the "Back to the main lexicon" button on the task list.
+#, fuzzy
+msgid "Close the word lexicon of the texts, and open the project's own lexicon again."
+msgstr "关闭文本词库，重新打开项目自己的词库。"
+
+#, fuzzy
+msgid "Split into:"
+msgstr "拆分为："
+
+#, fuzzy, python-brace-format
+msgid "Couldn’t find {n} clauses in this one: try fewer."
+msgstr "在这一句中找不到 {n} 个分句：请试更少的数目。"
+
+#, fuzzy, python-brace-format
+msgid "Clause {k} as {n} clauses"
+msgstr "第 {k} 句拆为 {n} 个分句"
+
+#, fuzzy, python-brace-format
+msgid "Way {i} of {m}: listen to each; record it said again carefully if you like."
+msgstr "第 {i} 种拆法（共 {m} 种）：逐个收听；如愿意，可录下仔细重说的版本。"
+
+#, fuzzy
+msgid "Split it"
+msgstr "拆分"
+
+#, fuzzy
+msgid "Another way"
+msgstr "换一种拆法"
+
+#, fuzzy
+msgid "Say this clause again, carefully: press, speak, release"
+msgstr "仔细地再说一遍这句：按住、说话、松开"
+
+#, fuzzy
+msgid "Hear the careful take"
+msgstr "收听仔细重说的录音"

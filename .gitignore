@@ -9,6 +9,7 @@ userlogs/*
 test*wav
 test.py
 translations_test/
+translations/drafts/
 excess/
 images/archive
 images/scaled

@@ -80,15 +80,38 @@ def recording_name(text, audiodir):
     return os.path.relpath(os.path.abspath(text.path()), os.path.abspath(str(audiodir))).replace(os.sep, '/')
 
 
-def text_phrases(text):
+def text_phrases(text, audiodir=None):
     """[{'guid', 'text', 'begin_ms', 'end_ms', 'words': [(guid, form, begin_ms, end_ms)]}] of a texts.Text.
-    A phrase's text is its final transcription if it has one, else its words joined by spaces."""
+    A phrase's text is its final transcription if it has one, else its words joined by spaces. A phrase whose
+    words were timed in its careful take has 'take': that file, relative to `audiodir` (the lexicon's folder;
+    default the texts folder, where take names start): its words and its example play from it."""
     out = []
     for p in text.phrases():
         words = p.words()
-        out.append({'guid': p.guid, 'text': p.final() or ' '.join(form for _g, form, _b, _e in words),
-                    'begin_ms': p.begin_ms, 'end_ms': p.end_ms, 'words': words})
+        phrase = {'guid': p.guid, 'text': p.final() or ' '.join(form for _g, form, _b, _e in words),
+                  'begin_ms': p.begin_ms, 'end_ms': p.end_ms, 'words': words}
+        take = p.words_audio()
+        if take:
+            if audiodir is not None:
+                full = os.path.join(text.db.project_dir, texts.TEXTS_FOLDER, *take.split('/'))
+                take = os.path.relpath(os.path.abspath(full), os.path.abspath(str(audiodir))).replace(os.sep, '/')
+            phrase['take'] = take
+        out.append(phrase)
     return out
+
+
+def _word_audio(phrase, recording, begin_ms, end_ms):
+    """A word's audio form: its span of the clause's take, if its words were timed there, else of the
+    recording; None without times."""
+    if begin_ms is None or end_ms is None:
+        return None
+    return _fragment(phrase.get('take') or recording, begin_ms, end_ms)
+
+
+def _example_audio(phrase, recording):
+    """The clause's audio form: its whole take, if its words were timed there, else its span of the
+    recording."""
+    return phrase.get('take') or _fragment(recording, phrase['begin_ms'], phrase['end_ms'])
 
 
 def word_count(phrases):
@@ -151,7 +174,7 @@ def _update(entry, phrase, word, recording, analang, audiolang, now):
         entry.insert(0, citation)
     if _key(_put(citation, analang, form)) != _key(form):
         changed.add('spelling')
-    audio = _fragment(recording, begin_ms, end_ms) if begin_ms is not None and end_ms is not None else None
+    audio = _word_audio(phrase, recording, begin_ms, end_ms)
     old = _put(citation, audiolang, audio)
     if _times(old) != _times(audio):
         changed.add('times')
@@ -164,7 +187,7 @@ def _update(entry, phrase, word, recording, analang, audiolang, now):
         if _put(ex, analang, phrase['text']) != phrase['text'] or trait.get('value') != phrase['guid']:
             changed.add('phrase')
         trait.set('value', phrase['guid'])
-        span = _fragment(recording, phrase['begin_ms'], phrase['end_ms'])
+        span = _example_audio(phrase, recording)
         old = _put(ex, audiolang, span)
         if _times(old) != _times(span):
             changed.add('phrase')
@@ -252,15 +275,16 @@ def make_lexicon(path, phrases, recording, analang, audiolang=None, known=None):
         entry = ET.SubElement(root, 'entry', {'dateCreated': now, 'dateModified': now, 'guid': guid, 'id': guid})
         citation = ET.SubElement(entry, 'citation')
         _form(citation, analang, form)
-        if begin_ms is not None and end_ms is not None:
-            _form(citation, audiolang, _fragment(recording, begin_ms, end_ms))
+        audio = _word_audio(phrase, recording, begin_ms, end_ms)
+        if audio:
+            _form(citation, audiolang, audio)
         else:
             untimed += 1
         sense = ET.SubElement(entry, 'sense', {'id': str(uuid.uuid4())})
         ET.SubElement(sense, 'grammatical-info', {'value': PS})
         example = ET.SubElement(sense, 'example')
         _form(example, analang, phrase['text'])
-        _form(example, audiolang, _fragment(recording, phrase['begin_ms'], phrase['end_ms']))
+        _form(example, audiolang, _example_audio(phrase, recording))
         ET.SubElement(example, 'trait', {'name': lift.PHRASE_TRAIT, 'value': phrase['guid']})
         set_id = set_ids.get(_key(form))
         if set_id:
@@ -282,6 +306,60 @@ def make_lexicon(path, phrases, recording, analang, audiolang=None, known=None):
     log.info(f"word lexicon {path}: {result['added']} entries added ({untimed} without times); of {existing} "
              f"already there, {updated} updated ({unverified} to verify again), {len(removed)} removed "
              f"(no longer in the texts)")
+    return result
+
+
+def texts_from_lexicon(path, db, analang):
+    """THE ROUND TRIP (Kent, 2026-11-23): sorting corrects the texts. Each word whose entry in the word lexicon
+    at `path` now has another spelling (its citation form in `analang`) is respelled in the texts file `db`
+    (texts.TextsDB; not saved here), and its clause's transcription is made again from its words:
+      - a clause the person transcribed: its words are its transcription's tokens (Parse finds them so, and
+        "Sort words from these texts" brings them up to date first: Text.sync_words), so the words joined, as
+        sorting left them, are the transcription with the corrections. If its tokens aren't its words (the
+        transcription was edited since, and not sorted since) NOTHING in that clause is changed, and it is
+        listed as a conflict: changing the words alone would be undone, as Parse makes them from the
+        transcription;
+      - a clause not transcribed yet is given its words, respelled, as its transcription: the corrections are
+        the person's, and "Parse" makes words from a transcription, not from the models, so they stay.
+    Word guids and times don't change, so the next "Sort words from these texts" finds every entry already
+    saying what its word does (no spelling change: nothing to verify again). Returns {'words' (respelled),
+    'clauses' (changed), 'conflicts': [(text title, clause number)]}."""
+    result = {'words': 0, 'clauses': 0, 'conflicts': []}
+    if not os.path.exists(path):
+        return result
+    forms = {}
+    for entry in ET.parse(path).getroot().findall('entry'):
+        form = entry.findtext(f"citation/form[@lang='{analang}']/text")
+        if form and form.strip():
+            forms[entry.get('guid')] = form.strip()
+    for text in db.texts():
+        for phrase in text.phrases():
+            nodes = phrase.node.findall('words/word')
+            old = [w.findtext("item[@type='txt']") or '' for w in nodes]
+            new = [forms.get(w.get('guid'), o) for w, o in zip(nodes, old)]
+            changed = [i for i, (o, n) in enumerate(zip(old, new)) if _key(o) != _key(n)]
+            if not changed:
+                continue
+            final = phrase.final()
+            # its tokens, each put back from its word (form + punctuation + case): the transcription, if the
+            # words are its words
+            as_is = [texts.word_token(w) for w in nodes]
+            if final and [_key(t) for t in texts.transcription_tokens(final)] != [_key(t) for t in as_is]:
+                result['conflicts'].append((text.title, phrase.number))
+                log.info(f"text '{text.title}' clause {phrase.number}: sorting respelled "
+                         f"{[(old[i], new[i]) for i in changed]}, but its transcription '{final}' isn't its "
+                         f"words {as_is}; nothing changed there")
+                continue
+            phrase.set_final(' '.join(texts.word_token(w, n) for w, n in zip(nodes, new)))
+            for i in changed:
+                item = nodes[i].find("item[@type='txt']")
+                if item is None:
+                    item = ET.SubElement(nodes[i], 'item', {'type': 'txt', 'lang': text.lang})
+                item.text = new[i]
+            result['words'] += len(changed)
+            result['clauses'] += 1
+    log.info(f"texts from the word lexicon {path}: {result['words']} words respelled in {result['clauses']} "
+             f"clauses; {len(result['conflicts'])} clauses left as they were (transcription doesn't match)")
     return result
 
 
@@ -326,7 +404,7 @@ def make_texts_lexicon(path, text_list, audiodir, analang, audiolang=None, all_t
     phrases = []
     for text in text_list:
         recording = recording_name(text, audiodir)
-        phrases += [dict(p, recording=recording) for p in text_phrases(text)]
+        phrases += [dict(p, recording=recording) for p in text_phrases(text, audiodir)]
     if not word_count(phrases):
         return None
     known = {w[0] for text in (all_texts or ()) for p in text.phrases() for w in p.words()}

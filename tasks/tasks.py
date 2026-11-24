@@ -467,6 +467,7 @@ class WordCollectionCitationwRecordings(WordCollectionwRecordings,Task):
         return _("This task helps you collect words in citation form through "
                 "recordings with automatic transcription drafts.")
     tasktitle = N_("Add Words with Audio") # for Citation Forms
+    lexicons = ('main',) # words are added to the project's lexicon, not the texts' (Kent, 2026-11-20)
     def __init__(self, **kwargs): #frame, filename=None
         super().__init__(**kwargs)
         log.info("Initializing {}".format(_(self.tasktitle)))
@@ -543,6 +544,7 @@ class WordCollectnParse(Parse,WordCollection,Task):
                 'tttext':tttext
                 }
     tasktitle = N_("Add and Parse Words") # for Citation Forms
+    lexicons = ('main',) # as Add Words with Audio
     def __init__(self, program, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
         # `self.ftype=program.params.ftype('lc')` was here, BEFORE super() so
@@ -588,6 +590,7 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
                 'tttext':tttext
                 }
     tasktitle = N_("Add and Parse Words with Audio") # for Citation Forms
+    lexicons = ('main',) # as Add Words with Audio
     def __init__(self, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
         super().__init__(**kwargs)

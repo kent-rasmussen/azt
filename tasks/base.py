@@ -4,6 +4,20 @@ from utilities import logsetup
 log=logsetup.getlog(__name__)
 from backend.core.lexicon import Tone, Segments #for makecvtok
 
+def lexicon_kind(program):
+    """'texts' while the word lexicon of the project's texts is open (App.use_lexicon set
+    program.lexicon_filename), else 'main' (the project's own LIFT)."""
+    return 'texts' if getattr(program, 'lexicon_filename', None) else 'main'
+
+
+def title_for_lexicon(title, program):
+    """A task's title, marked when it works on the texts' words, so sorting text data never looks like
+    sorting the main lexicon (Kent, 2026-11-20). One marker for every task, so it reads the same everywhere."""
+    if lexicon_kind(program) == 'texts':
+        return _("{title} — text words").format(title=title)
+    return title
+
+
 class TaskBase:
     """Pure logic base for tasks. No window, no UI dependency.
 
@@ -12,6 +26,10 @@ class TaskBase:
     (the TaskWindow) via __getattr__, so backend mixins can call
     window methods transparently.
     """
+    # WHICH LEXICONS THE CHOOSER OFFERS THIS TASK FOR (Kent, 2026-11-20): 'main' (the project's LIFT) and/or
+    # 'texts' (the word lexicon of its texts; lexicon_kind). Both unless a class says otherwise, so a task is
+    # never lost by default; Add Words and Transcribe Texts are main only. Reports: undecided, both for now.
+    lexicons=('main','texts')
     is_chooser=False
     is_report=False
     is_record_task=False

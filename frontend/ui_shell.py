@@ -1073,7 +1073,9 @@ class StatusFrame(ui.Frame):
             template_fn=self.glosslangtemplate)
     def updatefields(self):
         for ps in [self.program.settings.nominalps, self.program.settings.verbalps]:
-            if 'fields'+ps in self.labels:
+            # unset (None) on a lexicon with no POS yet, e.g. the text-word
+            # lexicon (Kent, 2026-11-21): it has no fields label either
+            if ps and 'fields'+ps in self.labels:
                 self.labels['fields'+ps]['text'].set(self.fieldsvalue(ps))
     def fieldslabel(self,ps):
         return (_("Using second form field ‘{field}’ ({ps})").format(
@@ -3315,13 +3317,17 @@ class TaskDressing(HasMenus,ui.Window):
         if task is not None and task is not self:
             task.setcontext()
     def _tasktitle(self):
+        # marked when the texts' word lexicon is open (Kent, 2026-11-20)
+        from tasks.base import title_for_lexicon
         if callable(self.task.tasktitle):
-            return self.task.tasktitle()
-        if self.task.tasktitle:
-            return _(self.task.tasktitle)
-        return _("Unnamed {name} Task ({type})").format(
+            title=self.task.tasktitle()
+        elif self.task.tasktitle:
+            title=_(self.task.tasktitle)
+        else:
+            title=_("Unnamed {name} Task ({type})").format(
                                 name=self.program.name,
                                 type=type(self.task).__name__)
+        return title_for_lexicon(title,self.program)
     def maketitle(self):
         title=_("{name} Dictionary and Orthography Checker: {task}").format(
                                             name=self.program.name,task=self._tasktitle())

@@ -434,7 +434,7 @@ class CollabSession:
             log.info(f"lan_peer_sync probe: {e}") # keep the last answer
         return self._peers_known
 
-    def ambient_status(self, st=None):
+    def ambient_status(self, st=None, probe=True):
         """One short phrase for ambient display (the title bar). Reports
         the TWO channels SEPARATELY — ``WAN:✓ LAN:✓`` (Kent 2026-07-27):
         a single tick can't say WHICH kind of up-to-date this is, and
@@ -452,7 +452,9 @@ class CollabSession:
           shared WITH, which is not the same as being shared
 
         Pass *st* to reuse the tick's ProjectStatus (§ 17c rule 4: one
-        ``project_status`` per UI event). Never raises."""
+        ``project_status`` per UI event). ``probe=False`` reads the LAN-peer
+        answer from its cache only, never an RPC — for the Tk thread, whose
+        caller refreshes the cache in its worker. Never raises."""
         if self.degraded:
             return _("saving locally — server unreachable")
         if st is None:
@@ -468,7 +470,7 @@ class CollabSession:
             wan_txt = '✓'
         else:
             wan_txt = '0⋯'
-        if not self._lan_has_peers():
+        if not (self._lan_has_peers() if probe else self._peers_known):
             lan_txt = '—'
         else:
             lan = getattr(st, 'lan_unshared', 0) or 0
@@ -838,11 +840,20 @@ class CollabSession:
 
     def commit_artifacts(self):
         """Debounced whole-tree commit for non-LIFT changes (settings
-        JSONs, audio, chart adds). Cheap; call at task boundaries."""
-        try:
-            _client.commit_project(self.langcode)
-        except Exception as e:
-            log.info(f"commit_artifacts: {e}")
+        JSONs, audio, chart adds). Cheap; call at task boundaries.
+
+        Runs in a background thread: callers are Tk handlers (a record
+        button's release), and the RPC blocks until the daemon answers —
+        up to 300 s × 3 attempts when it's wedged, which froze the whole
+        UI (py-spy, Kent 2026-11-21). Nothing reads the result."""
+        import threading
+
+        def work():
+            try:
+                _client.commit_project(self.langcode)
+            except Exception as e:
+                log.info(f"commit_artifacts: {e}")
+        threading.Thread(target=work, name='commit_artifacts', daemon=True).start()
 
     def shutdown_sync(self):
         """Replaces the legacy shutdown ``share()``: one commit of any

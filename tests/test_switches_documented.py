@@ -26,7 +26,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # `_switch_value`; the rest test `sys.argv` directly.
 SOURCES = ('main.py', 'utilities/ui_backend.py', 'utilities/duplicates.py',
            'utilities/utilities.py', 'utilities/restartmark.py',
-           'frontend/ui_webview.py', 'frontend/ui_shell.py')
+           'frontend/ui_webview.py', 'frontend/ui_shell.py',
+           'backend/core/texts.py')   # --segmenter= (texts.segmenter_switch)
 
 # Switches that exist but are NOT the user's to type, so they stay out of the
 # list on purpose. Keep this short and say why for each.

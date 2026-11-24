@@ -53,6 +53,10 @@ IMAGELIST = [
     ('iconTRep', 'T Report_icon.png'),
     ('iconCVRep', 'ZA Report_icon.png'),
     ('iconTranscribe', 'Transcribe Tone_icon.png'),
+    # Transcribe Texts: on the page of text, the microphone above the ZAZA
+    # letters with an arrow between — speech in, letters out (Kent,
+    # 2026-11-20); made by images/compose_text_rec_icon.py
+    ('iconTextRec', 'ZA Report Rec_icon.png'),
     ('iconTranscribeC', 'Consonant Choice_icon.png'),
     ('iconTranscribeV', 'Vowel Choice_icon.png'),
     ('iconJoinUF', 'Join Tone_icon.png'),
@@ -91,6 +95,7 @@ IMAGELIST = [
     ('TRep', 'T Report.png'),
     ('CVRep', 'ZA Report.png'),
     ('Transcribe', 'Transcribe Tone.png'),
+    ('TextRec', 'ZA Report Rec.png'),
     ('TranscribeC', 'Consonant Choice.png'),
     ('TranscribeV', 'Vowel Choice.png'),
     ('JoinUF', 'Join Tone.png'),

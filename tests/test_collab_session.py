@@ -334,6 +334,18 @@ def test_ambient_appends_stale_note(session):
                                  main_merged=True)
 
 
+def test_ambient_without_probe_reads_only_the_cache(session):
+    """The Tk-thread title tail passes probe=False: a stale cache must NOT
+    trigger the lan_peer_sync RPC there (it froze the UI on a wedged daemon,
+    2026-11-21)."""
+    session._peers_checked_at = 0.0     # stale: a probing call WOULD ask
+    session._peers_known = True
+    session._lan_has_peers = lambda: pytest.fail('probed on the Tk thread')
+    assert session.ambient_status(st=types.SimpleNamespace(
+        wan_unshared=0, lan_unshared=0, main_merged=True),
+        probe=False) == 'WAN:✓ LAN:✓'
+
+
 def test_ambient_degraded_short_circuits(session):
     session.degraded = True
     # No status call at all on the stub client → would AttributeError.

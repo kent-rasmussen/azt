@@ -1963,7 +1963,8 @@ let _dragSourceWid = null;
 
 function makeDraggable(wid) {
     const el = _widgets.get(wid);
-    if (!el) return;
+    if (!el || el.dataset.wvDrag) return;   // once: a second set would fire twice
+    el.dataset.wvDrag = '1';
     el.draggable = true;
     el.style.cursor = 'grab';
 
@@ -1977,7 +1978,11 @@ function makeDraggable(wid) {
     // dragged, solid on the target it is over (~/.claude-sil/CLAUDE.md:
     // colour may accompany meaning, never carry it). `outline` rather than
     // `border` so nothing reflows when it appears.
+    // STOPPED HERE, every drag event: a sort group's whole button is draggable
+    // and droppable part by part (Kent, 2026-11-24), so these elements nest,
+    // and a bubbling drop would join once per enclosing part.
     el.addEventListener('dragstart', (e) => {
+        e.stopPropagation();
         _dragSourceWid = wid;
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', String(wid));
@@ -1989,6 +1994,7 @@ function makeDraggable(wid) {
     });
 
     el.addEventListener('dragend', (e) => {
+        e.stopPropagation();
         el.classList.remove('wv-dragging');
         document.querySelectorAll('.wv-drop-target').forEach(
             d => d.classList.remove('wv-drop-target'));
@@ -2001,30 +2007,36 @@ function makeDraggable(wid) {
 
 function makeDroppable(wid) {
     const el = _widgets.get(wid);
-    if (!el) return;
+    if (!el || el.dataset.wvDrop) return;   // once: a second set would drop twice
+    el.dataset.wvDrop = '1';
 
     el.addEventListener('dragover', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
     });
 
+    // ENTER AND LEAVE STAY ON THE PAGE. Each used to call Python too, only to
+    // repaint a background the outline below already shows — and dragleave
+    // fires on every child crossed, so one drag across the sort page was a
+    // burst of page→Python calls, each answered with a page update. The app
+    // segfaulted inside JavaScriptCore during exactly such a drag (journal,
+    // Kent 2026-11-24, libjavascriptcoregtk); fewer crossings of that bridge is
+    // the cheap half of finding out whether that is why.
     el.addEventListener('dragenter', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         el.classList.add('wv-drop-target');
-        if (window.pywebview && window.pywebview.api) {
-            window.pywebview.api.on_event(wid, 'dnd_enter', {source_wid: _dragSourceWid});
-        }
     });
 
     el.addEventListener('dragleave', (e) => {
+        e.stopPropagation();
         el.classList.remove('wv-drop-target');
-        if (window.pywebview && window.pywebview.api) {
-            window.pywebview.api.on_event(wid, 'dnd_leave', {source_wid: _dragSourceWid});
-        }
     });
 
     el.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         el.classList.remove('wv-drop-target');
         const sourceWid = parseInt(e.dataTransfer.getData('text/plain'));
         if (window.pywebview && window.pywebview.api) {

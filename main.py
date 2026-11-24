@@ -476,6 +476,11 @@ class App:
             try:
                 st=session.status()
                 outcome=session.poll_remote_change(st=st)
+                # The LAN-peer probe is an RPC too: refresh its cache HERE,
+                # off the Tk thread. The title tail below reads only the
+                # cache — it used to make this call itself and froze the UI
+                # on a daemon that wasn't answering (py-spy, Kent 2026-11-21).
+                session._lan_has_peers()
             except Exception as e:
                 log.info(f"collab_poll worker: {e}")
             try:
@@ -530,7 +535,7 @@ class App:
         get re-suffixed on the next tick."""
         SEP=' ⇅ '
         try:
-            txt=session.ambient_status(st=st)
+            txt=session.ambient_status(st=st,probe=False)
         except Exception:
             return
         task=getattr(self,'task',None)
@@ -1247,6 +1252,9 @@ class App:
             return
         if self.towrite:
             self.maybewrite(definitely=True)
+        leaving=getattr(self,'lexicon_filename',None)
+        if leaving:
+            self.texts_from_lexicon(leaving)
         log.info("Switching lexicon to %s", filename or self.filename)
         self.lexicon_filename=filename
         # to the chooser: the task that asked (Transcribe Texts, say) isn't the
@@ -1254,6 +1262,40 @@ class App:
         self.reload_database(msg=_("Opening {name}…").format(
                     name=file.getfilenamebase(filename or self.filename)),
                     to_chooser=True)
+    def texts_from_lexicon(self,path):
+        """Leaving the texts' word lexicon: what sorting respelled goes back
+        into the texts and their transcriptions (text_lexicon.texts_from_lexicon;
+        Kent, 2026-11-23). Reads the lexicon from disk, so its last write is
+        finished first. Never stops the switch: a failure is reported."""
+        from backend.core import texts, text_lexicon
+        while self.writing:
+            time.sleep(0.2)
+            self.check_if_write_done()
+        try:
+            s=self.settings
+            db=texts.TextsDB(os.path.join(str(s.directory),
+                                f"{s.liftnamebase}.texts.flextext"),
+                             s.directory,self.params.analang())
+            result=text_lexicon.texts_from_lexicon(str(path),db,
+                                                   self.params.analang())
+        except Exception as e:
+            log.error("couldn't take the sorting back into the texts: %s",e,
+                      exc_info=True)
+            ErrorNotice(_("Couldn’t put the sorted words back into the texts: "
+                          "{error}").format(error=e))
+            return
+        if result['clauses']:
+            db.save()
+        if result['conflicts']:
+            NotifyUser(_("Sorting respelled words in {n} clauses whose "
+                         "transcription doesn’t match their words, so they "
+                         "weren’t changed; correct them on the clause page: "
+                         "{clauses}").format(n=len(result['conflicts']),
+                            clauses=', '.join(f"{t} {c}"
+                                    for t,c in result['conflicts'])))
+        elif result['words']:
+            log.info("texts: %s words respelled from sorting, in %s clauses",
+                     result['words'],result['clauses'])
     def reload_database(self,msg=None,to_chooser=False):
         """A5 (in-place reload): re-read the LIFT from disk and rebuild
         everything derived from it — no process restart. Used when the
