@@ -2184,10 +2184,11 @@ class StatusFrame(ui.Frame):
             return
         ui.Label(titleframe, text=_('Progress for'), font='title',
                 row=0,column=1,sticky='nwe',padx=10)
+        pstext=self.ps
         if not self.mainrelief:
-            lps=ui.Label(titleframe,text=self.ps,anchor='c',font='title')
+            lps=ui.Label(titleframe,text=pstext,anchor='c',font='title')
         else:
-            lps=ui.Button(titleframe,text=self.ps, anchor='c',
+            lps=ui.Button(titleframe,text=pstext, anchor='c',
                             relief=self.mainrelief, font='title')
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
@@ -2305,6 +2306,30 @@ class StatusFrame(ui.Frame):
             if self._active_cell and self._active_cell.winfo_exists():
                 self.deactivate_cell(self._active_cell)
             self.activate_cell(new_cell)
+        self._highlight_pool()
+    def _highlight_pool(self):
+        """Sorting by groups of profiles (Kent 2026-11-25): highlight, beside the
+        current cell, every cell of its pool — together they are what "Sort!"
+        will sort. The status window still names the one profile selected."""
+        for cell in getattr(self,'_pool_cells',[]):
+            if cell is not self._active_cell and cell.winfo_exists():
+                self.deactivate_cell(cell)
+        self._pool_cells=[]
+        if (not self.program.sorting_pooled
+                or self.program.params.cvt() not in ('C','V')):
+            return
+        from backend.core import locations
+        profile=self.program.slices.profile()
+        loc=locations.check_location(profile,self.program.params.check())
+        if not loc:
+            return
+        main=self._active_cell
+        for key,cell in self._cells.items():
+            if (isinstance(key,tuple) and len(key)==2 and cell is not main
+                    and locations.check_location(*key)==loc and cell.winfo_exists()):
+                self.activate_cell(cell)
+                self._pool_cells.append(cell)
+        self._active_cell=main
     def update_active_prep_cell(self):
         """Move the syllable-PREP board highlight to the selected slice
         (program.syllable_preferred_slice). Light counterpart to
@@ -2334,6 +2359,8 @@ class StatusFrame(ui.Frame):
             self.deactivate_cell(self._active_cell)
         if new_cell and new_cell.winfo_exists():
             self.activate_cell(new_cell)
+        if self.program.params.cvt()!='σ':
+            self._highlight_pool()
     def updateprofilencheck(self,profile,check):
         # new_cell=self._cells.get((profile,check))
         # if new_cell and new_cell.winfo_exists():
@@ -2912,6 +2939,8 @@ class StatusFrame(ui.Frame):
         curcell=self._cells.get((curprofile,curcheck))
         if curcell:
             self.activate_cell(curcell)
+        self._pool_cells=[] #the old table's cells are gone
+        self._highlight_pool() #its pool's cells too, when sorting by groups
         # self.labels['profile']['textvariable'].trace_add("write", self.update_active_cell)
         # self.labels['check']['textvariable'].trace_add("write", self.update_active_cell)
         if ungroups > 0:
@@ -5301,6 +5330,8 @@ class Settings(object):
             pss=self.program.db.pss+self.program.settings.additionalps
         else:
             pss=self.program.db.pss
+        # "All": every ps sorts together (segmental sorting; tone stays by ps)
+        pss=list(pss)+[(self.program.settings.ALL_PS,_("All"))]
         _option_dialog(self.dialogparent(),
                        title=_('Select Lexical Category'),
                        text=_('What lexical category do you '

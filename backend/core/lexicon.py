@@ -323,15 +323,39 @@ class Segments(Senses):
         # not-equal remainder reaches NA. Any other check falls back to the
         # form-seed.
         posrx=None
-        if '=' not in (check or '') and 'x' not in (check or ''):
-            posrx=self.rxdict.rx.get(check)
-        if posrx is not None or '=' in (check or ''):
-            unsortedids=set(self.program.slices.senses(ps=ps,profile=profile))
-        else:
-            self.buildregexnocheck()
-            unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
         posgroups={} #position value (C1 guess) -> senses; only for positional checks
-        if posrx is not None:
+        # POOLED (stage 3b): the universe is every member slice, each word's
+        # guess taken at ITS OWN check's position (C3 of CVCVC on a C# page).
+        members=(self.pool_members(check,profile)
+                    if hasattr(self,'pool_members') else [])
+        if members:
+            posrx=True #positional path below, with posgroups filled here
+            unsortedids=set()
+            for m_ps,m_profile,m_check in members:
+                # never re-presort a member already presorted: its words may
+                # since have been sorted by hand
+                if self.program.status.node(cvt=cvt,ps=m_ps,profile=m_profile,
+                                    check=m_check,_member=True).get('presorted'):
+                    continue
+                rx=self.rxdict.rx.get(m_check)
+                senses=set(self.program.slices.senses(ps=m_ps,profile=m_profile))
+                unsortedids|=senses
+                if rx is None:
+                    continue
+                for sense in senses:
+                    form=sense.ftypes[self.program.params.ftype()].textvaluebylang(self.analang)
+                    m=rx.search(form) if form else None
+                    if m and m.groups():
+                        posgroups.setdefault(m.groups()[-1],set()).add(sense)
+        else:
+            if '=' not in (check or '') and 'x' not in (check or ''):
+                posrx=self.rxdict.rx.get(check)
+            if posrx is not None or '=' in (check or ''):
+                unsortedids=set(self.program.slices.senses(ps=ps,profile=profile))
+            else:
+                self.buildregexnocheck()
+                unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
+        if posrx is not None and not members:
             for sense in unsortedids:
                 form=sense.ftypes[self.program.params.ftype()].textvaluebylang(self.analang)
                 m=posrx.search(form) if form else None

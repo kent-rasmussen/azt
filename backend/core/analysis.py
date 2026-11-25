@@ -101,6 +101,9 @@ class ExampleDict(dict):
     in a given tone frame (from check); thus, only sorted data."""
     def sensesinslicegroup(self,group,check):
         """Convert to senses before return"""
+        pooled=self._pooled_senses(group,check)
+        if pooled is not None:
+            return pooled
         #This returns all the senses with a given tone value
         senses=self.program.task.getsensesingroup(check,group)
         if not senses:
@@ -121,6 +124,13 @@ class ExampleDict(dict):
                 f"{check} {group})")
             return []
         return list(set(senses)&set(sensesinslice))
+    def _pooled_senses(self,group,check,profile=None):
+        """The group's senses across the pool when sorting pooled (each by its own check —
+        Categories.pool_senses_in_group), else None: examples and counts then cover the pool."""
+        task=getattr(self.program,'task',None)
+        if task is None or not hasattr(task,'pool_senses_in_group'):
+            return None
+        return task.pool_senses_in_group(group,check,profile)
     def hasglosses(self,node):
         # log.info("hasglosses sense: {}".format(sense.id))
         try:
@@ -157,6 +167,11 @@ class ExampleDict(dict):
         """
         check = kwargs.get('check', self.program.params.check())
         ftype = kwargs.get('ftype', self.program.params.ftype())
+        task = getattr(self.program, 'task', None)
+        if (not all_for_cvt and hasattr(task, 'pooled_location')
+                and task.pooled_location(check, kwargs.get('profile'))):
+            log.info("Pooled: no slice prefetch; examples are found per group across the pool.")
+            return
         log.info("Prefetching examples for {n} groups...".format(n=len(groups)))
         # Prepare codes mapping to avoid repeated calls and initialize cache
         group_to_code = {}
@@ -211,7 +226,12 @@ class ExampleDict(dict):
                         if group in s.annotationvaluedictbyftypelang(ftype,
                                                 self.program.db.analang).values()
                     ]
-        else: # Other FormParent nodes
+        elif self._pooled_senses(group,check,kwargs.get('profile')) is not None:
+            # pooled: the group's words across the pool, each by its own check
+            nodes=[s.ftypes[ftype] for s in
+                        self._pooled_senses(group,check,kwargs.get('profile'))
+                        if ftype in s.ftypes]
+        else: # Other FormParent nodes (not pooled: _pooled_senses is None)
             nodes=[s.ftypes[ftype] for s in self.program.slices.inslice(
                                                         self.program.db.senses,
                                                         **kwargs)
@@ -2054,7 +2074,13 @@ class StatusDict(dict):
             log.info("Not Tone and no profile; not returning a check")
         # log.info(f"{self._checksdict[cvt][profile]=}")
     def node(self,**kwargs):
-        """This will fail if fed None values"""
+        """This will fail if fed None values.
+        POOLED (stage 3c, Kent 2026-11-25): while sorting a location across profiles, the PAGE's
+        node (its ps and profile, any check) is a pools.PoolNode — reads across the pool's member
+        nodes, writes to them — so every accessor below works on the pool unchanged. `_member=True`
+        asks for the one stored node regardless (per-member writers: the status rebuild, the to-sort
+        list, pool reconciling)."""
+        member=kwargs.pop('_member',False)
         kwargs=self.checkslicetypecurrent(**kwargs)
         if None in [kwargs['cvt'],kwargs['ps'],kwargs['profile'],
                                                             kwargs['check']]:
@@ -2062,8 +2088,30 @@ class StatusDict(dict):
                                                             if not kwargs[i]],
                                                             kwargs=kwargs))
         self.dictcheck(**kwargs)
-        return self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
-                                                                kwargs['check']]
+        sn=self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][kwargs['check']]
+        if not member:
+            pool=self.pool_node(sn,**kwargs)
+            if pool is not None:
+                return pool
+        return sn
+    def pool_node(self,home,**kwargs):
+        """The pools.PoolNode for this page node when sorting pooled, else None."""
+        task=getattr(self,'_task',None)
+        if (task is None or not hasattr(task,'pool_members')
+                or kwargs['ps']!=self.status_ps(kwargs['cvt'],self.program.slices.ps())
+                or kwargs['profile']!=self.program.slices.profile()):
+            return None
+        members=task.pool_members(kwargs['check'],kwargs['profile'])
+        if not members:
+            return None
+        from backend.core import pools
+        nodes=[]
+        for ps,profile,check in members:
+            try:
+                nodes.append(self[kwargs['cvt']][ps][profile][check])
+            except (KeyError,TypeError):
+                continue
+        return pools.PoolNode(nodes,home)
     def tojoin(self,v=None,**kwargs):
         kwargs=self.checkslicetypecurrent(**kwargs) # current value defaults
         sn=self.node(**kwargs)
@@ -2176,6 +2224,18 @@ class StatusDict(dict):
         return getattr(self,'_group',None)# this needs to be booleanable
     def renamegroup(self,j,k,**kwargs):
         # log.info(f"Status renaming {j}>{k} for {kwargs=}")
+        if not kwargs.get('_member'):
+            # POOLED: rename in every member node, each on its own lists
+            k_=self.checkslicetypecurrent(**kwargs)
+            sn=self.node(**kwargs)
+            if hasattr(sn,'nodes'):
+                task=self.task()
+                for ps,profile,check in task.pool_members(k_['check'],k_['profile']):
+                    self.renamegroup(j,k,cvt=k_['cvt'],ps=ps,profile=profile,
+                                        check=check,_member=True)
+                if self.group() == j:
+                    self.group(k)
+                return
         sn=self.node(**kwargs)
         # Lists, as status keeps them; a rebuild once left a set here and
         # .append crashed (2026-10-13). Renaming onto an existing name merges.

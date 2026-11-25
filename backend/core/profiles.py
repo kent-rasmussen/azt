@@ -9,6 +9,7 @@ from utilities.utilities import setnesteddictval
 from utilities.i18n import _
 from backend.core.analysis import SliceDict, SyllableSliceDict
 from backend.core import casing
+from backend.core import locations
 
 log = logsetup.getlog(__name__)
 
@@ -854,6 +855,56 @@ class ProfileAnalyzer:
             self.program.maybewrite(definitely=True)
         return fixed_sort, cleared_verif
 
+    def carry_location_verifications(self, ftype=None):
+        """Run on every load, after the scrub. A word whose confirmed profile changed keeps each
+        segmental check whose LOCATION is the same in the new profile (locations.carry): the code is
+        added under the new profile's verification field (renamed to the check that sits there: C2 of
+        CVC → C3 of CVCVC, both C#), and its group annotation follows; a group annotation left on a
+        check that now sorts another location is cleared, to be sorted again. The old profile's codes
+        stay — they are true for that profile. Kent, 2026-11-25."""
+        ftype = ftype or self.program.params.ftype()
+        analang = self.program.db.analang
+        tail = ' {} verification'.format(ftype)
+        primitive = '{} primitive verification'.format(ftype)
+        added = moved = cleared = 0
+        for s in self.program.db.senses:
+            fields = {}
+            for key in list(getattr(s, 'fields', {})):
+                if key.endswith(tail) and key != primitive:
+                    profile = key[:-len(tail)]
+                    if profile and profile != ftype:
+                        fields[profile] = s.verificationtextvalue(profile, ftype) or []
+            current = s.cvprofilevalue(ftype)
+            if not current or not [p for p in fields if p != current]:
+                continue
+            names = set(locations.checks_of(current))
+            for codes in fields.values():
+                names.update(c for c, _g in filter(None, map(locations.parse_code, codes)))
+            annotations = {c: s.annotationvaluebyftypelang(ftype, analang, c) for c in names}
+            add, set_ann, clear = locations.carry(current, fields, annotations)
+            if not (add or set_ann or clear):
+                continue
+            if add:
+                # add carries a location code only where the old one had it (verified pooled)
+                s.verificationtextvalue(current, ftype, value=locations.sync_location_codes(
+                                                current, fields.get(current, []) + add))
+                added += len(add)
+            for check, group in set_ann.items():
+                if annotations.get(check) != group:
+                    s.annotationvaluebyftypelang(ftype, analang, check, group)
+                    moved += 1
+            for check in clear:
+                s.annotationvaluebyftypelang(ftype, analang, check, '')
+                cleared += 1
+            log.info("Profile now %s for sense %s: kept %s; moved %s; cleared %s",
+                     current, getattr(s, 'id', '?'), add, set_ann, clear)
+        if added or moved or cleared:
+            log.info("Location carry-over: %d verification code(s) kept across a profile change, "
+                     "%d group annotation(s) moved, %d cleared to be sorted again.",
+                     added, moved, cleared)
+            self.program.maybewrite(definitely=True)
+        return added, moved, cleared
+
     def unsort_if_out_of_class(self, sense, ftype=None, anno=None):
         """Clear `sense`'s profile sort group and confirmed profile when the
         group doesn't fit the profile class its primitives name. True if it
@@ -990,6 +1041,11 @@ class ProfileAnalyzer:
         # primitives, and clear any cvprofile verification that no longer matches —
         # BEFORE the slices below are built (they read the confirmed cvprofile form).
         self.scrub_sorts_to_primitives()
+        try:
+            self.carry_location_verifications()
+        except Exception as e:
+            log.warning("Location carry-over stopped on an error (words before it were "
+                        "updated; unsaved): %s", e)
         if self.program.params.PROFILE_CONSTRAINT.get('force_resort'):
             log.warning("PROFILE_CONSTRAINT['force_resort'] is ON (TESTING): "
                     "re-deriving EVERY word's syllable profile from the "
@@ -1028,6 +1084,8 @@ class ProfileAnalyzer:
         else:
             self.adhocgroups = {}
         SliceDict(self.adhocgroups, self.profilesbysense, self.program)
+        # Trying the cross-profile sorting locations on real data (Kent, 2026-11-25)
+        locations.log_report(self.profilesbysense, adhoc=self.adhocgroups)
         # If syllable prep has been STARTED (any word carries a #C primitive),
         # re-seed the primitives from the now-current profiles and rebuild the prep
         # slice node AT LOAD — so syllable_prep_complete is honest without waiting

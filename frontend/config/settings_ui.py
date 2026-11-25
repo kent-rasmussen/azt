@@ -797,7 +797,18 @@ class SettingsUI(object):
         self.program.mainwindow.status.updateparserautolevel()
         if window:      # None when the value was set in place, not in a dialog
             window.destroy()
+    ALL_PS='<all ps>' # the ps chooser's "All": every ps sorts together (segments)
     def setps(self,choice,window=None):               # see setanalang
+        # "All" keeps the current ps as the page's own and pools across every ps
+        # (program.sorting_all_ps; Kent 2026-11-25); any real ps turns that off.
+        self.sortallps=(choice==self.ALL_PS)
+        self.storesettingsfile()
+        if self.sortallps:
+            self.program.mainwindow.status.updateps()
+            self.program.mainwindow.status.maybeboard()
+            if window:
+                window.destroy()
+            return
         self.program.slices.ps(choice)
         self.program.mainwindow.status.updateps()
         self.attrschanged.append('ps')

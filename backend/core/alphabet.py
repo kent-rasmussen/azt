@@ -297,8 +297,10 @@ class Alphabet():
         # DIAG-conflict (temporary): every add-path is supposed to resolve
         # conflict_code first, yet a same-slice pair is landing in one glyph. Log
         # the collision AND the call stack so we see which path skipped resolution.
+        group=self.parse_verificationcode(item)['group']
         clash=[m for m in d[glyph]
-               if m!=item and self.conflict_code(m)==self.conflict_code(item)]
+               if m!=item and self.conflict_code(m)==self.conflict_code(item)
+               and self.parse_verificationcode(m)['group']!=group] #not its own unit
         if clash:
             import traceback
             log.warning("DIAG-conflict: add_glyph_member('%s' -> glyph '%s') collides "
@@ -533,7 +535,44 @@ class Alphabet():
             if sids:
                 out[g]=sids
         return out
+    # POOLED MACROSORT (stage 4; Kent 2026-11-25): items stay as stored, one per
+    # ps_profile_ftype_check_group. While sorting pooled, the items of one POOL
+    # GROUP (same location — locations.py — same group, every member profile, and
+    # every ps when ps is 'All') are a UNIT: shown once, given one letter, moved
+    # and validated together; and the same-slice rule becomes same-POOL: a letter
+    # never holds two groups of one pool. One profile at a time: as before.
+    def _pooled(self):
+        return bool(getattr(self.program,'sorting_pooled',False))
+    def pool_key(self,code):
+        """(ps scope, ftype, location) of an item's pool, or None (not pooled, or
+        the check has no location — '=' checks, tone)."""
+        if not self._pooled():
+            return None
+        try:
+            p=self.parse_verificationcode(code)
+        except ValueError:
+            return None
+        from backend.core import locations
+        loc=locations.check_location(p['profile'],p['check'])
+        if not loc:
+            return None
+        scope='All' if getattr(self.program,'sorting_all_ps',False) else p['ps']
+        return (scope,p['ftype'],loc)
+    def unit_items(self,item):
+        """Every stored item of `item`'s pool group (itself only, when not pooled)."""
+        key=self.pool_key(item)
+        if key is None:
+            return [item]
+        group=self.parse_verificationcode(item)['group']
+        known=set(getattr(self,'items_existing',()))|{item}
+        return sorted(i for i in known if self.pool_key(i)==key
+                        and self.parse_verificationcode(i)['group']==group)
     def conflict_code(self,code):
+        """What two items of one letter must not share (with different groups): the
+        slice (ps_profile_ftype_check), or, pooled, the pool."""
+        key=self.pool_key(code)
+        if key is not None:
+            return ['pool',*key]
         return code.split('_')[:4]
     def verificationcode(self,**kwargs):
         ps=kwargs.get('ps',self.program.slices.ps())
@@ -632,7 +671,17 @@ class Alphabet():
         sorted={g for g in self.glyphs() if g != 'NA'} #constrained by cvt
         return sorted-{i for k,v in self.glyphdict().items() for i in v}
     def itemstosort(self):
-        return sorted(self._itemstomacrosort)
+        """Pooled: one item per unit (unit_items), so a pool group is shown once."""
+        items=sorted(self._itemstomacrosort)
+        if not self._pooled():
+            return items
+        out,seen=[],set()
+        for i in items:
+            unit=tuple(self.unit_items(i))
+            if unit not in seen:
+                seen.add(unit)
+                out.append(i)
+        return out
     def items_present_in_cvt(self,cvt):
         return [i for i in self.items_present if self.cvt_of_item(i) == cvt]
     def item_is_tomacrosort(self,item):
@@ -657,13 +706,15 @@ class Alphabet():
             for m in members:
                 byslice.setdefault('_'.join(self.conflict_code(m)),[]).append(m)
             for _code,ms in byslice.items():
-                if len(ms)<2:
+                # one GROUP is no conflict: pooled, a unit's items share a code
+                if len({self.parse_verificationcode(m)['group'] for m in ms})<2:
                     continue
                 nondigit=[m for m in ms
                           if not self.parse_verificationcode(m)['group'].isdigit()]
                 keep=nondigit[0] if nondigit else ms[0]
+                kept=self.parse_verificationcode(keep)['group']
                 for m in ms:
-                    if m!=keep:
+                    if self.parse_verificationcode(m)['group']!=kept: #not keep's unit
                         self.remove_item_from_glyph(m,glyph)
                         kicked.append((m,glyph,keep))
         if kicked:
@@ -734,9 +785,12 @@ class Alphabet():
         if glyph not in d:
             return [] #keep iterable
         compare=self.conflict_code(item)
+        group=self.parse_verificationcode(item)['group']
         r=list()
         for i in list(d[glyph]):
-            if self.conflict_code(i) == compare:
+            # another GROUP of the same slice (pooled: pool); not its own unit
+            if (self.conflict_code(i) == compare
+                    and self.parse_verificationcode(i)['group'] != group):
                 r.append(i)
         return r
     def remove_conflicting_items(self,item,glyph):
@@ -766,6 +820,15 @@ class Alphabet():
             self.remove_item_from_glyph(i)
         return recurring_conflicts
     def mark_item_glyph(self,item,glyph):#maybe move to Alphabet Sort
+        """Give `item` — pooled, its whole unit — the letter `glyph`. Returns the
+        recurring conflicts (as before; pooled, of any of the unit's items)."""
+        recurring=set()
+        for i in self.unit_items(item):
+            r=self._mark_item_glyph(i,glyph)
+            if r:
+                recurring|=set(r)
+        return recurring
+    def _mark_item_glyph(self,item,glyph):
         # INVARIANT (Kent 2026-07-27): NA belongs to SORTING only — there is no
         # such thing as an NA glyph, and an NA sort group is never macrosorted.
         # The old guard here asserted the opposite ("never mark NA sort groups
@@ -793,6 +856,11 @@ class Alphabet():
             # log.info(f"{self.glyph_members()=}")
         return recurring_conflicts
     def remove_item_from_glyph(self,item,glyph=None):
+        """Take `item` — pooled, its whole unit — out of its letter, back to
+        macrosort."""
+        for i in self.unit_items(item):
+            self._remove_item_from_glyph(i,glyph)
+    def _remove_item_from_glyph(self,item,glyph=None):
         try:
             self.unsorted[glyph].add(item)
         except KeyError:

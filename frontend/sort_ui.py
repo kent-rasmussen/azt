@@ -527,6 +527,31 @@ class SortPresenter(PresenterBase):
             tosort_frame.destroy()
             return None
 
+    def _pool_toggle(self, f, task):
+        """Sort-page switch: sort by GROUPS OF PROFILES (one location across
+        profiles — the default) or one profile at a time (Kent 2026-11-25). Says
+        in words which it is doing, and what the pool is; the switch ends this
+        page and the sort goes on in the other mode."""
+        program = task.program
+        if program.sorting_pooled:
+            loc = task.pooled_location()
+            now = _("Sorting groups of profiles: {location}").format(
+                                location=loc or _("(none for this check)"))
+            switch = _("Sort one profile at a time")
+        else:
+            now = _("Sorting one profile: {profile}").format(
+                                profile=program.slices.profile())
+            switch = _("Sort groups of profiles")
+        ui.Label(f, text=now, row=4, column=0, sticky='nw')
+        def toggle():
+            program.settings.sortpooled = not program.sorting_pooled
+            program.settings.storesettingsfile()
+            program.status_dirty = True #the to-sort lists change with the mode
+            if program.sorting_pooled:
+                task.reconcile_pool()
+            if not task._restart_from_sort_page():
+                log.info("pool toggle: no sort page to end; takes effect next sort")
+        ui.Button(f, text=switch, cmd=toggle, row=5, column=0, sticky='nw', padx=4)
     def build_sort_layout(self, runwindow, img_mod, page_icon,
                          instructions, sort_obj, groups, macrosort):
         """Build the main sort window layout. Returns (groupsFrame, buttonframe)."""
@@ -544,6 +569,8 @@ class SortPresenter(PresenterBase):
         f.columnconfigure(1, weight=1)
         ui.Label(groupsFrame, text=instructions, font='instructions',
                 anchor='c', sticky='sew')
+        if not macrosort and getattr(sort_obj,'cvt',None) in ('C','V'):
+            self._pool_toggle(f, sort_obj)
         # BEFORE the group buttons, which register with it as they are built
         # (group_play_buttons).
         self._start_sort_playall(runwindow, groupsFrame, sort_obj)

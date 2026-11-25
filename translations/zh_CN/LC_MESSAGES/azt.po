@@ -11085,3 +11085,126 @@ msgstr "仔细地再说一遍这句：按住、说话、松开"
 #, fuzzy
 msgid "Hear the careful take"
 msgstr "收听仔细重说的录音"
+
+#, fuzzy
+msgid "Join with next"
+msgstr "与下一个合并"
+
+#, fuzzy
+msgid "Make this clause and the next one clause"
+msgstr "将此分句与下一个分句合并为一个分句"
+
+#, fuzzy
+msgid "Couldn’t join these clauses."
+msgstr "无法合并这些分句。"
+
+#, fuzzy
+msgid "Make this piece and the next one piece"
+msgstr "将此片段与下一个片段合并为一个片段"
+
+#, fuzzy
+msgid "Split in two"
+msgstr "一分为二"
+
+#, fuzzy
+msgid "Cut this piece at its best place not tried yet"
+msgstr "在尚未尝试过的最佳位置切分此片段"
+
+#, fuzzy
+msgid "No other place to split this piece."
+msgstr "此片段没有其他可切分的位置。"
+
+#, fuzzy
+msgid "Play all with context"
+msgstr "全部连同语境播放"
+
+#, fuzzy
+msgid "Play each word in turn in its phrase (up to a second each side), from the top; click again to stop"
+msgstr "从顶部开始，依次在其短语中播放每个词（前后各最多一秒）；再次点击即停止"
+
+#, fuzzy
+msgid "Couldn’t put the sorted words back into the texts: {error}"
+msgstr "无法将排序后的词放回文本：{error}"
+
+#, fuzzy
+msgid "Sorting respelled words in {n} clauses whose transcription doesn’t match their words, so they weren’t changed; correct them on the clause page: {clauses}"
+msgstr "排序更改了 {n} 个分句中词的拼写，但这些分句的转写与其词不对应，因此未作修改；请在分句页面上更正：{clauses}"
+
+#, fuzzy
+msgid "Resort this group"
+msgstr "重新分类此组"
+
+#, fuzzy
+msgid "Resort this word"
+msgstr "重新分类此词"
+
+#, fuzzy
+msgid "Splitting clause {k} into {n}: finding the pauses in it most likely to be clause breaks, then sharing out its words, and saving…"
+msgstr "正在将分句 {k} 切分为 {n} 个：寻找最可能是分句边界的停顿，然后分配其中的词，并保存…"
+
+#, fuzzy
+msgid "Joining clauses {k} and {k2}: putting their words and transcriptions together, and saving…"
+msgstr "正在合并分句 {k} 和 {k2}：合并它们的词和转写，并保存…"
+
+#, fuzzy
+msgid "Making clause {k} into {n} clauses: sharing out its words and transcription, and saving…"
+msgstr "正在将分句 {k} 分成 {n} 个分句：分配其中的词和转写，并保存…"
+
+#, fuzzy
+msgid "Finding the best places to split clause {k} into {n}: the pauses in it most likely to be clause breaks…"
+msgstr "正在寻找将分句 {k} 切分为 {n} 个的最佳位置：最可能是分句边界的停顿…"
+
+#, fuzzy
+msgid "Showing the pieces again…"
+msgstr "正在重新显示各片段…"
+
+#, fuzzy
+msgid "Clauses of {title}"
+msgstr "{title} 的分句"
+
+#, fuzzy
+msgid "Listen to each clause, record it said again carefully, and split or join clauses where they are wrong."
+msgstr "逐句聆听，录下仔细重说的每个分句，并在分句有误处切分或合并。"
+
+#, fuzzy
+msgid "Split this clause into {n} clauses"
+msgstr "将此分句切分为 {n} 个分句"
+
+#, fuzzy
+msgid "Listen to {name} clause by clause, record it said again carefully, and split or join its clauses"
+msgstr "逐句聆听 {name}，录下仔细重说的内容，并切分或合并其分句"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sorting groups of profiles: {location}"
+msgstr "按音节结构组分类：{location}"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "(none for this check)"
+msgstr "（此检查无）"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sort one profile at a time"
+msgstr "一次分类一个音节结构"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sorting one profile: {profile}"
+msgstr "分类单个音节结构：{profile}"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sort groups of profiles"
+msgstr "按音节结构组分类"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sorted together with every cell marked {pool}"
+msgstr "与所有标记为 {pool} 的格子一起分类"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "{ps} (sorting all together)"
+msgstr "{ps}（全部一起分类）"

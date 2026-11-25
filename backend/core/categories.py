@@ -6,6 +6,7 @@ from utilities import logsetup
 from utilities.error_handler import notify_error as ErrorNotice
 from utilities.i18n import _
 from backend.core import samesort
+from backend.core import locations
 
 log=logsetup.getlog(__name__)
 
@@ -34,6 +35,97 @@ class Categories:
             if frame:
                 return frame.get('field') or 'lc'
         return self.program.params.ftype()
+    # POOLED SORTING (agenda cross_profile_segmental_sort.md, stage 3; Kent 2026-11-25): one LOCATION
+    # ('#C', 'C#', 'V2#C' — backend/core/locations.py) sorted across profiles, and across ps when the ps
+    # setting is 'All'. Nothing new is stored: each word keeps its group under ITS OWN check name, and
+    # its verification under ITS OWN profile. These turn the page's (check, profile) into the word's.
+    # Inert until the sort-page setting sets program.sorting_pooled (stage 5).
+    def pooled_location(self,check=None,profile=None):
+        """The location the page sorts, when sorting pooled; None when one profile at a time (or for
+        tone/syllables, which never pool here)."""
+        if not getattr(self.program,'sorting_pooled',False):
+            return None
+        if getattr(self,'cvt',None) not in ('C','V'):
+            return None
+        return locations.check_location(profile or self.program.slices.profile(),
+                                        check or self.program.params.check())
+    def pool_ps(self):
+        """pools.ALL when all ps sort together, else the current ps."""
+        from backend.core import pools
+        return (pools.ALL if getattr(self.program,'sorting_all_ps',False)
+                else self.program.slices.ps())
+    def word_slot(self,sense,check,profile):
+        """(check, profile) to read/write for `sense`: the page's, unless sorting pooled — then the
+        check that sorts the pool's location in the word's OWN confirmed profile (CVCVC's C3 for C#)."""
+        loc=self.pooled_location(check,profile)
+        if not loc:
+            return check,profile
+        own=sense.cvprofilevalue(self.program.params.ftype())
+        mine=[c for c,l in locations.checks_of(own or '').items() if l==loc]
+        if len(mine)!=1:
+            log.info("pooled %s: sense %s (profile %r) has no check there; using %s/%s",
+                     loc,getattr(sense,'id','?'),own,check,profile)
+            return check,profile
+        return mine[0],own
+    def pool_members(self,check=None,profile=None):
+        """[(ps, profile, check)] of the pool the page sorts; [] when not pooled."""
+        loc=self.pooled_location(check,profile)
+        if not loc:
+            return []
+        from backend.core import pools
+        return pools.members(self.program.status,self.cvt,loc,ps=self.pool_ps())
+    def pool_senses_in_group(self,group,check=None,profile=None):
+        """Senses in `group` across the pool, each by its own check, within its own slice; None when
+        not pooled (callers then use their slice as before)."""
+        members=self.pool_members(check,profile)
+        if not members:
+            return None
+        out=[]
+        for ps,p,c in members:
+            out+=self.program.slices.inslice(self.getsensesingroup(c,group),ps=ps,profile=p)
+        return out
+    def reconcile_pool(self,check=None,profile=None):
+        """Once per member, before a pool is worked (pools.plan_pooling; Kent 2026-11-25): integer
+        groups that collide across members are renamed apart, in LIFT (each word's own annotation and
+        verification code) and in that member's status node; a NAMED group found in two or more members
+        was verified apart, so it is unverified (heard once, pooled — which also takes it back out of
+        macrosort, which only takes verified groups). Members are then marked so this runs once.
+        Returns (renames, unverify) for the log; ({}, {}) when not pooled or nothing to do."""
+        members=self.pool_members(check,profile)
+        if not members:
+            return {},{}
+        from backend.core import pools
+        st=self.program.status
+        nodes={m:st.node(cvt=self.cvt,ps=m[0],profile=m[1],check=m[2],_member=True)
+                for m in members}
+        renames,unverify,mark=pools.plan_pooling(list(nodes.items()))
+        vftype=self.verification_ftype()
+        def words(m,group):
+            ps,p,c=m
+            return self.program.slices.inslice(self.getsensesingroup(c,group),ps=ps,profile=p)
+        for m,table in renames.items():
+            ps,p,c=m
+            for old,new in table.items():
+                for s in words(m,old):
+                    was=self.verificationcode(check=c,group=old) in s.verificationtextvalue(p,vftype)
+                    self.setitemgroup(s,c,new)
+                    if was:
+                        self.modverification(s,p,c,self.verificationcode(check=c,group=new))
+                st.renamegroup(old,new,cvt=self.cvt,ps=ps,profile=p,check=c,_member=True)
+        for g,ms in unverify.items():
+            for m in ms:
+                for s in words(m,g):
+                    self.modverification(s,m[1],m[2]) #its code goes
+                pools.set_done(g,False,[nodes[m]])
+        for m in mark:
+            nodes[m][pools.MARK]=True
+        if renames or unverify:
+            log.info("Pooling %s: renamed %s; unverified (to hear pooled) %s",
+                     self.pooled_location(check,profile),renames,unverify)
+            self.maybewrite()
+        if mark:
+            st.store()
+        return renames,unverify
     def getsensesincheckgroup(self,**kwargs):
         check=kwargs.get('check',self.program.params.check())
         group=kwargs.get('group',self.program.status.group())
@@ -54,10 +146,12 @@ class Categories:
         """
         added=None
         assert not add or check in add
+        pooled=self.pooled_checks(check) if add else () #before add is consumed below
         vftype=self.verification_ftype(check)
         values=sense.verificationtextvalue(profile,vftype) #always returns list
         if add and not values:
-            v=sense.verificationtextvalue(profile,vftype,value=[add])
+            v=sense.verificationtextvalue(profile,vftype,
+                        value=locations.sync_location_codes(profile,[add],pooled))
             return #if more complex, continue
         # EXACT match on the check part, not a substring one. A verification
         # code is '<check>=<group>', split on the LAST '=' because checks are
@@ -84,7 +178,14 @@ class Categories:
         if add: #i.e., still, after switching out current values for changes
             values.append(add)
             added=add
-        v=sense.verificationtextvalue(profile,vftype,value=values)
+        v=sense.verificationtextvalue(profile,vftype,
+                        value=locations.sync_location_codes(profile,values,pooled))
+    def pooled_checks(self,check):
+        """[check] when verification is being done POOLED (a location across profiles), so its
+        location code is written beside the check code (locations.sync_location_codes); () when
+        sorting one profile at a time. Nothing sorts pooled yet: the sort-page setting
+        ("groups of profiles" / "single profiles") sets program.sorting_pooled when it is built."""
+        return (check,) if getattr(self.program,'sorting_pooled',False) else ()
     def confirmverificationgroup(self,sense,profile,check):
         """This does the one field storing a list of verified values
         for all checks"""
@@ -141,6 +242,11 @@ class Categories:
     def _marksortgroup(self,sense,group,**kwargs):
         check=kwargs.get('check',self.program.params.check())
         profile=kwargs.get('profile',self.program.slices.profile())
+        page_check=check
+        check,profile=self.word_slot(sense,check,profile) #its own, when pooled
+        if check!=page_check: #pooled: the page's cached example/count is stale too
+            self.program.examples.clear_cache(**{**kwargs,'group':group,
+                                                'check':page_check})
         nocheck=kwargs.get('nocheck',False)
         if kwargs.get('updateverification'):
             add=self.verificationcode(check=check,group=group)
@@ -224,6 +330,12 @@ class Categories:
         #leave these in kwargs for use below:
         check=kwargs.get('check',self.program.params.check())
         group=kwargs.get('group',self.program.status.group())
+        if self.pooled_location(check,kwargs.get('profile')):
+            # the page's cached example/count for the group is stale too
+            self.program.examples.clear_cache(**{**kwargs,'group':group,'check':check})
+            # its own check, and its own verification field (profile, below)
+            check,kwargs['profile']=self.word_slot(item,check,
+                        kwargs.get('profile') or self.program.slices.profile())
         write=kwargs.pop('write',True) #avoid duplicate
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing sense {id} from subcheck {group}").format(id=item.id,group=group))
@@ -244,7 +356,13 @@ class Categories:
             return
         rm=self.verificationcode(check=check,group=group)
         profile=kwargs.get('profile',self.program.slices.profile())
-        item.rmverificationvalue(profile,self.verification_ftype(check),rm)
+        vftype=self.verification_ftype(check)
+        item.rmverificationvalue(profile,vftype,rm)
+        # its location code goes with it (locations.with_location_codes)
+        left=item.verificationtextvalue(profile,vftype)
+        synced=locations.sync_location_codes(profile,left)
+        if synced!=left:
+            item.verificationtextvalue(profile,vftype,value=synced)
         self.program.status.last('sort',update=True)
         self.program.examples.clear_cache(**kwargs) #anything should still be in kwargs
         if write:
@@ -297,11 +415,12 @@ class Categories:
         updates, maybewrite) is handled after generator exhaustion.
         """
         check=self.program.params.check()
-        lst2=self.getsensesingroup(check,x) #by annotations, for C/V
         profile=self.program.slices.profile()
+        pooled=self.pool_senses_in_group(x) #across the pool, when pooled
+        if pooled is None:
+            pooled=self.program.slices.inslice(self.getsensesingroup(check,x)) #by annotations, for C/V
         # one per sameSort set: marksortgroup writes to the whole set
-        senses=samesort.representatives(self.program,
-                                        self.program.slices.inslice(lst2))
+        senses=samesort.representatives(self.program,pooled)
         ftype=self.program.params.ftype()
         if not senses:
             log.info("No senses for {check}={value}".format(check=check,value=x))
@@ -312,11 +431,12 @@ class Categories:
         # A word keeps the verification it had: one carrying '<check>=x' gets
         # '<check>=y'; one without stays unverified. Marking them all verified
         # made renaming an unverified group verify it (2026-10-13).
-        old=self.verificationcode(check=check,group=x)
         vftype=self.verification_ftype(check)
         n=len(senses)
         for i, sense in enumerate(senses):
-            verified=old in sense.verificationtextvalue(profile,vftype)
+            c,p=self.word_slot(sense,check,profile) #its own, when pooled
+            verified=(self.verificationcode(check=c,group=x)
+                        in sense.verificationtextvalue(p,vftype))
             self.marksortgroup(sense, y, updateverification=verified,
                                 **kwargs)
             yield i * 50 // n  # 0-50 for marksortgroup phase

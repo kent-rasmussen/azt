@@ -11124,3 +11124,126 @@ msgstr "Redites cette proposition soigneusement : appuyez, parlez, relâchez"
 #, fuzzy
 msgid "Hear the careful take"
 msgstr "Écouter la prise soignée"
+
+#, fuzzy
+msgid "Join with next"
+msgstr "Joindre à la suivante"
+
+#, fuzzy
+msgid "Make this clause and the next one clause"
+msgstr "Faire de cette proposition et de la suivante une seule proposition"
+
+#, fuzzy
+msgid "Couldn’t join these clauses."
+msgstr "Impossible de joindre ces propositions."
+
+#, fuzzy
+msgid "Make this piece and the next one piece"
+msgstr "Faire de ce morceau et du suivant un seul morceau"
+
+#, fuzzy
+msgid "Split in two"
+msgstr "Couper en deux"
+
+#, fuzzy
+msgid "Cut this piece at its best place not tried yet"
+msgstr "Couper ce morceau au meilleur endroit pas encore essayé"
+
+#, fuzzy
+msgid "No other place to split this piece."
+msgstr "Aucun autre endroit où couper ce morceau."
+
+#, fuzzy
+msgid "Play all with context"
+msgstr "Tout écouter en contexte"
+
+#, fuzzy
+msgid "Play each word in turn in its phrase (up to a second each side), from the top; click again to stop"
+msgstr "Écouter chaque mot à tour de rôle dans sa phrase (jusqu’à une seconde de chaque côté), depuis le haut ; cliquer à nouveau pour arrêter"
+
+#, fuzzy
+msgid "Couldn’t put the sorted words back into the texts: {error}"
+msgstr "Impossible de remettre les mots triés dans les textes : {error}"
+
+#, fuzzy
+msgid "Sorting respelled words in {n} clauses whose transcription doesn’t match their words, so they weren’t changed; correct them on the clause page: {clauses}"
+msgstr "Le tri a changé l’orthographe de mots dans {n} propositions dont la transcription ne correspond pas à leurs mots ; elles n’ont donc pas été modifiées. Corrigez-les sur la page des propositions : {clauses}"
+
+#, fuzzy
+msgid "Resort this group"
+msgstr "Retrier ce groupe"
+
+#, fuzzy
+msgid "Resort this word"
+msgstr "Retrier ce mot"
+
+#, fuzzy
+msgid "Splitting clause {k} into {n}: finding the pauses in it most likely to be clause breaks, then sharing out its words, and saving…"
+msgstr "Découpage de la proposition {k} en {n} : recherche des pauses les plus susceptibles d’être des limites de proposition, puis répartition de ses mots, et enregistrement…"
+
+#, fuzzy
+msgid "Joining clauses {k} and {k2}: putting their words and transcriptions together, and saving…"
+msgstr "Jonction des propositions {k} et {k2} : réunion de leurs mots et de leurs transcriptions, et enregistrement…"
+
+#, fuzzy
+msgid "Making clause {k} into {n} clauses: sharing out its words and transcription, and saving…"
+msgstr "Découpage de la proposition {k} en {n} propositions : répartition de ses mots et de sa transcription, et enregistrement…"
+
+#, fuzzy
+msgid "Finding the best places to split clause {k} into {n}: the pauses in it most likely to be clause breaks…"
+msgstr "Recherche des meilleurs endroits où couper la proposition {k} en {n} : les pauses les plus susceptibles d’être des limites de proposition…"
+
+#, fuzzy
+msgid "Showing the pieces again…"
+msgstr "Nouvel affichage des morceaux…"
+
+#, fuzzy
+msgid "Clauses of {title}"
+msgstr "Propositions de {title}"
+
+#, fuzzy
+msgid "Listen to each clause, record it said again carefully, and split or join clauses where they are wrong."
+msgstr "Écoutez chaque proposition, enregistrez-la redite avec soin, et coupez ou joignez les propositions mal découpées."
+
+#, fuzzy
+msgid "Split this clause into {n} clauses"
+msgstr "Couper cette proposition en {n} propositions"
+
+#, fuzzy
+msgid "Listen to {name} clause by clause, record it said again carefully, and split or join its clauses"
+msgstr "Écouter {name} proposition par proposition, l’enregistrer redite avec soin, et couper ou joindre ses propositions"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sorting groups of profiles: {location}"
+msgstr "Tri par groupes de profils : {location}"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "(none for this check)"
+msgstr "(aucun pour ce test)"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sort one profile at a time"
+msgstr "Trier un profil à la fois"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sorting one profile: {profile}"
+msgstr "Tri d’un seul profil : {profile}"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sort groups of profiles"
+msgstr "Trier par groupes de profils"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "Sorted together with every cell marked {pool}"
+msgstr "Trié avec toutes les cases marquées {pool}"
+
+# Not in azt.pot when merged; kept in case it is used again.
+#, fuzzy
+msgid "{ps} (sorting all together)"
+msgstr "{ps} (tri de toutes ensemble)"

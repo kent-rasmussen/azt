@@ -252,7 +252,9 @@ class Settings(SettingsUI):
                                 'askedlxtolc',
                                 'start_at_entry',
                                 'end_at_entry',
-                                'writeeverynwrites'
+                                'writeeverynwrites',
+                                'sortpooled',
+                                'sortallps'
                                 ]},
             'profiledata':{
                                 'file':'profiledatafile',
@@ -1221,7 +1223,7 @@ class Settings(SettingsUI):
         # its <check>=<group> code). Recomputed here so verified state can't go
         # stale in the status file — a join no longer drops sibling groups.
         verified=self.program.db.verified_groups_by_ps_profile(ftype)
-        k={}
+        k={'_member':True} #each stored node itself, never the pooled view
         for k['ps'],profile_dict in d.items():
             for k['profile'],check_dict in profile_dict.items():
                 for k['check'],groups in check_dict.items():
@@ -1394,6 +1396,23 @@ class Settings(SettingsUI):
             fn=Syllables.getitemgroup
         else:
             fn=Segments.getitemgroup #This pulls from annotation, not form
+        # POOLED (stage 3b, Kent 2026-11-25): the to-sort list spans the pool —
+        # every member slice, each word read by ITS OWN check — and each member's
+        # node gets its own groups (pools.py reads them together).
+        task=self.program.status.task()
+        members=(task.pool_members(check,profile)
+                    if cvt in ('C','V') and hasattr(task,'pool_members') else [])
+        if members:
+            for m_ps,m_profile,m_check in members:
+                self._groups=[]
+                for sense in self.program.slices.senses(ps=m_ps,profile=m_profile):
+                    self.categorizebygrouping(fn,sense,**{**kwargs,'check':m_check})
+                self.program.status.groups(list(set(self._groups)),**{**kwargs,
+                                'ps':m_ps,'profile':m_profile,'check':m_check,
+                                '_member':True})
+            if store:
+                self.storesettingsfile(setting='status')
+            return
         for sense in senses:
             self.categorizebygrouping(fn,sense,**kwargs)
         sorted=set(self._groups)

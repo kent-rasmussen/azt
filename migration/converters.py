@@ -19,7 +19,10 @@ class Converter:
         # main lexicon's (Kent, 2026-11-05). Was in 'project' until then; a
         # value still there is read first and overridden by this domain.
         'lexicon': [
-            'ps', 'profile', 'cvt', 'check'
+            'ps', 'profile', 'cvt', 'check',
+            # segmental sorting by groups of profiles (default) or one at a time,
+            # and whether all ps sort together (the ps chooser's "All")
+            'sortpooled', 'sortallps'
         ],
         'ui': [
             'interfacelang', 'mainrelief', 'fontthemesmall', 'buttoncolumns',

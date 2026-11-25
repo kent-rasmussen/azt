@@ -209,6 +209,19 @@ from tasks.tasks import (ExportData, AlphabetChart, AlphabetComparisonPages,
     ReportCitationMultisliceTBackground, ReportCitationMultisliceTLBackground)
 
 class App:
+    @property
+    def sorting_pooled(self):
+        """Segmental sorting by GROUPS OF PROFILES (a location across profiles —
+        backend/core/locations.py, pools.py), the default, or one profile at a time
+        (Kent 2026-11-25). Settings attribute 'sortpooled'; unset = pooled."""
+        s=self.__dict__.get('settings')
+        v=getattr(s,'sortpooled',None) if s is not None else None
+        return True if v is None else bool(v)
+    @property
+    def sorting_all_ps(self):
+        """All ps sort together (the ps chooser's "All"); settings 'sortallps'."""
+        s=self.__dict__.get('settings')
+        return bool(getattr(s,'sortallps',False)) if s is not None else False
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
             sys.__excepthook__(exc_type, exc_value, exc_traceback)

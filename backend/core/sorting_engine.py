@@ -400,6 +400,16 @@ class Sort(Categories):
         # specific group (e.g. join's updatestatus(group=lpr[1], verified=False))
         # stripped the verification code off whatever group happened to be
         # current — greedily unverifying an unrelated, already-done group.
+        pooled=self.pool_senses_in_group(group,check,profile) #stage 3b
+        if pooled is not None:
+            # each word verified under its OWN check and profile (word_slot)
+            for sense in pooled:
+                c,p=self.word_slot(sense,check,profile)
+                self.modverification(sense,p,c,
+                        self.verificationcode(check=c,group=group) if verified==True else None)
+            if kwargs.get('write'):
+                self.maybewrite()
+            return
         senses=self.getsensesincheckgroup(check=check,group=group)
         value=self.verificationcode(check=check,group=group)
         # The above gives a check=group string, which should be escaped later
@@ -800,6 +810,10 @@ class Sort(Categories):
             exit=self.getcheck()
             if exit and not self.ui.exitFlag.istrue():
                 return #if the user didn't supply a check
+        # POOLED (stage 3d): a profile joining its pool for the first time has
+        # its colliding integer groups renamed apart and its shared named groups
+        # unverified, once (Categories.reconcile_pool). Nothing when not pooled.
+        self.reconcile_pool()
         gen=self.presortgroups()
         def after_presort():
             self.updatesortingstatus() # Not just tone anymore
@@ -2074,8 +2088,11 @@ class Sort(Categories):
                 return 1
             _t0=time.perf_counter()
             # one row per sameSort set; a row's verdict goes to the whole set
+            # pooled: the group's words across the pool, each by its own check
+            pooled=self.pool_senses_in_group(group,check)
             self.currentsortitems=items=samesort.representatives(self.program,
-                    self.program.examples.sensesinslicegroup(group,check) or [])
+                    (pooled if pooled is not None else
+                        self.program.examples.sensesinslicegroup(group,check)) or [])
             log.info("verify: sensesinslicegroup(%s,%s) → %d items in %.2fs",
                      check, group, len(items or []), time.perf_counter()-_t0)
             # Present the list in a sensible order, not a random pile of words.
